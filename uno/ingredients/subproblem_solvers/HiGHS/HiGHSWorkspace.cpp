@@ -112,7 +112,7 @@ namespace uno {
          this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = constraint_index;
 
          // variable index is used to build the pointers to the column starts
-         const int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
+         const uno_int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
          assert(current_variable <= variable_index);
          while (current_variable < variable_index) {
             ++current_variable;
@@ -171,7 +171,7 @@ namespace uno {
          this->model.hessian_.index_[hessian_nonzero_index] = row_index;
 
          // column index
-         const int column_index = this->hessian_column_indices[permuted_nonzero_index];
+         const uno_int column_index = this->hessian_column_indices[permuted_nonzero_index];
          assert(current_column <= column_index);
          while (current_column < column_index) {
             ++current_column;

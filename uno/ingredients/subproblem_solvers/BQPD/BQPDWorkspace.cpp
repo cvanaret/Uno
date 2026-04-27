@@ -122,12 +122,12 @@ namespace uno {
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
-         const int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
+         const uno_int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
          this->gradients_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] = variable_index +
             Indexing::Fortran_indexing;
 
          // constraint index
-         const int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
+         const uno_int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;

@@ -971,7 +971,7 @@ double uno_get_solver_double_option(void* solver, const char* option_name) {
    return uno_solver->options->get_double(option_name);
 }
 
-int uno_get_solver_integer_option(void* solver, const char* option_name) {
+uno_int uno_get_solver_integer_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
    }
