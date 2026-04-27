@@ -364,10 +364,10 @@ public:
          return this->termination_callback(static_cast<uno_int>(primals.size()),
             static_cast<uno_int>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
-            stationarity_residual, complementarity_residual, this->user_data);
+            stationarity_residual, complementarity_residual, this->user_data) == 0;
       }
       else {
-         return false; // never terminate
+         return false; // no user termination
       }
    }
 
@@ -971,7 +971,7 @@ double uno_get_solver_double_option(void* solver, const char* option_name) {
    return uno_solver->options->get_double(option_name);
 }
 
-int uno_get_solver_integer_option(void* solver, const char* option_name) {
+uno_int uno_get_solver_integer_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
    }

@@ -274,7 +274,7 @@ abstract interface
                                      primal_feasibility_residual, stationarity_residual, &
                                      complementarity_residual, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr, c_bool
+      import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: primals(*)
@@ -286,7 +286,7 @@ abstract interface
       real(c_double), value :: stationarity_residual
       real(c_double), value :: complementarity_residual
       type(c_ptr), value :: user_data
-      logical(c_bool) :: uno_termination_callback
+      logical(uno_int) :: uno_termination_callback
    end function
 end interface
 

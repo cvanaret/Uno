@@ -233,7 +233,7 @@ end
 
 function uno_get_solver_integer_option(solver, option_name)
     @ccall libuno.uno_get_solver_integer_option(solver::Ptr{Cvoid},
-                                                option_name::Cstring)::Cint
+                                                option_name::Cstring)::Int32
 end
 
 function uno_get_solver_double_option(solver, option_name)

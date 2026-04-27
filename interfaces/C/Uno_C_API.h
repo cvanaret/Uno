@@ -134,7 +134,7 @@ extern "C" {
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
    // the complementarity residual.
    // returns true for user termination.
-   typedef bool (*uno_termination_callback)(uno_int number_variables, uno_int number_constraints, const double* primals,
+   typedef uno_int (*uno_termination_callback)(uno_int number_variables, uno_int number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
@@ -328,7 +328,7 @@ extern "C" {
    // gets the value of a given double option.
    // takes as inputs the name of the option.
    // the possible types are integer, double, bool and string.
-   int uno_get_solver_integer_option(void* solver, const char* option_name);
+   uno_int uno_get_solver_integer_option(void* solver, const char* option_name);
    double uno_get_solver_double_option(void* solver, const char* option_name);
    bool uno_get_solver_bool_option(void* solver, const char* option_name);
    const char* uno_get_solver_string_option(void* solver, const char* option_name);
