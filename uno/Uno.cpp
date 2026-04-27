@@ -237,7 +237,7 @@ namespace uno {
          const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
-      return {model.number_variables, model.number_constraints, optimization_status, solution.status,
+      return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
          evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, major_iterations, timer.get_duration(),

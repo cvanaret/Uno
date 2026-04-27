@@ -33,7 +33,8 @@ class UnoModel: public Model {
 public:
    explicit UnoModel(const CUserModel& user_model):
          Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
-            static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention)),
+            static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention),
+            user_model.base_indexing),
          user_model(user_model),
          nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
