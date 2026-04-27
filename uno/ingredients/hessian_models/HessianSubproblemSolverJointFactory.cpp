@@ -50,7 +50,7 @@ namespace uno {
          }
       }
 
-      if (hessian_model_type == "LBFGS" || (default_to_lbfgs && options.get_string("globalization_mechanism") == "LS")) {
+      if (hessian_model_type == "LBFGS" || default_to_lbfgs) {
          if (default_to_lbfgs) {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-LBFGS Hessian instead\n";
             // override user defined option
