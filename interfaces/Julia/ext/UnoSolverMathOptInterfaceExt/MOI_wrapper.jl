@@ -788,7 +788,7 @@ function MOI.get(
     x = [MOI.get(model, MOI.VariablePrimal(), xi) for xi in f.variables]
     s.set.eval_jacobian(J, x)
     λ = Float64[
-        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r)
         for r in row(model, ci)
     ]
     dual = zeros(MOI.dimension(s.set))
@@ -807,7 +807,7 @@ function MOI.get(
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     λ = Float64[
-        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r)
         for r in row(model, ci)
     ]
     return _dual_multiplier(model) * λ
