@@ -22,6 +22,7 @@ namespace uno {
             throw std::runtime_error("The view ends before its starting point");
          }
       }
+      VectorView(const Vector&&) = delete;
 
       [[nodiscard]] size_t size() const noexcept override {
          return this->end - this->start;
@@ -53,6 +54,7 @@ namespace uno {
             throw std::runtime_error("The view ends before its starting point");
          }
       }
+      MutableVectorView(const Vector&&) = delete;
 
       // operators
       using MutableBLASVector<value_type>::operator=;

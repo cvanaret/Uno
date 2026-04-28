@@ -122,7 +122,7 @@ namespace uno {
    template <typename Array>
    bool in_increasing_order(const Array& array, size_t length) {
       size_t index = 0;
-      while (index < length - 1) {
+      while (index + 1 < length) {
          if (array[index] > array[index + 1]) {
             return false;
          }

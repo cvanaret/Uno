@@ -294,7 +294,7 @@ namespace uno {
       if (result.solution_status == SolutionStatus::FEASIBLE_KKT_POINT) {
          this->asl->p.solve_code_ = 0;
       }
-      if (result.solution_status == SolutionStatus::FEASIBLE_SMALL_STEP) {
+      else if (result.solution_status == SolutionStatus::FEASIBLE_SMALL_STEP) {
          this->asl->p.solve_code_ = 100;
       }
       else if (result.solution_status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
