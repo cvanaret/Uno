@@ -38,8 +38,8 @@ namespace uno {
       // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
       const auto sk = this->S.column(this->current_index);
       const auto yk = this->Y.column(this->current_index);
-      const double norm_sk = dot(sk, sk);
-      const double norm_yk = dot(yk, yk);
+      const double norm_sk = norm_2(sk);
+      const double norm_yk = norm_2(yk);
       // tolerance is √(machine epsilon)
       if (dot(sk, yk) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
@@ -138,7 +138,6 @@ namespace uno {
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
       /* form U = (Y - δ S) J⁻ᵀ */
-      const auto Yk = this->Y.submatrix(this->model.number_variables, this->number_entries_in_memory);
       auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          this->U.column(column_index) = this->Y.column(column_index) - this->delta*this->S.column(column_index);
@@ -150,7 +149,8 @@ namespace uno {
    }
 
    double LSR1Hessian::compute_delta() const {
-      // we cannot use the L-BFGS initialization because it kills U
+      assert(0 < this->number_entries_in_memory);
+      // TODO safeguard
       return 1.;
    }
 } // namespace

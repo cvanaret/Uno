@@ -56,8 +56,8 @@ namespace uno {
       // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
       const auto sk = this->S.column(this->current_index);
       const auto yk = this->Y.column(this->current_index);
-      const double norm_sk = dot(sk, sk);
-      const double norm_yk = dot(yk, yk);
+      const double norm_sk = norm_2(sk);
+      const double norm_yk = norm_2(yk);
       // tolerance is √(machine epsilon)
       if (dot(sk, yk) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
@@ -174,13 +174,13 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute δ = sᵀy / yᵀy at the last entry
+   // compute δ = yᵀy / sᵀy at the last entry
    double InverseLBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
-      const auto y = this->Y.column(this->current_index);
       const double sTy = this->R.entry(this->current_index, this->current_index);
+      const auto y = this->Y.column(this->current_index);
       const double yTy = dot(y, y);
       // TODO safeguard
-      return sTy/yTy;
+      return yTy/sTy;
    }
 } // namespace
