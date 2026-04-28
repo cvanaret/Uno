@@ -1,5 +1,4 @@
 # Script to parse Uno headers and generate Julia wrappers.
-using Uno_jll
 using Clang
 using Clang.Generators
 using JuliaFormatter

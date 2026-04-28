@@ -30,18 +30,18 @@ const CALLBACKS = String[
 # ----------------------------------------------------------------
 # Pre-computed type info structs (must be defined before any use)
 # ----------------------------------------------------------------
-struct ArgInfo
+struct FortranArgInfo
   name      :: String
   ftype     :: String   # e.g. "real(c_double)"
   suffix    :: String   # e.g. ", value" or "(*)" or ""
   is_string :: Bool     # true if original C type is char*
 end
 
-struct FuncInfo
+struct FortranFuncInfo
   name      :: String
   ret_ftype :: String   # e.g. "logical(c_bool)" or "void"
   is_void   :: Bool
-  args      :: Vector{ArgInfo}
+  args      :: Vector{FortranArgInfo}
 end
 
 const C_TO_FORTRAN_KIND = Dict(
@@ -150,8 +150,8 @@ function ftype_to_import(ftype::String)
 end
 
 # Build a minimal import list in order of first appearance in arguments.
-# Works on pre-computed ArgInfo strings (no Clang calls needed).
-function build_import(args::Vector{ArgInfo}, ret_ftype, is_void)
+# Works on pre-computed FortranArgInfo strings (no Clang calls needed).
+function build_import(args::Vector{FortranArgInfo}, ret_ftype, is_void)
   order = String[]
   seen  = Set{String}()
   add = function(k)
@@ -230,9 +230,9 @@ function cltype_to_fortran(t)
 end
 
 # ----------------------------------------------------------------
-# Emit arg declarations from pre-computed ArgInfo (no Clang calls)
+# Emit arg declarations from pre-computed FortranArgInfo (no Clang calls)
 # ----------------------------------------------------------------
-function emit_bind_c_arg(io, indent, a::ArgInfo)
+function emit_bind_c_arg(io, indent, a::FortranArgInfo)
   s = a.suffix
   if s == "(array)"
     println(io, "$(indent)$(a.ftype) :: $(a.name)(*)")
@@ -245,7 +245,7 @@ function emit_bind_c_arg(io, indent, a::ArgInfo)
   end
 end
 
-function emit_wrapper_arg(io, a::ArgInfo)
+function emit_wrapper_arg(io, a::FortranArgInfo)
   s = a.suffix
   if s in ("(*)", "(array)", "(scalar)")
     println(io, "   $(a.ftype) :: $(a.name)$(s == "(scalar)" ? "" : "(*)")")
@@ -257,7 +257,7 @@ end
 # ----------------------------------------------------------------
 # Collect function declarations in ONE pass over the cursor tree
 # ----------------------------------------------------------------
-# Compute ArgInfo from a cursor arg — must be called while Clang ctx is alive
+# Compute FortranArgInfo from a cursor arg — must be called while Clang ctx is alive
 function make_arg_info(arg_cursor, arg_type)
   aname = Clang.spelling(arg_cursor)
   t = arg_type
@@ -344,11 +344,11 @@ function make_arg_info(arg_cursor, arg_type)
     suffix
   end
 
-  ArgInfo(aname, ftype, final_suffix, is_str)
+  FortranArgInfo(aname, ftype, final_suffix, is_str)
 end
 
 function collect_funcs(root)
-  funcs = FuncInfo[]
+  funcs = FortranFuncInfo[]
   for child in Clang.children(root)
     k = Clang.kind(child)
     name = Clang.spelling(child)
@@ -359,7 +359,7 @@ function collect_funcs(root)
       clang_args = Clang.get_function_args(child)
       clang_types = [Clang.getCursorType(a) for a in clang_args]
       args = [make_arg_info(clang_args[i], clang_types[i]) for i in eachindex(clang_args)]
-      push!(funcs, FuncInfo(name, ret_ftype, is_void, args))
+      push!(funcs, FortranFuncInfo(name, ret_ftype, is_void, args))
     end
   end
   return funcs
@@ -396,7 +396,7 @@ function gen_uno_c(io, include_dir, funcs)
   end
 end
 
-function gen_one_c_interface(io, f::FuncInfo, trailing_blank=true)
+function gen_one_c_interface(io, f::FortranFuncInfo, trailing_blank=true)
   name   = f.name
   joined = join((a.name for a in f.args), ", ")
   rname  = name_to_result(name, f.ret_ftype)
@@ -450,7 +450,7 @@ function gen_uno_fortran(io, funcs)
   gen_get_string_option_fortran_wrapper(io)
 end
 
-function gen_one_string_wrapper(io, f::FuncInfo, string_arg_names)
+function gen_one_string_wrapper(io, f::FortranFuncInfo, string_arg_names)
   name        = f.name
   joined      = join((a.name for a in f.args), ", ")
   result_name = name_to_result(name, f.ret_ftype)
@@ -603,11 +603,13 @@ function main_fortran()
   open(out_c, "w") do io
     gen_uno_c(io, include_dir, funcs)
   end
+  println("Generated: $out_c")
 
   out_fortran = joinpath(fortran_dir, "uno_fortran.f90")
   open(out_fortran, "w") do io
     gen_uno_fortran(io, funcs)
   end
+  println("Generated: $out_fortran")
 end
 
 # If we want to use the file as a script with `julia wrapper_fortran.jl`
