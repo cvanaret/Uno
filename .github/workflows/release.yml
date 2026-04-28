@@ -17,18 +17,22 @@ jobs:
             os: Linux
             arch: x86_64
             extension: tar.gz
+
           - build: aarch64-linux-gnu-cxx11
             os: Linux
             arch: aarch64
             extension: tar.gz
+
           - build: x86_64-w64-mingw32-cxx11
             os: Windows
             arch: x86_64
             extension: zip
-          - build: aarch64-apple-darwin-cxx11
+
+          - build: x86_64-apple-darwin-cxx11
             os: macOS
             arch: x86_64
             extension: tar.gz
+
           - build: aarch64-apple-darwin-cxx11
             os: macOS
             arch: aarch64
@@ -68,32 +72,46 @@ jobs:
           path: ./Uno_binaries.${{ github.ref_name }}.${{ matrix.build }}.${{ matrix.extension }}
 
   test-artifacts:
-    name: Uno -- ${{ matrix.os }} (${{ matrix.arch }}) -- Test ${{ github.ref_name }}
+    name: Uno -- ${{ matrix.os-name }} (${{ matrix.arch }}) -- Test ${{ github.ref_name }}
     needs: build-artifacts
     strategy:
       fail-fast: false
       matrix:
         include:
           - build: x86_64-linux-gnu-cxx11
-            os: Linux
+            os: ubuntu-latest
+            os-name: Linux
             arch: x86_64
             extension: tar.gz
+            libuno-extension: so
+
           - build: aarch64-linux-gnu-cxx11
-            os: Linux
+            os: ubuntu-22.04-arm
+            os-name: Linux
             arch: aarch64
             extension: tar.gz
+            libuno-extension: so
+
           - build: x86_64-w64-mingw32-cxx11
-            os: Windows
+            os: windows-latest
+            os-name: Windows
             arch: x86_64
             extension: zip
-          - build: aarch64-apple-darwin-cxx11
-            os: macOS
+            libuno-extension: dll.a
+
+          - build: x86_64-apple-darwin-cxx11
+            os: macos-15-intel
+            os-name: macOS
             arch: x86_64
             extension: tar.gz
+            libuno-extension: dylib
+
           - build: aarch64-apple-darwin-cxx11
-            os: macOS
+            os: macos-latest
+            os-name: macOS
             arch: aarch64
             extension: tar.gz
+            libuno-extension: dylib
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -116,14 +134,14 @@ jobs:
           echo "UNO_DIR=${UNO_DIR}" >> "$GITHUB_ENV"
 
       - name: Extract artifact (tar.gz)
-        if: matrix.artifact-ext == 'tar.gz'
+        if: matrix.extension == 'tar.gz'
         shell: bash
         run: |
           mkdir -p "${{ env.UNO_DIR }}"
-          tar -xzf "${{ steps.download.outputs.artifact }}" -C "${{ env.UNO_DIR }}"
+          tar -xzf "${{ steps.artifact.outputs.artifact }}" -C "${{ env.UNO_DIR }}"
 
       - name: Extract artifact (zip)
-        if: matrix.artifact-ext == 'zip'
+        if: matrix.extension == 'zip'
         shell: pwsh
         run: |
           Expand-Archive -Path "${{ steps.download.outputs.artifact }}" -DestinationPath "${{ env.UNO_DIR }}"

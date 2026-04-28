@@ -34,35 +34,30 @@ jobs:
             arch: x86_64
             artifact-os: linux-gnu
             artifact-ext: tar.gz
-            dep-extension: so
             libuno-extension: so
 
           - os: ubuntu-22.04-arm
             arch: aarch64
             artifact-os: linux-gnu
             artifact-ext: tar.gz
-            dep-extension: so
             libuno-extension: so
 
           - os: macos-latest
             arch: aarch64
             artifact-os: apple-darwin
             artifact-ext: tar.gz
-            dep-extension: dylib
             libuno-extension: dylib
 
           - os: macos-15-intel
             arch: x86_64
             artifact-os: apple-darwin
             artifact-ext: tar.gz
-            dep-extension: dylib
             libuno-extension: dylib
 
           - os: windows-latest
             arch: x86_64
             artifact-os: w64-mingw32
             artifact-ext: zip
-            dep-extension: dll
             libuno-extension: dll.a
 
     runs-on: ${{ matrix.os }}
