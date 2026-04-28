@@ -748,6 +748,10 @@ bool uno_set_lagrangian_sign_convention(void* model, uno_int lagrangian_sign_con
          UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
       return false;
    }
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
    return true;
@@ -879,13 +883,13 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
    }
    // handle the preset separately
    if (strcmp(option_name, "preset") == 0) {
-      uno_set_solver_preset(solver, option_value);
+      return uno_set_solver_preset(solver, option_value);
    }
    else {
       Solver* uno_solver = static_cast<Solver*>(solver);
       uno_solver->options->set_string(option_name, option_value);
+      return true;
    }
-   return true;
 }
 
 uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
