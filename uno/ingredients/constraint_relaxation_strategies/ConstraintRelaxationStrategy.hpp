@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/SolutionStatus.hpp"
@@ -61,6 +62,9 @@ namespace uno {
       const size_t loose_tolerance_iteration_threshold;
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
+      // workspaces reused across iterations to avoid per-iteration heap allocations
+      mutable Vector<double> complementarity_workspace{};
+      mutable Vector<double> infeasibility_reduction_workspace{};
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Subproblem& subproblem,

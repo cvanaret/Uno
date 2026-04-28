@@ -80,11 +80,11 @@ namespace uno {
 
       // local models of progress measures
       [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
-         double step_length, Norm norm, Evaluations& current_evaluations) const;
+         double step_length, Norm norm, Evaluations& current_evaluations, Vector<double>& workspace) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Vector<double>& primal_direction,
          double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
       [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
-         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
+         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace, Vector<double>& workspace) const;
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;

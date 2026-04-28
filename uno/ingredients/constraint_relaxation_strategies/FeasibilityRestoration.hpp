@@ -71,6 +71,8 @@ namespace uno {
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
+      // workspace reused across iterations to avoid per-call heap allocations
+      mutable Vector<double> linearized_constraints_workspace{};
 
       void solve_subproblem(Statistics& statistics, const Subproblem& subproblem, SubproblemSolver& subproblem_solver,
          const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy, Iterate& current_iterate,

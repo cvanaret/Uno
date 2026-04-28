@@ -261,17 +261,16 @@ namespace uno {
 
    // local models of progress measures
    double Subproblem::compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
-         double step_length, Norm norm, Evaluations& current_evaluations) const {
+         double step_length, Norm norm, Evaluations& current_evaluations, Vector<double>& workspace) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
       current_evaluations.evaluate_constraints(model, this->current_iterate.primals);
       current_evaluations.evaluate_jacobian(model, this->current_iterate.primals);
 
       const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
-      // TODO preallocate
-      Vector<double> result(model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(model, primal_direction.data(), result.data());
+      workspace.resize(model.number_constraints);
+      current_evaluations.compute_jacobian_vector_product(model, primal_direction.data(), workspace.data());
       const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
-         step_length * result, norm);
+         step_length * workspace, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
@@ -290,10 +289,10 @@ namespace uno {
    }
 
    ProgressMeasures Subproblem::compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
-         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
+         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace, Vector<double>& workspace) const {
       return {
          this->compute_predicted_infeasibility_reduction(this->problem.model, direction.primals, step_length, norm,
-            current_evaluations),
+            current_evaluations, workspace),
          this->compute_predicted_objective_reduction(direction.primals, step_length, current_evaluations, solver_workspace),
          this->problem.compute_predicted_auxiliary_reduction(this->current_iterate, direction.primals, step_length)
       };

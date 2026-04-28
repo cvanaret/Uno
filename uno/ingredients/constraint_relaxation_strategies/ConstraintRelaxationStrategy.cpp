@@ -70,7 +70,7 @@ namespace uno {
       else {
          // determine acceptance wrt the globalization strategy
          const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(direction, step_length,
-            this->progress_norm, evaluation_cache.current_evaluations, solver_workspace);
+            this->progress_norm, evaluation_cache.current_evaluations, solver_workspace, this->infeasibility_reduction_workspace);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reductions, objective_multiplier);
          // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
@@ -102,10 +102,9 @@ namespace uno {
 
       // complementarity error
       constexpr double shift_value = 0.;
-      // TODO preallocate constraints
-      Vector<double> constraints(problem.number_constraints);
-      problem.evaluate_constraints(iterate, constraints.data(), evaluations);
-      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
+      this->complementarity_workspace.resize(problem.number_constraints);
+      problem.evaluate_constraints(iterate, this->complementarity_workspace.data(), evaluations);
+      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, this->complementarity_workspace,
          iterate.multipliers, shift_value, this->residual_norm);
 
       // scaling factors

@@ -191,11 +191,10 @@ namespace uno {
             return true;
          }
          // compute the linearized constraint violation
-         // TODO preallocate
-         Vector<double> result(model.number_constraints);
-         current_evaluations.compute_jacobian_vector_product(model, direction.primals.data(), result.data());
+         this->linearized_constraints_workspace.resize(model.number_constraints);
+         current_evaluations.compute_jacobian_vector_product(model, direction.primals.data(), this->linearized_constraints_workspace.data());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
-            step_length * result, this->residual_norm);
+            step_length * this->linearized_constraints_workspace, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
       }
       return false;
