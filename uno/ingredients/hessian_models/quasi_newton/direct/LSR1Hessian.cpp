@@ -138,7 +138,6 @@ namespace uno {
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
       /* form U = (Y - δ S) J⁻ᵀ */
-      const auto Yk = this->Y.submatrix(this->model.number_variables, this->number_entries_in_memory);
       auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          this->U.column(column_index) = this->Y.column(column_index) - this->delta*this->S.column(column_index);
