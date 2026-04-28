@@ -175,13 +175,6 @@ jobs:
           "${{ env.UNO_DIR }}\lib"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "${{ env.UNO_DIR }}\deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Generate OpenBLAS import library (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          cd "${{ env.UNO_DIR }}/deps"
-          dlltool -D libopenblas.dll -l libopenblas.dll.a
-
       - name: Configure example CMake (Linux and macOS)
         if: runner.os != 'Windows'
         working-directory: ${{github.workspace}}/interfaces/C/example
