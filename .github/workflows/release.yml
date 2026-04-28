@@ -6,6 +6,9 @@ on:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v2023.11.15
 
+env:
+  BUILD_TYPE: Release
+
 jobs:
   build-artifacts:
     name: Uno -- ${{ matrix.os }} (${{ matrix.arch }}) -- Release ${{ github.ref_name }}
