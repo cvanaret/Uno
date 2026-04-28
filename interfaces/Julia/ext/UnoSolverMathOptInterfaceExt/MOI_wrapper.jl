@@ -440,7 +440,7 @@ function MOI.set(
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
     if !isnothing(model.inner) && !model.needs_new_inner
         vi = ci.value
-        UnoSolver.uno_set_variable_upper_bound(model.inner, vi-1, model.variables.upper[vi])
+        UnoSolver.uno_set_variable_upper_bound(model.inner, vi, model.variables.upper[vi])
     end
     model.solver = nothing
     return
@@ -455,7 +455,7 @@ function MOI.set(
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
     if !isnothing(model.inner) && !model.needs_new_inner
         vi = ci.value
-        UnoSolver.uno_set_variable_lower_bound(model.inner, vi-1, model.variables.lower[vi])
+        UnoSolver.uno_set_variable_lower_bound(model.inner, vi, model.variables.lower[vi])
     end
     model.solver = nothing
     return
@@ -475,8 +475,8 @@ function MOI.set(
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
     if !isnothing(model.inner) && !model.needs_new_inner
         vi = ci.value
-        UnoSolver.uno_set_variable_lower_bound(model.inner, vi-1, model.variables.lower[vi])
-        UnoSolver.uno_set_variable_upper_bound(model.inner, vi-1, model.variables.upper[vi])
+        UnoSolver.uno_set_variable_lower_bound(model.inner, vi, model.variables.lower[vi])
+        UnoSolver.uno_set_variable_upper_bound(model.inner, vi, model.variables.upper[vi])
     end
     model.solver = nothing
     return
@@ -559,7 +559,7 @@ function MOI.set(
 }
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
     if !isnothing(model.inner) && !model.needs_new_inner
-        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci)-1, model.qp_data.g_U[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.qp_data.g_U[ci.value])
     end
     model.solver = nothing
     return
@@ -578,7 +578,7 @@ function MOI.set(
 }
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
     if !isnothing(model.inner) && !model.needs_new_inner
-        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci)-1, model.qp_data.g_L[ci.value])
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.qp_data.g_L[ci.value])
     end
     model.solver = nothing
     return
@@ -601,8 +601,8 @@ function MOI.set(
 }
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
     if !isnothing(model.inner) && !model.needs_new_inner
-        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci)-1, model.qp_data.g_L[ci.value])
-        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci)-1, model.qp_data.g_U[ci.value])
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.qp_data.g_L[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.qp_data.g_U[ci.value])
     end
     model.solver = nothing
     return
@@ -748,7 +748,7 @@ function MOI.set(
     func = model.nlp_model[index].expression
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
     if !isnothing(model.inner) && !model.needs_new_inner
-        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci)-1, model.nlp_data.constraint_bounds.upper[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.upper[ci.value])
     end
     model.solver = nothing
     return
@@ -765,7 +765,7 @@ function MOI.set(
     func = model.nlp_model[index].expression
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
     if !isnothing(model.inner) && !model.needs_new_inner
-        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci)-1, model.nlp_data.constraint_bounds.lower[ci.value])
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.lower[ci.value])
     end
     model.solver = nothing
     return
@@ -787,8 +787,8 @@ function MOI.set(
     func = model.nlp_model[index].expression
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
     if !isnothing(model.inner) && !model.needs_new_inner
-        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci)-1, model.nlp_data.constraint_bounds.lower[ci.value])
-        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci)-1, model.nlp_data.constraint_bounds.upper[ci.value])
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.lower[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.upper[ci.value])
     end
     model.solver = nothing
     return
