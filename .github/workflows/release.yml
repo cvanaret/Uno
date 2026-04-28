@@ -67,9 +67,143 @@ jobs:
           name: Uno_binaries.${{ github.ref_name }}.${{ matrix.build }}.${{ matrix.extension }}
           path: ./Uno_binaries.${{ github.ref_name }}.${{ matrix.build }}.${{ matrix.extension }}
 
+  test-artifacts:
+    name: Uno -- ${{ matrix.os }} (${{ matrix.arch }}) -- Test ${{ github.ref_name }}
+    needs: build-artifacts
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build: x86_64-linux-gnu-cxx11
+            os: Linux
+            arch: x86_64
+            extension: tar.gz
+          - build: aarch64-linux-gnu-cxx11
+            os: Linux
+            arch: aarch64
+            extension: tar.gz
+          - build: x86_64-w64-mingw32-cxx11
+            os: Windows
+            arch: x86_64
+            extension: zip
+          - build: aarch64-apple-darwin-cxx11
+            os: macOS
+            arch: x86_64
+            extension: tar.gz
+          - build: aarch64-apple-darwin-cxx11
+            os: macOS
+            arch: aarch64
+            extension: tar.gz
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Uno_binaries.${{ github.ref_name }}.${{ matrix.build }}.${{ matrix.extension }}
+          path: ${{ runner.temp }}
+
+      - name: Set artifact paths
+        id: artifact
+        shell: bash
+        run: |
+          ARCHIVE="Uno_binaries.${{ github.ref_name }}.${{ matrix.build }}.${{ matrix.extension }}"
+          echo "artifact=${{ runner.temp }}/${ARCHIVE}" >> "$GITHUB_OUTPUT"
+          UNO_DIR="${{ runner.temp }}/Uno"
+          echo "UNO_DIR=${UNO_DIR}" >> "$GITHUB_ENV"
+
+      - name: Extract artifact (tar.gz)
+        if: matrix.artifact-ext == 'tar.gz'
+        shell: bash
+        run: |
+          mkdir -p "${{ env.UNO_DIR }}"
+          tar -xzf "${{ steps.download.outputs.artifact }}" -C "${{ env.UNO_DIR }}"
+
+      - name: Extract artifact (zip)
+        if: matrix.artifact-ext == 'zip'
+        shell: pwsh
+        run: |
+          Expand-Archive -Path "${{ steps.download.outputs.artifact }}" -DestinationPath "${{ env.UNO_DIR }}"
+
+      - name: Set LD_LIBRARY_PATH (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "LD_LIBRARY_PATH=${{ env.UNO_DIR }}/lib:${{ env.UNO_DIR }}/deps${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+            >> "$GITHUB_ENV"
+          echo "${{ env.UNO_DIR }}/bin" >> "$GITHUB_PATH"
+
+      - name: Set DYLD_LIBRARY_PATH (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "DYLD_LIBRARY_PATH=${{ env.UNO_DIR }}/lib:${{ env.UNO_DIR }}/deps${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" \
+            >> "$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=${{ env.UNO_DIR }}/lib:${{ env.UNO_DIR }}/deps" \
+            >> "$GITHUB_ENV"
+          echo "${{ env.UNO_DIR }}/bin" >> "$GITHUB_PATH"
+
+      - name: Set PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # On Windows all three directories need to be on PATH so that the
+          # dynamic linker can find the DLLs at runtime.
+          "${{ env.UNO_DIR }}\bin"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "${{ env.UNO_DIR }}\lib"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "${{ env.UNO_DIR }}\deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Generate OpenBLAS import library (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd "${{ env.UNO_DIR }}/deps"
+          dlltool -D libopenblas.dll -l libopenblas.dll.a
+
+      - name: Configure example CMake (Linux and macOS)
+        if: runner.os != 'Windows'
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        shell: bash
+        run: |
+          cmake -B "${{github.workspace}}/interfaces/C/example/build" \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
+                .
+
+      - name: Configure example CMake (Windows)
+        if: runner.os == 'Windows'
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        shell: bash
+        run: |
+          cmake -G "MinGW Makefiles" \
+                -B "${{github.workspace}}/interfaces/C/example/build" \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO:FILEPATH="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
+                -DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe \
+                -DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe \
+                .
+
+      - name: Build example
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        shell: bash
+        run: cmake --build "${{github.workspace}}/interfaces/C/example/build" --config ${{env.BUILD_TYPE}}
+
+      - name: Run example (Linux and macOS)
+        if: runner.os != 'Windows'
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
+        shell: bash
+        run: ./example_hs015
+
+      - name: Run example (Windows)
+        if: runner.os == 'Windows'
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
+        shell: pwsh
+        run: .\example_hs015.exe
+
   release:
     name: Create Release and Upload Binaries
-    needs: build-artifacts
+    needs: test-artifacts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Uno
