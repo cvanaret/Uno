@@ -36,6 +36,14 @@ namespace uno {
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
    }
 
+   void BacktrackingLineSearch::reinitialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         EvaluationCache& evaluation_cache, Options& options) {
+      this->constraint_relaxation_strategy->reinitialize(statistics, model, current_iterate, this->direction, false,
+         evaluation_cache, options);
+      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
+      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
+   }
+
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {

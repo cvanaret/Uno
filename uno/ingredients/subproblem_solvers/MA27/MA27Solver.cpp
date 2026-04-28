@@ -128,6 +128,11 @@ namespace uno {
       this->workspace.iw1.resize(2 * this->linear_system.dimension);
    }
 
+   void MA27Solver::reset_symbolic_analysis() {
+      this->analysis_performed = false;
+      this->factorization_performed = false;
+   }
+
    void MA27Solver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 

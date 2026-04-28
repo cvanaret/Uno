@@ -44,11 +44,21 @@ namespace uno {
          const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
          subproblem.evaluate_jacobian(linear_system.matrix_values.data() + number_hessian_nonzeros, current_evaluations);
 
+         // detect structure changes (e.g. when Uno::solve() is called again on a different problem)
+         if (this->analysis_performed &&
+               (linear_system.dimension != this->analyzed_dimension ||
+                linear_system.number_nonzeros != this->analyzed_number_nonzeros)) {
+            DEBUG << "Linear system structure changed: resetting symbolic analysis\n";
+            this->linear_solver->reset_symbolic_analysis();
+            this->analysis_performed = false;
+         }
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
             this->linear_solver->do_symbolic_analysis();
             this->analysis_performed = true;
+            this->analyzed_dimension = linear_system.dimension;
+            this->analyzed_number_nonzeros = linear_system.number_nonzeros;
          }
 
          // regularize the augmented matrix (this calls the analysis and the factorization)

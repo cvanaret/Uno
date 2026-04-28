@@ -28,6 +28,8 @@ namespace uno {
    protected:
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
+      size_t analyzed_dimension{0};
+      size_t analyzed_number_nonzeros{0};
    };
 } // namespace
 

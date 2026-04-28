@@ -17,6 +17,16 @@ namespace uno {
       this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
    }
 
+   void SSIDSSolver::reset_symbolic_analysis() {
+      if (this->analysis_performed) {
+         spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
+         this->workspace.akeep = nullptr;
+         this->workspace.fkeep = nullptr;
+      }
+      this->analysis_performed = false;
+      this->factorization_performed = false;
+   }
+
    void SSIDSSolver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 

@@ -17,6 +17,8 @@ namespace uno {
 
       virtual void do_symbolic_analysis() = 0;
       virtual void do_numerical_factorization(bool is_matrix_positive_definite) = 0;
+      // reset analysis state so do_symbolic_analysis() will be called again on the next solve
+      virtual void reset_symbolic_analysis() = 0;
 
       [[nodiscard]] virtual Inertia get_inertia() const = 0;
       [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;

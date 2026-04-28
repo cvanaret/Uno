@@ -32,6 +32,9 @@ namespace uno {
       virtual void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
+      // called when recycling the solver across multiple Uno::solve() calls (same structure)
+      virtual void reset() { }
+
       virtual void initialize_statistics(Statistics& statistics) const = 0;
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) = 0;

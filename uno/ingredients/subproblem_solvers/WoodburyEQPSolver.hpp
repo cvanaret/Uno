@@ -45,6 +45,8 @@ namespace uno {
       const DirectQuasiNewtonHessian& hessian_model;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
+      size_t analyzed_dimension{0};
+      size_t analyzed_number_nonzeros{0};
 
       void compute_low_rank_correction(const Subproblem& subproblem, LinearSystem& linear_system, Vector<double>& b) const;
       [[nodiscard]] static bool solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d);

@@ -28,6 +28,15 @@ namespace uno {
       return true;
    }
 
+   void QuasiNewtonHessian::reset() {
+      this->number_entries_in_memory = 0;
+      this->current_index = 0;
+      this->delta = 1.;
+      this->hessian_recomputation_required = false;
+      this->S.fill(0.);
+      this->Y.fill(0.);
+   }
+
    bool QuasiNewtonHessian::has_curvature() const {
       return true;
    }

@@ -59,6 +59,21 @@ namespace uno {
       this->hessian_model->initialize_statistics(statistics);
    }
 
+   void NoRelaxation::reinitialize(Statistics& statistics, const Model& /*model*/, Iterate& initial_iterate,
+         Direction& /*direction*/, bool /*uses_trust_region*/, EvaluationCache& evaluation_cache, Options& /*options*/) {
+      // reset algorithmic state without recreating the subproblem solver (preserves symbolic analysis)
+      this->parameterization = Parameterization{};
+      this->number_subproblems_solved = 0;
+      this->loose_tolerance_consecutive_iterations = 0;
+      this->hessian_model->reset();
+
+      // re-initialize the initial iterate
+      this->reformulated_problem->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
+      this->evaluate_progress_measures(*this->reformulated_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->globalization_strategy.initialize(statistics, initial_iterate);
+   }
+
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       direction.reset();

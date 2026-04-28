@@ -21,6 +21,7 @@ namespace uno {
 
       [[nodiscard]] bool has_hessian_operator() const override;
       [[nodiscard]] bool has_curvature() const override;
+      void reset() override;
 
    protected:
       const Model& model;

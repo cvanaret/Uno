@@ -52,6 +52,11 @@ namespace uno {
       this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
    }
 
+   void MUMPSSolver::reset_symbolic_analysis() {
+      this->analysis_performed = false;
+      this->factorization_performed = false;
+   }
+
    void MUMPSSolver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 

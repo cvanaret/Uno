@@ -44,6 +44,7 @@ namespace uno {
 
       void do_symbolic_analysis() override;
       void do_numerical_factorization(bool is_matrix_positive_definite) override;
+      void reset_symbolic_analysis() override;
       void solve_indefinite_system(double* result) override;
 
       [[nodiscard]] Inertia get_inertia() const override;

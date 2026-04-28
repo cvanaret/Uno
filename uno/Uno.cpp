@@ -169,8 +169,15 @@ namespace uno {
          model.project_onto_variable_bounds(current_iterate.primals);
 
          // set the ingredients based on the user-defined options
-         this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
-         this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options);
+         if (this->globalization_mechanism == nullptr) {
+            // first call: create the mechanism (performs symbolic analysis of the linear system)
+            this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
+            this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options);
+         }
+         else {
+            // subsequent call: reuse the mechanism (skips symbolic analysis)
+            this->globalization_mechanism->reinitialize(statistics, model, current_iterate, evaluation_cache, options);
+         }
 
          options.print_non_default();
          if (Logger::level == INFO) {

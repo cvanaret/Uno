@@ -34,6 +34,10 @@ namespace uno {
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
          bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) = 0;
+      // reinitialize resets algorithmic state (filter, phase, L-BFGS) without recreating the subproblem solver
+      // (avoids redoing the symbolic analysis of the linear system between consecutive Uno::solve() calls)
+      virtual void reinitialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
+         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) = 0;
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
