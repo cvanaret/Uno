@@ -54,7 +54,7 @@ namespace uno {
          }
       }
       // if only bound constraints, allocate bound-constrained solver
-      else if (!subproblem.has_inequality_constraints() && subproblem.has_bound_constraints()) {
+      else if (subproblem.number_constraints == 0 && subproblem.has_bound_constraints()) {
          auto subproblem_solver = std::make_unique<TRONSolver>();
          subproblem_solver->initialize_memory(subproblem);
          return subproblem_solver;
