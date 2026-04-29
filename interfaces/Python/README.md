@@ -2,12 +2,12 @@
 
 Uno is a solver for nonlinearly constrained optimization that unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods.
 It breaks them down into a set of common building blocks (e.g., strategies to compute descent directions and techniques to enforce globalization).
-
-`unopy`, Uno's Python interface, allows you to solve an optimization model described by callback functions.
+`unopy` is Uno's Python interface.
 
 ## Example
 
-An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
+unopy allows you to solve an optimization model described by callback functions.
+An example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
 ### Querying the current Uno version
 
