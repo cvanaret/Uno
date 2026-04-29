@@ -1,8 +1,7 @@
 ## Uno
 
-Uno is a solver for nonlinearly constrained optimization that unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods.
-It breaks them down into a set of common building blocks (e.g., strategies to compute descent directions and techniques to enforce globalization).
-`unopy` is Uno's Python interface.
+`unopy` is the Python interface of Uno, a C++ solver for nonlinearly constrained optimization that unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods.
+It breaks them down into a set of common building blocks such as constraint reformulation, step computation, and globalization.
 
 ## Example
 
