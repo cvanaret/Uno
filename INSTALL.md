@@ -1,22 +1,67 @@
-## Installation instructions
+## Installation guide
+
+### Precompiled libraries and executables
+
+We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux (x64 and aarch64), macOS (x64 and aarch64), and Windows (x64).
+
+> [!NOTE]
+> The shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` provided in the precompiled archive is a dummy version that does not include the official HSL linear solvers such as `MA27` or `MA57`.
+> However, it can be safely replaced with the official precompiled [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) library without the need to recompile anything.
+> The routine symbols are identical, allowing seamless hot-swapping of the library.
+
+On some platforms, the dynamic linker needs to know where to look for libraries at runtime.
+You might need to set the following environment variables:
+
+- `LD_LIBRARY_PATH` on Linux
+- `DYLD_LIBRARY_PATH` or `DYLD_FALLBACK_LIBRARY_PATH` on macOS
+- `PATH` on Windows
+
+These variables should include the directories where you extracted the library files.
+For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`.
+
+**Example for Linux**:
+```console
+tar -xzf Uno.vX.Y.Z.linux.tar.gz
+export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$LD_LIBRARY_PATH
+export PATH=/path/to/extracted/Uno/bin:$PATH
+```
+
+**Example for macOS**:
+```console
+tar -xzf Uno.vX.Y.Z.macos.tar.gz
+export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$DYLD_LIBRARY_PATH
+export PATH=/path/to/extracted/Uno/bin:$PATH
+```
+Alternatively, you can use `DYLD_FALLBACK_LIBRARY_PATH` instead of `DYLD_LIBRARY_PATH`.
+
+**Example for Windows (PowerShell)**:
+```console
+tar -xzf Uno.vX.Y.Z.windows.zip
+$env:PATH="C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;$env:PATH"
+```
+
+**Example for Windows (Command Prompt)**:
+```console
+tar -xzf Uno.vX.Y.Z.windows.zip
+set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;%PATH%
+```
 
 ### Packages and libraries
 
-* install BLAS and LAPACK:
+* install cmake, BLAS and LAPACK:
 ```console
+sudo apt update
+sudo apt install cmake
 sudo apt install libblas-dev liblapack-dev
-```
-* install cmake (and optionally ccmake, CMake curses interface):
-```console
-sudo apt install cmake cmake-curses-gui
 ```
 
 * **(optional)** download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
 * **(optional)** download  solvers:
     * BQPD (null-space active set solver for nonconvex quadratic programming): get a precompiled binary for your architecture (https://github.com/leyffer/BQPD_jll.jl/releases) or get in touch with Sven Leyffer to apply for an academic license (https://www.mcs.anl.gov/~leyffer/solvers.html)
+    * MA27 (sparse indefinite symmetric linear solver): https://www.hsl.rl.ac.uk/download/MA27/1.0.0
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
-    * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
+    * LIBHSL (collection of solvers for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
     * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
     * SSIDS (sparse indefinite symmetric linear solver): https://github.com/ralna/spral
     * HiGHS (linear programming and convex quadratic programming solver): https://highs.dev
@@ -36,88 +81,42 @@ lstopo --of xml ~/.config/hwloc-topology.xml
 echo 'export HWLOC_XMLFILE=$HOME/.config/hwloc-topology.xml' >> ~/.bashrc
 ```
 
-### Compilation
+### Compiling and installing Uno
 
-1. Create a `build` directory in the main directory and move to it:
+The sequence of commands to configure and build is as follows (assuming the build directory is `build`):
 ```console
-mkdir build && cd build
-```
-2. Execute cmake:  
-```console
-cmake [options] ..
+cmake -S. -B build [options]
+cmake --build build --parallel
 ```
 You can pass the following options:
 - build type: `-DCMAKE_BUILD_TYPE=[Release|Debug]`
+- enable the unit tests: `-DENABLE_TESTS=[ON|OFF]`
 - build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
 - build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
+- path(s) to the LAPACK library: `-DBLAS_LIBRARIES=paths`
+- path(s) to the BLAS library: `-DLAPACK_LIBRARIES=paths`
 - path to the BQPD library: `-DBQPD=path_to_libbqpd`
-- path to the MA27 library: `-DMA57=path_to_libma27`
+- path to the MA27 library: `-DMA27=path_to_libma27`
 - path to the MA57 library: `-DMA57=path_to_libma57`
 - path to ASL library: `-DAMPLSOLVER=path_to_libamplsolver`
 - path to HiGHS library: `-DHIGHS=path_to_libhighs`
 - path to HSL library: `-DHSL=path_to_libhsl`
-- path to METIS library (`fakemetis` is built with MA57): `-DMETIS=path_to_libmetis`
+- path to METIS library: `-DMETIS=path_to_libmetis`
 - path to MUMPS library: `-DMUMPS_LIBRARY=path_to_libdmumps`
 - path to MUMPS common library: `-DMUMPS_COMMON_LIBRARY=path_to_libmumps_common`
 - path to MUMPS PORD library: `-DMUMPS_PORD_LIBRARY=path_to_mumps_libpord`
 - path to MUMPS MPISEQ library: `-DMUMPS_MPISEQ_LIBRARY=path_to_mumps_mpiseq_lib`
 - path to MUMPS include directory: `-DMUMPS_INCLUDE_DIR=path_to_mumps_include_dir`
 - path to SPRAL library: `-DSPRAL=path_to_libspral`
+- path(s) to additional libraries to link against (e.g., `libstdc++.a`): `-DAUXILIARY_LIBRARIES=paths`
 
-3. **(or)** Use ccmake to provide the paths to the required and optional libraries:
+To install the built libraries and headers:
 ```console
-ccmake ..
-```
-4. Compile (in parallel: `n` being the number of threads, e.g. 6):
-```console
-make -jn
+cmake --install build
 ```
 
-To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 4.
-
-### Install
-
-5. Install the built libraries and header (`uno_static`, `uno_shared` and `Uno_C_API.h`):
+To compile and run the test suite:
 ```console
-sudo make install
+cmake --build build --target run_unotest --parallel
+ctest --test-dir build
 ```
-
-### Unit tests
-
-6. Install the GoogleTest suite:
-```console
-sudo apt install googletest
-```
-7. Compile the test suite:
-```console
-make run_unotest -jn
-```
-8. Run the test suite:
-```console
-./run_unotest
-```
-
-### Precompiled libraries and executables
-
-We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux (x64 and aarch64), macOS (x64 and aarch64), and Windows (x64).
-
-On some platforms, the dynamic linker needs to know where to look for libraries at runtime.
-You might need to set the following environment variables:
-
-- `LD_LIBRARY_PATH` on Linux
-- `DYLD_LIBRARY_PATH` or `DYLD_FALLBACK_LIBRARY_PATH` on macOS
-- `PATH` on Windows
-
-These variables should include the directory where you extracted the library files.
-For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`.
-
-**Example for Linux**:
-```console
-tar -xzf Uno.vX.Y.Z.linux.tar.gz
-export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$LD_LIBRARY_PATH
-export PATH=/path/to/extracted/Uno/bin:$PATH
-```
-
-Note: The shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` provided in the precompiled archive is a dummy version that does not include the official HSL linear solvers such as `MA27` or `MA57`.
-However, it can be safely replaced with the official precompiled [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) library without the need to recompile anything.
-The routine symbols are identical, allowing seamless hot-swapping of the library.

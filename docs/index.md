@@ -44,6 +44,27 @@ Uno allows the automatic generation of various strategy combinations on the fly 
 - **globalization strategies**: filter method, funnel method, merit function;
 - **globalization mechanisms**: backtracking line search, trust-region method.
 
-We believe that Uno has the potential to serve as an experimental laboratory for practitioners and optimizers and to accelerate research in nonlinearly constrained optimization. Our ultimate goal is to promote the extension of state-of-the-art nonlinear optimization techniques to new classes of problems such as problems with equilibrium constraints and nonlinear robust optimization.
+Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
+* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
+* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
+
+## Who uses Uno?
+
+Uno is currently used as a nonlinear optimization solver in:
+
+- [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
+- [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
+- [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
+- [control-toolbox](https://github.com/control-toolbox), a collection of Julia packages for mathematical control and its applications
+- [FelooPy](https://www.linkedin.com/posts/k-tafakkori_optimization101-operationsresearch-decisionscience-activity-7397646574035697664-AzmK), a user-friendly tool for coding, modeling, and solving decision problems
+- [IMPL &copy; /IMPL-DATA &copy;](https://www.linkedin.com/posts/jeffrey-dean-kelly-a5420a6a_releases-cvanaretuno-activity-7388564004585160704-WSxz/) by [Industrial Algorithms Limited](https://www.industrialgorithms.ca/), a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation
+
+and more to come:
+
+- [CasADi](https://github.com/casadi/casadi/issues/3908)
+- [Pyomo](https://github.com/cvanaret/Uno/issues/319)
+- [pyOptSparse](https://github.com/cvanaret/Uno/issues/318)
+- [Minotaur](https://github.com/cvanaret/Uno/issues/107)
+- [NEOS Server](https://neos-server.org/neos/solvers/)
 
 [^1]: Uno was first introduced at the ISMP 2018 conference under the name Argonot.
