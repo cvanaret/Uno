@@ -147,7 +147,7 @@ jobs:
         if: matrix.extension == 'zip'
         shell: pwsh
         run: |
-          Expand-Archive -Path "${{ steps.download.outputs.artifact }}" -DestinationPath "${{ env.UNO_DIR }}"
+          Expand-Archive -Path "${{ steps.artifact.outputs.artifact }}" -DestinationPath "${{ env.UNO_DIR }}"
 
       - name: Set LD_LIBRARY_PATH (Linux)
         if: runner.os == 'Linux'
