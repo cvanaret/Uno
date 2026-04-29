@@ -133,6 +133,7 @@ result = uno_solver.optimize(model)
 ## Inspecting the result
 
 To inspect the result of the optimization, read the attributes of the `result` object:
+
 - the optimization status (`UNO_SUCCESS`, `UNO_ITERATION_LIMIT`, `UNO_TIME_LIMIT`, `UNO_EVALUATION_ERROR`, `UNO_ALGORITHMIC_ERROR`): `result.optimization_status`
 - the solution status (`UNO_NOT_OPTIMAL`, `UNO_FEASIBLE_KKT_POINT`, `UNO_FEASIBLE_FJ_POINT`, `UNO_INFEASIBLE_STATIONARY_POINT`, `UNO_FEASIBLE_SMALL_STEP`, `UNO_INFEASIBLE_SMALL_STEP`, `UNO_UNBOUNDED`): `result.solution_status`
 - the objective value of the solution: `result.solution_objective`
