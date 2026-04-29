@@ -13,9 +13,9 @@ sources = [
     # SPRAL v2025.9.18
     GitSource("https://github.com/ralna/spral.git",
               "80bc843ac3847d4a783a0e11213715a70175aee6"),
-    # MUMPS v5.8.2
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.8.2.tar.gz",
-                  "eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039"),
+    # MUMPS v5.9.0
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.0.tar.gz",
+                  "02c6efdb91749ec0f82351d40f3f860547272a1eb1d899126a4265b4d6bcc4ca"),
     # HiGHS v1.14.0 with symbol mangling
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
               "f65a6838e3daa4fa23f06ffffc7c895370dbd3dc"),
@@ -46,7 +46,7 @@ fi
 cd ${prefix}
 cp -rL share/licenses deps/licenses
 mkdir deps/licenses/MUMPS
-cp $WORKSPACE/srcdir/MUMPS_5.8.2/LICENSE deps/licenses/MUMPS/LICENSE
+cp $WORKSPACE/srcdir/MUMPS_5.9.0/LICENSE deps/licenses/MUMPS/LICENSE
 mkdir deps/licenses/spral
 cp $WORKSPACE/srcdir/spral/LICENCE deps/licenses/spral/LICENCE
 chmod -R u=rwx deps

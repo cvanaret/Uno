@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.4.26"
+version = v"2026.4.29"
 
 # Collection of sources
 sources = [
@@ -28,9 +28,9 @@ sources = [
     # OpenBLAS v0.3.31
     # ArchiveSource("https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.31/OpenBLAS-0.3.31.tar.gz",
     #               "6dd2a63ac9d32643b7cc636eab57bf4e57d0ed1fff926dfbc5d3d97f2d2be3a6"),
-    # MUMPS v5.8.2
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.8.2.tar.gz",
-                  "eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039"),
+    # MUMPS v5.9.0
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.0.tar.gz",
+                  "02c6efdb91749ec0f82351d40f3f860547272a1eb1d899126a4265b4d6bcc4ca"),
     # HiGHS v1.14.0 with symbol mangling
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
               "f65a6838e3daa4fa23f06ffffc7c895370dbd3dc"),
