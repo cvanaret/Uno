@@ -1,5 +1,7 @@
 # Getting started
 
+Uno implements presets, that is combinations of ingredients that correspond to existing solvers. At the moment, the available presets are `filtersqp` (after the trust-region restoration filter SQP solver filterSQP) and `ipopt` (after the line-search filter restoration infeasible interior-point solver IPOPT).
+
 ## In Python
 
 ```python
@@ -59,6 +61,8 @@ if __name__ == '__main__':
 	print("Objective at solution:", result.solution_objective)
 ```
 
+For more details, see the [Python documentation](interfaces/python).
+
 ## In Julia
 
 ```julia
@@ -78,3 +82,5 @@ termination_status(jump_model)  # solver termination status
 objective_value(jump_model)     # objective value
 value.(x)                       # primal solution
 ```
+
+For more details, see the [Julia documentation](interfaces/julia).
