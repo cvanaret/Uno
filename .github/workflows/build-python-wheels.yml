@@ -82,6 +82,12 @@ jobs:
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
 
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       - name: Build wheels (Linux, ${{ matrix.sys.build }})
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
