@@ -9,12 +9,13 @@ nav:
   - Installation: 'installation.md'
   - 'Getting started': 'getting_started.md'
   - 'The Uno solver':
+    - 'The Uno solver': 'uno_solver.md'
     - 'Presets': 'presets.md'
     - 'Options': 'options.md'
-  - 'Unfiying nonlinear optimization':
+  - 'Unification theory':
     - 'Unification framework': 'unification_framework.md'
-    - 'Uno solver': 'uno_solver.md'
-    - 'CUTE benchmark': 'cute_benchmark.md'
+    - 'Combining the ingredients': 'combining_ingredients.md'
+  - 'CUTE benchmark': 'cute_benchmark.md'
   - 'Interfaces':
     - 'Python': 'interfaces/python.md'
     - 'Julia': 'interfaces/julia.md'

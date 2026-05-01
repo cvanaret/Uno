@@ -1,6 +1,6 @@
-## Installation guide
+# Installation guide
 
-### Precompiled libraries and executables
+## Precompiled libraries and executables
 
 We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux (x64 and aarch64), macOS (x64 and aarch64), and Windows (x64).
 
@@ -46,7 +46,7 @@ tar -xzf Uno.vX.Y.Z.windows.zip
 set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;%PATH%
 ```
 
-### Packages and libraries
+## Packages and libraries
 
 * install cmake, BLAS and LAPACK:
 ```console
@@ -81,7 +81,7 @@ lstopo --of xml ~/.config/hwloc-topology.xml
 echo 'export HWLOC_XMLFILE=$HOME/.config/hwloc-topology.xml' >> ~/.bashrc
 ```
 
-### Compiling and installing Uno
+## Compiling and installing Uno
 
 The sequence of commands to configure and build is as follows (assuming the build directory is `build`):
 ```console
@@ -89,6 +89,7 @@ cmake -S. -B build [options]
 cmake --build build --parallel
 ```
 You can pass the following options:
+
 - build type: `-DCMAKE_BUILD_TYPE=[Release|Debug]`
 - enable the unit tests: `-DENABLE_TESTS=[ON|OFF]`
 - build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
