@@ -10,7 +10,6 @@ nav:
   - 'Getting started': 'getting_started.md'
   - 'The Uno solver':
     - 'The Uno solver': 'uno_solver.md'
-    - 'Presets': 'presets.md'
     - 'Options': 'options.md'
   - 'Unification theory':
     - 'Unification framework': 'unification_framework.md'
