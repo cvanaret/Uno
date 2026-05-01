@@ -6,7 +6,7 @@ theme:
     - navigation.top
 nav:
   - Introduction: 'index.md'
-  - Installation: '../INSTALL.md'
+  - Installation: 'installation.md'
   - 'Getting started': 'getting_started.md'
   - 'The Uno solver':
     - 'Presets': 'presets.md'
