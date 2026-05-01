@@ -434,11 +434,50 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
+    set::MOI.LessThan{Float64},
+)
+    MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        vi = ci.value
+        UnoSolver.uno_set_variable_upper_bound(model.inner, vi, model.variables.upper[vi])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+    set::MOI.GreaterThan{Float64},
+)
+    MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        vi = ci.value
+        UnoSolver.uno_set_variable_lower_bound(model.inner, vi, model.variables.lower[vi])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
     set::S,
-) where {S<:_SETS}
+) where {
+    S <: Union{
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    },
+}
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
-    model.needs_new_inner = true
+    if !isnothing(model.inner) && !model.needs_new_inner
+        vi = ci.value
+        UnoSolver.uno_set_variable_lower_bound(model.inner, vi, model.variables.lower[vi])
+        UnoSolver.uno_set_variable_upper_bound(model.inner, vi, model.variables.upper[vi])
+    end
     model.solver = nothing
     return
 end
@@ -510,6 +549,44 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,MOI.LessThan{Float64}},
+    set::MOI.LessThan{Float64},
+) where {
+    F<:Union{
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    },
+}
+    MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.qp_data.g_U[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,MOI.GreaterThan{Float64}},
+    set::MOI.GreaterThan{Float64},
+) where {
+    F<:Union{
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    },
+}
+    MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.qp_data.g_L[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{F,S},
     set::S,
 ) where {
@@ -517,10 +594,16 @@ function MOI.set(
         MOI.ScalarAffineFunction{Float64},
         MOI.ScalarQuadraticFunction{Float64},
     },
-    S<:_SETS,
+    S <: Union{
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    },
 }
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
-    model.needs_new_inner = true
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.qp_data.g_L[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.qp_data.g_U[ci.value])
+    end
     model.solver = nothing
     return
 end
@@ -657,14 +740,56 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
-    set::S,
-) where {S<:_SETS}
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{Float64}},
+    set::MOI.LessThan{Float64},
+)
     MOI.throw_if_not_valid(model, ci)
     index = MOI.Nonlinear.ConstraintIndex(ci.value)
     func = model.nlp_model[index].expression
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
-    model.needs_new_inner = true
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.upper[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.GreaterThan{Float64}},
+    set::MOI.GreaterThan{Float64},
+)
+    MOI.throw_if_not_valid(model, ci)
+    index = MOI.Nonlinear.ConstraintIndex(ci.value)
+    func = model.nlp_model[index].expression
+    model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.lower[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
+    set::S,
+) where {
+    S <: Union{
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    },
+}
+    MOI.throw_if_not_valid(model, ci)
+    index = MOI.Nonlinear.ConstraintIndex(ci.value)
+    func = model.nlp_model[index].expression
+    model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.lower[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.upper[ci.value])
+    end
     model.solver = nothing
     return
 end

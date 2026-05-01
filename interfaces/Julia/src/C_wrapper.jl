@@ -1,4 +1,4 @@
-# Copyright (c) 2025: Alexis Montoison, Charlie Vanaret, other contributors
+# Copyright (c) 2026: Alexis Montoison, Charlie Vanaret, other contributors
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE file or at https://opensource.org/licenses/MIT.
@@ -9,26 +9,6 @@ function uno_version()
     patch = Ref{Cint}()
     uno_get_version(major, minor, patch)
     return VersionNumber(major[], minor[], patch[])
-end
-
-mutable struct Model{M}
-  # Reference to the internal C model of Uno
-  c_model::Ptr{Cvoid}
-  # Number of variables
-  nvar::Int
-  # Number of constraints
-  ncon::Int
-  # Callbacks
-  eval_objective::Function
-  eval_constraints::Union{Function,Nothing}
-  eval_gradient::Function
-  eval_jacobian::Union{Function,Nothing}
-  eval_hessian::Union{Function,Nothing}
-  eval_Jv::Union{Function,Nothing}
-  eval_Jtv::Union{Function,Nothing}
-  eval_Hv::Union{Function,Nothing}
-  # User data
-  user_model::M
 end
 
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
@@ -100,6 +80,28 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   return Cint(0)
 end
 
+mutable struct Model{M}
+  # Reference to the internal C model of Uno
+  c_model::Ptr{Cvoid}
+  # Number of variables
+  nvar::Int
+  # Number of constraints
+  ncon::Int
+  # Callbacks
+  eval_objective::Function
+  eval_constraints::Union{Function,Nothing}
+  eval_gradient::Function
+  eval_jacobian::Union{Function,Nothing}
+  eval_hessian::Union{Function,Nothing}
+  eval_Jv::Union{Function,Nothing}
+  eval_Jtv::Union{Function,Nothing}
+  eval_Hv::Union{Function,Nothing}
+  # User data
+  user_model::M
+end
+
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Model) = model.c_model
+
 function uno_destroy_model(model::Model)
   if model.c_model != C_NULL
     uno_destroy_model(model.c_model)
@@ -107,7 +109,113 @@ function uno_destroy_model(model::Model)
   end
 end
 
-Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Model) = model.c_model
+function uno_set_variables_lower_bounds(model::Model, variables_lower_bounds::Vector{Float64})
+  @assert model.nvar == length(variables_lower_bounds)
+  GC.@preserve model begin
+    flag = uno_set_variables_lower_bounds(model.c_model, variables_lower_bounds)
+  end
+  flag || error("Failed to set variables lower bounds via uno_set_variables_lower_bounds.")
+  return
+end
+
+function uno_set_variable_lower_bound(model::Model, variable_index::Int, lower_bound::Float64)
+  @assert 1 ≤ variable_index ≤ model.nvar
+  GC.@preserve model begin
+    flag = uno_set_variable_lower_bound(model.c_model, Cint(variable_index), lower_bound)
+  end
+  flag || error("Failed to set variable lower bound via uno_set_variable_lower_bound.")
+  return
+end
+
+function uno_set_variables_upper_bounds(model::Model, variables_upper_bounds::Vector{Float64})
+  @assert model.nvar == length(variables_upper_bounds)
+  GC.@preserve model begin
+    flag = uno_set_variables_upper_bounds(model.c_model, variables_upper_bounds)
+  end
+  flag || error("Failed to set variables upper bounds via uno_set_variables_upper_bounds.")
+  return
+end
+
+function uno_set_variable_upper_bound(model::Model, variable_index::Int, upper_bound::Float64)
+  @assert 1 ≤ variable_index ≤ model.nvar
+  GC.@preserve model begin
+    flag = uno_set_variable_upper_bound(model.c_model, Cint(variable_index), upper_bound)
+  end
+  flag || error("Failed to set variable upper bound via uno_set_variable_upper_bound.")
+  return
+end
+
+function uno_set_constraints_lower_bounds(model::Model, constraints_lower_bounds::Vector{Float64})
+  @assert model.ncon == length(constraints_lower_bounds)
+  GC.@preserve model begin
+    flag = uno_set_constraints_lower_bounds(model.c_model, constraints_lower_bounds)
+  end
+  flag || error("Failed to set constraints lower bounds via uno_set_constraints_lower_bounds.")
+  return
+end
+
+function uno_set_constraint_lower_bound(model::Model, constraint_index::Int, lower_bound::Float64)
+  @assert 1 ≤ constraint_index ≤ model.ncon
+  GC.@preserve model begin
+    flag = uno_set_constraint_lower_bound(model.c_model, Cint(constraint_index), lower_bound)
+  end
+  flag || error("Failed to set constraint lower bound via uno_set_constraint_lower_bound.")
+  return
+end
+
+function uno_set_constraints_upper_bounds(model::Model, constraints_upper_bounds::Vector{Float64})
+  @assert model.ncon == length(constraints_upper_bounds)
+  GC.@preserve model begin
+    flag = uno_set_constraints_upper_bounds(model.c_model, constraints_upper_bounds)
+  end
+  flag || error("Failed to set constraints upper bounds via uno_set_constraints_upper_bounds.")
+  return
+end
+
+function uno_set_constraint_upper_bound(model::Model, constraint_index::Int, upper_bound::Float64)
+  @assert 1 ≤ constraint_index ≤ model.ncon
+  GC.@preserve model begin
+    flag = uno_set_constraint_upper_bound(model.c_model, Cint(constraint_index), upper_bound)
+  end
+  flag || error("Failed to set constraint upper bound via uno_set_constraint_upper_bound.")
+  return
+end
+
+function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
+  @assert model.nvar == length(initial_primal_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
+  end
+  flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
+  return
+end
+
+function uno_set_initial_primal_iterate_component(model::Model, index::Int, initial_primal_component::Float64)
+  @assert 1 ≤ index ≤ model.nvar
+  GC.@preserve model begin
+    flag = uno_set_initial_primal_iterate_component(model.c_model, Cint(index), initial_primal_component)
+  end
+  flag || error("Failed to set initial primal iterate component via uno_set_initial_primal_iterate_component.")
+  return
+end
+
+function uno_set_initial_dual_iterate(model::Model, initial_dual_iterate::Vector{Float64})
+  @assert model.ncon == length(initial_dual_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
+  end
+  flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
+  return
+end
+
+function uno_set_initial_dual_iterate_component(model::Model, index::Int, initial_dual_component::Float64)
+  @assert 1 ≤ index ≤ model.ncon
+  GC.@preserve model begin
+    flag = uno_set_initial_dual_iterate_component(model.c_model, Cint(index), initial_dual_component)
+  end
+  flag || error("Failed to set initial dual iterate component via uno_set_initial_dual_iterate_component.")
+  return
+end
 
 function uno_model(
   problem_type::String,
@@ -260,69 +368,12 @@ function uno_model(
   )
 end
 
-function uno_set_variables_lower_bounds(model::Model, variables_lower_bounds::Vector{Float64})
-  @assert model.nvar == length(variables_lower_bounds)
-  GC.@preserve model begin
-    flag = uno_set_variables_lower_bounds(model.c_model, variables_lower_bounds)
-  end
-  flag || error("Failed to set variables lower bounds via uno_set_variables_lower_bounds.")
-  return
-end
-
-function uno_set_variables_upper_bounds(model::Model, variables_upper_bounds::Vector{Float64})
-  @assert model.nvar == length(variables_upper_bounds)
-  GC.@preserve model begin
-    flag = uno_set_variables_upper_bounds(model.c_model, variables_upper_bounds)
-  end
-  flag || error("Failed to set variables upper bounds via uno_set_variables_upper_bounds.")
-  return
-end
-
-function uno_set_constraints_lower_bounds(model::Model, constraints_lower_bounds::Vector{Float64})
-  @assert model.ncon == length(constraints_lower_bounds)
-  GC.@preserve model begin
-    flag = uno_set_constraints_lower_bounds(model.c_model, constraints_lower_bounds)
-  end
-  flag || error("Failed to set constraints lower bounds via uno_set_constraints_lower_bounds.")
-  return
-end
-
-function uno_set_constraints_upper_bounds(model::Model, constraints_upper_bounds::Vector{Float64})
-  @assert model.ncon == length(constraints_upper_bounds)
-  GC.@preserve model begin
-    flag = uno_set_constraints_upper_bounds(model.c_model, constraints_upper_bounds)
-  end
-  flag || error("Failed to set constraints upper bounds via uno_set_constraints_upper_bounds.")
-  return
-end
-
-function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
-  @assert model.nvar == length(initial_primal_iterate)
-  GC.@preserve model begin
-    flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
-  end
-  flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
-  return
-end
-
-function uno_set_initial_dual_iterate(model::Model, initial_dual_iterate::Vector{Float64})
-  @assert model.ncon == length(initial_dual_iterate)
-  GC.@preserve model begin
-    flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
-  end
-  flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
-  return
-end
-
 mutable struct Solver
   # Reference to the internal C solver of Uno
   c_solver::Ptr{Cvoid}
 end
 
-function uno_get_solver_string_option(solver::Solver, option_name::String)
-  option_value = uno_get_solver_string_option(solver.c_solver, option_name)
-  return unsafe_string(option_value)
-end
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::Solver) = solver.c_solver
 
 function uno_destroy_solver(solver::Solver)
   if solver.c_solver != C_NULL
@@ -331,7 +382,12 @@ function uno_destroy_solver(solver::Solver)
   end
 end
 
-Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::Solver) = solver.c_solver
+function uno_get_solver_string_option(solver::Solver, option_name::String)
+  GC.@preserve solver begin
+    option_value = uno_get_solver_string_option(solver.c_solver, option_name)
+  end
+  return unsafe_string(option_value)
+end
 
 function uno_solver(; kwargs...)
   c_solver = uno_create_solver()
