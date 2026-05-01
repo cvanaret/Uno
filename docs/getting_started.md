@@ -25,7 +25,8 @@ def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 						-400.*objective_multiplier*x[0] - multipliers[0],
 						200.*objective_multiplier - 2.*multipliers[1]]
 
-def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers, vector, result):
+def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier,
+                                multipliers, vector, result):
 	hessian00 = objective_multiplier*(1200*x[0]**2. - 400.*x[1] + 2.)
 	hessian10 = -400.*objective_multiplier*x[0] - multipliers[0]
 	hessian11 = 200.*objective_multiplier - 2.*multipliers[1]
@@ -36,13 +37,15 @@ if __name__ == '__main__':
 	number_variables = 2
 	number_constraints = 2
 
-	model = unopy.Model(unopy.PROBLEM_NONLINEAR, number_variables, unopy.ZERO_BASED_INDEXING)
+	model = unopy.Model(unopy.PROBLEM_NONLINEAR, number_variables,
+                        unopy.ZERO_BASED_INDEXING)
 	model.set_variables_lower_bounds([-Inf, -Inf])
 	model.set_variables_upper_bounds([0.5, Inf])
 	model.set_objective(unopy.MINIMIZE, objective, objective_gradient)
-	model.set_constraints(number_constraints, constraints, [1., 0.], [Inf, Inf], 4, [0, 1, 0, 1],
-                          [0, 0, 1, 1], jacobian)
-	model.set_lagrangian_hessian(3, unopy.LOWER_TRIANGLE, [0, 1, 1], [0, 0, 1], lagrangian_hessian)
+	model.set_constraints(number_constraints, constraints, [1., 0.], [Inf, Inf],
+                          4, [0, 1, 0, 1], [0, 0, 1, 1], jacobian)
+	model.set_lagrangian_hessian(3, unopy.LOWER_TRIANGLE, [0, 1, 1], [0, 0, 1],
+                                 lagrangian_hessian)
     model.set_lagrangian_sign_convention(unopy.MULTIPLIER_NEGATIVE)
 	model.set_initial_primal_iterate([-2., 1.])
 
