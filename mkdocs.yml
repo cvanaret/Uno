@@ -6,9 +6,11 @@ theme:
     - navigation.top
 nav:
   - Introduction: 'index.md'
-  - 'Getting started':
-    - 'Uno presets': 'presets.md'
-    - 'Uno options': 'options.md'
+  - Installation: '../INSTALL.md'
+  - 'Getting started': 'getting_started.md'
+  - 'The Uno solver':
+    - 'Presets': 'presets.md'
+    - 'Options': 'options.md'
   - 'Unfiying nonlinear optimization':
     - 'Unification framework': 'unification_framework.md'
     - 'Uno solver': 'uno_solver.md'
