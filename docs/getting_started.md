@@ -61,7 +61,7 @@ if __name__ == '__main__':
 	print("Objective at solution:", result.solution_objective)
 ```
 
-For more details, see the [Python documentation](interfaces/python).
+For more details, see the [Python documentation](./interfaces/python).
 
 ## In Julia
 
@@ -83,4 +83,4 @@ objective_value(jump_model)     # objective value
 value.(x)                       # primal solution
 ```
 
-For more details, see the [Julia documentation](interfaces/julia).
+For more details, see the [Julia documentation](./interfaces/julia).
