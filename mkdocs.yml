@@ -20,6 +20,7 @@ nav:
     - 'Julia': 'interfaces/julia.md'
     - 'C': 'interfaces/c.md'
     - 'AMPL': 'interfaces/ampl.md'
+    - 'Fortran': 'interfaces/fortran.md'
   - 'Issue tracker': 'https://github.com/cvanaret/Uno/issues'
   - 'Checklists for developers': 'developers/checklists.md'
   - 'Citing Uno': 'citing_uno.md'
