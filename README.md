@@ -22,9 +22,13 @@ Uno unifies Lagrange-Newton methods that iteratively solve the optimality (KKT) 
 - Sequential (convex and nonconvex) Quadratic Programming (SQP) method
 - primal-dual Interior-Point Method (IPM)
 - Sequential Linear Programming (SLP)
-- unconstrained optimization
+- Newton's method for unconstrained optimization
 
 Uno breaks down these methods into a set of common building blocks that interact with one another, such as constraint reformulation, step computation, and globalization. These strategies can be combined at runtime in various ways.
+
+<p align="center">
+   <img src="docs/figures/wheel.png" alt="Uno's wheel of strategies" width="40%" />
+</p>
 
 Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
 
