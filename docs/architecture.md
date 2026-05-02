@@ -33,7 +33,7 @@ Some strategy combinations are available as "presets" that automatically connect
 Interfaces to the following subproblem solvers are available:
 
 - **BQPD**: a null-space active-set solver for nonconvex QPs. BQPD accepts Hessian-vector products instead of an explicit matrix;
-- **MA57**, **MA27**, and **MUMPS**: direct solvers for sparse symmetric indefinite linear systems;
+- **MA57**, **MA27**, **MUMPS**, and **SSIDS**: direct solvers for sparse symmetric indefinite linear systems;
 - **HiGHS**: a parallel simplex implementation for linear programming.
 
 ### Definition of the subproblem
