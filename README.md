@@ -2,6 +2,7 @@
 
 **Contents**
 - [Installation](#installation)
+- [Getting started](#getting-started)
 - [How to cite Uno](#how-to-cite-uno)
 - [Credits](#credits)
 
