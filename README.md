@@ -71,7 +71,7 @@ We also submitted a [short article](https://github.com/openjournals/joss-reviews
 The theoretical abstract framework for unifying nonlinearly constrained optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
 The interfaces and continuous integration infrastructure for Uno were developed and are maintained by [Alexis Montoison](https://github.com/amontoison) (Argonne National Laboratory) and Charlie Vanaret.
 Uno itself was designed and implemented by Charlie Vanaret.
-It is released under the MIT license (see the [license file](LICENSE)).
+It is released under the [MIT license](LICENSE).
 
 The contributors are (in alphabetical order):
 [Oscar Dowson](https://github.com/odow), [Marcel Jacobse](https://github.com/mjacobse), [Arnav Kapoor](https://github.com/arnavk23), [David Kiessling](https://github.com/david0oo), [Rujia Liu](https://github.com/rujialiu), [Stefano Lovato](https://github.com/stefphd), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).

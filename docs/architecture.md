@@ -1,4 +1,4 @@
-# Uno: a unified solver for nonlinearly constrained optimization
+# Architecture
 
 We have implemented our unifying framework for nonlinearly constrained optimization within Uno, a modular solver written in C++17. A generic and flexible code, it supports a broad range of strategies that can be combined automatically and on the fly with no programming effort from the user. The code is packaged in a lightweight library (around 10,000 lines of code for the current version, excluding interfaces) available as open-source software under the MIT license at https://github.com/cvanaret/Uno. Uno is available via its C, Julia (registered package `UnoSolver.jl`), Python (the packaging of `unopy` is under development), Fortran, and AMPL interfaces.
 
