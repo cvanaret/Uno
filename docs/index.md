@@ -1,3 +1,7 @@
+<p align="center">
+   <img src="figures/logo.png" alt="Uno" width="100%" />
+</p>
+
 Uno, a unified solver for nonlinearly constrained optimization
 ==============================================================
 
