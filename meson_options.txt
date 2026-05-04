@@ -1,0 +1,89 @@
+option('examples',
+       type : 'boolean',
+       value : false,
+       description : 'whether to generate the examples')
+
+option('tests',
+       type : 'boolean',
+       value : true,
+       description : 'whether to generate the tests')
+
+option('libblas',
+       type : 'string',
+       value : 'blas',
+       description : 'BLAS library against which to link')
+
+option('liblapack',
+       type : 'string',
+       value : 'lapack',
+       description : 'LAPACK library against which to link')
+
+option('libasl',
+       type : 'string',
+       value : 'asl',
+       description : 'AMPL solver library against which to link')
+
+option('libbqpd',
+       type : 'string',
+       value : 'bqpd',
+       description : 'BQPD library against which to link')
+
+option('libhighs',
+       type : 'string',
+       value : 'highs',
+       description : 'HiGHS library against which to link')
+
+option('libmumps',
+       type : 'string',
+       value : 'dmumps',
+       description : 'MUMPS library against which to link')
+
+option('libhsl',
+       type : 'string',
+       value : 'hsl',
+       description : 'HSL library against which to link')
+
+option('libspral',
+       type : 'string',
+       value : 'spral',
+       description : 'SPRAL library against which to link')
+
+option('libblas_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directories to search for the BLAS library')
+
+option('liblapack_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directories to search for the LAPACK library')
+
+option('libasl_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directories to search for the AMPL solver library')
+
+option('libbqpd_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directories to search for the BQPD library')
+
+option('libhighs_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directories to search for the HiGHS library')
+
+option('libmumps_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directories to search for the MUMPS library')
+
+option('libhsl_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directories to search for the HSL library')
+
+option('libspral_path',
+       type : 'array',
+       value : [],
+       description : 'Additional directory to search for the SPRAL library')

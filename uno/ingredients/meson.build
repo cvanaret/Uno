@@ -1,0 +1,8 @@
+subdir('constraint_relaxation_strategies')
+subdir('globalization_mechanisms')
+subdir('globalization_strategies')
+subdir('hessian_models')
+subdir('inequality_handling_methods')
+subdir('inertia_correction_strategies')
+subdir('subproblem')
+subdir('subproblem_solvers')

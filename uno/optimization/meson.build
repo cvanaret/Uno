@@ -1,0 +1,11 @@
+libuno_src += files('Direction.cpp',
+	                'EvaluationCache.cpp',
+	                'Evaluations.cpp',
+	                'Iterate.cpp',
+	                'Multipliers.cpp',
+	                'OptimizationProblem.cpp',
+	                'OptimizationStatus.cpp',
+	                'Parameterization.cpp',
+	                'Result.cpp',
+	                'SolutionStatus.cpp',
+	                'WarmstartInformation.cpp')
