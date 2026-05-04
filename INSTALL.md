@@ -85,39 +85,42 @@ echo 'export HWLOC_XMLFILE=$HOME/.config/hwloc-topology.xml' >> ~/.bashrc
 
 The sequence of commands to configure and build is as follows (assuming the build directory is `build`):
 ```console
-cmake -S. -B build [options]
+cmake -S . -B build [options]
 cmake --build build --parallel
 ```
-You can pass the following options:
+You can pass the following options as `-DOPTION=value`:
 
-- build type: `-DCMAKE_BUILD_TYPE=[Release|Debug]`
-- enable the unit tests: `-DENABLE_TESTS=[ON|OFF]`
-- build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
-- build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
-- path(s) to the LAPACK library: `-DBLAS_LIBRARIES=paths`
-- path(s) to the BLAS library: `-DLAPACK_LIBRARIES=paths`
-- path to the BQPD library: `-DBQPD=path_to_libbqpd`
-- path to the MA27 library: `-DMA27=path_to_libma27`
-- path to the MA57 library: `-DMA57=path_to_libma57`
-- path to ASL library: `-DAMPLSOLVER=path_to_libamplsolver`
-- path to HiGHS library: `-DHIGHS=path_to_libhighs`
-- path to HSL library: `-DHSL=path_to_libhsl`
-- path to METIS library: `-DMETIS=path_to_libmetis`
-- path to MUMPS library: `-DMUMPS_LIBRARY=path_to_libdmumps`
-- path to MUMPS common library: `-DMUMPS_COMMON_LIBRARY=path_to_libmumps_common`
-- path to MUMPS PORD library: `-DMUMPS_PORD_LIBRARY=path_to_mumps_libpord`
-- path to MUMPS MPISEQ library: `-DMUMPS_MPISEQ_LIBRARY=path_to_mumps_mpiseq_lib`
-- path to MUMPS include directory: `-DMUMPS_INCLUDE_DIR=path_to_mumps_include_dir`
-- path to SPRAL library: `-DSPRAL=path_to_libspral`
-- path(s) to additional libraries to link against (e.g., `libstdc++.a`): `-DAUXILIARY_LIBRARIES=paths`
+| Option                 | Description                                                                                                | Possible values             |
+|:-----------------------|:-----------------------------------------------------------------------------------------------------------|:----------------------------|
+| `CMAKE_BUILD_TYPE`     | build type                                                                                                 | `Release`, `Debug`          |
+| `ENABLE_TESTS`         | enable the unit tests                                                                                      | `ON`, `OFF`                 |
+| `BUILD_STATIC_LIBS`    | build the Uno static library                                                                               | `ON`, `OFF`                 |
+| `BUILD_SHARED_LIBS`    | build the Uno shared library                                                                               | `ON`, `OFF`                 |
+| `LAPACK_LIBRARIES`     | path(s) to the LAPACK library, separated by `;`                                                            | `paths`                     |
+| `BLAS_LIBRARIES`       | path(s) to the BLAS library, separated by `;`                                                              | `paths`                     |
+| `AMPLSOLVER`           | path(s) to the ASL library                                                                                 | `path_to_libamplsolver`     |
+| `BQPD`                 | path to the BQPD library                                                                                   | `path_to_libbqpd`           |
+| `MA27`                 | path to the MA27 library                                                                                   | `path_to_libma27`           |
+| `MA57`                 | path to the MA57 library                                                                                   | `path_to_libma57`           |
+| `HSL`                  | path to the HSL library                                                                                    | `path_to_libhsl`            |
+| `HIGHS`                | path to the HiGHS library                                                                                  | `path_to_libhighs`          |
+| `METIS`                | path to the METIS library                                                                                  | `path_to_libmetis`          |
+| `MUMPS_LIBRARY`        | path to the MUMPS library                                                                                  | `path_to_libdmumps`         |
+| `MUMPS_COMMON_LIBRARY` | path to the MUMPS common library                                                                           | `path_to_libmumps_common`   |
+| `MUMPS_PORD_LIBRARY`   | path to the MUMPS PORD library                                                                             | `path_to_libpord`           |
+| `MUMPS_MPISEQ_LIBRARY` | path to the MUMPS MPISEQ library                                                                           | `path_to_libmpiseq`         |
+| `MUMPS_INCLUDE_DIR`    | path to MUMPS include directory                                                                            | `path_to_mumps_include_dir` |
+| `SPRAL`                | path to SPRAL library </br> (requires `libhwloc` passed to `AUXILIARY_LIBRARIES`)                          | `path_to_libspral`          |
+| `AUXILIARY_LIBRARIES`  | path(s) to additional libraries to link against, separated by `;` </br> (e.g., `libhwloc` and `libstdc++`) | `paths`                     |
 
 To install the built libraries and headers:
 ```console
 cmake --install build
 ```
 
-To compile and run the test suite:
+To configure, compile and run the test suite:
 ```console
+cmake -S . -B build -DENABLE_TESTS=ON
 cmake --build build --target run_unotest --parallel
 ctest --test-dir build
 ```
