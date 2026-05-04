@@ -35,7 +35,7 @@ Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces
 
 ## Installation
 
-See the [installation guide](INSTALL.md) file for instructions on how to compile Uno from source or use the precompiled libraries and executables.
+See the [installation guide](INSTALL.md) file for instructions on how to compile Uno from source, or use the precompiled libraries and executables.
 
 ## Getting started
 
@@ -68,7 +68,7 @@ We also submitted a [short article](https://github.com/openjournals/joss-reviews
 
 ## Credits
 
-The theoretical abstract framework for unifying nonlinearly constrained optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
+The theoretical unification framework was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
 The interfaces and continuous integration infrastructure for Uno were developed and are maintained by [Alexis Montoison](https://github.com/amontoison) (Argonne National Laboratory) and Charlie Vanaret.
 Uno itself was designed and implemented by Charlie Vanaret.
 It is released under the [MIT license](LICENSE).

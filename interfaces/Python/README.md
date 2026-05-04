@@ -8,13 +8,6 @@ It breaks them down into a set of common building blocks such as constraint refo
 unopy allows you to solve an optimization model described by callback functions.
 An example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
-### Querying the current Uno version
-
-Query the current Uno version with:
-```python
-unopy.current_uno_version()
-```
-
 ## How to cite Uno
 
 Our Uno paper was accepted in the Mathematical Programming Computation journal on Feb 22, 2026.
