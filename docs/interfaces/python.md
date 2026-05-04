@@ -1,6 +1,10 @@
 # unopy
 
-`unopy`, Uno's Python interface, allows you to solve an optimization model described by callback functions.
+[unopy](https://pypi.org/project/unopy/), Uno's Python interface, allows you to solve an optimization model described by callback functions.
+It can be installed with `pip`:
+```bash
+pip install unopy
+```
 An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
 ## Querying the current Uno version
