@@ -9,7 +9,7 @@ build:
    # https://docs.readthedocs.io/page/guides/reproducible-builds.html
   jobs:
     pre_install:
-      - pip install mkdocs-material
+      - pip install mkdocs-material mkdocs-github-admonitions-plugin
 
 mkdocs:
   configuration: mkdocs.yml
