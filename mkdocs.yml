@@ -4,6 +4,7 @@ theme:
   features:
     - navigation.footer
     - navigation.top
+
 nav:
   - Introduction: 'index.md'
   - Installation: 'installation.md'
@@ -33,6 +34,9 @@ markdown_extensions:
       generic: true
   - footnotes
   - admonition
+
+plugins:
+  - gh-admonitions
 
 extra_javascript:
   - javascript/mathjax.js
