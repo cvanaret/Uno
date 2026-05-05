@@ -1,11 +1,19 @@
-## Uno
+## unopy
 
-`unopy` is the Python interface of Uno, a C++ solver for nonlinearly constrained optimization that unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods.
-It breaks them down into a set of common building blocks such as constraint reformulation, step computation, and globalization.
+`unopy` is the Python interface for [Uno](https://github.com/cvanaret/Uno), a modern and modular solver for nonlinearly constrained optimization.
+Uno unifies Lagrange-Newton (**SQP** and **interior-point**) methods by breaking them down into a set of common building blocks such as constraint reformulation, step computation, and globalization.
+
+## Installation
+
+`unopy` is a registered Python package that can be installed via pip:
+
+```bash
+pip install unopy
+```
 
 ## Getting started
 
-To get started with Uno, check out the [official documentation](https://unosolver.readthedocs.io).
+To get started with Uno, check out the [official documentation](https://unosolver.readthedocs.io/en/latest/interfaces/python/).
 
 ## Example
 

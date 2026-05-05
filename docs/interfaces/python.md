@@ -1,7 +1,7 @@
 # unopy
 
 [unopy](https://pypi.org/project/unopy/), Uno's Python interface, allows you to solve an optimization model described by callback functions.
-It can be installed with `pip`:
+It can be installed via `pip`:
 ```bash
 pip install unopy
 ```
