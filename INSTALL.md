@@ -88,6 +88,22 @@ The sequence of commands to configure and build is as follows (assuming the buil
 cmake -S . -B build [options]
 cmake --build build --parallel
 ```
+See the list of CMake options [here](#cmake-options).
+
+To install the built libraries and headers:
+```console
+cmake --install build
+```
+
+To configure, compile and run the test suite:
+```console
+cmake -S . -B build -DENABLE_TESTS=ON
+cmake --build build --target run_unotest --parallel
+ctest --test-dir build
+```
+
+## CMake options
+
 You can pass the following options as `-DOPTION=value`:
 
 | Option                 | Description                                                                                                | Possible values             |
@@ -113,14 +129,3 @@ You can pass the following options as `-DOPTION=value`:
 | `SPRAL`                | path to SPRAL library </br> (requires `libhwloc` passed to `AUXILIARY_LIBRARIES`)                          | `path_to_libspral`          |
 | `AUXILIARY_LIBRARIES`  | path(s) to additional libraries to link against, separated by `;` </br> (e.g., `libhwloc` and `libstdc++`) | `paths`                     |
 
-To install the built libraries and headers:
-```console
-cmake --install build
-```
-
-To configure, compile and run the test suite:
-```console
-cmake -S . -B build -DENABLE_TESTS=ON
-cmake --build build --target run_unotest --parallel
-ctest --test-dir build
-```
