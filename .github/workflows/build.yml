@@ -115,19 +115,6 @@ jobs:
         compiler: intel
         version: '2025.0'
 
-    # ----- MinGW -----
-    - name: Setup MSYS2
-      if: matrix.toolchain == 'mingw'
-      uses: msys2/setup-msys2@v2
-      with:
-        path-type: inherit
-        msystem: MINGW64
-        update: true
-        install: |
-          mingw-w64-x86_64-gcc-fortran
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-make
-
     # =========================================================
     # DEPENDENCIES
     # =========================================================
@@ -238,6 +225,10 @@ jobs:
         cmake -G "MinGW Makefiles" ^
           -B build ^
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe ^
+          -DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe ^
+          -DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe ^
+          -DCMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe ^
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^

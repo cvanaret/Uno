@@ -99,9 +99,6 @@ jobs:
           msystem: MINGW64
           update: true
           install: |
-            mingw-w64-x86_64-gcc-fortran
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-make
             mingw-w64-x86_64-metis
 
       # =========================================================
@@ -176,9 +173,10 @@ jobs:
             -B build \
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
             -DENABLE_TESTS=ON \
-            -DCMAKE_C_COMPILER=gcc \
-            -DCMAKE_CXX_COMPILER=g++ \
-            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DCMAKE_MAKE_PROGRAM=/mingw64/bin/mingw32-make.exe \
+            -DCMAKE_C_COMPILER=/mingw64/bin/gcc.exe \
+            -DCMAKE_CXX_COMPILER=/mingw64/bin/g++.exe \
+            -DCMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe \
             -DMUMPS_INCLUDE_DIR=${GITHUB_WORKSPACE}/dependencies/include \
             -DMETIS_INCLUDE_DIR=/mingw64/include \
             -DBQPD=${GITHUB_WORKSPACE}/dependencies/lib/libbqpd.a \
