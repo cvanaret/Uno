@@ -139,23 +139,26 @@ namespace uno {
    }
    
    std::string_view Statistics::symbol(std::string_view value) {
+      // display ASCII characters on Windows, UTF-8 on other OS
+#ifdef _WIN32
       static std::map<std::string_view, std::string_view> symbols = {
-            {"top", "─"},
-            {"top-mid", "┬"},
-            {"top-left", "┌"},
-            {"top-right", "┐"},
-            {"bottom", "─"},
-            {"bottom-mid", "┴"},
-            {"bottom-left", "└"},
-            {"bottom-right", "┘"},
-            {"left", "│"},
-            {"left-mid", "├"},
-            {"mid", "─"},
-            {"mid-mid", "┼"},
-            {"right", "│"},
-            {"right-mid", "┤"},
-            {"middle", "│"}
+         {"top", "-"}, {"top-mid", "+"}, {"top-left", "+"}, {"top-right", "+"},
+         {"bottom", "-"}, {"bottom-mid", "+"}, {"bottom-left", "+"}, {"bottom-right", "+"},
+         {"left", "|"}, {"left-mid", "+"},
+         {"mid", "-"}, {"mid-mid", "+"},
+         {"right", "|"}, {"right-mid", "+"},
+         {"middle", "|"}
       };
+#else
+      static std::map<std::string_view, std::string_view> symbols = {
+         {"top", "─"}, {"top-mid", "┬"}, {"top-left", "┌"}, {"top-right", "┐"},
+         {"bottom", "─"}, {"bottom-mid", "┴"}, {"bottom-left", "└"}, {"bottom-right", "┘"},
+         {"left", "│"}, {"left-mid", "├"},
+         {"mid", "─"}, {"mid-mid", "┼"},
+         {"right", "│"}, {"right-mid", "┤"},
+         {"middle", "│"}
+      };
+#endif
       return symbols[value];
    }
 } // namespace
