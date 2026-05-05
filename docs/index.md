@@ -51,6 +51,7 @@ Uno allows the automatic generation of various strategy combinations on the fly 
 - **globalization mechanisms**: backtracking line search, trust-region method.
 
 Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
+
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
