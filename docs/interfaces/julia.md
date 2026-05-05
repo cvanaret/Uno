@@ -1,6 +1,6 @@
 # UnoSolver.jl
 
-UnoSolver.jl is a wrapper for [Uno](https://github.com/cvanaret/Uno), a modern and modular solver for nonlinearly constrained optimization.
+[UnoSolver.jl](https://juliahub.com/ui/Packages/General/UnoSolver) is a wrapper for [Uno](https://github.com/cvanaret/Uno), a modern and modular solver for nonlinearly constrained optimization.
 Uno unifies Lagrange-Newton (**SQP** and **interior-point**) methods by breaking them down into a set of common building blocks such as constraint reformulation, step computation, and globalization.
 
 The package has three components:

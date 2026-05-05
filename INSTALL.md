@@ -46,7 +46,7 @@ tar -xzf Uno.vX.Y.Z.windows.zip
 set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;%PATH%
 ```
 
-## Packages and libraries
+## Dependencies
 
 * install cmake, BLAS and LAPACK:
 ```console

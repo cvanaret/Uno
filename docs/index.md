@@ -2,8 +2,9 @@
    <img src="figures/logo.png" alt="Uno" width="100%" />
 </p>
 
-Uno, a unified solver for nonlinearly constrained optimization
-==============================================================
+# Uno, a unified solver for nonlinearly constrained optimization
+
+## Notation
 
 We consider nonlinearly constrained optimization problems of the form
 
@@ -32,6 +33,8 @@ $$
 $$
 
 where $x \in \mathbb{R}^n$, $f : \mathbb{R}^n \to \mathbb{R}$, and $c: \mathbb{R}^n \to \mathbb{R}^m$.
+
+## Unifying nonlinear optimization
 
 We argue that most derivative-based iterative methods for nonlinearly constrained nonconvex optimization share common algorithmic components, such as constraint reformulation, step computation, and globalization.
 
