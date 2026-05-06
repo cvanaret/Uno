@@ -4,6 +4,7 @@ theme:
   features:
     - navigation.footer
     - navigation.top
+    - content.code.copy
 
 nav:
   - Introduction: 'index.md'
@@ -35,6 +36,15 @@ markdown_extensions:
       generic: true
   - footnotes
   - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
 
 plugins:
   - gh-admonitions
