@@ -39,7 +39,7 @@ namespace uno {
       Direction direction{};
 
       static void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double primal_step_length, double dual_step_length);
+         const Direction& direction, double primal_step_length, double constraint_dual_step_length, double bound_dual_step_length);
       static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate,
          const Evaluations& evaluations);
       static void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate);

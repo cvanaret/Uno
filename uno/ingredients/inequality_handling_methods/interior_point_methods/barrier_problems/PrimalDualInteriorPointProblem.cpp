@@ -322,18 +322,13 @@ namespace uno {
       // "fraction-to-boundary" rule for primal variables and constraints multipliers
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       const double tau = std::max(this->parameters.tau_min, 1. - barrier_parameter);
-      const double primal_step_length = PrimalDualInteriorPointProblem::primal_fraction_to_boundary(current_iterate.primals,
+      direction.primal_step_length = PrimalDualInteriorPointProblem::primal_fraction_to_boundary(current_iterate.primals,
          direction.primals, tau);
-      const double bound_dual_step_length = PrimalDualInteriorPointProblem::dual_fraction_to_boundary(current_iterate.multipliers,
+      direction.bound_dual_step_length = PrimalDualInteriorPointProblem::dual_fraction_to_boundary(current_iterate.multipliers,
          direction.multipliers, tau);
       DEBUG << "Fraction-to-boundary rules:\n";
-      DEBUG << "primal step length = " << primal_step_length << '\n';
-      DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
-      // scale the primal-dual variables
-      direction.primals.scale(primal_step_length);
-      direction.multipliers.constraints.scale(primal_step_length);
-      direction.multipliers.lower_bounds.scale(bound_dual_step_length);
-      direction.multipliers.upper_bounds.scale(bound_dual_step_length);
+      DEBUG << "primal step length = " << direction.primal_step_length << '\n';
+      DEBUG << "bound dual step length = " << direction.bound_dual_step_length << "\n\n";
    }
 
    double PrimalDualInteriorPointProblem::dual_regularization_factor() const {
