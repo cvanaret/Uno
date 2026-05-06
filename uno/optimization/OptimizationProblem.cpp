@@ -169,6 +169,8 @@ namespace uno {
       view(direction.primals, 0, this->number_variables) = view(solution, 0, this->number_variables);
       // retrieve the duals with correct signs (note the sign flip)
       direction.multipliers.constraints = -view(solution, this->number_variables, this->number_variables + this->number_constraints);
+      // set the step lengths (direction unscaled)
+      direction.primal_dual_step_length = direction.bound_dual_step_length = 1.;
    }
 
    double OptimizationProblem::dual_regularization_factor() const {

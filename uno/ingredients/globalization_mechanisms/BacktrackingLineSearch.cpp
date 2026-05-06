@@ -101,9 +101,13 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            BacktrackingLineSearch::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
-               // scale or not the constraint dual direction with the LS step length
-               this->scale_duals_with_step_length ? step_length : 1.);
+            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
+               // primal step length
+               step_length * direction.primal_dual_step_length,
+               // constraint dual step length: scale or not with the LS step length
+               (this->scale_duals_with_step_length ? step_length : 1.) * direction.primal_dual_step_length,
+               // bound dual step length
+               direction.bound_dual_step_length);
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
