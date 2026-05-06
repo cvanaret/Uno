@@ -1,5 +1,7 @@
 # Getting started
 
+In [Python](./interfaces/python), [Julia](./interfaces/julia), [C](./interfaces/c), and [Fortran](./interfaces/fortran), building an optimization model is incremental
+
 === "Python"
 
     ```py
@@ -37,6 +39,7 @@
         number_variables = 2
         number_constraints = 2
     
+        # model creation
         model = unopy.Model(unopy.PROBLEM_NONLINEAR, number_variables,
                             unopy.ZERO_BASED_INDEXING)
         model.set_variables_lower_bounds([-Inf, -Inf])
@@ -59,7 +62,7 @@
         print("Objective at solution:", result.solution_objective)
     ```
 
-=== "Julia"
+=== "Julia/JuMP"
 
     ```julia
     using UnoSolver, JuMP
@@ -78,6 +81,3 @@
     objective_value(jump_model)     # objective value
     value.(x)                       # primal solution
     ```
-
-For more details, see the [Python documentation](./interfaces/python).
-For more details, see the [Julia documentation](./interfaces/julia).
