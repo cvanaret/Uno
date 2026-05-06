@@ -20,7 +20,7 @@ namespace uno {
 
       Vector<double> primals{}; /*!< Primal variables */
       Multipliers multipliers{}; /*!< Multipliers */
-      double primal_step_length{1.};
+      double primal_dual_step_length{1.};
       double bound_dual_step_length{1.};
 
       SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */

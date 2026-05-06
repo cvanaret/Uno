@@ -84,7 +84,7 @@ namespace uno {
             else {
                // take full primal-dual step
                GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction,
-                  this->direction.primal_step_length, this->direction.primal_step_length, this->direction.bound_dual_step_length);
+                  this->direction.primal_dual_step_length, this->direction.primal_dual_step_length, this->direction.bound_dual_step_length);
                this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
                is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, this->direction,

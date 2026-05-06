@@ -103,9 +103,9 @@ namespace uno {
             // take a step as a fraction of the direction
             GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
                // primal step length
-               step_length * direction.primal_step_length,
+               step_length * direction.primal_dual_step_length,
                // constraint dual step length: scale or not with the LS step length
-               (this->scale_duals_with_step_length ? step_length : 1.) * direction.primal_step_length,
+               (this->scale_duals_with_step_length ? step_length : 1.) * direction.primal_dual_step_length,
                // bound dual step length
                direction.bound_dual_step_length);
             statistics.set("||Step||", step_length * direction.norm);

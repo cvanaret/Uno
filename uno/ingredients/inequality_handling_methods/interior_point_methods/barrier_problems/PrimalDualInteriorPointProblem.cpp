@@ -317,17 +317,15 @@ namespace uno {
       OptimizationProblem::assemble_primal_dual_direction(current_iterate, solution, direction);
 
       // compute the bound duals
-      this->compute_bound_dual_direction(current_iterate, direction);
+      compute_bound_dual_direction(current_iterate, direction);
 
-      // "fraction-to-boundary" rule for primal variables and constraints multipliers
+      // "fraction-to-boundary" rule for primal variables and bound constraints multipliers
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       const double tau = std::max(this->parameters.tau_min, 1. - barrier_parameter);
-      direction.primal_step_length = PrimalDualInteriorPointProblem::primal_fraction_to_boundary(current_iterate.primals,
-         direction.primals, tau);
-      direction.bound_dual_step_length = PrimalDualInteriorPointProblem::dual_fraction_to_boundary(current_iterate.multipliers,
-         direction.multipliers, tau);
+      direction.primal_dual_step_length = primal_fraction_to_boundary(current_iterate.primals, direction.primals, tau);
+      direction.bound_dual_step_length = dual_fraction_to_boundary(current_iterate.multipliers, direction.multipliers, tau);
       DEBUG << "Fraction-to-boundary rules:\n";
-      DEBUG << "primal step length = " << direction.primal_step_length << '\n';
+      DEBUG << "primal step length = " << direction.primal_dual_step_length << '\n';
       DEBUG << "bound dual step length = " << direction.bound_dual_step_length << "\n\n";
    }
 
