@@ -19,35 +19,32 @@ You might need to set the following environment variables:
 These variables should include the directories where you extracted the library files.
 For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`.
 
-=== "Linux"
+**Example for Linux**:
+```console
+tar -xzf Uno.vX.Y.Z.linux.tar.gz
+export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$LD_LIBRARY_PATH
+export PATH=/path/to/extracted/Uno/bin:$PATH
+```
 
-  ```console
-  tar -xzf Uno.vX.Y.Z.linux.tar.gz
-  export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$LD_LIBRARY_PATH
-  export PATH=/path/to/extracted/Uno/bin:$PATH
-  ```
+**Example for macOS**:
+```console
+tar -xzf Uno.vX.Y.Z.macos.tar.gz
+export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$DYLD_LIBRARY_PATH
+export PATH=/path/to/extracted/Uno/bin:$PATH
+```
+Alternatively, you can use `DYLD_FALLBACK_LIBRARY_PATH` instead of `DYLD_LIBRARY_PATH`.
 
-=== "macOS"
+**Example for Windows (PowerShell)**:
+```console
+tar -xzf Uno.vX.Y.Z.windows.zip
+$env:PATH="C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;$env:PATH"
+```
 
-  ```console
-  tar -xzf Uno.vX.Y.Z.macos.tar.gz
-  export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$DYLD_LIBRARY_PATH
-  export PATH=/path/to/extracted/Uno/bin:$PATH
-  ```
-
-=== "Windows (PowerShell)"
-
-  ```console
-  tar -xzf Uno.vX.Y.Z.windows.zip
-  $env:PATH="C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;$env:PATH"
-  ```
-
-=== "Windows (Command Prompt)"
-
-  ```console
-  tar -xzf Uno.vX.Y.Z.windows.zip
-  set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;%PATH%
-  ```
+**Example for Windows (Command Prompt)**:
+```console
+tar -xzf Uno.vX.Y.Z.windows.zip
+set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;%PATH%
+```
 
 ## Dependencies
 
