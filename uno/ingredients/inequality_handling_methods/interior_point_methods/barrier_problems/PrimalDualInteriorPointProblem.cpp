@@ -256,11 +256,11 @@ namespace uno {
          if (finite_lower_bound || finite_upper_bound) {
             double diagonal_barrier_term = 0.;
             if (finite_lower_bound) { // lower bounded
-               const double distance_to_bound = vector[variable_index] - variables_lower_bounds[variable_index];
+               const double distance_to_bound = x[variable_index] - variables_lower_bounds[variable_index];
                diagonal_barrier_term += multipliers.lower_bounds[variable_index] / distance_to_bound;
             }
             if (finite_upper_bound) { // upper bounded
-               const double distance_to_bound = vector[variable_index] - variables_upper_bounds[variable_index];
+               const double distance_to_bound = x[variable_index] - variables_upper_bounds[variable_index];
                diagonal_barrier_term += multipliers.upper_bounds[variable_index] / distance_to_bound;
             }
             result[variable_index] += diagonal_barrier_term * vector[variable_index];
@@ -273,7 +273,7 @@ namespace uno {
    }
 
    const std::vector<double>& PrimalDualInteriorPointProblem::get_variables_upper_bounds() const {
-      return this->barrier_variables_lower_bounds;
+      return this->barrier_variables_upper_bounds;
    }
 
    const Vector<size_t>& PrimalDualInteriorPointProblem::get_fixed_variables() const {
