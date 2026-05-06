@@ -1,6 +1,6 @@
-# Uno presets
+# Combining the ingredients
 
-Uno implements presets, that is combinations of ingredients that correspond to existing solvers. At the moment, the available presets are `filtersqp` (after the trust-region restoration filter SQP solver filterSQP) and `ipopt` (after the line-search filter restoration infeasible interior-point solver IPOPT). We show below how the eight ingredients naturally arise in these two methods.
+We show below how the eight ingredients naturally arise in two classic methods: a trust-region restoration filter SQP and a line-search filter restoration infeasible interior-point method.
 
 ## Trust-region restoration filter SQP
 

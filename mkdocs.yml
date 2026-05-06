@@ -4,16 +4,29 @@ theme:
   features:
     - navigation.footer
     - navigation.top
+    - content.code.copy
+
 nav:
   - Introduction: 'index.md'
-  - 'Getting started':
-    - 'Uno presets': 'presets.md'
-    - 'Uno options': 'options.md'
-  - 'Unfiying nonlinear optimization':
+  - Installation: 'installation.md'
+  - 'Getting started': 'getting_started.md'
+  - 'The Uno solver':
+    - 'Architecture': 'architecture.md'
+    - 'Options': 'options.md'
+  - 'Unification theory':
     - 'Unification framework': 'unification_framework.md'
-    - 'Uno solver': 'uno_solver.md'
+    - 'Combining the ingredients': 'combining_ingredients.md'
+  - 'CUTE benchmark': 'cute_benchmark.md'
+  - 'Interfaces':
+    - 'Python': 'interfaces/python.md'
+    - 'Julia': 'interfaces/julia.md'
+    - 'C': 'interfaces/c.md'
+    - 'AMPL': 'interfaces/ampl.md'
+    - 'Fortran': 'interfaces/fortran.md'
+  - 'Success stories': 'success_stories.md'
   - 'Issue tracker': 'https://github.com/cvanaret/Uno/issues'
   - 'Checklists for developers': 'developers/checklists.md'
+  - 'Citing Uno': 'citing_uno.md'
   - Acknowledgments: 'acknowledgments.md'
 
 repo_url: https://github.com/cvanaret/Uno
@@ -22,6 +35,19 @@ markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
   - footnotes
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - gh-admonitions
 
 extra_javascript:
   - javascript/mathjax.js
