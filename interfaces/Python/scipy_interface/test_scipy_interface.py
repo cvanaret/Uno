@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Francois Gallard
+# Copyright (c) 2026 Francois Gallard, Jean-Christophe Giret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 import numpy as np
