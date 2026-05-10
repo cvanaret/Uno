@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Francois Gallard
+# Copyright (c) 2026 Francois Gallard, Jean-Christophe Giret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 import numpy as np
 import unopy
@@ -268,15 +268,7 @@ def minimize(
                 gradient[i] = float(g[i])
             return 0
     else:
-        from scipy.optimize import approx_fprime
-
-        def gradient_callback(number_variables, x, gradient, user_data):
-            x_np = _to_numpy(x, number_variables)
-            eps = np.sqrt(np.finfo(float).eps)
-            g = approx_fprime(x_np, lambda xv: fun(xv, *args), eps)
-            for i in range(number_variables):
-                gradient[i] = float(g[i])
-            return 0
+        raise ValueError("Objective gradient is not defined.")
 
     # Step 4: Normalize and merge constraints
     # 4a: Normalize input to a list
@@ -376,14 +368,7 @@ def minimize(
             if c_jac_i is not None:
                 jac_block = np.atleast_2d(np.asarray(c_jac_i(x_np), dtype=float))
             else:
-                from scipy.optimize import approx_fprime
-
-                eps = np.sqrt(np.finfo(float).eps)
-                jac_block = np.zeros((m_i, n))
-                for row in range(m_i):
-                    def _scalar_fun(xv, _row=row, _cf=c_fun_i):
-                        return np.atleast_1d(np.asarray(_cf(xv), dtype=float))[_row]
-                    jac_block[row, :] = approx_fprime(x_np, _scalar_fun, eps)
+                raise ValueError("Constraint Jacobian is not provided.")
             # Column-major (Fortran) ordering to match unopy convention
             flat = jac_block.ravel(order="F")
             for j in range(len(flat)):
