@@ -1,25 +1,23 @@
 # Copyright (c) 2026 Francois Gallard
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
-from numbers import Number
-from typing import Iterable, Sequence, Any, Callable
-
 import numpy as np
 import unopy
-from numpy import triu_indices
+from numbers import Number
 from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 from scipy.optimize._minimize import standardize_bounds, _validate_bounds, Bounds
+from typing import Iterable, Sequence, Any
 
 Inf = float("inf")
 AVAILABLE_METHODS = ["filterslp", "filtersqp", "funnelsqp", "ipopt"]
 
 
 def minimize(
-    fun: Callable,
+    fun: callable,
     x0: np.ndarray,
     args: tuple = (),
     method: str = "filtersqp",
-    jac: Callable | None = None,
-    hess: Callable | None = None,
+    jac: callable = None,
+    hess: callable = None,
     bounds: Iterable | None | Bounds = None,
     constraints: Iterable[dict[str:Any] | NonlinearConstraint | LinearConstraint] = (),
     tol: float | None = None,
@@ -31,7 +29,7 @@ def minimize(
 
     Parameters
     ----------
-    fun :
+    fun : callable
         The objective function to be minimized::
 
             fun(x, *args) -> float
@@ -46,10 +44,10 @@ def minimize(
         only ""x""; e.g., pass ""fun=lambda x: f0(x, *my_args, **my_kwargs)"" as the
         callable, where ""my_args"" (tuple) and ""my_kwargs"" (dict) have been
         gathered before invoking this function.
-    x0 :
+    x0 : ndarray, shape (n,)
         Initial guess. Array of real elements of size (n,),
         where ""n"" is the number of independent variables.
-    args :
+    args : tuple, optional
         Extra arguments passed to the objective function and its
         derivatives ("fun", "jac" functions).
     method : str
@@ -60,7 +58,7 @@ def minimize(
         - "funnelsqp"
         - "ipopt"
 
-    jac :
+    jac : {callable}, optional
         Method for computing the gradient vector.
         It should be a function that returns the gradient
         vector::
@@ -70,17 +68,20 @@ def minimize(
         where ""x"" is an array with shape (n,) and ""args"" is a tuple with
         the fixed parameters.
 
-    hess :
-        Method for computing the Hessian matrix.
+    hess : callable, optional
+        Hessian of the objective function. Signature: hess(x, *args) -> ndarray (n, n).
+        If provided, constraint Hessians are also read from NonlinearConstraint.hess
+        attributes. The constraint Hessian callable has signature:
+        hess(x, v) -> ndarray (n, n), where v is the vector of constraint multipliers.
 
-    bounds :
+    bounds : sequence or "Bounds", optional
         Bounds on variables. There are two ways to specify the bounds:
 
         1. Instance of "Bounds" class.
         2. Sequence of ""(min, max)"" pairs for each element in "x". None
            is used to specify no bound.
 
-    constraints :
+    constraints : {Constraint, dict} or List of {Constraint, dict}, optional
         Constraints definition.
 
         Available constraints are:
@@ -93,9 +94,9 @@ def minimize(
 
         type : str
             Constraint type: 'eq' for equality, 'ineq' for inequality.
-        fun :
+        fun : callable
             The function defining the constraint.
-        jac :
+        jac : callable, optional
             The Jacobian of "fun" (only for SLSQP).
         args : sequence, optional
             Extra arguments to be passed to the function and Jacobian.
@@ -103,12 +104,12 @@ def minimize(
         Equality constraint means that the constraint function result is to
         be zero whereas inequality means that it is to be non-negative.
 
-    tol :
+    tol : float, optional
         Tolerance for termination. When "tol" is specified, the selected
         minimization algorithm sets some relevant solver-specific tolerance(s)
         equal to "tol".
 
-    options :
+    options : dict, optional
         A dictionary of solver options.
 
         The available options and their types are:
@@ -203,7 +204,7 @@ def minimize(
 
     Returns
     -------
-    res :
+    res : OptimizeResult
         The optimization result represented as a ""OptimizeResult"" object.
         Important attributes are: ""x"" the solution array, ""success"" a
         Boolean flag indicating if the optimizer exited successfully and
@@ -226,235 +227,241 @@ def minimize(
     To define linear and non-linear constraints, please read the scipy.optimize. minimize documentation:
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html
 
+
     """
-    x0 = np.atleast_1d(np.asarray(x0))
-
-    if x0.ndim != 1:
-        raise ValueError("'x0' must only have one dimension.")
-
-    if x0.dtype.kind in np.typecodes["AllInteger"]:
-        x0 = np.asarray(x0, dtype=float)
-
-    if not isinstance(args, tuple):
-        args = (args,)
-
-    if method not in AVAILABLE_METHODS:
-        raise ValueError(f"Unknown solver {method}")
-
-    def _objective(_, x: Sequence, objective_value: Sequence, user_data: Sequence):
-        x = np.fromiter(x, dtype="float64")
-        if args:
-            val = fun(x, *args)
-        else:
-            val = fun(x)
-        if isinstance(val, np.ndarray):
-            val = val[0]
-        objective_value[0] = val
-        return 0
-
-    n_constr = 0
-    constr_upper_bounds = []
-    constr_lower_bounds = []
-    for constr in constraints:
-        if isinstance(constr, dict):
-            c_type = constr["type"]
-            val = constr["fun"](x0)
-            if isinstance(val, Number):
-                nc = 1
-            else:
-                nc = len(val)
-            if c_type == "ineq":
-                ub = np.full(nc, Inf)
-                lb = np.zeros(nc)
-            elif c_type == "eq":
-                ub = np.zeros(nc)
-                lb = np.zeros(nc)
-            else:
-                raise ValueError(f"Unknown constraint type: {c_type}.")
-        elif isinstance(constr, LinearConstraint):
-            nc = constr.A.shape[0]
-            lb = constr.lb
-            ub = constr.ub
-
-        elif isinstance(constr, NonlinearConstraint):
-            val = constr.fun(x0)
-            if isinstance(val, Number):
-                nc = 1
-            else:
-                nc = len(val)
-
-            lb = constr.lb
-            ub = constr.ub
-        else:
-            raise TypeError(f"Unsupported constraint type {type(constr)}")
-        n_constr += nc
-        if not isinstance(lb, np.ndarray):
-            raise ValueError(f"Unsupported lower bound type {type(lb)}")
-        if not isinstance(ub, np.ndarray):
-            raise ValueError(f"Unsupported upper bound type {type(lb)}")
-        constr_lower_bounds.append(lb)
-        constr_upper_bounds.append(ub)
-
-    def _constraints(
-        _, nc: int, x: Sequence, constraint_values: Sequence, user_data: Sequence
-    ):
-        x = np.fromiter(x, dtype="float64")
-        i_max = 0
-        for constr in constraints:
-            if isinstance(constr, dict):
-                val = constr["fun"](x)
-            else:
-                if isinstance(constr, LinearConstraint):
-                    val = constr.A @ x
-                else:
-                    val = constr.fun(x)
-            if isinstance(val, Number):
-                n_v = 1
-            else:
-                n_v = len(val)
-            for i, v in enumerate(val):
-                constraint_values[i_max + i] = v
-            i_max += n_v
-        return 0
-
-    number_variables = x0.size
-
-    def _objective_gradient(_, x, gradient, user_data):
-        x = np.fromiter(x, dtype="float")
-        if args:
-            val = jac(x, *args)
-        else:
-            val = jac(x)
-        for i in range(number_variables):
-            gradient[i] = val[i]
-        return 0
-
-    def _constraint_jacobian(_, ncnz, x, jacobian_values, user_data):
-        x = np.fromiter(x, dtype="float")
-        i_max = 0
-        for constr in constraints:
-            if isinstance(constr, dict):
-                val = constr["jac"](x)
-            else:
-                if isinstance(constr, LinearConstraint):
-                    val = constr.A
-                else:
-                    val = constr.jac(x)
-
-            val_flat = val.flatten()
-            for i, v in enumerate(val_flat):
-                jacobian_values[i_max + i] = v
-            i_max += val_flat.size
-        return 0
-
-    hess_row_indices, hess_col_indices = (
-        triu_indices(number_variables) if hess is not None else (None, None)
-    )
-
-    def _lagrangian_hessian(
-        number_variables,
-        number_constraints,
-        number_hessian_nonzeros,
-        x,
-        objective_multiplier,
-        multipliers,
-        hessian_values,
-        user_data,
-    ):
-        x = np.fromiter(x, dtype="float")
-        for i, j in zip(hess_row_indices, hess_col_indices):
-            hessian_values[j + number_variables * i] = (
-                objective_multiplier * hess(x)[i, j]
-            )
-        i_mult = 0
-        for constr in constraints:
-            mult = multipliers[i_mult]
-            i_mult += 1
-            if isinstance(constr, dict):
-                val = constr["hess"](x) * mult
-            else:
-                if isinstance(constr, LinearConstraint):
-                    val = float("NaN")
-                else:
-                    val = constr.hess(x) * mult
-
-            if val != float("NaN"):
-                for i, j in zip(hess_row_indices, hess_col_indices):
-                    hessian_values[j + number_variables * i] += val[i, j]
-
-        return 0
-
-    if bounds is not None:
-        # convert to new-style bounds so we only have to consider one case
-        _bounds = standardize_bounds(bounds, x0, "new")
-        _bounds: Bounds = _validate_bounds(_bounds, x0, method)
-
-        lb = _bounds.lb.tolist()
-        ub = _bounds.ub.tolist()
-    else:
-        lb = [-Inf] * number_variables
-        ub = [Inf] * number_variables
-
-    model = unopy.Model(
-        unopy.PROBLEM_NONLINEAR, number_variables, lb, ub, unopy.ZERO_BASED_INDEXING
-    )
-    if jac is not None:
-        model.set_objective(unopy.MINIMIZE, _objective, _objective_gradient)
-    else:
-        raise ValueError("Jacobian of objective is required.")
-
-    if n_constr > 0:
-        model.set_constraints(
-            n_constr,
-            _constraints,
-            np.concatenate(constr_lower_bounds),
-            np.concatenate(constr_upper_bounds),
-            number_variables * n_constr,
-            np.tile(np.arange(number_variables), n_constr).tolist(),
-            np.repeat(np.arange(number_variables), n_constr).tolist(),
-            _constraint_jacobian,
+    # Step 1: Input validation
+    x0 = np.atleast_1d(np.asarray(x0, dtype=float))
+    n = len(x0)
+    method_lower = method.lower()
+    if method_lower not in AVAILABLE_METHODS:
+        raise ValueError(
+            f"Unknown method '{method}'. Must be one of {AVAILABLE_METHODS}"
         )
-    model.set_initial_primal_iterate(x0.tolist())
-    if args:
-        model.set_user_data(args)
+    if options is None:
+        options = {}
 
+    # Step 2: Process bounds
+    if bounds is not None:
+        bounds = standardize_bounds(bounds, x0, "new")
+        _validate_bounds(bounds, x0, method)
+        var_lb = list(bounds.lb)
+        var_ub = list(bounds.ub)
+    else:
+        var_lb = [-Inf] * n
+        var_ub = [Inf] * n
+
+    # Helper to convert unopy array to numpy
+    def _to_numpy(x, size):
+        return np.array([float(x[i]) for i in range(size)])
+
+    # Step 3: Build objective callbacks
+    def objective_callback(number_variables, x, objective_value, user_data):
+        x_np = _to_numpy(x, number_variables)
+        objective_value[0] = float(fun(x_np, *args))
+        return 0
+
+    if jac is not None:
+        def gradient_callback(number_variables, x, gradient, user_data):
+            x_np = _to_numpy(x, number_variables)
+            g = np.asarray(jac(x_np, *args), dtype=float).ravel()
+            for i in range(number_variables):
+                gradient[i] = float(g[i])
+            return 0
+    else:
+        from scipy.optimize import approx_fprime
+
+        def gradient_callback(number_variables, x, gradient, user_data):
+            x_np = _to_numpy(x, number_variables)
+            eps = np.sqrt(np.finfo(float).eps)
+            g = approx_fprime(x_np, lambda xv: fun(xv, *args), eps)
+            for i in range(number_variables):
+                gradient[i] = float(g[i])
+            return 0
+
+    # Step 4: Normalize and merge constraints
+    # 4a: Normalize input to a list
+    if isinstance(constraints, dict) or isinstance(
+        constraints, (NonlinearConstraint, LinearConstraint)
+    ):
+        constraints = [constraints]
+    else:
+        constraints = list(constraints)
+
+    # 4b: Convert each constraint to (c_fun, c_jac, c_hess, c_lb, c_ub, m_i)
+    normalized = []
+    for i, con in enumerate(constraints):
+        if isinstance(con, NonlinearConstraint):
+            c_fun = con.fun
+            c_jac = con.jac
+            c_hess = getattr(con, "hess", None)
+            c_lb = np.atleast_1d(np.asarray(con.lb, dtype=float))
+            c_ub = np.atleast_1d(np.asarray(con.ub, dtype=float))
+            m_i = len(np.atleast_1d(c_fun(x0)))
+            normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
+        elif isinstance(con, LinearConstraint):
+            A = np.atleast_2d(np.asarray(con.A, dtype=float))
+            m_i = A.shape[0]
+            c_lb = np.broadcast_to(
+                np.atleast_1d(np.asarray(con.lb, dtype=float)), (m_i,)
+            ).copy()
+            c_ub = np.broadcast_to(
+                np.atleast_1d(np.asarray(con.ub, dtype=float)), (m_i,)
+            ).copy()
+            # Use default-arg binding to capture A
+            c_fun = lambda x, _A=A: _A @ x
+            c_jac = lambda x, _A=A: _A
+            c_hess = None  # Linear constraints have zero Hessian
+            normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
+        elif isinstance(con, dict):
+            c_fun_raw = con["fun"]
+            c_jac_raw = con.get("jac")
+            c_args = con.get("args", ())
+            c_type = con["type"]
+            # Evaluate to get dimension
+            val = np.atleast_1d(np.asarray(c_fun_raw(x0, *c_args), dtype=float))
+            m_i = len(val)
+            if c_type == "eq":
+                c_lb = np.zeros(m_i)
+                c_ub = np.zeros(m_i)
+            elif c_type == "ineq":
+                c_lb = np.zeros(m_i)
+                c_ub = np.full(m_i, Inf)
+            else:
+                raise ValueError(
+                    f"Unknown constraint type '{c_type}'. Must be 'eq' or 'ineq'"
+                )
+            # Use default-arg binding
+            c_fun = lambda x, _f=c_fun_raw, _a=c_args: np.atleast_1d(
+                np.asarray(_f(x, *_a), dtype=float)
+            )
+            if c_jac_raw is not None:
+                c_jac = lambda x, _j=c_jac_raw, _a=c_args: np.atleast_2d(
+                    np.asarray(_j(x, *_a), dtype=float)
+                )
+            else:
+                c_jac = None
+            c_hess = None  # Dict constraints don't support Hessians
+            normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
+        else:
+            raise TypeError(f"Unsupported constraint type: {type(con)}")
+
+    # 4c: Merge
+    total_constraints = sum(item[5] for item in normalized)
+    if total_constraints > 0:
+        all_lb = np.concatenate([item[3] for item in normalized])
+        all_ub = np.concatenate([item[4] for item in normalized])
+    else:
+        all_lb = np.array([])
+        all_ub = np.array([])
+
+    # 4d: Build merged callbacks
+    def constraint_callback(
+        number_variables, number_constraints, x, constraint_values, user_data
+    ):
+        x_np = _to_numpy(x, number_variables)
+        offset = 0
+        for c_fun_i, _, _, _, _, m_i in normalized:
+            val = np.atleast_1d(np.asarray(c_fun_i(x_np), dtype=float))
+            for j in range(m_i):
+                constraint_values[offset + j] = float(val[j])
+            offset += m_i
+        return 0
+
+    def constraint_jacobian_callback(
+        number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data
+    ):
+        x_np = _to_numpy(x, number_variables)
+        offset = 0
+        for c_fun_i, c_jac_i, _, _, _, m_i in normalized:
+            if c_jac_i is not None:
+                jac_block = np.atleast_2d(np.asarray(c_jac_i(x_np), dtype=float))
+            else:
+                from scipy.optimize import approx_fprime
+
+                eps = np.sqrt(np.finfo(float).eps)
+                jac_block = np.zeros((m_i, n))
+                for row in range(m_i):
+                    def _scalar_fun(xv, _row=row, _cf=c_fun_i):
+                        return np.atleast_1d(np.asarray(_cf(xv), dtype=float))[_row]
+                    jac_block[row, :] = approx_fprime(x_np, _scalar_fun, eps)
+            # Column-major (Fortran) ordering to match unopy convention
+            flat = jac_block.ravel(order="F")
+            for j in range(len(flat)):
+                jacobian_values[offset + j] = float(flat[j])
+            offset += len(flat)
+        return 0
+
+    # 4e: Dense sparsity pattern (column-major ordering)
+    if total_constraints > 0:
+        nnz_jac = total_constraints * n
+        # Column-major: iterate columns first, then rows within each column
+        col_indices = np.repeat(np.arange(n), total_constraints).tolist()
+        row_indices = np.tile(np.arange(total_constraints), n).tolist()
+    else:
+        nnz_jac = 0
+        row_indices = []
+        col_indices = []
+
+    # Step 5: Build unopy.Model
+    model = unopy.Model(
+        unopy.PROBLEM_NONLINEAR, n, var_lb, var_ub, unopy.ZERO_BASED_INDEXING
+    )
+    model.set_objective(unopy.MINIMIZE, objective_callback, gradient_callback)
+    if total_constraints > 0:
+        model.set_constraints(
+            total_constraints,
+            constraint_callback,
+            list(all_lb),
+            list(all_ub),
+            nnz_jac,
+            row_indices,
+            col_indices,
+            constraint_jacobian_callback,
+        )
+    model.set_initial_primal_iterate(list(x0))
+
+    # Step 5b: Lagrangian Hessian operator (if Hessian provided)
+    if hess is not None:
+        def hessian_operator_callback(n_vars, n_cons, x, evaluate_at_x, obj_mult,
+                                      multipliers, vector, result, user_data):
+            x_np = _to_numpy(x, n_vars)
+            v_np = _to_numpy(vector, n_vars)
+
+            # Objective Hessian contribution
+            H = float(obj_mult) * np.atleast_2d(np.asarray(hess(x_np, *args), dtype=float))
+
+            # Constraint Hessian contributions
+            offset = 0
+            for _, _, c_hess_i, _, _, m_i in normalized:
+                if c_hess_i is not None:
+                    mult_slice = np.array([float(multipliers[offset + j]) for j in range(m_i)])
+                    H += np.atleast_2d(np.asarray(c_hess_i(x_np, mult_slice), dtype=float))
+                offset += m_i
+
+            # Compute H @ vector and write element-by-element
+            Hv = H @ v_np
+            for i in range(n_vars):
+                result[i] = float(Hv[i])
+            return 0
+
+        model.set_lagrangian_hessian_operator(
+            hessian_operator_callback, unopy.MULTIPLIER_POSITIVE
+        )
+
+    # Step 6: Configure and run solver
     uno_solver = unopy.UnoSolver()
-
-    uno_solver.set_preset(method)
+    uno_solver.set_preset(method_lower)
     if tol is not None:
         uno_solver.set_option("primal_tolerance", tol)
         uno_solver.set_option("dual_tolerance", tol)
-        uno_solver.set_option("loose_dual_tolerance", tol)
-        uno_solver.set_option("loose_tolerance_consecutive_iteration_threshold", tol)
-        uno_solver.set_option("primal_tolerance", tol)
-
-    if method in ["filterslp"]:
-        if options is None or "LP_solver" not in options:
-            uno_solver.set_option("LP_solver", "HiGHS")
-    if method in ["ipopt"]:
-        if options is None or "linear_solver" not in options:
-            try:
-                uno_solver.set_option("linear_solver", "MUMPS")
-            except ValueError:
-                uno_solver.set_option("linear_solver", "MA57")
-
-    if options is not None:
-        if "max_iter" in options:
-            uno_solver.set_option("max_iter", options["max_iter"])
-        for opt_key, opt_value in options.items():
-            uno_solver.set_option(opt_key, opt_value)
-
-    if hess is not None:
-        model.set_lagrangian_hessian(
-            int(number_variables * (number_variables + 1) / 2),
-            unopy.LOWER_TRIANGLE,
-            hess_col_indices.tolist(),  # Inverted on purpose
-            hess_row_indices.tolist(),
-            _lagrangian_hessian,
-            unopy.MULTIPLIER_NEGATIVE,
-        )
+    for key, value in options.items():
+        if key == "maxiter":
+            key = "max_iterations"
+        uno_solver.set_option(key, value)
 
     result = uno_solver.optimize(model)
+
+    # Step 7: Return OptimizeResult
     return OptimizeResult(
         x=result.primal_solution,
         success=str(result.optimization_status) == "OptimizationStatus.SUCCESS",
