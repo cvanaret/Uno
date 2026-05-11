@@ -89,6 +89,9 @@ function test_ConstraintDualStart()
     @test MOI.get(model, MOI.ConstraintDualStart(), e) === nothing
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     @test MOI.get(model, MOI.NLPBlockDualStart()) === nothing
+    MOI.set(model, MOI.ConstraintDualStart(), l, 1.0)
+    MOI.set(model, MOI.ConstraintDualStart(), u, -1.0)
+    MOI.set(model, MOI.ConstraintDualStart(), e, -1.5)
     MOI.set(model, MOI.ConstraintDualStart(), c, 2.0)
     MOI.set(model, MOI.NLPBlockDualStart(), [1.0, 2.0])
     @test MOI.get(model, MOI.ConstraintDualStart(), l) == 1.0
