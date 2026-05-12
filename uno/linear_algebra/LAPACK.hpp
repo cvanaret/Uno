@@ -5,6 +5,7 @@
 #define UNO_LAPACK_H
 
 #include <cassert>
+#include <cmath>
 #include "fortran_interface.h"
 #define dpotrf FC_GLOBAL_(dpotrf, DPOTRF)
 #define dsytrf FC_GLOBAL_(dsytrf, DSYTRF)
@@ -55,8 +56,11 @@ namespace uno {
          int lwork = -1;
          int info = 0;
          dsytrf(&uplo, &n, a, &lda, ipiv.data(), &work_size, &lwork, &info);
+         if (info < 0) {
+            throw std::runtime_error("bunch_kaufman_factorization (first call to dsytrf) failed");
+         }
          // second call to factorize
-         lwork = static_cast<int>(work_size);
+         lwork = static_cast<int>(std::ceil(work_size));
          assert(lwork >= 0);
          std::vector<double> work(static_cast<size_t>(lwork));
          dsytrf(&uplo, &n, a, &lda, ipiv.data(), work.data(), &lwork, &info);

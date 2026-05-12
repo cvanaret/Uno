@@ -126,7 +126,9 @@ namespace uno {
             size_t leading_dimension_b, double beta, double* c, size_t leading_dimension_c) {
          const int m = static_cast<int>(number_rows_c);
          const int n = static_cast<int>(number_columns_c);
-         const int k = static_cast<int>(transa == 'N' ? number_columns_a : number_rows_a);
+         const size_t kA = (transa == 'N') ? number_columns_a : number_rows_a;
+         const size_t kB = (transb == 'N') ? number_rows_b : number_columns_b;
+         assert(kA == kB);
          if (transa == 'N') {
             assert(number_rows_c == number_rows_a);
          }
@@ -142,6 +144,7 @@ namespace uno {
          const int lda = static_cast<int>(leading_dimension_a);
          const int ldb = static_cast<int>(leading_dimension_b);
          const int ldc = static_cast<int>(leading_dimension_c);
+         const int k = static_cast<int>(kA);
          assert(lda >= std::max(1, transa == 'N' ? m : k));
          assert(ldb >= std::max(1, transb == 'N' ? k : n));
          assert(ldc >= std::max(1, m));
@@ -205,6 +208,7 @@ namespace uno {
          const int lda = static_cast<int>(leading_dimension_a);
          assert(lda >= std::max(1, trans == 'N' ? n : k));
          const int ldc = static_cast<int>(leading_dimension_c);
+         assert(ldc >= std::max(1, n));
          dsyrk(&uplo, &trans, &n, &k, &alpha, a, &lda, &beta, c, &ldc);
       }
    }

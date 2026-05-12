@@ -71,11 +71,15 @@ namespace uno {
          number_rows(number_rows), number_columns(number_columns), leading_dimension(leading_dimension) {
    }
 
-   // copy an existing matrix into this object
+   // copy an existing matrix into this object. Careful, there may be padding
    template <typename T>
    BLASMatrix<T>& BLASMatrix<T>::operator=(const BLASMatrix& other) {
       assert(other.number_rows == this->number_rows && other.number_columns == this->number_columns);
-      blas1::copy(this->number_rows * this->number_columns, other.data(), this->data());
+      // copy each column
+      for (size_t column_index = 0; column_index < this->number_columns; ++column_index) {
+         blas1::copy(this->number_rows, other.data() + column_index * other.leading_dimension,
+            this->data() + column_index * this->leading_dimension);
+      }
       return *this;
    }
 
