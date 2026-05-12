@@ -106,7 +106,7 @@ namespace uno {
    }
 
    // get a column of (U V)
-   VectorView<std::vector<double>> LBFGSHessian::get_correction_column(size_t column_index) const {
+   VectorView<const double> LBFGSHessian::get_correction_column(size_t column_index) const {
       if (column_index < this->number_entries_in_memory) {
          return this->U.column(column_index);
       }

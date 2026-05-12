@@ -25,7 +25,7 @@ namespace uno {
 
       // functions that can be called by WoodburyEQPSolver
       [[nodiscard]] size_t get_correction_rank() const override;
-      [[nodiscard]] VectorView<std::vector<double>> get_correction_column(size_t column_index) const override;
+      [[nodiscard]] VectorView<const double> get_correction_column(size_t column_index) const override;
       [[nodiscard]] double get_correction_column_scaling(size_t column_index) const override;
 
    protected:

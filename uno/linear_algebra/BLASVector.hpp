@@ -19,7 +19,7 @@ namespace uno {
    template <typename T>
    class BLASVector {
    public:
-      using value_type = std::remove_const_t<T>;
+      using value_type = T;
 
       BLASVector() = default;
       virtual ~BLASVector() = default;
@@ -30,13 +30,6 @@ namespace uno {
       }
       [[nodiscard]] virtual const T* data() const = 0;
       [[nodiscard]] virtual const T& operator[](size_t index) const = 0;
-   };
-
-   // non-constant contiguous array in memory on which BLAS can be called
-   template <typename T>
-   class MutableBLASVector: public BLASVector<T> {
-   public:
-      MutableBLASVector() = default;
 
       // specialized operation y = x, when the other vector has the member function data()
       template <typename Vector, decltype(Vector{}.data()) = true>
@@ -50,8 +43,8 @@ namespace uno {
 
       // generic operation y = expression
       template <typename Expression>
-      MutableBLASVector& operator=(const Expression& expression) {
-         static_assert(std::is_same_v<typename Expression::value_type, T>);
+      BLASVector& operator=(const Expression& expression) {
+         // static_assert(std::is_same_v<typename Expression::value_type, T>);
          if (expression.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between expression and y");
          }
@@ -63,7 +56,7 @@ namespace uno {
 
       // specialized operation y = a * x (note: no BLAS operation available)
       template <typename Vector>
-      MutableBLASVector& operator=(ScalarMultiple<Vector>&& expression) {
+      BLASVector& operator=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
          if (x.size() != this->size()) {
@@ -78,7 +71,7 @@ namespace uno {
       // specialized operation y = x - z
       // note: no BLAS operation available
       template <typename Vector>
-      MutableBLASVector& operator=(Subtraction<Vector, Vector>&& expression) {
+      BLASVector& operator=(Subtraction<Vector, Vector>&& expression) {
          const auto& x = expression.get_expression1();
          const auto& z = expression.get_expression2();
          if (x.size() != z.size()) {
@@ -94,10 +87,10 @@ namespace uno {
 
       // y = Ax (or y = A x + 0 * y)
       template <typename Matrix, typename Vector>
-      MutableBLASVector& operator=(Multiplication<Matrix, Vector>&& expression) {
+      BLASVector& operator=(Multiplication<Matrix, Vector>&& expression) {
          const auto& x = expression.get_right();
          if (x.data() == this->data()) {
-            throw std::invalid_argument("MutableBLASVector::operator= cannot be called with x == y");
+            throw std::invalid_argument("BLASVector::operator= cannot be called with x == y");
          }
          const auto& A = expression.get_left();
          if (A.number_columns != x.size()) {
@@ -113,7 +106,7 @@ namespace uno {
 
       // specialized operation y += a * x
       template <typename Vector>
-      MutableBLASVector& operator+=(ScalarMultiple<Vector>&& expression) {
+      BLASVector& operator+=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
          if (x.size() != this->size()) {
@@ -125,7 +118,7 @@ namespace uno {
 
       // generic operation y += x
       template <typename Vector>
-      MutableBLASVector& operator+=(const Vector& other) {
+      BLASVector& operator+=(const Vector& other) {
          if (other.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
@@ -135,7 +128,7 @@ namespace uno {
 
       // generic operation y -= x
       template <typename Vector>
-      MutableBLASVector& operator-=(const Vector& other) {
+      BLASVector& operator-=(const Vector& other) {
          if (other.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
@@ -145,11 +138,11 @@ namespace uno {
 
       // x := U⁻ᵀ y with U upper triangular (solve Uᵀ x := y)
       template <typename Matrix, typename Vector>
-      MutableBLASVector<T>& operator=(Multiplication<Transpose<Inverse<UpperTriangular<Matrix>>>, Vector>&& expression) {
+      BLASVector<T>& operator=(Multiplication<Transpose<Inverse<UpperTriangular<Matrix>>>, Vector>&& expression) {
          const auto& U = expression.get_left().get_matrix().get_matrix().get_matrix();
          const auto& y = expression.get_right();
          if (this->size() != U.number_columns) {
-            throw std::runtime_error("Dimension mismatch in MutableBLASVector::operator=");
+            throw std::runtime_error("Dimension mismatch in BLASVector::operator=");
          }
          // copy the RHS into this
          blas1::copy(this->size(), y.data(), this->data());
@@ -160,11 +153,11 @@ namespace uno {
 
       // x := U⁻¹ y with U upper triangular (solve U x := y)
       template <typename Matrix, typename Vector>
-      MutableBLASVector<T>& operator=(Multiplication<Inverse<UpperTriangular<Matrix>>, Vector>&& expression) {
+      BLASVector<T>& operator=(Multiplication<Inverse<UpperTriangular<Matrix>>, Vector>&& expression) {
          const auto& U = expression.get_left().get_matrix().get_matrix();
          const auto& y = expression.get_right();
          if (this->size() != U.number_columns) {
-            throw std::runtime_error("Dimension mismatch in MutableBLASVector::operator=");
+            throw std::runtime_error("Dimension mismatch in BLASVector::operator=");
          }
          // copy the RHS into this
          blas1::copy(this->size(), y.data(), this->data());
@@ -175,7 +168,7 @@ namespace uno {
 
       // y := A^T x
       template <typename Matrix, typename Vector>
-      MutableBLASVector& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
+      BLASVector& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
          if (A.number_rows != x.size()) {
@@ -191,7 +184,7 @@ namespace uno {
 
       // y += Ax (or y = A x + y)
       template <typename Matrix, typename Vector>
-      MutableBLASVector& operator+=(Multiplication<Matrix, Vector>&& expression) {
+      BLASVector& operator+=(Multiplication<Matrix, Vector>&& expression) {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          if (A.number_columns != x.size()) {
@@ -207,7 +200,7 @@ namespace uno {
 
       // y -= Ax (or y = -A x + y)
       template <typename Matrix, typename Vector>
-      MutableBLASVector& operator-=(Multiplication<Matrix, Vector>&& expression) {
+      BLASVector& operator-=(Multiplication<Matrix, Vector>&& expression) {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          if (A.number_columns != x.size()) {
@@ -221,10 +214,8 @@ namespace uno {
          return *this;
       }
 
-      using BLASVector<T>::data; // const version
       [[nodiscard]] virtual T* data() = 0;
 
-      using BLASVector<T>::operator[]; // const version
       [[nodiscard]] virtual T& operator[](size_t index) = 0;
 
       void scale(T factor) {
@@ -236,7 +227,8 @@ namespace uno {
       }
    };
 
-   inline double dot(const BLASVector<double>& x, const BLASVector<double>& y) {
+   template <typename T, typename U>
+   double dot(const BLASVector<T>& x, const BLASVector<U>& y) {
       if (x.size() != y.size()) {
          throw std::invalid_argument("Dimension mismatch between x and y");
       }

@@ -42,7 +42,7 @@ namespace uno {
    }
 
    // generic norm function for iterators that return the elements
-   template <typename Array, typename AccumulationFunction, typename ElementType = typename Array::value_type>
+   template <typename Array, typename AccumulationFunction, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType generic_norm(const Array& x, const AccumulationFunction& accumulation_function) {
       ElementType result{0};
       for (size_t index: Range(x.size())) {
@@ -59,13 +59,13 @@ namespace uno {
       result += std::abs(element);
    }
 
-   template <typename Array, typename ElementType = typename Array::value_type>
+   template <typename Array, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_1(const Array& x) {
       return generic_norm(x, norm_1_accumulation<ElementType>);
    }
 
    // l1 norm of several arrays
-   template <typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
+   template <typename Array, typename... Arrays, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_1(const Array& x, const Arrays& ... other_arrays) {
       return norm_1(x) + norm_1(other_arrays...);
    }
@@ -78,13 +78,13 @@ namespace uno {
       result += element * element;
    }
 
-   template <typename Array, typename ElementType = typename Array::value_type>
+   template <typename Array, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_2_squared(const Array& x) {
       return generic_norm(x, norm_2_squared_accumulation<ElementType>);
    }
 
    // l2 squared norm of several arrays
-   template <typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
+   template <typename Array, typename... Arrays, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_2_squared(const Array& x, const Arrays& ... other_arrays) {
       return norm_2_squared(x) + norm_2_squared(other_arrays...);
    }
@@ -92,7 +92,7 @@ namespace uno {
    //***********
    // l2 norm //
    //***********
-   template <typename Array, typename ElementType = typename Array::value_type>
+   template <typename Array, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_2(const Array& x) {
       return std::sqrt(norm_2_squared(x));
    }
@@ -111,13 +111,13 @@ namespace uno {
       result = std::max(result, std::abs(element));
    }
 
-   template <typename Array, typename ElementType = typename Array::value_type>
+   template <typename Array, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_inf(const Array& x) {
       return generic_norm(x, norm_inf_accumulation<ElementType>);
    }
 
    // inf norm of several arrays
-   template <typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
+   template <typename Array, typename... Arrays, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_inf(const Array& x, const Arrays& ... other_arrays) {
       return std::max(norm_inf(x), norm_inf(other_arrays...));
    }
@@ -126,7 +126,7 @@ namespace uno {
    // dispatch function //
    //*********************
    // norm of at least one array
-   template <typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
+   template <typename Array, typename... Arrays, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm(Norm norm, const Array& x, const Arrays& ... other_arrays) {
       if (norm == Norm::L1) {
          return norm_1(x, other_arrays...);
