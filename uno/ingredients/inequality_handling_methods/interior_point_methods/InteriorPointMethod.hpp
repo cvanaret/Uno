@@ -148,8 +148,12 @@ namespace uno {
          iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
          iterate.multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
          iterate.multipliers.upper_bounds[elastic_index] = 0.;
-         assert(0. < iterate.primals[elastic_index] && "The elastic variable is not strictly positive.");
-         assert(0. < iterate.multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
+         if (iterate.primals[elastic_index] <= 0.) {
+            throw std::runtime_error("The elastic variable is not strictly positive.");
+         }
+         if (iterate.multipliers.lower_bounds[elastic_index] <= 0.) {
+            throw std::runtime_error("The elastic dual is not strictly positive.");
+         }
       };
       feasibility_problem.set_elastic_variable_values(iterate, elastic_setting_function);
    }

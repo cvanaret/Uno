@@ -92,7 +92,9 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          const Inertia problem_inertia = this->problem.get_inertia();
          const Inertia expected_inertia = {problem_inertia.positive, 0, problem_inertia.zero};
-         assert(expected_inertia.positive + expected_inertia.zero == this->number_variables);
+         if (expected_inertia.positive + expected_inertia.zero != this->number_variables) {
+            throw std::runtime_error("Mismatch in expected inertia");
+         }
          this->inertia_correction_strategy.regularize_hessian(statistics, *this, expected_inertia, hessian_values);
       }
    }
@@ -115,8 +117,10 @@ namespace uno {
       if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
          const Inertia expected_inertia = this->problem.get_inertia();
-         assert(expected_inertia.positive + expected_inertia.negative + expected_inertia.zero ==
-            this->number_variables + this->number_constraints);
+         if (expected_inertia.positive + expected_inertia.negative + expected_inertia.zero !=
+               this->number_variables + this->number_constraints) {
+            throw std::runtime_error("Mismatch in expected inertia");
+         }
 
          const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
          double* primal_regularization_values = augmented_matrix_values + offset;

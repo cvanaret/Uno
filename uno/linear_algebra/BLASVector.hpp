@@ -5,7 +5,6 @@
 #define UNO_BLASVECTOR_H
 
 #include <cstddef>
-#include <cassert>
 #include "BLAS.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
@@ -42,7 +41,9 @@ namespace uno {
       // specialized operation y = x, when the other vector has the member function data()
       template <typename Vector, decltype(Vector{}.data()) = true>
       auto operator=(const Vector& other) {
-         assert(other.size() == this->size());
+         if (other.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between x and y");
+         }
          blas1::copy(this->size(), other.data(), this->data());
          return *this;
       }
@@ -51,7 +52,9 @@ namespace uno {
       template <typename Expression>
       MutableBLASVector& operator=(const Expression& expression) {
          static_assert(std::is_same_v<typename Expression::value_type, T>);
-         assert(expression.size() == this->size());
+         if (expression.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between expression and y");
+         }
          for (size_t index: Range(expression.size())) {
             this->operator[](index) = expression[index];
          }
@@ -63,7 +66,9 @@ namespace uno {
       MutableBLASVector& operator=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
-         assert(x.size() == this->size());
+         if (x.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between x and y");
+         }
          for (size_t index: Range(this->size())) {
             this->operator[](index) = a * x[index];
          }
@@ -76,8 +81,12 @@ namespace uno {
       MutableBLASVector& operator=(Subtraction<Vector, Vector>&& expression) {
          const auto& x = expression.get_expression1();
          const auto& z = expression.get_expression2();
-         assert(x.size() == z.size());
-         assert(x.size() == this->size());
+         if (x.size() != z.size()) {
+            throw std::invalid_argument("Dimension mismatch between x and z");
+         }
+         if (x.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between x and y");
+         }
          *this = x;
          *this -= z;
          return *this;
@@ -86,10 +95,17 @@ namespace uno {
       // y = Ax (or y = A x + 0 * y)
       template <typename Matrix, typename Vector>
       MutableBLASVector& operator=(Multiplication<Matrix, Vector>&& expression) {
-         const auto& A = expression.get_left();
          const auto& x = expression.get_right();
-         assert(A.number_columns == x.size());
-         assert(A.number_rows == this->size());
+         if (x.data() == this->data()) {
+            throw std::invalid_argument("MutableBLASVector::operator= cannot be called with x == y");
+         }
+         const auto& A = expression.get_left();
+         if (A.number_columns != x.size()) {
+            throw std::invalid_argument("Dimension mismatch between A and x");
+         }
+         if (A.number_rows != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between A and y");
+         }
          blas2::matrix_vector_product('N', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             0., this->data());
          return *this;
@@ -100,7 +116,9 @@ namespace uno {
       MutableBLASVector& operator+=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
-         assert(x.size() == this->size());
+         if (x.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between x and y");
+         }
          blas1::add(this->size(), a, x.data(), this->data());
          return *this;
       }
@@ -108,14 +126,19 @@ namespace uno {
       // generic operation y += x
       template <typename Vector>
       MutableBLASVector& operator+=(const Vector& other) {
-         assert(other.size() == this->size());
+         if (other.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between x and y");
+         }
          blas1::add(this->size(), 1., other.data(), this->data());
          return *this;
       }
 
+      // generic operation y -= x
       template <typename Vector>
       MutableBLASVector& operator-=(const Vector& other) {
-         assert(other.size() == this->size());
+         if (other.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between x and y");
+         }
          blas1::add(this->size(), -1., other.data(), this->data());
          return *this;
       }
@@ -155,8 +178,12 @@ namespace uno {
       MutableBLASVector& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
-         assert(A.number_rows == x.size());
-         assert(A.number_columns == this->size());
+         if (A.number_rows != x.size()) {
+            throw std::invalid_argument("Dimension mismatch between A and x");
+         }
+         if (A.number_columns != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between A and y");
+         }
          blas2::matrix_vector_product('T', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             0., this->data());
          return *this;
@@ -167,8 +194,12 @@ namespace uno {
       MutableBLASVector& operator+=(Multiplication<Matrix, Vector>&& expression) {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
-         assert(A.number_columns == x.size());
-         assert(A.number_rows == this->size());
+         if (A.number_columns != x.size()) {
+            throw std::invalid_argument("Dimension mismatch between A and x");
+         }
+         if (A.number_rows != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between A and y");
+         }
          blas2::matrix_vector_product('N', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             1., this->data());
          return *this;
@@ -179,8 +210,12 @@ namespace uno {
       MutableBLASVector& operator-=(Multiplication<Matrix, Vector>&& expression) {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
-         assert(A.number_columns == x.size());
-         assert(A.number_rows == this->size());
+         if (A.number_columns != x.size()) {
+            throw std::invalid_argument("Dimension mismatch between A and x");
+         }
+         if (A.number_rows != this->size()) {
+            throw std::invalid_argument("Dimension mismatch between A and y");
+         }
          blas2::matrix_vector_product('N', A.number_rows, A.number_columns, -1., A.data(), A.leading_dimension, x.data(),
             1., this->data());
          return *this;
@@ -202,7 +237,9 @@ namespace uno {
    };
 
    inline double dot(const BLASVector<double>& x, const BLASVector<double>& y) {
-      assert(x.size() == y.size());
+      if (x.size() != y.size()) {
+         throw std::invalid_argument("Dimension mismatch between x and y");
+      }
       return blas1::dot(x.size(), x.data(), y.data());
    }
 

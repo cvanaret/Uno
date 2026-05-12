@@ -55,7 +55,9 @@ namespace uno {
 
    template <typename BarrierProblem>
    void BarrierParameterUpdateStrategy<BarrierProblem>::set_barrier_parameter(double new_barrier_parameter) {
-      assert(0. < new_barrier_parameter && "The barrier parameter should be positive.");
+      if (new_barrier_parameter <= 0.) {
+         throw std::runtime_error("The barrier parameter should be positive.");
+      }
       this->barrier_parameter = new_barrier_parameter;
    }
 

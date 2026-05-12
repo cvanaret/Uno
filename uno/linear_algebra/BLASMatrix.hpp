@@ -4,7 +4,6 @@
 #ifndef UNO_BLASMATRIX_H
 #define UNO_BLASMATRIX_H
 
-#include <cassert>
 #include "Vector.hpp"
 #include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/LAPACK.hpp"
@@ -74,7 +73,9 @@ namespace uno {
    // copy an existing matrix into this object. Careful, there may be padding
    template <typename T>
    BLASMatrix<T>& BLASMatrix<T>::operator=(const BLASMatrix& other) {
-      assert(other.number_rows == this->number_rows && other.number_columns == this->number_columns);
+      if (other.number_rows != this->number_rows || other.number_columns != this->number_columns) {
+         throw std::invalid_argument("Dimension mismatch");
+      }
       // copy each column
       for (size_t column_index = 0; column_index < this->number_columns; ++column_index) {
          blas1::copy(this->number_rows, other.data() + column_index * other.leading_dimension,
@@ -126,7 +127,9 @@ namespace uno {
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression) {
-      assert(this->number_rows == this->number_columns);
+      if (this->number_rows != this->number_columns) {
+         throw std::invalid_argument("The matrix is not square");
+      }
       // decode expression as alpha A Bᵀ
       const auto& A = expression.get_left();
       const auto& B = expression.get_right().get_matrix();
@@ -145,7 +148,9 @@ namespace uno {
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression) {
-      assert(this->number_rows == this->number_columns);
+      if (this->number_rows != this->number_columns) {
+         throw std::invalid_argument("The matrix is not square");
+      }
       // decode expression as alpha Aᵀ B
       const T alpha = expression.get_factor();
       const auto& A = expression.get_expression().get_left().get_matrix();
@@ -165,7 +170,9 @@ namespace uno {
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator+=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression) {
-      assert(this->number_rows == this->number_columns);
+      if (this->number_rows != this->number_columns) {
+         throw std::invalid_argument("The matrix is not square");
+      }
       // decode expression as alpha Aᵀ B
       const T alpha = expression.get_factor();
       const auto& A = expression.get_expression().get_left().get_matrix();
