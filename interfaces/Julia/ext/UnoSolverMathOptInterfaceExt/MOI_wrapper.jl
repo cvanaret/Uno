@@ -1631,8 +1631,8 @@ function MOI.optimize!(model::Optimizer)
         end
     end
 
-    # Initialize the starting point, projecting variables from 0 onto their
-    # bounds if VariablePrimalStart is not provided.
+    # Initialize the starting point, projecting variables from 0 onto their bounds if VariablePrimalStart is not provided.
+    # Primal iterate
     for i in 1:length(model.variable_primal_start)
         x0_i = something(
             model.variable_primal_start[i],
@@ -1641,6 +1641,7 @@ function MOI.optimize!(model::Optimizer)
         UnoSolver.uno_set_initial_primal_iterate_component(inner, i, x0_i)
     end
 
+    # Dual iterate for the general constraints
     for (i, start) in enumerate(model.qp_data.mult_g)
         y0_i = _dual_start(model, start, -1)
         UnoSolver.uno_set_initial_dual_iterate_component(inner, i, y0_i)
@@ -1668,6 +1669,14 @@ function MOI.optimize!(model::Optimizer)
             y0_i = _dual_start(model, start, -1)
             UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, y0_i)
         end
+    end
+
+    # Dual iterate for the bound constraints
+    for i in 1:length(model.variable_primal_start)
+        z0_L_i = max(0.0, something(model.mult_x_L[i], 0.0)) # >= 0
+        UnoSolver.uno_set_initial_lower_bound_dual_iterate_component(inner, i, z0_L_i)
+        z0_U_i = min(0.0, something(model.mult_x_U[i], 0.0)) # <= 0
+        UnoSolver.uno_set_initial_upper_bound_dual_iterate_component(inner, i, z0_U_i)
     end
 
     # Clear timers
