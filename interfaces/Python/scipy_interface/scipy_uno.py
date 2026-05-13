@@ -429,9 +429,9 @@ def minimize(
                 result[i] = float(Hv[i])
             return 0
 
-        model.set_lagrangian_hessian_operator(
-            hessian_operator_callback, unopy.MULTIPLIER_POSITIVE
-        )
+        model.set_lagrangian_hessian_operator(hessian_operator_callback)
+        model.set_lagrangian_sign_convention(unopy.MULTIPLIER_POSITIVE)
+
 
     # Step 6: Configure and run solver
     uno_solver = unopy.UnoSolver()
