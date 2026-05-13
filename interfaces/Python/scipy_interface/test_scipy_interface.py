@@ -35,28 +35,28 @@ def test_rosen_bnds(method):
     assert res.success
 
 
-# @pytest.mark.parametrize(
-    # "c_type", ["lambda", "NonLinearConstraint", "LinearConstraint"]
-# )
-# def test_rosen_constr(c_type):
-    # if c_type == "NonLinearConstraint":
-        # constr = NonlinearConstraint(
-            # fun=lambda x: 1.0 - 2 * x,
-            # jac=lambda x: -2 * np.eye(2),
-            # lb=np.zeros(2),
-            # ub=np.full(2, float("Inf")),
-        # )
-    # elif c_type == "LinearConstraint":
-        # constr = LinearConstraint(A=np.eye(2), ub=0.5 * np.zeros(2), lb=-float("Inf"))
-    # else:
-        # constr = {
-            # "type": "ineq",
-            # "fun": lambda x: 1.0 - 2 * x,
-            # "jac": lambda x: -2 * np.eye(2),
-        # }
-    # res = minimize(rosen, jac=rosen_der, x0=np.zeros(2), constraints=(constr,))
+@pytest.mark.parametrize(
+    "c_type", ["lambda", "NonLinearConstraint", "LinearConstraint"]
+)
+def test_rosen_constr(c_type):
+    if c_type == "NonLinearConstraint":
+        constr = NonlinearConstraint(
+            fun=lambda x: 1.0 - 2 * x,
+            jac=lambda x: -2 * np.eye(2),
+            lb=np.zeros(2),
+            ub=np.full(2, float("Inf")),
+        )
+    elif c_type == "LinearConstraint":
+        constr = LinearConstraint(A=np.eye(2), ub=0.5 * np.zeros(2), lb=-float("Inf"))
+    else:
+        constr = {
+            "type": "ineq",
+            "fun": lambda x: 1.0 - 2 * x,
+            "jac": lambda x: -2 * np.eye(2),
+        }
+    res = minimize(rosen, jac=rosen_der, x0=np.zeros(2), constraints=(constr,))
 
-    # assert res.success
+    assert res.success
 
 @pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_rosen_constr2(method):
