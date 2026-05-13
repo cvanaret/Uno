@@ -70,8 +70,8 @@ def test_rosen_constr2(method):
             NonlinearConstraint(
                 fun=lambda x: x**2,
                 jac=lambda x: 2 * np.diag(x),
-                lb=np.full(3, 0.1),
-                ub=np.full(3, 0.8),
+                lb=np.full(4, 0.1),
+                ub=np.full(4, 0.8),
             ),
         ],
         options={"max_iterations": 10000},
