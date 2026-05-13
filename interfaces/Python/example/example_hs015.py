@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Charlie Vanaret
+# Copyright (c) 2025-2026 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 import unopy
@@ -28,13 +28,20 @@ def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 						-400.*objective_multiplier*x[0] - multipliers[0],
 						200.*objective_multiplier - 2.*multipliers[1]]
 
-def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers, vector, result):
+def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers,
+								vector, result):
 	# the modeler should throw an exception if the function cannot be evaluated
 	hessian00 = objective_multiplier*(1200*x[0]**2. - 400.*x[1] + 2.)
 	hessian10 = -400.*objective_multiplier*x[0] - multipliers[0]
 	hessian11 = 200.*objective_multiplier - 2.*multipliers[1]
 	result[:] = [hessian00*vector[0] + hessian10*vector[1],
 				hessian10*vector[0] + hessian11*vector[1]]
+
+def notify_acceptable_iterate_callback(primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers,
+									   objective_multiplier, primal_feasibility_residual, stationarity_residual,
+									   complementarity_residual):
+	print("CALLBACK = ", primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers, objective_multiplier,
+	      primal_feasibility_residual, stationarity_residual, complementarity_residual)
 
 if __name__ == '__main__':
 	# model creation
@@ -74,6 +81,7 @@ if __name__ == '__main__':
 	uno_solver = unopy.UnoSolver()
 	uno_solver.set_preset("filtersqp")
 	uno_solver.set_option("QP_solver", "BQPD")
+	uno_solver.set_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback)
 	print("Solving with Uno", unopy.current_uno_version())
 
 	# run 1: solve with the filtersqp preset with no exact Hessian. Uno defaults to L-BFGS Hessian for NLPs

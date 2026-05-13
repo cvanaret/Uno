@@ -1,19 +1,37 @@
-// Copyright (c) 2025 Charlie Vanaret
+// Copyright (c) 2025-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_UNOSOLVERWRAPPER_H
 #define UNO_UNOSOLVERWRAPPER_H
 
+#include <optional>
 #include "Uno.hpp"
 #include "options/Options.hpp"
+#include "tools/UserCallbacks.hpp"
 #include "PythonModel.hpp"
 #include "PythonStreamBuffer.hpp"
+#include "../unopy.hpp"
 
 namespace uno {
+   class UnopyUserCallbacks: public UserCallbacks {
+   public:
+      UnopyUserCallbacks(std::optional<NotifyAcceptableIterateCallback>& notify_acceptable_iterate_callback);
+
+      void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+            double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override;
+
+      bool user_termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
+            double /*primal_feasibility_residual*/, double /*stationarity_residual*/, double /*complementarity_residual*/) override;
+
+   protected:
+      std::optional<NotifyAcceptableIterateCallback>& notify_acceptable_iterate_callback;
+   };
+
    class UnoSolverWrapper {
    public:
       Uno uno_solver{};
       Options options{};
+      std::optional<NotifyAcceptableIterateCallback> notify_acceptable_iterate_callback{};
 
       UnoSolverWrapper();
 
