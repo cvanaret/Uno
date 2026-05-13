@@ -244,29 +244,19 @@ def minimize(
     if bounds is not None:
         bounds = standardize_bounds(bounds, x0, "new")
         _validate_bounds(bounds, x0, method)
-        var_lb = list(bounds.lb)
-        var_ub = list(bounds.ub)
+        var_lb = bounds.lb
+        var_ub = bounds.ub
     else:
         var_lb = [-Inf] * n
         var_ub = [Inf] * n
 
-    # Helper to convert unopy array to numpy
-    def _to_numpy(x, size):
-        return np.array([float(x[i]) for i in range(size)])
-
     # Step 3: Build objective callbacks
-    def objective_callback(number_variables, x, objective_value, user_data):
-        x_np = _to_numpy(x, number_variables)
-        objective_value[0] = float(fun(x_np, *args))
-        return 0
+    def objective_callback(x):
+        return float(fun(x, *args))
 
     if jac is not None:
-        def gradient_callback(number_variables, x, gradient, user_data):
-            x_np = _to_numpy(x, number_variables)
-            g = np.asarray(jac(x_np, *args), dtype=float).ravel()
-            for i in range(number_variables):
-                gradient[i] = float(g[i])
-            return 0
+        def gradient_callback(x, gradient):
+            gradient[:] = np.asarray(jac(x, *args), dtype=float).ravel()
     else:
         raise ValueError("Objective gradient is not defined.")
 
@@ -347,34 +337,21 @@ def minimize(
         all_ub = np.array([])
 
     # 4d: Build merged callbacks
-    def constraint_callback(
-        number_variables, number_constraints, x, constraint_values, user_data
-    ):
-        x_np = _to_numpy(x, number_variables)
+    def constraint_callback(x, constraint_values):
         offset = 0
         for c_fun_i, _, _, _, _, m_i in normalized:
-            val = np.atleast_1d(np.asarray(c_fun_i(x_np), dtype=float))
-            for j in range(m_i):
-                constraint_values[offset + j] = float(val[j])
+            constraint_values[offset:offset + m_i] = np.asarray(c_fun_i(x), dtype=float).ravel()
             offset += m_i
-        return 0
 
-    def constraint_jacobian_callback(
-        number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data
-    ):
-        x_np = _to_numpy(x, number_variables)
+    def constraint_jacobian_callback(x, jacobian_values):
         offset = 0
         for c_fun_i, c_jac_i, _, _, _, m_i in normalized:
-            if c_jac_i is not None:
-                jac_block = np.atleast_2d(np.asarray(c_jac_i(x_np), dtype=float))
-            else:
+            if c_jac_i is None:
                 raise ValueError("Constraint Jacobian is not provided.")
+            flat_jac_block = np.atleast_2d(np.asarray(c_jac_i(x), dtype=float)).ravel(order="F")
             # Column-major (Fortran) ordering to match unopy convention
-            flat = jac_block.ravel(order="F")
-            for j in range(len(flat)):
-                jacobian_values[offset + j] = float(flat[j])
+            jacobian_values[offset:offset + flat.size] = flat_jac_block
             offset += len(flat)
-        return 0
 
     # 4e: Dense sparsity pattern (column-major ordering)
     if total_constraints > 0:
@@ -396,8 +373,8 @@ def minimize(
         model.set_constraints(
             total_constraints,
             constraint_callback,
-            list(all_lb),
-            list(all_ub),
+            all_lb,
+            all_ub,
             nnz_jac,
             row_indices,
             col_indices,
@@ -407,27 +384,21 @@ def minimize(
 
     # Step 5b: Lagrangian Hessian operator (if Hessian provided)
     if hess is not None:
-        def hessian_operator_callback(n_vars, n_cons, x, evaluate_at_x, obj_mult,
-                                      multipliers, vector, result, user_data):
-            x_np = _to_numpy(x, n_vars)
-            v_np = _to_numpy(vector, n_vars)
-
+        def hessian_operator_callback(x, evaluate_at_x, obj_mult,
+                                      multipliers, vector, result):
             # Objective Hessian contribution
-            H = float(obj_mult) * np.atleast_2d(np.asarray(hess(x_np, *args), dtype=float))
+            H = float(obj_mult) * np.atleast_2d(np.asarray(hess(x, *args), dtype=float))
 
             # Constraint Hessian contributions
             offset = 0
             for _, _, c_hess_i, _, _, m_i in normalized:
                 if c_hess_i is not None:
-                    mult_slice = np.array([float(multipliers[offset + j]) for j in range(m_i)])
-                    H += np.atleast_2d(np.asarray(c_hess_i(x_np, mult_slice), dtype=float))
+                    mult_slice = np.asarray(multipliers[offset:offset + m_i], dtype=float)
+                    H += np.atleast_2d(np.asarray(c_hess_i(x, mult_slice), dtype=float))
                 offset += m_i
 
-            # Compute H @ vector and write element-by-element
-            Hv = H @ v_np
-            for i in range(n_vars):
-                result[i] = float(Hv[i])
-            return 0
+            # Compute H @ vector
+            result[:] = H @ vector
 
         model.set_lagrangian_hessian_operator(hessian_operator_callback)
         model.set_lagrangian_sign_convention(unopy.MULTIPLIER_POSITIVE)
