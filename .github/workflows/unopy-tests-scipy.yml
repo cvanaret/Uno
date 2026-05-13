@@ -46,8 +46,8 @@ jobs:
       - name: Install pybind11
         run: sudo apt install -y python3-pybind11 pybind11-dev
         
-      - name: Install pytest, gemseo, and scipy
-        run: pip install pytest gemseo scipy
+      - name: Install pytest, and scipy
+        run: pip install pytest scipy
 
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
@@ -57,4 +57,4 @@ jobs:
 
       - name: Run tests
         working-directory: ${{github.workspace}}/interfaces/Python/scipy_interface
-        run: pytest ${{github.workspace}}/.github/Python/test_scipy_interface.py
+        run: pytest test_scipy_interface.py
