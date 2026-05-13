@@ -351,7 +351,7 @@ def minimize(
             flat_jac_block = np.atleast_2d(np.asarray(c_jac_i(x), dtype=float)).ravel(order="F")
             # Column-major (Fortran) ordering to match unopy convention
             jacobian_values[offset:offset + flat.size] = flat_jac_block
-            offset += len(flat)
+            offset += flat.size
 
     # 4e: Dense sparsity pattern (column-major ordering)
     if total_constraints > 0:
