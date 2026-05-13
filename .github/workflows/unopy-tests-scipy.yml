@@ -54,5 +54,5 @@ jobs:
         run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
 
       - name: Run tests
-        working-directory: ${{github.workspace}}/interfaces/scipy_interface
+        working-directory: ${{github.workspace}}/interfaces/Python/scipy_interface
         run: pytest ${{github.workspace}}/.github/Python/test_scipy_interface.py
