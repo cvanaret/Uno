@@ -373,7 +373,6 @@ def minimize(
     )
     model.set_objective(unopy.MINIMIZE, objective_callback, gradient_callback)
     if total_constraints > 0:
-        print(total_constraints, "variables with lower bounds", all_lb, "and upper bound", all_ub)
         model.set_constraints(
             total_constraints,
             constraint_callback,
@@ -388,7 +387,6 @@ def minimize(
 
     # Step 5b: Lagrangian Hessian operator (if Hessian provided)
     if hess is not None:
-        print("Hessian operator provided")
         def hessian_operator_callback(x, evaluate_at_x, obj_mult,
                                       multipliers, vector, result):
             # Objective Hessian contribution
@@ -407,8 +405,6 @@ def minimize(
 
         model.set_lagrangian_hessian_operator(hessian_operator_callback)
         model.set_lagrangian_sign_convention(unopy.MULTIPLIER_POSITIVE)
-    else:
-        print("No Hessian operator provided")
 
 
     # Step 6: Configure and run solver
