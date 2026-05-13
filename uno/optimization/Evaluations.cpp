@@ -61,7 +61,7 @@ namespace uno {
          model.evaluate_jacobian(primals, this->jacobian_values.data());
          // check finiteness
          if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), invalid_value)) {
-            throw GradientEvaluationError();
+            throw JacobianEvaluationError();
          }
          this->is_jacobian_computed = true;
       }
