@@ -372,7 +372,9 @@ if(SKBUILD)
       target_link_options(unopy PRIVATE -flto=auto)
    endif()
 
-   install(FILES interfaces/Python/unopy/__init__.py DESTINATION unopy)
+   install(DIRECTORY interfaces/Python/unopy/ DESTINATION unopy)
+   install(DIRECTORY interfaces/Python/scipy_interface/ DESTINATION scipy_interface)
+   install(DIRECTORY interfaces/Python/gemseo_uno/ DESTINATION gemseo_uno)
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
