@@ -57,4 +57,4 @@ jobs:
 
       - name: Run tests
         working-directory: ${{github.workspace}}/interfaces/Python/gemseo_uno
-        run: pytest ${{github.workspace}}/.github/Python/test_gemseo_uno.py
+        run: pytest test_gemseo_uno.py
