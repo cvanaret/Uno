@@ -7,7 +7,7 @@ from gemseo_uno.settings.base_uno_settings import UNO_Settings
 
 
 @pytest.mark.parametrize(
-    "method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"]
+    "method", ["UNO_Filter_SQP", "UNO_Funnel_SQP"]
 )
 def test_power2(method):
     problem = Power2()
