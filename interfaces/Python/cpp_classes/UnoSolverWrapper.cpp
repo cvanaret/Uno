@@ -43,6 +43,10 @@ namespace uno {
       uno::Logger::set_stream(*this->ostream);
    }
 
+   void UnoSolverWrapper::set_notify_acceptable_iterate_callback(NotifyAcceptableIterateCallback notify_acceptable_iterate_callback) {
+      this->notify_acceptable_iterate_callback = std::move(notify_acceptable_iterate_callback);
+   }
+
    Result UnoSolverWrapper::optimize(const PythonUserModel& user_model) {
       const PythonModel model{user_model};
       Logger::set_logger(this->options.get_string("logger"));

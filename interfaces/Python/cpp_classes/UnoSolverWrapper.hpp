@@ -31,17 +31,18 @@ namespace uno {
    public:
       Uno uno_solver{};
       Options options{};
-      std::optional<NotifyAcceptableIterateCallback> notify_acceptable_iterate_callback{};
 
       UnoSolverWrapper();
 
       void set_logger_stream(py::object py_stream);
+      void set_notify_acceptable_iterate_callback(NotifyAcceptableIterateCallback notify_acceptable_iterate_callback);
       [[nodiscard]] Result optimize(const PythonUserModel& user_model);
 
    private:
       py::object stream;
       std::unique_ptr<PythonStreamBuffer> stream_buffer;
       std::unique_ptr<std::ostream> ostream;
+      std::optional<NotifyAcceptableIterateCallback> notify_acceptable_iterate_callback{};
    };
 } // namespace
 

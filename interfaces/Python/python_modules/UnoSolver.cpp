@@ -87,7 +87,7 @@ namespace uno {
       }, py::arg("preset_name"))
 
       .def("set_notify_acceptable_iterate_callback", [](UnoSolverWrapper& solver, NotifyAcceptableIterateCallback callback) {
-         solver.notify_acceptable_iterate_callback = std::move(callback);
+         solver.set_notify_acceptable_iterate_callback(std::move(callback));
       })
 
       .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
