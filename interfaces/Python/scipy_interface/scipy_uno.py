@@ -370,6 +370,7 @@ def minimize(
     )
     model.set_objective(unopy.MINIMIZE, objective_callback, gradient_callback)
     if total_constraints > 0:
+        print(total_constraints, "variables with lower bounds", all_lb, "and upper bound", all_ub)
         model.set_constraints(
             total_constraints,
             constraint_callback,
