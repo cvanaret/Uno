@@ -37,7 +37,6 @@ testpaths = ["interfaces/Python/tests"]
 cmake.source-dir = "."
 build.verbose = true
 wheel.cmake = true
-wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init__.py
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
