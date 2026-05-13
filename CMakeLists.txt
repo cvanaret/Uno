@@ -372,6 +372,7 @@ if(SKBUILD)
       target_link_options(unopy PRIVATE -flto=auto)
    endif()
 
+   install(FILES interfaces/Python/unopy/__init__.py DESTINATION unopy)
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
