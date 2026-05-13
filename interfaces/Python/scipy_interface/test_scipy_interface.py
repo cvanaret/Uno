@@ -8,7 +8,7 @@ from scipy.optimize import rosen, rosen_der, rosen_hess, NonlinearConstraint, Li
 from scipy_interface.scipy_uno import minimize
 
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])  # "ipopt"
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_rosen(method):
     res = minimize(
         rosen,
@@ -22,7 +22,7 @@ def test_rosen(method):
     assert res.success
 
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])  # "ipopt"
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_rosen_bnds(method):
     res = minimize(
         rosen,
@@ -58,7 +58,7 @@ def test_rosen_constr(c_type):
 
     assert res.success
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_rosen_constr2(method):
     res = minimize(
         rosen,
@@ -78,7 +78,7 @@ def test_rosen_constr2(method):
     )
     assert res.success
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_rosen_constr2_hess(method):
     res = minimize(
         rosen,
