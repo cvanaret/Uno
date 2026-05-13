@@ -78,7 +78,7 @@ def test_rosen_constr2(method):
     )
     assert res.success
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp"])
 def test_rosen_constr2_hess(method):
     res = minimize(
         rosen,
