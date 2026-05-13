@@ -346,12 +346,15 @@ def minimize(
     def constraint_jacobian_callback(x, jacobian_values):
         offset = 0
         for c_fun_i, c_jac_i, _, _, _, m_i in normalized:
-            if c_jac_i is None:
+            if c_jac_i is not None:
+                jac_block = np.atleast_2d(np.asarray(c_jac_i(x), dtype=float))
+            else:
                 raise ValueError("Constraint Jacobian is not provided.")
-            flat_jac_block = np.atleast_2d(np.asarray(c_jac_i(x), dtype=float)).ravel(order="F")
             # Column-major (Fortran) ordering to match unopy convention
-            jacobian_values[offset:offset + flat.size] = flat_jac_block
-            offset += flat.size
+            flat = jac_block.ravel(order="F")
+            for j in range(len(flat)):
+                jacobian_values[offset + j] = float(flat[j])
+            offset += len(flat)
 
     # 4e: Dense sparsity pattern (column-major ordering)
     if total_constraints > 0:
