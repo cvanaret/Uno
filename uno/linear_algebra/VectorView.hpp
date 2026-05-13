@@ -9,13 +9,13 @@
 #include "linear_algebra/BLASVector.hpp"
 
 namespace uno {
-   // span of a C pointer: allocation-free view of a certain length
+   // non-owning view of a certain size
    template <typename T>
    class VectorView: public BLASVector<T> {
    public:
       using value_type = T;
 
-      VectorView(T* pointer, size_t size) noexcept: pointer(pointer), size_(size) {
+      VectorView(T* pointer, size_t size) noexcept: pointer(pointer), view_size(size) {
       }
 
       // operators
@@ -24,7 +24,7 @@ namespace uno {
       using BLASVector<T>::operator-=;
 
       [[nodiscard]] size_t size() const noexcept override {
-         return this->size_;
+         return this->view_size;
       }
 
       [[nodiscard]] T* data() noexcept override {
@@ -45,7 +45,7 @@ namespace uno {
 
    protected:
       T* pointer;
-      const size_t size_;
+      const size_t view_size;
    };
 
    // free functions
