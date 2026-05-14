@@ -245,6 +245,8 @@ function uno_model(
   lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing,
   y0::Union{Vector{Float64},Nothing}=nothing,
+  zL0::Union{Vector{Float64},Nothing}=nothing,
+  zU0::Union{Vector{Float64},Nothing}=nothing,
 )
   @assert nvar == length(lvar) == length(uvar)
   @assert ncon == length(lcon) == length(ucon)
@@ -252,6 +254,8 @@ function uno_model(
   @assert nnzh == length(hrows) == length(hcols)
   @assert isnothing(x0) || nvar == length(x0)
   @assert isnothing(y0) || ncon == length(y0)
+  @assert isnothing(zL0) || nvar == length(zL0)
+  @assert isnothing(zU0) || nvar == length(zU0)
 
   # "LP" for linear problem, "QP" for quadratic problem, "NLP" for nonlinear problem
   @assert problem_type == "LP" || problem_type == "QP" || problem_type == "NLP"
@@ -315,6 +319,14 @@ function uno_model(
     uno_set_initial_primal_iterate(c_model, x0)
   end
 
+  if !isnothing(zL0)
+    uno_set_initial_lower_bound_dual_iterate(c_model, zL0)
+  end
+
+  if !isnothing(zU0)
+    uno_set_initial_upper_bound_dual_iterate(c_model, zU0)
+  end
+
   finalizer(uno_destroy_model, model)
   return model
 end
@@ -336,6 +348,8 @@ function uno_model(
   hessian_triangle::Char='L',
   lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing,
+  zL0::Union{Vector{Float64},Nothing}=nothing,
+  zU0::Union{Vector{Float64},Nothing}=nothing,
 )
   return uno_model(
     problem_type,
@@ -365,6 +379,8 @@ function uno_model(
     lagrangian_sign,
     x0,
     nothing,
+    zL0,
+    zU0,
   )
 end
 
@@ -546,13 +562,15 @@ function uno(
   hessian_triangle::Char='L',
   lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing,
-  y0::Union{Vector{Float64},Nothing}=nothing;
+  y0::Union{Vector{Float64},Nothing}=nothing,
+  zL0::Union{Vector{Float64},Nothing}=nothing,
+  zU0::Union{Vector{Float64},Nothing}=nothing;
   kwargs...
 )
   model = uno_model(problem_type, minimize, nvar, ncon, lvar, uvar, lcon, ucon, jrows,
                     jcols, nnzj, hrows, hcols, nnzh, eval_objective, eval_constraints,
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
-                    eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
+                    eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0, zL0, zU0)
   solver = uno_solver(; kwargs...)
   uno_optimize(solver, model)
   stats = uno_statistics(model, solver)
@@ -575,7 +593,9 @@ function uno(
   user_model=nothing,
   hessian_triangle::Char='L',
   lagrangian_sign::Int=1,
-  x0::Union{Vector{Float64},Nothing}=nothing;
+  x0::Union{Vector{Float64},Nothing}=nothing,
+  zL0::Union{Vector{Float64},Nothing}=nothing,
+  zU0::Union{Vector{Float64},Nothing}=nothing;
   kwargs...
 )
   return uno(
@@ -605,7 +625,9 @@ function uno(
     hessian_triangle,
     lagrangian_sign,
     x0,
-    nothing;
+    nothing,
+    zL0,
+    zU0;
     kwargs...
   )
 end
