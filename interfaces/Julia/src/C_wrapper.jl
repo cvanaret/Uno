@@ -217,6 +217,42 @@ function uno_set_initial_dual_iterate_component(model::Model, index::Int, initia
   return
 end
 
+function uno_set_initial_lower_bound_dual_iterate(model::Model, initial_lower_bound_dual_iterate::Vector{Float64})
+  @assert model.nvar == length(initial_lower_bound_dual_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_lower_bound_dual_iterate(model.c_model, initial_lower_bound_dual_iterate)
+  end
+  flag || error("Failed to set initial lower bound dual iterate via uno_set_initial_lower_bound_dual_iterate.")
+  return
+end
+
+function uno_set_initial_lower_bound_dual_iterate_component(model::Model, index::Int, initial_dual_component::Float64)
+  @assert 1 ≤ index ≤ model.nvar
+  GC.@preserve model begin
+    flag = uno_set_initial_lower_bound_dual_iterate_component(model.c_model, Cint(index), initial_dual_component)
+  end
+  flag || error("Failed to set initial lower bound dual iterate component via uno_set_initial_lower_bound_dual_iterate_component.")
+  return
+end
+
+function uno_set_initial_upper_bound_dual_iterate(model::Model, initial_upper_bound_dual_iterate::Vector{Float64})
+  @assert model.nvar == length(initial_upper_bound_dual_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_upper_bound_dual_iterate(model.c_model, initial_upper_bound_dual_iterate)
+  end
+  flag || error("Failed to set initial upper bound dual iterate via uno_set_initial_upper_bound_dual_iterate.")
+  return
+end
+
+function uno_set_initial_upper_bound_dual_iterate_component(model::Model, index::Int, initial_dual_component::Float64)
+  @assert 1 ≤ index ≤ model.nvar
+  GC.@preserve model begin
+    flag = uno_set_initial_upper_bound_dual_iterate_component(model.c_model, Cint(index), initial_dual_component)
+  end
+  flag || error("Failed to set initial upper bound dual iterate component via uno_set_initial_upper_bound_dual_iterate_component.")
+  return
+end
+
 function uno_model(
   problem_type::String,
   minimize::Bool,
@@ -311,20 +347,20 @@ function uno_model(
     end
 
     if !isnothing(y0)
-      uno_set_initial_dual_iterate(c_model, y0)
+      uno_set_initial_dual_iterate(model, y0)
     end
   end
 
   if !isnothing(x0)
-    uno_set_initial_primal_iterate(c_model, x0)
+    uno_set_initial_primal_iterate(model, x0)
   end
 
   if !isnothing(zL0)
-    uno_set_initial_lower_bound_dual_iterate(c_model, zL0)
+    uno_set_initial_lower_bound_dual_iterate(model, zL0)
   end
 
   if !isnothing(zU0)
-    uno_set_initial_upper_bound_dual_iterate(c_model, zU0)
+    uno_set_initial_upper_bound_dual_iterate(model, zU0)
   end
 
   finalizer(uno_destroy_model, model)
