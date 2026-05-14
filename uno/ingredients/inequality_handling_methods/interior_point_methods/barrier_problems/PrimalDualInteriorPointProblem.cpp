@@ -359,13 +359,17 @@ namespace uno {
             const double distance_to_bound = current_iterate.primals[variable_index] - variables_lower_bounds[variable_index];
             direction.multipliers.lower_bounds[variable_index] = (barrier_parameter - direction.primals[variable_index] *
                current_iterate.multipliers.lower_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.lower_bounds[variable_index];
-            assert(is_finite(direction.multipliers.lower_bounds[variable_index]) && "The lower bound dual is infinite");
+            if (is_infinite(direction.multipliers.lower_bounds[variable_index])) {
+               throw std::runtime_error("The lower bound dual is infinite");
+            }
          }
          if (is_finite(variables_upper_bounds[variable_index])) {
             const double distance_to_bound = current_iterate.primals[variable_index] - variables_upper_bounds[variable_index];
             direction.multipliers.upper_bounds[variable_index] = (barrier_parameter - direction.primals[variable_index] *
                current_iterate.multipliers.upper_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.upper_bounds[variable_index];
-            assert(is_finite(direction.multipliers.upper_bounds[variable_index]) && "The upper bound dual is infinite");
+            if (is_infinite(direction.multipliers.upper_bounds[variable_index])) {
+               throw std::runtime_error("The upper bound dual is infinite");
+            }
          }
       }
    }
@@ -392,7 +396,9 @@ namespace uno {
             }
          }
       }
-      assert(0. < step_length && step_length <= 1. && "The primal fraction-to-boundary step length is not in (0, 1]");
+      if (step_length <= 0. || step_length > 1.) {
+         throw std::runtime_error("The primal fraction-to-boundary step length is not in (0, 1]");
+      }
       return step_length;
    }
 
@@ -415,7 +421,9 @@ namespace uno {
             }
          }
       }
-      assert(0. < step_length && step_length <= 1. && "The dual fraction-to-boundary step length is not in (0, 1]");
+      if (step_length <= 0. || step_length > 1.) {
+         throw std::runtime_error("The dual fraction-to-boundary step length is not in (0, 1]");
+      }
       return step_length;
    }
 
@@ -457,7 +465,6 @@ namespace uno {
             if (is_finite(coefficient)) {
                const double lb = coefficient / this->parameters.k_sigma;
                const double ub = coefficient * this->parameters.k_sigma;
-               assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
                if (lb <= ub) {
                   const double current_value = iterate.multipliers.lower_bounds[variable_index];
                   iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
@@ -467,7 +474,7 @@ namespace uno {
                   }
                }
                else {
-                  WARNING << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset\n";
+                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
                }
             }
          }
@@ -476,7 +483,6 @@ namespace uno {
             if (is_finite(coefficient)) {
                const double lb = coefficient * this->parameters.k_sigma;
                const double ub = coefficient / this->parameters.k_sigma;
-               assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
                if (lb <= ub) {
                   const double current_value = iterate.multipliers.upper_bounds[variable_index];
                   iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
@@ -486,7 +492,7 @@ namespace uno {
                   }
                }
                else {
-                  WARNING << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset\n";
+                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
                }
             }
          }
@@ -495,7 +501,9 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
-      assert(is_finite(barrier_parameter));
+      if (is_infinite(barrier_parameter)) {
+         throw std::runtime_error("Barrier parameter is infinite");
+      }
 
       // start with the auxiliary measure of the initial problem
       this->inner.set_auxiliary_measure(iterate);
@@ -520,7 +528,9 @@ namespace uno {
          }
       }
       barrier_terms *= barrier_parameter;
-      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
+      if (std::isnan(barrier_terms)) {
+         throw std::runtime_error("The auxiliary measure is not an number.");
+      }
       iterate.progress.auxiliary += barrier_terms;
    }
 

@@ -4,7 +4,7 @@
 #ifndef UNO_LAPACK_H
 #define UNO_LAPACK_H
 
-#include <cassert>
+#include <cmath>
 #include "fortran_interface.h"
 #define dpotrf FC_GLOBAL_(dpotrf, DPOTRF)
 #define dsytrf FC_GLOBAL_(dsytrf, DSYTRF)
@@ -35,7 +35,9 @@ namespace uno {
       inline bool cholesky_factorization(char uplo, size_t dimension, double* a, size_t leading_dimension) {
          const int n = static_cast<int>(dimension);
          const int lda = static_cast<int>(leading_dimension);
-         assert(lda >= std::max(1, n));
+         if (lda < std::max(1, n)) {
+            throw std::invalid_argument("lda is not large enough");
+         }
          int info = 0;
          dpotrf(&uplo, &n, a, &lda, &info);
          return (info == 0);
@@ -48,16 +50,23 @@ namespace uno {
             size_t leading_dimension) {
          const int n = static_cast<int>(dimension);
          const int lda = static_cast<int>(leading_dimension);
-         assert(lda >= std::max(1, n));
+         if (lda < std::max(1, n)) {
+            throw std::invalid_argument("lda is not large enough");
+         }
          std::vector<int> ipiv(dimension);
          // first call to get the optimal lwork
          double work_size = 0.;
          int lwork = -1;
          int info = 0;
          dsytrf(&uplo, &n, a, &lda, ipiv.data(), &work_size, &lwork, &info);
+         if (info < 0) {
+            throw std::runtime_error("bunch_kaufman_factorization (first call to dsytrf) failed");
+         }
          // second call to factorize
-         lwork = static_cast<int>(work_size);
-         assert(lwork >= 0);
+         lwork = static_cast<int>(std::ceil(work_size));
+         if (lwork < 0) {
+            throw std::runtime_error("lwork is negative");
+         }
          std::vector<double> work(static_cast<size_t>(lwork));
          dsytrf(&uplo, &n, a, &lda, ipiv.data(), work.data(), &lwork, &info);
          return {(info == 0), std::move(ipiv)};

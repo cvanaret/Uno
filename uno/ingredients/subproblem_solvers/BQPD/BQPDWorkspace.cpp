@@ -55,8 +55,9 @@ namespace uno {
             const size_t row_index = static_cast<size_t>(this->hessian_row_indices[nonzero_index]);
             const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
             const double entry = this->hessian_values[nonzero_index];
-            assert(row_index < vector.size());
-            assert(column_index < vector.size());
+            if (row_index >= vector.size() || column_index >= vector.size()) {
+               throw std::runtime_error("Dimension mismatch");
+            }
 
             const double factor = (row_index != column_index) ? 2. : 1.;
             quadratic_product += factor * entry * vector[row_index] * vector[column_index];
@@ -128,7 +129,9 @@ namespace uno {
 
          // constraint index
          const uno_int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
-         assert(current_constraint <= constraint_index);
+         if (current_constraint > constraint_index) {
+            throw std::runtime_error("Dimension mismatch");
+         }
          while (current_constraint < constraint_index) {
             ++current_constraint;
             this->gradients_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 +

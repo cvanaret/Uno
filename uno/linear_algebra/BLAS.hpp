@@ -4,7 +4,6 @@
 #ifndef UNO_BLAS_H
 #define UNO_BLAS_H
 
-#include <cassert>
 #include "fortran_interface.h"
 #define dcopy FC_GLOBAL_(dcopy, DCOPY)
 #define dscal FC_GLOBAL_(dscal, DSCAL)
@@ -109,7 +108,9 @@ namespace uno {
          const int m = static_cast<int>(number_rows);
          const int n = static_cast<int>(number_colums);
          const int lda = static_cast<int>(leading_dimension);
-         assert(lda >= std::max(1, m));
+         if (lda < std::max(1, m)) {
+            throw std::invalid_argument("lda is not large enough");
+         }
          constexpr int increment = 1;
          dgemv(&trans, &m, &n, &alpha, a, &lda, x, &increment, &beta, y, &increment);
       }
@@ -126,25 +127,44 @@ namespace uno {
             size_t leading_dimension_b, double beta, double* c, size_t leading_dimension_c) {
          const int m = static_cast<int>(number_rows_c);
          const int n = static_cast<int>(number_columns_c);
-         const int k = static_cast<int>(transa == 'N' ? number_columns_a : number_rows_a);
+         const size_t kA = (transa == 'N') ? number_columns_a : number_rows_a;
+         const size_t kB = (transb == 'N') ? number_rows_b : number_columns_b;
+         if (kA != kB) {
+            throw std::invalid_argument("Dimension mismatch");
+         }
          if (transa == 'N') {
-            assert(number_rows_c == number_rows_a);
+            if (number_rows_c != number_rows_a) {
+               throw std::invalid_argument("Dimension mismatch between C and A");
+            }
          }
          else {
-            assert(number_rows_c == number_columns_a);
+            if (number_rows_c != number_columns_a) {
+               throw std::invalid_argument("Dimension mismatch between C and A");
+            }
          }
          if (transb == 'N') {
-            assert(number_columns_c == number_columns_b);
+            if (number_columns_c != number_columns_b) {
+               throw std::invalid_argument("Dimension mismatch between C and B");
+            }
          }
          else {
-            assert(number_columns_c == number_rows_b);
+            if (number_columns_c != number_rows_b) {
+               throw std::invalid_argument("Dimension mismatch between C and B");
+            }
          }
          const int lda = static_cast<int>(leading_dimension_a);
          const int ldb = static_cast<int>(leading_dimension_b);
          const int ldc = static_cast<int>(leading_dimension_c);
-         assert(lda >= std::max(1, transa == 'N' ? m : k));
-         assert(ldb >= std::max(1, transb == 'N' ? k : n));
-         assert(ldc >= std::max(1, m));
+         const int k = static_cast<int>(kA);
+         if (lda < std::max(1, transa == 'N' ? m : k)) {
+            throw std::invalid_argument("lda is too small");
+         }
+         if (ldb < std::max(1, transb == 'N' ? k : n)) {
+            throw std::invalid_argument("ldb is too small");
+         }
+         if (ldc < std::max(1, m)) {
+            throw std::invalid_argument("ldc is too small");
+         }
          dgemm(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
       }
 
@@ -160,28 +180,14 @@ namespace uno {
          const int n = static_cast<int>(number_columns_b);
          const int lda = static_cast<int>(leading_dimension_a);
          const int ldb = static_cast<int>(leading_dimension_b);
-         assert(lda >= std::max(1, side == 'L' ? m : n));
-         assert(ldb >= std::max(1, m));
+         if (lda < std::max(1, side == 'L' ? m : n)) {
+            throw std::invalid_argument("lda is too small");
+         }
+         if (ldb < std::max(1, m)) {
+            throw std::invalid_argument("ldb is too small");
+         }
          dtrsm(&side, &uplo, &transa, &diag, &m, &n, &alpha, a, &lda, b, &ldb);
       }
-
-      /*
-      // performs one of the matrix-matrix operations
-      // B := alpha op(A) B   or   B := alpha B op(A)
-      // where
-      // alpha is a scalar, B is an m by n matrix, A is a unit, or non-unit, triangular matrix, and
-      // op(X) = X   or   op(X) = X^T
-      inline void BLAS_triangular_matrix_matrix_product(char side, char uplo, char transa, char diag, size_t number_rows_b,
-            size_t number_columns_b, double alpha, double* a, size_t leading_dimension_a, double* b, size_t leading_dimension_b) {
-         const int m = static_cast<int>(number_rows_b);
-         const int n = static_cast<int>(number_columns_b);
-         const int lda = static_cast<int>(leading_dimension_a);
-         const int ldb = static_cast<int>(leading_dimension_b);
-         assert(lda >= std::max(1, side == 'L' ? m : n));
-         assert(ldb >= std::max(1, m));
-         dtrmm(&side, &uplo, &transa, &diag, &m, &n, &alpha, a, &lda, b, &ldb);
-      }
-      */
 
       // performs symmetric rank-1 update:
       // A := alpha x x^T + A
@@ -190,7 +196,9 @@ namespace uno {
          const int n = static_cast<int>(dimension);
          constexpr int increment = 1;
          const int lda = static_cast<int>(leading_dimension_a);
-         assert(lda >= std::max(1, n));
+         if (lda < std::max(1, n)) {
+            throw std::invalid_argument("lda is too small");
+         }
          dsyr(&uplo, &n, &alpha, x, &increment, a, &lda);
       }
 
@@ -203,8 +211,13 @@ namespace uno {
          const int n = static_cast<int>(dimension_c);
          const int k = static_cast<int>(trans == 'N' ? number_columns_a : number_rows_a);
          const int lda = static_cast<int>(leading_dimension_a);
-         assert(lda >= std::max(1, trans == 'N' ? n : k));
+         if (lda < std::max(1, trans == 'N' ? n : k)) {
+            throw std::invalid_argument("lda is too small");
+         }
          const int ldc = static_cast<int>(leading_dimension_c);
+         if (ldc < std::max(1, n)) {
+            throw std::invalid_argument("ldc is too small");
+         }
          dsyrk(&uplo, &trans, &n, &k, &alpha, a, &lda, &beta, c, &ldc);
       }
    }

@@ -74,8 +74,9 @@ namespace uno {
          const size_t constraint_index = static_cast<size_t>(this->jacobian_sparsity->row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_sparsity->column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
-         assert(variable_index < model.number_variables);
-         assert(constraint_index < model.number_constraints);
+         if (variable_index >= model.number_variables || constraint_index >= model.number_constraints) {
+            throw std::runtime_error("Dimension mismatch");
+         }
 
          result[constraint_index] += derivative * vector[variable_index];
       }
@@ -88,8 +89,9 @@ namespace uno {
          const size_t constraint_index = static_cast<size_t>(this->jacobian_sparsity->row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_sparsity->column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
-         assert(constraint_index < model.number_constraints);
-         assert(variable_index < model.number_variables);
+         if (variable_index >= model.number_variables || constraint_index >= model.number_constraints) {
+            throw std::runtime_error("Dimension mismatch");
+         }
 
          result[variable_index] += derivative * vector[constraint_index];
       }

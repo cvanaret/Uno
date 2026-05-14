@@ -32,8 +32,8 @@ namespace uno {
 
    // free function
    template <typename Matrix1, typename Matrix2,
-         std::enable_if_t<std::is_same_v<typename std::remove_reference_t<Matrix1>::value_type,
-                                         typename std::remove_reference_t<Matrix2>::value_type>, int> = 0,
+         std::enable_if_t<std::is_same_v<std::remove_const_t<typename std::remove_reference_t<Matrix1>::value_type>,
+                                         std::remove_const_t<typename std::remove_reference_t<Matrix2>::value_type>>, int> = 0,
       // Matrix1 and Matrix2 are both not arithmetic types
       std::enable_if_t<!std::is_arithmetic_v<Matrix1>, int> = 0,
       std::enable_if_t<!std::is_arithmetic_v<Matrix2>, int> = 0>
