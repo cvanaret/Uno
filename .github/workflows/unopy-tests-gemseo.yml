@@ -56,4 +56,4 @@ jobs:
         run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
 
       - name: Run tests
-        run: python -m pytest --import-mode=importlib ${{github.workspace}}/interfaces/Python/gemseo_uno/test_gemseo_uno.py
+        run: python -m pytest -s --import-mode=importlib ${{github.workspace}}/interfaces/Python/gemseo_uno/test_gemseo_uno.py
