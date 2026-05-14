@@ -46,7 +46,7 @@ namespace uno {
 
    bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) const {
+         const Direction& direction, double step_length, EvaluationCache& evaluation_cache) const {
       subproblem.problem.postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
@@ -78,10 +78,6 @@ namespace uno {
             evaluation_cache.trial_evaluations.evaluate_objective_gradient(subproblem.problem.model, trial_iterate.primals);
             evaluation_cache.trial_evaluations.evaluate_jacobian(subproblem.problem.model, trial_iterate.primals);
          }
-      }
-      if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier,
-            trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
       }
       return accept_iterate;
    }

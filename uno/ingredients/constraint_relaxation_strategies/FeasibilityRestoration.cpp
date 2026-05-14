@@ -26,6 +26,7 @@
 #include "symbolic/Sum.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/UserCallbacks.hpp"
 
 namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options) :
@@ -225,7 +226,7 @@ namespace uno {
             *this->inertia_correction_strategy);
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, *this->globalization_strategy,
             subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
-            evaluation_cache, user_callbacks);
+            evaluation_cache);
          if (uses_trust_region || accept_iterate) {
             this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
          }
@@ -235,7 +236,7 @@ namespace uno {
             *this->feasibility_inertia_correction_strategy);
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->feasibility_globalization_strategy,
             feasibility_subproblem, this->feasibility_subproblem_solver->get_workspace(), current_iterate, trial_iterate,
-            direction, step_length, evaluation_cache, user_callbacks);
+            direction, step_length, evaluation_cache);
          if (uses_trust_region || accept_iterate) {
             this->feasibility_hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
          }
@@ -257,11 +258,21 @@ namespace uno {
          this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate,
             evaluation_cache.trial_evaluations);
+         if (accept_iterate) {
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+               this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+               trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+         }
       }
       else {
          this->compute_residuals(this->feasibility_problem, trial_iterate, evaluation_cache.trial_evaluations);
          trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate,
             evaluation_cache.trial_evaluations);
+         if (accept_iterate) {
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+               this->feasibility_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+               trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+         }
       }
       return accept_iterate;
    }

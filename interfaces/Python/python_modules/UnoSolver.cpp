@@ -1,15 +1,15 @@
-// Copyright (c) 2025 Charlie Vanaret
+// Copyright (c) 2025-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
+#include <pybind11/functional.h>
+#include <pybind11/stl.h>
 #include <memory>
 #include <string>
 #include "../cpp_classes/PythonModel.hpp"
-#include "../cpp_classes/PythonStreamBuffer.hpp"
 #include "../cpp_classes/UnoSolverWrapper.hpp"
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
-#include "tools/Logger.hpp"
 
 namespace py = pybind11;
 
@@ -85,6 +85,10 @@ namespace uno {
       .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
          Presets::set(solver.options, preset_name);
       }, py::arg("preset_name"))
+
+      .def("set_notify_acceptable_iterate_callback", [](UnoSolverWrapper& solver, NotifyAcceptableIterateCallback callback) {
+         solver.set_notify_acceptable_iterate_callback(std::move(callback));
+      })
 
       .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
          return solver.optimize(user_model);

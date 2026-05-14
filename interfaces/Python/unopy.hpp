@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Charlie Vanaret
+// Copyright (c) 2025-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_UNOPY_H
@@ -59,6 +59,11 @@ namespace uno {
 
    using HessianOperator = std::function<void(const_array<double>, bool, double, const_array<double>,
       const_array<double>, py::array_t<double>)>;
+
+   using NotifyAcceptableIterateCallback = std::function<void(const_array<double> /*primals*/,
+      const_array<double> /*lower_bound_multipliers*/, const_array<double> /*upper_bound_multipliers*/,
+      const_array<double> /*constraint_multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility_residual*/,
+      double /*stationarity_residual*/, double /*complementarity_residual*/)>;
 
    using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,
       std::optional<Jacobian>, std::optional<JacobianOperator>, std::optional<JacobianTransposedOperator>,

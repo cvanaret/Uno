@@ -18,6 +18,7 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
+#include "tools/UserCallbacks.hpp"
 
 namespace uno {
    class ExactHessian;
@@ -97,9 +98,14 @@ namespace uno {
          *this->inertia_correction_strategy);
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->globalization_strategy,
          subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
-         evaluation_cache, user_callbacks);
+         evaluation_cache);
       this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+      if (accept_iterate) {
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+            this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+      }
       if (uses_trust_region || accept_iterate) {
          this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
       }
