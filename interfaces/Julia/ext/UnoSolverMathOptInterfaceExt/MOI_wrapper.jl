@@ -1643,7 +1643,7 @@ function MOI.optimize!(model::Optimizer)
 
     # Dual iterate for the general constraints
     for (i, start) in enumerate(model.qp_data.mult_g)
-        y0_i = _dual_start(model, start, -1)
+        y0_i = _dual_start(model, start)
         UnoSolver.uno_set_initial_dual_iterate_component(inner, i, y0_i)
     end
     offset = length(model.qp_data.mult_g)
@@ -1655,27 +1655,27 @@ function MOI.optimize!(model::Optimizer)
         for (_, cache) in model.vector_nonlinear_oracle_constraints
             if cache.start !== nothing
                 for i in 1:cache.set.output_dimension
-                    UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, _dual_start(model, cache.start[i], -1))
+                    UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, _dual_start(model, cache.start[i]))
                 end
             end
             offset += cache.set.output_dimension
         end
         # ...then come the ScalarNonlinearFunctions
         for (key, val) in model.mult_g_nlp
-            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+key.value, _dual_start(model, val, -1))
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+key.value, _dual_start(model, val))
         end
     else
         for (i, start) in enumerate(model.nlp_dual_start::Vector{Float64})
-            y0_i = _dual_start(model, start, -1)
+            y0_i = _dual_start(model, start)
             UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, y0_i)
         end
     end
 
     # Dual iterate for the bound constraints
     for i in 1:length(model.variable_primal_start)
-        z0_L_i = max(0.0, something(model.mult_x_L[i], 0.0)) # >= 0
+        z0_L_i = max(0.0, something(_dual_start(model, model.mult_x_L[i]), 0.0)) # >= 0
         UnoSolver.uno_set_initial_lower_bound_dual_iterate_component(inner, i, z0_L_i)
-        z0_U_i = min(0.0, something(model.mult_x_U[i], 0.0)) # <= 0
+        z0_U_i = min(0.0, something(_dual_start(model, model.mult_x_U[i]), 0.0)) # <= 0
         UnoSolver.uno_set_initial_upper_bound_dual_iterate_component(inner, i, z0_U_i)
     end
 
