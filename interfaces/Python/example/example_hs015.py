@@ -40,8 +40,7 @@ def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipli
 def notify_acceptable_iterate_callback(primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers,
 									   objective_multiplier, primal_feasibility_residual, stationarity_residual,
 									   complementarity_residual):
-	print("CALLBACK = ", primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers, objective_multiplier,
-	      primal_feasibility_residual, stationarity_residual, complementarity_residual)
+	pass
 
 if __name__ == '__main__':
 	# model creation
