@@ -411,6 +411,8 @@ def minimize(
     uno_solver = unopy.UnoSolver()
     uno_solver.set_preset(method_lower)
     uno_solver.set_option("logger", "DEBUG3")
+    uno_solver.set_option("print_subproblem", True)
+    uno_solver.set_option("print_solution", True)
     if tol is not None:
         uno_solver.set_option("primal_tolerance", tol)
         uno_solver.set_option("dual_tolerance", tol)
