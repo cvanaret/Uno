@@ -410,6 +410,7 @@ def minimize(
     # Step 6: Configure and run solver
     uno_solver = unopy.UnoSolver()
     uno_solver.set_preset(method_lower)
+    uno_solver.set_option("logger", "DEBUG3")
     if tol is not None:
         uno_solver.set_option("primal_tolerance", tol)
         uno_solver.set_option("dual_tolerance", tol)
