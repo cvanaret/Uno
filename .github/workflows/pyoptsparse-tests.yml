@@ -85,7 +85,7 @@ jobs:
       # -------------------------
       # Run tests
       # -------------------------
-      - name: Run pyOptSparse tests (Uno/unopy only)
+      - name: Run pyOptSparse tests (unopy only)
         run: |
           pip install pytest pytest-timeout parameterized
           cd pyoptsparse
