@@ -87,7 +87,7 @@ jobs:
       # -------------------------
       - name: Run pyOptSparse tests (Uno/unopy only)
         run: |
-          pip install pytest parameterized
+          pip install pytest pytest-timeout parameterized
           cd pyoptsparse
 
           # Ensure we only test Uno/unopy:
@@ -95,4 +95,4 @@ jobs:
           # We avoid installing IPOPT, SNOPT, etc., so only pure-Python / available solvers remain.)
 
           pytest tests -v -k "uno or unopy or UNO or Unopy or test_uno or test_unopy" \
-            --maxfail=1 --disable-warnings
+            --maxfail=1 --disable-warnings --timeout=5
