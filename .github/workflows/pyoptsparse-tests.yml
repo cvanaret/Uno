@@ -1,0 +1,70 @@
+name: pyOptSparse tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-pyoptsparse-unopy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      # -------------------------
+      # Install Uno / unopy
+      # -------------------------
+      - name: Install unopy (local build)
+        run: |
+          pip install numpy scipy
+          pip install .
+
+      # -------------------------
+      # Clone pyOptSparse
+      # -------------------------
+      - name: Clone pyOptSparse
+        run: |
+          git clone https://github.com/mdolab/pyoptsparse.git
+          cd pyoptsparse
+          git checkout main
+
+      # -------------------------
+      # Install pyOptSparse WITHOUT external solvers
+      # -------------------------
+      - name: Install pyOptSparse (no external solvers)
+        run: |
+          cd pyoptsparse
+
+          # Install core package only
+          pip install -e .
+
+          # Install test dependencies if present
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # -------------------------
+      # Run tests
+      # -------------------------
+      - name: Run pyOptSparse tests (Uno/unopy only)
+        run: |
+          cd pyoptsparse
+
+          # Ensure we only test Uno/unopy:
+          # (pyoptsparse selects solvers dynamically; if others are installed they may run.
+          # We avoid installing IPOPT, SNOPT, etc., so only pure-Python / available solvers remain.)
+
+          pytest tests -v -k "uno or unopy or UNO or Unopy or test_uno or test_unopy" \
+            --maxfail=1 --disable-warnings
