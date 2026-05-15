@@ -82,7 +82,7 @@ jobs:
       # -------------------------
       - name: Run pyOptSparse tests (Uno/unopy only)
         run: |
-          pip install pytest
+          pip install pytest parameterized
           cd pyoptsparse
 
           # Ensure we only test Uno/unopy:
