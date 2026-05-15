@@ -28,10 +28,13 @@ jobs:
       # -------------------------
       # Install Uno / unopy
       # -------------------------
-      - name: Install unopy (local build)
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+      
+      - name: Compile and install unopy
         run: |
           pip install numpy scipy
-          pip install .
+          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
 
       # -------------------------
       # Clone pyOptSparse
