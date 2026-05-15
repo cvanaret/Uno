@@ -60,9 +60,9 @@ jobs:
       # -------------------------
       - name: Clone pyOptSparse
         run: |
-          git clone https://github.com/mdolab/pyoptsparse.git
+          git clone https://github.com/robfalck/pyoptsparse
           cd pyoptsparse
-          git checkout main
+          git checkout unopy
 
       # -------------------------
       # Install pyOptSparse WITHOUT external solvers
@@ -82,6 +82,7 @@ jobs:
       # -------------------------
       - name: Run pyOptSparse tests (Uno/unopy only)
         run: |
+          pip install pytest
           cd pyoptsparse
 
           # Ensure we only test Uno/unopy:
