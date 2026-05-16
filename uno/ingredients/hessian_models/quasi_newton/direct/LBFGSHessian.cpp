@@ -199,13 +199,13 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute δ = sᵀy / yᵀy at the last entry
+   // compute δ = yᵀy / sᵀy at the last entry
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const double sTy = this->D[this->current_index];
       const auto y = this->Y.column(this->current_index);
       const double yTy = dot(y, y);
       // TODO safeguard
-      return std::min(this->delta_upper_bound, sTy/yTy);
+      return std::min(this->delta_upper_bound, yTy/sTy);
    }
 } // namespace
