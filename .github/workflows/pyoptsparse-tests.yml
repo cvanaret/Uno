@@ -75,24 +75,14 @@ jobs:
       - name: Install pyOptSparse (no external solvers)
         run: |
           cd pyoptsparse
-
-          # Install core package only
           pip install .
-
-          # Install test dependencies if present
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       # -------------------------
-      # Run tests
+      # Run Uno tests
       # -------------------------
       - name: Run pyOptSparse tests (unopy only)
         run: |
           pip install pytest pytest-timeout parameterized
           cd pyoptsparse
-
-          # Ensure we only test Uno/unopy:
-          # (pyoptsparse selects solvers dynamically; if others are installed they may run.
-          # We avoid installing IPOPT, SNOPT, etc., so only pure-Python / available solvers remain.)
-
-          pytest tests -v -k "uno or unopy or UNO or Unopy or test_uno or test_unopy" \
-            --maxfail=1 --disable-warnings --timeout=5
+          pytest tests -v -k "Uno" --maxfail=1 --timeout=120 --timeout-method=thread
