@@ -237,7 +237,7 @@ success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
 success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
 ```
 
-Loading options from a file:
+Loading options from a file that contains an `option value` pair per line. Anything that follows a `#` is treated as a comment and is ignored. The file `uno_default.opt` in the root directory contains the default Uno options.
 
 ```fortran
 logical(c_bool) :: success

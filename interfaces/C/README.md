@@ -129,7 +129,7 @@ uno_set_solver_bool_option(solver, "print_solution", true);
 uno_set_solver_string_option(solver, "hessian_model", "exact");
 ```
 
-Loading options from a file (overwrites existing options):
+Loading options from a file that contains an `option value` pair per line. Anything that follows a `#` is treated as a comment and is ignored. The file `uno_default.opt` in the root directory contains the default Uno options.
 ```c
 uno_load_solver_option_file(solver, "uno.opt");
 ```

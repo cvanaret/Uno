@@ -12,7 +12,7 @@ TR_aggressive_decrease_factor	4
 TR_decrease_factor	2
 TR_increase_factor	2
 TR_min_radius	1e-12
-TR_radius	100
+TR_radius	10
 TR_radius_reset_threshold	0.0001
 armijo_decrease_fraction	0.0001
 armijo_tolerance	1e-09
