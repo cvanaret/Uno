@@ -49,18 +49,28 @@ namespace uno {
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
 
       // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
+      // TODO compare against Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
       const auto sk = this->S.column(this->current_index);
       const auto yk = this->Y.column(this->current_index);
       const double norm_sk = norm_2(sk);
       const double norm_yk = norm_2(yk);
+      const double sTy = dot(sk, yk);
       // tolerance is √(machine epsilon)
-      if (dot(sk, yk) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
+      if (sTy < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
       }
       else {
          // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
          // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
          this->hessian_recomputation_required = true;
+         this->D[this->current_index] = sTy;
+         DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
+         /*
+         if (this->D[this->current_index] <= 0.) {
+            DEBUG << "Skipping the update\n";
+            return;
+         }
+         */
       }
    }
 
@@ -127,20 +137,7 @@ namespace uno {
 
    // protected member functions
 
-   void LBFGSHessian::update_D() {
-      this->D[this->current_index] = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
-      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
-   }
-
    void LBFGSHessian::recompute_hessian_representation() {
-      // check that the latest D entry sᵀ y is > 0
-      // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
-      this->update_D();
-      if (this->D[this->current_index] <= 0.) {
-         DEBUG << "Skipping the update\n";
-         return;
-      }
-
       this->validate_update();
       assert(0 < this->number_entries_in_memory);
 
