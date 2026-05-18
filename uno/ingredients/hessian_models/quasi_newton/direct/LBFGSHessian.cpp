@@ -29,7 +29,8 @@ namespace uno {
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
          V(this->model.number_variables, this->memory_size),
-         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")) {
+         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")),
+         max_skips_before_reset(options.get_unsigned_int("LBFGS_max_skips_before_reset")) {
    }
 
    bool LBFGSHessian::is_positive_definite() const {
@@ -49,18 +50,31 @@ namespace uno {
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
 
       // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
+      // TODO compare against Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
       const auto sk = this->S.column(this->current_index);
       const auto yk = this->Y.column(this->current_index);
       const double norm_sk = norm_2(sk);
       const double norm_yk = norm_2(yk);
+      const double sTy = dot(sk, yk);
       // tolerance is √(machine epsilon)
-      if (dot(sk, yk) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
+      if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
+         ++this->consecutive_skips;
+         if (this->consecutive_skips >= this->max_skips_before_reset) {
+            // reset the limited memory
+            DEBUG << "Update was skipped " << this->max_skips_before_reset << " consecutive times, resetting the limited memory\n";
+            this->number_entries_in_memory = 0;
+            this->current_index = 0;
+            this->consecutive_skips = 0;
+         }
       }
       else {
          // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
          // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
+         DEBUG << "Update is valid\n";
          this->hessian_recomputation_required = true;
+         this->D[this->current_index] = sTy;
+         this->consecutive_skips = 0;
       }
    }
 
@@ -127,20 +141,7 @@ namespace uno {
 
    // protected member functions
 
-   void LBFGSHessian::update_D() {
-      this->D[this->current_index] = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
-      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
-   }
-
    void LBFGSHessian::recompute_hessian_representation() {
-      // check that the latest D entry sᵀ y is > 0
-      // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
-      this->update_D();
-      if (this->D[this->current_index] <= 0.) {
-         DEBUG << "Skipping the update\n";
-         return;
-      }
-
       this->validate_update();
       assert(0 < this->number_entries_in_memory);
 
@@ -205,7 +206,6 @@ namespace uno {
       const double sTy = this->D[this->current_index];
       const auto y = this->Y.column(this->current_index);
       const double yTy = dot(y, y);
-      // TODO safeguard
       return std::min(this->delta_upper_bound, yTy/sTy);
    }
 } // namespace
