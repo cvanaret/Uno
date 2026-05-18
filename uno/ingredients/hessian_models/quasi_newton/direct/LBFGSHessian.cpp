@@ -29,7 +29,8 @@ namespace uno {
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
          V(this->model.number_variables, this->memory_size),
-         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")) {
+         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")),
+         max_skips_before_reset(options.get_unsigned_int("LBFGS_max_skips_before_reset")) {
    }
 
    bool LBFGSHessian::is_positive_definite() const {
