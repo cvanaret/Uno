@@ -119,7 +119,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 | Option                                       | Type    | Default | Description |
 | :---                                         | :---    | :---    | :---        |
-| `regularization_failure_threshold`           | double  | 1e40    | Threshold for the primal inertia correction coefficient above which failure is reported |
+| `regularization_failure_threshold`           | double  | 1e20    | Threshold for the primal inertia correction coefficient above which failure is reported |
 | `primal_regularization_initial_factor`       | double  | 1e-4    | Initial value of primal inertia correction coefficient |
 | `regularization_increase_factor`             | double  | 2       | Increase factor for the primal inertia correction coefficient |
 | `dual_regularization_fraction`               | double  | 1e-8    | Fraction of the dual inertia correction parameter |
