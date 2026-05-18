@@ -92,7 +92,7 @@ namespace uno {
 
       /** regularization options **/
       // regularization failure threshold
-      options.set_double("regularization_failure_threshold", 1e40);
+      options.set_double("regularization_failure_threshold", 1e20); // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_max_hessian_perturbation
       // Hessian regularization: initial value
       options.set_double("primal_regularization_initial_factor", 1e-4);
       options.set_double("regularization_increase_factor", 2);
