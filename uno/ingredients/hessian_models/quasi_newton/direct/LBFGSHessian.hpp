@@ -44,6 +44,8 @@ namespace uno {
       DenseMatrix<double> U;
       DenseMatrix<double> V;
       const double delta_upper_bound;
+      size_t consecutive_skips{0};
+      const size_t max_skips_before_reset{2};
 
       void recompute_hessian_representation() override;
       [[nodiscard]] double compute_delta() const;

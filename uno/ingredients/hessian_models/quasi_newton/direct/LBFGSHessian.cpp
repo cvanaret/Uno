@@ -58,6 +58,14 @@ namespace uno {
       // tolerance is √(machine epsilon)
       if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
+         ++this->consecutive_skips;
+         if (this->consecutive_skips >= this->max_skips_before_reset) {
+            // reset the limited memory
+            DEBUG << "Update was skipped " << this->max_skips_before_reset << " consecutive times, resetting the limited memory\n";
+            this->number_entries_in_memory = 0;
+            this->current_index = 0;
+            this->consecutive_skips = 0;
+         }
       }
       else {
          // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
@@ -65,6 +73,7 @@ namespace uno {
          DEBUG << "Update is valid\n";
          this->hessian_recomputation_required = true;
          this->D[this->current_index] = sTy;
+         this->consecutive_skips = 0;
       }
    }
 
@@ -196,7 +205,6 @@ namespace uno {
       const double sTy = this->D[this->current_index];
       const auto y = this->Y.column(this->current_index);
       const double yTy = dot(y, y);
-      // TODO safeguard
       return std::min(this->delta_upper_bound, yTy/sTy);
    }
 } // namespace
