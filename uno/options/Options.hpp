@@ -7,7 +7,6 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
@@ -41,7 +40,7 @@ namespace uno {
       void overwrite_with(const Options& overwriting_options);
       void print_non_default() const;
 
-      static const std::unordered_map<std::string, OptionType> option_types;
+      static const std::map<std::string, OptionType> option_types;
 
    private:
       std::map<std::string, uno_int> integer_options{};

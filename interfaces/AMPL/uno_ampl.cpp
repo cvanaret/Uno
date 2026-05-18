@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
    else if (argc == 2 && std::string(argv[1]) == "--strategies") {
       Uno::print_available_strategies();
    }
-   else {
+   else { // argc >= 2
       // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value, ...]
       // model name
       const char* model_name = argv[1];
@@ -70,16 +70,19 @@ int main(int argc, char* argv[]) {
       }
       // get the command line arguments (options start at index offset)
       const Options command_line_options = Options::get_command_line_options(argc, argv, offset);
-      // possibly set options from an option file
+
+      // [optional] set a preset
+      const auto optional_preset = command_line_options.get_string_optional("preset");
+      const Options preset_options = Presets::get_preset_options(optional_preset);
+      options.overwrite_with(preset_options);
+
+      // [optional] set options from an option file
       const auto optional_option_file = command_line_options.get_string_optional("option_file");
       if (optional_option_file.has_value()) {
          Options file_options = Options::load_option_file(*optional_option_file);
          options.overwrite_with(file_options);
       }
-      // possibly set a preset
-      const auto optional_preset = command_line_options.get_string_optional("preset");
-      const Options preset_options = Presets::get_preset_options(optional_preset);
-      options.overwrite_with(preset_options);
+
       // overwrite the options with the command line arguments
       options.overwrite_with(command_line_options);
 
