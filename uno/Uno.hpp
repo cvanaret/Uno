@@ -8,7 +8,6 @@
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Result.hpp"
-#include "optimization/SolutionStatus.hpp"
 
 namespace uno {
    // forward declarations
