@@ -256,7 +256,6 @@ namespace uno {
          file.close();
       }
       return options;
-      return options;
    }
 
    void Options::dump_default_options() {
@@ -307,7 +306,13 @@ namespace uno {
          this->bool_options[option_name] = option_value;
       }
       for (const auto& [option_name, option_value]: overwriting_options.string_options) {
-         this->string_options[option_name] = option_value;
+         // the preset may be passed as a normal option, handle it separately
+         if (option_name == "preset") {
+            Presets::set(*this, option_value);
+         }
+         else {
+            this->string_options[option_name] = option_value;
+         }
       }
       // if the option already exists and is not the same, flag it as overwritten
       //const auto existing_option_value = this->at_optional(option_name);
