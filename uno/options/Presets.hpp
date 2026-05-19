@@ -4,7 +4,6 @@
 #ifndef UNO_PRESETS_H
 #define UNO_PRESETS_H
 
-#include <optional>
 #include <string>
 
 namespace uno {
@@ -13,7 +12,7 @@ namespace uno {
 
    class Presets {
    public:
-      [[nodiscard]] static Options get_preset_options(const std::optional<std::string>& optional_preset);
+      static void set_default(Options& options);
       static void set(Options& options, const std::string& preset_name);
    };
 } // namespace

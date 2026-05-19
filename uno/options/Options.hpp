@@ -7,6 +7,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <vector>
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
@@ -31,13 +32,13 @@ namespace uno {
       [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
       [[nodiscard]] OptionType get_option_type(const std::string& option_name) const;
 
-      [[nodiscard]] static Options get_command_line_options(int argc, char* argv[], size_t offset);
-      [[nodiscard]] static Options load_option_file(const std::string& file_name);
+      [[nodiscard]] static std::vector<std::pair<std::string, std::string>> get_command_line_options(int argc, char* argv[],
+         size_t offset);
+      static void load_option_file(Options& options, const std::string& file_name);
 
       // Print all available options with their type and default value
       static void dump_default_options();
 
-      void overwrite_with(const Options& overwriting_options);
       void print_non_default() const;
 
       static const std::map<std::string, OptionType> option_types;

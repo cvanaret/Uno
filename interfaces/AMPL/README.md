@@ -6,8 +6,8 @@ To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(for
 - run the command ```./uno_ampl model.nl [-AMPL] [option=value ...]``` where ```[option=value ...]``` is a list of options separated by spaces. If the `-AMPL` flag is supplied, the solution is written to the AMPL solution file `model.sol`
 
 Options can be set in three different ways (with decreasing precedence):
+- passing an option file (`option_file=file`) that contains an `option value` pair per line (the example file `uno_default.opt` in the root directory contains Uno's default options). The options are set in this particular order. Anything that follows a `#` is treated as a comment and is ignored.
 - setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt]`).
-- passing an option file (`option_file=file`) that contains an `option value` pair per line. Anything that follows a `#` is treated as a comment and is ignored. The file `uno_default.opt` in the root directory contains the default Uno options.
 - setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/docs/options.md)).
 For an overview of the available strategies, type: ```./uno_ampl --strategies```:
 

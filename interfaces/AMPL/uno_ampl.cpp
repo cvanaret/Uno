@@ -59,6 +59,9 @@ int main(int argc, char* argv[]) {
       // gather the options
       Options options;
       DefaultOptions::load(options);
+      // set default preset
+      Presets::set_default(options);
+
       // the -AMPL flag indicates that the solution should be written to the AMPL solution file
       size_t offset = 2;
       if (argc > 2 && std::string(argv[2]) == "-AMPL") {
@@ -69,22 +72,34 @@ int main(int argc, char* argv[]) {
          options.set_bool("AMPL_write_solution_to_file", false);
       }
       // get the command line arguments (options start at index offset)
-      const Options command_line_options = Options::get_command_line_options(argc, argv, offset);
-
-      // [optional] set a preset
-      const auto optional_preset = command_line_options.get_string_optional("preset");
-      const Options preset_options = Presets::get_preset_options(optional_preset);
-      options.overwrite_with(preset_options);
-
-      // [optional] set options from an option file
-      const auto optional_option_file = command_line_options.get_string_optional("option_file");
-      if (optional_option_file.has_value()) {
-         Options file_options = Options::load_option_file(*optional_option_file);
-         options.overwrite_with(file_options);
+      const auto command_line_options = Options::get_command_line_options(argc, argv, offset);
+      std::optional<std::string> optional_option_file{};
+      std::optional<std::string> optional_preset{};
+      for (const auto& [option_name, option_value]: command_line_options) {
+         if (option_name == "option_file") {
+            optional_option_file = option_value;
+         }
+         else if (option_name == "preset") {
+            optional_preset = option_value;
+         }
       }
 
-      // overwrite the options with the command line arguments
-      options.overwrite_with(command_line_options);
+      // [optional] set options from an option file
+      if (optional_option_file.has_value()) {
+         Options::load_option_file(options, *optional_option_file);
+      }
+
+      // [optional] set a preset
+      if (optional_preset.has_value()) {
+         Presets::set(options, *optional_preset);
+      }
+
+      // set the rest of the command line options
+      for (const auto& [option_name, option_value]: command_line_options) {
+         if (option_name != "preset" && option_name != "option_file" && option_name != "logger") {
+            options.set(option_name, option_value);
+         }
+      }
 
       // solve the model
       Logger::set_logger(options.get_string("logger"));

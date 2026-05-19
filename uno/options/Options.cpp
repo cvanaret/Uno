@@ -215,9 +215,9 @@ namespace uno {
    }
 
    // argv[i] for i = offset..argc-1 are overwriting options
-   Options Options::get_command_line_options(int argc, char* argv[], size_t offset) {
+   std::vector<std::pair<std::string, std::string>> Options::get_command_line_options(int argc, char* argv[], size_t offset) {
       static const std::string delimiter = "=";
-      Options command_line_options;
+      std::vector<std::pair<std::string, std::string>> command_line_options;
 
       // build the (name, value) map
       for (size_t i = offset; i < static_cast<size_t>(argc); ++i) {
@@ -228,14 +228,17 @@ namespace uno {
          }
          const std::string option_name = argument.substr(0, position);
          const std::string option_value = argument.substr(position + 1);
-         // set option with unknown type
-         command_line_options.set(option_name, option_value);
+         command_line_options.emplace_back(option_name, option_value);
       }
       return command_line_options;
    }
 
-   Options Options::load_option_file(const std::string& file_name) {
-      Options options;
+   void trim(std::string& string) {
+      string.erase(0, string.find_first_not_of(" \n\r\t"));
+      string.erase(string.find_last_not_of(" \n\r\t")+1);
+   }
+
+   void Options::load_option_file(Options& options, const std::string& file_name) {
       std::ifstream file;
       file.open(file_name);
       if (!file) {
@@ -245,26 +248,33 @@ namespace uno {
          std::string option_name, option_value;
          std::string line;
          while (std::getline(file, line)) {
-            if (!line.empty() && line.find('#') != 0) {
-               std::istringstream iss;
-               iss.str(line);
-               iss >> option_name >> option_value;
-               // set option with unknown type
+            // Remove comments
+            const size_t comment_position = line.find('#');
+            if (comment_position != std::string::npos) {
+               line.erase(comment_position);
+            }
+            trim(line);
+            std::istringstream iss;
+            iss.str(line);
+            if (iss >> option_name >> option_value) {
+               // handle preset separately
+               if (option_name == "preset") {
+                  Presets::set(options, option_value);
+               }
+               // set option (with unknown type)
                options.set(option_name, option_value);
             }
          }
          file.close();
       }
-      return options;
    }
 
    void Options::dump_default_options() {
       Options default_options;
       DefaultOptions::load(default_options);
-      const Options preset_options = Presets::get_preset_options(std::nullopt);
-      default_options.overwrite_with(preset_options);
+      Presets::set_default(default_options);
 
-      for (const auto& [option_name, option_type]: Options::option_types) {
+      for (const auto& [option_name, option_type]: option_types) {
          try {
             switch (option_type) {
                case OptionType::INTEGER:
@@ -293,31 +303,6 @@ namespace uno {
             std::cout << "<error>\n";
          }
       }
-   }
-
-   void Options::overwrite_with(const Options& overwriting_options) {
-      for (const auto& [option_name, option_value]: overwriting_options.integer_options) {
-         this->integer_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: overwriting_options.double_options) {
-         this->double_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: overwriting_options.bool_options) {
-         this->bool_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: overwriting_options.string_options) {
-         // the preset may be passed as a normal option, handle it separately
-         if (option_name == "preset") {
-            Presets::set(*this, option_value);
-         }
-         else {
-            this->string_options[option_name] = option_value;
-         }
-      }
-      // if the option already exists and is not the same, flag it as overwritten
-      //const auto existing_option_value = this->at_optional(option_name);
-      //bool flag_as_overwritten = (existing_option_value.has_value() && *existing_option_value != option_value);
-      //this->set(option_name, option_value, flag_as_overwritten);
    }
 
    void Options::print_non_default() const {

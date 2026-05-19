@@ -72,7 +72,7 @@ progress_norm	L1
 protect_actual_reduction_against_roundoff	false
 protected_actual_reduction_macheps_coefficient	10
 quasi_newton_memory_size	6
-regularization_failure_threshold	1e+40
+regularization_failure_threshold	1e+20
 regularization_increase_factor	2
 residual_norm	L2
 residual_scaling_threshold	100
