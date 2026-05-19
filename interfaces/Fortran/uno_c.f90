@@ -691,19 +691,6 @@ interface
 end interface
 
 !---------------------------------------------
-! uno_get_method_description
-!---------------------------------------------
-interface
-   function uno_get_method_description(solver) &
-      result(method_description) &
-      bind(C, name="uno_get_method_description")
-      import :: c_ptr, c_char
-      type(c_ptr), value :: solver
-      character(c_char) :: method_description
-   end function uno_get_method_description
-end interface
-
-!---------------------------------------------
 ! uno_get_optimization_status
 !---------------------------------------------
 interface
