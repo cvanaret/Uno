@@ -1,4 +1,4 @@
-# these are the Uno default options [name
+# these are the Uno default options
 BQPD_kmax_heuristic	filtersqp
 LBFGS_delta_upper_bound	10
 LP_solver	BQPD
