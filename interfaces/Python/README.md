@@ -122,9 +122,14 @@ Options can be passed to the Uno solver:
 uno_solver.set_option("print_solution", True)
 ```
 
-The Uno solver also accepts a callback that is called on trial iterates upon acceptance:
+Uno accepts a callback that is called on accepted iterates:
 ```python
 uno_solver.set_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback)
+```
+
+Uno accepts a termination callback that forces solver termination when it returns `True`:
+```python
+uno_solver.set_termination_callback(termination_callback)
 ```
 
 Uno mimics the state-of-the-art solvers filterSQP and IPOPT via presets:

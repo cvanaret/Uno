@@ -42,6 +42,10 @@ def notify_acceptable_iterate_callback(primals, lower_bound_multipliers, upper_b
 									   complementarity_residual):
 	pass
 
+def termination_callback(primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers, objective_multiplier,
+						 primal_feasibility_residual, stationarity_residual, complementarity_residual):
+	return False
+
 if __name__ == '__main__':
 	# model creation
 	problem_type = unopy.PROBLEM_NONLINEAR
@@ -81,6 +85,7 @@ if __name__ == '__main__':
 	uno_solver.set_preset("filtersqp")
 	uno_solver.set_option("QP_solver", "BQPD")
 	uno_solver.set_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback)
+	uno_solver.set_termination_callback(termination_callback)
 	print("Solving with Uno", unopy.current_uno_version())
 
 	# run 1: solve with the filtersqp preset with no exact Hessian. Uno defaults to L-BFGS Hessian for NLPs
