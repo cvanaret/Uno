@@ -120,6 +120,7 @@ int main() {
 
       // run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
       uno_optimize(solver, model);
+      printf("Method used = %s\n", uno_get_method_description(solver));
       // get the solution
       uno_int optimization_status = uno_get_optimization_status(solver);
       assert(optimization_status == UNO_SUCCESS);
@@ -135,6 +136,7 @@ int main() {
       // the Hessian model was overwritten. Set it again
       uno_set_solver_string_option(solver, "hessian_model", "exact");
       uno_optimize(solver, model);
+      printf("Method used = %s\n", uno_get_method_description(solver));
       // get the solution
       optimization_status = uno_get_optimization_status(solver);
       assert(optimization_status == UNO_SUCCESS);
