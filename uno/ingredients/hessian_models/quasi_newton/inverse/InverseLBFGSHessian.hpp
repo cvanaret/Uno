@@ -4,7 +4,6 @@
 #ifndef UNO_INVERSELBFGSHESSIAN_H
 #define UNO_INVERSELBFGSHESSIAN_H
 
-#include <vector>
 #include "../QuasiNewtonHessian.hpp"
 
 namespace uno {

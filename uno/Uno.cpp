@@ -70,7 +70,6 @@ namespace uno {
    // protected solve function
    Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
-      size_t major_iterations = 0;
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
@@ -79,8 +78,6 @@ namespace uno {
       model.reset_number_evaluations();
       EvaluationCache evaluation_cache{model};
       Statistics statistics = Uno::create_statistics(model);
-      WarmstartInformation warmstart_information{};
-      warmstart_information.whole_problem_changed();
 
       bool termination = false;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
@@ -91,16 +88,19 @@ namespace uno {
          termination = true;
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
-
+      const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
+      if (max_iterations == 0) {
+         termination = true;
+         optimization_status = OptimizationStatus::ITERATION_LIMIT;
+      }
+      // outer loop: compute a sequence of accepted iterates
+      size_t major_iterations = 0;
+      // allocate the trial iterate once and for all
+      Iterate trial_iterate(current_iterate);
+      const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
+      WarmstartInformation warmstart_information{};
+      warmstart_information.whole_problem_changed();
       try {
-         Iterate trial_iterate(current_iterate); // allocate the trial iterate once and for all here
-         const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
-         const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
-         if (max_iterations == 0) {
-            termination = true;
-            optimization_status = OptimizationStatus::ITERATION_LIMIT;
-         }
-         // outer loop: compute a sequence of accepted iterates
          while (!termination) {
             ++major_iterations;
             statistics.start_new_line();
@@ -111,11 +111,8 @@ namespace uno {
             warmstart_information.iterate_changed();
             this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                evaluation_cache, warmstart_information, user_callbacks);
-            const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
-               trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
-               trial_iterate.residuals.complementarity);
-            termination = Uno::check_termination(trial_iterate.status, major_iterations, max_iterations,
-               timer.get_duration(), time_limit, user_termination, optimization_status);
+            termination = Uno::check_termination(trial_iterate, major_iterations, max_iterations,
+               timer.get_duration(), time_limit, optimization_status, user_callbacks);
 
             // the trial iterate becomes the current iterate for the next iteration
             std::swap(current_iterate, trial_iterate);
@@ -200,9 +197,9 @@ namespace uno {
       return statistics;
    }
 
-   bool Uno::check_termination(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
-         double time_limit, bool user_termination, OptimizationStatus& optimization_status) {
-      if (solution_status != SolutionStatus::NOT_OPTIMAL) {
+   bool Uno::check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations, double current_time,
+         double time_limit, OptimizationStatus& optimization_status, UserCallbacks& user_callbacks) {
+      if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
          return true;
       }
       else if (max_iterations <= iteration) {
@@ -213,7 +210,8 @@ namespace uno {
          optimization_status = OptimizationStatus::TIME_LIMIT;
          return true;
       }
-      else if (user_termination) {
+      else if (user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers, trial_iterate.objective_multiplier,
+            trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity)) {
          optimization_status = OptimizationStatus::USER_TERMINATION;
          return true;
       }

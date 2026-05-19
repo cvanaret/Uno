@@ -8,7 +8,6 @@
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Result.hpp"
-#include "optimization/SolutionStatus.hpp"
 
 namespace uno {
    // forward declarations
@@ -35,8 +34,8 @@ namespace uno {
       [[nodiscard]] bool initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
          EvaluationCache& evaluation_cache);
       [[nodiscard]] static Statistics create_statistics(const Model& model);
-      [[nodiscard]] static bool check_termination(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
-         double current_time, double time_limit, bool user_termination, OptimizationStatus& optimization_status);
+      [[nodiscard]] static bool check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations,
+         double current_time, double time_limit, OptimizationStatus& optimization_status, UserCallbacks& user_callbacks);
       [[nodiscard]] Result uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks);
       static void postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
