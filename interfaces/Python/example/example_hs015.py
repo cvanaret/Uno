@@ -85,6 +85,7 @@ if __name__ == '__main__':
 
 	# run 1: solve with the filtersqp preset with no exact Hessian. Uno defaults to L-BFGS Hessian for NLPs
 	result = uno_solver.optimize(model)
+	print("Method used:", uno_solver.get_method_description())
 	print("Objective at solution:", result.solution_objective)
 
 	# run 2: solve with the filtersqp preset with exact Hessian
@@ -94,6 +95,7 @@ if __name__ == '__main__':
 	# the Hessian model was overwritten. Set it again
 	uno_solver.set_option("hessian_model", "exact")
 	result = uno_solver.optimize(model)
+	print("Method used:", uno_solver.get_method_description())
 	print("Objective at solution:", result.solution_objective)
 	# optimization summary
 	print("Optimization status:", result.optimization_status)
@@ -119,10 +121,12 @@ if __name__ == '__main__':
 	uno_solver.set_preset("ipopt")
 	uno_solver.set_option("linear_solver", "MUMPS")
 	result = uno_solver.optimize(model)
+	print("Method used:", uno_solver.get_method_description())
 	assert abs(result.solution_objective - 306.5) <= 1e-4
 	
 	# run 4: solve with the filterslp preset
 	uno_solver.set_preset("filterslp")
 	uno_solver.set_option("LP_solver", "HiGHS")
 	result = uno_solver.optimize(model)
+	print("Method used:", uno_solver.get_method_description())
 	assert abs(result.solution_objective - 306.5) <= 1e-4
