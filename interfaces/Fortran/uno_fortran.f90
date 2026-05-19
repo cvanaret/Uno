@@ -452,7 +452,6 @@ function uno_get_solver_string_option(solver, option_name) &
    deallocate(option_name_c)
 end function uno_get_solver_string_option
 
-
 !---------------------------------------------
 ! uno_get_method_description
 !---------------------------------------------
