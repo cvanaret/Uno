@@ -156,7 +156,7 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
-   const std::string& Uno::get_method_description() {
+   const std::string& Uno::get_method_description() const {
       return this->method_description;
    }
 
