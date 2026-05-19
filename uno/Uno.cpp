@@ -156,6 +156,10 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
+   const std::string& Uno::get_method_description() {
+      return this->method_description;
+   }
+
    bool Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
          EvaluationCache& evaluation_cache) {
       try {
@@ -168,6 +172,9 @@ namespace uno {
          // set the ingredients based on the user-defined options
          this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
          this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options);
+         if (this->globalization_mechanism != nullptr) {
+            this->method_description = this->globalization_mechanism->get_name();
+         }
 
          options.print_non_default();
          if (Logger::level == INFO) {
@@ -260,13 +267,8 @@ namespace uno {
       result.solution_objective *= model.optimization_sense;
    }
 
-   std::string Uno::get_strategy_combination() const {
-      return (this->globalization_mechanism != nullptr) ? this->globalization_mechanism->get_name() :
-         "strategy combination not initialized";
-   }
-
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {
-      DISCRETE << "\nUno " << Uno::current_version() << " (" << this->get_strategy_combination() << ")\n";
+      DISCRETE << "\nUno " << Uno::current_version() << " (" << this->method_description << ")\n";
       DISCRETE << Timer::get_current_date();
       DISCRETE << "────────────────────────────────────────\n";
       result.print(print_solution);
