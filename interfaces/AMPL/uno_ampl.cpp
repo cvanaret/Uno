@@ -94,9 +94,9 @@ int main(int argc, char* argv[]) {
          Presets::set(options, *optional_preset);
       }
 
-      // set the rest of the command line options
+      // set the rest of the command line options (note: we add preset to the options for debugging purposes)
       for (const auto& [option_name, option_value]: command_line_options) {
-         if (option_name != "preset" && option_name != "option_file" && option_name != "logger") {
+         if (option_name != "option_file" && option_name != "logger") {
             options.set(option_name, option_value);
          }
       }
