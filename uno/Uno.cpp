@@ -51,12 +51,13 @@ namespace uno {
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
          const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
          // slightly relax the bound constraints
-         const BoundRelaxedModel bound_relaxed_model(homogeneous_model, options);
+         //const BoundRelaxedModel bound_relaxed_model(homogeneous_model, options);
+         const auto& reformulated_model = homogeneous_model;
 
-         DISCRETE << "Reformulated model " << bound_relaxed_model.name << '\n' << bound_relaxed_model.number_variables << " variables, " <<
-            bound_relaxed_model.number_constraints << " constraints (" << bound_relaxed_model.get_equality_constraints().size() <<
-            " equality, " << bound_relaxed_model.get_inequality_constraints().size() << " inequality)\n";
-         Result result = uno_solve(bound_relaxed_model, options, user_callbacks);
+         DISCRETE << "Reformulated model " << reformulated_model.name << '\n' << reformulated_model.number_variables << " variables, " <<
+            reformulated_model.number_constraints << " constraints (" << reformulated_model.get_equality_constraints().size() <<
+            " equality, " << reformulated_model.get_inequality_constraints().size() << " inequality)\n";
+         Result result = uno_solve(reformulated_model, options, user_callbacks);
          // fix the dimensions
          result.number_variables = model.number_variables;
          result.number_constraints = model.number_constraints;
