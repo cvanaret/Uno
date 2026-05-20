@@ -68,7 +68,7 @@ namespace uno {
       for (const auto& element: this->columns) {
          std::string header = element.second;
          for (size_t j = 0; j < this->widths[header]; j++) {
-            INFO << Statistics::symbol("top");
+            INFO << top_symbol;
          }
       }
       INFO << '\n';
@@ -126,39 +126,6 @@ namespace uno {
    }
 
    void Statistics::print_footer() {
-      /*
-      for (const auto& element: this->columns) {
-         const auto& header = element.second;
-         for (size_t j = 0; j < this->widths[header]; j++) {
-            INFO << Statistics::symbol("bottom");
-         }
-      }
-      INFO << '\n';
-      */
       Statistics::print_header();
-   }
-   
-   std::string_view Statistics::symbol(std::string_view value) {
-      // display ASCII characters on Windows, UTF-8 on other OS
-#ifdef _WIN32
-      static std::map<std::string_view, std::string_view> symbols = {
-         {"top", "-"}, {"top-mid", "+"}, {"top-left", "+"}, {"top-right", "+"},
-         {"bottom", "-"}, {"bottom-mid", "+"}, {"bottom-left", "+"}, {"bottom-right", "+"},
-         {"left", "|"}, {"left-mid", "+"},
-         {"mid", "-"}, {"mid-mid", "+"},
-         {"right", "|"}, {"right-mid", "+"},
-         {"middle", "|"}
-      };
-#else
-      static std::map<std::string_view, std::string_view> symbols = {
-         {"top", "─"}, {"top-mid", "┬"}, {"top-left", "┌"}, {"top-right", "┐"},
-         {"bottom", "─"}, {"bottom-mid", "┴"}, {"bottom-left", "└"}, {"bottom-right", "┘"},
-         {"left", "│"}, {"left-mid", "├"},
-         {"mid", "─"}, {"mid-mid", "┼"},
-         {"right", "│"}, {"right-mid", "┤"},
-         {"middle", "│"}
-      };
-#endif
-      return symbols[value];
    }
 } // namespace

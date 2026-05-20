@@ -35,7 +35,14 @@ namespace uno {
       std::map<std::string_view, size_t> widths{};
       std::map<std::string_view, size_t> precisions{};
       std::map<std::string_view, std::string> current_line{};
-      static std::string_view symbol(std::string_view value);
+      // display ASCII characters on Windows, UTF-8 on other OS
+      static constexpr auto top_symbol =
+#ifdef _WIN32
+      "-"
+#else
+      u8"─"
+#endif
+      ;
    };
 } // namespace
 
