@@ -15,7 +15,6 @@ namespace uno {
       static size_t int_width;
       static size_t double_width;
       static size_t string_width;
-      static size_t numerical_format_size;
 
       void add_column(std::string_view name, size_t width, size_t precision, size_t order);
       void start_new_line();
