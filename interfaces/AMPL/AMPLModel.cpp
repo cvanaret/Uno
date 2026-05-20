@@ -171,7 +171,7 @@ namespace uno {
          while (constraint_gradient != nullptr) {
             const int variable_index = constraint_gradient->varno;
             // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
-            row_indices[constraint_gradient->goff] = static_cast<int>(constraint_index) + row_offset + solver_indexing;
+            row_indices[constraint_gradient->goff] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
             column_indices[constraint_gradient->goff] = variable_index + column_offset + solver_indexing;
             constraint_gradient = constraint_gradient->next;
          }
@@ -184,7 +184,7 @@ namespace uno {
       size_t current_index = 0;
       for (size_t column_index: Range(this->number_variables)) {
          for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
-            const int row_index = asl_row_index[nonzero_index];
+            const uno_int row_index = static_cast<uno_int>(asl_row_index[nonzero_index]);
             row_indices[current_index] = row_index + solver_indexing;
             column_indices[current_index] = static_cast<int>(column_index) + solver_indexing;
             ++current_index;

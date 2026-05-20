@@ -87,8 +87,8 @@ namespace uno {
       // add the slack contributions
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
       for (const auto [constraint_index, slack_index]: this->get_slacks()) {
-         row_indices[nonzero_index] = static_cast<int>(constraint_index) + row_offset + solver_indexing;
-         column_indices[nonzero_index] = static_cast<int>(slack_index) + column_offset + solver_indexing;
+         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
+         column_indices[nonzero_index] = static_cast<uno_int>(slack_index) + column_offset + solver_indexing;
          ++nonzero_index;
       }
    }
