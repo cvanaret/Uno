@@ -268,6 +268,9 @@ namespace uno {
 
    template <typename T>
    auto view(T* pointer, size_t start, size_t end) {
+      if (start > end) {
+         throw std::out_of_range("invalid vector view");
+      }
       return VectorView{pointer + start, end - start};
    }
 
