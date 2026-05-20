@@ -17,6 +17,7 @@ program example_uno
     integer(uno_int) :: number_iterations, max_iterations = 1000
     real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
     character(:), allocatable :: logger
+    character(:), allocatable :: method_description
     character(len=*), parameter :: hessian_model = "exact"
     character(len=*), parameter :: problem_type = UNO_PROBLEM_NONLINEAR
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
@@ -129,6 +130,12 @@ program example_uno
     ! the Hessian model was overwritten. Set it again
     success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
     call uno_optimize(solver, model)
+
+    !---------------------------------------------------
+    ! Get method description
+    !---------------------------------------------------
+    method_description = uno_get_method_description(solver)
+    print *, 'method description = ', method_description
 
     !---------------------------------------------------
     ! Get options

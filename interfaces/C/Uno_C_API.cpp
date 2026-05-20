@@ -977,6 +977,14 @@ void uno_optimize(void* solver, void* model) {
    Logger::flush();
 }
 
+const char* uno_get_method_description(void* solver) {
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->solver->get_method_description().c_str();
+}
+
 double uno_get_solver_double_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");

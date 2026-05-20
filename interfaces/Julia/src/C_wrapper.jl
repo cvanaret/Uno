@@ -389,6 +389,13 @@ function uno_get_solver_string_option(solver::Solver, option_name::String)
   return unsafe_string(option_value)
 end
 
+function uno_get_method_description(solver::Solver)
+  GC.@preserve solver begin
+    method_description = uno_get_method_description(solver.c_solver)
+  end
+  return unsafe_string(method_description)
+end
+
 function uno_solver(; kwargs...)
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")

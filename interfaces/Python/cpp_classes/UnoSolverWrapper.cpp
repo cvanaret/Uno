@@ -53,4 +53,8 @@ namespace uno {
       UnopyUserCallbacks callbacks{this->notify_acceptable_iterate_callback};
       return this->uno_solver.solve(model, this->options, callbacks);
    }
+
+   const std::string& UnoSolverWrapper::get_method_description() const {
+      return this->uno_solver.get_method_description();
+   }
 } // namespace

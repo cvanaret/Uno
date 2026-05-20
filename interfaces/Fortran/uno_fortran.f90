@@ -451,3 +451,36 @@ function uno_get_solver_string_option(solver, option_name) &
    end do
    deallocate(option_name_c)
 end function uno_get_solver_string_option
+
+!---------------------------------------------
+! uno_get_method_description
+!---------------------------------------------
+function uno_get_method_description(solver) &
+   result(method_description)
+   type(c_ptr), value :: solver
+   character(:), allocatable :: method_description
+   type(c_ptr) :: ptr_method_description_c
+   integer :: i, n
+   character(c_char), pointer :: method_description_c(:)
+
+   interface
+      function uno_get_method_description_c(solver) &
+         result(method_description) &
+         bind(C, name="uno_get_method_description")
+         import :: c_ptr
+         type(c_ptr), value :: solver
+         type(c_ptr) :: method_description
+      end function uno_get_method_description_c
+   end interface
+
+   ptr_method_description_c = uno_get_method_description_c(solver)
+   call c_f_pointer(ptr_method_description_c, method_description_c, [0])
+   n = 0
+   do while (method_description_c(n+1) /= c_null_char)
+      n = n + 1
+   end do
+   allocate(character(len=n)::method_description)
+   do i = 1, n
+      method_description(i:i) = method_description_c(i)
+   end do
+end function uno_get_method_description

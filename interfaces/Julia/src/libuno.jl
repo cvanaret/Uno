@@ -231,6 +231,10 @@ function uno_optimize(solver, model)
     @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Cvoid
 end
 
+function uno_get_method_description(solver)
+    @ccall libuno.uno_get_method_description(solver::Ptr{Cvoid})::Cstring
+end
+
 function uno_get_solver_integer_option(solver, option_name)
     @ccall libuno.uno_get_solver_integer_option(solver::Ptr{Cvoid},
                                                 option_name::Cstring)::Int32

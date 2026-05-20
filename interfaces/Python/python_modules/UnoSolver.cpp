@@ -92,6 +92,8 @@ namespace uno {
 
       .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
          return solver.optimize(user_model);
-      }, py::arg("model"), "Optimize an optimization model with the Uno solver");
+      }, py::arg("model"), "Optimize an optimization model with the Uno solver")
+
+      .def("get_method_description", &UnoSolverWrapper::get_method_description);
    }
 } // namespace

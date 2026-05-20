@@ -390,7 +390,7 @@ function gen_uno_c(io, include_dir, funcs)
   println(io, "")
 
   # C bind(C) interfaces — skip functions that have string args
-  non_string = [f for f in funcs if !any(a.is_string for a in f.args)]
+  non_string = [f for f in funcs if !any(a.is_string for a in f.args) && f.ret_ftype != "character(c_char)"]
   for (i, f) in enumerate(non_string)
     gen_one_c_interface(io, f, i < length(non_string))
   end
@@ -436,18 +436,19 @@ function gen_uno_fortran(io, funcs)
   println(io, "!==============================================================")
 
   for f in funcs
-    string_arg_names = [a.name for a in f.args if a.is_string]
-    if isempty(string_arg_names)
-      continue
+    if f.ret_ftype != "character(c_char)"
+      string_arg_names = [a.name for a in f.args if a.is_string]
+      if !isempty(string_arg_names)
+        gen_one_string_wrapper(io, f, string_arg_names)
+      end
     end
-    if f.name == "uno_get_solver_string_option"
-      continue
-    end
-    gen_one_string_wrapper(io, f, string_arg_names)
   end
 
-  # Special wrapper for uno_get_solver_string_option (returns const char*)
+  # Special wrapper for functions that return const char*
+  println(io, "")
   gen_get_string_option_fortran_wrapper(io)
+  println(io, "")
+  gen_get_method_description_fortran_wrapper(io)
 end
 
 function gen_one_string_wrapper(io, f::FuncInfo, string_arg_names)
@@ -538,7 +539,6 @@ function gen_one_string_wrapper(io, f::FuncInfo, string_arg_names)
 end
 
 function gen_get_string_option_fortran_wrapper(io)
-  println(io, "")
   println(io, "!---------------------------------------------")
   println(io, "! uno_get_solver_string_option")
   println(io, "!---------------------------------------------")
@@ -581,6 +581,41 @@ function gen_get_string_option_fortran_wrapper(io)
   println(io, "   end do")
   println(io, "   deallocate(option_name_c)")
   println(io, "end function uno_get_solver_string_option")
+end
+
+function gen_get_method_description_fortran_wrapper(io)
+  println(io, "!---------------------------------------------")
+  println(io, "! uno_get_method_description")
+  println(io, "!---------------------------------------------")
+  println(io, "function uno_get_method_description(solver) &")
+  println(io, "   result(method_description)")
+  println(io, "   type(c_ptr), value :: solver")
+  println(io, "   character(:), allocatable :: method_description")
+  println(io, "   type(c_ptr) :: ptr_method_description_c")
+  println(io, "   integer :: i, n")
+  println(io, "   character(c_char), pointer :: method_description_c(:)")
+  println(io, "")
+  println(io, "   interface")
+  println(io, "      function uno_get_method_description_c(solver) &")
+  println(io, "         result(method_description) &")
+  println(io, "         bind(C, name=\"uno_get_method_description\")")
+  println(io, "         import :: c_ptr")
+  println(io, "         type(c_ptr), value :: solver")
+  println(io, "         type(c_ptr) :: method_description")
+  println(io, "      end function uno_get_method_description_c")
+  println(io, "   end interface")
+  println(io, "")
+  println(io, "   ptr_method_description_c = uno_get_method_description_c(solver)")
+  println(io, "   call c_f_pointer(ptr_method_description_c, method_description_c, [0])")
+  println(io, "   n = 0")
+  println(io, "   do while (method_description_c(n+1) /= c_null_char)")
+  println(io, "      n = n + 1")
+  println(io, "   end do")
+  println(io, "   allocate(character(len=n)::method_description)")
+  println(io, "   do i = 1, n")
+  println(io, "      method_description(i:i) = method_description_c(i)")
+  println(io, "   end do")
+  println(io, "end function uno_get_method_description")
 end
 
 function main_fortran()

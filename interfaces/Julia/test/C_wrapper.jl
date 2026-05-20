@@ -236,6 +236,8 @@ end
     uno_set_solver_bool_option(solver, "print_solution", true)
     uno_optimize(solver, model)
 
+    @test UnoSolver.uno_get_method_description(solver) == "TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction"
+
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
     solution_objective = UnoSolver.uno_get_solution_objective(solver)

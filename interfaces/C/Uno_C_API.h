@@ -325,6 +325,10 @@ extern "C" {
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
 
+   // gets the description of the optimization method used by Uno to solve the model
+   // example: TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction
+   const char* uno_get_method_description(void* solver);
+
    // gets the value of a given double option.
    // takes as inputs the name of the option.
    // the possible types are integer, double, bool and string.

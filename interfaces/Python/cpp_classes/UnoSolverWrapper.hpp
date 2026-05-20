@@ -37,6 +37,7 @@ namespace uno {
       void set_logger_stream(py::object py_stream);
       void set_notify_acceptable_iterate_callback(NotifyAcceptableIterateCallback notify_acceptable_iterate_callback);
       [[nodiscard]] Result optimize(const PythonUserModel& user_model);
+      [[nodiscard]] const std::string& get_method_description() const;
 
    private:
       py::object stream;
