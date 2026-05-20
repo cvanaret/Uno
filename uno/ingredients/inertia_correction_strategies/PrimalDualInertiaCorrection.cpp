@@ -27,7 +27,7 @@ namespace uno {
    }
 
    void PrimalDualInertiaCorrection::initialize_statistics(Statistics& statistics) {
-      statistics.add_column("Regulariz", Statistics::double_width, 2, Statistics::column_order.at("Regulariz"));
+      statistics.add_column("Regulariz", Statistics::double_width, 2);
    }
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,

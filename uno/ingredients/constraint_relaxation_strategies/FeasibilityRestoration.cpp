@@ -87,7 +87,7 @@ namespace uno {
       this->feasibility_inequality_handling_method->initialize_statistics(statistics);
       this->hessian_model->initialize_statistics(statistics);
       this->feasibility_hessian_model->initialize_statistics(statistics);
-      statistics.add_column("Phase", Statistics::int_width - 1, 3, Statistics::column_order.at("Phase"));
+      statistics.add_column("Phase", Statistics::int_width - 1, 3);
       statistics.set("Phase", "OPT");
    }
 

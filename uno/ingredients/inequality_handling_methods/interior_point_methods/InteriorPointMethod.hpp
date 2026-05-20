@@ -70,7 +70,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics) {
-      statistics.add_column("Barrier", Statistics::double_width, 2, Statistics::column_order.at("Barrier"));
+      statistics.add_column("Barrier", Statistics::double_width, 2);
    }
 
    template <typename BarrierProblem>

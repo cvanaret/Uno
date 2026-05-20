@@ -192,15 +192,15 @@ namespace uno {
 
    Statistics Uno::create_statistics(const Model& model) {
       Statistics statistics{};
-      statistics.add_column("Major", Statistics::int_width, 3, Statistics::column_order.at("Major"));
-      statistics.add_column("||Step||", Statistics::double_width, 2, Statistics::column_order.at("||Step||"));
-      statistics.add_column("Objective", Statistics::double_width + 1, 3, Statistics::column_order.at("Objective"));
+      statistics.add_column("Major", Statistics::int_width, 3);
+      statistics.add_column("||Step||", Statistics::double_width, 2);
+      statistics.add_column("Objective", Statistics::double_width + 1, 3);
       if (model.is_constrained()) {
-         statistics.add_column("Infeas", Statistics::double_width, 2, Statistics::column_order.at("Infeas"));
+         statistics.add_column("Infeas", Statistics::double_width, 2);
       }
-      statistics.add_column("Statio", Statistics::double_width, 2, Statistics::column_order.at("Statio"));
-      statistics.add_column("Compl", Statistics::double_width, 2, Statistics::column_order.at("Compl"));
-      statistics.add_column("Status", Statistics::string_width, 3, Statistics::column_order.at("Status"));
+      statistics.add_column("Statio", Statistics::double_width, 2);
+      statistics.add_column("Compl", Statistics::double_width, 2);
+      statistics.add_column("Status", Statistics::string_width, 3);
       return statistics;
    }
 

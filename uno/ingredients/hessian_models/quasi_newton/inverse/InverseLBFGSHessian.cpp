@@ -42,7 +42,7 @@ namespace uno {
    }
 
    void InverseLBFGSHessian::initialize_statistics(Statistics& statistics) const {
-      statistics.add_column("|BFGS|", Statistics::double_width - 2, 2, Statistics::column_order.at("|BFGS|"));
+      statistics.add_column("|BFGS|", Statistics::double_width - 2, 2);
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
