@@ -22,7 +22,7 @@ namespace uno {
             std::max(1., std::abs(lower_bound));
          const double upper_bound = variables_upper_bounds[variable_index];
          this->relaxed_variables_upper_bounds[variable_index] = upper_bound + this->relaxation_factor *
-            std::max(1., std::abs(upper_bound));;
+            std::max(1., std::abs(upper_bound));
       }
    }
 
