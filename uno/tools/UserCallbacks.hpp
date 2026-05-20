@@ -17,7 +17,7 @@ namespace uno {
 
       virtual void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) = 0;
-      virtual bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+      virtual bool termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) = 0; // returns true for user termination
    };
 
@@ -27,7 +27,7 @@ namespace uno {
 
       void notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
          double /*primal_feasibility_residual*/, double /*stationarity_residual*/, double /*complementarity_residual*/) override { }
-      bool user_termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
+      bool termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
             double /*primal_feasibility_residual*/, double /*stationarity_residual*/, double /*complementarity_residual*/) override {
          return false;
       }

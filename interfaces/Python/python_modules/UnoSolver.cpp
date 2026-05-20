@@ -90,6 +90,10 @@ namespace uno {
          solver.set_notify_acceptable_iterate_callback(std::move(callback));
       })
 
+      .def("set_termination_callback", [](UnoSolverWrapper& solver, TerminationCallback callback) {
+         solver.set_termination_callback(std::move(callback));
+      })
+
       .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
          return solver.optimize(user_model);
       }, py::arg("model"), "Optimize an optimization model with the Uno solver")

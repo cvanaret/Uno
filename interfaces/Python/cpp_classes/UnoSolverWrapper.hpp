@@ -15,16 +15,18 @@
 namespace uno {
    class UnopyUserCallbacks: public UserCallbacks {
    public:
-      UnopyUserCallbacks(std::optional<NotifyAcceptableIterateCallback>& notify_acceptable_iterate_callback);
+      UnopyUserCallbacks(std::optional<NotifyAcceptableIterateCallback>& notify_acceptable_iterate_callback,
+         std::optional<TerminationCallback>& termination_callback);
 
       void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
             double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override;
 
-      bool user_termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
+      bool termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
             double /*primal_feasibility_residual*/, double /*stationarity_residual*/, double /*complementarity_residual*/) override;
 
    protected:
       std::optional<NotifyAcceptableIterateCallback>& notify_acceptable_iterate_callback;
+      std::optional<TerminationCallback>& termination_callback;
    };
 
    class UnoSolverWrapper {
@@ -36,6 +38,7 @@ namespace uno {
 
       void set_logger_stream(py::object py_stream);
       void set_notify_acceptable_iterate_callback(NotifyAcceptableIterateCallback notify_acceptable_iterate_callback);
+      void set_termination_callback(TerminationCallback termination_callback);
       [[nodiscard]] Result optimize(const PythonUserModel& user_model);
       [[nodiscard]] const std::string& get_method_description() const;
 
@@ -44,6 +47,7 @@ namespace uno {
       std::unique_ptr<PythonStreamBuffer> stream_buffer;
       std::unique_ptr<std::ostream> ostream;
       std::optional<NotifyAcceptableIterateCallback> notify_acceptable_iterate_callback{};
+      std::optional<TerminationCallback> termination_callback{};
    };
 } // namespace
 

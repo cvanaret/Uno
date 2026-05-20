@@ -359,7 +359,7 @@ public:
       }
    }
 
-   bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+   bool termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override {
       if (this->termination_callback) {
          return this->termination_callback(static_cast<uno_int>(primals.size()),
