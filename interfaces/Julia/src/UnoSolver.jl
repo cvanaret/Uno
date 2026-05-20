@@ -21,6 +21,7 @@ export uno_set_solver_preset, uno_statistics
 export uno_set_initial_primal_iterate, uno_set_initial_dual_iterate
 export uno_set_variables_lower_bounds, uno_set_variables_upper_bounds
 export uno_set_constraints_lower_bounds, uno_set_constraints_upper_bounds
+export uno_get_method_description
 
 export UnoExecutionStats
 
