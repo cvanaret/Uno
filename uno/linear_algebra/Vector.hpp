@@ -7,14 +7,14 @@
 #include <string>
 #include <vector>
 #include <initializer_list>
-#include "BLASVector.hpp"
+#include "VectorView.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
    template <typename T>
-   class Vector: public BLASVector<T> {
+   class Vector {
    public:
-      using value_type = T;
+      using value_type = typename std::vector<T>::value_type;
       // iterators
       using iterator = typename std::vector<T>::iterator;
       using const_iterator = typename std::vector<T>::const_iterator;
@@ -25,7 +25,7 @@ namespace uno {
       Vector(std::initializer_list<T> initializer_list): vector(initializer_list) { }
       Vector(const Vector<T>& other): vector(other.vector) { }
       Vector(Vector<T>&& other) noexcept: vector(std::move(other.vector)) { }
-      ~Vector() override = default;
+      ~Vector() = default;
 
       // copy assignment operator
       Vector<T>& operator=(const Vector<T>& other) {
@@ -43,28 +43,27 @@ namespace uno {
          return *this;
       }
 
-      // operators
-      using BLASVector<value_type>::operator=;
-      using BLASVector<value_type>::operator+=;
-      using BLASVector<value_type>::operator-=;
-
-      [[nodiscard]] size_t size() const override {
+      [[nodiscard]] size_t size() const {
          return this->vector.size();
       }
 
-      T* data() override {
+      [[nodiscard]] bool empty() const {
+         return (this->size() == 0);
+      }
+
+      T* data() {
          return this->vector.data();
       }
 
-      const T* data() const override {
+      const T* data() const {
          return this->vector.data();
       }
 
-      T& operator[](size_t index) override {
+      T& operator[](size_t index) {
          return this->vector[index];
       }
 
-      const T& operator[](size_t index) const override {
+      const T& operator[](size_t index) const {
          return this->vector[index];
       }
 
@@ -104,6 +103,31 @@ namespace uno {
             stream << element << ' ';
          }
       }
+
+      // mathematical operators: delegate to underlying VectorView
+
+      template <typename Expression>
+      Vector<T>& operator=(Expression&& expression) {
+         view(this->data(), this->size()) = std::forward<Expression>(expression);
+         return *this;
+      }
+
+      template <typename Expression>
+      Vector<T>& operator+=(Expression&& expression) {
+         view(this->data(), this->size()) += std::forward<Expression>(expression);
+         return *this;
+      }
+
+      template <typename Expression>
+      Vector<T>& operator-=(Expression&& expression) {
+         view(this->data(), this->size()) -= std::forward<Expression>(expression);
+         return *this;
+      }
+
+      void scale(T factor) {
+         view(this->data(), this->size()).scale(factor);
+      }
+
 
    protected:
       std::vector<T> vector;
