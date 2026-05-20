@@ -32,6 +32,9 @@ namespace uno {
       void reset();
 
       friend std::ostream& operator<<(std::ostream& stream, const Direction& direction);
+
+   protected:
+      [[nodiscard]] static std::string status_to_string(SubproblemStatus status);
    };
 } // namespace
 
