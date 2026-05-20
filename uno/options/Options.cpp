@@ -10,7 +10,7 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   const std::unordered_map<std::string, OptionType> Options::option_types = {
+   const std::map<std::string, OptionType> Options::option_types = {
       {"primal_tolerance", OptionType::DOUBLE},
       {"dual_tolerance", OptionType::DOUBLE},
       {"loose_primal_tolerance", OptionType::DOUBLE},
@@ -97,6 +97,7 @@ namespace uno {
       {"LP_solver", OptionType::STRING},
       {"linear_solver", OptionType::STRING},
       {"preset", OptionType::STRING},
+      {"option_file", OptionType::STRING},
    };
 
    // setters
@@ -105,55 +106,6 @@ namespace uno {
       this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
-   void Options::dump_default_options() {
-       Options defaults;
-       DefaultOptions::load(defaults);
-       // Header (tab-separated for easy parsing)
-       std::cout << "name\ttype\tdefault\n";
-       for (const auto &[option_name, option_type] : defaults.option_types) {
-           std::cout << option_name << '\t';
-           try {
-               switch (option_type) {
-                   case OptionType::INTEGER: 
-                       std::cout << "INTEGER\t";
-                       if (defaults.integer_options.find(option_name) != defaults.integer_options.end())
-                           std::cout << defaults.integer_options.at(option_name);
-                       else
-                           std::cout << "<unset>";
-                       break;
-                   case OptionType::DOUBLE:
-                       std::cout << "DOUBLE\t";
-                       if (defaults.double_options.find(option_name) != defaults.double_options.end())
-                           std::cout << defaults.double_options.at(option_name);
-                       else
-                           std::cout << "<unset>";
-                       break;
-                   case OptionType::BOOL:
-                       std::cout << "BOOL\t";
-                       if (defaults.bool_options.find(option_name) != defaults.bool_options.end())
-                           std::cout << (defaults.bool_options.at(option_name) ? "true"
-                                                                               : "false");
-                       else
-                           std::cout << "<unset>";
-                       break;
-                   case OptionType::STRING:
-                       std::cout << "STRING\t";
-                       if (defaults.string_options.find(option_name) != defaults.string_options.end())
-                           std::cout << defaults.string_options.at(option_name);
-                       else
-                           std::cout << "<unset>";
-                       break;
-                   default:
-                       std::cout << "UNKNOWN\t<unset>";
-                       break;
-               }
-           } catch (const std::out_of_range &) {
-               std::cout << "<error>";
-           }
-           std::cout << '\n';
-       }
-   }
-   
    void Options::set_double(const std::string& option_name, double option_value, bool flag_as_overwritten) {
       this->double_options[option_name] = option_value;
       this->overwritten_options[option_name] = flag_as_overwritten;
@@ -263,9 +215,9 @@ namespace uno {
    }
 
    // argv[i] for i = offset..argc-1 are overwriting options
-   Options Options::get_command_line_options(int argc, char* argv[], size_t offset) {
+   std::vector<std::pair<std::string, std::string>> Options::get_command_line_options(int argc, char* argv[], size_t offset) {
       static const std::string delimiter = "=";
-      Options command_line_options;
+      std::vector<std::pair<std::string, std::string>> command_line_options;
 
       // build the (name, value) map
       for (size_t i = offset; i < static_cast<size_t>(argc); ++i) {
@@ -276,14 +228,17 @@ namespace uno {
          }
          const std::string option_name = argument.substr(0, position);
          const std::string option_value = argument.substr(position + 1);
-         // set option with unknown type
-         command_line_options.set(option_name, option_value);
+         command_line_options.emplace_back(option_name, option_value);
       }
       return command_line_options;
    }
 
-   Options Options::load_option_file(const std::string& file_name) {
-      Options options;
+   void trim(std::string& string) {
+      string.erase(0, string.find_first_not_of(" \n\r\t"));
+      string.erase(string.find_last_not_of(" \n\r\t")+1);
+   }
+
+   void Options::load_option_file(Options& options, const std::string& file_name) {
       std::ifstream file;
       file.open(file_name);
       if (!file) {
@@ -293,36 +248,61 @@ namespace uno {
          std::string option_name, option_value;
          std::string line;
          while (std::getline(file, line)) {
-            if (!line.empty() && line.find('#') != 0) {
-               std::istringstream iss;
-               iss.str(line);
-               iss >> option_name >> option_value;
-               // set option with unknown type
+            // Remove comments
+            const size_t comment_position = line.find('#');
+            if (comment_position != std::string::npos) {
+               line.erase(comment_position);
+            }
+            trim(line);
+            std::istringstream iss;
+            iss.str(line);
+            if (iss >> option_name >> option_value) {
+               // handle preset separately
+               if (option_name == "preset") {
+                  Presets::set(options, option_value);
+               }
+               // set option (with unknown type)
                options.set(option_name, option_value);
             }
          }
          file.close();
       }
-      return options;
    }
 
-   void Options::overwrite_with(const Options& overwriting_options) {
-      for (const auto& [option_name, option_value]: overwriting_options.integer_options) {
-         this->integer_options[option_name] = option_value;
+   void Options::dump_default_options() {
+      Options default_options;
+      DefaultOptions::load(default_options);
+      Presets::set_default(default_options);
+
+      for (const auto& [option_name, option_type]: option_types) {
+         try {
+            switch (option_type) {
+               case OptionType::INTEGER:
+                  if (default_options.integer_options.find(option_name) != default_options.integer_options.end()) {
+                     std::cout << option_name << '\t' << default_options.integer_options.at(option_name) << '\n';
+                  }
+                  break;
+               case OptionType::DOUBLE:
+                  if (default_options.double_options.find(option_name) != default_options.double_options.end()) {
+                     std::cout << option_name << '\t' << default_options.double_options.at(option_name) << '\n';
+                  }
+                  break;
+               case OptionType::BOOL:
+                  if (default_options.bool_options.find(option_name) != default_options.bool_options.end()) {
+                     std::cout << option_name << '\t' << (default_options.bool_options.at(option_name) ? "true" : "false") << '\n';
+                  }
+                  break;
+               case OptionType::STRING:
+                  if (default_options.string_options.find(option_name) != default_options.string_options.end()) {
+                     std::cout << option_name << '\t' << default_options.string_options.at(option_name) << '\n';
+                  }
+                  break;
+            }
+         }
+         catch (const std::out_of_range &) {
+            std::cout << "<error>\n";
+         }
       }
-      for (const auto& [option_name, option_value]: overwriting_options.double_options) {
-         this->double_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: overwriting_options.bool_options) {
-         this->bool_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: overwriting_options.string_options) {
-         this->string_options[option_name] = option_value;
-      }
-      // if the option already exists and is not the same, flag it as overwritten
-      //const auto existing_option_value = this->at_optional(option_name);
-      //bool flag_as_overwritten = (existing_option_value.has_value() && *existing_option_value != option_value);
-      //this->set(option_name, option_value, flag_as_overwritten);
    }
 
    void Options::print_non_default() const {

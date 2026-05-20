@@ -833,9 +833,8 @@ void* uno_create_solver() {
    // default options
    Options* options = new Options;
    DefaultOptions::load(*options);
-   // add default preset
-   const Options preset_options = Presets::get_preset_options(std::nullopt);
-   options->overwrite_with(preset_options);
+   // set default preset
+   Presets::set_default(*options);
 
    // default user callbacks
    UserCallbacks* user_callbacks = new NoUserCallbacks;
@@ -912,7 +911,8 @@ bool uno_load_solver_option_file(void* solver, const char* file_name) {
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
+   // load_option_file() handles a possible preset separately
+   uno::Options::load_option_file(*uno_solver->options, file_name);
    return true;
 }
 
@@ -931,8 +931,7 @@ bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callba
    if (solver == nullptr) {
       WARNING << "Please specify a valid solver."  << std::endl;
       return false;
-   }
-   Solver* uno_solver = static_cast<Solver*>(solver);
+   }   Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callbacks; // delete the previous callbacks
    uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, termination_callback, user_data);
    return true;
