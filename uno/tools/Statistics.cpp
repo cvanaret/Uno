@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <sstream>
@@ -32,7 +32,8 @@ namespace uno {
       {"Status", 200},
    };
 
-   void Statistics::add_column(std::string_view name, size_t width, size_t precision, size_t order) {
+   void Statistics::add_column(std::string_view name, size_t width, size_t precision) {
+      const size_t order = column_order.at(name);
       this->columns[order] = name;
       this->widths[name] = width;
       this->precisions[name] = precision;
@@ -66,9 +67,9 @@ namespace uno {
    
    void Statistics::print_horizontal_line() {
       for (const auto& element: this->columns) {
-         std::string header = element.second;
+         const std::string& header = element.second;
          for (size_t j = 0; j < this->widths[header]; j++) {
-            INFO << Statistics::symbol("top");
+            INFO << top_symbol;
          }
       }
       INFO << '\n';
@@ -94,9 +95,9 @@ namespace uno {
    }
 
    // https://cplusplus.com/forum/beginner/192031/
-   std::size_t length_utf8(const std::string& str) {
+   std::size_t length_utf8(const std::string& string) {
       size_t length = 0;
-      for (char c: str) {
+      for (char c: string) {
          if ((c & 0xC0) != 0x80) {
             ++length;
          }
@@ -126,39 +127,6 @@ namespace uno {
    }
 
    void Statistics::print_footer() {
-      /*
-      for (const auto& element: this->columns) {
-         const auto& header = element.second;
-         for (size_t j = 0; j < this->widths[header]; j++) {
-            INFO << Statistics::symbol("bottom");
-         }
-      }
-      INFO << '\n';
-      */
       Statistics::print_header();
-   }
-   
-   std::string_view Statistics::symbol(std::string_view value) {
-      // display ASCII characters on Windows, UTF-8 on other OS
-#ifdef _WIN32
-      static std::map<std::string_view, std::string_view> symbols = {
-         {"top", "-"}, {"top-mid", "+"}, {"top-left", "+"}, {"top-right", "+"},
-         {"bottom", "-"}, {"bottom-mid", "+"}, {"bottom-left", "+"}, {"bottom-right", "+"},
-         {"left", "|"}, {"left-mid", "+"},
-         {"mid", "-"}, {"mid-mid", "+"},
-         {"right", "|"}, {"right-mid", "+"},
-         {"middle", "|"}
-      };
-#else
-      static std::map<std::string_view, std::string_view> symbols = {
-         {"top", "─"}, {"top-mid", "┬"}, {"top-left", "┌"}, {"top-right", "┐"},
-         {"bottom", "─"}, {"bottom-mid", "┴"}, {"bottom-left", "└"}, {"bottom-right", "┘"},
-         {"left", "│"}, {"left-mid", "├"},
-         {"mid", "─"}, {"mid-mid", "┼"},
-         {"right", "│"}, {"right-mid", "┤"},
-         {"middle", "│"}
-      };
-#endif
-      return symbols[value];
    }
 } // namespace

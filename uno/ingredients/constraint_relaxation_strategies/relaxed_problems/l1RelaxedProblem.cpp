@@ -83,12 +83,12 @@ namespace uno {
       // add the contribution of the elastic variables
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         row_indices[nonzero_index] = static_cast<int>(constraint_index) + row_offset + solver_indexing;
+         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
          column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + column_offset + solver_indexing;
          ++nonzero_index;
       }
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         row_indices[nonzero_index] = static_cast<int>(constraint_index) + row_offset + solver_indexing;
+         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
          column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + column_offset + solver_indexing;
          ++nonzero_index;
       }
@@ -102,8 +102,8 @@ namespace uno {
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          size_t current_index = hessian_model.number_nonzeros();
          for (size_t variable_index: Range(this->model.number_variables)) {
-            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
+            row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }

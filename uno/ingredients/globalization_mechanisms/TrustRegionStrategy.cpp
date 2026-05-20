@@ -36,8 +36,8 @@ namespace uno {
          EvaluationCache& evaluation_cache, Options& options) {
       this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, true,
          evaluation_cache, options);
-      statistics.add_column("Minor", Statistics::int_width, 3, Statistics::column_order.at("Minor"));
-      statistics.add_column("Radius", Statistics::double_width, 2, Statistics::column_order.at("Radius"));
+      statistics.add_column("Minor", Statistics::int_width, 3);
+      statistics.add_column("Radius", Statistics::double_width, 2);
       statistics.set("Radius", this->radius);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);

@@ -4,7 +4,7 @@
 #ifndef UNO_OPTIONS_H
 #define UNO_OPTIONS_H
 
-#include <map>
+#include <unordered_map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -41,16 +41,16 @@ namespace uno {
 
       void print_non_default() const;
 
-      static const std::map<std::string, OptionType> option_types;
+      static const std::unordered_map<std::string, OptionType> option_types;
 
    private:
-      std::map<std::string, uno_int> integer_options{};
-      std::map<std::string, double> double_options{};
-      std::map<std::string, bool> bool_options{};
-      std::map<std::string, std::string> string_options{};
+      std::unordered_map<std::string, uno_int> integer_options{};
+      std::unordered_map<std::string, double> double_options{};
+      std::unordered_map<std::string, bool> bool_options{};
+      std::unordered_map<std::string, std::string> string_options{};
 
-      mutable std::map<std::string, bool> used{};
-      mutable std::map<std::string, bool> overwritten_options{};
+      mutable std::unordered_map<std::string, bool> used{};
+      mutable std::unordered_map<std::string, bool> overwritten_options{};
    };
 } // namespace
 

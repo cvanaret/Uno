@@ -132,8 +132,8 @@ namespace uno {
       const auto& variables_upper_bounds = this->inner.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->inner.number_variables)) {
          if (is_finite(variables_lower_bounds[variable_index]) || is_finite(variables_upper_bounds[variable_index])) {
-            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
+            row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }

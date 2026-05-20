@@ -10,7 +10,7 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   const std::map<std::string, OptionType> Options::option_types = {
+   const std::unordered_map<std::string, OptionType> Options::option_types = {
       {"primal_tolerance", OptionType::DOUBLE},
       {"dual_tolerance", OptionType::DOUBLE},
       {"loose_primal_tolerance", OptionType::DOUBLE},
@@ -124,7 +124,7 @@ namespace uno {
    // setter for option with unknown type
    void Options::set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
       try {
-         const OptionType type = Options::option_types.at(option_name);
+         const OptionType type = option_types.at(option_name);
          if (type == OptionType::INTEGER) {
             this->set_integer(option_name, std::stoi(option_value), flag_as_overwritten);
          }

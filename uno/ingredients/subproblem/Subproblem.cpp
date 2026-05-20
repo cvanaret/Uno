@@ -38,8 +38,8 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          size_t current_index = this->number_hessian_nonzeros();
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
+            row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }
@@ -62,14 +62,14 @@ namespace uno {
       nonzero_index += this->problem.number_jacobian_nonzeros();
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[nonzero_index] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[nonzero_index] = static_cast<int>(variable_index) + solver_indexing;
+            row_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            column_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             ++nonzero_index;
          }
       }
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
-            const int shifted_constraint_index = static_cast<int>(this->number_variables + constraint_index);
+            const uno_int shifted_constraint_index = static_cast<uno_int>(this->number_variables + constraint_index);
             row_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
             column_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
             ++nonzero_index;
@@ -285,7 +285,7 @@ namespace uno {
       const double directional_derivative = dot(view(primal_direction, 0, this->problem.model.number_variables), current_evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
-      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
+      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() || this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
          solver_workspace.compute_hessian_quadratic_form(*this, primal_direction);
       return [=](double objective_multiplier) {

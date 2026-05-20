@@ -25,7 +25,19 @@ namespace uno {
       this->multipliers.reset();
    }
 
-   std::string status_to_string(SubproblemStatus status) {
+   std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
+      stream << "Direction:\n";
+      stream << "│ status: " << Direction::status_to_string(direction.status) << '\n';
+      stream << "│ primals = "; print_vector(stream, direction.primals);
+      stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
+      stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
+      stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
+      stream << "│ objective = " << direction.subproblem_objective << '\n';
+      stream << "│ norm = " << direction.norm << '\n';
+      return stream;
+   }
+
+   std::string Direction::status_to_string(SubproblemStatus status) {
       switch (status) {
          case SubproblemStatus::OPTIMAL:
             return "optimal";
@@ -36,17 +48,5 @@ namespace uno {
          default:
             return "unknown status, something went wrong";
       }
-   }
-
-   std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-      stream << "Direction:\n";
-      stream << "│ status: " << status_to_string(direction.status) << '\n';
-      stream << "│ primals = "; print_vector(stream, direction.primals);
-      stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
-      stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
-      stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
-      stream << "│ objective = " << direction.subproblem_objective << '\n';
-      stream << "│ norm = " << direction.norm << '\n';
-      return stream;
    }
 } // namespace

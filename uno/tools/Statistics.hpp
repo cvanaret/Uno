@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_STATISTICS_H
@@ -15,9 +15,8 @@ namespace uno {
       static size_t int_width;
       static size_t double_width;
       static size_t string_width;
-      static size_t numerical_format_size;
 
-      void add_column(std::string_view name, size_t width, size_t precision, size_t order);
+      void add_column(std::string_view name, size_t width, size_t precision);
       void start_new_line();
       void set(std::string_view name, std::string value);
       void set(std::string_view name, int value);
@@ -29,14 +28,21 @@ namespace uno {
       void print_current_line();
       void print_footer();
 
-      static const std::map<std::string_view, size_t> column_order;
-
    private:
       std::map<size_t, std::string> columns{};
       std::map<std::string_view, size_t> widths{};
       std::map<std::string_view, size_t> precisions{};
       std::map<std::string_view, std::string> current_line{};
-      static std::string_view symbol(std::string_view value);
+      static const std::map<std::string_view, size_t> column_order;
+
+      // display ASCII characters on Windows, UTF-8 on other OS
+      static constexpr auto top_symbol =
+#ifdef _WIN32
+      "-"
+#else
+      u8"─"
+#endif
+      ;
    };
 } // namespace
 

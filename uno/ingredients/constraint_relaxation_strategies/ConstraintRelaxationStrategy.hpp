@@ -89,8 +89,8 @@ namespace uno {
          return status_tight_tolerance;
       }
 
-      // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(trial_iterate, this->primal_tolerance,
+      // if not converged, check convergence wrt loose tolerances (provided they are strictly looser than the tight tolerances)
+      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(trial_iterate, this->loose_primal_tolerance,
          this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != SolutionStatus::NOT_OPTIMAL) {
