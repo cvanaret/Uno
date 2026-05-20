@@ -285,7 +285,7 @@ namespace uno {
       const double directional_derivative = dot(view(primal_direction, 0, this->problem.model.number_variables), current_evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
-      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
+      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() || this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
          solver_workspace.compute_hessian_quadratic_form(*this, primal_direction);
       return [=](double objective_multiplier) {
