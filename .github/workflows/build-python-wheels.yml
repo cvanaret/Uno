@@ -212,10 +212,11 @@ jobs:
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
-    # if the merge commit message contains '[unopy] Release', trigger the upload to PyPi
+    # if the merge commit message contains '[unopy] Release' or '[Release]', trigger the upload to PyPi
     name: Upload release to PyPI
     if: >-
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[unopy] Release'))
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, '[unopy] Release') ||
+                                       contains(github.event.head_commit.message, '[Release]')))
     runs-on: ubuntu-latest
     permissions:
       id-token: write
