@@ -1,4 +1,4 @@
-name: Run Valgrind on the C example
+name: Valgrind on the C example
 
 on:
   push:
