@@ -81,6 +81,8 @@ namespace uno {
       // initial iterate
       DoubleVector initial_primal_iterate{};
       DoubleVector initial_dual_iterate{};
+      DoubleVector initial_lower_bound_dual_iterate{};
+      DoubleVector initial_upper_bound_dual_iterate{};
    };
 } // namespace
 

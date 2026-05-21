@@ -596,6 +596,38 @@ interface
 end interface
 
 !---------------------------------------------
+! uno_set_initial_lower_bound_dual_iterate_component
+!---------------------------------------------
+interface
+   function uno_set_initial_lower_bound_dual_iterate_component(model, index, &
+                                                               initial_dual_component) &
+      result(success) &
+      bind(C, name="uno_set_initial_lower_bound_dual_iterate_component")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: index
+      real(c_double), value :: initial_dual_component
+      logical(c_bool) :: success
+   end function uno_set_initial_lower_bound_dual_iterate_component
+end interface
+
+!---------------------------------------------
+! uno_set_initial_upper_bound_dual_iterate_component
+!---------------------------------------------
+interface
+   function uno_set_initial_upper_bound_dual_iterate_component(model, index, &
+                                                               initial_dual_component) &
+      result(success) &
+      bind(C, name="uno_set_initial_upper_bound_dual_iterate_component")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: index
+      real(c_double), value :: initial_dual_component
+      logical(c_bool) :: success
+   end function uno_set_initial_upper_bound_dual_iterate_component
+end interface
+
+!---------------------------------------------
 ! uno_set_initial_primal_iterate
 !---------------------------------------------
 interface
@@ -621,6 +653,36 @@ interface
       real(c_double) :: initial_dual_iterate(*)
       logical(c_bool) :: success
    end function uno_set_initial_dual_iterate
+end interface
+
+!---------------------------------------------
+! uno_set_initial_lower_bound_dual_iterate
+!---------------------------------------------
+interface
+   function uno_set_initial_lower_bound_dual_iterate(model, &
+                                                     initial_lower_bound_dual_iterate) &
+      result(success) &
+      bind(C, name="uno_set_initial_lower_bound_dual_iterate")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double) :: initial_lower_bound_dual_iterate(*)
+      logical(c_bool) :: success
+   end function uno_set_initial_lower_bound_dual_iterate
+end interface
+
+!---------------------------------------------
+! uno_set_initial_upper_bound_dual_iterate
+!---------------------------------------------
+interface
+   function uno_set_initial_upper_bound_dual_iterate(model, &
+                                                     initial_upper_bound_dual_iterate) &
+      result(success) &
+      bind(C, name="uno_set_initial_upper_bound_dual_iterate")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double) :: initial_upper_bound_dual_iterate(*)
+      logical(c_bool) :: success
+   end function uno_set_initial_upper_bound_dual_iterate
 end interface
 
 !---------------------------------------------

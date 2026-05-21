@@ -163,6 +163,20 @@ function uno_set_initial_dual_iterate_component(model, index, initial_dual_compo
                                                          initial_dual_component::Cdouble)::Bool
 end
 
+function uno_set_initial_lower_bound_dual_iterate_component(model, index,
+                                                            initial_dual_component)
+    @ccall libuno.uno_set_initial_lower_bound_dual_iterate_component(model::Ptr{Cvoid},
+                                                                     index::Int32,
+                                                                     initial_dual_component::Cdouble)::Bool
+end
+
+function uno_set_initial_upper_bound_dual_iterate_component(model, index,
+                                                            initial_dual_component)
+    @ccall libuno.uno_set_initial_upper_bound_dual_iterate_component(model::Ptr{Cvoid},
+                                                                     index::Int32,
+                                                                     initial_dual_component::Cdouble)::Bool
+end
+
 function uno_set_initial_primal_iterate(model, initial_primal_iterate)
     @ccall libuno.uno_set_initial_primal_iterate(model::Ptr{Cvoid},
                                                  initial_primal_iterate::Ptr{Cdouble})::Bool
@@ -171,6 +185,16 @@ end
 function uno_set_initial_dual_iterate(model, initial_dual_iterate)
     @ccall libuno.uno_set_initial_dual_iterate(model::Ptr{Cvoid},
                                                initial_dual_iterate::Ptr{Cdouble})::Bool
+end
+
+function uno_set_initial_lower_bound_dual_iterate(model, initial_lower_bound_dual_iterate)
+    @ccall libuno.uno_set_initial_lower_bound_dual_iterate(model::Ptr{Cvoid},
+                                                           initial_lower_bound_dual_iterate::Ptr{Cdouble})::Bool
+end
+
+function uno_set_initial_upper_bound_dual_iterate(model, initial_upper_bound_dual_iterate)
+    @ccall libuno.uno_set_initial_upper_bound_dual_iterate(model::Ptr{Cvoid},
+                                                           initial_upper_bound_dual_iterate::Ptr{Cdouble})::Bool
 end
 
 function uno_create_solver()
