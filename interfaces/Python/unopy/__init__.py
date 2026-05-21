@@ -4,7 +4,7 @@ import sys
 # load bundled DLLs from unopy.libs
 basedir = os.path.dirname(__file__)
 subdir = os.path.join(basedir, '..', 'unopy.libs')
-if os.name == 'nt':
+if os.name == 'nt' and os.path.isdir(subdir):
     # Prepend to PATH so our DLLs are found before any system MinGW ones
     os.environ['PATH'] = subdir + os.pathsep + os.environ.get('PATH', '')
     os.add_dll_directory(subdir)
