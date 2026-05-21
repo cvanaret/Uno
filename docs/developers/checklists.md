@@ -15,8 +15,11 @@ In preparation for an Uno release, use the following checklist. These steps can 
 - [ ] Change the version number in `CMakeLists.txt`
 - [ ] Change the version number in `interfaces/C/Uno_C_API.h`
 - [ ] Change the version number in `interfaces/Julia/gen/prologue_fortran.f90`
+- [ ] Making a release of `unopy`
+  - [ ] Change the version number in `pyproject.toml`
+  - [ ] The title of the test commit should start with `[unopy] Test release`
 - [ ] Update the logo in `docs/figures/logo.png`
-- [ ] The PR should have the title `Prep for vX.Y.Z.`
+- [ ] The PR should have the title `[Release] Prep for vX.Y.Z.`
 - [ ] The commit messages in this PR do not contain `[ci skip]`
 
 ## Post-release
