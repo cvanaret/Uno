@@ -101,8 +101,8 @@ namespace uno {
       // note: no BLAS operation available
       template <typename Vector>
       VectorView& operator=(Subtraction<Vector, Vector>&& expression) {
-         const auto& x = expression.get_expression1();
-         const auto& z = expression.get_expression2();
+         const auto& x = expression.get_left();
+         const auto& z = expression.get_right();
          if (x.size() != z.size()) {
             throw std::invalid_argument("Dimension mismatch between x and z");
          }

@@ -4,6 +4,8 @@
 #ifndef UNO_SCALARMULTIPLE_H
 #define UNO_SCALARMULTIPLE_H
 
+#include "symbolic_traits.hpp"
+
 namespace uno {
    // stores the expression (factor * expression) symbolically
    template <typename Expression>
@@ -22,13 +24,13 @@ namespace uno {
          return this->factor;
       }
 
-      [[nodiscard]] const Expression& get_expression() const {
+      [[nodiscard]] constexpr decltype(auto) get_expression() const noexcept {
          return this->expression;
       }
 
    protected:
       const value_type factor;
-      const Expression expression;
+      storage_t<Expression> expression;
    };
 
    // free function
@@ -36,7 +38,7 @@ namespace uno {
       // the first argument should be of arithmetic type, the second not
       typename std::enable_if_t<std::is_arithmetic_v<ElementType>, int> = 0,
       typename std::enable_if_t<!std::is_arithmetic_v<Expression>, int> = 0>
-   inline ScalarMultiple<Expression> operator*(ElementType factor, Expression&& expression) {
+   ScalarMultiple<Expression> operator*(ElementType factor, Expression&& expression) {
       return ScalarMultiple<Expression>(factor, std::forward<Expression>(expression));
    }
 } // namespace

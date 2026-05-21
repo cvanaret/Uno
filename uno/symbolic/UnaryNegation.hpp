@@ -5,6 +5,7 @@
 #define UNO_UNARYNEGATION_H
 
 #include <cstddef>
+#include "symbolic_traits.hpp"
 
 namespace uno {
    // stores the expression -expression symbolically
@@ -17,21 +18,21 @@ namespace uno {
 
       explicit UnaryNegation(Expression&& expression): expression(std::forward<Expression>(expression)) { }
 
-      [[nodiscard]] constexpr size_t size() const {
+      [[nodiscard]] constexpr size_t size() const noexcept {
          return this->expression.size();
       }
 
-      [[nodiscard]] typename UnaryNegation::value_type operator[](size_t index) const {
+      [[nodiscard]] constexpr value_type operator[](size_t index) const noexcept {
          return -this->expression[index];
       }
 
    protected:
-      const Expression expression;
+      storage_t<Expression> expression;
    };
 
    // free function
    template <typename Expression>
-   inline UnaryNegation<Expression> operator-(Expression&& expression) {
+   UnaryNegation<Expression> operator-(Expression&& expression) {
       return UnaryNegation<Expression>(std::forward<Expression>(expression));
    }
 } // namespace

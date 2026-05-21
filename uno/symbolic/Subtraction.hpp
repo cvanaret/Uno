@@ -4,43 +4,46 @@
 #ifndef UNO_SUBTRACTION_H
 #define UNO_SUBTRACTION_H
 
+#include "symbolic_traits.hpp"
+
 namespace uno {
-   // stores the expression (expression1 - expression2) symbolically
+   // stores the expression (left - right) symbolically
    // limited to types that possess value_type
    // https://stackoverflow.com/questions/11055923/stdenable-if-parameter-vs-template-parameter
-   template <typename E1, typename E2,
-      typename std::enable_if_t<std::is_same_v<typename std::remove_reference_t<E1>::value_type, typename std::remove_reference_t<E2>::value_type>, int> = 0>
+   template <typename L, typename R,
+      std::enable_if_t<std::is_same_v<typename std::remove_reference_t<L>::value_type,
+                                      typename std::remove_reference_t<R>::value_type>, int> = 0>
    class Subtraction {
    public:
-      using value_type = typename std::remove_reference_t<E1>::value_type;
+      using value_type = typename std::remove_reference_t<L>::value_type;
 
-      Subtraction(E1&& expression1, E2&& expression2): expression1(std::forward<E1>(expression1)), expression2(std::forward<E2>(expression2)) { }
+      Subtraction(L&& left, R&& right): left(std::forward<L>(left)), right(std::forward<R>(right)) { }
 
-      [[nodiscard]] constexpr size_t size() const {
-         return this->expression1.size();
+      [[nodiscard]] constexpr size_t size() const noexcept {
+         return this->left.size();
       }
 
-      [[nodiscard]] typename Subtraction::value_type operator[](size_t index) const {
-         return this->expression1[index] - this->expression2[index];
+      [[nodiscard]] constexpr value_type operator[](size_t index) const noexcept {
+         return this->left[index] - this->right[index];
       }
 
-      [[nodiscard]] const E1& get_expression1() const {
-         return this->expression1;
+      [[nodiscard]] constexpr decltype(auto) get_left() const noexcept {
+         return this->left;
       }
 
-      [[nodiscard]] const E2& get_expression2() const {
-         return this->expression2;
+      [[nodiscard]] constexpr decltype(auto) get_right() const noexcept {
+         return this->right;
       }
 
    protected:
-      const E1 expression1;
-      const E2 expression2;
+      storage_t<L> left;
+      storage_t<R> right;
    };
 
    // free function
    template <typename E1, typename E2>
-   inline Subtraction<E1, E2> operator-(E1&& expression1, E2&& expression2) {
-      return {std::forward<E1>(expression1), std::forward<E2>(expression2)};
+   Subtraction<E1, E2> operator-(E1&& left, E2&& right) {
+      return {std::forward<E1>(left), std::forward<E2>(right)};
    }
 } // namespace
 

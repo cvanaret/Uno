@@ -4,7 +4,6 @@
 #include <algorithm>
 #include "Evaluations.hpp"
 #include "linear_algebra/COOSparsity.hpp"
-#include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 
