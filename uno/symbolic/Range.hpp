@@ -34,12 +34,12 @@ namespace uno {
    };
 
    template <RangeDirection direction>
-   inline Range<direction>::Range(size_t end_value): Range(0, end_value) {
+   Range<direction>::Range(size_t end_value): Range(0, end_value) {
       static_assert(direction == FORWARD);
    }
 
    template <RangeDirection direction>
-   inline Range<direction>::Range(size_t start_value, size_t end_value): Collection<size_t>(), start_value(start_value), end_value(end_value) {
+   Range<direction>::Range(size_t start_value, size_t end_value): Collection<size_t>(), start_value(start_value), end_value(end_value) {
       if (direction == FORWARD && end_value < start_value) {
          throw std::runtime_error("Forward range: end index is smaller than start index");
       }
@@ -49,7 +49,7 @@ namespace uno {
    }
 
    template <RangeDirection direction>
-   inline size_t Range<direction>::size() const {
+   size_t Range<direction>::size() const {
       if constexpr (direction == FORWARD) {
          return this->end_value - this->start_value;
       }

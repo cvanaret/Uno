@@ -8,7 +8,7 @@
 
 namespace uno {
    // Concatenation based on https://stackoverflow.com/questions/24175279/how-to-store-either-rvalue-or-lvalue-references-in-template
-   // Aggregates two collections, not necessarily of the same type. However they must have the same value_type (the type of the elements)
+   // Aggregates two collections, not necessarily of the same type. However, they must have the same value_type (the type of the elements)
    template <typename Collection1, typename Collection2>
    class Concatenation: public Collection<typename std::remove_reference_t<Collection1>::value_type> {
    public:

@@ -8,17 +8,17 @@
 #include <limits>
 
 namespace uno {
-   template <typename NumericalType>
-   const double INF = std::numeric_limits<NumericalType>::infinity();
+   template <typename T>
+   const double INF = std::numeric_limits<T>::infinity();
 
-   template <typename NumericalType>
-   inline bool is_finite(NumericalType value) {
-      return std::abs(value) < INF<NumericalType>;
+   template <typename T>
+   bool is_finite(T value) {
+      return std::abs(value) < INF<T>;
    }
 
-   template <typename NumericalType>
-   inline bool is_infinite(NumericalType value) {
-      return std::abs(value) == INF<NumericalType>;
+   template <typename T>
+   bool is_infinite(T value) {
+      return std::abs(value) == INF<T>;
    }
 } // namespace
 

@@ -4,7 +4,7 @@
 #ifndef UNO_TRANSPOSE_H
 #define UNO_TRANSPOSE_H
 
-#include <utility>
+#include "symbolic_traits.hpp"
 
 namespace uno {
    template <typename Matrix>
@@ -14,17 +14,17 @@ namespace uno {
 
       explicit Transpose(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
-      [[nodiscard]] const Matrix& get_matrix() const {
+      [[nodiscard]] constexpr decltype(auto) get_matrix() const noexcept {
          return this->matrix;
       }
 
    protected:
-      const Matrix matrix;
+      storage_t<Matrix> matrix;
    };
 
    // free function
    template <typename Matrix>
-   inline Transpose<Matrix> transpose(Matrix&& matrix) {
+   Transpose<Matrix> transpose(Matrix&& matrix) {
       return Transpose<Matrix>(std::forward<Matrix>(matrix));
    }
 } // namespace

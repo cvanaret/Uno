@@ -4,43 +4,46 @@
 #ifndef UNO_SUM_H
 #define UNO_SUM_H
 
+#include "symbolic_traits.hpp"
+
 namespace uno {
-   // stores the expression (expression1 + expression2) symbolically
+   // stores the expression (left + right) symbolically
    // limited to types that possess value_type
    // https://stackoverflow.com/questions/11055923/stdenable-if-parameter-vs-template-parameter
    template <typename E1, typename E2,
-      typename std::enable_if_t<std::is_same_v<typename std::remove_reference_t<E1>::value_type, typename std::remove_reference_t<E2>::value_type>, int> = 0>
+      std::enable_if_t<std::is_same_v<typename std::remove_reference_t<E1>::value_type,
+                                      typename std::remove_reference_t<E2>::value_type>, int> = 0>
    class Sum {
    public:
       using value_type = typename std::remove_reference_t<E1>::value_type;
 
-      Sum(E1&& expression1, E2&& expression2): expression1(std::forward<E1>(expression1)), expression2(std::forward<E2>(expression2)) { }
+      Sum(E1&& left, E2&& right): left(std::forward<E1>(left)), right(std::forward<E2>(right)) { }
 
-      [[nodiscard]] constexpr size_t size() const {
-         return this->expression1.size();
+      [[nodiscard]] constexpr size_t size() const noexcept {
+         return this->left.size();
       }
 
-      [[nodiscard]] typename Sum::value_type operator[](size_t index) const {
-         return this->expression1[index] + this->expression2[index];
+      [[nodiscard]] constexpr value_type operator[](size_t index) const noexcept {
+         return this->left[index] + this->right[index];
       }
 
-      [[nodiscard]] const E1& get_left() const {
-         return this->expression1;
+      [[nodiscard]] constexpr decltype(auto) get_left() const noexcept {
+         return this->left;
       }
 
-      [[nodiscard]] const E2& get_right() const {
-         return this->expression2;
+      [[nodiscard]] constexpr decltype(auto) get_right() const noexcept {
+         return this->right;
       }
 
    protected:
-      const E1 expression1;
-      const E2 expression2;
+      storage_t<E1> left;
+      storage_t<E2> right;
    };
 
    // free function
-   template <typename E1, typename E2>
-   inline Sum<E1, E2> operator+(E1&& expression1, E2&& expression2) {
-      return {std::forward<E1>(expression1), std::forward<E2>(expression2)};
+   template <typename L, typename R>
+   Sum<L, R> operator+(L&& left, R&& right) {
+      return {std::forward<L>(left), std::forward<R>(right)};
    }
 } // namespace
 

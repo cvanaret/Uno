@@ -4,7 +4,7 @@
 #ifndef UNO_TRIANGULAR_H
 #define UNO_TRIANGULAR_H
 
-#include <utility>
+#include "symbolic_traits.hpp"
 
 namespace uno {
    template <typename Matrix>
@@ -14,17 +14,17 @@ namespace uno {
 
       explicit LowerTriangular(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
-      [[nodiscard]] const Matrix& get_matrix() const {
+      [[nodiscard]] constexpr decltype(auto) get_matrix() const noexcept {
          return this->matrix;
       }
 
    protected:
-      const Matrix matrix;
+      storage_t<Matrix> matrix;
    };
 
    // free function
    template <typename Matrix>
-   inline LowerTriangular<Matrix> lower_triangular(Matrix&& matrix) {
+   LowerTriangular<Matrix> lower_triangular(Matrix&& matrix) {
       return LowerTriangular<Matrix>(std::forward<Matrix>(matrix));
    }
 
@@ -35,17 +35,17 @@ namespace uno {
 
       explicit UpperTriangular(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
-      [[nodiscard]] const Matrix& get_matrix() const {
+      [[nodiscard]] constexpr decltype(auto) get_matrix() const noexcept {
          return this->matrix;
       }
 
    protected:
-      const Matrix matrix;
+      storage_t<Matrix> matrix;
    };
 
    // free function
    template <typename Matrix>
-   inline UpperTriangular<Matrix> upper_triangular(Matrix&& matrix) {
+   UpperTriangular<Matrix> upper_triangular(Matrix&& matrix) {
       return UpperTriangular<Matrix>(std::forward<Matrix>(matrix));
    }
 
@@ -56,17 +56,17 @@ namespace uno {
 
       explicit LowerUnitTriangular(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
-      [[nodiscard]] const Matrix& get_matrix() const {
+      [[nodiscard]] constexpr decltype(auto) get_matrix() const noexcept {
          return this->matrix;
       }
 
    protected:
-      const Matrix matrix;
+      storage_t<Matrix> matrix;
    };
 
    // free function
    template <typename Matrix>
-   inline LowerUnitTriangular<Matrix> lower_unit_triangular(Matrix&& matrix) {
+   LowerUnitTriangular<Matrix> lower_unit_triangular(Matrix&& matrix) {
       return LowerUnitTriangular<Matrix>(std::forward<Matrix>(matrix));
    }
 
@@ -77,17 +77,17 @@ namespace uno {
 
       explicit UpperUnitTriangular(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
-      [[nodiscard]] const Matrix& get_matrix() const {
+      [[nodiscard]] constexpr decltype(auto) get_matrix() const noexcept {
          return this->matrix;
       }
 
    protected:
-      const Matrix matrix;
+      storage_t<Matrix> matrix;
    };
 
    // free function
    template <typename Matrix>
-   inline UpperUnitTriangular<Matrix> upper_unit_triangular(Matrix&& matrix) {
+   UpperUnitTriangular<Matrix> upper_unit_triangular(Matrix&& matrix) {
       return UpperUnitTriangular<Matrix>(std::forward<Matrix>(matrix));
    }
 } // namespace
