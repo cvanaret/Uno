@@ -14,7 +14,7 @@ In preparation for an Uno release, use the following checklist. These steps can 
 - [ ] Change the version number in `CITATION.cff` (twice)
 - [ ] Change the version number in `CMakeLists.txt`
 - [ ] Change the version number in `interfaces/C/Uno_C_API.h`
-- [ ] Change the version number in `interfaces/Julia/gen/prologue_fortran.f90`
+- [ ] Change the version number in `interfaces/Julia/gen/prologue_fortran.f90` and generate a new `interfaces/Fortran/uno_c.f90`
 - [ ] Making a release of `unopy`
   - [ ] Change the version number in `pyproject.toml`
   - [ ] The title of the test commit should start with `[unopy] Test release`
