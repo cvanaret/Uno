@@ -243,6 +243,10 @@ namespace uno {
          return *this;
       }
 
+      void fill(T value) {
+         std::fill(this->data(), this->data() + this->size(), value);
+      }
+
       void scale(T factor) {
          blas1::scale(this->size(), factor, this->data());
       }
