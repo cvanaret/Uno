@@ -197,6 +197,8 @@ program example_uno
     !---------------------------------------------------
     ! Cleanup
     !---------------------------------------------------
+    deallocate(logger)
+    deallocate(method_description)
     call uno_destroy_solver(solver)
     call uno_destroy_model(model)
 

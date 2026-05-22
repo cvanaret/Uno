@@ -1,4 +1,4 @@
-name: Valgrind on the C example
+name: Valgrind on the C and Fortran examples
 
 on:
   push:
@@ -30,6 +30,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         architecture: [x64]
+
+    env:
+      VALGRIND: valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --errors-for-leak-kinds=definite,possible --error-exitcode=1
 
     steps:
       - uses: actions/checkout@v4
@@ -65,10 +68,18 @@ jobs:
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                 -DUNO=/usr/local/lib/libuno.so .
 
-      - name: Build example
+      - name: Build C example
         working-directory: ${{github.workspace}}/interfaces/C/example
         run: cmake --build ${{github.workspace}}/interfaces/C/example/build --config ${{env.BUILD_TYPE}}
 
-      - name: Run Valgrind on example
+      - name: Run Valgrind on C example
         working-directory: ${{github.workspace}}/interfaces/C/example/build
-        run: valgrind --leak-check=full -s ./example_hs015
+        run: $VALGRIND --leak-check=full -s ./example_hs015
+
+      - name: Compile Fortran example
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: gfortran example_uno.f90 -o example_uno /usr/local/lib/libuno.so -Wl,-rpath,/usr/local/lib
+
+      - name: Run Valgrind on Fortran example
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: $VALGRIND --leak-check=full -s ./example_uno
