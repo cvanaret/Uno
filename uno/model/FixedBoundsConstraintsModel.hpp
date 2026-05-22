@@ -7,7 +7,7 @@
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/Concatenation.hpp"
-#include "symbolic/Range.hpp"
+#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // forward declaration
@@ -81,8 +81,8 @@ namespace uno {
    private:
       const Model& model;
       Vector<size_t> fixed_variables{};
-      Concatenation<const Collection<size_t>&, ForwardRange> equality_constraints;
-      Concatenation<const Collection<size_t>&, ForwardRange> linear_constraints;
+      Concatenation<const Collection<size_t>&, IntegerRange> equality_constraints;
+      Concatenation<const Collection<size_t>&, IntegerRange> linear_constraints;
 
       std::vector<double> variables_lower_bounds;
       std::vector<double> variables_upper_bounds;

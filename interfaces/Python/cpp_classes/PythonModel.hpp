@@ -10,6 +10,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 
 namespace uno {
@@ -81,8 +82,8 @@ namespace uno {
       mutable NumberModelEvaluations number_model_evaluations{};
       const SparseVector<size_t> slacks{};
       Vector<size_t> fixed_variables{};
-      const ForwardRange linear_constraints{0};
-      const ForwardRange nonlinear_constraints;
+      const IntegerRange linear_constraints{0};
+      const IntegerRange nonlinear_constraints;
       std::vector<size_t> equality_constraints;
       CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
       std::vector<size_t> inequality_constraints;

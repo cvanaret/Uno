@@ -10,6 +10,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "optimization/ProblemType.hpp"
 #include "symbolic/CollectionAdapter.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 // include AMPL Solver Library (ASL)
 extern "C" {
@@ -102,8 +103,8 @@ namespace uno {
       std::vector<double> constraints_upper_bounds;
 
       // lists of variables and constraints + corresponding collection objects
-      const ForwardRange linear_constraints;
-      const ForwardRange nonlinear_constraints;
+      const IntegerRange linear_constraints;
+      const IntegerRange nonlinear_constraints;
       const ProblemType problem_type;
       std::vector<size_t> equality_constraints{};
       CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;

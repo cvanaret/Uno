@@ -6,7 +6,7 @@
 
 #include "optimization/OptimizationProblem.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "symbolic/Range.hpp"
+#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // forward declarations
@@ -80,8 +80,8 @@ namespace uno {
       const Parameterization& parameterization;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
-      const ForwardRange equality_constraints;
-      const ForwardRange inequality_constraints{0};
+      const IntegerRange equality_constraints;
+      const IntegerRange inequality_constraints{0};
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;

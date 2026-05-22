@@ -5,8 +5,10 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include <functional>
+#include <memory>
 #include "ElasticVariables.hpp"
 #include "optimization/OptimizationProblem.hpp"
+#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
@@ -14,7 +16,7 @@ namespace uno {
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
          bool relax_linear_constraints);
       ~l1RelaxedProblem() override = default;
-      std::unique_ptr<OptimizationProblem> clone() const override;
+      [[nodiscard]] std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
       [[nodiscard]] bool has_inequality_constraints() const override;
@@ -77,7 +79,7 @@ namespace uno {
       const double constraint_violation_coefficient;
       double proximal_coefficient{0.};
       double* proximal_center{};
-      const ForwardRange dual_regularization_constraints{0};
+      const IntegerRange dual_regularization_constraints{0};
 
       std::vector<double> variables_lower_bounds;
       std::vector<double> variables_upper_bounds;

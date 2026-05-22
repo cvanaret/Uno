@@ -6,6 +6,7 @@
 
 #include "Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // generate an equality-constrained model by:
@@ -76,8 +77,8 @@ namespace uno {
    protected:
       const Model& model;
 
-      ForwardRange equality_constraints;
-      ForwardRange inequality_constraints;
+      IntegerRange equality_constraints;
+      IntegerRange inequality_constraints;
       SparseVector<size_t> slacks;
 
       std::vector<double> variables_lower_bounds;

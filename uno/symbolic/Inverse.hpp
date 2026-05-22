@@ -14,9 +14,7 @@ namespace uno {
 
       explicit Inverse(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
-      [[nodiscard]] constexpr decltype(auto) get_matrix() const noexcept {
-         return this->matrix;
-      }
+      UNO_FORWARD_ACCESSOR(get_matrix, this->matrix)
 
    protected:
       storage_t<Matrix> matrix;
