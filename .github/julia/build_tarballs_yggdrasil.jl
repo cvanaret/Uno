@@ -33,11 +33,21 @@ else
     OMP=gomp
 fi
 
+if [[ "${target}" == *-linux-gnu* ]]; then
+    SANITIZER_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
+else
+    SANITIZER_FLAGS=""
+fi
+
 cmake \
     -DCMAKE_INSTALL_PREFIX=${prefix} \
     -DCMAKE_PREFIX_PATH=${libdir} \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_CXX_FLAGS="${SANITIZER_FLAGS}" \
+    -DCMAKE_C_FLAGS="${SANITIZER_FLAGS}" \
+    -DCMAKE_EXE_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+    -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
     -DHIGHS=${libdir}/libhighs.${dlext} \
     -DBQPD=${prefix}/lib/libbqpd.a \

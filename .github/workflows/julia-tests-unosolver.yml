@@ -67,7 +67,21 @@ jobs:
         with:
           version: "1.10"
           arch: x64
+      - name: Get the path of libasan
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.add("CompilerSupportLibraries_jll")
+          using CompilerSupportLibraries_jll
+          open(ENV["GITHUB_ENV"], "a") do f
+            println(f, "LIBASAN=$(CompilerSupportLibraries_jll.libasan_path)")
+          end
+
       - name: Unit tests of UnoSolver.jl
+        env:
+          LD_PRELOAD: ${{env.LIBASAN}}
+          ASAN_OPTIONS: verify_asan_link_order=0
+          UBSAN_OPTIONS: print_stacktrace=1
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg
