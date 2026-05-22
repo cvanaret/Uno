@@ -3,6 +3,7 @@
 
 #include "ElasticVariables.hpp"
 #include "model/Model.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -16,7 +17,7 @@ namespace uno {
       // generate elastic variables to relax the constraints
       size_t elastic_index = model.number_variables;
       const auto& constraints = relax_linear_constraints ?
-         static_cast<const Collection<size_t>&>(Range(model.number_constraints)) : model.get_nonlinear_constraints();
+         static_cast<const Collection<size_t>&>(IntegerRange(model.number_constraints)) : model.get_nonlinear_constraints();
       const auto& constraints_lower_bounds = model.get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = model.get_constraints_upper_bounds();
       for (size_t constraint_index: constraints) {
@@ -37,7 +38,7 @@ namespace uno {
    ElasticVariablesSizes ElasticVariables::count(const Model& model, bool relax_linear_constraints) {
       ElasticVariablesSizes number_elastic_variables{};
       const auto& constraints = relax_linear_constraints ?
-         static_cast<const Collection<size_t>&>(Range(model.number_constraints)) : model.get_nonlinear_constraints();
+         static_cast<const Collection<size_t>&>(IntegerRange(model.number_constraints)) : model.get_nonlinear_constraints();
       const auto& constraints_lower_bounds = model.get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = model.get_constraints_upper_bounds();
       for (size_t constraint_index: constraints) {

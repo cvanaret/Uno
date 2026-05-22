@@ -16,8 +16,8 @@ namespace uno {
             original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
          model(original_model),
          // all constraints are equality constraints
-         equality_constraints(Range(this->number_constraints)),
-         inequality_constraints(Range(0)),
+         equality_constraints(this->number_constraints),
+         inequality_constraints(0),
          slacks(this->model.get_inequality_constraints().size()),
          variables_lower_bounds(this->number_variables),
          variables_upper_bounds(this->number_variables),

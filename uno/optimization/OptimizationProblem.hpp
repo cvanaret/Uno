@@ -12,6 +12,7 @@
 #include "optimization/SolutionStatus.hpp"
 #include "../interfaces/C/uno_int.h"
 #include "model/Model.hpp"
+#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // forward declarations
@@ -105,8 +106,8 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const;
 
    protected:
-      const ForwardRange primal_regularization_variables;
-      const ForwardRange dual_regularization_constraints;
+      const IntegerRange primal_regularization_variables;
+      const IntegerRange dual_regularization_constraints;
    };
 } // namespace
 
