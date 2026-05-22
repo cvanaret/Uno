@@ -93,9 +93,7 @@ namespace uno {
       }
 
       void fill(T value) {
-         for (size_t index: Range(this->size())) {
-            this->vector[index] = value;
-         }
+         this->view().fill(value);
       }
 
       void print(std::ostream& stream) const {
@@ -108,29 +106,36 @@ namespace uno {
 
       template <typename Expression>
       Vector<T>& operator=(Expression&& expression) {
-         view(this->data(), this->size()) = std::forward<Expression>(expression);
+         this->view() = std::forward<Expression>(expression);
          return *this;
       }
 
       template <typename Expression>
       Vector<T>& operator+=(Expression&& expression) {
-         view(this->data(), this->size()) += std::forward<Expression>(expression);
+         this->view() += std::forward<Expression>(expression);
          return *this;
       }
 
       template <typename Expression>
       Vector<T>& operator-=(Expression&& expression) {
-         view(this->data(), this->size()) -= std::forward<Expression>(expression);
+         this->view() -= std::forward<Expression>(expression);
          return *this;
       }
 
       void scale(T factor) {
-         view(this->data(), this->size()).scale(factor);
+         this->view().scale(factor);
       }
-
 
    protected:
       std::vector<T> vector;
+
+      VectorView<const T> view() const noexcept {
+         return uno::view(this->data(), this->size());
+      }
+
+      VectorView<T> view() noexcept {
+         return uno::view(this->data(), this->size());
+      }
    };
 
    // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)

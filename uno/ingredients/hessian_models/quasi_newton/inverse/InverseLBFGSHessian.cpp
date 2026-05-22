@@ -58,14 +58,16 @@ namespace uno {
       const auto yk = this->Y.column(this->current_index);
       const double norm_sk = norm_2(sk);
       const double norm_yk = norm_2(yk);
+      const double sTy = dot(sk, yk);
       // tolerance is √(machine epsilon)
-      if (dot(sk, yk) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
+      if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
       }
       else {
          // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
          // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
          this->hessian_recomputation_required = true;
+         this->R.entry(this->current_index, this->current_index) = sTy;
       }
    }
 
@@ -133,6 +135,9 @@ namespace uno {
          Hv.scale(this->delta);
          Hv += Sk * p1;
       }
+      else {
+         Hv.fill(0.);
+      }
 
       // diagonal contribution δ I
       Hv += this->delta * v;
@@ -141,20 +146,10 @@ namespace uno {
    // protected member functions
 
    void InverseLBFGSHessian::recompute_hessian_representation() {
-      // check that sᵀy is > 0
-      // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
-      const double sTy = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
-      if (sTy <= 0.) {
-         DEBUG << "Skipping the update\n";
-         return;
-      }
-      this->R.entry(this->current_index, this->current_index) = sTy;
-
       this->validate_update();
       assert(0 < this->number_entries_in_memory);
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
-
       /* update the initial Hessian approximation δ I */
       this->delta = this->compute_delta();
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
