@@ -34,13 +34,7 @@ else
 fi
 
 if [[ "${target}" == *-linux-gnu* ]]; then
-    SANITIZER_FLAGS="
-        -fsanitize=undefined,null,vptr,local-bounds
-        -fno-omit-frame-pointer
-        -fno-sanitize-recover=all
-        -D_GLIBCXX_ASSERTIONS
-        -O1
-    "
+    SANITIZER_FLAGS="-fsanitize=undefined,null,vptr,local-bounds -fno-omit-frame-pointer -fno-sanitize-recover=all -D_GLIBCXX_ASSERTIONS -O1"
 else
     SANITIZER_FLAGS=""
 fi
