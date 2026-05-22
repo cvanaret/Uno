@@ -4,22 +4,18 @@ name: Build Python wheels
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.yml'
-      - '*.yaml'
-      - 'docs/**'
+    paths:
+      - "uno/**"
+      - "interfaces/UserModel.hpp"
+      - "interfaces/Python/**"
+      - ".github/workflows/build-python-wheels.yml"
   pull_request:
     branches: [ "main" ]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.yml'
-      - '*.yaml'
-      - 'docs/**'
+    paths:
+      - "uno/**"
+      - "interfaces/UserModel.hpp"
+      - "interfaces/Python/**"
+      - ".github/workflows/build-python-wheels.yml"
 
 env:
   CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
