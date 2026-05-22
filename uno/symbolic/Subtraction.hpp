@@ -4,6 +4,7 @@
 #ifndef UNO_SUBTRACTION_H
 #define UNO_SUBTRACTION_H
 
+#include <cstddef>
 #include "symbolic_traits.hpp"
 
 namespace uno {
@@ -27,13 +28,9 @@ namespace uno {
          return this->left[index] - this->right[index];
       }
 
-      [[nodiscard]] constexpr decltype(auto) get_left() const noexcept {
-         return this->left;
-      }
+      UNO_FORWARD_ACCESSOR(get_left, this->left)
 
-      [[nodiscard]] constexpr decltype(auto) get_right() const noexcept {
-         return this->right;
-      }
+      UNO_FORWARD_ACCESSOR(get_right, this->right)
 
    protected:
       storage_t<L> left;

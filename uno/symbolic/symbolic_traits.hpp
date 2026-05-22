@@ -16,6 +16,23 @@ namespace uno {
 
     template<class T>
     using storage_t = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::decay_t<T>>;
+
+    #define UNO_FORWARD_ACCESSOR(name, member)                     \
+    constexpr decltype(auto) name() & noexcept {                   \
+      return (member);                                            \
+    }                                                              \
+    \
+    constexpr decltype(auto) name() const& noexcept {              \
+      return (member);                                            \
+    }                                                              \
+    \
+    constexpr decltype(auto) name() && noexcept {                  \
+      return std::move(member);                                   \
+    }                                                              \
+    \
+    constexpr decltype(auto) name() const&& noexcept {             \
+      return std::move(member);                                   \
+    }
 } // namespace
 
 #endif // UNO_SYMBOLIC_TRAITS_H

@@ -24,9 +24,7 @@ namespace uno {
          return this->factor;
       }
 
-      [[nodiscard]] constexpr decltype(auto) get_expression() const noexcept {
-         return this->expression;
-      }
+      UNO_FORWARD_ACCESSOR(get_expression, this->expression)
 
    protected:
       const value_type factor;
@@ -34,10 +32,10 @@ namespace uno {
    };
 
    // free function
-   template <typename Expression, typename ElementType = typename Expression::value_type,
+   template <typename Expression, typename ElementType = typename std::remove_reference_t<Expression>::value_type,
       // the first argument should be of arithmetic type, the second not
-      typename std::enable_if_t<std::is_arithmetic_v<ElementType>, int> = 0,
-      typename std::enable_if_t<!std::is_arithmetic_v<Expression>, int> = 0>
+      typename std::enable_if_t<std::is_arithmetic_v<std::remove_reference_t<ElementType>>, int> = 0,
+      typename std::enable_if_t<!std::is_arithmetic_v<std::remove_reference_t<Expression>>, int> = 0>
    ScalarMultiple<Expression> operator*(ElementType factor, Expression&& expression) {
       return ScalarMultiple<Expression>(factor, std::forward<Expression>(expression));
    }

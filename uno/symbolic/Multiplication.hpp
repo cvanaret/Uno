@@ -15,13 +15,9 @@ namespace uno {
 
       Multiplication(L&& left, R&& right): left(std::forward<L>(left)), right(std::forward<R>(right)) { }
 
-      [[nodiscard]] constexpr decltype(auto) get_left() const noexcept {
-         return this->left;
-      }
+      UNO_FORWARD_ACCESSOR(get_left, this->left)
 
-      [[nodiscard]] constexpr decltype(auto) get_right() const noexcept {
-         return this->right;
-      }
+      UNO_FORWARD_ACCESSOR(get_right, this->right)
 
    protected:
       storage_t<L> left;
