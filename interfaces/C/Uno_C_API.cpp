@@ -1182,6 +1182,7 @@ void uno_destroy_solver(void* solver) {
       Solver* uno_solver = static_cast<Solver*>(solver);
       delete uno_solver->solver;
       delete uno_solver->options;
+      delete uno_solver->user_callbacks;
       if (uno_solver->result != nullptr) {
          delete uno_solver->result;
       }
