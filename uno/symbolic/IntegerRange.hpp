@@ -37,9 +37,6 @@ namespace uno {
       const size_t start_value;
       const size_t end_value;
    };
-
-   using ForwardRange = Range<FORWARD>;
-   using BackwardRange = Range<BACKWARD>;
 } // namespace
 
 #endif // UNO_INTEGERRANGE_H
