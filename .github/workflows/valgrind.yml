@@ -31,6 +31,9 @@ jobs:
         os: [ubuntu-latest]
         architecture: [x64]
 
+    env:
+      VALGRIND: valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --errors-for-leak-kinds=definite,possible --error-exitcode=1
+
     steps:
       - uses: actions/checkout@v4
       
@@ -71,7 +74,7 @@ jobs:
 
       - name: Run Valgrind on C example
         working-directory: ${{github.workspace}}/interfaces/C/example/build
-        run: valgrind --leak-check=full -s ./example_hs015
+        run: $VALGRIND --leak-check=full -s ./example_hs015
 
       - name: Compile Fortran example
         working-directory: ${{github.workspace}}/interfaces/Fortran
@@ -79,4 +82,4 @@ jobs:
 
       - name: Run Valgrind on Fortran example
         working-directory: ${{github.workspace}}/interfaces/Fortran
-        run: valgrind --leak-check=full -s ./example_uno
+        run: $VALGRIND --leak-check=full -s ./example_uno
