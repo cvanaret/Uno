@@ -1,4 +1,4 @@
-name: unopy on Python example
+name: Test unopy via GEMSEO interface
 
 on:
   push:
@@ -46,12 +46,14 @@ jobs:
       - name: Install pybind11
         run: sudo apt install -y python3-pybind11 pybind11-dev
 
+      - name: Install pytest, gemseo, and scipy
+        run: pip install pytest gemseo scipy
+
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Compile and install unopy
         run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
 
-      - name: Run example
-        working-directory: ${{github.workspace}}/interfaces/Python/example
-        run: python example_hs015.py
+      - name: Run tests
+        run: python -m pytest -s --import-mode=importlib ${{github.workspace}}/interfaces/Python/gemseo_uno/test_gemseo_uno.py

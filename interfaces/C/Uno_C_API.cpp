@@ -149,7 +149,7 @@ public:
          const uno_int return_code = this->user_model.jacobian(this->user_model.number_variables,
             this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
          if (0 < return_code) {
-            throw GradientEvaluationError();
+            throw JacobianEvaluationError();
          }
          ++this->number_model_evaluations.jacobian;
       }
@@ -186,7 +186,7 @@ public:
          const uno_int return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
             this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
          if (0 < return_code) {
-            throw GradientEvaluationError();
+            throw JacobianEvaluationError();
          }
       }
       else {
@@ -199,7 +199,7 @@ public:
          const uno_int return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
             this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
          if (0 < return_code) {
-            throw GradientEvaluationError();
+            throw JacobianEvaluationError();
          }
       }
       else {
