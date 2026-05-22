@@ -68,9 +68,9 @@ jobs:
       
       - name: Clone pyOptSparse
         run: |
-          git clone https://github.com/robfalck/pyoptsparse
+          git clone https://github.com/mdolab/pyoptsparse
           cd pyoptsparse
-          git checkout unopy
+          git checkout main
 
       - name: Install pyOptSparse (no external solvers)
         run: |
