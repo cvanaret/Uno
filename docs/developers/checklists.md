@@ -30,6 +30,7 @@ In preparation for an Uno release, use the following checklist. These steps can 
   - [ ] Change the `Uno_jll` version number in `interfaces/Julia/gen/Project.toml`
   - [ ] Change the patch version number in `interfaces/Julia/Project.toml`
 - [ ] Update the logo in [the Github settings](https://github.com/cvanaret/Uno/settings)
+- [ ] Write release notes once release and artifacts are available
 ````
 
 ## Making a release of `UnoSolver.jl`
