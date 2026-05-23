@@ -115,15 +115,24 @@ jobs:
       # CONFIGURE
       # =========================================================
 
-      - name: Configure (Linux)
+      - name: Configure (Linux with ASan + UBSan)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          SANITIZER_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all -O1 -g"
+
+          echo "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1" >> $GITHUB_ENV
+          echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1" >> $GITHUB_ENV
+
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
             -DENABLE_TESTS=ON \
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
-            -DCMAKE_FORTRAN_COMPILER=gfortran \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DCMAKE_C_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_CXX_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
@@ -135,8 +144,8 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
-            -DBUILD_STATIC_LIBS=ON \
-            -DBUILD_SHARED_LIBS=OFF
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
 
       - name: Configure (Mac)
         if: startsWith(matrix.os, 'macos')
