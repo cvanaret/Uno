@@ -317,6 +317,43 @@ function uno_set_solver_preset(solver, preset_name) result(success)
 end function uno_set_solver_preset
 
 !---------------------------------------------
+! uno_get_method_description
+!---------------------------------------------
+function uno_get_method_description(solver) &
+   result(method_description)
+   type(c_ptr), value :: solver
+   character(:), allocatable :: method_description
+   type(c_ptr) :: ptr_method_description_c
+   integer :: i, n
+   character(c_char), pointer :: method_description_c(:)
+
+   interface
+      function uno_get_method_description_c(solver) &
+         result(method_description) &
+         bind(C, name="uno_get_method_description")
+         import :: c_ptr
+         type(c_ptr), value :: solver
+         type(c_ptr) :: method_description
+      end function uno_get_method_description_c
+   end interface
+
+   ptr_method_description_c = uno_get_method_description_c(solver)
+   if (.not. c_associated(ptr_method_description_c)) then
+      method_description = ""
+      return
+   end if
+   call c_f_pointer(ptr_method_description_c, method_description_c, [huge(0)])
+   n = 0
+   do while (method_description_c(n+1) /= c_null_char)
+      n = n + 1
+   end do
+   allocate(character(len=n)::method_description)
+   do i = 1, n
+      method_description(i:i) = method_description_c(i)
+   end do
+end function uno_get_method_description
+
+!---------------------------------------------
 ! uno_get_solver_integer_option
 !---------------------------------------------
 function uno_get_solver_integer_option(solver, option_name) result(solver_integer_option)
@@ -440,7 +477,12 @@ function uno_get_solver_string_option(solver, option_name) &
    end do
    option_name_c(n+1) = c_null_char
    ptr_solver_string_option_c = uno_get_solver_string_option_c(solver, option_name_c)
-   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [0])
+   if (.not. c_associated(ptr_solver_string_option_c)) then
+      solver_string_option = ""
+      deallocate(option_name_c)
+      return
+   end if
+   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [huge(0)])
    n = 0
    do while (solver_string_option_c(n+1) /= c_null_char)
       n = n + 1
@@ -451,36 +493,3 @@ function uno_get_solver_string_option(solver, option_name) &
    end do
    deallocate(option_name_c)
 end function uno_get_solver_string_option
-
-!---------------------------------------------
-! uno_get_method_description
-!---------------------------------------------
-function uno_get_method_description(solver) &
-   result(method_description)
-   type(c_ptr), value :: solver
-   character(:), allocatable :: method_description
-   type(c_ptr) :: ptr_method_description_c
-   integer :: i, n
-   character(c_char), pointer :: method_description_c(:)
-
-   interface
-      function uno_get_method_description_c(solver) &
-         result(method_description) &
-         bind(C, name="uno_get_method_description")
-         import :: c_ptr
-         type(c_ptr), value :: solver
-         type(c_ptr) :: method_description
-      end function uno_get_method_description_c
-   end interface
-
-   ptr_method_description_c = uno_get_method_description_c(solver)
-   call c_f_pointer(ptr_method_description_c, method_description_c, [0])
-   n = 0
-   do while (method_description_c(n+1) /= c_null_char)
-      n = n + 1
-   end do
-   allocate(character(len=n)::method_description)
-   do i = 1, n
-      method_description(i:i) = method_description_c(i)
-   end do
-end function uno_get_method_description

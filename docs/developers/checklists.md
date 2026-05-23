@@ -14,7 +14,7 @@ In preparation for an Uno release, use the following checklist. These steps can 
 - [ ] Change the version number in `CITATION.cff` (twice)
 - [ ] Change the version number in `CMakeLists.txt`
 - [ ] Change the version number in `interfaces/C/Uno_C_API.h`
-- [ ] Change the version number in `interfaces/Julia/gen/prologue_fortran.f90` and generate a new `interfaces/Fortran/uno_c.f90`
+- [ ] Change the version number in `interfaces/Fortran/uno_c.f90`
 - [ ] Making a release of `unopy`
   - [ ] Change the version number in `pyproject.toml`
   - [ ] The title of the test commit should start with `[unopy] Test release`
@@ -27,7 +27,6 @@ In preparation for an Uno release, use the following checklist. These steps can 
 - `Uno_jll.jl` and `UnoSolver.jl`
   - [ ] Update the [Yggdrasil tarballs](https://github.com/JuliaPackaging/Yggdrasil/blob/master/U/Uno/build_tarballs.jl)
   - [ ] Change the `Uno_jll` version number in `interfaces/Julia/Project.toml`
-  - [ ] Change the `Uno_jll` version number in `interfaces/Julia/gen/Project.toml`
   - [ ] Change the patch version number in `interfaces/Julia/Project.toml`
 - [ ] Update the logo in [the Github settings](https://github.com/cvanaret/Uno/settings)
 - [ ] Write release notes once release and artifacts are available
