@@ -67,7 +67,10 @@ jobs:
         with:
           version: "1.10"
           arch: x64
+
       - name: Unit tests of UnoSolver.jl
+        env:
+          UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg
