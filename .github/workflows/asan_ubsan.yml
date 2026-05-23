@@ -81,7 +81,10 @@ jobs:
       - name: Compile Fortran example
         working-directory: ${{github.workspace}}/interfaces/Fortran
         run: |
-          gfortran -g -O1 -fcheck=all -fbacktrace \
+          gfortran -g -O1 \
+            -fsanitize=address,undefined \
+            -fno-omit-frame-pointer \
+            -fcheck=all -fbacktrace \
             example_uno.f90 -o example_uno \
             /usr/local/lib/libuno.so \
             -Wl,-rpath,/usr/local/lib
