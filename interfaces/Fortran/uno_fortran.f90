@@ -474,7 +474,11 @@ function uno_get_method_description(solver) &
    end interface
 
    ptr_method_description_c = uno_get_method_description_c(solver)
-   call c_f_pointer(ptr_method_description_c, method_description_c, [0])
+   if (.not. c_associated(ptr_method_description_c)) then
+      method_description = ""
+      return
+   endif
+   call c_f_pointer(ptr_method_description_c, method_description_c)
    n = 0
    do while (method_description_c(n+1) /= c_null_char)
       n = n + 1
