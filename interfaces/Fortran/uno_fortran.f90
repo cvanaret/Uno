@@ -444,13 +444,13 @@ function uno_get_solver_string_option(solver, option_name) &
       solver_string_option = ""
       return
    endif
-   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [1])
-   n = 1
-   do while (solver_string_option_c(n) /= c_null_char)
+   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [huge(0)])
+   n = 0
+   do while (solver_string_option_c(n+1) /= c_null_char)
       n = n + 1
    end do
-   allocate(character(len=n-1)::solver_string_option)
-   do i = 1, n-1
+   allocate(character(len=n)::solver_string_option)
+   do i = 1, n
       solver_string_option(i:i) = solver_string_option_c(i)
    end do
    deallocate(option_name_c)
@@ -482,13 +482,13 @@ function uno_get_method_description(solver) &
       method_description = ""
       return
    endif
-   call c_f_pointer(ptr_method_description_c, method_description_c, [1])
-   n = 1
-   do while (method_description_c(n) /= c_null_char)
+   call c_f_pointer(ptr_method_description_c, method_description_c, [huge(0)])
+   n = 0
+   do while (method_description_c(n+1) /= c_null_char)
       n = n + 1
    end do
-   allocate(character(len=n-1)::method_description)
-   do i = 1, n-1
+   allocate(character(len=n)::method_description)
+   do i = 1, n
       method_description(i:i) = method_description_c(i)
    end do
 end function uno_get_method_description
