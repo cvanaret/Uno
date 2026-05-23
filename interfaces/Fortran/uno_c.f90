@@ -303,7 +303,6 @@ abstract interface
       integer(uno_int) :: uno_logger_stream_callback
    end function
 end interface
-
 !---------------------------------------------
 ! uno_get_version
 !---------------------------------------------

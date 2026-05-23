@@ -38,10 +38,11 @@ struct ArgInfo
 end
 
 struct FuncInfo
-  name      :: String
-  ret_ftype :: String   # e.g. "logical(c_bool)" or "void"
-  is_void   :: Bool
-  args      :: Vector{ArgInfo}
+  name          :: String
+  ret_ftype     :: String   # e.g. "logical(c_bool)" or "void"
+  is_void       :: Bool
+  ret_is_string :: Bool     # true if C return type is char*
+  args          :: Vector{ArgInfo}
 end
 
 const C_TO_FORTRAN_KIND = Dict(
@@ -56,6 +57,16 @@ const C_TO_FORTRAN_KIND = Dict(
   "int"      => "c_int",
   "long"     => "c_long",
 )
+
+function extract_uno_version(include_dir)
+  header = read(joinpath(include_dir, "Uno_C_API.h"), String)
+  function extract(name)
+    m = match(Regex("const\\s+uno_int\\s+$name\\s*=\\s*(\\d+)\\s*;"), header)
+    m === nothing && error("Cannot find '$name' in Uno_C_API.h")
+    return parse(Int, m[1])
+  end
+  return extract("UNO_VERSION_MAJOR"), extract("UNO_VERSION_MINOR"), extract("UNO_VERSION_PATCH")
+end
 
 function extract_uno_int_kind(include_dir)
   uno_int_h = joinpath(include_dir, "uno_int.h")
@@ -354,12 +365,15 @@ function collect_funcs(root)
     name = Clang.spelling(child)
     if k == Clang.CXCursor_FunctionDecl && startswith(name, "uno_")
       ret_cltype = Clang.getCursorResultType(child)
-      is_void = Clang.kind(ret_cltype) == Clang.CXType_Void
+      rk = Clang.kind(ret_cltype)
+      is_void = rk == Clang.CXType_Void
+      ret_is_string = !is_void && rk == Clang.CXType_Pointer &&
+        Clang.kind(Clang.getPointeeType(ret_cltype)) in (Clang.CXType_Char_S, Clang.CXType_Char_U)
       ret_ftype = is_void ? "void" : first(cltype_to_fortran(ret_cltype))
       clang_args = Clang.get_function_args(child)
       clang_types = [Clang.getCursorType(a) for a in clang_args]
       args = [make_arg_info(clang_args[i], clang_types[i]) for i in eachindex(clang_args)]
-      push!(funcs, FuncInfo(name, ret_ftype, is_void, args))
+      push!(funcs, FuncInfo(name, ret_ftype, is_void, ret_is_string, args))
     end
   end
   return funcs
@@ -377,20 +391,28 @@ function gen_uno_c(io, include_dir, funcs)
   println(io, "!==============================================================")
   println(io, "")
 
-  # Prologue: read prologue_fortran.f90 and inject uno_int at the marker
+  # Prologue: read prologue_fortran.f90 and inject uno_int + version at markers
   uno_int_kind = extract_uno_int_kind(include_dir)
+  major, minor, patch = extract_uno_version(include_dir)
   prologue = read(joinpath(@__DIR__, "prologue_fortran.f90"), String)
-  marker = "!--- UNO_INT_KIND ---\n"
-  idx = findfirst(marker, prologue)
-  idx === nothing && error("Marker '$marker' not found in prologue_fortran.f90")
-  print(io, prologue[1:first(idx)-1])
-  println(io, "integer, parameter :: uno_int = $uno_int_kind")
-  println(io, "")
-  print(io, prologue[last(idx)+1:end])
+
+  function inject(text, marker, replacement)
+    idx = findfirst(marker, text)
+    idx === nothing && error("Marker '$marker' not found in prologue_fortran.f90")
+    text[1:first(idx)-1] * replacement * text[last(idx)+1:end]
+  end
+
+  prologue = inject(prologue, "!--- UNO_INT_KIND ---\n",
+    "integer, parameter :: uno_int = $uno_int_kind\n\n")
+  prologue = inject(prologue, "!--- UNO_VERSION ---\n",
+    "integer(uno_int), parameter :: UNO_VERSION_MAJOR = $major\n" *
+    "integer(uno_int), parameter :: UNO_VERSION_MINOR = $minor\n" *
+    "integer(uno_int), parameter :: UNO_VERSION_PATCH = $patch\n")
+  print(io, prologue)
   println(io, "")
 
-  # C bind(C) interfaces — skip functions that have string args
-  non_string = [f for f in funcs if !any(a.is_string for a in f.args) && f.ret_ftype != "character(c_char)"]
+  # C bind(C) interfaces — skip functions that have string args or return char*
+  non_string = [f for f in funcs if !any(a.is_string for a in f.args) && !f.ret_is_string]
   for (i, f) in enumerate(non_string)
     gen_one_c_interface(io, f, i < length(non_string))
   end
@@ -436,19 +458,12 @@ function gen_uno_fortran(io, funcs)
   println(io, "!==============================================================")
 
   for f in funcs
-    if f.ret_ftype != "character(c_char)"
-      string_arg_names = [a.name for a in f.args if a.is_string]
-      if !isempty(string_arg_names)
-        gen_one_string_wrapper(io, f, string_arg_names)
-      end
+    if f.ret_is_string
+      gen_char_ptr_return_wrapper(io, f)
+    elseif any(a.is_string for a in f.args)
+      gen_one_string_wrapper(io, f, [a.name for a in f.args if a.is_string])
     end
   end
-
-  # Special wrapper for functions that return const char*
-  println(io, "")
-  gen_get_string_option_fortran_wrapper(io)
-  println(io, "")
-  gen_get_method_description_fortran_wrapper(io)
 end
 
 function gen_one_string_wrapper(io, f::FuncInfo, string_arg_names)
@@ -538,84 +553,92 @@ function gen_one_string_wrapper(io, f::FuncInfo, string_arg_names)
   f.is_void ? println(io, "end subroutine $name") : println(io, "end function $name")
 end
 
-function gen_get_string_option_fortran_wrapper(io)
-  println(io, "!---------------------------------------------")
-  println(io, "! uno_get_solver_string_option")
-  println(io, "!---------------------------------------------")
-  println(io, "function uno_get_solver_string_option(solver, option_name) &")
-  println(io, "   result(solver_string_option)")
-  println(io, "   type(c_ptr), value :: solver")
-  println(io, "   character(len=*) :: option_name")
-  println(io, "   character(:), allocatable :: solver_string_option")
-  println(io, "   character(c_char), allocatable :: option_name_c(:)")
-  println(io, "   type(c_ptr) :: ptr_solver_string_option_c")
-  println(io, "   integer :: i, n")
-  println(io, "   character(c_char), pointer :: solver_string_option_c(:)")
-  println(io, "")
-  println(io, "   interface")
-  println(io, "      function uno_get_solver_string_option_c(solver, option_name) &")
-  println(io, "         result(solver_string_option) &")
-  println(io, "         bind(C, name=\"uno_get_solver_string_option\")")
-  println(io, "         import :: c_ptr, c_char")
-  println(io, "         type(c_ptr), value :: solver")
-  println(io, "         character(c_char) :: option_name(*)")
-  println(io, "         type(c_ptr) :: solver_string_option")
-  println(io, "      end function uno_get_solver_string_option_c")
-  println(io, "   end interface")
-  println(io, "")
-  println(io, "   n = len_trim(option_name)")
-  println(io, "   allocate(option_name_c(n+1))")
-  println(io, "   do i = 1, n")
-  println(io, "      option_name_c(i) = option_name(i:i)")
-  println(io, "   end do")
-  println(io, "   option_name_c(n+1) = c_null_char")
-  println(io, "   ptr_solver_string_option_c = uno_get_solver_string_option_c(solver, option_name_c)")
-  println(io, "   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [0])")
-  println(io, "   n = 0")
-  println(io, "   do while (solver_string_option_c(n+1) /= c_null_char)")
-  println(io, "      n = n + 1")
-  println(io, "   end do")
-  println(io, "   allocate(character(len=n)::solver_string_option)")
-  println(io, "   do i = 1, n")
-  println(io, "      solver_string_option(i:i) = solver_string_option_c(i)")
-  println(io, "   end do")
-  println(io, "   deallocate(option_name_c)")
-  println(io, "end function uno_get_solver_string_option")
-end
+function gen_char_ptr_return_wrapper(io, f::FuncInfo)
+  name             = f.name
+  result_name      = name_to_result(name, f.ret_ftype)
+  c_name           = name * "_c"
+  ptr_name         = "ptr_$(result_name)_c"
+  arr_name         = "$(result_name)_c"
+  string_arg_names = [a.name for a in f.args if a.is_string]
+  joined           = join((a.name for a in f.args), ", ")
 
-function gen_get_method_description_fortran_wrapper(io)
-  println(io, "!---------------------------------------------")
-  println(io, "! uno_get_method_description")
-  println(io, "!---------------------------------------------")
-  println(io, "function uno_get_method_description(solver) &")
-  println(io, "   result(method_description)")
-  println(io, "   type(c_ptr), value :: solver")
-  println(io, "   character(:), allocatable :: method_description")
-  println(io, "   type(c_ptr) :: ptr_method_description_c")
-  println(io, "   integer :: i, n")
-  println(io, "   character(c_char), pointer :: method_description_c(:)")
   println(io, "")
+  println(io, "!---------------------------------------------")
+  println(io, "! $name")
+  println(io, "!---------------------------------------------")
+  # Always put result(...) on its own line for char* return wrappers
+  println_wrapped(io, "function $name($joined) &", " " ^ length("function $name("))
+  println(io, "   result($result_name)")
+
+  for a in f.args
+    a.is_string ? println(io, "   character(len=*) :: $(a.name)") : emit_wrapper_arg(io, a)
+  end
+  println(io, "   character(:), allocatable :: $result_name")
+  for sarg in string_arg_names
+    println(io, "   character(c_char), allocatable :: $(sarg)_c(:)")
+  end
+  println(io, "   type(c_ptr) :: $ptr_name")
+  println(io, "   integer :: i, n")
+  println(io, "   character(c_char), pointer :: $arr_name(:)")
+  println(io, "")
+
+  # Build import list for inner bind(C) interface:
+  # non-string args + c_ptr (return) + c_char (if any string arg)
+  inner_args = [ArgInfo(a.name, a.ftype, a.suffix, false) for a in f.args if !a.is_string]
+  imports = build_import(inner_args, "type(c_ptr)", false)
+  occursin("c_ptr", imports) || (imports = isempty(imports) ? "c_ptr" : "$imports, c_ptr")
+  !isempty(string_arg_names) && !occursin("c_char", imports) && (imports *= ", c_char")
+
   println(io, "   interface")
-  println(io, "      function uno_get_method_description_c(solver) &")
-  println(io, "         result(method_description) &")
-  println(io, "         bind(C, name=\"uno_get_method_description\")")
-  println(io, "         import :: c_ptr")
-  println(io, "         type(c_ptr), value :: solver")
-  println(io, "         type(c_ptr) :: method_description")
-  println(io, "      end function uno_get_method_description_c")
+  emit_subprogram_header(io, "      ", c_name, joined, result_name, "         ")
+  println(io, "         bind(C, name=\"$name\")")
+  !isempty(imports) && println(io, "         import :: $imports")
+  for a in f.args
+    a.is_string ? println(io, "         character(c_char) :: $(a.name)(*)") : emit_bind_c_arg(io, "         ", a)
+  end
+  println(io, "         type(c_ptr) :: $result_name")
+  println(io, "      end function $c_name")
   println(io, "   end interface")
   println(io, "")
-  println(io, "   ptr_method_description_c = uno_get_method_description_c(solver)")
-  println(io, "   call c_f_pointer(ptr_method_description_c, method_description_c, [0])")
+
+  # Convert string args to C
+  for sarg in string_arg_names
+    println(io, "   n = len_trim($sarg)")
+    println(io, "   allocate($(sarg)_c(n+1))")
+    println(io, "   do i = 1, n")
+    println(io, "      $(sarg)_c(i) = $sarg(i:i)")
+    println(io, "   end do")
+    println(io, "   $(sarg)_c(n+1) = c_null_char")
+  end
+
+  c_args   = [a.is_string ? "$(a.name)_c" : a.name for a in f.args]
+  c_joined = join(c_args, ", ")
+  println_wrapped(io, "   $ptr_name = $c_name($c_joined)", " " ^ (length("   $ptr_name = $c_name(")))
+
+  # Guard against C_NULL: no allocation needed, "" auto-allocates to length 0
+  println(io, "   if (.not. c_associated($ptr_name)) then")
+  println(io, "      $result_name = \"\"")
+  for sarg in string_arg_names
+    println(io, "      deallocate($(sarg)_c)")
+  end
+  println(io, "      return")
+  println(io, "   end if")
+
+  # Scan length then copy
+  println(io, "   call c_f_pointer($ptr_name, $arr_name, [huge(0)])")
   println(io, "   n = 0")
-  println(io, "   do while (method_description_c(n+1) /= c_null_char)")
+  println(io, "   do while ($arr_name(n+1) /= c_null_char)")
   println(io, "      n = n + 1")
   println(io, "   end do")
-  println(io, "   allocate(character(len=n)::method_description)")
+  println(io, "   allocate(character(len=n)::$result_name)")
   println(io, "   do i = 1, n")
-  println(io, "      method_description(i:i) = method_description_c(i)")
+  println(io, "      $result_name(i:i) = $arr_name(i)")
   println(io, "   end do")
-  println(io, "end function uno_get_method_description")
+
+  for sarg in string_arg_names
+    println(io, "   deallocate($(sarg)_c)")
+  end
+  println(io, "end function $name")
 end
 
 function main_fortran()
