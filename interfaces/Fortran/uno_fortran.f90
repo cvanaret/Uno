@@ -440,7 +440,11 @@ function uno_get_solver_string_option(solver, option_name) &
    end do
    option_name_c(n+1) = c_null_char
    ptr_solver_string_option_c = uno_get_solver_string_option_c(solver, option_name_c)
-   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [0])
+   if (.not. c_associated(ptr_solver_string_option_c)) then
+      solver_string_option = ""
+      return
+   endif
+   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [huge(0)])
    n = 0
    do while (solver_string_option_c(n+1) /= c_null_char)
       n = n + 1
@@ -474,7 +478,11 @@ function uno_get_method_description(solver) &
    end interface
 
    ptr_method_description_c = uno_get_method_description_c(solver)
-   call c_f_pointer(ptr_method_description_c, method_description_c, [0])
+   if (.not. c_associated(ptr_method_description_c)) then
+      method_description = ""
+      return
+   endif
+   call c_f_pointer(ptr_method_description_c, method_description_c, [huge(0)])
    n = 0
    do while (method_description_c(n+1) /= c_null_char)
       n = n + 1
