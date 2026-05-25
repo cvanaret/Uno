@@ -166,6 +166,10 @@ namespace uno {
             ++this->number_model_evaluations.hessian;
          }
          catch (const std::exception&) {
+            // flip the signs of the multipliers back
+            if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+               const_cast<Vector<double>&>(multipliers).scale(-1.);
+            }
             throw HessianEvaluationError();
          }
          // flip the signs of the multipliers back
