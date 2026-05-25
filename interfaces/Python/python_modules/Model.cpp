@@ -36,14 +36,14 @@ namespace uno {
 
       // methods
       .def("set_variables_lower_bounds", [](PythonUserModel& user_model, std::vector<double> variables_lower_bounds) {
-         if (variables_lower_bounds.size() != user_model.number_variables) {
+         if (static_cast<uno_int>(variables_lower_bounds.size()) != user_model.number_variables) {
             throw std::invalid_argument("Dimension mismatch in variables_lower_bounds.");
          }
          user_model.variables_lower_bounds = std::move(variables_lower_bounds);
       })
 
       .def("set_variables_upper_bounds", [](PythonUserModel& user_model, std::vector<double> variables_upper_bounds) {
-         if (variables_upper_bounds.size() != user_model.number_variables) {
+         if (static_cast<uno_int>(variables_upper_bounds.size()) != user_model.number_variables) {
             throw std::invalid_argument("Dimension mismatch in variables_upper_bounds.");
          }
          user_model.variables_upper_bounds = std::move(variables_upper_bounds);
@@ -103,14 +103,14 @@ namespace uno {
       })
 
       .def("set_constraints_lower_bounds", [](PythonUserModel& user_model, std::vector<double> constraints_lower_bounds) {
-         if (constraints_lower_bounds.size() != user_model.number_constraints) {
+         if (static_cast<uno_int>(constraints_lower_bounds.size()) != user_model.number_constraints) {
             throw std::invalid_argument("Dimension mismatch in constraints_lower_bounds.");
          }
          user_model.constraints_lower_bounds = std::move(constraints_lower_bounds);
       })
 
       .def("set_constraints_upper_bounds", [](PythonUserModel& user_model, std::vector<double> constraints_upper_bounds) {
-         if (constraints_upper_bounds.size() != user_model.number_constraints) {
+         if (static_cast<uno_int>(constraints_upper_bounds.size()) != user_model.number_constraints) {
             throw std::invalid_argument("Dimension mismatch in constraints_upper_bounds.");
          }
          user_model.constraints_upper_bounds = std::move(constraints_upper_bounds);
