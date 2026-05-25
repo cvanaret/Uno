@@ -16,6 +16,7 @@ set(CMAKE_CXX_STANDARD 17)
 option(BUILD_STATIC_LIBS "Build using static libraries" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(ENABLE_TESTS "Build unit tests" OFF)
+option(UNO_PYBIND11_DETAILED_ERRORS "Verbose pybind11 type-conversion error messages" OFF)
 
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
@@ -361,10 +362,13 @@ if(SKBUILD)
       interfaces/Python/unopy.cpp
    )
 
-   add_compile_definitions(PYBIND11_DETAILED_ERROR_MESSAGES)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC uno_dependencies)
+
+   if(UNO_PYBIND11_DETAILED_ERRORS)
+      target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
+   endif()
 
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       # link-time optimization
