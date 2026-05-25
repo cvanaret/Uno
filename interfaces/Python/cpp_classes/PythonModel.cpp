@@ -49,7 +49,6 @@ namespace uno {
       double objective_value = 0.;
       if (this->user_model.objective_function.has_value()) {
          const auto x_py = to_const_array(x.data(), this->number_variables);
-         auto objective_py = to_array(&objective_value, 1);
 
          // evaluate objective
          try {
