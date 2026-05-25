@@ -112,7 +112,7 @@ namespace uno {
       })
 
       .def("set_constraint_upper_bound", [](PythonUserModel& user_model, uno_int constraint_index, double upper_bound) {
-         if (constraint_index < 0 || constraint_index >= user_model.number_variables) {
+         if (constraint_index < 0 || constraint_index >= user_model.number_constraints) {
             throw std::invalid_argument("Please specify a valid index.");
          }
          user_model.constraints_upper_bounds[static_cast<size_t>(constraint_index)] = upper_bound;
