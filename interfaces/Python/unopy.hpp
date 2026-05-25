@@ -33,7 +33,7 @@ namespace uno {
 
    template <typename T>
    py::array_t<T> to_const_array(const T* ptr, size_t n) {
-      auto array = py::array_t<double>(
+      auto array = py::array_t<T>(
           {static_cast<py::ssize_t>(n)},
           {sizeof(T)},
           const_cast<T*>(ptr),
