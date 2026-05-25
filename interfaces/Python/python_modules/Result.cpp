@@ -11,7 +11,8 @@ namespace uno {
    // zero-copy, read-only numpy view of a double vector owned by a Result.
    // `owner` (the Result py::object) is set as the array base so the backing storage outlives the view.
    // The writeable flag is cleared so Python cannot mutate Uno's internal solution vectors.
-   py::array_t<double> readonly_view(const std::vector<double>& vector, py::object owner) {
+   template <typename DoubleContainer>
+   py::array_t<double> readonly_view(const DoubleContainer& vector, py::object owner) {
       py::array_t<double> array(
          {static_cast<py::ssize_t>(vector.size())}, // shape
          {sizeof(double)},                        // strides
