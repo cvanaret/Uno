@@ -8,19 +8,11 @@
 namespace py = pybind11;
 
 namespace uno {
-   // zero-copy, read-only numpy view of a double vector owned by a Result.
-   // `owner` (the Result py::object) is set as the array base so the backing storage outlives the view.
-   // The writeable flag is cleared so Python cannot mutate Uno's internal solution vectors.
+   // owning, writeable numpy copy of a double container. A copy (rather than a zero-copy view) keeps Result's internal
+   // vectors safe from mutation and lets consumers such as pyOptSparse scale the returned arrays in place
    template <typename DoubleContainer>
-   py::array_t<double> readonly_view(const DoubleContainer& vector, py::object owner) {
-      py::array_t<double> array(
-         {static_cast<py::ssize_t>(vector.size())}, // shape
-         {sizeof(double)},                        // strides
-         vector.data(),                           // data (NOT owned by numpy)
-         std::move(owner)                         // base: keeps Result alive
-      );
-      array.attr("flags").attr("writeable") = false;
-      return array;
+   py::array_t<double> to_owned_array(const DoubleContainer& vector) {
+      return py::array_t<double>(static_cast<py::ssize_t>(vector.size()), vector.data());
    }
 
    void define_Result(py::module& module) {
@@ -32,17 +24,17 @@ namespace uno {
       .def_readonly("solution_primal_feasibility", &Result::solution_primal_feasibility)
       .def_readonly("solution_stationarity", &Result::solution_stationarity)
       .def_readonly("solution_complementarity", &Result::solution_complementarity)
-      .def_property_readonly("primal_solution", [](py::object self) {
-         return readonly_view(self.cast<const Result&>().primal_solution, self);
+      .def_property_readonly("primal_solution", [](const Result& result) {
+         return to_owned_array(result.primal_solution);
       })
-      .def_property_readonly("constraint_dual_solution", [](py::object self) {
-         return readonly_view(self.cast<const Result&>().constraint_dual_solution, self);
+      .def_property_readonly("constraint_dual_solution", [](const Result& result) {
+         return to_owned_array(result.constraint_dual_solution);
       })
-      .def_property_readonly("lower_bound_dual_solution", [](py::object self) {
-         return readonly_view(self.cast<const Result&>().lower_bound_dual_solution, self);
+      .def_property_readonly("lower_bound_dual_solution", [](const Result& result) {
+         return to_owned_array(result.lower_bound_dual_solution);
       })
-      .def_property_readonly("upper_bound_dual_solution", [](py::object self) {
-         return readonly_view(self.cast<const Result&>().upper_bound_dual_solution, self);
+      .def_property_readonly("upper_bound_dual_solution", [](const Result& result) {
+         return to_owned_array(result.upper_bound_dual_solution);
       })
       .def_readonly("number_iterations", &Result::number_iterations)
       .def_readonly("cpu_time", &Result::cpu_time)
