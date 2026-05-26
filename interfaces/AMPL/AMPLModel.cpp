@@ -7,6 +7,7 @@
 #include "AMPLModel.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
 #include "Uno.hpp"
@@ -312,10 +313,6 @@ namespace uno {
          this->asl->p.solve_code_ = 500;
       }
 
-      // due to the different sign convention for the Lagrangian between ASL and Uno,
-      // we need to flip the signs of the constraint multipliers
-      result.constraint_dual_solution.scale(-1.);
-
       // include the bound duals in the .sol file, using suffixes
       SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
       SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
@@ -328,10 +325,10 @@ namespace uno {
       option_info.wantsol = 9; // write the solution without printing the message to stdout
       std::string message = "Uno ";
       message.append(Uno::current_version()).append(": ").append(solution_status_to_message(result.solution_status));
-      write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), result.constraint_dual_solution.data(), &option_info);
-
-      // flip back the signs of the multipliers
-      result.constraint_dual_solution.scale(-1.);
+      
+      // flip the signs of the constraint multipliers (different Lagrangian convention between ASL and Uno)
+      const Vector<double> ampl_dual_solution = -result.constraint_dual_solution;
+      write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), ampl_dual_solution.data(), &option_info);
    }
 
    size_t AMPLModel::number_jacobian_nonzeros() const {

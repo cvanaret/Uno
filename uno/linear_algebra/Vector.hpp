@@ -27,6 +27,14 @@ namespace uno {
       Vector(Vector<T>&& other) noexcept: vector(std::move(other.vector)) { }
       ~Vector() = default;
 
+      // specialized constructor
+      template<typename Expression, typename = std::enable_if_t<!std::is_same_v<std::decay_t<Expression>, Vector>>>
+      Vector(Expression&& expression): vector(expression.size()) {
+         for (size_t index: Range(expression.size())) {
+            this->operator[](index) = expression[index];
+         }
+      }
+
       // copy assignment operator
       Vector<T>& operator=(const Vector<T>& other) {
          if (&other != this) {
