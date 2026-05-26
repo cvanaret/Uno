@@ -191,7 +191,7 @@ namespace uno {
          for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const uno_int row_index = static_cast<uno_int>(asl_row_index[nonzero_index]);
             row_indices[current_index] = row_index + solver_indexing;
-            column_indices[current_index] = static_cast<int>(column_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(column_index) + solver_indexing;
             ++current_index;
          }
       }
