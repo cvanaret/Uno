@@ -15,14 +15,19 @@
 namespace uno {
    ASL* generate_asl(const std::string &file_name) {
       ASL* asl = ASL_alloc(ASL_read_pfgh);
+      if (asl == nullptr) {
+         throw std::runtime_error("The ASL could not be allocated");
+      }
       FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
-      // indices start at 0
-      asl->i.Fortran_ = 0;
+      if (nl == nullptr) {
+         ASL_free(&asl);
+         throw std::runtime_error("The nl file could not be read");
+      }
 
       int n_discrete = asl->i.nbv_ + asl->i.niv_ + asl->i.nlvbi_ + asl->i.nlvci_ + asl->i.nlvoi_;
       if (0 < n_discrete) {
          ASL_free(&asl);
-         throw std::runtime_error("Error: " + std::to_string(n_discrete) + " variables are discrete, which Uno cannot handle");
+         throw std::runtime_error("Uno does not support discrete variables");
       }
 
       // preallocate initial primal and dual solutions
@@ -30,6 +35,7 @@ namespace uno {
       asl->i.pi0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(asl->i.n_con_)));
 
       // read the file_name.nl file
+      asl->i.Fortran_ = 0; // indices start at 0
       const int read_error = pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
       if (read_error != 0) {
          ASL_free(&asl);
@@ -59,6 +65,7 @@ namespace uno {
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),
+         // problem_type is computed based on number_asl_hessian_nonzeros and linear_constraints
          problem_type(this->determine_problem_type()),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
@@ -141,7 +148,9 @@ namespace uno {
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
-      gradient.scale(this->optimization_sense);
+      if (this->optimization_sense != 1.) {
+         gradient.scale(this->optimization_sense);
+      }
       ++this->number_model_evaluations.objective_gradient;
    }
 
