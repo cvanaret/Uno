@@ -53,12 +53,14 @@ namespace uno {
             return subproblem_solver;
          }
       }
+      /*
       // if only bound constraints, allocate bound-constrained solver
       else if (subproblem.number_constraints == 0 && subproblem.has_bound_constraints()) {
          auto subproblem_solver = std::make_unique<TRONSolver>();
          subproblem_solver->initialize_memory(subproblem);
          return subproblem_solver;
       }
+      */
       // if no inequality constraint and no trust region, allocate EQP solver
       else if (!subproblem.has_inequality_constraints() && !subproblem.has_bound_constraints() && !uses_trust_region) {
          if constexpr (std::is_same_v<HessianType, InverseLBFGSHessian>) { // unconstrained
