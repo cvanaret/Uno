@@ -118,19 +118,6 @@ namespace uno {
       [[nodiscard]] size_t compute_lagrangian_hessian_sparsity() const;
       [[nodiscard]] ProblemType determine_problem_type() const;
    };
-
-   // check that an array of integers is in increasing order (x[i] <= x[i+1])
-   template <typename Array>
-   bool in_increasing_order(const Array& array, size_t length) {
-      size_t index = 0;
-      while (index + 1 < length) {
-         if (array[index] > array[index + 1]) {
-            return false;
-         }
-         index++;
-      }
-      return true;
-   }
 } // namespace
 
 #endif // UNO_AMPLMODEL_H

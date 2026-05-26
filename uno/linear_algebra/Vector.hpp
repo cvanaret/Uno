@@ -27,6 +27,29 @@ namespace uno {
       Vector(Vector<T>&& other) noexcept: vector(std::move(other.vector)) { }
       ~Vector() = default;
 
+      // specialized constructor for expressions
+      template<typename E, typename = void>
+      struct is_expression : std::false_type {};
+
+      template<typename E>
+      struct is_expression<E,
+          std::void_t<
+              decltype(std::declval<E>().size()),
+              decltype(std::declval<E>()[std::size_t{}])
+          >
+      > : std::true_type {};
+
+      template<typename Expression, typename = std::enable_if_t<
+            is_expression<std::decay_t<Expression>>::value &&
+            !std::is_same_v<std::decay_t<Expression>, Vector>
+         >
+      >
+      Vector(Expression&& expression): vector(expression.size()) {
+         for (size_t index: Range(expression.size())) {
+            (*this)[index] = expression[index];
+         }
+      }
+
       // copy assignment operator
       Vector<T>& operator=(const Vector<T>& other) {
          if (&other != this) {

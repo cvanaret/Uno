@@ -7,6 +7,7 @@
 #include "AMPLModel.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
 #include "Uno.hpp"
@@ -14,13 +15,19 @@
 namespace uno {
    ASL* generate_asl(const std::string &file_name) {
       ASL* asl = ASL_alloc(ASL_read_pfgh);
+      if (asl == nullptr) {
+         throw std::runtime_error("The ASL could not be allocated");
+      }
       FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
-      // indices start at 0
-      asl->i.Fortran_ = 0;
+      if (nl == nullptr) {
+         ASL_free(&asl);
+         throw std::runtime_error("The nl file could not be read");
+      }
 
       int n_discrete = asl->i.nbv_ + asl->i.niv_ + asl->i.nlvbi_ + asl->i.nlvci_ + asl->i.nlvoi_;
       if (0 < n_discrete) {
-         throw std::runtime_error("Error: " + std::to_string(n_discrete) + " variables are discrete, which Uno cannot handle");
+         ASL_free(&asl);
+         throw std::runtime_error("Uno does not support discrete variables");
       }
 
       // preallocate initial primal and dual solutions
@@ -28,7 +35,12 @@ namespace uno {
       asl->i.pi0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(asl->i.n_con_)));
 
       // read the file_name.nl file
-      pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
+      asl->i.Fortran_ = 0; // indices start at 0
+      const int read_error = pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
+      if (read_error != 0) {
+         ASL_free(&asl);
+         throw std::runtime_error("pfgh_read_ASL was to able to read the ASL");
+      }
 
       // set the sign convention for the Lagrangian: Uno uses ∇²L(x, y) = ∇²f(x) - \sum_j y_j ∇²c_j(x)
       fint error_flag{0};
@@ -53,6 +65,7 @@ namespace uno {
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),
+         // problem_type is computed based on number_asl_hessian_nonzeros and linear_constraints
          problem_type(this->determine_problem_type()),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
@@ -111,7 +124,7 @@ namespace uno {
 
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
       fint error_flag = 0;
-      const double result = this->optimization_sense * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+      const double result = this->optimization_sense * this->asl->p.Objval(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
@@ -119,20 +132,9 @@ namespace uno {
       return result;
    }
 
-   /*
-   double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
-      fint error_flag = 0;
-      double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &error_flag);
-      if (0 < error_flag) {
-         throw FunctionNumericalError();
-      }
-      return result;
-   }
-   */
-
    void AMPLModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       fint error_flag = 0;
-      (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
+      this->asl->p.Conval(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
@@ -142,11 +144,13 @@ namespace uno {
    // dense gradient
    void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       fint error_flag = 0;
-      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
+      this->asl->p.Objgrd(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
-      gradient.scale(this->optimization_sense);
+      if (this->optimization_sense != 1.) {
+         gradient.scale(this->optimization_sense);
+      }
       ++this->number_model_evaluations.objective_gradient;
    }
 
@@ -186,7 +190,7 @@ namespace uno {
          for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const uno_int row_index = static_cast<uno_int>(asl_row_index[nonzero_index]);
             row_indices[current_index] = row_index + solver_indexing;
-            column_indices[current_index] = static_cast<int>(column_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(column_index) + solver_indexing;
             ++current_index;
          }
       }
@@ -194,7 +198,7 @@ namespace uno {
 
    void AMPLModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
       fint error_flag = 0;
-      (*(this->asl)->p.Jacval)(this->asl, const_cast<double*>(x.data()), jacobian_values, &error_flag);
+      this->asl->p.Jacval(this->asl, const_cast<double*>(x.data()), jacobian_values, &error_flag);
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
@@ -202,15 +206,14 @@ namespace uno {
    }
 
    // register the vector of variables
-   //(*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
+   //this->asl->p.Xknown(this->asl, const_cast<double*>(x.data()), nullptr);
    // unregister the vector of variables
    //this->asl->i.x_known = 0;
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const {
       objective_multiplier *= this->optimization_sense;
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values, -1, &objective_multiplier,
-         const_cast<double*>(multipliers.data()));
+      this->asl->p.Sphes(this->asl, nullptr, hessian_values, -1, &objective_multiplier, const_cast<double*>(multipliers.data()));
       ++this->number_model_evaluations.hessian;
    }
 
@@ -307,10 +310,6 @@ namespace uno {
          this->asl->p.solve_code_ = 500;
       }
 
-      // due to the different sign convention for the Lagrangian between ASL and Uno,
-      // we need to flip the signs of the constraint multipliers
-      result.constraint_dual_solution.scale(-1.);
-
       // include the bound duals in the .sol file, using suffixes
       SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
       SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
@@ -323,10 +322,10 @@ namespace uno {
       option_info.wantsol = 9; // write the solution without printing the message to stdout
       std::string message = "Uno ";
       message.append(Uno::current_version()).append(": ").append(solution_status_to_message(result.solution_status));
-      write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), result.constraint_dual_solution.data(), &option_info);
 
-      // flip back the signs of the multipliers
-      result.constraint_dual_solution.scale(-1.);
+      // flip the signs of the constraint multipliers (different Lagrangian convention between ASL and Uno)
+      Vector<double> ampl_dual_solution = -result.constraint_dual_solution;
+      write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), ampl_dual_solution.data(), &option_info);
    }
 
    size_t AMPLModel::number_jacobian_nonzeros() const {
@@ -366,7 +365,7 @@ namespace uno {
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
       // store in lower-triangular part
       constexpr int triangular = 2;
-      return static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, triangular));
+      return static_cast<size_t>(this->asl->p.Sphset(this->asl, nullptr, -1, 1, 1, triangular));
    }
 
    ProblemType AMPLModel::determine_problem_type() const {
