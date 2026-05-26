@@ -113,6 +113,7 @@ jobs:
       uses: gha3mi/setup-fortran-conda@latest
       with:
         compiler: ifx
+        compiler-version: '2025.0'
 
     # ----- MinGW -----
     - name: Setup MSYS2
