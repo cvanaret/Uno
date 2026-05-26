@@ -110,10 +110,9 @@ jobs:
 
     - name: Intel Fortran
       if: matrix.toolchain == 'msvc'
-      uses: fortran-lang/setup-fortran@main
+      uses: gha3mi/setup-fortran-conda@latest
       with:
-        compiler: intel
-        version: '2025.0'
+        compiler: ifx
 
     # ----- MinGW -----
     - name: Setup MSYS2
