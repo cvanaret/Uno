@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
-#include "Uno_C_API.h"
+#include "uno/Uno_C_API.h"
 
 uno_int objective_function(uno_int /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
       *objective_value = 100.*pow(x[1] - pow(x[0], 2.), 2.) + pow(1. - x[0], 2.);
@@ -23,11 +23,11 @@ uno_int objective_gradient(uno_int /*number_variables*/, const double* x, double
 }
 
 uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
-            double* jacobian, void* /*user_data*/) {
-      jacobian[0] = x[1];
-      jacobian[1] = 1.;
-      jacobian[2] = x[0];
-      jacobian[3] = 2.*x[1];
+            double* jacobian_values, void* /*user_data*/) {
+      jacobian_values[0] = x[1];
+      jacobian_values[1] = 1.;
+      jacobian_values[2] = x[0];
+      jacobian_values[3] = 2.*x[1];
       return 0;
 }
 
@@ -46,10 +46,10 @@ uno_int jacobian_transposed_operator(uno_int /*number_variables*/, uno_int /*num
 }
 
 uno_int lagrangian_hessian(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-            const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* /*user_data*/) {
-      hessian[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
-      hessian[1] = -400.*objective_multiplier*x[0] - multipliers[0];
-      hessian[2] = 200.*objective_multiplier - 2.*multipliers[1];
+            const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+      hessian_values[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
+      hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0];
+      hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1];
       return 0;
 }
 
@@ -96,22 +96,22 @@ int main() {
       const char hessian_triangular_part = UNO_LOWER_TRIANGLE;
       uno_int hessian_row_indices[] = {0, 1, 1};
       uno_int hessian_column_indices[] = {0, 0, 1};
-      const double lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE;
+      const uno_int lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE;
       // initial point
       double x0[] = {-2., 1.};
 
       void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
-      variables_upper_bounds, base_indexing);
-      assert(uno_set_objective(model, optimization_sense, objective_function, objective_gradient));
-      assert(uno_set_constraints(model, number_constraints, constraint_functions,
+            variables_upper_bounds, base_indexing);
+      uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
+      uno_set_constraints(model, number_constraints, constraint_functions,
             constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-            jacobian_row_indices, jacobian_column_indices, jacobian));
+            jacobian_row_indices, jacobian_column_indices, jacobian);
 /*
-      assert(uno_set_jacobian_operator(model, jacobian_operator));
-      assert(uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator));
-      assert(uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention));
+      uno_set_jacobian_operator(model, jacobian_operator));
+      uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator));
+      uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator));
 */
-      assert(uno_set_initial_primal_iterate(model, x0));
+      uno_set_initial_primal_iterate(model, x0);
 
       // solver creation
       void* solver = uno_create_solver();
@@ -120,6 +120,7 @@ int main() {
 
       // run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
       uno_optimize(solver, model);
+      printf("Method used: %s\n", uno_get_method_description(solver));
       // get the solution
       uno_int optimization_status = uno_get_optimization_status(solver);
       assert(optimization_status == UNO_SUCCESS);
@@ -129,9 +130,13 @@ int main() {
       printf("Solution objective = %g\n", solution_objective);
 
       // run 2: solve with exact Hessian
-      assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-            hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
+      uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+            hessian_column_indices, lagrangian_hessian);
+      uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
+      // the Hessian model was overwritten. Set it again
+      uno_set_solver_string_option(solver, "hessian_model", "exact");
       uno_optimize(solver, model);
+      printf("Method used: %s\n", uno_get_method_description(solver));
       // get the solution
       optimization_status = uno_get_optimization_status(solver);
       assert(optimization_status == UNO_SUCCESS);

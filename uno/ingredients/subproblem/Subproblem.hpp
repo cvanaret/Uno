@@ -5,15 +5,12 @@
 #define UNO_SUBPROBLEM_H
 
 #include <functional>
-#include "optimization/Iterate.hpp"
-#include "linear_algebra/Matrix.hpp"
+#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "linear_algebra/VectorView.hpp"
-#include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "symbolic/Range.hpp"
-#include "symbolic/UnaryNegation.hpp"
-#include "tools/Logger.hpp"
+#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // forward declarations
@@ -22,9 +19,9 @@ namespace uno {
    class SolverWorkspace;
    class HessianModel;
    class InertiaCorrectionStrategy;
+   class Iterate;
+   class Model;
    class Statistics;
-   template <typename ElementType>
-   class Vector;
 
    class Subproblem {
    public:
@@ -34,11 +31,12 @@ namespace uno {
          InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const;
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder matrix_order) const;
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
-      void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices,
-         const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_int solver_indexing) const;
+      void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
+
+      void evaluate_jacobian(double* jacobian_values, Evaluations& evaluations) const;
 
       // regularized Hessian
       void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
@@ -46,11 +44,9 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
 
       // augmented system
-      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, Evaluations& evaluations) const;
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
-      template <typename IndexType>
-      void assemble_augmented_rhs(Evaluations& evaluations, const Matrix<IndexType>& jacobian, Vector<double>& rhs) const;
+      void assemble_augmented_rhs(Evaluations& evaluations, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
@@ -66,6 +62,8 @@ namespace uno {
       [[nodiscard]] bool has_hessian_operator() const;
       [[nodiscard]] bool has_hessian_matrix() const;
       [[nodiscard]] bool has_curvature() const;
+      [[nodiscard]] bool has_inequality_constraints() const;
+      [[nodiscard]] bool has_bound_constraints() const;
 
       [[nodiscard]] bool performs_primal_regularization() const;
       [[nodiscard]] bool performs_dual_regularization() const;
@@ -94,41 +92,20 @@ namespace uno {
    protected:
       HessianModel& hessian_model;
       InertiaCorrectionStrategy& inertia_correction_strategy;
-      const ForwardRange empty_set{0};
+      const IntegerRange empty_set{0};
    };
-
-   template <typename IndexType>
-   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, const Matrix<IndexType>& jacobian, Vector<double>& rhs) const {
-      rhs.fill(0.);
-
-      // objective gradient
-      auto objective_gradient = view(rhs, 0, this->number_variables);
-      this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient.data(), evaluations);
-
-      // Jacobian
-      // TODO use evaluation_cache
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
-         rhs[static_cast<size_t>(variable_index)] -=
-            this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
-      }
-
-      // constraints
-      auto constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
-      this->problem.evaluate_constraints(this->current_iterate, constraints.data(), evaluations);
-
-      // flip the sign
-      rhs.scale(-1.);
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
-   }
 
    template <typename Array>
    void Subproblem::set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
          Vector<double>& constraints) const {
+      view(constraints_lower_bounds, 0, this->number_constraints) = this->problem.get_constraints_lower_bounds() - constraints;
+      view(constraints_upper_bounds, 0, this->number_constraints) = this->problem.get_constraints_upper_bounds() - constraints;
+      /*
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
          constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];
       }
+      */
    }
 } // namespace
 

@@ -4,7 +4,13 @@ set -e
 # detect OS
 OS_NAME="$(uname -s)"
 case "$OS_NAME" in
-    Linux*)  OS="linux-gnu";;
+    Linux*)
+      if [[ "$CIBW_BUILD" == *musllinux* ]] || ldd --version 2>&1 | grep -qi musl; then
+        OS="linux-musl"
+      else
+        OS="linux-gnu"
+      fi
+      ;;
     Darwin*) OS="apple-darwin";;
     Windows*) OS="w64-mingw32";;
     MINGW64_NT*) OS="w64-mingw32";;
@@ -29,17 +35,17 @@ ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o BQPD.tar.gz "$ASSET_URL"
-tar -xzvf BQPD.tar.gz
+tar -xzf BQPD.tar.gz
 pwd
 
 # download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
-VERSION="2026.2.17"
+VERSION="2026.4.29"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
-ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5-cxx11.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o UnoUtils.tar.gz "$ASSET_URL"
-tar -xzvf UnoUtils.tar.gz
+tar -xzf UnoUtils.tar.gz
 pwd
 
 # delete unwanted directories
@@ -50,6 +56,6 @@ if [[ "$OS" == "w64-mingw32" ]]; then
     cd ..
     ASSET_URL="https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz"
     curl -L -o libstdc++.tar.gz "$ASSET_URL"
-    tar -xzvf libstdc++.tar.gz
+    tar -xzf libstdc++.tar.gz
     cp ./mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ./dependencies/lib/libstdc++.a
 fi

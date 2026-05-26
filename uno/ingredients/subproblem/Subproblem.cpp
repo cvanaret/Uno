@@ -7,11 +7,15 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/VectorView.hpp"
+#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Multipliers.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
@@ -21,9 +25,9 @@ namespace uno {
          inertia_correction_strategy(inertia_correction_strategy) {
    }
 
-   void Subproblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const {
-      this->problem.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   void Subproblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int row_offset,
+         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
+      this->problem.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
    }
 
    void Subproblem::compute_regularized_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
@@ -34,8 +38,8 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          size_t current_index = this->number_hessian_nonzeros();
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index ] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
+            row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }
@@ -43,36 +47,38 @@ namespace uno {
 
    // lower triangular part of the symmetric augmented matrix
    void Subproblem::compute_regularized_augmented_matrix_sparsity(uno_int *row_indices, uno_int *column_indices,
-         const uno_int *jacobian_row_indices, const uno_int *jacobian_column_indices, uno_int solver_indexing) const {
+         uno_int solver_indexing) const {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
       // copy Jacobian of general constraints into the (2, 1) block
-      const size_t hessian_offset = this->number_hessian_nonzeros();
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         // to get the transpose, switch the order of the row/column vectors
-         row_indices[hessian_offset + nonzero_index] = static_cast<int>(this->problem.number_variables) +
-            jacobian_row_indices[nonzero_index] + solver_indexing;
-         column_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + solver_indexing;
-      }
+      size_t nonzero_index = this->number_hessian_nonzeros();
+      const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
+      constexpr uno_int column_offset = 0;
+      this->problem.compute_jacobian_sparsity(row_indices + nonzero_index, column_indices + nonzero_index,
+         row_offset, column_offset, solver_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // regularize the augmented matrix only if required (diagonal regularization)
-      size_t current_index = hessian_offset + this->problem.number_jacobian_nonzeros();
+      nonzero_index += this->problem.number_jacobian_nonzeros();
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            ++current_index;
+            row_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            column_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            ++nonzero_index;
          }
       }
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
-            const int shifted_constraint_index = static_cast<int>(this->number_variables + constraint_index);
-            row_indices[current_index] = shifted_constraint_index + solver_indexing;
-            column_indices[current_index] = shifted_constraint_index + solver_indexing;
-            ++current_index;
+            const uno_int shifted_constraint_index = static_cast<uno_int>(this->number_variables + constraint_index);
+            row_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
+            column_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
+            ++nonzero_index;
          }
       }
+   }
+
+   void Subproblem::evaluate_jacobian(double* jacobian_values, Evaluations& evaluations) const {
+      this->problem.evaluate_jacobian(this->current_iterate.primals, jacobian_values, evaluations);
    }
 
    void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
@@ -84,12 +90,12 @@ namespace uno {
    void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // regularize the Hessian only if necessary
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
-         const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
-            this->problem.number_variables - this->problem.get_number_original_variables()};
-         const size_t offset = this->number_hessian_nonzeros();
-         double* primal_regularization_values = hessian_values + offset;
-         this->inertia_correction_strategy.regularize_hessian(statistics, *this, hessian_values, expected_inertia,
-            primal_regularization_values);
+         const Inertia problem_inertia = this->problem.get_inertia();
+         const Inertia expected_inertia = {problem_inertia.positive, 0, problem_inertia.zero};
+         if (expected_inertia.positive + expected_inertia.zero != this->number_variables) {
+            throw std::runtime_error("Mismatch in expected inertia");
+         }
+         this->inertia_correction_strategy.regularize_hessian(statistics, *this, expected_inertia, hessian_values);
       }
    }
 
@@ -106,50 +112,69 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, Evaluations& evaluations) const {
-      // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
-      this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_iterate.multipliers, augmented_matrix_values);
-
-      // Jacobian of general constraints
-      this->problem.evaluate_jacobian(this->current_iterate.primals, augmented_matrix_values + this->number_hessian_nonzeros(),
-         evaluations);
-   }
-
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
-      if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_dual_regularization()) ||
+      if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
-         const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
+         const Inertia expected_inertia = this->problem.get_inertia();
+         if (expected_inertia.positive + expected_inertia.negative + expected_inertia.zero !=
+               this->number_variables + this->number_constraints) {
+            throw std::runtime_error("Mismatch in expected inertia");
+         }
 
          const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
          double* primal_regularization_values = augmented_matrix_values + offset;
          double* dual_regularization_values = augmented_matrix_values + offset + this->get_primal_regularization_variables().size();
-         this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
-            dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
+         this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, dual_regularization_parameter,
+            expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
       }
       else {
-         linear_solver.do_numerical_factorization(augmented_matrix_values);
+         linear_solver.do_numerical_factorization(false);
       }
+   }
+
+   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, Vector<double>& rhs) const {
+      rhs.fill(0.);
+
+      // -Jacobian^T-multipliers product
+      this->problem.compute_jacobian_transposed_vector_product(this->current_iterate.multipliers.constraints.data(),
+         rhs.data(), evaluations);
+      rhs.scale(-1.);
+
+      // objective gradient
+      this->problem.evaluate_objective_gradient(this->current_iterate, rhs.data(), evaluations);
+
+      // constraints
+      this->problem.evaluate_constraints(this->current_iterate, rhs.data() + this->number_variables, evaluations);
+      // shift the bound (lb == ub)
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
+         rhs[this->number_variables + constraint_index] -= this->problem.get_constraints_lower_bounds()[constraint_index];
+      }
+
+      // flip the sign
+      rhs.scale(-1.);
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
 
    void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {
       this->problem.assemble_primal_dual_direction(this->current_iterate, solution, direction);
    }
 
-   void Subproblem::set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
-         double trust_region_radius) const {
+   void Subproblem::set_variables_bounds(std::vector<double>& subproblem_variables_lower_bounds,
+         std::vector<double>& subproblem_variables_upper_bounds, double trust_region_radius) const {
+      const auto& variables_lower_bounds = this->problem.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->problem.get_variables_upper_bounds();
       // bounds of original variables intersected with trust region
       for (size_t variable_index: Range(this->problem.get_number_original_variables())) {
-         variables_lower_bounds[variable_index] = std::max(-trust_region_radius,
-            this->problem.variable_lower_bound(variable_index) - this->current_iterate.primals[variable_index]);
-         variables_upper_bounds[variable_index] = std::min(trust_region_radius,
-            this->problem.variable_upper_bound(variable_index) - this->current_iterate.primals[variable_index]);
+         subproblem_variables_lower_bounds[variable_index] = std::max(-trust_region_radius,
+            variables_lower_bounds[variable_index] - this->current_iterate.primals[variable_index]);
+         subproblem_variables_upper_bounds[variable_index] = std::min(trust_region_radius,
+            variables_upper_bounds[variable_index] - this->current_iterate.primals[variable_index]);
       }
       // bounds of additional variables (no trust region!)
       for (size_t variable_index: Range(this->problem.get_number_original_variables(), this->problem.number_variables)) {
-         variables_lower_bounds[variable_index] = this->problem.variable_lower_bound(variable_index) - this->current_iterate.primals[variable_index];
-         variables_upper_bounds[variable_index] = this->problem.variable_upper_bound(variable_index) - this->current_iterate.primals[variable_index];
+         subproblem_variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index] - this->current_iterate.primals[variable_index];
+         subproblem_variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index] - this->current_iterate.primals[variable_index];
       }
    }
 
@@ -178,6 +203,14 @@ namespace uno {
          }
          return false;
       }
+   }
+
+   bool Subproblem::has_inequality_constraints() const {
+      return this->problem.has_inequality_constraints();
+   }
+
+   bool Subproblem::has_bound_constraints() const {
+      return this->problem.has_bound_constraints();
    }
 
    bool Subproblem::performs_primal_regularization() const {
@@ -240,7 +273,7 @@ namespace uno {
       const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
       // TODO preallocate
       Vector<double> result(model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(primal_direction, result);
+      current_evaluations.compute_jacobian_vector_product(model, primal_direction.data(), result.data());
       const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
@@ -249,12 +282,12 @@ namespace uno {
    std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const Vector<double>& primal_direction,
          double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-      const double directional_derivative = dot(primal_direction, current_evaluations.objective_gradient);
+      const double directional_derivative = dot(view(primal_direction, 0, this->problem.model.number_variables), current_evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
-      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
+      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() || this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
-         solver_workspace.compute_hessian_quadratic_product(*this, primal_direction);
+         solver_workspace.compute_hessian_quadratic_form(*this, primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };

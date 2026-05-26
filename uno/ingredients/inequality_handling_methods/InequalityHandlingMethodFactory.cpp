@@ -4,7 +4,7 @@
 #include <string>
 #include "InequalityHandlingMethod.hpp"
 #include "InequalityHandlingMethodFactory.hpp"
-#include "inequality_constrained_methods/InequalityConstrainedMethod.hpp"
+#include "NoInequalityReformulation.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -13,12 +13,26 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const Options& options) {
-      // TODO set unconstrained strategy automatically
+   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const OptimizationProblem& problem,
+         bool uses_trust_region, const Options& options) {
+      // figure out whether there are inequality constraints altogether
+      if (!problem.has_inequality_constraints() && !problem.has_bound_constraints() && !uses_trust_region) {
+         // no reformulation
+         if (0 < problem.number_constraints) {
+            INFO << "The problem has no inequalities, picking a pure SQP method\n";
+            return std::make_unique<NoInequalityReformulation>("pure SQP method");
+         }
+         else {
+            INFO << "The problem has no constraints, picking a pure Newton method\n";
+            return std::make_unique<NoInequalityReformulation>("pure Newton method");
+         }
+      }
+      // from now on, the problem has inequalities
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
-         return std::make_unique<InequalityConstrainedMethod>(options);
+         // no inequality reformulation: let the subproblem solver handle them
+         return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method");
       }
       // interior-point method
       else if (inequality_handling_method == "interior_point") {

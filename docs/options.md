@@ -10,7 +10,7 @@ Defaults are taken from `uno/options/DefaultOptions.cpp`.
 | :---       | :---                 |
 | `constraint_relaxation_strategy` | `feasibility_restoration` |
 | `inequality_handling_method` | `inequality_constrained`, `interior_point` |
-| `hessian_model` | `exact`, `LBFGS`, `identity`, `zero` |
+| `hessian_model` | `exact`, `LBFGS`, `LSR1`, `identity`, `zero` |
 | `inertia_correction_strategy` | `primal`, `primal_dual`, `none` |
 | `globalization_mechanism` | `TR`, `LS` |
 | `globalization_strategy` | `merit_function`, `fletcher_filter_method`, `waechter_filter_method`, `funnel_method` |
@@ -19,9 +19,9 @@ Defaults are taken from `uno/options/DefaultOptions.cpp`.
 
 | Ingredient | Available strategies |
 | :---       | :---                 |
-| `QP_solver` | `BQPD` (if available) |
+| `QP_solver` | `BQPD`, `HiGHS` (if available) |
 | `LP_solver` | `BQPD`, `HiGHS` (if available) |
-| `linear_solver` | `MA57`, `MA27`, `MUMPS` (if available) |
+| `linear_solver` | `MA57`, `MA27`, `MUMPS`, `SSIDS` (if available) |
 
 If not provided, the solver is chosen automatically from the available solvers (if any).
 
@@ -82,7 +82,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 | Option        | Possible values           | Default    | Description |
 | :---          | :---                      | :---       | :---        |
-| `filter_type` | `standard`, `nonmonotone` | `standard` | Type of the filter data structure |
+| `filter_type` | `standard`                | `standard` | Type of the filter data structure |
 
 ### Numerical options
 
@@ -94,7 +94,6 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `filter_fact`                                     | double  | 1.25    | Multiple of the initial infeasibility for the initial upper bound on the infeasibility |
 | `filter_capacity`                                 | integer | 50      | Maximum number of filter entries |
 | `filter_sufficient_infeasibility_decrease_factor` | double  | 0.9     | Infeasibility decrease factor in the infeasibility sufficient decrease condition |
-| `nonmonotone_filter_number_dominated_entries`     | integer | 3       | Number of dominated filter entries (nonmonotone filter) |
 
 ## Funnel options
 
@@ -120,7 +119,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 | Option                                       | Type    | Default | Description |
 | :---                                         | :---    | :---    | :---        |
-| `regularization_failure_threshold`           | double  | 1e40    | Threshold for the primal inertia correction coefficient above which failure is reported |
+| `regularization_failure_threshold`           | double  | 1e20    | Threshold for the primal inertia correction coefficient above which failure is reported |
 | `primal_regularization_initial_factor`       | double  | 1e-4    | Initial value of primal inertia correction coefficient |
 | `regularization_increase_factor`             | double  | 2       | Increase factor for the primal inertia correction coefficient |
 | `dual_regularization_fraction`               | double  | 1e-8    | Fraction of the dual inertia correction parameter |
@@ -132,9 +131,12 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 ## Quasi-Newton options
 
-| Option                     | Type    | Default | Description |
-| :---                       | :---    | :---    | :---        |
-| `quasi_newton_memory_size` | integer | 6       | Size of the quasi-Newton limited memory |
+| Option                         | Type    | Default | Description                                                    |
+|:-------------------------------|:--------|:--------|:---------------------------------------------------------------|
+| `quasi_newton_memory_size`     | integer | 6       | Size of the quasi-Newton limited memory                        |
+| `LBFGS_delta_upper_bound`      | double  | 100     | Upper bound on delta in L-BFGS                                 |
+| `LBFGS_max_skips_before_reset` | integer | 2       | Number of consecutive skips before the limited memory is reset |
+| `LSR1_pivot_max_magnitude`     | double  | 1e-7    | Maximum magnitude of allowed pivots in L-SR1                   |
 
 ## Trust region options
 
@@ -145,7 +147,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `TR_decrease_factor`            | double | 2       | Decrease factor of the radius for unsuccessful iterations |
 | `TR_aggressive_decrease_factor` | double | 4       | Decrease factor of the radius when errors occur |
 | `TR_activity_tolerance`         | double | 1e-6    | Tolerance with which the trust-region constraint is considered active |
-| `TR_min_radius`                 | double | 1e-7    | Minimum radius acceptable before failure is reported |
+| `TR_min_radius`                 | double | 1e-12   | Minimum radius acceptable before failure is reported |
 | `TR_radius_reset_threshold`     | double | 1e-4    | Smallest value to which the radius is reset at the beginning of an iteration |
 
 ## Feasibility restoration options

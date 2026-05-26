@@ -15,11 +15,14 @@ namespace uno {
    class Direction;
    class EvaluationCache;
    class Evaluations;
+   class GlobalizationStrategy;
    class Model;
    class Multipliers;
    class OptimizationProblem;
    class Options;
+   class SolverWorkspace;
    class Statistics;
+   class Subproblem;
    class UserCallbacks;
    class WarmstartInformation;
 
@@ -28,25 +31,26 @@ namespace uno {
       explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
-      virtual void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, bool uses_trust_region,
-         EvaluationCache& evaluation_cache) = 0;
+      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
+         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) = 0;
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
-      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
-         bool uses_trust_region, WarmstartInformation& warmstart_information) = 0;
+      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
-      [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
+      [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:
+      const Norm progress_norm;
       const Norm residual_norm;
       const double residual_scaling_threshold;
       const double primal_tolerance;
@@ -56,7 +60,12 @@ namespace uno {
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_iteration_threshold;
       const double unbounded_objective_threshold;
+      size_t number_subproblems_solved{0};
 
+      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
+      bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Subproblem& subproblem,
+         const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, EvaluationCache& evaluation_cache) const;
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
@@ -80,8 +89,8 @@ namespace uno {
          return status_tight_tolerance;
       }
 
-      // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(trial_iterate, this->primal_tolerance,
+      // if not converged, check convergence wrt loose tolerances (provided they are strictly looser than the tight tolerances)
+      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(trial_iterate, this->loose_primal_tolerance,
          this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != SolutionStatus::NOT_OPTIMAL) {

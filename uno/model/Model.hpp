@@ -29,16 +29,19 @@ namespace uno {
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double optimization_sense,
-         double lagrangian_sign_convention);
+         double lagrangian_sign_convention, uno_int base_indexing);
       virtual ~Model() = default;
 
       const std::string name;
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
       const double optimization_sense; /*!< 1: minimization, -1: maximization */
-      const double lagrangian_sign_convention; /*!< -1, 1 */
+      const double lagrangian_sign_convention;
+      const uno_int base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
 
       [[nodiscard]] virtual ProblemType get_problem_type() const = 0;
+      [[nodiscard]] bool has_inequality_constraints() const;
+      [[nodiscard]] bool has_bound_constraints() const;
 
       // availability of linear operators
       [[nodiscard]] virtual bool has_jacobian_operator() const = 0;
@@ -54,8 +57,8 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // sparsity patterns of Jacobian and Hessian
-      virtual void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const = 0;
+      virtual void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder matrix_order) const = 0;
       virtual void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian
@@ -75,13 +78,13 @@ namespace uno {
          const Vector<double>& multipliers, double* result) const = 0;
 
       // purely virtual functions
-      [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
-      [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const = 0;
       [[nodiscard]] virtual const SparseVector<size_t>& get_slacks() const = 0;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const = 0;
 
-      [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
-      [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_linear_constraints() const = 0;

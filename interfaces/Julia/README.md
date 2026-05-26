@@ -33,19 +33,20 @@ nlp = CUTEstModel{Float64}("HS15")
 stats = uno(nlp, preset="filtersqp", print_solution=true, logger="INFO")
 model, solver = stats.model, stats.solver
 
-primal_solution = stats.primal_solution
-constraint_dual_solution = stats.constraint_dual_solution
-lower_bound_dual_solution = stats.lower_bound_dual_solution
-upper_bound_dual_solution = stats.upper_bound_dual_solution
+primal_solution = stats.solution
+constraint_dual_solution = stats.multipliers
+lower_bound_dual_solution = stats.multipliers_L
+upper_bound_dual_solution = stats.multipliers_U
 
-timer = stats.cpu_time
-solution_objective = stats.solution_objective
-solution_primal_feasibility = stats.solution_primal_feasibility
-solution_stationarity = stats.solution_stationarity
-solution_complementarity = stats.solution_complementarity
+timer = stats.elapsed_time
+solution_objective = stats.objective
+solution_primal_feasibility = stats.primal_feas
+solution_stationarity = stats.dual_feas
+solution_complementarity = stats.complementarity_feas
 
-niter = stats.number_iterations
+niter = stats.iter
 nsub = stats.number_subproblem_solved_evaluations
+
 optimization_status = stats.optimization_status
 solution_status = stats.solution_status
 

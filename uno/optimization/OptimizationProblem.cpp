@@ -6,8 +6,11 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/VectorView.hpp"
+#include "model/Model.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -21,8 +24,28 @@ namespace uno {
          primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
    }
 
+   std::unique_ptr<OptimizationProblem> OptimizationProblem::clone() const {
+      return std::make_unique<OptimizationProblem>(*this);
+   }
+
    double OptimizationProblem::get_objective_multiplier() const {
       return 1.;
+   }
+
+   bool OptimizationProblem::has_inequality_constraints() const {
+      return this->model.has_inequality_constraints();
+   }
+
+   bool OptimizationProblem::has_bound_constraints() const {
+      return this->model.has_bound_constraints();
+   }
+
+   void OptimizationProblem::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+      // do nothing
+   }
+
+   void OptimizationProblem::postprocess_iterate(Iterate& /*iterate*/) const {
+      // do nothing
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
@@ -37,9 +60,9 @@ namespace uno {
       return hessian_model.number_nonzeros();
    }
 
-   void OptimizationProblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   void OptimizationProblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int row_offset,
+         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
@@ -54,10 +77,11 @@ namespace uno {
       }
    }
 
+   // warning: adds to objective_gradient (objective_gradient must be reset prior, if necessary)
    void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       for (size_t index: Range(this->number_variables)) {
-         objective_gradient[index] = evaluations.objective_gradient[index];
+         objective_gradient[index] += evaluations.objective_gradient[index];
       }
    }
 
@@ -80,6 +104,16 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
+   void OptimizationProblem::compute_jacobian_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_vector_product(this->model, vector, result);
+   }
+
+   void OptimizationProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
+   }
+
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const {
       hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
@@ -89,12 +123,12 @@ namespace uno {
       return this->model.number_variables;
    }
 
-   double OptimizationProblem::variable_lower_bound(size_t variable_index) const {
-      return this->model.variable_lower_bound(variable_index);
+   const std::vector<double>& OptimizationProblem::get_variables_lower_bounds() const {
+      return this->model.get_variables_lower_bounds();
    }
 
-   double OptimizationProblem::variable_upper_bound(size_t variable_index) const {
-      return this->model.variable_upper_bound(variable_index);
+   const std::vector<double>& OptimizationProblem::get_variables_upper_bounds() const {
+      return this->model.get_variables_upper_bounds();
    }
 
    const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {
@@ -105,12 +139,12 @@ namespace uno {
       return this->primal_regularization_variables;
    }
 
-   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
+   const std::vector<double>& OptimizationProblem::get_constraints_lower_bounds() const {
+      return this->model.get_constraints_lower_bounds();
    }
 
-   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
+   const std::vector<double>& OptimizationProblem::get_constraints_upper_bounds() const {
+      return this->model.get_constraints_upper_bounds();
    }
 
    const Collection<size_t>& OptimizationProblem::get_equality_constraints() const {
@@ -125,8 +159,18 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
-   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& /*solution*/,
-         Direction& /*direction*/) const {
+   Inertia OptimizationProblem::get_inertia() const {
+      return {this->number_variables, this->number_constraints, 0};
+   }
+
+   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
+         Direction& direction) const {
+      // form the primal-dual direction
+      view(direction.primals, 0, this->number_variables) = view(solution, 0, this->number_variables);
+      // retrieve the duals with correct signs (note the sign flip)
+      direction.multipliers.constraints = -view(solution, this->number_variables, this->number_variables + this->number_constraints);
+      // set the step lengths (direction unscaled)
+      direction.primal_dual_step_length = direction.bound_dual_step_length = 1.;
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
@@ -137,36 +181,62 @@ namespace uno {
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(this->number_variables);
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
-         assert(variable_index < primals.size());
-         assert(variable_index < multipliers.lower_bounds.size());
-         assert(variable_index < multipliers.upper_bounds.size());
+         if (variable_index >= primals.size() || variable_index >= multipliers.lower_bounds.size() ||
+               variable_index >= multipliers.upper_bounds.size()) {
+            throw std::runtime_error("Dimension mismatch");
+         }
 
          if (0. < multipliers.lower_bounds[variable_index]) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]) - shift_value;
          }
          if (multipliers.upper_bounds[variable_index] < 0.) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift_value;
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]) - shift_value;
          }
          return 0.;
       }};
 
       // inequality constraints
+      const auto& constraints_lower_bounds = this->model.get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->model.get_constraints_upper_bounds();
       const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
-         assert(constraint_index < constraints.size());
-         assert(constraint_index < multipliers.constraints.size());
+         if (constraint_index >= constraints.size() || constraint_index >= multipliers.constraints.size()) {
+            throw std::runtime_error("Dimension mismatch");
+         }
 
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) -
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]) -
                shift_value;
          }
          if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) -
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]) -
                shift_value;
          }
          return 0.;
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
+   double OptimizationProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double shift) const {
+      const Range variables_range = Range(this->number_variables);
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
+      const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
+         double result = 0.;
+         if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - variables_lower_bounds[variable_index]) - shift));
+         }
+         if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - variables_upper_bounds[variable_index]) - shift));
+         }
+         return result;
+      }};
+      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
    }
 
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,

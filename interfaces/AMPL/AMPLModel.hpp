@@ -10,6 +10,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "optimization/ProblemType.hpp"
 #include "symbolic/CollectionAdapter.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 // include AMPL Solver Library (ASL)
 extern "C" {
@@ -44,8 +45,8 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
       // structures of Jacobian and Hessian
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const override;
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder matrix_order) const override;
       void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
@@ -59,13 +60,13 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const override;
 
-      [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
-      [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
-      [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
-      [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
@@ -94,11 +95,17 @@ namespace uno {
       // mutable: can be modified by const methods (internal state not seen by user)
       mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
       const size_t number_asl_hessian_nonzeros; /*!< Number of nonzero elements in the Hessian */
-      const ProblemType problem_type;
+
+      // bounds
+      std::vector<double> variables_lower_bounds;
+      std::vector<double> variables_upper_bounds;
+      std::vector<double> constraints_lower_bounds;
+      std::vector<double> constraints_upper_bounds;
 
       // lists of variables and constraints + corresponding collection objects
-      const ForwardRange linear_constraints;
-      const ForwardRange nonlinear_constraints;
+      const IntegerRange linear_constraints;
+      const IntegerRange nonlinear_constraints;
+      const ProblemType problem_type;
       std::vector<size_t> equality_constraints{};
       CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
@@ -111,19 +118,6 @@ namespace uno {
       [[nodiscard]] size_t compute_lagrangian_hessian_sparsity() const;
       [[nodiscard]] ProblemType determine_problem_type() const;
    };
-
-   // check that an array of integers is in increasing order (x[i] <= x[i+1])
-   template <typename Array>
-   bool in_increasing_order(const Array& array, size_t length) {
-      size_t index = 0;
-      while (index < length - 1) {
-         if (array[index] > array[index + 1]) {
-            return false;
-         }
-         index++;
-      }
-      return true;
-   }
 } // namespace
 
 #endif // UNO_AMPLMODEL_H

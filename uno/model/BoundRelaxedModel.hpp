@@ -50,9 +50,10 @@ namespace uno {
       }
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-            MatrixOrder matrix_order) const override {
-         this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+            uno_int solver_indexing, MatrixOrder matrix_order) const override {
+         this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing,
+            matrix_order);
       }
 
       void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
@@ -82,13 +83,25 @@ namespace uno {
       }
 
       // only these two functions are redefined
-      [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
-      [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override {
+         return this->relaxed_variables_lower_bounds;
+      }
+
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override {
+         return this->relaxed_variables_upper_bounds;
+      }
+
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override { return this->model.get_slacks(); }
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->model.get_fixed_variables(); }
 
-      [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override { return this->model.constraint_lower_bound(constraint_index); }
-      [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override { return this->model.constraint_upper_bound(constraint_index); }
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override {
+         return this->model.get_constraints_lower_bounds();
+      }
+
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override {
+         return this->model.get_constraints_upper_bounds();
+      }
+
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->model.get_equality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->model.get_inequality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override { return this->model.get_linear_constraints(); }
@@ -130,6 +143,8 @@ namespace uno {
    private:
       const Model& model;
       const double relaxation_factor;
+      std::vector<double> relaxed_variables_lower_bounds;
+      std::vector<double> relaxed_variables_upper_bounds;
    };
 } // namespace
 

@@ -4,10 +4,10 @@
 #ifndef UNO_OPTIONS_H
 #define UNO_OPTIONS_H
 
-#include <map>
+#include <unordered_map>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <vector>
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
@@ -36,25 +36,25 @@ namespace uno {
       [[nodiscard]] std::map<std::string, bool> get_bool_options() const;
       [[nodiscard]] std::map<std::string, std::string> get_string_options() const;
 
-      [[nodiscard]] static Options get_command_line_options(int argc, char* argv[], size_t offset);
-      [[nodiscard]] static Options load_option_file(const std::string& file_name);
+      [[nodiscard]] static std::vector<std::pair<std::string, std::string>> get_command_line_options(int argc, char* argv[],
+         size_t offset);
+      static void load_option_file(Options& options, const std::string& file_name);
 
       // Print all available options with their type and default value
       static void dump_default_options();
 
-      void overwrite_with(const Options& overwriting_options);
       void print_non_default() const;
 
-   private:
-      std::map<std::string, uno_int> integer_options{};
-      std::map<std::string, double> double_options{};
-      std::map<std::string, bool> bool_options{};
-      std::map<std::string, std::string> string_options{};
-
-      mutable std::map<std::string, bool> used{};
-      mutable std::map<std::string, bool> overwritten_options{};
-
       static const std::unordered_map<std::string, OptionType> option_types;
+
+   private:
+      std::unordered_map<std::string, uno_int> integer_options{};
+      std::unordered_map<std::string, double> double_options{};
+      std::unordered_map<std::string, bool> bool_options{};
+      std::unordered_map<std::string, std::string> string_options{};
+
+      mutable std::unordered_map<std::string, bool> used{};
+      mutable std::unordered_map<std::string, bool> overwritten_options{};
    };
 } // namespace
 

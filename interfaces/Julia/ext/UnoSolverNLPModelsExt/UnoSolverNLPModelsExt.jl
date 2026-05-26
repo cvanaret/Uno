@@ -59,11 +59,14 @@ end
 
 function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
   @assert nlp.meta.grad_available && (nlp.meta.ncon == 0 || nlp.meta.jac_available)
-  jrows, jcols = NLPModels.jac_structure(nlp)
+  if nlp.meta.jac_available
+    jrows, jcols = NLPModels.jac_structure(nlp)
+  end
   if nlp.meta.hess_available
     hrows, hcols = NLPModels.hess_structure(nlp)
   end
-  problem_type = nlp.meta.islp ? "LP" : "NLP"
+  islp = nlp.meta.islp || (nlp.meta.hess_available && nlp.meta.nnzh == 0)
+  problem_type = islp ? "LP" : "NLP"
   model = UnoSolver.uno_model(
     problem_type,
     nlp.meta.minimize,
@@ -73,25 +76,25 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
     nlp.meta.uvar,
     nlp.meta.lcon,
     nlp.meta.ucon,
-    Cint.(jrows),
-    Cint.(jcols),
+    nlp.meta.jac_available ? Cint.(jrows) : Cint[],
+    nlp.meta.jac_available ? Cint.(jcols) : Cint[],
     nlp.meta.nnzj,
     nlp.meta.hess_available ? Cint.(hrows) : Cint[],
     nlp.meta.hess_available ? Cint.(hcols) : Cint[],
     nlp.meta.nnzh,
     nlpmodels_objective,
-    nlpmodels_constraints,
+    nlp.meta.ncon > 0 ? nlpmodels_constraints : nothing,
     nlpmodels_objective_gradient,
-    nlpmodels_jacobian,
+    nlp.meta.jac_available ? nlpmodels_jacobian : nothing,
     nlp.meta.hess_available ? nlpmodels_lagrangian_hessian : nothing,
     nlp.meta.jprod_available ? nlpmodels_jacobian_operator : nothing,
     nlp.meta.jtprod_available ? nlpmodels_jacobian_transposed_operator : nothing,
     nlp.meta.hprod_available ? nlpmodels_lagrangian_hessian_operator : nothing,
     nlp,
     'L',
-    1.0,
+    1,
     nlp.meta.x0,
-    nlp.meta.y0
+    nlp.meta.y0,
   )
   return model
 end

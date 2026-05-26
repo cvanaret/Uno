@@ -4,6 +4,8 @@
 #ifndef UNO_VECTOREXPRESSION_H
 #define UNO_VECTOREXPRESSION_H
 
+#include "symbolic_traits.hpp"
+
 namespace uno {
    template <typename Indices, typename Callable>
    class VectorExpression {
@@ -36,27 +38,29 @@ namespace uno {
       // compatible with algorithms that query the type of the elements
       using value_type = double;
 
-      VectorExpression(const Indices& indices, Callable&& component_function);
-      [[nodiscard]] size_t size() const { return this->indices.size(); }
-      [[nodiscard]] double operator[](size_t index) const;
+      VectorExpression(const Indices& indices, Callable&& component_function):
+         indices(indices), component_function(std::forward<Callable>(component_function)) { }
 
-      iterator begin() const { return iterator(*this, 0); }
-      iterator end() const { return iterator(*this, this->size()); }
+      [[nodiscard]] constexpr size_t size() const noexcept {
+         return this->indices.size();
+      }
+
+      [[nodiscard]] constexpr double operator[](size_t index) const noexcept {
+         return this->component_function(index);
+      }
+
+      constexpr iterator begin() const noexcept {
+         return iterator(*this, 0);
+      }
+
+      constexpr iterator end() const noexcept {
+         return iterator(*this, this->size());
+      }
 
    protected:
       const Indices& indices; // store const reference or rvalue (temporary)
-      const Callable component_function;
+      storage_t<Callable> component_function;
    };
-
-   template <typename Indices, typename Callable>
-   VectorExpression<Indices, Callable>::VectorExpression(const Indices& indices, Callable&& component_function):
-         indices(indices), component_function(std::forward<Callable>(component_function)) {
-   }
-
-   template <typename Indices, typename Callable>
-   double VectorExpression<Indices, Callable>::operator[](size_t index) const {
-      return this->component_function(index);
-   }
 } // namespace
 
 #endif // UNO_VECTOREXPRESSION_H

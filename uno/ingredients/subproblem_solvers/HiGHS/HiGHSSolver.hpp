@@ -4,7 +4,7 @@
 #ifndef UNO_HIGHSSOLVER_H
 #define UNO_HIGHSSOLVER_H
 
-#include "ingredients/subproblem_solvers/QPSolver.hpp"
+#include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "Highs.h"
 #include "HiGHSWorkspace.hpp"
 
@@ -12,13 +12,13 @@ namespace uno {
    // forward declaration
    class Options;
 
-   class HiGHSSolver : public QPSolver {
+   class HiGHSSolver : public SubproblemSolver {
    public:
       explicit HiGHSSolver(const Options& options);
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
+      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;

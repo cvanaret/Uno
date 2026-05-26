@@ -13,13 +13,14 @@ namespace uno {
       this->workspace.objective_gradient.resize(subproblem.number_variables);
    }
 
-   void BoxLPSolver::solve(Statistics& /*statistics*/, Subproblem& subproblem, double trust_region_radius,
+   void BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {
          throw std::runtime_error("BoxLPSolver cannot solve problems with general constraints");
       }
       // compute the objective gradient
+      this->workspace.objective_gradient.fill(0.);
       subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->workspace.objective_gradient.data(),
         current_evaluations);
 
@@ -32,14 +33,14 @@ namespace uno {
          if (0. < this->workspace.objective_gradient[variable_index]) {
             direction.primals[variable_index] = this->variable_lower_bounds[variable_index];
             direction.multipliers.lower_bounds[variable_index] = this->workspace.objective_gradient[variable_index];
-            if (!is_finite(this->variable_lower_bounds[variable_index])) {
+            if (is_infinite(this->variable_lower_bounds[variable_index])) {
                direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
             }
          }
          else if (this->workspace.objective_gradient[variable_index] < 0.) {
             direction.primals[variable_index] = this->variable_upper_bounds[variable_index];
             direction.multipliers.upper_bounds[variable_index] = this->workspace.objective_gradient[variable_index];
-            if (!is_finite(this->variable_upper_bounds[variable_index])) {
+            if (is_infinite(this->variable_upper_bounds[variable_index])) {
                direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
             }
          }

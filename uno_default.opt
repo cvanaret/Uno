@@ -1,0 +1,206 @@
+## Ingredients
+# constraint relaxation strategy (feasibility_restoration)
+constraint_relaxation_strategy feasibility_restoration
+# inequality handling method (inequality_constrained|interior_point)
+inequality_handling_method 	inequality_constrained
+# Hessian model (exact|LBFGS|LSR1|identity|zero)
+hessian_model 	exact
+# inertia correction strategy (primal|primal_dual|none)
+inertia_correction_strategy none
+# globalization mechanism (TR|LS)
+globalization_mechanism TR
+# globalization strategy (merit_function|fletcher_filter_method|waechter_filter_method|funnel_method)
+globalization_strategy fletcher_filter_method
+
+## Preset (uncomment to force) (filtersqp|ipopt)
+#preset filtersqp
+
+## Subproblem solver (picked by Uno automatically, uncomment to force)
+# QP solver (BQPD|HiGHS)
+#QP_solver 	BQPD
+# QP solver (BQPD|HiGHS)
+#LP_solver 	BQPD
+# linear solver (MA57|MA27|MUMPS|SSIDS)
+#linear_solver 	MA57
+
+## Termination
+# Tolerance on constraint violation (double)
+primal_tolerance 1e-8
+# Tolerance on stationarity and complementarity (double)
+dual_tolerance 1e-8
+# Loose tolerance on constraint violation (double)
+loose_primal_tolerance 1e-6
+# Loose tolerance on stationarity and complementarity (double)
+loose_dual_tolerance 1e-6
+# Number of iterations for the loose tolerance to apply (integer)
+loose_tolerance_iteration_threshold 15
+# Maximum number of outer iterations (integer)
+max_iterations 2000
+# Time limit (double)
+time_limit infinity
+# Whether the primal-dual solution is printed (bool)
+print_solution false
+# Objective threshold under which the problem is declared unbounded (double)
+unbounded_objective_threshold -1e20
+
+## Main options
+# Verbosity level of the logger (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
+logger INFO
+# Norm used for the progress measures (L1|L2|INF)
+progress_norm L1
+# Norm used for the residuals (L1|L2|INF)
+residual_norm INF
+# Scaling factor in stationarity and complementarity residuals (double)
+residual_scaling_threshold 100.0
+# Whether the actual reduction is slightly modified to account for roundoff (bool)
+protect_actual_reduction_against_roundoff false
+# Coefficient of the machine epsilon in the protected actual reduction (double)
+protected_actual_reduction_macheps_coefficient 10
+# Whether the subproblem is printed in DEBUG mode (bool)
+print_subproblem false
+
+## Globalization strategy options
+# Fraction of the predicted reduction that should be achieved by the actual reduction in the Armijo condition (double)
+armijo_decrease_fraction 1e-4
+# Minimum value of the predicted reduction in the Armijo condition, 0 otherwise (double)
+armijo_tolerance 1e-9
+
+## Switching method options
+# Fraction of the constraint violation that should be achieved by the predicted reduction in the switching condition (double)
+switching_delta 0.999
+# Exponent of the constraint violation in the switching condition (double)
+switching_infeasibility_exponent 2
+
+## Merit function options
+# Sufficient infeasibility decrease ratio (double)
+sufficient_infeasibility_decrease_ratio 0.9
+
+## Filter method options
+# Type of the filter data structure (standard)
+filter_type standard
+# Fraction in the infeasibility sufficient reduction condition (double)
+filter_beta 0.999
+# Slope in the objective sufficient reduction condition (double)
+filter_gamma 0.001
+# Minimum value for the initial upper bound on the infeasibility (double)
+filter_ubd 1e2
+# Multiple of the initial infeasibility for the initial upper bound on the infeasibility (double)
+filter_fact 1.25
+# Maximum number of filter entries (integer)
+filter_capacity 50
+# Infeasibility decrease factor in the infeasibility sufficient decrease condition (double)
+filter_sufficient_infeasibility_decrease_factor 0.9
+
+## Funnel options
+# Convex combination coefficient in funnel update rule (double)
+funnel_kappa 0.5
+# Fraction in the infeasibility sufficient reduction condition (double)
+funnel_beta 0.9999
+# Slope in the objective sufficient reduction condition (double)
+funnel_gamma 0.001
+# Minimum value for the initial upper bound on the infeasibility (double)
+funnel_ubd 1.0
+# Multiple of the initial infeasibility for the initial upper bound on the infeasibility (double)
+funnel_fact 1.5
+# Rule for the funnel update (1, 2, or 3) (integer)
+funnel_update_strategy 1
+# Whether the trial iterate should improve upon the current iterate (bool)
+funnel_require_acceptance_wrt_current_iterate false
+
+## Line search options
+# Decrease ratio of the step length for backtracking line search (double)
+LS_backtracking_ratio 0.5
+# Minimum acceptable step length before failure is reported (double)
+LS_min_step_length 1e-12
+# Whether the Lagrange multipliers are scaled with the step length (bool)
+LS_scale_duals_with_step_length true
+
+## Inertia correction options
+# Threshold for the primal inertia correction coefficient above which failure is reported (double)
+regularization_failure_threshold 1e20
+# Initial value of primal inertia correction coefficient (double)
+primal_regularization_initial_factor 1e-4
+# Increase factor for the primal inertia correction coefficient (double)
+regularization_increase_factor 2
+# Fraction of the dual inertia correction parameter (double)
+dual_regularization_fraction 1e-8
+# Minimum value of the primal inertia correction coefficient upon decrease (double)
+primal_regularization_lb 1e-20
+# Decrease factor for the primal inertia correction coefficient (double)
+primal_regularization_decrease_factor 3.0
+# Fast increase factor for the primal inertia correction coefficient (double)
+primal_regularization_fast_increase_factor 100.0
+# Slow increase factor for the primal inertia correction coefficient (double)
+primal_regularization_slow_increase_factor 8.0
+# Number of unsuccessful attempts until inertia correction becomes more aggressive (integer)
+threshold_unsuccessful_attempts 8
+
+## Quasi-Newton options
+# Size of the quasi-Newton limited memory (integer)
+quasi_newton_memory_size 6
+# Upper bound on delta in L-BFGS (double)
+LBFGS_delta_upper_bound 100
+# Number of consecutive skips before the limited memory is reset (integer)
+LBFGS_max_skips_before_reset 2
+# Maximum magnitude of allowed pivots in L-SR1 (double)
+LSR1_pivot_max_magnitude 1e-7
+
+## Trust region options
+# Initial value of the radius (double)
+TR_radius 10.0
+# Increase factor of the radius for successful iterations (double)
+TR_increase_factor 2
+# Decrease factor of the radius for unsuccessful iterations (double)
+TR_decrease_factor 2
+# Decrease factor of the radius when errors occur (double)
+TR_aggressive_decrease_factor 4
+# Tolerance with which the trust-region constraint is considered active (double)
+TR_activity_tolerance 1e-6
+# Minimum radius acceptable before failure is reported (double)
+TR_min_radius 1e-12
+# Smallest value to which the radius is reset at the beginning of an iteration (double)
+TR_radius_reset_threshold 1e-4
+
+## Feasibility restoration options
+# Whether the switch to optimality phase requires the linearized constraints to be consistent (bool)
+switch_to_optimality_requires_linearized_feasibility true
+# Coefficient of the constraint violation in the ℓ_1 relaxed problem (double)
+l1_constraint_violation_coefficient 1
+
+## Barrier subproblem options
+# Type of the barrier function (log)
+barrier_function log
+# Initial value of the barrier parameter (double)
+barrier_initial_parameter 0.1
+# Initial value of the bound multipliers (double)
+barrier_default_multiplier 1
+# Coefficient of the fraction-to-boundary rule (double)
+barrier_tau_min 0.99
+# Safeguard parameter for rescaling the bound multipliers (double)
+barrier_k_sigma 1e10
+# Coefficient for multiplicative update of the barrier parameter (double)
+barrier_k_mu 0.2
+# Coefficient for geometric update of the barrier parameter (double)
+barrier_theta_mu 1.5
+# Scaling factor of the barrier parameter in the barrier update rule (double)
+barrier_k_epsilon 10
+# Fraction in the barrier update rule (double)
+barrier_update_fraction 10
+# Exponent of the barrier parameter in the dual inertia correction parameter (double)
+barrier_regularization_exponent 0.25
+# Multiple of the machine epsilon in the small step condition (double)
+barrier_small_direction_factor 10.0
+# Coefficient for the perturbation of the initial bounds (double)
+barrier_push_variable_to_interior_k1 1e-2
+# Coefficient for the perturbation of the initial bounds (double)
+barrier_push_variable_to_interior_k2 1e-2
+# Damping coefficient for single bounds (double)
+barrier_damping_factor 1e-5
+# Factor in the small infeasibility test (double)
+barrier_small_infeasibility_factor 1e-4
+# Maximum accepted norm of the least-square multipliers (double)
+least_square_multiplier_max_norm 1e3
+
+## BQPD options
+# Heuristic used to pick upper bound on nullspace size (kmax) (filtersqp|minotaur)
+BQPD_kmax_heuristic filtersqp

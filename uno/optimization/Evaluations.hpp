@@ -28,16 +28,17 @@ namespace uno {
 
       Evaluations(const Model& model, const COOSparsity* jacobian_sparsity);
       Evaluations(const Evaluations& other) = default;
-      Evaluations(Evaluations&& other) = default;
-      Evaluations& operator=(Evaluations&& other) = default;
+      Evaluations(Evaluations&& other) noexcept = default;
+      Evaluations& operator=(const Evaluations& other) = default;
+      Evaluations& operator=(Evaluations&& other) noexcept = default;
 
       void evaluate_objective(const Model& model, const Vector<double>& primals);
       void evaluate_constraints(const Model& model, const Vector<double>& primals);
       void evaluate_objective_gradient(const Model& model, const Vector<double>& primals);
       void evaluate_jacobian(const Model& model, const Vector<double>& primals);
 
-      void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const;
-      void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const;
+      void compute_jacobian_vector_product(const Model& model, const double* vector, double* result) const;
+      void compute_jacobian_transposed_vector_product(const Model& model, const double* vector, double* result) const;
 
       // reset the evaluation flags
       void reset();

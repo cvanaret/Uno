@@ -4,7 +4,7 @@
 #ifndef UNO_INVERSE_H
 #define UNO_INVERSE_H
 
-#include <utility>
+#include "symbolic_traits.hpp"
 
 namespace uno {
    template <typename Matrix>
@@ -14,17 +14,15 @@ namespace uno {
 
       explicit Inverse(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
-      [[nodiscard]] const Matrix& get_matrix() const {
-         return this->matrix;
-      }
+      UNO_FORWARD_ACCESSOR(get_matrix, this->matrix)
 
    protected:
-      const Matrix matrix;
+      storage_t<Matrix> matrix;
    };
 
    // free function
    template <typename Matrix>
-   inline Inverse<Matrix> inverse(Matrix&& matrix) {
+   Inverse<Matrix> inverse(Matrix&& matrix) {
       return Inverse<Matrix>(std::forward<Matrix>(matrix));
    }
 } // namespace

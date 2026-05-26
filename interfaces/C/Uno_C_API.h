@@ -17,8 +17,8 @@ extern "C" {
    const uno_int UNO_MAXIMIZE = -1;
 
    // Lagrange multiplier sign convention
-   const double UNO_MULTIPLIER_POSITIVE =  1.0;
-   const double UNO_MULTIPLIER_NEGATIVE = -1.0;
+   const uno_int UNO_MULTIPLIER_POSITIVE =  1;
+   const uno_int UNO_MULTIPLIER_NEGATIVE = -1;
 
    // Problem type: "LP" = Linear Problem, "Q" = Quadratic Problem, "NLP" = Nonlinear Problem
    const char UNO_PROBLEM_LINEAR[]    = "LP";
@@ -57,33 +57,33 @@ extern "C" {
    const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
    const uno_int UNO_UNBOUNDED = 6;
 
-   // current Uno version is 2.4.0
+   // current Uno version
    const uno_int UNO_VERSION_MAJOR = 2;
-   const uno_int UNO_VERSION_MINOR = 4;
-   const uno_int UNO_VERSION_PATCH = 0;
+   const uno_int UNO_VERSION_MINOR = 7;
+   const uno_int UNO_VERSION_PATCH = 3;
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef uno_int (*Objective)(uno_int number_variables, const double* x, double* objective_value, void* user_data);
+   typedef uno_int (*uno_objective_callback)(uno_int number_variables, const double* x, double* objective_value, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the constraint
    // values at "x" in the vector "constraint_values" of size "number_constraints".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   typedef uno_int (*Constraints)(uno_int number_variables, uno_int number_constraints, const double* x, double* constraint_values,
+   typedef uno_int (*uno_constraints_callback)(uno_int number_variables, uno_int number_constraints, const double* x, double* constraint_values,
       void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the dense objective
    // gradient at "x" in the vector "gradient" of size "number_variables".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   typedef uno_int (*ObjectiveGradient)(uno_int number_variables, const double* x, double* gradient, void* user_data);
+   typedef uno_int (*uno_objective_gradient_callback)(uno_int number_variables, const double* x, double* gradient, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
    // the same order as the indices provided in "jacobian_sparsity".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef uno_int (*Jacobian)(uno_int number_variables, uno_int number_jacobian_nonzeros, const double* x, double* jacobian,
-      void* user_data);
+   typedef uno_int (*uno_constraints_jacobian_callback)(uno_int number_variables, uno_int number_jacobian_nonzeros, const double* x,
+      double* jacobian_values, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
    // Lagrange multipliers of size "number_constraints", and an object "user_data", and stores the entries of the
@@ -91,15 +91,15 @@ extern "C" {
    // the same order as the indices provided in "jacobian_sparsity".
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef uno_int (*Hessian)(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* user_data);
+   typedef uno_int (*uno_lagrangian_hessian_callback)(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
+      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
    // the Jacobian should be evaluated at "x" (otherwise, the current constraint Jacobian is used), a vector "vector"
    // of size "number_variables" and an object "user_data", and stores the Jacobian-vector product in the vector
    // "result" of size "number_constraints".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef uno_int (*JacobianOperator)(uno_int number_variables, uno_int number_constraints, const double* x,
+   typedef uno_int (*uno_constraints_jacobian_operator_callback)(uno_int number_variables, uno_int number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -107,7 +107,7 @@ extern "C" {
    // of size "number_constraints" and an object "user_data", and stores the Jacobian transposed-vector product in the
    // vector "result" of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef uno_int (*JacobianTransposedOperator)(uno_int number_variables, uno_int number_constraints, const double* x,
+   typedef uno_int (*uno_constraints_jacobian_transposed_operator_callback)(uno_int number_variables, uno_int number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -116,7 +116,7 @@ extern "C" {
    // size "number_variables", and an object "user_data", and stores the Hessian-vector product in the vector "result"
    // of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef uno_int (*HessianOperator)(uno_int number_variables, uno_int number_constraints, const double* x,
+   typedef uno_int (*uno_lagrangian_hessian_operator_callback)(uno_int number_variables, uno_int number_constraints, const double* x,
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
@@ -124,7 +124,7 @@ extern "C" {
    // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
    // the complementarity residual.
-   typedef void (*NotifyAcceptableIterateUserCallback)(uno_int number_variables, uno_int number_constraints, const double* primals,
+   typedef void (*uno_notify_acceptable_iterate_callback)(uno_int number_variables, uno_int number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
@@ -134,13 +134,13 @@ extern "C" {
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
    // the complementarity residual.
    // returns true for user termination.
-   typedef bool (*TerminationUserCallback)(uno_int number_variables, uno_int number_constraints, const double* primals,
+   typedef uno_int (*uno_termination_callback)(uno_int number_variables, uno_int number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
 
    // - takes as inputs a vector "buffer" of size "length".
-   typedef uno_int (*LoggerStreamUserCallback)(const char* buffer, uno_int length, void* user_data);
+   typedef uno_int (*uno_logger_stream_callback)(const char* buffer, uno_int length, void* user_data);
 
    // get the current Uno version as v major.minor.patch
    void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch);
@@ -153,13 +153,41 @@ extern "C" {
    void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing);
 
+   // creates an unconstrained optimization model that can be solved by Uno.
+   // initially, the model contains "number_variables" variables, no bounds, no objective function, and no constraints.
+   // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
+   // number of variables, and the vector indexing (0 for C-style indexing, 1 for Fortran-style indexing).
+   void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing);
+
+   // [optional]
+   // sets the variables lower bounds of a given model.
+   // takes as inputs an array of lower bounds of size "number_variables".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_bounds);
+
+   // [optional]
+   // sets the variables upper bounds of a given model.
+   // takes as inputs an array of upper bounds of size "number_variables".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variables_upper_bounds(void* model, const double* variables_upper_bounds);
+
+   // [optional]
+   // sets the lower bound of a given variable.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variable_lower_bound(void* model, uno_int variable_index, double lower_bound);
+
+   // [optional]
+   // sets the upper bound of a given variable.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variable_upper_bound(void* model, uno_int variable_index, double upper_bound);
+
    // [optional]
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
    // function and a function pointer of its gradient function.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_objective(void* model, uno_int optimization_sense, Objective objective_function,
-      ObjectiveGradient objective_gradient);
+   bool uno_set_objective(void* model, uno_int optimization_sense, uno_objective_callback objective_function,
+      uno_objective_gradient_callback objective_gradient);
 
    // [optional]
    // sets the constraints and constraint Jacobian of a given model.
@@ -167,43 +195,65 @@ extern "C" {
    // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, two arrays of row and
    // column indices for the constraint Jacobian in COOrdinate format, and a function pointer of the constraint Jacobian.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
+   bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
-      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian jacobian);
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian);
+
+   // [optional]
+   // sets the constraints lower bounds of a given model.
+   // takes as inputs an array of lower bounds of size "number_constraints".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraints_lower_bounds(void* model, const double* constraints_lower_bounds);
+
+   // [optional]
+   // sets the constraints upper bounds of a given model.
+   // takes as inputs an array of upper bounds of size "number_constraints".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraints_upper_bounds(void* model, const double* constraints_upper_bounds);
+
+   // [optional]
+   // sets the lower bound of a given constraint.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraint_lower_bound(void* model, uno_int constraint_index, double lower_bound);
+
+   // [optional]
+   // sets the upper bound of a given constraint.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraint_upper_bound(void* model, uno_int constraint_index, double upper_bound);
 
    // [optional]
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator);
+   bool uno_set_jacobian_operator(void* model, uno_constraints_jacobian_operator_callback jacobian_operator);
 
    // [optional]
    // sets the Jacobian transposed operator (computes Jacobian^T-vector products) of a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator);
+   bool uno_set_jacobian_transposed_operator(void* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator);
 
    // [optional]
    // sets the Lagrangian Hessian of a given model.
    // /!\ since the Lagrangian Hessian is symmetric, we ask for either the lower or the triangular part of the matrix.
    // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a character that specifies whether the
    // lower ('L') or upper ('U') triangular part is provided, two arrays of row and column indices for the Hessian in
-   // COOrdinate format, a function pointer of the Hessian, and a scalar in {-1, +1} that determines the sign convention
-   // of the Lagrangian:
-   // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
-   // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
+   // COOrdinate format, and a function pointer of the Hessian.
    // returns true if it succeeded, false otherwise.
    bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
-      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
-      double lagrangian_sign_convention);
+      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, uno_lagrangian_hessian_callback lagrangian_hessian);
 
    // [optional]
    // sets the Lagrangian Hessian operator (computes Hessian-vector products) of a given model.
-   // takes as inputs a function pointer of the Hessian operator, and a scalar in {-1, +1} that determines the sign
-   // convention of the Lagrangian:
-   // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
-   // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
+   // takes as inputs a function pointer of the Hessian operator.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
-      double lagrangian_sign_convention);
+   bool uno_set_lagrangian_hessian_operator(void* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator);
+
+   // [optional]
+   // sets the sign convention of the Lagrangian of a given model:
+   // if "lagrangian_sign_convention" == UNO_MULTIPLIER_POSITIVE, the Lagrangian is rho*f(x) + y^T c(x)
+   // if "lagrangian_sign_convention" == UNO_MULTIPLIER_NEGATIVE, the Lagrangian is rho*f(x) - y^T c(x)
+   // if not set, Uno defaults to UNO_MULTIPLIER_NEGATIVE.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_lagrangian_sign_convention(void* model, uno_int lagrangian_sign_convention);
 
    // [optional]
    // sets the user data of a given model.
@@ -259,13 +309,13 @@ extern "C" {
    // [optional]
    // sets the user callbacks for solver.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      TerminationUserCallback user_termination_callback, void* user_data);
+   bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+      uno_termination_callback termination_callback, void* user_data);
 
    // [optional]
    // sets the logger stream callback.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data);
+   bool uno_set_logger_stream_callback(uno_logger_stream_callback logger_stream_callback, void* user_data);
 
    // [optional]
    // resets the logger stream to the standard output
@@ -275,10 +325,14 @@ extern "C" {
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
 
+   // gets the description of the optimization method used by Uno to solve the model
+   // example: TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction
+   const char* uno_get_method_description(void* solver);
+
    // gets the value of a given double option.
    // takes as inputs the name of the option.
    // the possible types are integer, double, bool and string.
-   int uno_get_solver_integer_option(void* solver, const char* option_name);
+   uno_int uno_get_solver_integer_option(void* solver, const char* option_name);
    double uno_get_solver_double_option(void* solver, const char* option_name);
    bool uno_get_solver_bool_option(void* solver, const char* option_name);
    const char* uno_get_solver_string_option(void* solver, const char* option_name);

@@ -10,6 +10,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 
 namespace uno {
@@ -34,8 +35,8 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
-                                                MatrixOrder matrix_format) const override;
+      void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder matrix_format) const override;
       void compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
@@ -50,13 +51,13 @@ namespace uno {
          const Vector<double>& multipliers, double* result) const override;
 
       // purely functions
-      [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
-      [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
-      [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
-      [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
@@ -81,8 +82,8 @@ namespace uno {
       mutable NumberModelEvaluations number_model_evaluations{};
       const SparseVector<size_t> slacks{};
       Vector<size_t> fixed_variables{};
-      const ForwardRange linear_constraints{0};
-      const ForwardRange nonlinear_constraints;
+      const IntegerRange linear_constraints{0};
+      const IntegerRange nonlinear_constraints;
       std::vector<size_t> equality_constraints;
       CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
       std::vector<size_t> inequality_constraints;

@@ -7,6 +7,8 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/VectorView.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
@@ -32,19 +34,19 @@ namespace uno {
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
             this->hessian_column_indices.data(), Indexing::C_indexing);
       }
-      else {
-         // TODO allocate some vector to contain the result of Hv (see compute_hessian_quadratic_product)
+      if (subproblem.has_hessian_operator()) {
+         this->hessian_vector_product.resize(subproblem.number_variables);
       }
    }
 
-   double BQPDWorkspace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
+   double BQPDWorkspace::compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const {
       if (subproblem.has_hessian_operator()) { // linear operator
-         // TODO preallocate
-         Vector<double> result(subproblem.number_variables);
+         // TODO compute the quadratic form directly without temporary result
          // compute Hv
-         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data());
+         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(),
+            this->hessian_vector_product.data());
          // compute the dot product <v, Hv>
-         return dot(vector, result);
+         return dot(view(vector, 0, subproblem.number_variables), this->hessian_vector_product);
       }
       else if (subproblem.has_hessian_matrix()) { // explicit matrix
          double quadratic_product = 0.;
@@ -53,8 +55,9 @@ namespace uno {
             const size_t row_index = static_cast<size_t>(this->hessian_row_indices[nonzero_index]);
             const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
             const double entry = this->hessian_values[nonzero_index];
-            assert(row_index < vector.size());
-            assert(column_index < vector.size());
+            if (row_index >= vector.size() || column_index >= vector.size()) {
+               throw std::runtime_error("Dimension mismatch");
+            }
 
             const double factor = (row_index != column_index) ? 2. : 1.;
             quadratic_product += factor * entry * vector[row_index] * vector[column_index];
@@ -66,11 +69,12 @@ namespace uno {
       }
    }
 
-   void BQPDWorkspace::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate,
+   void BQPDWorkspace::evaluate_functions(const OptimizationProblem& problem, const Iterate& current_iterate,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.new_iterate) {
+         this->gradients.fill(0.);
          problem.evaluate_objective_gradient(current_iterate, this->gradients.data(), current_evaluations);
          problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
          this->evaluate_jacobian(problem, current_iterate.primals, current_evaluations);
@@ -98,7 +102,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
+         0, 0, Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
       // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To
@@ -119,13 +123,15 @@ namespace uno {
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
-         const int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
+         const uno_int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
          this->gradients_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] = variable_index +
             Indexing::Fortran_indexing;
 
          // constraint index
-         const int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
-         assert(current_constraint <= constraint_index);
+         const uno_int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
+         if (current_constraint > constraint_index) {
+            throw std::runtime_error("Dimension mismatch");
+         }
          while (current_constraint < constraint_index) {
             ++current_constraint;
             this->gradients_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 +

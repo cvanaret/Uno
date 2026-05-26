@@ -1,0 +1,88 @@
+name: pyOptSparse tests
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  test-pyoptsparse-unopy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # -------------------------
+      # Install Uno / unopy
+      # -------------------------
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+      
+      - name: Compile and install unopy
+        run: |
+          pip install numpy scipy
+          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
+
+      # -------------------------
+      # Install pyOptSparse
+      # -------------------------
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake build-essential
+            
+      - name: Install Python build tools
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install numpy scipy ninja cmake
+      
+      - name: Clone pyOptSparse
+        run: |
+          git clone https://github.com/mdolab/pyoptsparse
+          cd pyoptsparse
+          git checkout main
+
+      - name: Install pyOptSparse (no external solvers)
+        run: |
+          cd pyoptsparse
+          pip install .
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # -------------------------
+      # Run Uno tests
+      # -------------------------
+      - name: Run pyOptSparse tests (unopy only)
+        run: |
+          pip install pytest pytest-timeout parameterized
+          cd pyoptsparse
+          pytest tests -v -k "Uno" --maxfail=1 --timeout=120 --timeout-method=thread

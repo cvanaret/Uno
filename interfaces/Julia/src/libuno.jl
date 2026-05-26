@@ -4,8 +4,8 @@
 const UNO_MINIMIZE = Cint(1)
 const UNO_MAXIMIZE = Cint(-1)
 
-const UNO_MULTIPLIER_POSITIVE = Cdouble(1.0)
-const UNO_MULTIPLIER_NEGATIVE = Cdouble(-1.0)
+const UNO_MULTIPLIER_POSITIVE = Cint(1)
+const UNO_MULTIPLIER_NEGATIVE = Cint(-1)
 
 const UNO_PROBLEM_LINEAR = "LP"
 const UNO_PROBLEM_QUADRATIC = "QP"
@@ -51,6 +51,32 @@ function uno_create_model(problem_type, number_variables, variables_lower_bounds
                                    base_indexing::Int32)::Ptr{Cvoid}
 end
 
+function uno_create_unconstrained_model(problem_type, number_variables, base_indexing)
+    @ccall libuno.uno_create_unconstrained_model(problem_type::Cstring,
+                                                 number_variables::Int32,
+                                                 base_indexing::Int32)::Ptr{Cvoid}
+end
+
+function uno_set_variables_lower_bounds(model, variables_lower_bounds)
+    @ccall libuno.uno_set_variables_lower_bounds(model::Ptr{Cvoid},
+                                                 variables_lower_bounds::Ptr{Cdouble})::Bool
+end
+
+function uno_set_variables_upper_bounds(model, variables_upper_bounds)
+    @ccall libuno.uno_set_variables_upper_bounds(model::Ptr{Cvoid},
+                                                 variables_upper_bounds::Ptr{Cdouble})::Bool
+end
+
+function uno_set_variable_lower_bound(model, variable_index, lower_bound)
+    @ccall libuno.uno_set_variable_lower_bound(model::Ptr{Cvoid}, variable_index::Int32,
+                                               lower_bound::Cdouble)::Bool
+end
+
+function uno_set_variable_upper_bound(model, variable_index, upper_bound)
+    @ccall libuno.uno_set_variable_upper_bound(model::Ptr{Cvoid}, variable_index::Int32,
+                                               upper_bound::Cdouble)::Bool
+end
+
 function uno_set_objective(model, optimization_sense, objective_function,
                            objective_gradient)
     @ccall libuno.uno_set_objective(model::Ptr{Cvoid}, optimization_sense::Int32,
@@ -72,6 +98,26 @@ function uno_set_constraints(model, number_constraints, constraint_functions,
                                       jacobian::Ptr{Cvoid})::Bool
 end
 
+function uno_set_constraints_lower_bounds(model, constraints_lower_bounds)
+    @ccall libuno.uno_set_constraints_lower_bounds(model::Ptr{Cvoid},
+                                                   constraints_lower_bounds::Ptr{Cdouble})::Bool
+end
+
+function uno_set_constraints_upper_bounds(model, constraints_upper_bounds)
+    @ccall libuno.uno_set_constraints_upper_bounds(model::Ptr{Cvoid},
+                                                   constraints_upper_bounds::Ptr{Cdouble})::Bool
+end
+
+function uno_set_constraint_lower_bound(model, constraint_index, lower_bound)
+    @ccall libuno.uno_set_constraint_lower_bound(model::Ptr{Cvoid}, constraint_index::Int32,
+                                                 lower_bound::Cdouble)::Bool
+end
+
+function uno_set_constraint_upper_bound(model, constraint_index, upper_bound)
+    @ccall libuno.uno_set_constraint_upper_bound(model::Ptr{Cvoid}, constraint_index::Int32,
+                                                 upper_bound::Cdouble)::Bool
+end
+
 function uno_set_jacobian_operator(model, jacobian_operator)
     @ccall libuno.uno_set_jacobian_operator(model::Ptr{Cvoid},
                                             jacobian_operator::Ptr{Cvoid})::Bool
@@ -84,21 +130,23 @@ end
 
 function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
                                     hessian_row_indices, hessian_column_indices,
-                                    lagrangian_hessian, lagrangian_sign_convention)
+                                    lagrangian_hessian)
     @ccall libuno.uno_set_lagrangian_hessian(model::Ptr{Cvoid},
                                              number_hessian_nonzeros::Int32,
                                              hessian_triangular_part::Cchar,
                                              hessian_row_indices::Ptr{Int32},
                                              hessian_column_indices::Ptr{Int32},
-                                             lagrangian_hessian::Ptr{Cvoid},
-                                             lagrangian_sign_convention::Cdouble)::Bool
+                                             lagrangian_hessian::Ptr{Cvoid})::Bool
 end
 
-function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator,
-                                             lagrangian_sign_convention)
+function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
     @ccall libuno.uno_set_lagrangian_hessian_operator(model::Ptr{Cvoid},
-                                                      lagrangian_hessian_operator::Ptr{Cvoid},
-                                                      lagrangian_sign_convention::Cdouble)::Bool
+                                                      lagrangian_hessian_operator::Ptr{Cvoid})::Bool
+end
+
+function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
+    @ccall libuno.uno_set_lagrangian_sign_convention(model::Ptr{Cvoid},
+                                                     lagrangian_sign_convention::Int32)::Bool
 end
 
 function uno_set_user_data(model, user_data)
@@ -163,10 +211,10 @@ function uno_set_solver_preset(solver, preset_name)
 end
 
 function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
-                                  user_termination_callback, user_data)
+                                  termination_callback, user_data)
     @ccall libuno.uno_set_solver_callbacks(solver::Ptr{Cvoid},
                                            notify_acceptable_iterate_callback::Ptr{Cvoid},
-                                           user_termination_callback::Ptr{Cvoid},
+                                           termination_callback::Ptr{Cvoid},
                                            user_data::Ptr{Cvoid})::Bool
 end
 
@@ -183,9 +231,13 @@ function uno_optimize(solver, model)
     @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Cvoid
 end
 
+function uno_get_method_description(solver)
+    @ccall libuno.uno_get_method_description(solver::Ptr{Cvoid})::Cstring
+end
+
 function uno_get_solver_integer_option(solver, option_name)
     @ccall libuno.uno_get_solver_integer_option(solver::Ptr{Cvoid},
-                                                option_name::Cstring)::Cint
+                                                option_name::Cstring)::Int32
 end
 
 function uno_get_solver_double_option(solver, option_name)

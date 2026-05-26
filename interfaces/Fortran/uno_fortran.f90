@@ -9,22 +9,29 @@
 ! uno_create_model
 !---------------------------------------------
 function uno_create_model(problem_type, number_variables, variables_lower_bounds, &
-                          variables_upper_bounds, base_indexing) result(model)
+                          variables_upper_bounds, base_indexing) &
+   result(model)
    character(len=*) :: problem_type
-   integer(uno_int), value :: number_variables, base_indexing
-   real(c_double), dimension(*) :: variables_lower_bounds, variables_upper_bounds
+   integer(uno_int), value :: number_variables
+   real(c_double) :: variables_lower_bounds(*)
+   real(c_double) :: variables_upper_bounds(*)
+   integer(uno_int), value :: base_indexing
    type(c_ptr) :: model
    character(c_char), allocatable :: problem_type_c(:)
    integer :: i, n
 
    interface
-      function uno_create_model_c(problem_type, number_variables, variables_lower_bounds, &
-                                  variables_upper_bounds, base_indexing) result(model) &
+      function uno_create_model_c(problem_type, number_variables, &
+                                  variables_lower_bounds, variables_upper_bounds, &
+                                  base_indexing) &
+         result(model) &
          bind(C, name="uno_create_model")
          import :: c_char, uno_int, c_double, c_ptr
-         character(c_char), dimension(*) :: problem_type
-         integer(uno_int), value :: number_variables, base_indexing
-         real(c_double), dimension(*) :: variables_lower_bounds, variables_upper_bounds
+         character(c_char) :: problem_type(*)
+         integer(uno_int), value :: number_variables
+         real(c_double) :: variables_lower_bounds(*)
+         real(c_double) :: variables_upper_bounds(*)
+         integer(uno_int), value :: base_indexing
          type(c_ptr) :: model
       end function uno_create_model_c
    end interface
@@ -35,9 +42,46 @@ function uno_create_model(problem_type, number_variables, variables_lower_bounds
       problem_type_c(i) = problem_type(i:i)
    end do
    problem_type_c(n+1) = c_null_char
-   model = uno_create_model_c(problem_type_c, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
+   model = uno_create_model_c(problem_type_c, number_variables, variables_lower_bounds, &
+                              variables_upper_bounds, base_indexing)
    deallocate(problem_type_c)
 end function uno_create_model
+
+!---------------------------------------------
+! uno_create_unconstrained_model
+!---------------------------------------------
+function uno_create_unconstrained_model(problem_type, number_variables, base_indexing) &
+   result(model)
+   character(len=*) :: problem_type
+   integer(uno_int), value :: number_variables
+   integer(uno_int), value :: base_indexing
+   type(c_ptr) :: model
+   character(c_char), allocatable :: problem_type_c(:)
+   integer :: i, n
+
+   interface
+      function uno_create_unconstrained_model_c(problem_type, number_variables, &
+                                                base_indexing) &
+         result(model) &
+         bind(C, name="uno_create_unconstrained_model")
+         import :: c_char, uno_int, c_ptr
+         character(c_char) :: problem_type(*)
+         integer(uno_int), value :: number_variables
+         integer(uno_int), value :: base_indexing
+         type(c_ptr) :: model
+      end function uno_create_unconstrained_model_c
+   end interface
+
+   n = len_trim(problem_type)
+   allocate(problem_type_c(n+1))
+   do i = 1, n
+      problem_type_c(i) = problem_type(i:i)
+   end do
+   problem_type_c(n+1) = c_null_char
+   model = uno_create_unconstrained_model_c(problem_type_c, number_variables, &
+                                            base_indexing)
+   deallocate(problem_type_c)
+end function uno_create_unconstrained_model
 
 !---------------------------------------------
 ! uno_set_solver_integer_option
@@ -51,11 +95,12 @@ function uno_set_solver_integer_option(solver, option_name, option_value) result
    integer :: i, n
 
    interface
-      function uno_set_solver_integer_option_c(solver, option_name, option_value) result(success) &
+      function uno_set_solver_integer_option_c(solver, option_name, option_value) &
+         result(success) &
          bind(C, name="uno_set_solver_integer_option")
          import :: c_ptr, c_char, uno_int, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          integer(uno_int), value :: option_value
          logical(c_bool) :: success
       end function uno_set_solver_integer_option_c
@@ -83,11 +128,12 @@ function uno_set_solver_double_option(solver, option_name, option_value) result(
    integer :: i, n
 
    interface
-      function uno_set_solver_double_option_c(solver, option_name, option_value) result(success) &
+      function uno_set_solver_double_option_c(solver, option_name, option_value) &
+         result(success) &
          bind(C, name="uno_set_solver_double_option")
          import :: c_ptr, c_char, c_double, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          real(c_double), value :: option_value
          logical(c_bool) :: success
       end function uno_set_solver_double_option_c
@@ -115,11 +161,12 @@ function uno_set_solver_bool_option(solver, option_name, option_value) result(su
    integer :: i, n
 
    interface
-      function uno_set_solver_bool_option_c(solver, option_name, option_value) result(success) &
+      function uno_set_solver_bool_option_c(solver, option_name, option_value) &
+         result(success) &
          bind(C, name="uno_set_solver_bool_option")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          logical(c_bool), value :: option_value
          logical(c_bool) :: success
       end function uno_set_solver_bool_option_c
@@ -148,12 +195,13 @@ function uno_set_solver_string_option(solver, option_name, option_value) result(
    integer :: i, n
 
    interface
-      function uno_set_solver_string_option_c(solver, option_name, option_value) result(success) &
+      function uno_set_solver_string_option_c(solver, option_name, option_value) &
+         result(success) &
          bind(C, name="uno_set_solver_string_option")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
-         character(c_char), dimension(*) :: option_value
+         character(c_char) :: option_name(*)
+         character(c_char) :: option_value(*)
          logical(c_bool) :: success
       end function uno_set_solver_string_option_c
    end interface
@@ -178,20 +226,21 @@ end function uno_set_solver_string_option
 !---------------------------------------------
 ! uno_get_solver_option_type
 !---------------------------------------------
-function uno_get_solver_option_type(solver, option_name) result(option_type)
+function uno_get_solver_option_type(solver, option_name) result(solver_option_type)
    type(c_ptr), value :: solver
    character(len=*) :: option_name
-   integer(uno_int) :: option_type
+   integer(uno_int) :: solver_option_type
    character(c_char), allocatable :: option_name_c(:)
    integer :: i, n
 
    interface
-      function uno_get_solver_option_type_c(solver, option_name) result(option_type) &
+      function uno_get_solver_option_type_c(solver, option_name) &
+         result(solver_option_type) &
          bind(C, name="uno_get_solver_option_type")
          import :: c_ptr, c_char, uno_int
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
-         integer(uno_int) :: option_type
+         character(c_char) :: option_name(*)
+         integer(uno_int) :: solver_option_type
       end function uno_get_solver_option_type_c
    end interface
 
@@ -201,7 +250,7 @@ function uno_get_solver_option_type(solver, option_name) result(option_type)
       option_name_c(i) = option_name(i:i)
    end do
    option_name_c(n+1) = c_null_char
-   option_type = uno_get_solver_option_type_c(solver, option_name_c)
+   solver_option_type = uno_get_solver_option_type_c(solver, option_name_c)
    deallocate(option_name_c)
 end function uno_get_solver_option_type
 
@@ -216,11 +265,12 @@ function uno_load_solver_option_file(solver, file_name) result(success)
    integer :: i, n
 
    interface
-      function uno_load_solver_option_file_c(solver, file_name) result(success) &
+      function uno_load_solver_option_file_c(solver, file_name) &
+         result(success) &
          bind(C, name="uno_load_solver_option_file")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: file_name
+         character(c_char) :: file_name(*)
          logical(c_bool) :: success
       end function uno_load_solver_option_file_c
    end interface
@@ -246,11 +296,12 @@ function uno_set_solver_preset(solver, preset_name) result(success)
    integer :: i, n
 
    interface
-      function uno_set_solver_preset_c(solver, preset_name) result(success) &
+      function uno_set_solver_preset_c(solver, preset_name) &
+         result(success) &
          bind(C, name="uno_set_solver_preset")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: preset_name
+         character(c_char) :: preset_name(*)
          logical(c_bool) :: success
       end function uno_set_solver_preset_c
    end interface
@@ -266,6 +317,43 @@ function uno_set_solver_preset(solver, preset_name) result(success)
 end function uno_set_solver_preset
 
 !---------------------------------------------
+! uno_get_method_description
+!---------------------------------------------
+function uno_get_method_description(solver) &
+   result(method_description)
+   type(c_ptr), value :: solver
+   character(:), allocatable :: method_description
+   type(c_ptr) :: ptr_method_description_c
+   integer :: i, n
+   character(c_char), pointer :: method_description_c(:)
+
+   interface
+      function uno_get_method_description_c(solver) &
+         result(method_description) &
+         bind(C, name="uno_get_method_description")
+         import :: c_ptr
+         type(c_ptr), value :: solver
+         type(c_ptr) :: method_description
+      end function uno_get_method_description_c
+   end interface
+
+   ptr_method_description_c = uno_get_method_description_c(solver)
+   if (.not. c_associated(ptr_method_description_c)) then
+      method_description = ""
+      return
+   end if
+   call c_f_pointer(ptr_method_description_c, method_description_c, [huge(0)])
+   n = 0
+   do while (method_description_c(n+1) /= c_null_char)
+      n = n + 1
+   end do
+   allocate(character(len=n)::method_description)
+   do i = 1, n
+      method_description(i:i) = method_description_c(i)
+   end do
+end function uno_get_method_description
+
+!---------------------------------------------
 ! uno_get_solver_integer_option
 !---------------------------------------------
 function uno_get_solver_integer_option(solver, option_name) result(solver_integer_option)
@@ -276,11 +364,12 @@ function uno_get_solver_integer_option(solver, option_name) result(solver_intege
    integer :: i, n
 
    interface
-      function uno_get_solver_integer_option_c(solver, option_name) result(solver_integer_option) &
+      function uno_get_solver_integer_option_c(solver, option_name) &
+         result(solver_integer_option) &
          bind(C, name="uno_get_solver_integer_option")
          import :: c_ptr, c_char, uno_int
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          integer(uno_int) :: solver_integer_option
       end function uno_get_solver_integer_option_c
    end interface
@@ -290,6 +379,7 @@ function uno_get_solver_integer_option(solver, option_name) result(solver_intege
    do i = 1, n
       option_name_c(i) = option_name(i:i)
    end do
+   option_name_c(n+1) = c_null_char
    solver_integer_option = uno_get_solver_integer_option_c(solver, option_name_c)
    deallocate(option_name_c)
 end function uno_get_solver_integer_option
@@ -305,11 +395,12 @@ function uno_get_solver_double_option(solver, option_name) result(solver_double_
    integer :: i, n
 
    interface
-      function uno_get_solver_double_option_c(solver, option_name) result(solver_double_option) &
+      function uno_get_solver_double_option_c(solver, option_name) &
+         result(solver_double_option) &
          bind(C, name="uno_get_solver_double_option")
          import :: c_ptr, c_char, c_double
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          real(c_double) :: solver_double_option
       end function uno_get_solver_double_option_c
    end interface
@@ -319,6 +410,7 @@ function uno_get_solver_double_option(solver, option_name) result(solver_double_
    do i = 1, n
       option_name_c(i) = option_name(i:i)
    end do
+   option_name_c(n+1) = c_null_char
    solver_double_option = uno_get_solver_double_option_c(solver, option_name_c)
    deallocate(option_name_c)
 end function uno_get_solver_double_option
@@ -334,11 +426,12 @@ function uno_get_solver_bool_option(solver, option_name) result(solver_bool_opti
    integer :: i, n
 
    interface
-      function uno_get_solver_bool_option_c(solver, option_name) result(solver_bool_option) &
+      function uno_get_solver_bool_option_c(solver, option_name) &
+         result(solver_bool_option) &
          bind(C, name="uno_get_solver_bool_option")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          logical(c_bool) :: solver_bool_option
       end function uno_get_solver_bool_option_c
    end interface
@@ -348,6 +441,7 @@ function uno_get_solver_bool_option(solver, option_name) result(solver_bool_opti
    do i = 1, n
       option_name_c(i) = option_name(i:i)
    end do
+   option_name_c(n+1) = c_null_char
    solver_bool_option = uno_get_solver_bool_option_c(solver, option_name_c)
    deallocate(option_name_c)
 end function uno_get_solver_bool_option
@@ -355,7 +449,8 @@ end function uno_get_solver_bool_option
 !---------------------------------------------
 ! uno_get_solver_string_option
 !---------------------------------------------
-function uno_get_solver_string_option(solver, option_name) result(solver_string_option)
+function uno_get_solver_string_option(solver, option_name) &
+   result(solver_string_option)
    type(c_ptr), value :: solver
    character(len=*) :: option_name
    character(:), allocatable :: solver_string_option
@@ -365,11 +460,12 @@ function uno_get_solver_string_option(solver, option_name) result(solver_string_
    character(c_char), pointer :: solver_string_option_c(:)
 
    interface
-      function uno_get_solver_string_option_c(solver, option_name) result(solver_string_option) &
+      function uno_get_solver_string_option_c(solver, option_name) &
+         result(solver_string_option) &
          bind(C, name="uno_get_solver_string_option")
          import :: c_ptr, c_char
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          type(c_ptr) :: solver_string_option
       end function uno_get_solver_string_option_c
    end interface
@@ -379,8 +475,14 @@ function uno_get_solver_string_option(solver, option_name) result(solver_string_
    do i = 1, n
       option_name_c(i) = option_name(i:i)
    end do
+   option_name_c(n+1) = c_null_char
    ptr_solver_string_option_c = uno_get_solver_string_option_c(solver, option_name_c)
-   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [0])
+   if (.not. c_associated(ptr_solver_string_option_c)) then
+      solver_string_option = ""
+      deallocate(option_name_c)
+      return
+   end if
+   call c_f_pointer(ptr_solver_string_option_c, solver_string_option_c, [huge(0)])
    n = 0
    do while (solver_string_option_c(n+1) /= c_null_char)
       n = n + 1

@@ -1,0 +1,85 @@
+name: Valgrind on the C and Fortran examples
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+
+    env:
+      VALGRIND: valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --errors-for-leak-kinds=definite,possible --error-exitcode=1
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Valgrind
+        run: sudo apt install -y valgrind
+
+      - name: Download dependencies
+        shell: bash
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure Uno CMake
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                               -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+                                               -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DBUILD_STATIC_LIBS=OFF \
+                                               -DBUILD_SHARED_LIBS=ON .
+
+      - name: Build Uno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Install Uno
+        run: sudo cmake --install ${{github.workspace}}/build
+
+      - name: Configure example CMake
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/interfaces/C/example/build \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO=/usr/local/lib/libuno.so .
+
+      - name: Build C example
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        run: cmake --build ${{github.workspace}}/interfaces/C/example/build --config ${{env.BUILD_TYPE}}
+
+      - name: Run Valgrind on C example
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
+        run: $VALGRIND --leak-check=full -s ./example_hs015
+
+      - name: Compile Fortran example
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: gfortran example_uno.f90 -o example_uno /usr/local/lib/libuno.so -Wl,-rpath,/usr/local/lib
+
+      - name: Run Valgrind on Fortran example
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: $VALGRIND --leak-check=full -s ./example_uno

@@ -1,7 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cmath>
+#include <algorithm>
 #include "GlobalizationStrategy.hpp"
 #include "options/Options.hpp"
 
@@ -12,6 +12,8 @@ namespace uno {
       protect_actual_reduction_against_roundoff(options.get_bool("protect_actual_reduction_against_roundoff")),
       protected_actual_reduction_macheps_coefficient(options.get_double("protected_actual_reduction_macheps_coefficient")) {
    }
+
+   GlobalizationStrategy::~GlobalizationStrategy() = default;
 
    bool GlobalizationStrategy::armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const {
       return (actual_reduction >= this->armijo_decrease_fraction * std::max(0., predicted_reduction - this->armijo_tolerance));

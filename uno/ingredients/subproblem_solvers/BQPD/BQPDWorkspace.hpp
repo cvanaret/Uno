@@ -24,9 +24,9 @@ namespace uno {
 
       void initialize(const Subproblem& subproblem);
 
-      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
+      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, Evaluations& current_evaluations,
+      void evaluate_functions(const OptimizationProblem& problem, const Iterate& current_iterate, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);
 
       Vector<double> constraints{};
@@ -42,6 +42,7 @@ namespace uno {
       Vector<uno_int> hessian_column_indices{};
       Vector<double> hessian_values{};
       bool hessian_evaluation_required{false};
+      mutable Vector<double> hessian_vector_product{};
 
    protected:
       void compute_gradients_sparsity(const Subproblem& subproblem);

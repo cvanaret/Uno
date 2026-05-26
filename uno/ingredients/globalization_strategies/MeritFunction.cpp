@@ -14,7 +14,7 @@ namespace uno {
    }
 
    void MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/) {
-      statistics.add_column("Penalty", Statistics::double_width, 2, Statistics::column_order.at("Penalty"));
+      statistics.add_column("Penalty", Statistics::double_width, 2);
    }
 
    bool MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

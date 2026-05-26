@@ -6,10 +6,10 @@
 
 #include <array>
 #include <memory>
-#include "InertiaCorrectionStrategy.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   class InertiaCorrectionStrategy;
    class Options;
 
    class InertiaCorrectionStrategyFactory {

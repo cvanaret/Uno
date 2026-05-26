@@ -9,12 +9,12 @@
 
 namespace uno {
    // forward declarations
-   class LPSolver;
+   class SubproblemSolver;
    class Options;
 
    class LPSolverFactory {
    public:
-      static std::unique_ptr<LPSolver> create([[maybe_unused]] const Options& options);
+      static std::unique_ptr<SubproblemSolver> create([[maybe_unused]] const Options& options);
 
       // list of available LP solvers
       constexpr static std::initializer_list<const char*> available_solvers{

@@ -3,17 +3,21 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):
+         progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          residual_scaling_threshold(options.get_double("residual_scaling_threshold")),
          primal_tolerance(options.get_double("primal_tolerance")),
@@ -24,18 +28,58 @@ namespace uno {
          unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
    }
 
-   ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() { }
+   ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() = default;
 
-   // with initial point
-   /*
-   void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Direction& direction,
-         const Vector<double>& initial_point, double trust_region_radius, WarmstartInformation& warmstart_information) {
-      inequality_handling_method.set_initial_point(initial_point);
-      this->compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
-         direction, trust_region_radius, warmstart_information);
+   size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
+      return this->number_subproblems_solved;
    }
-   */
+
+   // protected member functions
+
+   void ConstraintRelaxationStrategy::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,
+         Evaluations& evaluations) const {
+      problem.set_infeasibility_measure(iterate, evaluations, this->progress_norm);
+      problem.set_objective_measure(iterate, evaluations);
+      problem.set_auxiliary_measure(iterate);
+   }
+
+   bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, double step_length, EvaluationCache& evaluation_cache) const {
+      subproblem.problem.postprocess_iterate(trial_iterate);
+      const double objective_multiplier = subproblem.problem.get_objective_multiplier();
+
+      // evaluate progress measures
+      trial_iterate.objective_multiplier = objective_multiplier;
+      //if (this->subproblem_definition_changed) {
+         //DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
+         //globalization_strategy.reset();
+         subproblem.problem.set_auxiliary_measure(current_iterate);
+         //this->subproblem_definition_changed = false;
+      //}
+      this->evaluate_progress_measures(subproblem.problem, trial_iterate, evaluation_cache.trial_evaluations);
+
+      bool accept_iterate = false;
+      if (direction.norm == 0.) {
+         DEBUG << "Zero step acceptable\n";
+         evaluation_cache.trial_evaluations.objective = subproblem.problem.model.evaluate_objective(trial_iterate.primals);
+         accept_iterate = true;
+         statistics.set("Status", "0 primal step");
+      }
+      else {
+         // determine acceptance wrt the globalization strategy
+         const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(direction, step_length,
+            this->progress_norm, evaluation_cache.current_evaluations, solver_workspace);
+         accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
+            predicted_reductions, objective_multiplier);
+         // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
+         if (accept_iterate) {
+            evaluation_cache.trial_evaluations.evaluate_objective_gradient(subproblem.problem.model, trial_iterate.primals);
+            evaluation_cache.trial_evaluations.evaluate_jacobian(subproblem.problem.model, trial_iterate.primals);
+         }
+      }
+      return accept_iterate;
+   }
 
    // stationarity errors:
    // - for KKT conditions: with standard multipliers and current objective multiplier
@@ -67,11 +111,13 @@ namespace uno {
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {
       size_t number_lower_bounded_variables = 0;
       size_t number_upper_bounded_variables = 0;
+      const auto& variables_lower_bounds = model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = model.get_variables_upper_bounds();
       for (size_t variable_index: Range(model.number_variables)) {
-         if (is_finite(model.variable_lower_bound(variable_index))) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
             ++number_lower_bounded_variables;
          }
-         if (is_finite(model.variable_upper_bound(variable_index))) {
+         if (is_finite(variables_upper_bounds[variable_index])) {
             ++number_upper_bounded_variables;
          }
       }
@@ -93,11 +139,13 @@ namespace uno {
    double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const {
       size_t number_lower_bounded_variables = 0;
       size_t number_upper_bounded_variables = 0;
+      const auto& variables_lower_bounds = model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = model.get_variables_upper_bounds();
       for (size_t variable_index: Range(model.number_variables)) {
-         if (is_finite(model.variable_lower_bound(variable_index))) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
             ++number_lower_bounded_variables;
          }
-         if (is_finite(model.variable_upper_bound(variable_index))) {
+         if (is_finite(variables_upper_bounds[variable_index])) {
             ++number_upper_bounded_variables;
          }
       }

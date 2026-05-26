@@ -41,7 +41,7 @@ namespace uno {
 
       ~UserModel() = default;
 
-      const ProblemType problem_type;
+      ProblemType problem_type; // non-const, may be overridden based on the number of Hessian nonzeros
       const uno_int base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
 
       // variables
@@ -73,7 +73,7 @@ namespace uno {
       std::vector<uno_int> hessian_column_indices{};
       Hessian lagrangian_hessian{};
       HessianOperator lagrangian_hessian_operator{};
-      double lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE};
+      uno_int lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE}; // Uno's default
 
       // User data
       UserDataType user_data{};

@@ -25,12 +25,17 @@ Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods
 Uno currently implements the following strategies:
 * **constraint relaxation strategies**: feasibility restoration;
 * **inequality handling methods**: inequality constrained method, interior-point method;
-* **Hessian models**: exact, L-BFGS, identity, zero;
+* **Hessian models**: exact, L-BFGS, L-SR1, identity, zero;
 * **inertia control strategies**: primal, primal-dual, none;
 * **globalization strategies**: filter method, funnel method, merit function;
 * **globalization mechanisms**: backtracking line search, trust-region method.
 
-You can combine these strategies in a ton of different ways via [options](docs/options.md). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
+and the following subproblem solvers:
+* QP solvers: BQPD (for nonconvex QPs), HiGHS (for convex QPs);
+* LP solvers: BQPD, HiGHS
+* indefinite linear solvers: HSL, MA57, MA27, MUMPS, SSIDS
+
+You can combine these strategies in a ton of different ways via options (see [documentation](docs/options.md)). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
@@ -42,15 +47,16 @@ For more details on our unification theory, check out the [UNIFICATION](UNIFICAT
 
 Uno is currently used as a nonlinear optimization solver in: 
 - [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
+- [pyOptSparse](https://github.com/mdolab/pyoptsparse), an object-oriented framework for formulating and solving nonlinear constrained optimization problems in an efficient, reusable, and portable manner
 - [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
 - [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
+- [control-toolbox](https://github.com/control-toolbox), a collection of Julia packages for mathematical control and its applications
 - [FelooPy](https://www.linkedin.com/posts/k-tafakkori_optimization101-operationsresearch-decisionscience-activity-7397646574035697664-AzmK), a user-friendly tool for coding, modeling, and solving decision problems
 - [IMPL &copy; /IMPL-DATA &copy;](https://www.linkedin.com/posts/jeffrey-dean-kelly-a5420a6a_releases-cvanaretuno-activity-7388564004585160704-WSxz/) by [Industrial Algorithms Limited](https://www.industrialgorithms.ca/), a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation
 
 and more to come:
 - [CasADi](https://github.com/casadi/casadi/issues/3908)
 - [Pyomo](https://github.com/cvanaret/Uno/issues/319)
-- [pyOptSparse](https://github.com/cvanaret/Uno/issues/318)
 - [Minotaur](https://github.com/cvanaret/Uno/issues/107)
 - [NEOS Server](https://neos-server.org/neos/solvers/)
 

@@ -45,6 +45,51 @@ for (platform, libdir, ext) in platforms
       rm("products/$platform/deps", recursive=true)
       rm("products/$platform/deps.tar.gz", recursive=true)
 
+      # Remove the headers that are not related to Uno
+      rm("products/$platform/include/libseq", recursive=true)
+      rm("products/$platform/include/hwloc", recursive=true)
+      rm("products/$platform/include/highs", recursive=true)
+      for file in readdir("products/$platform/include")
+        if endswith(file, ".h")
+          rm("products/$platform/include/$file")
+        end
+      end
+
+      # Remove the binaries that are not related to Uno
+      for file in readdir("products/$platform/bin")
+        if !startswith(file, "uno_ampl") && !startswith(file, "libuno") && !endswith(file, ".dll")
+          rm("products/$platform/bin/$file")
+        end
+      end
+
+      # Remove the libraries that are not dependencies of Uno
+      rm("products/$platform/lib/pkgconfig", recursive=true)
+      rm("products/$platform/lib/cmake", recursive=true)
+      isfile("products/$platform/$libdir/libhsl_subset.$ext") && rm("products/$platform/$libdir/libhsl_subset.$ext")
+      isfile("products/$platform/$libdir/libhsl_subset_64.$ext") && rm("products/$platform/$libdir/libhsl_subset_64.$ext")
+      isfile("products/$platform/lib/libbqpd_dense.a") && rm("products/$platform/lib/libbqpd_dense.a")
+      isfile("products/$platform/lib/libcharset.a") && rm("products/$platform/lib/libcharset.a")
+      isfile("products/$platform/lib/libz.a") && rm("products/$platform/lib/libz.a")
+      isfile("products/$platform/lib/libiconv.a") && rm("products/$platform/lib/libiconv.a")
+      isfile("products/$platform/lib/libspral.dll.a") && rm("products/$platform/lib/libspral.dll.a")
+      isfile("products/$platform/lib/libhwloc.dll.a") && rm("products/$platform/lib/libhwloc.dll.a")
+      isfile("products/$platform/lib/libhighs.dll.a") && rm("products/$platform/lib/libhighs.dll.a")
+      isfile("products/$platform/lib/libhwloc.def") && rm("products/$platform/lib/libhwloc.def")
+      for file in readdir("products/$platform/$libdir")
+        if startswith(file, "libasan") || startswith(file, "libubsan") || startswith(file, "libtsan") || startswith(file, "libhwasan") || startswith(file, "liblsan")
+          rm("products/$platform/$libdir/$file")
+        end
+      end
+
+      # Create a folder with only the libraries of the dependencies
+      mkdir("products/$platform/deps")
+      for file in readdir("products/$platform/$libdir")
+        if !startswith(file, "uno_ampl") && !startswith(file, "libuno")
+          mv("products/$platform/$libdir/$file", "products/$platform/deps/$file")
+        end
+      end
+      isfile("products/$platform/lib/libbqpd.a") && mv("products/$platform/lib/libbqpd.a", "products/$platform/deps/libbqpd.a")
+
       # Create the archives *_binaries
       isfile("$(package)_binaries.$version2.$platform.tar.gz") && rm("$(package)_binaries.$version2.$platform.tar.gz")
       isfile("$(package)_binaries.$version2.$platform.zip") && rm("$(package)_binaries.$version2.$platform.zip")
@@ -52,15 +97,15 @@ for (platform, libdir, ext) in platforms
 
       # Create a folder with the version number of the package
       mkdir("$(package)_binaries.$version2")
-      for folder in ("lib", "bin", "share")
+      for folder in ("lib", "bin", "share", "include", "deps")
         cp(folder, "$(package)_binaries.$version2/$folder")
       end
 
       cd("$(package)_binaries.$version2")
       if ext == "dll"
-        run(`zip -r --symlinks ../../../$(package)_binaries.$version2.$platform.zip lib bin share`)
+        run(`zip -r --symlinks ../../../$(package)_binaries.$version2.$platform.zip lib bin share include deps`)
       else
-        run(`tar -czf ../../../$(package)_binaries.$version2.$platform.tar.gz lib bin share`)
+        run(`tar -czf ../../../$(package)_binaries.$version2.$platform.tar.gz lib bin share include deps`)
       end
       cd("../../..")
 

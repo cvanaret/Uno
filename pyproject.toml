@@ -7,10 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "unopy"
-# PyPI
-version = "0.2.5"
-# TestPyPI
-#version = "0.2.22"
+version = "0.4.9"
 description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
@@ -22,6 +19,9 @@ maintainers = [
     {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 license = "MIT"
+dependencies = [
+    "numpy",
+]
 
 [project.urls]
 Repository = "https://github.com/cvanaret/Uno"

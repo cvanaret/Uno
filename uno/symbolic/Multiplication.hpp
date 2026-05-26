@@ -4,37 +4,35 @@
 #ifndef UNO_MULTIPLICATION_H
 #define UNO_MULTIPLICATION_H
 
-#include <utility>
+#include "symbolic_traits.hpp"
 
 namespace uno {
-   // stores the expression (matrix1 * matrix2) symbolically
-   template <typename Matrix1, typename Matrix2,
-      typename std::enable_if_t<std::is_same_v<typename std::remove_reference_t<Matrix1>::value_type, typename std::remove_reference_t<Matrix2>::value_type>, int> = 0>
+   // stores the expression (left * right) symbolically
+   template <typename L, typename R>
    class Multiplication {
    public:
-      using value_type = typename std::remove_reference_t<Matrix1>::value_type;
+      using value_type = typename std::remove_reference_t<L>::value_type;
 
-      Multiplication(Matrix1&& expression1, Matrix2&& matrix2):
-            matrix1(std::forward<Matrix1>(expression1)), matrix2(std::forward<Matrix2>(matrix2)) {
-      }
+      Multiplication(L&& left, R&& right): left(std::forward<L>(left)), right(std::forward<R>(right)) { }
 
-      [[nodiscard]] const Matrix1& get_left() const {
-         return this->matrix1;
-      }
+      UNO_FORWARD_ACCESSOR(get_left, this->left)
 
-      [[nodiscard]] const Matrix2& get_right() const {
-         return this->matrix2;
-      }
+      UNO_FORWARD_ACCESSOR(get_right, this->right)
 
    protected:
-      const Matrix1 matrix1;
-      const Matrix2 matrix2;
+      storage_t<L> left;
+      storage_t<R> right;
    };
 
    // free function
-   template <typename Matrix1, typename Matrix2>
-   inline Multiplication<Matrix1, Matrix2> operator*(Matrix1&& matrix1, Matrix2&& matrix2) {
-      return {std::forward<Matrix1>(matrix1), std::forward<Matrix2>(matrix2)};
+   template <typename Matrix1, typename Matrix2,
+         std::enable_if_t<std::is_same_v<std::remove_const_t<typename std::remove_reference_t<Matrix1>::value_type>,
+                                         std::remove_const_t<typename std::remove_reference_t<Matrix2>::value_type>>, int> = 0,
+      // Matrix1 and Matrix2 are both not arithmetic types
+      std::enable_if_t<!std::is_arithmetic_v<std::remove_reference_t<Matrix1>>, int> = 0,
+      std::enable_if_t<!std::is_arithmetic_v<std::remove_reference_t<Matrix2>>, int> = 0>
+   Multiplication<Matrix1, Matrix2> operator*(Matrix1&& left, Matrix2&& right) {
+      return {std::forward<Matrix1>(left), std::forward<Matrix2>(right)};
    }
 } // namespace
 

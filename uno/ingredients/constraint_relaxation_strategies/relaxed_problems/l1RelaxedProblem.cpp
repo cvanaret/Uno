@@ -3,9 +3,11 @@
 
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "linear_algebra/VectorView.hpp"
+#include "model/Model.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/UnaryNegation.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -21,14 +23,31 @@ namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
             double constraint_violation_coefficient):
          OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints),
-         elastic_variables(elastic_variables),
-         number_elastic_variables(elastic_variables.size()),
+         elastic_variables(std::move(elastic_variables)),
+         number_elastic_variables(this->elastic_variables.size()),
          objective_multiplier(objective_multiplier),
-         constraint_violation_coefficient(constraint_violation_coefficient) {
+         constraint_violation_coefficient(constraint_violation_coefficient),
+         variables_lower_bounds(this->number_variables, 0.),
+         variables_upper_bounds(this->number_variables, INF<double>) {
+      // copy the original variables. The elastic variables have bounds [0, inf)
+      view(this->variables_lower_bounds, 0, model.number_variables) = model.get_variables_lower_bounds();
+      view(this->variables_upper_bounds, 0, model.number_variables) = model.get_variables_upper_bounds();
+   }
+
+   std::unique_ptr<OptimizationProblem> l1RelaxedProblem::clone() const {
+      return std::make_unique<l1RelaxedProblem>(*this);
    }
 
    double l1RelaxedProblem::get_objective_multiplier() const {
       return this->objective_multiplier;
+   }
+
+   bool l1RelaxedProblem::has_inequality_constraints() const {
+      return this->model.has_inequality_constraints();
+   }
+
+   bool l1RelaxedProblem::has_bound_constraints() const {
+      return true;
    }
 
    void l1RelaxedProblem::set_proximal_coefficient(double proximal_coefficient) {
@@ -57,20 +76,20 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void l1RelaxedProblem::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   void l1RelaxedProblem::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset,
+         uno_int column_offset,uno_int solver_indexing, MatrixOrder matrix_order) const {
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
 
       // add the contribution of the elastic variables
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         row_indices[nonzero_index] = static_cast<int>(constraint_index) + solver_indexing;
-         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + solver_indexing;
+         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
+         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + column_offset + solver_indexing;
          ++nonzero_index;
       }
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         row_indices[nonzero_index] = static_cast<int>(constraint_index) + solver_indexing;
-         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + solver_indexing;
+         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
+         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + column_offset + solver_indexing;
          ++nonzero_index;
       }
    }
@@ -83,8 +102,8 @@ namespace uno {
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          size_t current_index = hessian_model.number_nonzeros();
          for (size_t variable_index: Range(this->model.number_variables)) {
-            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
+            row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }
@@ -159,13 +178,20 @@ namespace uno {
 
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
-      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints, lagrangian_gradient);
+      evaluations.compute_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.data(),
+         lagrangian_gradient.data());
       lagrangian_gradient.scale(-1.);
 
       // z_k
       for (size_t variable_index: Range(this->model.number_variables)) {
          lagrangian_gradient[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
             iterate.multipliers.upper_bounds[variable_index]);
+      }
+
+      // ρ f(x_k)
+      if (this->objective_multiplier != 0.) {
+         evaluations.evaluate_objective_gradient(this->model, iterate.primals);
+         lagrangian_gradient += this->objective_multiplier * evaluations.objective_gradient;
       }
 
       // elastic variables
@@ -206,6 +232,31 @@ namespace uno {
       }
    }
 
+   void l1RelaxedProblem::compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_vector_product(this->model, vector, result);
+
+      // add the contribution of the elastic variables
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         result[constraint_index] -= vector[elastic_index];
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         result[constraint_index] += vector[elastic_index];
+      }
+   }
+
+   void l1RelaxedProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
+
+      // add the contribution of the elastic variables
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         result[elastic_index] -= vector[constraint_index];
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         result[elastic_index] += vector[constraint_index];
+      }
+   }
+
    void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const {
       hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
@@ -242,34 +293,24 @@ namespace uno {
       return SolutionStatus::NOT_OPTIMAL;
    }
 
-   double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {
-      if (variable_index < this->model.number_variables) { // model variable
-         return this->model.variable_lower_bound(variable_index);
-      }
-      else { // elastic variable in [0, +inf[
-         return 0.;
-      }
+   const std::vector<double>& l1RelaxedProblem::get_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
    }
 
-   double l1RelaxedProblem::variable_upper_bound(size_t variable_index) const {
-      if (variable_index < this->model.number_variables) { // model variable
-         return this->model.variable_upper_bound(variable_index);
-      }
-      else { // elastic variable in [0, +inf[
-         return INF<double>;
-      }
+   const std::vector<double>& l1RelaxedProblem::get_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
    }
 
    const Vector<size_t>& l1RelaxedProblem::get_fixed_variables() const {
       return this->model.get_fixed_variables();
    }
 
-   double l1RelaxedProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
+   const std::vector<double>& l1RelaxedProblem::get_constraints_lower_bounds() const {
+      return this->model.get_constraints_lower_bounds();
    }
 
-   double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
+   const std::vector<double>& l1RelaxedProblem::get_constraints_upper_bounds() const {
+      return this->model.get_constraints_upper_bounds();
    }
 
    const Collection<size_t>& l1RelaxedProblem::get_equality_constraints() const {
@@ -282,6 +323,10 @@ namespace uno {
 
    const Collection<size_t>& l1RelaxedProblem::get_dual_regularization_constraints() const {
       return this->dual_regularization_constraints;
+   }
+
+   Inertia l1RelaxedProblem::get_inertia() const {
+      return {this->model.number_variables, this->number_constraints, this->elastic_variables.size()};
    }
 
    void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,

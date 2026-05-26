@@ -6,7 +6,7 @@
 
 #include <array>
 #include <vector>
-#include "ingredients/subproblem_solvers/QPSolver.hpp"
+#include "../SubproblemSolver.hpp"
 #include "BQPDWorkspace.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 
@@ -39,13 +39,13 @@ namespace uno {
       UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6, // warm start
    };
 
-   class BQPDSolver : public QPSolver {
+   class BQPDSolver : public SubproblemSolver {
    public:
       explicit BQPDSolver(const Options& options);
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
+      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;

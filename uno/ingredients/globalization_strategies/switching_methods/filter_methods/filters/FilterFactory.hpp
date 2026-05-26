@@ -4,9 +4,13 @@
 #ifndef UNO_FILTERFACTORY_H
 #define UNO_FILTERFACTORY_H
 
-#include "Filter.hpp"
+#include <memory>
 
 namespace uno {
+   // forward declarations
+   class Filter;
+   class Options;
+
    class FilterFactory {
    public:
       static std::unique_ptr<Filter> create(const Options& options);

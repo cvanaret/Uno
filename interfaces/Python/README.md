@@ -9,6 +9,13 @@ It breaks them down into a set of common building blocks (e.g., strategies to co
 
 An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
+### Querying the current Uno version
+
+Query the current Uno version with:
+```python
+unopy.current_uno_version()
+```
+
 ### Building an optimization model
 
 Building an optimization model is incremental and starts with the information about the variables:
@@ -17,8 +24,28 @@ Building an optimization model is incremental and starts with the information ab
 model = unopy.Model(problem_type, number_variables,
    variables_lower_bounds, variables_upper_bounds, base_indexing)
 ```
+or (for an unconstrained model):
+```python
+model = unopy.Model(problem_type, number_variables, base_indexing)
+```
 
-The following optional elements can be added to the model separately:
+The following optional elements can be added or set to the model separately:
+- lower bounds for the variables:
+```python
+model.set_variables_lower_bounds(variables_lower_bounds)
+```
+- upper bounds for the variables:
+```python
+model.set_variables_upper_bounds(variables_upper_bounds)
+```
+- a lower bound for a given variable:
+```python
+model.set_variable_lower_bound(variable_index, lower_bound)
+```
+- an upper bound for a given variable:
+```python
+model.set_variable_upper_bound(variable_index, upper_bound)
+```
 - the objective function (and its gradient). It is 0 otherwise;
 ```python
 model.set_objective(optimization_sense, objective_function, objective_gradient)
@@ -29,10 +56,26 @@ model.set_constraints(number_constraints, constraint_functions,
    constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
    jacobian_row_indices, jacobian_column_indices, jacobian)
 ```
+- lower bounds for the constraints:
+```python
+model.set_constraints_lower_bounds(constraints_lower_bounds)
+```
+- upper bounds for the constraints:
+```python
+model.set_constraints_upper_bounds(constraints_upper_bounds)
+```
+- a lower bound for a given constraint:
+```python
+model.set_constraint_lower_bound(constraint_index, lower_bound)
+```
+- an upper bound for a given constraint:
+```python
+model.set_constraint_upper_bound(constraint_index, upper_bound)
+```
 - the Lagrangian Hessian;
 ```python
 model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, 
-   hessian_row_indices, hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+   hessian_row_indices, hessian_column_indices, lagrangian_hessian)
 ```
 - a Jacobian operator (performs Jacobian-vector products);
 ```python
@@ -44,7 +87,11 @@ model.set_jacobian_transposed_operator(jacobian_transposed_operator)
 ```
 - a Hessian operator (performs Hessian-vector products);
 ```python
-model.set_lagrangian_hessian_operator(lagrangian_hessian_operator, lagrangian_sign_convention)
+model.set_lagrangian_hessian_operator(lagrangian_hessian_operator)
+```
+- a Lagrangian sign convention (default is `unopy.MULTIPLIER_NEGATIVE`);
+```python
+model.set_lagrangian_sign_convention(lagrangian_sign_convention)
 ```
 - user data of an arbitrary type;
 ```python
@@ -73,6 +120,16 @@ uno_solver = unopy.UnoSolver()
 Options can be passed to the Uno solver:
 ```python
 uno_solver.set_option("print_solution", True)
+```
+
+Uno accepts a callback that is called on accepted iterates:
+```python
+uno_solver.set_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback)
+```
+
+Uno accepts a termination callback that forces solver termination when it returns `True`:
+```python
+uno_solver.set_termination_callback(termination_callback)
 ```
 
 Uno mimics the state-of-the-art solvers filterSQP and IPOPT via presets:

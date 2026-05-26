@@ -28,8 +28,8 @@ namespace uno {
    void IdentityHessian::compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
       // diagonal structure
       for (size_t variable_index: Range(this->number_variables)) {
-         row_indices[variable_index] = static_cast<int>(variable_index) + solver_indexing;
-         column_indices[variable_index] = static_cast<int>(variable_index) + solver_indexing;
+         row_indices[variable_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+         column_indices[variable_index] = static_cast<uno_int>(variable_index) + solver_indexing;
       }
    }
 
@@ -40,7 +40,7 @@ namespace uno {
    void IdentityHessian::initialize_statistics(Statistics& /*statistics*/) const {
    }
 
-   void IdentityHessian::notify_accepted_iterate(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+   void IdentityHessian::notify_trial_iterate(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
          const Iterate& /*trial_iterate*/, EvaluationCache& /*evaluation_cache*/) {
    }
 

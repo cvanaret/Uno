@@ -11,7 +11,7 @@ namespace uno {
    class WaechterFilterMethod : public FilterMethod {
    public:
       explicit WaechterFilterMethod(const Options& options);
-      ~WaechterFilterMethod() override;
+      ~WaechterFilterMethod() override = default;
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

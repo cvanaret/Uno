@@ -67,8 +67,36 @@ model = uno_create_model(problem_type, number_variables, &
                          variables_lower_bounds, variables_upper_bounds, &
                          base_indexing)
 ```
+or (for an unconstrained model):
+```fortran
+model = uno_create_unconstrained_model(problem_type, number_variables, &
+                                       base_indexing)
+```
 
-The following optional elements can be added to the model separately:
+The following optional elements can be added or set to the model separately:
+* lower bounds for the variables:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variables_lower_bounds(model, variables_lower_bounds)
+```
+
+* upper bounds for the variables:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variables_upper_bounds(model, variables_upper_bounds)
+```
+
+* a lower bound for a given variable:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variable_lower_bound(model, variable_index, lower_bound)
+```
+
+* an upper bound for a given variable:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variable_upper_bound(model, variable_index, upper_bound)
+```
 
 * the objective function and its gradient:
 
@@ -88,6 +116,30 @@ success = uno_set_constraints(model, number_constraints, constraint_functions, &
                               jacobian_column_indices, jacobian)
 ```
 
+* lower bounds for the constraints:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraints_lower_bounds(model, constraints_lower_bounds)
+```
+
+* upper bounds for the constraints:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraints_upper_bounds(model, constraints_upper_bounds)
+```
+
+* a lower bound for a given constraint:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraint_lower_bound(model, constraint_index, lower_bound)
+```
+
+* an upper bound for a given constraint:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraint_upper_bound(model, constraint_index, upper_bound)
+```
+
 * the Lagrangian Hessian:
 
 ```fortran
@@ -95,7 +147,7 @@ logical(c_bool) :: success
 success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, &
                                      hessian_triangular_part, &
                                      hessian_row_indices, hessian_column_indices, &
-                                     lagrangian_hessian, lagrangian_sign_convention)
+                                     lagrangian_hessian)
 ```
 
 * a Jacobian operator:
@@ -116,9 +168,14 @@ success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operat
 
 ```fortran
 logical(c_bool) :: success
-success = uno_set_lagrangian_hessian_operator(model, &
-                                              lagrangian_hessian_operator, &
-                                              lagrangian_sign_convention)
+success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
+```
+
+* the Lagrangian sign convention (default is `UNO_MULTIPLIER_NEGATIVE`):
+
+```fortran
+logical(c_bool) :: success
+success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
 ```
 
 * user-defined data:
@@ -180,7 +237,7 @@ success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
 success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
 ```
 
-Loading options from a file:
+Options can also be loaded from a file that contains an `option value` pair per line (the example file `uno_default.opt` in the root directory contains Uno's default options). The options are set in this particular order. Anything that follows a `#` is treated as a comment and is ignored.
 
 ```fortran
 logical(c_bool) :: success

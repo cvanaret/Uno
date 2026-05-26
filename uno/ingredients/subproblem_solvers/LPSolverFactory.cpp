@@ -3,9 +3,9 @@
 
 #include <stdexcept>
 #include "LPSolverFactory.hpp"
+#include "SubproblemSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
-#include "LPSolver.hpp"
 
 #ifdef HAS_BQPD
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
@@ -15,7 +15,7 @@
 #endif
 
 namespace uno {
-   std::unique_ptr<LPSolver> LPSolverFactory::create([[maybe_unused]] const Options& options) {
+   std::unique_ptr<SubproblemSolver> LPSolverFactory::create([[maybe_unused]] const Options& options) {
       try {
          [[maybe_unused]] const std::string& LP_solver_name = options.get_string("LP_solver");
 #ifdef HAS_BQPD

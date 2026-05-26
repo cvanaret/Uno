@@ -6,6 +6,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
@@ -34,7 +35,7 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   double HiGHSWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
+   double HiGHSWorkspace::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -54,6 +55,9 @@ namespace uno {
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.new_iterate) {
+         for (size_t index: Range(subproblem.number_variables)) {
+            this->model.lp_.col_cost_[index] = 0.;
+         }
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),
             current_evaluations);
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints.data(), current_evaluations);
@@ -77,8 +81,8 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(),
-         this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), 0, 0,
+         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
       // HiGHS matrix in CSC format (variable after variable)
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
       this->model.lp_.a_matrix_.start_.resize(subproblem.number_variables + 1);
@@ -108,7 +112,7 @@ namespace uno {
          this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = constraint_index;
 
          // variable index is used to build the pointers to the column starts
-         const int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
+         const uno_int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
          assert(current_variable <= variable_index);
          while (current_variable < variable_index) {
             ++current_variable;
@@ -167,7 +171,7 @@ namespace uno {
          this->model.hessian_.index_[hessian_nonzero_index] = row_index;
 
          // column index
-         const int column_index = this->hessian_column_indices[permuted_nonzero_index];
+         const uno_int column_index = this->hessian_column_indices[permuted_nonzero_index];
          assert(current_column <= column_index);
          while (current_column < column_index) {
             ++current_column;

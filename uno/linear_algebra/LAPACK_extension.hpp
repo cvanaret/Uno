@@ -1,0 +1,53 @@
+// Copyright (c) 2026 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#ifndef UNO_LAPACK_EXTENSION_H
+#define UNO_LAPACK_EXTENSION_H
+
+#include <cmath>
+#include "BLAS.hpp"
+
+namespace uno {
+   // LDL' (aka signed Cholesky) factorization without pivoting for symmetric indefinite matrices
+   // Returns true upon success (all pivots are larger in norm than zero_pivot_tolerance), false upon failure
+   // Partition A (nxn, column-major with leading dimension lda, symmetric) as
+   //
+   //   A = [ a11  a21ᵀ ]
+   //       [ a21  A22  ]
+   //
+   // The LDL' decomposition factorizes the leading 1x1 block first:
+   //
+   //   d11  = a11
+   //   l21  = a21 / d11
+   //   A22' = A22 - d11 · l21 · l21ᵀ          (Schur complement)
+   //
+   // then recurses on the (n-1)x(n-1) trailing Schur complement A22'.
+   // Only the lower triangle of A is read and updated throughout.
+   inline bool ldlt_nopiv_lvl2_rightlooking(double* A, size_t n, size_t lda, double zero_pivot_tolerance) noexcept {
+      // base case
+      if (n == 0) {
+         return true;
+      }
+
+      // step 1: extract pivot d11 = A(0,0)
+      const double d11 = A[0];
+      // near zero pivot: failure
+      if (std::abs(d11) <= zero_pivot_tolerance) {
+         return false;
+      }
+
+      // step 2: compute column of L:  l21 <- a21 / d11
+      double* l21 = A + 1;
+      blas1::scale(n - 1, 1./d11, l21);
+
+      // step 3: rank-1 update of the trailing sub-matrix (lower triangle):
+      //   A22 <- A22 - d11 · l21 · l21ᵀ
+      double* A22 = A + lda + 1;
+      blas3::symmetric_rank_1_update('L', n - 1, -d11, l21, A22, lda);
+
+      // step 4: recurse on the (n-1)x(n-1) trailing sub-matrix
+      return ldlt_nopiv_lvl2_rightlooking(A22, n - 1, lda, zero_pivot_tolerance);
+   }
+} // namespace
+
+#endif // UNO_LAPACK_EXTENSION_H

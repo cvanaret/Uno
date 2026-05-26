@@ -4,32 +4,54 @@
 #ifndef UNO_VECTOR_H
 #define UNO_VECTOR_H
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <initializer_list>
-#include "BLASVector.hpp"
+#include "VectorView.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   template <typename ElementType>
-   class Vector: public MutableBLASVector<ElementType> {
+   template <typename T>
+   class Vector {
    public:
-      using value_type = ElementType;
+      using value_type = typename std::vector<T>::value_type;
       // iterators
-      using iterator = typename std::vector<ElementType>::iterator;
-      using const_iterator = typename std::vector<ElementType>::const_iterator;
+      using iterator = typename std::vector<T>::iterator;
+      using const_iterator = typename std::vector<T>::const_iterator;
 
       // constructors and destructor
       explicit Vector(size_t capacity = 0): vector(capacity) { }
-      Vector(size_t capacity, ElementType value): vector(capacity, value) { }
-      Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
-      Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { }
-      Vector(Vector<ElementType>&& other) noexcept : vector(std::move(other.vector)) { }
-      ~Vector() override = default;
+      Vector(size_t capacity, T value): vector(capacity, value) { }
+      Vector(std::initializer_list<T> initializer_list): vector(initializer_list) { }
+      Vector(const Vector<T>& other): vector(other.vector) { }
+      Vector(Vector<T>&& other) noexcept: vector(std::move(other.vector)) { }
+      ~Vector() = default;
+
+      // specialized constructor for expressions
+      template<typename E, typename = void>
+      struct is_expression : std::false_type {};
+
+      template<typename E>
+      struct is_expression<E,
+          std::void_t<
+              decltype(std::declval<E>().size()),
+              decltype(std::declval<E>()[std::size_t{}])
+          >
+      > : std::true_type {};
+
+      template<typename Expression, typename = std::enable_if_t<
+            is_expression<std::decay_t<Expression>>::value &&
+            !std::is_same_v<std::decay_t<Expression>, Vector>
+         >
+      >
+      Vector(Expression&& expression): vector(expression.size()) {
+         for (size_t index: Range(expression.size())) {
+            (*this)[index] = expression[index];
+         }
+      }
 
       // copy assignment operator
-      Vector<ElementType>& operator=(const Vector<ElementType>& other) {
+      Vector<T>& operator=(const Vector<T>& other) {
          if (&other != this) {
             this->vector = other.vector;
          }
@@ -37,35 +59,34 @@ namespace uno {
       }
 
       // move assignment operator
-      Vector<ElementType>& operator=(Vector<ElementType>&& other) noexcept {
+      Vector<T>& operator=(Vector<T>&& other) noexcept {
          if (&other != this) {
             this->vector = std::move(other.vector);
          }
          return *this;
       }
 
-      // operators
-      using MutableBLASVector<value_type>::operator=;
-      using MutableBLASVector<value_type>::operator+=;
-      using MutableBLASVector<value_type>::operator-=;
-
-      [[nodiscard]] size_t size() const override {
+      [[nodiscard]] size_t size() const {
          return this->vector.size();
       }
 
-      ElementType* data() override {
+      [[nodiscard]] bool empty() const {
+         return (this->size() == 0);
+      }
+
+      T* data() {
          return this->vector.data();
       }
 
-      const ElementType* data() const override {
+      const T* data() const {
          return this->vector.data();
       }
 
-      ElementType& operator[](size_t index) override {
+      T& operator[](size_t index) {
          return this->vector[index];
       }
 
-      const ElementType& operator[](size_t index) const override {
+      const T& operator[](size_t index) const {
          return this->vector[index];
       }
 
@@ -85,23 +106,59 @@ namespace uno {
       const_iterator end() const noexcept { return this->vector.cend(); }
 
       // insertion
-      void push_back(ElementType element) { this->vector.push_back(element); }
-      void emplace_back(ElementType element) { this->vector.emplace_back(element); }
+      void push_back(T element) {
+         this->vector.push_back(element);
+      }
 
-      void fill(ElementType value) {
-         for (size_t index: Range(this->size())) {
-            this->vector[index] = value;
-         }
+      template <typename... Args>
+      void emplace_back(Args&&... args) {
+         this->vector.emplace_back(std::forward<Args>(args)...);
+      }
+
+      void fill(T value) {
+         this->view().fill(value);
       }
 
       void print(std::ostream& stream) const {
-         for (const ElementType& element: *this) {
+         for (const T& element: *this) {
             stream << element << ' ';
          }
       }
 
+      // mathematical operators: delegate to underlying VectorView
+
+      template <typename Expression>
+      Vector<T>& operator=(Expression&& expression) {
+         this->view() = std::forward<Expression>(expression);
+         return *this;
+      }
+
+      template <typename Expression>
+      Vector<T>& operator+=(Expression&& expression) {
+         this->view() += std::forward<Expression>(expression);
+         return *this;
+      }
+
+      template <typename Expression>
+      Vector<T>& operator-=(Expression&& expression) {
+         this->view() -= std::forward<Expression>(expression);
+         return *this;
+      }
+
+      void scale(T factor) {
+         this->view().scale(factor);
+      }
+
    protected:
-      std::vector<ElementType> vector;
+      std::vector<T> vector;
+
+      VectorView<const T> view() const noexcept {
+         return uno::view(this->data(), this->size());
+      }
+
+      VectorView<T> view() noexcept {
+         return uno::view(this->data(), this->size());
+      }
    };
 
    // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
@@ -113,17 +170,17 @@ namespace uno {
       stream << '\n';
    }
 
-   template <typename ElementType>
-   std::ostream& operator<<(std::ostream& stream, const Vector<ElementType>& vector) {
+   template <typename T>
+   std::ostream& operator<<(std::ostream& stream, const Vector<T>& vector) {
       vector.print(stream);
       return stream;
    }
 
    template <typename Container>
-   std::string join(const Container& vector, const std::string& separator) {
+   std::string join(const Container& container, const std::string& separator) {
       std::string result{};
       size_t index = 0;
-      for (const auto& element: vector) {
+      for (const auto& element: container) {
          if (0 < index) {
             result += separator;
          }

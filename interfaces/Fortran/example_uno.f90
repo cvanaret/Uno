@@ -17,14 +17,24 @@ program example_uno
     integer(uno_int) :: number_iterations, max_iterations = 1000
     real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
     character(:), allocatable :: logger
+    character(:), allocatable :: method_description
     character(len=*), parameter :: hessian_model = "exact"
     character(len=*), parameter :: problem_type = UNO_PROBLEM_NONLINEAR
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
     integer(uno_int), parameter :: optimization_sense = UNO_MINIMIZE
     character(len=1), parameter :: hessian_triangular_part = UNO_LOWER_TRIANGLE
-    real(c_double), parameter :: lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
+    integer(uno_int), parameter :: lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
     type(c_funptr) :: objective, gradient, constraints, jacobian, lagrangian_hessian
     type(c_funptr) :: jacobian_operator, jacobian_transposed_operator, lagrangian_hessian_operator
+    procedure(uno_objective_callback), pointer :: objective_callback => null()
+    procedure(uno_objective_gradient_callback), pointer :: objective_gradient_callback => null()
+    procedure(uno_constraints_callback), pointer :: constraints_callback => null()
+    procedure(uno_constraints_jacobian_callback), pointer :: constraints_jacobian_callback => null()
+    procedure(uno_lagrangian_hessian_callback), pointer :: lagrangian_hessian_callback => null()
+    procedure(uno_constraints_jacobian_operator_callback), pointer :: constraints_jacobian_operator_callback => null()
+    procedure(uno_constraints_jacobian_transposed_operator_callback), &
+        pointer :: constraints_jacobian_transposed_operator_callback => null()
+    procedure(uno_lagrangian_hessian_operator_callback), pointer :: lagrangian_hessian_operator_callback => null()
 
     !---------------------------------------------------
     ! Versions
@@ -61,14 +71,23 @@ program example_uno
     !---------------------------------------------------
     ! Callbacks for Uno
     !---------------------------------------------------
-    objective = c_funloc(objective_hs15)
-    gradient = c_funloc(gradient_hs15)
-    constraints = c_funloc(constraints_hs15)
-    jacobian = c_funloc(jacobian_hs15)
-    jacobian_operator = c_funloc(jacobian_operator_hs15)
-    jacobian_transposed_operator = c_funloc(jacobian_transposed_operator_hs15)
-    lagrangian_hessian = c_funloc(lagrangian_hessian_hs15)
-    lagrangian_hessian_operator = c_funloc(lagrangian_hessian_operator_hs15)
+    objective_callback => objective_hs15
+    objective_gradient_callback  => gradient_hs15
+    constraints_callback => constraints_hs15
+    constraints_jacobian_callback => jacobian_hs15
+    constraints_jacobian_operator_callback => jacobian_operator_hs15
+    constraints_jacobian_transposed_operator_callback => jacobian_transposed_operator_hs15
+    lagrangian_hessian_callback => lagrangian_hessian_hs15
+    lagrangian_hessian_operator_callback => lagrangian_hessian_operator_hs15
+
+    objective = c_funloc(objective_callback)
+    gradient = c_funloc(objective_gradient_callback)
+    constraints = c_funloc(constraints_callback)
+    jacobian = c_funloc(constraints_jacobian_callback)
+    jacobian_operator = c_funloc(constraints_jacobian_operator_callback)
+    jacobian_transposed_operator = c_funloc(constraints_jacobian_transposed_operator_callback)
+    lagrangian_hessian = c_funloc(lagrangian_hessian_callback)
+    lagrangian_hessian_operator = c_funloc(lagrangian_hessian_operator_callback)
 
     !---------------------------------------------------
     ! Model creation
@@ -80,7 +99,8 @@ program example_uno
                                   number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
     success = uno_set_jacobian_operator(model, jacobian_operator)
     success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
-    ! success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention)
+    ! success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
+    ! success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
     success = uno_set_initial_primal_iterate(model, x0)
     success = uno_set_initial_dual_iterate(model, y0)
 
@@ -105,8 +125,17 @@ program example_uno
     ! Run 2: solve with exact Hessian
     !---------------------------------------------------
     success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
-                                         hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+                                         hessian_column_indices, lagrangian_hessian)
+    success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
+    ! the Hessian model was overwritten. Set it again
+    success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
     call uno_optimize(solver, model)
+
+    !---------------------------------------------------
+    ! Get method description
+    !---------------------------------------------------
+    method_description = uno_get_method_description(solver)
+    print *, 'method description = ', method_description
 
     !---------------------------------------------------
     ! Get options
@@ -168,6 +197,8 @@ program example_uno
     !---------------------------------------------------
     ! Cleanup
     !---------------------------------------------------
+    deallocate(logger)
+    deallocate(method_description)
     call uno_destroy_solver(solver)
     call uno_destroy_model(model)
 

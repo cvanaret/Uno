@@ -5,7 +5,7 @@
 #define UNO_BOXLPSOLVER_H
 
 #include <vector>
-#include "InequalityConstrainedSolver.hpp"
+#include "SubproblemSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "SolverWorkspace.hpp"
 
@@ -14,21 +14,21 @@ namespace uno {
    public:
       BoxLPSolverWorkspace() = default;
 
-      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const override {
+      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const override {
          return 0.;
       }
 
       Vector<double> objective_gradient;
    };
 
-   class BoxLPSolver: public InequalityConstrainedSolver {
+   class BoxLPSolver: public SubproblemSolver {
    public:
       BoxLPSolver() = default;
       ~BoxLPSolver() override = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
+      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;

@@ -53,14 +53,17 @@ namespace uno {
       ~DenseMatrix() override = default;
 
       // operators
-      using BLASMatrix<T>::operator=;
+      DenseMatrix& operator=(const DenseMatrix& other) {
+         BLASMatrix<T>::operator=(other);
+         return *this;
+      }
       using BLASMatrix<T>::operator*=;
 
       [[nodiscard]] T& entry(size_t row_index, size_t column_index);
       [[nodiscard]] const T& entry(size_t row_index, size_t column_index) const;
       // vector view
-      [[nodiscard]] MutableVectorView<std::vector<double>> column(size_t column_index);
-      [[nodiscard]] VectorView<std::vector<double>> column(size_t column_index) const;
+      [[nodiscard]] VectorView<double> column(size_t column_index);
+      [[nodiscard]] VectorView<const double> column(size_t column_index) const;
       [[nodiscard]] Submatrix submatrix(size_t number_rows, size_t number_columns);
 
       [[nodiscard]] T* data() override;
@@ -89,13 +92,13 @@ namespace uno {
    }
 
    template <typename T>
-   MutableVectorView<std::vector<double>> DenseMatrix<T>::column(size_t column_index) {
-      return {this->matrix, column_index * this->number_rows, (column_index + 1) * this->number_rows};
+   VectorView<double> DenseMatrix<T>::column(size_t column_index) {
+      return {this->matrix.data() + column_index * this->number_rows, this->number_rows};
    }
 
    template <typename T>
-   VectorView<std::vector<double>> DenseMatrix<T>::column(size_t column_index) const {
-      return {this->matrix, column_index * this->number_rows, (column_index + 1) * this->number_rows};
+   VectorView<const double> DenseMatrix<T>::column(size_t column_index) const {
+      return {this->matrix.data() + column_index * this->number_rows, this->number_rows};
    }
 
    template <typename T>

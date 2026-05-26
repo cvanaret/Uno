@@ -295,11 +295,6 @@
     "default": "2000"
   },
   {
-    "name": "nonmonotone_filter_number_dominated_entries",
-    "type": "INTEGER",
-    "default": "3"
-  },
-  {
     "name": "preset",
     "type": "STRING",
     "default": "<unset>"

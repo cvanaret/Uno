@@ -7,33 +7,37 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
-#include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/OptimizationProblem.hpp"
+#include "optimization/Parameterization.hpp"
 
 namespace uno {
+   // forward declarations
+   class HessianModel;
+   class InequalityHandlingMethod;
+   class InertiaCorrectionStrategy;
+   class SubproblemSolver;
+
    class NoRelaxation : public ConstraintRelaxationStrategy {
    public:
-      NoRelaxation(const Model& model, const Options& options);
-      ~NoRelaxation() override = default;
+      NoRelaxation(const Model& model, Options& options);
+      ~NoRelaxation() override;
 
-      void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, bool uses_trust_region,
-         EvaluationCache& evaluation_cache) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
+         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
-      void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
-         bool uses_trust_region, WarmstartInformation& warmstart_information) override;
+      void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
-      [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
       const OptimizationProblem original_problem;
@@ -41,6 +45,10 @@ namespace uno {
       std::unique_ptr<HessianModel> hessian_model;
       std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
       MeritFunction globalization_strategy;
+      std::unique_ptr<OptimizationProblem> reformulated_problem{};
+      std::unique_ptr<SubproblemSolver> subproblem_solver{};
+      Parameterization parameterization;
+      Vector<double> initial_point;
    };
 } // namespace
 

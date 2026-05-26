@@ -39,7 +39,7 @@ Uno allows the automatic generation of various strategy combinations on the fly 
 
 - **constraint relaxation strategies**: feasibility restoration;
 - **inequality handling methods**: inequality constrained method, interior-point method;
-- **Hessian models**: exact, L-BFGS, identity, zero;
+- **Hessian models**: exact, L-BFGS, L-SR1, identity, zero;
 - **inertia control strategies**: primal, primal-dual, none;
 - **globalization strategies**: filter method, funnel method, merit function;
 - **globalization mechanisms**: backtracking line search, trust-region method.

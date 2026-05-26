@@ -1,8 +1,11 @@
-# julia +1.7 --color=yes build_tarballs_utils.jl x86_64-linux-gnu-libgfortran5-cxx11,x86_64-apple-darwin-libgfortran5-cxx11,x86_64-w64-mingw32-libgfortran5-cxx11,aarch64-linux-gnu-libgfortran5-cxx11,aarch64-apple-darwin-libgfortran5-cxx11 --verbose --deploy="amontoison/UnoUtils_jll.jl"
+# julia +1.7 --color=yes build_tarballs_utils.jl x86_64-linux-gnu-libgfortran5-cxx11,x86_64-linux-musl-libgfortran5-cxx11,x86_64-apple-darwin-libgfortran5-cxx11,x86_64-w64-mingw32-libgfortran5-cxx11,aarch64-linux-gnu-libgfortran5-cxx11,aarch64-linux-musl-libgfortran5-cxx11,aarch64-apple-darwin-libgfortran5-cxx11 --verbose --deploy="amontoison/UnoUtils_jll.jl"
+#
+# Note: the following variables is needed for cross-compilation on Mac platforms in the .bashrc
+# export BINARYBUILDER_AUTOMATIC_APPLE="true"
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.17"
+version = v"2026.4.29"
 
 # Collection of sources
 sources = [
@@ -25,16 +28,18 @@ sources = [
     # OpenBLAS v0.3.31
     # ArchiveSource("https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.31/OpenBLAS-0.3.31.tar.gz",
     #               "6dd2a63ac9d32643b7cc636eab57bf4e57d0ed1fff926dfbc5d3d97f2d2be3a6"),
-    # MUMPS v5.8.2
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.8.2.tar.gz",
-                  "eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039"),
-    # HiGHS v1.12.0
+    # MUMPS v5.9.0
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.0.tar.gz",
+                  "02c6efdb91749ec0f82351d40f3f860547272a1eb1d899126a4265b4d6bcc4ca"),
+    # HiGHS v1.14.0 with symbol mangling
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
-              "755a8e027a99a8d4ecf153a8dde4b2a767cdf384"),
-    # HiGHS v1.13.1
-    # GitSource("https://github.com/ERGO-Code/HiGHS.git",
-    #           "1d267d97c16928bb5f86fcb2cba2d20f94c8720c"),
-    #
+              "f65a6838e3daa4fa23f06ffffc7c895370dbd3dc"),
+    # SPRAL v2025.9.18
+    GitSource("https://github.com/ralna/spral.git",
+              "80bc843ac3847d4a783a0e11213715a70175aee6"),
+    # Hwloc v2.13.0
+    ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
+                  "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
     # Package compiler for Windows
     ArchiveSource("https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz",
                   "fe3f401bc936fbe6af940b26c5e0f266f762a3416f979c706e599b24082dc5c7"),
@@ -44,6 +49,9 @@ sources = [
 script = raw"""
 # Remove system CMake to use the jll version
 apk del cmake
+
+# Update Ninja
+cp ${host_prefix}/bin/ninja /usr/bin/ninja
 
 ## ----- Compile METIS -----
 cd $WORKSPACE/srcdir/METIS
@@ -159,6 +167,32 @@ make -j${nproc} d "${make_args[@]}"
 cp include/*.h ${includedir}
 cp lib/*.a ${prefix}/lib
 
+## ----- Compile Hwloc -----
+cd $WORKSPACE/srcdir/hwloc-*
+if [[ "${target}" == *-apple-darwin* ]]; then
+    ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --disable-static --enable-shared
+else
+    CFLAGS="${CFLAGS} -fPIC" ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
+fi
+make -j${nproc}
+make install
+
+## ----- Compile SPRAL -----
+cd $WORKSPACE/srcdir/spral
+
+meson setup builddir --cross-file="${MESON_TARGET_TOOLCHAIN}" \
+                     --prefix=$prefix \
+                     -Ddefault_library=static \
+                     -Dlibhwloc=hwloc \
+                     -Dlibblas=blas \
+                     -Dliblapack=lapack \
+                     -Dbinaries=false \
+                     -Dtests=false \
+                     -Dexamples=false
+
+meson compile -C builddir
+meson install -C builddir
+
 ## ----- Compile HiGHS -----
 cd $WORKSPACE/srcdir/HiGHS
 mkdir build
@@ -173,11 +207,10 @@ cmake .. \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
-    -DMETIS_ROOT=${prefix} \
     -DBLAS_LIBRARIES=${prefix}/lib/libblas.a \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-if [[ "${target}" == *-linux-* ]]; then
+if [[ "${target}" == *-linux* ]]; then
         make -j ${nproc}
 else
     if [[ "${target}" == *-mingw* ]]; then
@@ -192,9 +225,9 @@ if [[ "${target}" == *-mingw* ]]; then
     cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libstdc++.a
     cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgfortran.a ${prefix}/lib/libgfortran.a
     cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libquadmath.a ${prefix}/lib/libquadmath.a
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgomp.a
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgcc.a
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgcc_eh.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgomp.a ${prefix}/lib/libgomp.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgcc.a ${prefix}/lib/libgcc.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgcc_eh.a ${prefix}/lib/libgcc_eh.a
 fi
 
 # Clean
@@ -214,25 +247,6 @@ if [ $target = "x86_64-w64-mingw32" ] || [ $target = "i686-w64-mingw32" ]; then
         -DGKLIB_PATH=$WORKSPACE/srcdir/METIS/GKlib \
         -DSHARED=1
     make -j${nproc}
-    make install
-
-    # HiGHS
-    cd $WORKSPACE/srcdir/HiGHS
-    mkdir build_shared
-    cd build_shared
-    cmake .. \
-        -DCMAKE_INSTALL_PREFIX=${prefix} \
-        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=ON \
-        -DZLIB=OFF \
-        -DHIPO=ON \
-        -DBUILD_EXAMPLES=OFF \
-        -DBUILD_TESTING=OFF \
-        -DBUILD_CXX_EXE=OFF \
-        -DMETIS_ROOT=${prefix} \
-        -DBLAS_LIBRARIES="${prefix}/lib/libcblas.a;${prefix}/lib/libblas.a;${prefix}/lib/libgfortran.a;${prefix}/lib/libquadmath.a"
-    cmake --build . --config Release
     make install
 fi
 """
@@ -254,11 +268,15 @@ products = [
     FileProduct("lib/libmumps_common.a", :libmumps_common_a),
     FileProduct("lib/libdmumps.a", :libdmumps_a),
     FileProduct("lib/libhighs.a", :libhighs_a),
+    FileProduct("lib/libspral.a", :libspral_a),
+    # FileProduct("lib/libhwloc.a", :libhwloc_a),
 ]
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
+    HostBuildDependency(PackageSpec(name="Ninja_jll", uuid="76642167-d241-5cee-8c94-7a494e8cb7b7")),
     HostBuildDependency(PackageSpec(name="CMake_jll", uuid="3f4e10e2-61f2-5801-8945-23b9d642d0e6")),
+    Dependency(PackageSpec(name="LLVMOpenMP_jll", uuid="1d63c593-3942-5779-bab2-d838dc0a180e"); platforms=filter(Sys.isbsd, platforms)),
 ]
 
 build_tarballs(

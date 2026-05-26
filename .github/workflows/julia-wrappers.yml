@@ -24,15 +24,15 @@ jobs:
         run: |
           cd interfaces/Julia/gen
           julia --color=no --project -e 'using Pkg; Pkg.instantiate()'
-          julia --color=no --project wrapper.jl
+          julia --color=no --project wrapper_julia.jl
           cd ../src
           git diff --quiet libuno.jl || {
           echo "❌ The Julia wrappers in libuno.jl are out of date. ❌";
-          echo "Please run wrapper.jl in interfaces/Julia/gen to regenerate them:";
+          echo "Please run wrapper_julia.jl in interfaces/Julia/gen to regenerate them:";
           echo "";
           echo "cd interfaces/Julia/gen";
           echo "julia --project -e 'using Pkg; Pkg.instantiate()'";
-          echo "julia --project wrapper.jl";
+          echo "julia --project wrapper_julia.jl";
           echo "";
           echo "You can also find the instructions at:";
           echo "https://github.com/cvanaret/Uno/blob/master/interfaces/Julia/README.md";

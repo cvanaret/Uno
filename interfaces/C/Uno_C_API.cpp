@@ -14,6 +14,7 @@
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/CollectionAdapter.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -22,15 +23,17 @@
 
 using namespace uno;
 
-using CUserModel = UserModel<Objective, ObjectiveGradient, Constraints, Jacobian, JacobianOperator, JacobianTransposedOperator,
-   Hessian, HessianOperator, std::vector<double>, void*>;
+using CUserModel = UserModel<uno_objective_callback, uno_objective_gradient_callback, uno_constraints_callback,
+   uno_constraints_jacobian_callback, uno_constraints_jacobian_operator_callback, uno_constraints_jacobian_transposed_operator_callback,
+   uno_lagrangian_hessian_callback, uno_lagrangian_hessian_operator_callback, std::vector<double>, void*>;
 
 // UnoModel contains an instance of UserModel and complies with the Model interface
 class UnoModel: public Model {
 public:
    explicit UnoModel(const CUserModel& user_model):
          Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
-            static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
+            static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention),
+            user_model.base_indexing),
          user_model(user_model),
          nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
@@ -102,12 +105,12 @@ public:
    }
 
    // sparsity patterns of Jacobian and Hessian
-   void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
-                                             MatrixOrder /*matrix_order*/) const override {
+   void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
-         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index];
+         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index] + row_offset;
+         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index] + column_offset;
       }
       // TODO matrix_order
 
@@ -121,7 +124,7 @@ public:
       }
    }
 
-   void compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const override {
+   void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -203,8 +206,8 @@ public:
       }
    }
 
-   void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
-         double* result) const override {
+   void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+         const Vector<double>& multipliers, double* result) const override {
       if (this->user_model.lagrangian_hessian_operator != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
@@ -226,12 +229,12 @@ public:
       }
    }
 
-   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override {
-      return this->user_model.variables_lower_bounds[variable_index];
+   [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override {
+      return this->user_model.variables_lower_bounds;
    }
 
-   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override {
-      return this->user_model.variables_upper_bounds[variable_index];
+   [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override {
+      return this->user_model.variables_upper_bounds;
    }
 
    [[nodiscard]] const SparseVector<size_t>& get_slacks() const override {
@@ -242,12 +245,12 @@ public:
       return this->fixed_variables;
    }
 
-   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override {
-      return this->user_model.constraints_lower_bounds[constraint_index];
+   [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override {
+      return this->user_model.constraints_lower_bounds;
    }
 
-   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override {
-      return this->user_model.constraints_upper_bounds[constraint_index];
+   [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override {
+      return this->user_model.constraints_upper_bounds;
    }
 
    [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override {
@@ -329,8 +332,8 @@ protected:
    mutable NumberModelEvaluations number_model_evaluations{};
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
-   const ForwardRange linear_constraints{0};
-   const ForwardRange nonlinear_constraints;
+   const IntegerRange linear_constraints{0};
+   const IntegerRange nonlinear_constraints;
    std::vector<size_t> equality_constraints;
    CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
    std::vector<size_t> inequality_constraints;
@@ -339,10 +342,10 @@ protected:
 
 class CUserCallbacks: public UserCallbacks {
 public:
-   CUserCallbacks(NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      TerminationUserCallback user_termination_callback, void* user_data): UserCallbacks(),
+   CUserCallbacks(uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+      uno_termination_callback termination_callback, void* user_data): UserCallbacks(),
          notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
-         user_termination_callback(user_termination_callback),
+         termination_callback(termination_callback),
          user_data(user_data) { };
 
    void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
@@ -355,22 +358,22 @@ public:
       }
    }
 
-   bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+   bool termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override {
-      if (this->user_termination_callback) {
-         return this->user_termination_callback(static_cast<uno_int>(primals.size()),
+      if (this->termination_callback) {
+         return this->termination_callback(static_cast<uno_int>(primals.size()),
             static_cast<uno_int>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
-            stationarity_residual, complementarity_residual, this->user_data);
+            stationarity_residual, complementarity_residual, this->user_data) == 0;
       }
       else {
-         return false; // never terminate
+         return false; // no user termination
       }
    }
 
 private:
-   NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback;
-   TerminationUserCallback user_termination_callback;
+   uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback;
+   uno_termination_callback termination_callback;
    void* user_data;
 };
 
@@ -390,7 +393,7 @@ public:
    }
 
 private:
-   LoggerStreamUserCallback logger_stream_callback;
+   uno_logger_stream_callback logger_stream_callback;
    void* user_data;
    char* buffer;
 
@@ -433,6 +436,13 @@ void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) {
 
 void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing) {
+   void* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
+   uno_set_variables_lower_bounds(model, variables_lower_bounds);
+   uno_set_variables_upper_bounds(model, variables_upper_bounds);
+   return model;
+}
+
+void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing) {
    if (number_variables <= 0) {
       WARNING << "Please specify a positive number of variables."  << std::endl;
       return nullptr;
@@ -447,16 +457,10 @@ void* uno_create_model(const char* problem_type, uno_int number_variables, const
       return nullptr;
    }
    CUserModel* user_model = new CUserModel(problem_type, number_variables, base_indexing);
-   // copy the bounds internally
+   // set (-inf, +inf) bounds
    const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
-   user_model->variables_lower_bounds.resize(unsigned_number_variables);
-   user_model->variables_upper_bounds.resize(unsigned_number_variables);
-   for (size_t variable_index: Range(unsigned_number_variables)) {
-      user_model->variables_lower_bounds[variable_index] = (variables_lower_bounds != nullptr) ?
-         variables_lower_bounds[variable_index] : -INF<double>;
-      user_model->variables_upper_bounds[variable_index] = (variables_upper_bounds != nullptr) ?
-         variables_upper_bounds[variable_index] : INF<double>;
-   }
+   user_model->variables_lower_bounds.resize(unsigned_number_variables, -INF<double>);
+   user_model->variables_upper_bounds.resize(unsigned_number_variables, INF<double>);
    // create the initial primal point
    user_model->initial_primal_iterate.resize(unsigned_number_variables);
    for (size_t variable_index: Range(unsigned_number_variables)) {
@@ -465,8 +469,71 @@ void* uno_create_model(const char* problem_type, uno_int number_variables, const
    return user_model;
 }
 
-bool uno_set_objective(void* model, uno_int optimization_sense, Objective objective_function,
-      ObjectiveGradient objective_gradient) {
+bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_bounds) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the bounds internally
+   if (variables_lower_bounds != nullptr) {
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         user_model->variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index];
+      }
+   }
+   return true;
+}
+
+bool uno_set_variables_upper_bounds(void* model, const double* variables_upper_bounds) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the bounds internally
+   if (variables_upper_bounds != nullptr) {
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         user_model->variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index];
+      }
+   }
+
+   return true;
+}
+
+bool uno_set_variable_lower_bound(void* model, uno_int variable_index, double lower_bound) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   variable_index -= user_model->base_indexing;
+   if (variable_index < 0 || variable_index >= user_model->number_variables) {
+      WARNING << "Please specify a valid index."  << std::endl;
+      return false;
+   }
+   user_model->variables_lower_bounds[static_cast<size_t>(variable_index)] = lower_bound;
+   return true;
+}
+
+bool uno_set_variable_upper_bound(void* model, uno_int variable_index, double upper_bound) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   variable_index -= user_model->base_indexing;
+   if (variable_index < 0 || variable_index >= user_model->number_variables) {
+      WARNING << "Please specify a valid index."  << std::endl;
+      return false;
+   }
+   user_model->variables_upper_bounds[static_cast<size_t>(variable_index)] = upper_bound;
+   return true;
+}
+
+bool uno_set_objective(void* model, uno_int optimization_sense, uno_objective_callback objective_function,
+      uno_objective_gradient_callback objective_gradient) {
    if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
       WARNING << "Please specify a valid objective sense."  << std::endl;
       return false;
@@ -482,9 +549,9 @@ bool uno_set_objective(void* model, uno_int optimization_sense, Objective object
    return true;
 }
 
-bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
+bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
-      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian jacobian) {
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian) {
    if (number_constraints <= 0) {
       WARNING << "Please specify a positive number of constraints."  << std::endl;
       return false;
@@ -500,12 +567,8 @@ bool uno_set_constraints(void* model, uno_int number_constraints, Constraints co
    const size_t unsigned_number_constraints = static_cast<size_t>(number_constraints);
    user_model->constraints_lower_bounds.resize(unsigned_number_constraints);
    user_model->constraints_upper_bounds.resize(unsigned_number_constraints);
-   for (size_t constraint_index: Range(unsigned_number_constraints)) {
-      user_model->constraints_lower_bounds[constraint_index] = (constraints_lower_bounds != nullptr) ?
-         constraints_lower_bounds[constraint_index] : -INF<double>;
-      user_model->constraints_upper_bounds[constraint_index] = (constraints_upper_bounds != nullptr) ?
-         constraints_upper_bounds[constraint_index] : INF<double>;
-   }
+   uno_set_constraints_lower_bounds(model, constraints_lower_bounds);
+   uno_set_constraints_upper_bounds(model, constraints_upper_bounds);
    user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
    // copy the Jacobian sparsity to allow the calling code to dispose of its vectors
    user_model->jacobian_row_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
@@ -523,7 +586,69 @@ bool uno_set_constraints(void* model, uno_int number_constraints, Constraints co
    return true;
 }
 
-bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
+bool uno_set_constraints_lower_bounds(void* model, const double* constraints_lower_bounds) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the bounds internally
+   if (constraints_lower_bounds != nullptr) {
+      for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
+         user_model->constraints_lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];
+      }
+   }
+   return true;
+}
+
+bool uno_set_constraints_upper_bounds(void* model, const double* constraints_upper_bounds) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the bounds internally
+   if (constraints_upper_bounds != nullptr) {
+      for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
+         user_model->constraints_upper_bounds[constraint_index] = constraints_upper_bounds[constraint_index];
+      }
+   }
+   return true;
+}
+
+bool uno_set_constraint_lower_bound(void* model, uno_int constraint_index, double lower_bound) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   constraint_index -= user_model->base_indexing;
+   if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
+      WARNING << "Please specify a valid index."  << std::endl;
+      return false;
+   }
+   user_model->constraints_lower_bounds[static_cast<size_t>(constraint_index)] = lower_bound;
+   return true;
+}
+
+bool uno_set_constraint_upper_bound(void* model, uno_int constraint_index, double upper_bound) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   constraint_index -= user_model->base_indexing;
+   if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
+      WARNING << "Please specify a valid index."  << std::endl;
+      return false;
+   }
+   user_model->constraints_upper_bounds[static_cast<size_t>(constraint_index)] = upper_bound;
+   return true;
+}
+
+bool uno_set_jacobian_operator(void* model, uno_constraints_jacobian_operator_callback jacobian_operator) {
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
@@ -533,7 +658,7 @@ bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) 
    return true;
 }
 
-bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
+bool uno_set_jacobian_transposed_operator(void* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) {
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
@@ -544,10 +669,9 @@ bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
 }
 
 bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
-      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
-      double lagrangian_sign_convention) {
-   if (number_hessian_nonzeros <= 0) {
-      WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
+      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, uno_lagrangian_hessian_callback lagrangian_hessian) {
+   if (number_hessian_nonzeros < 0) {
+      WARNING << "Please specify a nonnegative number of Lagrangian Hessian nonzeros."  << std::endl;
       return false;
    }
    if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
@@ -555,38 +679,43 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
          UNO_UPPER_TRIANGLE << "'}."  << std::endl;
       return false;
    }
-   if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-      WARNING << "Please specify a correct Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
-         UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
-      return false;
-   }
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
-   // make sure that the sign convention is consistent with that of the Hessian operator
-   if (user_model->lagrangian_hessian_operator != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
-      WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian operator."  << std::endl;
-      return false;
-   }
    user_model->number_hessian_nonzeros = number_hessian_nonzeros;
-   // copy the Hessian sparsity to allow the calling code to dispose of its vectors
-   // from now on, we only maintain the lower triangle
-   user_model->hessian_row_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
-   user_model->hessian_column_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
-   const bool lower_triangle = (hessian_triangular_part == UNO_LOWER_TRIANGLE);
-   for (size_t index: Range(static_cast<size_t>(number_hessian_nonzeros))) {
-      user_model->hessian_row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
-      user_model->hessian_column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
+   // if the Hessian is empty, the problem is an LP
+   if (number_hessian_nonzeros == 0) {
+      user_model->problem_type = ProblemType::LINEAR;
    }
-   user_model->hessian_triangular_part = UNO_LOWER_TRIANGLE;
-   user_model->lagrangian_hessian = lagrangian_hessian;
-   user_model->lagrangian_sign_convention = lagrangian_sign_convention;
+   else {
+      // copy the Hessian sparsity to allow the calling code to dispose of its vectors
+      // from now on, we only maintain the lower triangle
+      user_model->hessian_row_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
+      user_model->hessian_column_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
+      const bool lower_triangle = (hessian_triangular_part == UNO_LOWER_TRIANGLE);
+      for (size_t index: Range(static_cast<size_t>(number_hessian_nonzeros))) {
+         user_model->hessian_row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
+         user_model->hessian_column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
+      }
+      user_model->hessian_triangular_part = UNO_LOWER_TRIANGLE;
+      user_model->lagrangian_hessian = lagrangian_hessian;
+   }
    return true;
 }
 
-bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator, double lagrangian_sign_convention) {
+bool uno_set_lagrangian_hessian_operator(void* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
+   return true;
+}
+
+bool uno_set_lagrangian_sign_convention(void* model, uno_int lagrangian_sign_convention) {
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
       WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
          UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
@@ -597,12 +726,6 @@ bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
-   // make sure that the sign convention is consistent with that of the Hessian function
-   if (user_model->lagrangian_hessian != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
-      WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian function."  << std::endl;
-      return false;
-   }
-   user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
    return true;
 }
@@ -623,9 +746,10 @@ bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   index -= user_model->base_indexing;
    if (0 <= index && index < user_model->number_variables) {
-      const size_t unsigned_index = static_cast<size_t>(index);
-      user_model->initial_primal_iterate[unsigned_index] = initial_primal_component;
+      user_model->initial_primal_iterate[static_cast<size_t>(index)] = initial_primal_component;
       return true;
    }
    return false;
@@ -637,9 +761,10 @@ bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double i
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   index -= user_model->base_indexing;
    if (0 <= index && index < user_model->number_constraints) {
-      const size_t unsigned_index = static_cast<size_t>(index);
-      user_model->initial_dual_iterate[unsigned_index] = initial_dual_component;
+      user_model->initial_dual_iterate[static_cast<size_t>(index)] = initial_dual_component;
       return true;
    }
    return false;
@@ -681,9 +806,8 @@ void* uno_create_solver() {
    // default options
    Options* options = new Options;
    DefaultOptions::load(*options);
-   // add default preset
-   const Options preset_options = Presets::get_preset_options(std::nullopt);
-   options->overwrite_with(preset_options);
+   // set default preset
+   Presets::set_default(*options);
 
    // default user callbacks
    UserCallbacks* user_callbacks = new NoUserCallbacks;
@@ -731,13 +855,13 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
    }
    // handle the preset separately
    if (strcmp(option_name, "preset") == 0) {
-      uno_set_solver_preset(solver, option_value);
+      return uno_set_solver_preset(solver, option_value);
    }
    else {
       Solver* uno_solver = static_cast<Solver*>(solver);
       uno_solver->options->set_string(option_name, option_value);
+      return true;
    }
-   return true;
 }
 
 uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
@@ -760,7 +884,8 @@ bool uno_load_solver_option_file(void* solver, const char* file_name) {
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
+   // load_option_file() handles a possible preset separately
+   uno::Options::load_option_file(*uno_solver->options, file_name);
    return true;
 }
 
@@ -774,15 +899,14 @@ bool uno_set_solver_preset(void* solver, const char* preset_name) {
    return true;
 }
 
-bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      TerminationUserCallback user_termination_callback, void* user_data) {
+bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+      uno_termination_callback termination_callback, void* user_data) {
    if (solver == nullptr) {
       WARNING << "Please specify a valid solver."  << std::endl;
       return false;
-   }
-   Solver* uno_solver = static_cast<Solver*>(solver);
+   }   Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callbacks; // delete the previous callbacks
-   uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, user_termination_callback, user_data);
+   uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, termination_callback, user_data);
    return true;
 }
 
@@ -830,6 +954,14 @@ void uno_optimize(void* solver, void* model) {
    Logger::flush();
 }
 
+const char* uno_get_method_description(void* solver) {
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->solver->get_method_description().c_str();
+}
+
 double uno_get_solver_double_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
@@ -838,7 +970,7 @@ double uno_get_solver_double_option(void* solver, const char* option_name) {
    return uno_solver->options->get_double(option_name);
 }
 
-int uno_get_solver_integer_option(void* solver, const char* option_name) {
+uno_int uno_get_solver_integer_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
    }
@@ -891,6 +1023,8 @@ double uno_get_solution_objective(void* solver) {
 
 double uno_get_primal_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_variables <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
@@ -900,6 +1034,8 @@ double uno_get_primal_solution_component(void* solver, uno_int index) {
 
 double uno_get_constraint_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_constraints <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
@@ -909,6 +1045,8 @@ double uno_get_constraint_dual_solution_component(void* solver, uno_int index) {
 
 double uno_get_lower_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_variables <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
@@ -918,6 +1056,8 @@ double uno_get_lower_bound_dual_solution_component(void* solver, uno_int index) 
 
 double uno_get_upper_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_variables <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
@@ -1019,6 +1159,7 @@ void uno_destroy_solver(void* solver) {
       Solver* uno_solver = static_cast<Solver*>(solver);
       delete uno_solver->solver;
       delete uno_solver->options;
+      delete uno_solver->user_callbacks;
       if (uno_solver->result != nullptr) {
          delete uno_solver->result;
       }

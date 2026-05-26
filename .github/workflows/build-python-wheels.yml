@@ -21,19 +21,25 @@ on:
       - '*.yaml'
       - 'docs/**'
 
+env:
+  CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
+
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.sys.os }}
+    name: Build wheels on (${{ matrix.sys.os }}, ${{ matrix.sys.build }})
     runs-on: ${{ matrix.sys.os }}
     strategy:
       fail-fast: false
       matrix:
         sys:
-          - { os: ubuntu-latest, shell: bash }
-          - { os: ubuntu-22.04-arm, shell: bash }
-          - { os: macos-latest, shell: bash }
-          - { os: macos-15-intel, shell: bash }
-          - { os: windows-latest, shell: 'msys2 {0}' }
+          # group manylinux and musllinux jobs together. Numpy is compiled for cp38+musl and cached for the other runs
+          - { os: ubuntu-latest, shell: bash, build: "*manylinux*" }
+          - { os: ubuntu-latest, shell: bash, build: "*musllinux*" }
+          - { os: ubuntu-22.04-arm, shell: bash, build: "*manylinux*" }
+          - { os: ubuntu-22.04-arm, shell: bash, build: "*musllinux*" }
+          - { os: macos-latest, shell: bash, build: "*" }
+          - { os: macos-15-intel, shell: bash, build: "*" }
+          - { os: windows-latest, shell: 'msys2 {0}', build: "*" }
     defaults:
       run:
         shell: ${{ matrix.sys.shell }}
@@ -76,13 +82,14 @@ jobs:
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
 
-      - name: Build wheels (Linux)
+      - name: Build wheels (Linux, ${{ matrix.sys.build }})
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
+          CIBW_BUILD: ${{ matrix.sys.build }}
+          CIBW_SKIP: cp*-*_i686 *-win32
+          CIBW_ENVIRONMENT_LINUX: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
-          # Skip some builds
-          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -92,6 +99,7 @@ jobs:
           CC: clang
           CXX: clang++
           MACOSX_DEPLOYMENT_TARGET: 15.0
+          CIBW_SKIP: cp*-*_i686 *-win32
           CIBW_BEFORE_ALL_MACOS: |
             cat > /tmp/clang_toolchain.cmake << 'EOF'
             set(CMAKE_C_COMPILER clang)
@@ -110,23 +118,24 @@ jobs:
             CXX=clang++
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
+            CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
-          # Skip some builds
-          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
+          CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
           CIBW_BEFORE_BUILD_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' --no-mangle-all -w {dest_dir} {wheel}"
+            delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
+            CMAKE_BUILD_PARALLEL_LEVEL=4
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
             CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
@@ -134,9 +143,8 @@ jobs:
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
-            cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a;dependencies/lib/libstdc++.a"
-          # Skip some builds
-          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
+            cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
+            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
@@ -204,10 +212,11 @@ jobs:
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
-    # if the merge commit message contains '[unopy] Release', trigger the upload to PyPi
+    # if the merge commit message contains '[unopy] Release' or '[Release]', trigger the upload to PyPi
     name: Upload release to PyPI
     if: >-
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[unopy] Release'))
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, '[unopy] Release') ||
+                                       contains(github.event.head_commit.message, '[Release]')))
     runs-on: ubuntu-latest
     permissions:
       id-token: write

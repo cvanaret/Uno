@@ -2,11 +2,19 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 #include "optimization/Result.hpp"
 
 namespace py = pybind11;
 
 namespace uno {
+   // owning, writeable numpy copy of a double container. A copy (rather than a zero-copy view) keeps Result's internal
+   // vectors safe from mutation and lets consumers such as pyOptSparse scale the returned arrays in place
+   template <typename DoubleContainer>
+   py::array_t<double> to_owned_array(const DoubleContainer& vector) {
+      return py::array_t<double>(static_cast<py::ssize_t>(vector.size()), vector.data());
+   }
+
    void define_Result(py::module& module) {
       py::class_<Result>(module, "Result")
       // attributes
@@ -16,10 +24,18 @@ namespace uno {
       .def_readonly("solution_primal_feasibility", &Result::solution_primal_feasibility)
       .def_readonly("solution_stationarity", &Result::solution_stationarity)
       .def_readonly("solution_complementarity", &Result::solution_complementarity)
-      .def_readonly("primal_solution", &Result::primal_solution)
-      .def_readonly("constraint_dual_solution", &Result::constraint_dual_solution)
-      .def_readonly("lower_bound_dual_solution", &Result::lower_bound_dual_solution)
-      .def_readonly("upper_bound_dual_solution", &Result::upper_bound_dual_solution)
+      .def_property_readonly("primal_solution", [](const Result& result) {
+         return to_owned_array(result.primal_solution);
+      })
+      .def_property_readonly("constraint_dual_solution", [](const Result& result) {
+         return to_owned_array(result.constraint_dual_solution);
+      })
+      .def_property_readonly("lower_bound_dual_solution", [](const Result& result) {
+         return to_owned_array(result.lower_bound_dual_solution);
+      })
+      .def_property_readonly("upper_bound_dual_solution", [](const Result& result) {
+         return to_owned_array(result.upper_bound_dual_solution);
+      })
       .def_readonly("number_iterations", &Result::number_iterations)
       .def_readonly("cpu_time", &Result::cpu_time)
       .def_readonly("number_objective_evaluations", &Result::number_objective_evaluations)

@@ -16,7 +16,7 @@ namespace uno {
    class GlobalizationStrategy {
    public:
       explicit GlobalizationStrategy(const Options& options);
-      virtual ~GlobalizationStrategy() = default;
+      virtual ~GlobalizationStrategy();
 
       virtual void initialize(Statistics& statistics, const Iterate& initial_iterate) = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

@@ -20,6 +20,8 @@ namespace uno {
 
       Vector<double> primals{}; /*!< Primal variables */
       Multipliers multipliers{}; /*!< Multipliers */
+      double primal_dual_step_length{1.};
+      double bound_dual_step_length{1.};
 
       SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
@@ -30,6 +32,9 @@ namespace uno {
       void reset();
 
       friend std::ostream& operator<<(std::ostream& stream, const Direction& direction);
+
+   protected:
+      [[nodiscard]] static std::string status_to_string(SubproblemStatus status);
    };
 } // namespace
 

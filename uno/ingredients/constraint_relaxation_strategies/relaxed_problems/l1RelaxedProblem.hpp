@@ -5,9 +5,10 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include <functional>
+#include <memory>
 #include "ElasticVariables.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "tools/Infinity.hpp"
+#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
@@ -15,8 +16,12 @@ namespace uno {
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
          bool relax_linear_constraints);
       ~l1RelaxedProblem() override = default;
+      [[nodiscard]] std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
+      [[nodiscard]] bool has_inequality_constraints() const override;
+      [[nodiscard]] bool has_bound_constraints() const override;
+
       void set_proximal_coefficient(double proximal_coefficient);
       void set_proximal_center(double* proximal_center);
 
@@ -24,8 +29,8 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const override;
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder matrix_order) const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices, uno_int* column_indices,
          uno_int solver_indexing) const override;
 
@@ -37,19 +42,25 @@ namespace uno {
          Vector<double>& lagrangian_gradient) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const override;
+
+      // linear operators
+      void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const override;
+      void compute_jacobian_transposed_vector_product(const double* vector, double* result, const Evaluations& evaluations) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const override;
 
-      [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
-      [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
       // [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
 
-      [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
-      [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
+
+      [[nodiscard]] Inertia get_inertia() const override;
 
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const override;
@@ -66,9 +77,12 @@ namespace uno {
       const size_t number_elastic_variables;
       const double objective_multiplier;
       const double constraint_violation_coefficient;
-      double proximal_coefficient{INF<double>};
+      double proximal_coefficient{0.};
       double* proximal_center{};
-      const ForwardRange dual_regularization_constraints{0};
+      const IntegerRange dual_regularization_constraints{0};
+
+      std::vector<double> variables_lower_bounds;
+      std::vector<double> variables_upper_bounds;
 
       // delegating constructor
       l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,

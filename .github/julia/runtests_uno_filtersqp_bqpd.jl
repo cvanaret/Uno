@@ -81,6 +81,7 @@ end
                 MOI.VariableBasisStatus,
                 MOI.ConstraintBasisStatus,
                 MOI.ObjectiveBound,
+                MOI.DualObjectiveValue,
             ],
         );
         exclude = [
@@ -118,6 +119,8 @@ end
             r"^test_attribute_SolverVersion$",
             r"^test_nonlinear_invalid$",
             r"^test_basic_VectorNonlinearFunction_",
+            # MPEC instances
+            "_complementarity",
         ],
     )
 end

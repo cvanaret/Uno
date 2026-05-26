@@ -9,7 +9,7 @@ TR_activity_tolerance	DOUBLE	1e-6
 TR_aggressive_decrease_factor	DOUBLE	4
 TR_decrease_factor	DOUBLE	2
 TR_increase_factor	DOUBLE	2
-TR_min_radius	DOUBLE	1e-7
+TR_min_radius	DOUBLE	1e-12
 TR_radius	DOUBLE	10.
 TR_radius_reset_threshold	DOUBLE	1e-4
 armijo_decrease_fraction	DOUBLE	1e-4
@@ -58,7 +58,6 @@ loose_dual_tolerance	DOUBLE	1e-6
 loose_primal_tolerance	DOUBLE	1e-6
 loose_tolerance_iteration_threshold	INTEGER	15
 max_iterations	INTEGER	2000
-nonmonotone_filter_number_dominated_entries	INTEGER	3
 preset	STRING	<unset>
 primal_regularization_decrease_factor	DOUBLE	3.
 primal_regularization_fast_increase_factor	DOUBLE	100.

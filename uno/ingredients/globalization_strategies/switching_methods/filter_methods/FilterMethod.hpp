@@ -20,7 +20,7 @@ namespace uno {
    class FilterMethod: public SwitchingMethod {
    public:
       explicit FilterMethod(const Options& options);
-      ~FilterMethod() override = default;
+      ~FilterMethod() override;
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
       void reset() override;

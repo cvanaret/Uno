@@ -9,27 +9,25 @@ namespace uno {
       // do nothing
    }
 
-   void NoInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const double* /*hessian_values*/,
-         const Inertia& /*expected_inertia*/, double* /*primal_regularization_values*/) {
+   void NoInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+         const Inertia& /*expected_inertia*/, double* /*hessian_values*/) {
       // do nothing
    }
 
-   void NoInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const double* /*hessian_values*/,
+   void NoInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         double* /*primal_regularization_values*/) {
+         double* /*hessian_values*/) {
       // do nothing
    }
 
    void NoInertiaCorrection::regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-         const double* /*augmented_matrix_values*/, double /*dual_regularization_parameter*/,
-         const Inertia& /*expected_inertia*/, double* /*primal_regularization_values*/,
+         double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, double* /*primal_regularization_values*/,
          double* /*dual_regularization_values*/) {
       // do nothing
    }
 
    void NoInertiaCorrection::regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
-         const double* /*augmented_matrix_values*/, double /*dual_regularization_parameter*/,
-         const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
+         double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
          double* primal_regularization_values, double* dual_regularization_values) {
       for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
          primal_regularization_values[index] = 0.;

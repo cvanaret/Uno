@@ -434,11 +434,50 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
+    set::MOI.LessThan{Float64},
+)
+    MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        vi = ci.value
+        UnoSolver.uno_set_variable_upper_bound(model.inner, vi, model.variables.upper[vi])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+    set::MOI.GreaterThan{Float64},
+)
+    MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        vi = ci.value
+        UnoSolver.uno_set_variable_lower_bound(model.inner, vi, model.variables.lower[vi])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
     set::S,
-) where {S<:_SETS}
+) where {
+    S <: Union{
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    },
+}
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
-    model.needs_new_inner = true
+    if !isnothing(model.inner) && !model.needs_new_inner
+        vi = ci.value
+        UnoSolver.uno_set_variable_lower_bound(model.inner, vi, model.variables.lower[vi])
+        UnoSolver.uno_set_variable_upper_bound(model.inner, vi, model.variables.upper[vi])
+    end
     model.solver = nothing
     return
 end
@@ -510,6 +549,44 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,MOI.LessThan{Float64}},
+    set::MOI.LessThan{Float64},
+) where {
+    F<:Union{
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    },
+}
+    MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.qp_data.g_U[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,MOI.GreaterThan{Float64}},
+    set::MOI.GreaterThan{Float64},
+) where {
+    F<:Union{
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    },
+}
+    MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.qp_data.g_L[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{F,S},
     set::S,
 ) where {
@@ -517,10 +594,16 @@ function MOI.set(
         MOI.ScalarAffineFunction{Float64},
         MOI.ScalarQuadraticFunction{Float64},
     },
-    S<:_SETS,
+    S <: Union{
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    },
 }
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
-    model.needs_new_inner = true
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.qp_data.g_L[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.qp_data.g_U[ci.value])
+    end
     model.solver = nothing
     return
 end
@@ -657,14 +740,56 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
-    set::S,
-) where {S<:_SETS}
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{Float64}},
+    set::MOI.LessThan{Float64},
+)
     MOI.throw_if_not_valid(model, ci)
     index = MOI.Nonlinear.ConstraintIndex(ci.value)
     func = model.nlp_model[index].expression
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
-    model.needs_new_inner = true
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.upper[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.GreaterThan{Float64}},
+    set::MOI.GreaterThan{Float64},
+)
+    MOI.throw_if_not_valid(model, ci)
+    index = MOI.Nonlinear.ConstraintIndex(ci.value)
+    func = model.nlp_model[index].expression
+    model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.lower[ci.value])
+    end
+    model.solver = nothing
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
+    set::S,
+) where {
+    S <: Union{
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    },
+}
+    MOI.throw_if_not_valid(model, ci)
+    index = MOI.Nonlinear.ConstraintIndex(ci.value)
+    func = model.nlp_model[index].expression
+    model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
+    if !isnothing(model.inner) && !model.needs_new_inner
+        UnoSolver.uno_set_constraint_lower_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.lower[ci.value])
+        UnoSolver.uno_set_constraint_upper_bound(model.inner, row(model, ci), model.nlp_data.constraint_bounds.upper[ci.value])
+    end
     model.solver = nothing
     return
 end
@@ -788,7 +913,7 @@ function MOI.get(
     x = [MOI.get(model, MOI.VariablePrimal(), xi) for xi in f.variables]
     s.set.eval_jacobian(J, x)
     λ = Float64[
-        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r)
         for r in row(model, ci)
     ]
     dual = zeros(MOI.dimension(s.set))
@@ -807,7 +932,7 @@ function MOI.get(
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     λ = Float64[
-        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r)
         for r in row(model, ci)
     ]
     return _dual_multiplier(model) * λ
@@ -1288,13 +1413,17 @@ function _setup_model(model::Optimizer)
     model.hrows = hrows
     model.hcols = hcols
 
-    if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
-        model.problem_type = "NLP"
-    elseif model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
-        model.problem_type = "QP"
-    else
-        @assert (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
+    if has_hessian && (nnzh == 0)
         model.problem_type = "LP"
+    else
+        if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
+            model.problem_type = "NLP"
+        elseif model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
+            model.problem_type = "QP"
+        else
+            @assert (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
+            model.problem_type = "LP"
+        end
     end
     model.needs_new_inner = true
     return
@@ -1352,7 +1481,7 @@ function _setup_inner(model::Optimizer)::UnoSolver.Model
         model.hprod_available ? moi_lagrangian_hessian_operator : nothing,
         model,
         'L',
-        1.0,
+        1,
     )
     model.needs_new_inner = false
     return model.inner
@@ -1416,35 +1545,35 @@ function MOI.optimize!(model::Optimizer)
             model.variable_primal_start[i],
             clamp(0.0, model.variables.lower[i], model.variables.upper[i]),
         )
-        UnoSolver.uno_set_initial_primal_iterate_component(inner, i-1, x0_i)
+        UnoSolver.uno_set_initial_primal_iterate_component(inner, i, x0_i)
     end
 
     for (i, start) in enumerate(model.qp_data.mult_g)
         y0_i = _dual_start(model, start, -1)
-        UnoSolver.uno_set_initial_dual_iterate_component(inner, i-1, y0_i)
+        UnoSolver.uno_set_initial_dual_iterate_component(inner, i, y0_i)
     end
     offset = length(model.qp_data.mult_g)
     if model.nlp_dual_start === nothing
         for i in offset+1:inner.ncon
-            UnoSolver.uno_set_initial_dual_iterate_component(inner, i-1, 0.0)
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, i, 0.0)
         end
         # First there is VectorNonlinearOracle...
         for (_, cache) in model.vector_nonlinear_oracle_constraints
             if cache.start !== nothing
                 for i in 1:cache.set.output_dimension
-                    UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i-1, _dual_start(model, cache.start[i], -1))
+                    UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, _dual_start(model, cache.start[i], -1))
                 end
             end
             offset += cache.set.output_dimension
         end
         # ...then come the ScalarNonlinearFunctions
         for (key, val) in model.mult_g_nlp
-            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+key.value-1, _dual_start(model, val, -1))
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+key.value, _dual_start(model, val, -1))
         end
     else
         for (i, start) in enumerate(model.nlp_dual_start::Vector{Float64})
             y0_i = _dual_start(model, start, -1)
-            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i-1, y0_i)
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, y0_i)
         end
     end
 
@@ -1467,6 +1596,8 @@ function _status_code_mapping(uno_termination_status::Cint, uno_solution_status:
         return (MOI.INVALID_MODEL, MOI.UNKNOWN_RESULT_STATUS)
     elseif uno_termination_status == UnoSolver.UNO_ALGORITHMIC_ERROR
         return (MOI.OTHER_ERROR, MOI.UNKNOWN_RESULT_STATUS)
+    elseif uno_termination_status == UnoSolver.UNO_USER_TERMINATION
+        return (MOI.INTERRUPTED, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
     else # UNO_SUCCESS
         if uno_solution_status == UnoSolver.UNO_FEASIBLE_KKT_POINT
             return (MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT)
@@ -1478,8 +1609,10 @@ function _status_code_mapping(uno_termination_status::Cint, uno_solution_status:
             return (MOI.SLOW_PROGRESS, MOI.FEASIBLE_POINT)
         elseif uno_solution_status == UnoSolver.UNO_INFEASIBLE_SMALL_STEP
             return (MOI.SLOW_PROGRESS, MOI.INFEASIBLE_POINT)
-        else # UNO_UNBOUNDED
+        elseif uno_solution_status == UnoSolver.UNO_UNBOUNDED
             return (MOI.DUAL_INFEASIBLE, MOI.FEASIBLE_POINT)
+        else # UNO_NOT_OPTIMAL
+            return (MOI.SLOW_PROGRESS, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
         end
     end
 end
@@ -1529,15 +1662,13 @@ function _manually_evaluated_primal_status(model::Optimizer)
 
     x_L, x_U = model.variables.lower, model.variables.upper
     g_L, g_U = copy(model.qp_data.g_L), copy(model.qp_data.g_U)
-    # Assuming constraints are guaranteed to be in the order:
-    # [qp_cons, nlp_cons, oracle]
-    for bound in model.nlp_data.constraint_bounds
-        push!(g_L, bound.lower)
-        push!(g_U, bound.upper)
-    end
     for (_, cache) in model.vector_nonlinear_oracle_constraints
         append!(g_L, cache.set.l)
         append!(g_U, cache.set.u)
+    end
+    for bound in model.nlp_data.constraint_bounds
+        push!(g_L, bound.lower)
+        push!(g_U, bound.upper)
     end
     m, n = length(g_L), length(x)
     # 1e-8 is the default primal tolerance
@@ -1609,7 +1740,7 @@ function MOI.get(
         p = model.parameters[vi]
         return model.nlp_model[p]
     end
-    return UnoSolver.uno_get_primal_solution_component(model.solver, column(vi)-1)
+    return UnoSolver.uno_get_primal_solution_component(model.solver, column(vi))
 end
 
 ### MOI.ConstraintPrimal
@@ -1669,15 +1800,8 @@ end
 
 ### MOI.ConstraintDual
 
-function _quasi_newton_approximation(model::Optimizer)::Bool
-    hessian_model = UnoSolver.uno_get_solver_string_option(model.solver, "hessian_model")
-    nlp_without_hessian = (model.problem_type != "LP") && (length(model.hrows) == 0)
-    return (hessian_model == "LBFGS") || nlp_without_hessian
-end
-
 function _dual_multiplier(model::Optimizer)
-    multiplier = xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
-    multiplier = _quasi_newton_approximation(model) ? -multiplier : multiplier
+    multiplier = (model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
     return multiplier
 end
 
@@ -1688,7 +1812,7 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    λ = UnoSolver.uno_get_constraint_dual_solution_component(model.solver, row(model, ci)-1)
+    λ = UnoSolver.uno_get_constraint_dual_solution_component(model.solver, row(model, ci))
     return _dual_multiplier(model) * λ
 end
 
@@ -1703,8 +1827,8 @@ function MOI.get(
 ) where {S<:_SETS}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value)
+    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value)
     return _reduced_cost_to_dual(S, _dual_multiplier(model) * (xL_i + xU_i))
 end
 
@@ -1715,6 +1839,6 @@ function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     s = _dual_multiplier(model)
     return Float64[
         s * UnoSolver.uno_get_constraint_dual_solution_component(model.solver, i)
-        for i in length(model.qp_data):(model.inner.ncon-1)
+        for i in (length(model.qp_data)+1):model.inner.ncon
     ]
 end

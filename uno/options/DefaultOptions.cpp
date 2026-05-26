@@ -58,7 +58,7 @@ namespace uno {
       options.set_double("sufficient_infeasibility_decrease_ratio", 0.9);
 
       /** filter method options **/
-      // filter type (standard|nonmonotone)
+      // filter type (standard)
       options.set_string("filter_type", "standard");
       options.set_double("filter_beta", 0.999);
       options.set_double("filter_gamma", 0.001);
@@ -67,8 +67,6 @@ namespace uno {
       options.set_integer("filter_capacity", 50);
       // used by Waechter filter method
       options.set_double("filter_sufficient_infeasibility_decrease_factor", 0.9);
-      // nonmonotone filter strategy
-      options.set_integer("nonmonotone_filter_number_dominated_entries", 3);
 
       /** funnel options **/
       options.set_double("funnel_kappa", 0.5);
@@ -89,10 +87,13 @@ namespace uno {
 
       /* quasi-Newton options */
       options.set_integer("quasi_newton_memory_size", 6);
+      options.set_double("LBFGS_delta_upper_bound", 10.);
+      options.set_integer("LBFGS_max_skips_before_reset", 2);
+      options.set_double("LSR1_pivot_max_magnitude", 1e-7);
 
       /** regularization options **/
       // regularization failure threshold
-      options.set_double("regularization_failure_threshold", 1e40);
+      options.set_double("regularization_failure_threshold", 1e20); // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_max_hessian_perturbation
       // Hessian regularization: initial value
       options.set_double("primal_regularization_initial_factor", 1e-4);
       options.set_double("regularization_increase_factor", 2);
@@ -116,7 +117,7 @@ namespace uno {
       // tolerance in TR constraint activity
       options.set_double("TR_activity_tolerance", 1e-6);
       // minimum TR radius
-      options.set_double("TR_min_radius", 1e-7);
+      options.set_double("TR_min_radius", 1e-12);
       // threshold below which the TR radius is reset
       options.set_double("TR_radius_reset_threshold", 1e-4);
 

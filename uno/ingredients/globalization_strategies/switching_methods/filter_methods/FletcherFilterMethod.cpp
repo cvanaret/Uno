@@ -10,8 +10,6 @@
 namespace uno {
    FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) { }
 
-   FletcherFilterMethod::~FletcherFilterMethod() { }
-
    bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
