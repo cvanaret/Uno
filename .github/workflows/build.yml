@@ -107,13 +107,16 @@ jobs:
     - name: MSVC environment
       if: matrix.toolchain == 'msvc'
       uses: ilammy/msvc-dev-cmd@v1
-
-    - name: Intel Fortran
+        
+    - name: Setup Miniconda
       if: matrix.toolchain == 'msvc'
-      uses: gha3mi/setup-fortran-conda@latest
-      with:
-        compiler: ifx
-        compiler-version: '2025.0'
+      uses: conda-incubator/setup-miniconda@v3
+
+    - name: Install minimal ifx toolchain
+      if: matrix.toolchain == 'msvc'
+      shell: bash
+      run: |
+        conda install -y -c https://software.repos.intel.com/python/conda intel-fortran=2025.* intel-c-compiler=2025.*
 
     # ----- MinGW -----
     - name: Setup MSYS2
