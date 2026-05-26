@@ -26,9 +26,7 @@ namespace uno {
          return -this->expression[index];
       }
 
-      [[nodiscard]] const Expression& get_expression() const {
-         return this->expression;
-      }
+		UNO_FORWARD_ACCESSOR(get_expression, this->expression)
 
    protected:
       storage_t<Expression> expression;

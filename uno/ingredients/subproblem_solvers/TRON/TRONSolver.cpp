@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <optional>
 #include <stdexcept>
@@ -9,6 +10,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "symbolic/UnaryNegation.hpp"
 
 namespace uno {
    void TRONSolver::initialize_memory(const Subproblem& subproblem) {
