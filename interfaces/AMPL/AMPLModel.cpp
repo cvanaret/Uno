@@ -324,7 +324,7 @@ namespace uno {
       message.append(Uno::current_version()).append(": ").append(solution_status_to_message(result.solution_status));
 
       // flip the signs of the constraint multipliers (different Lagrangian convention between ASL and Uno)
-      const Vector<double> ampl_dual_solution = -result.constraint_dual_solution;
+      Vector<double> ampl_dual_solution = -result.constraint_dual_solution;
       write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), ampl_dual_solution.data(), &option_info);
    }
 
