@@ -20,6 +20,7 @@ namespace uno {
 
       int n_discrete = asl->i.nbv_ + asl->i.niv_ + asl->i.nlvbi_ + asl->i.nlvci_ + asl->i.nlvoi_;
       if (0 < n_discrete) {
+         ASL_free(&asl);
          throw std::runtime_error("Error: " + std::to_string(n_discrete) + " variables are discrete, which Uno cannot handle");
       }
 
@@ -30,6 +31,7 @@ namespace uno {
       // read the file_name.nl file
       const int read_error = pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
       if (read_error != 0) {
+         ASL_free(&asl);
          throw std::runtime_error("pfgh_read_ASL was to able to read the ASL");
       }
 
