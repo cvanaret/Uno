@@ -28,7 +28,10 @@ namespace uno {
       asl->i.pi0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(asl->i.n_con_)));
 
       // read the file_name.nl file
-      pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
+      const int read_error = pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
+      if (read_error != 0) {
+         throw std::runtime_error("pfgh_read_ASL was to able to read the ASL");
+      }
 
       // set the sign convention for the Lagrangian: Uno uses ∇²L(x, y) = ∇²f(x) - \sum_j y_j ∇²c_j(x)
       fint error_flag{0};
