@@ -36,11 +36,8 @@ jobs:
       fail-fast: false
       matrix:
         sys:
-          # group manylinux and musllinux jobs together. Numpy is compiled for cp38+musl and cached for the other runs
           - { os: ubuntu-latest, shell: bash, build: "*manylinux*" }
-          - { os: ubuntu-latest, shell: bash, build: "*musllinux*" }
           - { os: ubuntu-22.04-arm, shell: bash, build: "*manylinux*" }
-          - { os: ubuntu-22.04-arm, shell: bash, build: "*musllinux*" }
           - { os: macos-latest, shell: bash, build: "*" }
           - { os: macos-15-intel, shell: bash, build: "*" }
           - { os: windows-latest, shell: 'msys2 {0}', build: "*" }
