@@ -135,7 +135,7 @@ jobs:
             CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
             CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
-            PATH=C:\mingw64\bin;C:\Windows\System32
+            PATH="C:/mingw64/bin;C:/Windows/System32"
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
