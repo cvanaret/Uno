@@ -4,6 +4,6 @@
 #ifndef UNO_KRYLOVSOLVERS_H
 #define UNO_KRYLOVSOLVERS_H
 
-#include "krylov.h"
+#include <krylov.h>
 
 #endif // UNO_KRYLOVSOLVERS_H
