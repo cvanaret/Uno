@@ -155,7 +155,7 @@ ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 if [[ "$OS_KRYLOV" == "windows" ]]; then
 	curl -L -o libkrylov.zip "$ASSET_URL"
-	# unzip libkrylov.zip
+	unzip libkrylov.zip
 else
 	curl -L -o libkrylov.tar.gz "$ASSET_URL"
 	tar -xzf libkrylov.tar.gz
