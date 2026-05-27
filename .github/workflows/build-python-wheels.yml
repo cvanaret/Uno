@@ -132,7 +132,7 @@ jobs:
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --add-path 'C:/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
+            delvewheel repair --no-mangle --ignore-missing-dependencies --add-path 'C:/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$NUMBER_OF_PROCESSORS
             CMAKE_GENERATOR="MinGW Makefiles"
