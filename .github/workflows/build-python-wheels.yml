@@ -138,7 +138,7 @@ jobs:
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --no-mangle --ignore-missing-dependencies -w {dest_dir} {wheel}"
+            delvewheel repair --add-path C:/mingw64/bin --ignore-existing -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
@@ -146,10 +146,13 @@ jobs:
             CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
             CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
+            PATH=C:\mingw64\bin;C:\Windows\System32
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
+          CIBW_TEST_ENVIRONMENT_WINDOWS: >
+            PATH={project}/unopy.libs
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
