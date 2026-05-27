@@ -262,7 +262,7 @@ if(KRYLOV)
    target_compile_definitions(uno_dependencies INTERFACE HAS_KRYLOV)
 
    get_filename_component(KRYLOV_DIRECTORY ${KRYLOV} DIRECTORY)
-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${KRYLOV_DIRECTORY}/../include/)
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${KRYLOV_INCLUDE_DIR})
 
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/KrylovSolversTests.cpp)
