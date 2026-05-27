@@ -138,7 +138,6 @@ jobs:
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
-            PATH="C:/mingw64/bin;C:/Windows/System32"
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
 
