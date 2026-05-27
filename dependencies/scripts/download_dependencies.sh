@@ -87,7 +87,7 @@ ASSET_NAME="libkrylov-${OS_KRYLOV}-${ARCH_KRYLOV}.${EXTENSION_KRYLOV}"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o libkrylov.tar.gz "$ASSET_URL"
-if [[ "$OS" == "windows" ]]; then
+if [[ "$OS_KRYLOV" == "windows" ]]; then
 	unzip libkrylov.zip
 else
 	tar -xzf libkrylov.tar.gz
