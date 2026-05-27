@@ -5,7 +5,7 @@ set -e
 OS_NAME="$(uname -s)"
 case "$OS_NAME" in
     Linux*)
-      if [[ "$CIBW_BUILD" == *musllinux* ]] || ldd --version 2>&1 | grep -qi musl; then
+      if ldd --version 2>&1 | grep -qi musl; then
         echo "Unsupported OS: linux-musl"
         exit 1
       else
@@ -154,7 +154,11 @@ ASSET_NAME="libkrylov-${OS_KRYLOV}-${ARCH_KRYLOV}.${EXTENSION_KRYLOV}"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o libkrylov.tar.gz "$ASSET_URL"
-tar -xzf libkrylov.tar.gz
+if [[ "$OS" == "windows" ]]; then
+	unzip libkrylov.zip
+else
+	tar -xzf libkrylov.tar.gz
+fi
 pwd
 
 # delete unwanted directories
