@@ -256,6 +256,22 @@ if(SPRAL)
    message(STATUS "Found SPRAL")
 endif()
 
+# Krylov
+find_library(KRYLOV krylov)
+if(KRYLOV)
+   target_link_libraries(uno_dependencies INTERFACE ${KRYLOV})
+   target_compile_definitions(uno_dependencies INTERFACE HAS_KRYLOV)
+
+   get_filename_component(KRYLOV_DIRECTORY ${KRYLOV} DIRECTORY)
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${KRYLOV_DIRECTORY}/../include/)
+
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/KrylovSolversTests.cpp)
+   endif()
+
+   message(STATUS "Found Krylov")
+endif()
+
 # helper function: resolve a mixed list of -lflags and relative paths to absolute paths
 function(resolve_library_paths input_list output_list)
    set(result)
