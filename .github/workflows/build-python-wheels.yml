@@ -63,6 +63,12 @@ jobs:
         if: runner.os == 'Windows'
         run: pip install delvewheel
         shell: pwsh
+        
+      - name: Install MSYS2 unzip (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S unzip"
 
       - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.sys.os, 'macos')
