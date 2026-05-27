@@ -11,23 +11,18 @@ case "$OS_NAME" in
       else
         OS="linux-gnu"
         OS_KRYLOV="linux"
+        EXTENSION_KRYLOV="tar.gz"
       fi
       ;;
     Darwin*)
 		OS="apple-darwin"
 		OS_KRYLOV="macos"
+		EXTENSION_KRYLOV="tar.gz"
 		;;
-    Windows*)
+    Windows*|MINGW64_NT*|MSYS_NT*)
 		OS="w64-mingw32"
 		OS_KRYLOV="windows"
-		;;
-    MINGW64_NT*)
-		OS="w64-mingw32"
-		OS_KRYLOV="windows"
-		;;
-    MSYS_NT*)
-		OS="w64-mingw32"
-		OS_KRYLOV="windows"
+		EXTENSION_KRYLOV="zip"
 		;;
     *)
 		echo "Unsupported OS: $OS_NAME"
@@ -155,7 +150,7 @@ fi
 # download Krylov.jl
 VERSION="v0.0.23"
 REPO="https://github.com/amontoison/Krylov.jl/releases/download/${VERSION}"
-ASSET_NAME="libkrylov-${OS_KRYLOV}-${ARCH_KRYLOV}.tar.gz"
+ASSET_NAME="libkrylov-${OS_KRYLOV}-${ARCH_KRYLOV}.${EXTENSION_KRYLOV}"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o libkrylov.tar.gz "$ASSET_URL"
