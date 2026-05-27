@@ -206,6 +206,12 @@ jobs:
       # TEST
       # =========================================================
 
+      - name: Set PATH (Windows)
+        if: matrix.toolchain == 'mingw'
+        shell: msys2 {0}
+        run: |
+          echo "PATH=${GITHUB_WORKSPACE}/dependencies/bin:$PATH" >> $GITHUB_ENV
+
       - name: Run tests
         working-directory: build
         run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
