@@ -144,6 +144,7 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+            -DKRYLOV=${{github.workspace}}/dependencies/lib/libkrylov.so \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
 
@@ -174,6 +175,7 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+            -DKRYLOV=${{github.workspace}}/dependencies/lib/libkrylov.dylib \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
