@@ -370,6 +370,9 @@ extern "C" {
    // gets the dual solution associated with the upper bounds (once the model was solved)
    void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution);
 
+   // gets the values of the constraints at the solution (once the model was solved)
+   void uno_get_solution_constraints(void* solver, double* constraint_values);
+
    // gets the primal feasibility residual at the solution (once the model was solved)
    double uno_get_solution_primal_feasibility(void* solver);
 

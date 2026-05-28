@@ -833,6 +833,18 @@ interface
 end interface
 
 !---------------------------------------------
+! uno_get_solution_constraints
+!---------------------------------------------
+interface
+   subroutine uno_get_solution_constraints(solver, constraint_values) &
+      bind(C, name="uno_get_solution_constraints")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double) :: constraint_values(*)
+   end subroutine uno_get_solution_constraints
+end interface
+
+!---------------------------------------------
 ! uno_get_solution_primal_feasibility
 !---------------------------------------------
 interface
