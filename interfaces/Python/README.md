@@ -156,6 +156,7 @@ To inspect the result of the optimization, read the attributes of the `result` o
 - the dual solution associated with the general constraints: `result.constraint_dual_solution`
 - the dual solution associated with the lower bounds: `result.lower_bound_dual_solution`
 - the dual solution associated with the upper bounds: `result.upper_bound_dual_solution`
+- the constraint values at the solution: `result.solution_constraints`
 - the primal feasibility residual at the solution: `result.solution_primal_feasibility`
 - the stationarity residual at the solution: `result.solution_stationarity`
 - the complementarity residual at the solution: `result.solution_complementarity`
