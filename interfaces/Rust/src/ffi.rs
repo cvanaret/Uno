@@ -204,6 +204,39 @@ extern "C" {
         base_indexing: uno_int,
     ) -> *mut c_void;
 
+    // uno_create_unconstrained_model
+    pub fn uno_create_unconstrained_model(
+        problem_type: *const c_char,
+        number_variables: uno_int,
+        base_indexing: uno_int,
+    ) -> *mut c_void;
+
+    // uno_set_variables_lower_bounds
+    pub fn uno_set_variables_lower_bounds(
+        model: *mut c_void,
+        variables_lower_bounds: *const f64,
+    ) -> bool;
+
+    // uno_set_variables_upper_bounds
+    pub fn uno_set_variables_upper_bounds(
+        model: *mut c_void,
+        variables_upper_bounds: *const f64,
+    ) -> bool;
+
+    // uno_set_variable_lower_bound
+    pub fn uno_set_variable_lower_bound(
+        model: *mut c_void,
+        variable_index: uno_int,
+        lower_bound: f64,
+    ) -> bool;
+
+    // uno_set_variable_upper_bound
+    pub fn uno_set_variable_upper_bound(
+        model: *mut c_void,
+        variable_index: uno_int,
+        upper_bound: f64,
+    ) -> bool;
+
     // uno_set_objective
     pub fn uno_set_objective(
         model: *mut c_void,
@@ -223,6 +256,32 @@ extern "C" {
         jacobian_row_indices: *const uno_int,
         jacobian_column_indices: *const uno_int,
         jacobian: uno_constraints_jacobian_callback,
+    ) -> bool;
+
+    // uno_set_constraints_lower_bounds
+    pub fn uno_set_constraints_lower_bounds(
+        model: *mut c_void,
+        constraints_lower_bounds: *const f64,
+    ) -> bool;
+
+    // uno_set_constraints_upper_bounds
+    pub fn uno_set_constraints_upper_bounds(
+        model: *mut c_void,
+        constraints_upper_bounds: *const f64,
+    ) -> bool;
+
+    // uno_set_constraint_lower_bound
+    pub fn uno_set_constraint_lower_bound(
+        model: *mut c_void,
+        constraint_index: uno_int,
+        lower_bound: f64,
+    ) -> bool;
+
+    // uno_set_constraint_upper_bound
+    pub fn uno_set_constraint_upper_bound(
+        model: *mut c_void,
+        constraint_index: uno_int,
+        upper_bound: f64,
     ) -> bool;
 
     // uno_set_jacobian_operator
@@ -348,8 +407,14 @@ extern "C" {
     // uno_optimize
     pub fn uno_optimize(solver: *mut c_void, model: *mut c_void);
 
+    // uno_get_method_description
+    pub fn uno_get_method_description(solver: *mut c_void) -> *const c_char;
+
     // uno_get_solver_integer_option
-    pub fn uno_get_solver_integer_option(solver: *mut c_void, option_name: *const c_char) -> c_int;
+    pub fn uno_get_solver_integer_option(
+        solver: *mut c_void,
+        option_name: *const c_char,
+    ) -> uno_int;
 
     // uno_get_solver_double_option
     pub fn uno_get_solver_double_option(solver: *mut c_void, option_name: *const c_char) -> f64;
