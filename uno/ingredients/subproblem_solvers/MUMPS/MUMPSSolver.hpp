@@ -4,7 +4,7 @@
 #ifndef UNO_MUMPSSOLVER_H
 #define UNO_MUMPSSOLVER_H
 
-#include "dmumps_c.h"
+#include <dmumps_c.h>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
 #include "linear_algebra/Indexing.hpp"

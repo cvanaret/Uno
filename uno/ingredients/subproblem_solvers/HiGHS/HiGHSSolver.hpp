@@ -4,8 +4,8 @@
 #ifndef UNO_HIGHSSOLVER_H
 #define UNO_HIGHSSOLVER_H
 
+#include <highs/Highs.h>
 #include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
-#include "Highs.h"
 #include "HiGHSWorkspace.hpp"
 
 namespace uno {
