@@ -28,10 +28,9 @@ extern "C" {
       int kk, ll, kkk, lll, mxws, mxlws;
    } WSC;
 
-   extern void
-   BQPD(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
-         double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, const int* mode, int* ifail,
-         int* info, int* iprint, int* nout);
+   extern void BQPD(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu,
+      double* f, double* fmin, double* g, double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq,
+      double* ws, int* lws, const int* mode, int* ifail, int* info, int* iprint, int* nout);
 }
 
 namespace uno {
