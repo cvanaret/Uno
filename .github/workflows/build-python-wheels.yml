@@ -71,18 +71,16 @@ jobs:
           compiler: 'gcc'
           version: '13'
 
-      - name: Install libomp and ccache (macOS)
+      - name: Install libomp (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         run: |
-          brew install libomp ccache
+          brew install libomp
           if [[ $(uname -m) == 'arm64' ]]; then
             echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
             echo "LIBGFORTRAN_FOLDER=/opt/homebrew/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
-            echo "CCACHE_BIN=/opt/homebrew/bin/ccache" >> $GITHUB_ENV
           else
             echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
-            echo "CCACHE_BIN=/usr/local/bin/ccache" >> $GITHUB_ENV
           fi
 
       - name: Build wheels (Linux)
@@ -93,14 +91,9 @@ jobs:
           CIBW_SKIP: cp*-*_i686 *-win32
           CIBW_ENVIRONMENT_LINUX:
             CMAKE_GENERATOR=Ninja
-            CMAKE_C_COMPILER_LAUNCHER=ccache
-            CMAKE_CXX_COMPILER_LAUNCHER=ccache
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
-            CCACHE_DIR=/project/.ccache
           CIBW_BEFORE_ALL_LINUX:
             bash dependencies/scripts/download_dependencies.sh
-          CIBW_BEFORE_BUILD_LINUX:
-            yum install -y epel-release ccache || dnf install -y ccache || true
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -131,8 +124,6 @@ jobs:
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
-            CMAKE_C_COMPILER_LAUNCHER=$CCACHE_BIN
-            CMAKE_CXX_COMPILER_LAUNCHER=$CCACHE_BIN
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
 
       - name: Build wheels (Windows)
