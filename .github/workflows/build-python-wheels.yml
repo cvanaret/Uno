@@ -21,6 +21,10 @@ on:
       - '*.yaml'
       - 'docs/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
 
@@ -85,8 +89,11 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.sys.build }}
           CIBW_SKIP: cp*-*_i686 *-win32
-          CIBW_ENVIRONMENT_LINUX: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
-          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          CIBW_ENVIRONMENT_LINUX:
+            CMAKE_GENERATOR=Ninja
+            CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+          CIBW_BEFORE_ALL_LINUX:
+            bash dependencies/scripts/download_dependencies.sh
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -110,13 +117,14 @@ jobs:
             set(CMAKE_EXE_LINKER_FLAGS "-L$LIBGFORTRAN_FOLDER -lgfortran -Wl,-rpath,$LIBGFORTRAN_FOLDER")
             set(CMAKE_SHARED_LINKER_FLAGS "-L$LIBGFORTRAN_FOLDER -lgfortran -Wl,-rpath,$LIBGFORTRAN_FOLDER")
             EOF
+            bash dependencies/scripts/download_dependencies.sh
           CIBW_ENVIRONMENT_MACOS: >
             CC=clang
             CXX=clang++
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
+            CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
-          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -132,7 +140,7 @@ jobs:
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
             delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
-            CMAKE_BUILD_PARALLEL_LEVEL=4
+            CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
             CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
@@ -151,7 +159,7 @@ jobs:
 
   build_sdist:
     name: Build source distribution
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
