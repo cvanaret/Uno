@@ -98,8 +98,9 @@ jobs:
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CCACHE_DIR=/host/tmp/ccache
           CIBW_BEFORE_ALL_LINUX:
-            yum install -y ccache || dnf install -y ccache
             bash dependencies/scripts/download_dependencies.sh
+            yum install -y epel-release || true
+            yum install -y ccache || dnf install -y ccache || true
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
