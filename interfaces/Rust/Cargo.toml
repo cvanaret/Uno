@@ -7,6 +7,10 @@ edition = "2021"
 name = "hs015"
 path = "example/example_hs015.rs"
 
+[[bin]]
+name = "hs015_idiomatic"
+path = "example/example_hs015_idiomatic.rs"
+
 [lib]
 name = "uno_rs"
 path = "src/lib.rs"

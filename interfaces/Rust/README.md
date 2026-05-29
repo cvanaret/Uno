@@ -1,7 +1,63 @@
 ## Uno's Rust interface: how to use Uno from Rust
 
 Uno's Rust interface (`uno_rs`) allows you to solve an optimization model described by callback functions.
-An example is available in the file [example_hs015.rs](example/example_hs015.rs).
+
+There are two ways to use the crate:
+
+- **The idiomatic API (recommended)** lets you describe your problem with ordinary Rust closures or functions. The crate handles the FFI layer (function pointers, `user_data`, raw slices) for you. See [example_hs015_idiomatic.rs](example/example_hs015_idiomatic.rs).
+- **The raw API** mirrors the C interface one-to-one: you pass `unsafe extern "C"` callbacks and raw pointers yourself. See [example_hs015.rs](example/example_hs015.rs). Use this only if you need full control over the FFI boundary.
+
+Both APIs share the same `Solver`, options, and `Solution` types.
+
+### Idiomatic API (closures)
+
+Import the safe builder:
+
+```rust
+use uno_rs::{uno_int, Problem, Solver, UNO_MINIMIZE, UNO_ZERO_BASED_INDEXING};
+```
+
+Build a [`Problem`] and attach an objective, constraints and (optionally) a Hessian using closures. Each closure takes safe `&[f64]` inputs and writes into a `&mut [f64]` (or `&mut f64`) output, returning `Ok(())` on success or `Err(())` to signal an evaluation error at the current point:
+
+```rust
+let var_lb = [f64::NEG_INFINITY, f64::NEG_INFINITY];
+let var_ub = [0.5, f64::INFINITY];
+let mut problem = Problem::new("NLP", &var_lb, &var_ub, UNO_ZERO_BASED_INDEXING)?;
+
+// Objective and its gradient.
+problem.set_objective(
+    UNO_MINIMIZE,
+    |x, obj| { *obj = 100.0 * (x[1] - x[0]*x[0]).powi(2) + (1.0 - x[0]).powi(2); Ok(()) },
+    |x, g| {
+        g[0] = 400.0*x[0].powi(3) - 400.0*x[0]*x[1] + 2.0*x[0] - 2.0;
+        g[1] = 200.0 * (x[1] - x[0]*x[0]);
+        Ok(())
+    },
+)?;
+
+// Constraints c0 = x0*x1, c1 = x0 + x1^2, plus their Jacobian (COO order).
+let con_lb = [1.0, 0.0];
+let con_ub = [f64::INFINITY, f64::INFINITY];
+let jac_rows = [0, 1, 0, 1];
+let jac_cols = [0, 0, 1, 1];
+problem.set_constraints(
+    |x, c| { c[0] = x[0]*x[1]; c[1] = x[0] + x[1]*x[1]; Ok(()) },
+    &con_lb, &con_ub, &jac_rows, &jac_cols,
+    |x, jv| { jv[0] = x[1]; jv[1] = 1.0; jv[2] = x[0]; jv[3] = 2.0*x[1]; Ok(()) },
+)?;
+
+problem.set_initial_primal_iterate(&[-2.0, 1.0])?;
+
+let solver = Solver::new();
+solver.set_preset("ipopt");
+let solution = solver.solve(&problem);   // constraint count is taken from the Problem
+```
+
+Because these are real closures, they may capture state from their environment — something the raw `extern "C"` function-pointer callbacks cannot do.
+
+The builder methods return `Result<&mut Self, UnoError>`, so failures surface as ordinary Rust errors (and the `&mut Self` return makes chaining with `?` convenient). `Solver::solve` takes a `&Problem` and reads the constraint count from it, so dual vectors always come back with the right length.
+
+The rest of this document describes the **raw API**.
 
 Start by importing from the crate:
 

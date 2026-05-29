@@ -1,6 +1,9 @@
 // uno-rs: Rust interface to the Uno solver
 
 pub mod ffi;
+pub mod safe;
+
+pub use safe::{Problem, UnoError};
 
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_void};
@@ -362,6 +365,19 @@ impl Solver {
     pub fn optimize_with_nc(&self, model: &Model, number_constraints: usize) -> Solution {
         unsafe { ffi::uno_optimize(self.ptr, model.ptr) }
         self.collect_solution(model.number_variables, number_constraints as uno_int)
+    }
+    
+    /// Optimizes a safe [`Problem`] and returns a [`Solution`].
+    ///
+    /// Unlike [`optimize_with_nc`](Self::optimize_with_nc), the number of
+    /// constraints is taken from the `Problem`, so dual vectors are always
+    /// collected with the correct length.
+    pub fn solve(&self, problem: &crate::safe::Problem) -> Solution {
+        unsafe { ffi::uno_optimize(self.ptr, problem.as_ptr()) }
+        self.collect_solution(
+            problem.number_variables() as uno_int,
+            problem.number_constraints() as uno_int,
+        )
     }
 
     fn collect_solution(&self, n: uno_int, nc: uno_int) -> Solution {
