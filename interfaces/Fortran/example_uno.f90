@@ -10,7 +10,7 @@ program example_uno
     type(c_ptr) :: model, solver
     real(c_double) :: solution_objective
     real(c_double), dimension(number_variables) :: primal_solution, lower_bound_dual_solution, upper_bound_dual_solution
-    real(c_double), dimension(number_constraints) :: constraint_dual_solution
+    real(c_double), dimension(number_constraints) :: constraint_dual_solution, solution_constraints
     real(c_double) :: solution_primal_feasibility, solution_stationarity, solution_complementarity
     integer(uno_int) :: optimization_status, iterate_status, option_type
     logical(c_bool) :: success, print_solution = .true.
@@ -184,6 +184,9 @@ program example_uno
 
     call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
     print *, 'Upper bound dual solution = ', upper_bound_dual_solution
+    
+    call uno_get_solution_constraints(solver, solution_constraints)
+    print *, 'Solution constraints = ', solution_constraints
 
     solution_primal_feasibility = uno_get_solution_primal_feasibility(solver)
     print *, 'Primal feasibility at solution = ', solution_primal_feasibility

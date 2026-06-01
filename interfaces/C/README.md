@@ -203,6 +203,10 @@ void uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution);
 ```c
 void uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
 ```
+- the constraint values at the solution:
+```c
+void uno_get_solution_constraints(solver, constraint_values);
+```
 - the primal feasibility measure at the solution:
 ```c
 double uno_get_solution_primal_feasibility(solver);

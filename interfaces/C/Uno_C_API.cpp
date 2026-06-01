@@ -1117,6 +1117,13 @@ void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_so
    }
 }
 
+void uno_get_solution_constraints(void* solver, double* constraint_values) {
+   const Result* result = uno_get_result(solver);
+   for (size_t constraint_index: Range(result->number_constraints)) {
+      constraint_values[constraint_index] = result->constraint_values[constraint_index];
+   }
+}
+
 double uno_get_solution_primal_feasibility(void* solver) {
    const Result* result = uno_get_result(solver);
    return result->solution_primal_feasibility;
