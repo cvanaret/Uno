@@ -99,6 +99,7 @@ namespace uno {
       {"linear_solver", OptionType::STRING},
       {"preset", OptionType::STRING},
       {"option_file", OptionType::STRING},
+      {"write_solution_to_file", OptionType::BOOL},
    };
 
    // setters

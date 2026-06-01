@@ -55,6 +55,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `protect_actual_reduction_against_roundoff` | bool | `false` | Whether the actual reduction is slightly modified to account for roundoff |
 | `protected_actual_reduction_macheps_coefficient` | double | 10 | Coefficient of the machine epsilon in the protected actual reduction |
 | `print_subproblem` | bool |  `false` | Whether the subproblem is printed in `DEBUG` mode |
+| `write_solution_to_file` | bool |  `false` | Whether the solution is printed to a file (used by AMPL and CUTEst) |
 
 ## Globalization strategy options
 
