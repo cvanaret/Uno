@@ -1,7 +1,9 @@
 # Getting started
 
+## Building a model and the solver
+
 In [Python](../interfaces/python), [Julia](../interfaces/julia), [C](../interfaces/c), and [Fortran](../interfaces/fortran), building an optimization model is incremental: you may attach bounds, an objective, constraints, and an initial primal-dual iterate to a particular model, as well as a Lagrangian Hessian, a Lagrangian Hessian operator, and a Lagrangian convention when the model is defined manually instead of via a modeling framework.
-By default, a model is unconstrained, has no objective, no Hessian, and has the Lagrangian convention $\mathcal{L} = f(x) - y^T c(x) - z$.
+By default, a model is unconstrained, has no objective, no Hessian, and has the Lagrangian convention similar to $\mathcal{L} = f(x) - y^T c(x) - z^T x$.
 
 The code snippets below present the Python and Julia/JuMP implementation of the `hs015` instance.
 
@@ -84,3 +86,6 @@ The code snippets below present the Python and Julia/JuMP implementation of the 
     objective_value(jump_model)     # objective value
     value.(x)                       # primal solution
     ```
+
+## Setting options
+
