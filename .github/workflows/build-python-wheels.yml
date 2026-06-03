@@ -130,6 +130,8 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
+          CIBW_CONFIG_SETTINGS_MACOS: >
+            cmake.define.KRYLOV=dependencies/lib/libkrylov.dylib
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -154,6 +156,7 @@ jobs:
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
+            cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
 
       - name: Store artifacts
