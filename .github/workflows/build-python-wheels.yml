@@ -83,9 +83,10 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.sys.build }}
           CIBW_SKIP: cp*-*_i686 *-win32
-          CIBW_ENVIRONMENT_LINUX:
+          CIBW_ENVIRONMENT_LINUX: >
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+            LD_LIBRARY_PATH=/project/dependencies/lib:/project/dependencies/lib/julia
           CIBW_BEFORE_ALL_LINUX:
             bash dependencies/scripts/download_dependencies.sh
 
