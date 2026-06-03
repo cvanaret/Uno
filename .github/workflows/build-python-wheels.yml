@@ -52,6 +52,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install unzip (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pacman -Sy --noconfirm
+          pacman -S --noconfirm unzip
+
       - run: pip install cibuildwheel
         if: runner.os != 'Windows'
 
