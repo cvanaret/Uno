@@ -119,6 +119,8 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
+          CIBW_CONFIG_SETTINGS_MACOS: >
+            cmake.define.KRYLOV=dependencies/lib/libkrylov.dylib
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -145,6 +147,7 @@ jobs:
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
+            cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
