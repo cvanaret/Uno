@@ -54,9 +54,8 @@ jobs:
 
       - name: Install unzip (Windows)
         if: runner.os == 'Windows'
-        run: |
-          pacman -Sy --noconfirm
-          pacman -S --noconfirm unzip
+        shell: pwsh
+        run: C:/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm --needed unzip"
 
       - run: pip install cibuildwheel
         if: runner.os != 'Windows'
