@@ -49,3 +49,6 @@ MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
 MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
 # HiGHS
 HIGHS = "dependencies/lib/libhighs.a"
+# Krylov.jl
+KRYLOV = "dependencies/lib/libkrylov.so"
+KRYLOV_INCLUDE_DIR = "dependencies/include"
