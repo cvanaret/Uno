@@ -92,8 +92,8 @@ jobs:
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_31
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_39
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_35
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_35
           CIBW_BUILD: ${{ matrix.sys.build }}
           CIBW_SKIP: cp38-* *_i686 *-win32
           CIBW_ENVIRONMENT_LINUX: >
