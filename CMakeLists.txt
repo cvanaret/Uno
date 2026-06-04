@@ -412,18 +412,6 @@ if(SKBUILD)
       set_target_properties(unopy PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
    endif()
 
-   # On Windows, statically link the C++/GCC runtime into the extension so the
-   # .pyd carries no shared libstdc++-6.dll / libgcc_s_seh-1.dll dependency. That
-   # removes the "procedure could not be found" load failure that occurs when the
-   # vendored runtime (msys2's, from delvewheel --add-path) is built by a
-   # different MinGW than the extension and lacks a symbol it needs. libkrylov
-   # keeps its own (Julia's) runtime, which ships next to it in unopy/lib.
-   # NOTE: if the link warns about duplicate runtimes, drop the static libstdc++.a
-   # you pass via AUXILIARY_LIBRARIES on Windows — these flags supersede it.
-   if(MINGW)
-      target_link_options(unopy PRIVATE -static-libgcc -static-libstdc++)
-   endif()
-
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
