@@ -436,18 +436,23 @@ if(SKBUILD)
       get_filename_component(KRYLOV_ABS "${KRYLOV}" ABSOLUTE)
       get_filename_component(KRYLOV_DIR "${KRYLOV_ABS}" DIRECTORY)
 
-      # Directory holding the Julia kernel libraries (lib/julia next to
-      # lib/libkrylov in the juliac layout). Override with -DJULIA_RUNTIME_DIR=...
-      # if your download script lays the dependencies out differently.
-      set(JULIA_RUNTIME_DIR "${KRYLOV_DIR}/julia" CACHE PATH "Directory containing the Julia runtime")
-
-      # libkrylov goes into unopy/lib/ (a directory literally named 'lib', which
-      # is what libkrylov's @loader_path/../lib rpath expects to find itself in).
-      install(FILES "${KRYLOV_ABS}" DESTINATION unopy/lib)
-
-      # The Julia runtime goes into unopy/lib/julia/, verbatim, so libkrylov's
-      # @loader_path/../lib/julia ($ORIGIN/../lib/julia) rpath resolves to it.
-      install(DIRECTORY "${JULIA_RUNTIME_DIR}/" DESTINATION unopy/lib/julia)
+      # Copy the ENTIRE dependency lib/ tree into unopy/lib, preserving structure:
+      #   lib/libkrylov.dylib        -> unopy/lib/libkrylov.dylib
+      #   lib/libjulia.*.dylib       -> unopy/lib/libjulia.*.dylib   (Julia public)
+      #   lib/julia/*.dylib          -> unopy/lib/julia/*.dylib      (Julia internal)
+      # This reproduces juliac's build-time layout exactly, so every one of
+      # libkrylov's baked-in rpaths resolves: @loader_path/../lib finds the public
+      # libjulia.*, @loader_path/../lib/julia finds the internal kernel. Installing
+      # only libkrylov + the julia/ subdir (as before) missed libjulia.*, which
+      # sits at the top of lib/, not inside lib/julia/.
+      #
+      # Static archives are excluded: they're linked into the extension at build
+      # time, not loaded at runtime, so they would only bloat the wheel.
+      install(DIRECTORY "${KRYLOV_DIR}/"
+              DESTINATION unopy/lib
+              USE_SOURCE_PERMISSIONS
+              PATTERN "*.a"   EXCLUDE
+              PATTERN "*.lib" EXCLUDE)
    endif()
 endif()
 
