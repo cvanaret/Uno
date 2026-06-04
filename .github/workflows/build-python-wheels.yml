@@ -105,6 +105,8 @@ jobs:
           CIBW_TEST_SKIP: "*-manylinux_*"
           CIBW_BEFORE_ALL_LINUX:
             bash dependencies/scripts/download_dependencies.sh
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
+            auditwheel repair --exclude libkrylov.so --exclude 'libjulia*.so*' --exclude 'libopenlibm*.so*' -w {dest_dir} {wheel}
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -140,7 +142,7 @@ jobs:
             cmake.define.KRYLOV=dependencies/lib/libkrylov.dylib
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
             DYLD_LIBRARY_PATH=${{ github.workspace }}/dependencies/lib:${{ github.workspace }}/dependencies/lib/julia
-            delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}
+            delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies --no-sanitize-rpaths -w {dest_dir} -v {wheel}
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -158,10 +160,10 @@ jobs:
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
-            CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
-            CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
-            CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
-            CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
+            CMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/mingw32-make.exe
+            CMAKE_C_COMPILER=C:/msys64/mingw64/bin/gcc.exe
+            CMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe
+            CMAKE_Fortran_COMPILER=C:/msys64/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
