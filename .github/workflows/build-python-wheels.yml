@@ -175,6 +175,20 @@ jobs:
           name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
           path: wheelhouse/*.whl
 
+      - name: Diagnose Windows DLL (temporary)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/unopy-*-win_amd64.whl | Select-Object -First 1
+          python -m pip install wheel
+          python -m wheel unpack $whl.FullName -d C:\tmp\w
+          $pyd = Get-ChildItem C:\tmp\w\*\unopy\*.pyd | Select-Object -First 1
+          Write-Host "=== PYD: $($pyd.FullName) ==="
+          Write-Host "=== unopy.libs contents ==="
+          Get-ChildItem C:\tmp\w\*\unopy.libs\ | Select-Object Name
+          # ntldd ships with MSYS2; resolves the import tree and flags missing ones
+          C:/msys64/usr/bin/bash -lc "ntldd -R '$($pyd.FullName -replace '\\','/')' 2>&1 | grep -iE 'not found|error' || echo 'ntldd: no unresolved imports reported'"
+
   # test the Linux wheels with glibc ≥ 2.35
   test-linux-wheels:
     needs: build_wheels
