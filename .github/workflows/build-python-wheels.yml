@@ -148,14 +148,14 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
-          CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
+          CIBW_SKIP: cp314t-* cp*-*_i686 *-win32 cp1*
           CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' -w {dest_dir} {wheel}"
+            delvewheel repair --no-mangle-all --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
