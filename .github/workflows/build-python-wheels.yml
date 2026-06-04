@@ -26,7 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
+  CIBW_TEST_COMMAND: >
+    python {project}/interfaces/Python/tests/run_wheel_tests.py
+  CIBW_TEST_REQUIRES: numpy
 
 jobs:
   build_wheels:
@@ -106,7 +108,7 @@ jobs:
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             LD_LIBRARY_PATH=/project/dependencies/lib:/project/dependencies/lib/julia
             AUDITWHEEL_PLAT=manylinux_2_35_$(uname -m)
-          # the Linux wheels are tested separately with glibc ≥ 2.35
+          # Linux wheels need glibc 2.35; test them in a separate job
           CIBW_TEST_SKIP: "*-manylinux_*"
           CIBW_BEFORE_ALL_LINUX:
             bash dependencies/scripts/download_dependencies.sh
@@ -177,15 +179,6 @@ jobs:
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
 
-      - name: Test wheel (Windows)
-        if: always() && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $tag = python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')"
-          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*win_amd64.whl | Where-Object { $_.Name -like "*$tag-*" } | Select-Object -First 1
-          python -m pip install --force-reinstall $whl.FullName
-          python interfaces/Python/example/example_hs015.py
-
       - name: Store artifacts
         uses: actions/upload-artifact@v4
         if: success() || failure()
@@ -207,9 +200,11 @@ jobs:
           merge-multiple: true
       - uses: actions/setup-python@v5
         with: { python-version: '3.11' }
-      - run: |
+      - shell: bash
+        run: |
           python -m pip install --find-links wheelhouse --only-binary=:all: unopy
-          python interfaces/Python/example/example_hs015.py
+          cd "$RUNNER_TEMP"   # run from outside the repo so 'import unopy' hits the wheel, not the source
+          python "$GITHUB_WORKSPACE/interfaces/Python/tests/run_wheel_tests.py"
 
   build_sdist:
     name: Build source distribution
