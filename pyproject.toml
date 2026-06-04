@@ -34,6 +34,11 @@ cmake.verbose = true
 wheel.cmake = true
 wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init__.py
 
+[tool.cibuildwheel]
+test-command = 'python -c "import unopy; unopy.test_libkrylov()"'
+test-requires = "numpy"
+test-skip = "*-manylinux_*"   # Linux wheels need glibc 2.35; test them in a separate job
+
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
 BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
