@@ -169,12 +169,17 @@ jobs:
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
 
+      - name: List wheels (temporary)
+        if: always()
+        shell: pwsh
+        run: Get-ChildItem -Recurse ${{ github.workspace }} -Filter *.whl -ErrorAction SilentlyContinue | Select-Object FullName
+
       - name: Store artifacts
         uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
-          path: wheelhouse/*.whl
+          path: ${{ github.workspace }}/wheelhouse/*.whl
           if-no-files-found: warn
 
       - name: Diagnose Windows DLL (temporary)
