@@ -213,7 +213,8 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.11' }
 
-      - shell: bash
+      - name: Run tests
+        shell: bash
         run: |
           ls -R wheelhouse || { echo "no wheels downloaded"; exit 1; }
           python -m pip install numpy

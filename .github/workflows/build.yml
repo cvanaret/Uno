@@ -204,6 +204,7 @@ jobs:
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
+          -DKRYLOV_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
           -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
           -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -213,6 +214,7 @@ jobs:
           -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
           -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
+          -DKRYLOV=${{github.workspace}}/dependencies/lib/libkrylov.so \
           -DBUILD_STATIC_LIBS=ON \
           -DBUILD_SHARED_LIBS=ON
         
