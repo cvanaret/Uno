@@ -182,19 +182,18 @@ jobs:
           path: ${{ github.workspace }}/wheelhouse/*.whl
           if-no-files-found: warn
 
-      - name: Diagnose Windows DLL (temporary)
+      - name: Find and inspect wheel (temporary)
         if: always() && runner.os == 'Windows'
         shell: pwsh
         run: |
-          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/unopy-*-win_amd64.whl | Select-Object -First 1
-          python -m pip install wheel
-          python -m wheel unpack $whl.FullName -d C:\tmp\w
-          $pyd = Get-ChildItem C:\tmp\w\*\unopy\*.pyd | Select-Object -First 1
-          Write-Host "=== PYD: $($pyd.FullName) ==="
-          Write-Host "=== unopy.libs contents ==="
-          Get-ChildItem C:\tmp\w\*\unopy.libs\ | Select-Object Name
-          # ntldd ships with MSYS2; resolves the import tree and flags missing ones
-          C:/msys64/usr/bin/bash -lc "ntldd -R '$($pyd.FullName -replace '\\','/')' 2>&1 | grep -iE 'not found|error' || echo 'ntldd: no unresolved imports reported'"
+          $whl = Get-ChildItem -Recurse $env:TEMP -Filter *win_amd64.whl -ErrorAction SilentlyContinue |
+                 Where-Object { $_.FullName -like '*repaired_wheel*' } | Select-Object -First 1
+          if (-not $whl) { Write-Error "no repaired wheel found in TEMP"; exit 1 }
+          Write-Host "=== $($whl.FullName) ==="
+          python -m wheel unpack $whl.FullName --dest C:\tmp\w
+          Get-ChildItem -Recurse C:\tmp\w -Directory -Filter unopy.libs | ForEach-Object { Get-ChildItem $_.FullName | Select-Object Name }
+          $pyd = (Get-ChildItem -Recurse C:\tmp\w -Filter *.pyd | Select-Object -First 1).FullName -replace '\\','/'
+          C:/msys64/usr/bin/bash -lc "ntldd -R '$pyd' 2>&1 | grep -iE 'not found|error' || echo 'ntldd: no unresolved imports'"
 
   # test the Linux wheels with glibc ≥ 2.35
   test-linux-wheels:
