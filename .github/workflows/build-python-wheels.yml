@@ -184,7 +184,6 @@ jobs:
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
-          CIBW_TEST_SKIP: "*-win_amd64"
 
       - name: Test wheel (Windows)
         if: always() && runner.os == 'Windows'
