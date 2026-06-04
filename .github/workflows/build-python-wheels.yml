@@ -174,10 +174,14 @@ jobs:
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
           CIBW_TEST_SKIP: "*-win_amd64"
 
-      - name: List wheels (temporary)
-        if: always()
+      - name: Test wheel (Windows)
+        if: always() && runner.os == 'Windows'
         shell: pwsh
-        run: Get-ChildItem -Recurse ${{ github.workspace }} -Filter *.whl -ErrorAction SilentlyContinue | Select-Object FullName
+        run: |
+          $tag = python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')"
+          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*win_amd64.whl | Where-Object { $_.Name -like "*$tag-*" } | Select-Object -First 1
+          python -m pip install --force-reinstall $whl.FullName
+          python interfaces/Python/example/example_hs015.py
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
@@ -186,16 +190,6 @@ jobs:
           name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
           path: ${{ github.workspace }}/wheelhouse/*.whl
           if-no-files-found: warn
-
-      - name: Inspect wheel layout (Windows)
-        if: always() && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $tag = python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')"
-          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*win_amd64.whl | Where-Object { $_.Name -like "*$tag-*" } | Select-Object -First 1
-          python -m wheel unpack $whl.FullName --dest C:\tmp\w
-          Write-Host "=== everything in the package ==="
-          Get-ChildItem -Recurse C:\tmp\w -Include *.dll,*.pyd | Select-Object FullName
 
   # test the Linux wheels with glibc ≥ 2.35
   test-linux-wheels:
