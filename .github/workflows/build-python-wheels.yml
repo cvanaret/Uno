@@ -168,6 +168,7 @@ jobs:
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
+          CIBW_TEST_SKIP: "*-win_amd64"
 
       - name: List wheels (temporary)
         if: always()
@@ -182,18 +183,22 @@ jobs:
           path: ${{ github.workspace }}/wheelhouse/*.whl
           if-no-files-found: warn
 
-      - name: Find and inspect wheel (temporary)
+      - name: Inspect + test wheel (Windows)
         if: always() && runner.os == 'Windows'
         shell: pwsh
         run: |
-          $whl = Get-ChildItem -Recurse $env:TEMP -Filter *win_amd64.whl -ErrorAction SilentlyContinue |
-                 Where-Object { $_.FullName -like '*repaired_wheel*' } | Select-Object -First 1
-          if (-not $whl) { Write-Error "no repaired wheel found in TEMP"; exit 1 }
+          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*win_amd64.whl | Select-Object -First 1
+          if (-not $whl) { Write-Error "no wheel in wheelhouse"; exit 1 }
           Write-Host "=== $($whl.FullName) ==="
           python -m wheel unpack $whl.FullName --dest C:\tmp\w
+          Write-Host "=== unopy.libs (want original names, no -<hash>) ==="
           Get-ChildItem -Recurse C:\tmp\w -Directory -Filter unopy.libs | ForEach-Object { Get-ChildItem $_.FullName | Select-Object Name }
           $pyd = (Get-ChildItem -Recurse C:\tmp\w -Filter *.pyd | Select-Object -First 1).FullName -replace '\\','/'
+          Write-Host "=== unresolved imports ==="
           C:/msys64/usr/bin/bash -lc "ntldd -R '$pyd' 2>&1 | grep -iE 'not found|error' || echo 'ntldd: no unresolved imports'"
+          Write-Host "=== import test ==="
+          python -m pip install $whl.FullName
+          python interfaces/Python/example/example_hs015.py
 
   # test the Linux wheels with glibc ≥ 2.35
   test-linux-wheels:
