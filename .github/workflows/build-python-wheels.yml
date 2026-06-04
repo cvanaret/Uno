@@ -83,8 +83,15 @@ jobs:
         run: |
           $url = "https://github.com/niXman/mingw-builds-binaries/releases/download/14.2.0-rt_v12-rev0/x86_64-14.2.0-release-posix-seh-msvcrt-rt_v12-rev0.7z"
           Invoke-WebRequest $url -OutFile mingw.7z
-          7z x mingw.7z -oC:\ -y      # extracts to C:\mingw64
-          C:\mingw64\bin\gcc --version
+          7z x mingw.7z -oC:\mingw1420 -y          # clean dir, NOT C:\mingw64
+          # the archive contains a top-level mingw64\ folder, so the compiler ends up at:
+          C:\mingw1420\mingw64\bin\gcc --version
+          C:\mingw1420\mingw64\bin\g++ --version
+
+      - name: Put 14.2 toolchain first on PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "C:\mingw1420\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
@@ -157,10 +164,10 @@ jobs:
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
-            CMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/mingw32-make.exe
-            CMAKE_C_COMPILER=C:/msys64/mingw64/bin/gcc.exe
-            CMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe
-            CMAKE_Fortran_COMPILER=C:/msys64/mingw64/bin/gfortran.exe
+            CMAKE_MAKE_PROGRAM=C:/mingw1420/mingw64/bin/mingw32-make.exe
+            CMAKE_C_COMPILER=C:/mingw1420/mingw64/bin/gcc.exe
+            CMAKE_CXX_COMPILER=C:/mingw1420/mingw64/bin/g++.exe
+            CMAKE_Fortran_COMPILER=C:/mingw1420/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
