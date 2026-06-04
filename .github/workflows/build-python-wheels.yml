@@ -148,7 +148,7 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
-          CIBW_SKIP: cp314t-* cp*-*_i686 *-win32 cp1*
+          CIBW_SKIP: cp314t-* cp*-*_i686 *-win32 cp31*
           CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
@@ -183,21 +183,18 @@ jobs:
           path: ${{ github.workspace }}/wheelhouse/*.whl
           if-no-files-found: warn
 
-      - name: Inspect + test wheel (Windows)
+      - name: Inspect wheel (Windows)
         if: always() && runner.os == 'Windows'
         shell: pwsh
         run: |
-          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*win_amd64.whl | Select-Object -First 1
-          if (-not $whl) { Write-Error "no wheel in wheelhouse"; exit 1 }
-          Write-Host "=== $($whl.FullName) ==="
+          $tag = python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')"
+          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*win_amd64.whl |
+                 Where-Object { $_.Name -like "*$tag-*" } | Select-Object -First 1
+          if (-not $whl) { Write-Error "no $tag wheel in wheelhouse"; exit 1 }
           python -m wheel unpack $whl.FullName --dest C:\tmp\w
-          Write-Host "=== unopy.libs (want original names, no -<hash>) ==="
+          Write-Host "=== full unopy.libs ==="
           Get-ChildItem -Recurse C:\tmp\w -Directory -Filter unopy.libs | ForEach-Object { Get-ChildItem $_.FullName | Select-Object Name }
-          $pyd = (Get-ChildItem -Recurse C:\tmp\w -Filter *.pyd | Select-Object -First 1).FullName -replace '\\','/'
-          Write-Host "=== unresolved imports ==="
-          C:/msys64/usr/bin/bash -lc "ntldd -R '$pyd' 2>&1 | grep -iE 'not found|error' || echo 'ntldd: no unresolved imports'"
-          Write-Host "=== import test ==="
-          python -m pip install $whl.FullName
+          python -m pip install --force-reinstall $whl.FullName
           python interfaces/Python/example/example_hs015.py
 
   # test the Linux wheels with glibc ≥ 2.35
