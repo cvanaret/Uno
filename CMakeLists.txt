@@ -447,6 +447,10 @@ if(SKBUILD)
       # references (@loader_path/julia, $ORIGIN/julia) resolve inside unopy/.
       install(DIRECTORY "${JULIA_RUNTIME_DIR}/" DESTINATION unopy/julia)
    endif()
+
+   if(MINGW)
+      target_link_options(unopy PRIVATE -static-libgcc -static-libstdc++)
+   endif()
 endif()
 
 # ======================
