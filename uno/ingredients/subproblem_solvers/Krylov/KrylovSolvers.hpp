@@ -82,7 +82,7 @@ static void test_krylov_solvers() {
    ret = krylov_get_x(ws, x, N);
    assert(ret == 0);
 
-   std::cout << "Solution:";
+   std::cout << "KrylovSolvers: CG solution (should be a vector of 1):";
    for (int i = 0; i < N; i++) {
       std::cout << ' ' << x[i];
    }
