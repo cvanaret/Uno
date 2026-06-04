@@ -161,9 +161,11 @@ jobs:
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
+        if: success() || failure()
         with:
           name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
           path: wheelhouse/*.whl
+          if-no-files-found: warn
 
       - name: Diagnose Windows DLL (temporary)
         if: always() && runner.os == 'Windows'
