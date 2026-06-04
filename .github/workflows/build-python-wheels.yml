@@ -189,6 +189,7 @@ jobs:
 
   # test the Linux wheels with glibc ≥ 2.35
   test-linux-wheels:
+    name: Test Linux wheels (${{ matrix.runs-on }})
     needs: build_wheels
     runs-on: ${{ matrix.runs-on }}
     strategy:
@@ -215,6 +216,7 @@ jobs:
       - shell: bash
         run: |
           ls -R wheelhouse || { echo "no wheels downloaded"; exit 1; }
+          python -m pip install numpy
           python -m pip install --no-index --find-links "$GITHUB_WORKSPACE/wheelhouse" --only-binary=:all: unopy
           cd "$RUNNER_TEMP"   # run from outside the repo so 'import unopy' hits the wheel, not the source
           python "$GITHUB_WORKSPACE/interfaces/Python/tests/run_wheel_tests.py"
