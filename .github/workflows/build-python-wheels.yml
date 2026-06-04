@@ -155,7 +155,6 @@ jobs:
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
-            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
           CIBW_TEST_SKIP: "*-win_amd64"
 
       - name: List wheels (temporary)
