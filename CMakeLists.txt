@@ -451,10 +451,6 @@ if(SKBUILD)
               PATTERN "*.a"   EXCLUDE
               PATTERN "*.lib" EXCLUDE)
    endif()
-
-   if(MINGW)
-      target_link_options(unopy PRIVATE -static-libgcc -static-libstdc++)
-   endif()
 endif()
 
 # ======================
