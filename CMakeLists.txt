@@ -402,14 +402,14 @@ if(SKBUILD)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
    endif()
 
-   # The installed extension loads libkrylov from its own package directory.
-   # Bake a *relative* RPATH so @rpath/libkrylov.dylib (macOS) / libkrylov.so
-   # (Linux) resolves to unopy/ at runtime. Windows has no RPATH; the search
-   # path is set in unopy/__init__.py via os.add_dll_directory() instead.
+   # The installed extension loads libkrylov from a 'lib' subdirectory of the
+   # package. Point a relative RPATH there so @rpath/libkrylov.dylib (macOS) /
+   # libkrylov.so (Linux) resolves to unopy/lib/ at runtime. Windows has no
+   # RPATH; the search path is set in unopy/__init__.py via add_dll_directory().
    if(APPLE)
-      set_target_properties(unopy PROPERTIES INSTALL_RPATH "@loader_path")
+      set_target_properties(unopy PROPERTIES INSTALL_RPATH "@loader_path/lib")
    elseif(UNIX)
-      set_target_properties(unopy PROPERTIES INSTALL_RPATH "$ORIGIN")
+      set_target_properties(unopy PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
    endif()
 
    install(TARGETS unopy
@@ -420,12 +420,13 @@ if(SKBUILD)
    # =========================================================================
    # Bundle the Krylov + Julia runtime into the wheel, INTACT  (Unix only)
    # =========================================================================
-   # juliac emits a *relocatable tree*: libkrylov locates its Julia runtime via
-   # relative references (@loader_path/julia, $ORIGIN/julia) and runtime
-   # dlopen(). On macOS/Linux, delocate/auditwheel always rename SONAMEs and
-   # flatten the julia/ subdirectory, which shatters that layout (the tell-tale
-   # symptom is ".../.dylibs/julia/libopenlibm.dylib not found" at import). So on
-   # Unix we install the tree ourselves and exclude it from the repair tool.
+   # juliac emits a *relocatable tree*. libkrylov carries baked-in rpaths that
+   # assume it lives in a directory named 'lib' with the Julia runtime as a
+   # 'julia/' sibling (@loader_path/../lib, @loader_path/../lib/julia on macOS;
+   # the $ORIGIN equivalents on Linux). delocate/auditwheel would flatten and
+   # rename that tree, so on Unix we install it ourselves, reproducing that exact
+   # layout under unopy/lib so libkrylov's own rpaths resolve, and we exclude the
+   # tree from the repair tool (CIBW_REPAIR_WHEEL_COMMAND_*).
    #
    # Windows is intentionally NOT handled here: the Julia DLLs ship flat (no
    # subdirectory) and delvewheel can keep their names with --no-mangle-all, so
@@ -440,16 +441,13 @@ if(SKBUILD)
       # if your download script lays the dependencies out differently.
       set(JULIA_RUNTIME_DIR "${KRYLOV_DIR}/julia" CACHE PATH "Directory containing the Julia runtime")
 
-      # libkrylov sits next to the extension module (unopy/libkrylov.*)
-      install(FILES "${KRYLOV_ABS}" DESTINATION unopy)
+      # libkrylov goes into unopy/lib/ (a directory literally named 'lib', which
+      # is what libkrylov's @loader_path/../lib rpath expects to find itself in).
+      install(FILES "${KRYLOV_ABS}" DESTINATION unopy/lib)
 
-      # Preserve the julia/ subdirectory verbatim so libkrylov's relative
-      # references (@loader_path/julia, $ORIGIN/julia) resolve inside unopy/.
-      install(DIRECTORY "${JULIA_RUNTIME_DIR}/" DESTINATION unopy/julia)
-   endif()
-
-   if(MINGW)
-      target_link_options(unopy PRIVATE -static-libgcc -static-libstdc++)
+      # The Julia runtime goes into unopy/lib/julia/, verbatim, so libkrylov's
+      # @loader_path/../lib/julia ($ORIGIN/../lib/julia) rpath resolves to it.
+      install(DIRECTORY "${JULIA_RUNTIME_DIR}/" DESTINATION unopy/lib/julia)
    endif()
 endif()
 
