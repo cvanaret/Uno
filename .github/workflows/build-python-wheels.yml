@@ -138,7 +138,7 @@ jobs:
         shell: pwsh
         env:
           CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
-          CIBW_BEFORE_BUILD_WINDOWS: >
+          CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
             ForEach-Object { $_.LastWriteTime = Get-Date }"
