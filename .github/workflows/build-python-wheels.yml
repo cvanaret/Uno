@@ -190,19 +190,32 @@ jobs:
   # test the Linux wheels with glibc ≥ 2.35
   test-linux-wheels:
     needs: build_wheels
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs-on: ubuntu-24.04
+            pattern: cibw-wheels-ubuntu-latest-*
+          - runs-on: ubuntu-24.04-arm
+            pattern: cibw-wheels-ubuntu-22.04-arm-*
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
-          pattern: cibw-wheels-linux-*
+          pattern: ${{ matrix.pattern }}
           path: wheelhouse
           merge-multiple: true
+
       - uses: actions/setup-python@v5
         with: { python-version: '3.11' }
+
       - shell: bash
         run: |
-          python -m pip install --find-links wheelhouse --only-binary=:all: unopy
+          ls -R wheelhouse || { echo "no wheels downloaded"; exit 1; }
+          python -m pip install --no-index --find-links "$GITHUB_WORKSPACE/wheelhouse" --only-binary=:all: unopy
           cd "$RUNNER_TEMP"   # run from outside the repo so 'import unopy' hits the wheel, not the source
           python "$GITHUB_WORKSPACE/interfaces/Python/tests/run_wheel_tests.py"
 
