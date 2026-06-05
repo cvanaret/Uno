@@ -16,6 +16,54 @@ The code snippets below present the Python and JuMP implementations of the `hs01
     using UnoSolver, JuMP
     ```
 
+## Building the solver
+
+The solver is created as follows:
+
+=== "Python"
+
+    ```py
+    solver = unopy.UnoSolver()
+    ```
+
+=== "Julia/JuMP"
+
+    ```julia
+    solver = UnoSolver.Optimizer
+    ```
+
+### Setting a preset
+
+Presets are strategy combinations that mimic existing solvers (like filterSQP or IPOPT). A preset may be set as follows:
+
+=== "Python"
+
+    ```py
+    solver.set_preset("filtersqp")
+    ```
+
+=== "Julia/JuMP"
+
+    ```julia
+    solver = () -> UnoSolver.Optimizer(preset="filtersqp")
+    ```
+
+### Setting options
+
+Additional options may be set with the following syntax:
+
+=== "Python"
+
+    ```py
+    solver.set_options("hessian_model", "LBFGS")
+    ```
+
+=== "Julia/JuMP"
+
+    ```julia
+    solver = () -> UnoSolver.Optimizer(preset="filtersqp", hessian_model="LBFGS")
+    ```
+
 ## Building a model
 
 In [Python](../interfaces/python), [Julia](../interfaces/julia), [C](../interfaces/c), and [Fortran](../interfaces/fortran), building an optimization model is incremental: you may attach bounds, an objective, constraints, and an initial primal-dual iterate to a particular model, as well as a Lagrangian Hessian, a Lagrangian Hessian operator, and a Lagrangian convention when the model is defined manually instead of via a modeling framework.
@@ -38,9 +86,9 @@ In Python, the bounds are attached via the functions `set_variables_lower_bounds
 === "Julia/JuMP"
 
     ```julia
-    jump_model = Model(UnoSolver.Optimizer)
+    model = Model(solver)
     variables_upper_bounds = [0.5, Inf]
-    @variable(jump_model, x[i = 1:2] ≤ variables_upper_bounds[i])
+    @variable(model, x[i = 1:2] ≤ variables_upper_bounds[i])
     ```
 
 ### Objective
@@ -63,7 +111,7 @@ We then attach an objective function. The Python interface expects callback of t
 === "Julia/JuMP"
 
     ```julia
-    @objective(jump_model, Min, 100 * (x[2] - x[1]^2)^2 + (1 - x[1])^2)
+    @objective(model, Min, 100 * (x[2] - x[1]^2)^2 + (1 - x[1])^2)
     ```
 
 ### Constraints
@@ -85,15 +133,16 @@ We then attach the constraints and information about the constraint Jacobian, in
     number_jacobian_nonzeros = 4
     jacobian_row_indices = [0, 1, 0, 1]
     jacobian_column_indices = [0, 0, 1, 1]
-    model.set_constraints(number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds,
-                          number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
+    model.set_constraints(number_constraints, constraints, constraints_lower_bounds,
+        constraints_upper_bounds, number_jacobian_nonzeros, jacobian_row_indices,
+        jacobian_column_indices, jacobian)
     ```
 
 === "Julia/JuMP"
 
     ```julia
-    @constraint(jump_model, x[1] * x[2] - 1 ≥ 0)
-    @constraint(jump_model, x[1] + x[2]^2 ≥ 0)
+    @constraint(model, x[1] * x[2] - 1 ≥ 0)
+    @constraint(model, x[1] + x[2]^2 ≥ 0)
     ```
 
 ### Lagrangian Hessian
@@ -109,8 +158,8 @@ def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 number_hessian_nonzeros = 3
 hessian_row_indices = [0, 1, 1]
 hessian_column_indices = [0, 0, 1]
-model.set_lagrangian_hessian(number_hessian_nonzeros, unopy.LOWER_TRIANGLE, hessian_row_indices, hessian_column_indices,
-                             lagrangian_hessian)
+model.set_lagrangian_hessian(number_hessian_nonzeros, unopy.LOWER_TRIANGLE,
+    hessian_row_indices, hessian_column_indices, lagrangian_hessian)
 ```
 
 The convention of the Lagrangian should be specified in Python whenever the problem has simple bounds (in which cases the corresponding dual variables will be returned with the correct signs) or general constraints (the convention should match the construction of the Lagrangian Hessian if provided).
@@ -133,46 +182,6 @@ model.set_lagrangian_sign_convention(unopy.MULTIPLIER_NEGATIVE)
     set_start_value.(x, [-2., 1.])
     ```
 
-## Building the solver
-
-In JuMP, the model and the solver are built simultaneously (see above). In Python, the solver is created separately from the model:
-
-```py
-solver = unopy.UnoSolver()
-```
-
-### Setting a preset
-
-Presets are strategy combinations that mimic existing solvers (like filterSQP or IPOPT). A preset may be set as follows:
-
-=== "Python"
-
-    ```py
-    solver.set_preset("filtersqp")
-    ```
-
-=== "Julia/JuMP"
-
-    ```julia
-    jump_model = Model(() -> UnoSolver.Optimizer(preset="filtersqp"))
-    ```
-
-### Setting options
-
-Additional options may be set with the following syntax:
-
-=== "Python"
-
-    ```py
-    solver.set_options("hessian_model", "LBFGS")
-    ```
-
-=== "Julia/JuMP"
-
-    ```julia
-    jump_model = Model(() -> UnoSolver.Optimizer(preset="filtersqp", hessian_model="LBFGS"))
-    ```
-
 ## Solving the model
 
 The model is solved by calling the `optimize` function:
@@ -180,13 +189,13 @@ The model is solved by calling the `optimize` function:
 === "Python"
 
     ```py
-    result = uno_solver.optimize(model)
+    result = solver.optimize(model)
     ```
 
 === "Julia/JuMP"
 
     ```julia
-    optimize!(jump_model)
+    optimize!(model)
     ```
 
 ## Inspecting the result
@@ -202,7 +211,7 @@ TODO
 === "Julia/JuMP"
 
     ```julia
-    termination_status(jump_model)  # solver termination status
-    objective_value(jump_model)     # objective value
+    termination_status(model)  # solver termination status
+    objective_value(model)     # objective value
     value.(x)                       # primal solution
     ```
