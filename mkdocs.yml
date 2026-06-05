@@ -5,6 +5,7 @@ theme:
     - navigation.footer
     - navigation.top
     - content.code.copy
+    - content.tabs.link
 
 nav:
   - Introduction: 'index.md'
