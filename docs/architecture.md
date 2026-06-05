@@ -1,4 +1,4 @@
-# Uno: a unified solver for nonlinearly constrained optimization
+# Architecture
 
 We have implemented our unifying framework for nonlinearly constrained optimization within Uno, a modular solver written in C++17. A generic and flexible code, it supports a broad range of strategies that can be combined automatically and on the fly with no programming effort from the user. The code is packaged in a lightweight library (around 10,000 lines of code for the current version, excluding interfaces) available as open-source software under the MIT license at https://github.com/cvanaret/Uno. Uno is available via its C, Julia (registered package `UnoSolver.jl`), Python (the packaging of `unopy` is under development), Fortran, and AMPL interfaces.
 
@@ -33,7 +33,7 @@ Some strategy combinations are available as "presets" that automatically connect
 Interfaces to the following subproblem solvers are available:
 
 - **BQPD**: a null-space active-set solver for nonconvex QPs. BQPD accepts Hessian-vector products instead of an explicit matrix;
-- **MA57**, **MA27**, and **MUMPS**: direct solvers for sparse symmetric indefinite linear systems;
+- **MA57**, **MA27**, **MUMPS**, and **SSIDS**: direct solvers for sparse symmetric indefinite linear systems;
 - **HiGHS**: a parallel simplex implementation for linear programming.
 
 ### Definition of the subproblem
