@@ -64,9 +64,11 @@ Additional options may be set with the following syntax:
     solver = () -> UnoSolver.Optimizer(preset="filtersqp", hessian_model="LBFGS")
     ```
 
+A comprehensive list of options can be found [here](../options).
+
 ## Building a model
 
-In [Python](../interfaces/python), [Julia](../interfaces/julia), [C](../interfaces/c), and [Fortran](../interfaces/fortran), building an optimization model is incremental: you may attach bounds, an objective, constraints, and an initial primal-dual iterate to a particular model, as well as a Lagrangian Hessian, a Lagrangian Hessian operator, and a Lagrangian convention when the model is defined manually instead of via a modeling framework.
+Building an optimization model is incremental: you may attach bounds, an objective, constraints, and an initial primal-dual iterate to a particular model, as well as a Lagrangian Hessian, a Lagrangian Hessian operator, and a Lagrangian convention when the model is defined manually instead of via a modeling framework.
 By default, a model is unconstrained, has no objective, no Hessian, and has the Lagrangian convention similar to $\mathcal{L} = f(x) - y^T c(x) - z^T x$.
 
 ### Variables and bounds
@@ -160,6 +162,21 @@ hessian_row_indices = [0, 1, 1]
 hessian_column_indices = [0, 0, 1]
 model.set_lagrangian_hessian(number_hessian_nonzeros, unopy.LOWER_TRIANGLE,
     hessian_row_indices, hessian_column_indices, lagrangian_hessian)
+```
+
+Some of the methods implemented in Uno (e.g., SQP methods using the BQPD QP solver) support a Hessian-vector operator:
+
+```py
+def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers,
+								vector, result):
+	# the modeler should throw an exception if the function cannot be evaluated
+	hessian00 = objective_multiplier*(1200*x[0]**2. - 400.*x[1] + 2.)
+	hessian10 = -400.*objective_multiplier*x[0] - multipliers[0]
+	hessian11 = 200.*objective_multiplier - 2.*multipliers[1]
+	result[:] = [hessian00*vector[0] + hessian10*vector[1],
+				hessian10*vector[0] + hessian11*vector[1]]
+
+model.set_lagrangian_hessian_operator(lagrangian_hessian_operator)
 ```
 
 The convention of the Lagrangian should be specified in Python whenever the problem has simple bounds (in which cases the corresponding dual variables will be returned with the correct signs) or general constraints (the convention should match the construction of the Lagrangian Hessian if provided).
