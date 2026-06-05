@@ -143,8 +143,10 @@ We then attach the constraints and information about the constraint Jacobian, in
 === "Julia/JuMP"
 
     ```julia
-    @constraint(model, x[1] * x[2] - 1 ≥ 0)
-    @constraint(model, x[1] + x[2]^2 ≥ 0)
+    constraints = [
+        @constraint(model, x[1] * x[2] - 1 ≥ 0)
+        @constraint(model, x[1] + x[2]^2 ≥ 0)
+    ]
     ```
 
 ### Lagrangian Hessian
@@ -217,18 +219,62 @@ The model is solved by calling the `optimize` function:
 
 ## Inspecting the result
 
-TODO
+The termination status is given by:
 
 === "Python"
 
     ```py
-    print("Objective at solution:", result.solution_objective)
+    result.optimization_status
+    result.solution_status
     ```
 
 === "Julia/JuMP"
 
     ```julia
-    termination_status(model)  # solver termination status
-    objective_value(model)     # objective value
-    value.(x)                       # primal solution
+    termination_status(model)
+    ```
+
+The objective at the solution is given by:
+
+=== "Python"
+
+    ```py
+    result.solution_objective
+    ```
+
+=== "Julia/JuMP"
+
+    ```julia
+    objective_value(model)
+    ```
+
+The primal solution is given by:
+
+=== "Python"
+
+    ```py
+    result.primal_solution
+    ```
+
+=== "Julia/JuMP"
+
+    ```julia
+    value.(x)
+    ```
+
+The dual solution is given by:
+
+=== "Python"
+
+    ```py
+    result.constraint_dual_solution
+    result.lower_bound_dual_solution
+    result.upper_bound_dual_solution
+    ```
+
+=== "Julia/JuMP"
+
+    ```julia
+    dual.(constraints)
+    reduced_cost.(x)
     ```
