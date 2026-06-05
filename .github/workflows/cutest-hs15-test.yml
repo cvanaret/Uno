@@ -1,0 +1,129 @@
+name: CUTEst HS15 test
+
+# Installs Uno as a shared library, compiles CUTEst (classic ARCHDefs/make build,
+# the one the `runcutest -p uno` interface relies on), and solves the HS15 instance.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+jobs:
+  uno-cutest-hs15:
+    runs-on: ubuntu-latest
+
+    env:
+      BUILD_TYPE: Release
+      # CUTEst classic-install layout. The `runcutest -p uno` driver reads
+      # packages/$ARCH/$PRECISION and objects/$ARCH/$PRECISION, so it needs the
+      # ARCHDefs/make build (not the Meson build) plus SIFDecode + ARCHDefs.
+      ARCHDEFS:  ${{ github.workspace }}/ARCHDefs
+      SIFDECODE: ${{ github.workspace }}/SIFDecode
+      CUTEST:    ${{ github.workspace }}/CUTEst
+      MASTSIF:   ${{ github.workspace }}/sif
+      # Architecture key produced by the install answers below (Linux + gfortran).
+      MYARCH:    pc64.lnx.gfo
+
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      # Match the libgfortran5 ABI of Uno's precompiled dependencies (BQPD, UnoUtils).
+      - name: Install GCC / gfortran 14
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: gcc
+          version: '14'
+
+      # ----------------------------------------------------------------
+      # 1) Build & install Uno  ->  /usr/local/lib/libuno.so
+      #    (this is the path CUTEst's default `uno` package links against)
+      # ----------------------------------------------------------------
+      - name: Download Uno dependencies (BQPD, MUMPS, HiGHS, BLAS/LAPACK, METIS)
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure Uno (shared library)
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_FORTRAN_COMPILER=gfortran \
+            -DMUMPS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include \
+            -DMETIS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include \
+            -DBQPD=${{ github.workspace }}/dependencies/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${{ github.workspace }}/dependencies/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${{ github.workspace }}/dependencies/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${{ github.workspace }}/dependencies/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${{ github.workspace }}/dependencies/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${{ github.workspace }}/dependencies/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${{ github.workspace }}/dependencies/lib/libcblas.a;${{ github.workspace }}/dependencies/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${{ github.workspace }}/dependencies/lib/liblapack.a \
+            -DHIGHS=${{ github.workspace }}/dependencies/lib/libhighs.a \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build Uno
+        run: cmake --build build --config ${BUILD_TYPE} --parallel
+
+      - name: Install Uno
+        run: |
+          sudo cmake --install build
+          sudo ldconfig                 # refresh the linker cache for /usr/local/lib
+
+      # ----------------------------------------------------------------
+      # 2) Compile CUTEst (with SIFDecode + ARCHDefs)
+      # ----------------------------------------------------------------
+      - name: Fetch ARCHDefs, SIFDecode, CUTEst
+        run: |
+          git clone --depth=1 https://github.com/ralna/ARCHDefs.git  "$ARCHDEFS"
+          git clone --depth=1 https://github.com/ralna/SIFDecode.git "$SIFDECODE"
+          git clone --depth=1 https://github.com/ralna/CUTEst.git    "$CUTEST"
+
+      - name: Install SIFDecode
+        run: |
+          export TERM=xterm
+          cd "$SIFDECODE"
+          # Answers: Linux / 64-bit / gfortran / no modifications.
+          printf '1\n1\nN1\nNyy' > install_sifdecode_config
+          ./install_sifdecode < install_sifdecode_config
+
+      - name: Compile CUTEst (double precision)
+        run: |
+          export TERM=xterm
+          cd "$CUTEST"
+          # Answers: Linux / 64-bit / gfortran / gcc / no modifications.
+          printf '1\n1\nN1\n2\n2\nNNyDyN' > install_config
+          ./install_cutest < install_config
+
+      # ----------------------------------------------------------------
+      # 3) Provide HS15 and solve it through the Uno interface
+      # ----------------------------------------------------------------
+      - name: Get the SIF test set (MASTSIF — contains HS15.SIF)
+        run: git clone --depth=1 https://bitbucket.org/optrove/sif.git "$MASTSIF"
+        # Lighter alternative if you only ever need HS15:
+        #   mkdir -p "$MASTSIF"
+        #   curl -L -o "$MASTSIF/HS15.SIF" \
+        #     https://bitbucket.org/optrove/sif/raw/HEAD/HS15.SIF
+
+      - name: Run HS15 with Uno via CUTEst
+        run: |
+          export TERM=xterm
+          # -A: architecture key   -p uno: package   -D HS15: decode & solve HS15.SIF
+          # runcutest copies the default uno.opt (from $CUTEST/src/uno) into the run dir.
+          "$CUTEST/bin/runcutest" -A "$MYARCH" -p uno -D HS15
