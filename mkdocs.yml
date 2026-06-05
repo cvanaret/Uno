@@ -2,6 +2,7 @@ site_name: Uno
 theme:
   name: material
   features:
+    - navigation.expand
     - navigation.footer
     - navigation.top
     - content.code.copy
