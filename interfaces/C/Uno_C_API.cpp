@@ -899,11 +899,34 @@ uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    try {
-      return static_cast<uno_int>(uno_solver->options->get_option_type(option_name));
+      return static_cast<uno_int>(Options::option_types.at(option_name));
    }
    catch(const std::out_of_range&) {
       return UNO_OPTION_TYPE_NOT_FOUND;
    }
+}
+
+uno_int uno_get_solver_option_index(const char* option_name) {
+   const std::string option_name_str(option_name);
+   uno_int it = 0;
+   for (const auto& [name, value] : Options::option_types) {
+      if (name == option_name_str) {
+         return it;
+      }
+      ++it;
+   }
+   return -1;
+}
+
+const char* uno_get_solver_option_name(uno_int option_index) {
+   uno_int it = 0;
+   for (const auto& [name, value] : Options::option_types) {
+      if (it == option_index) {
+         return name.c_str();
+      }
+      ++it;
+   }
+   return nullptr;
 }
 
 bool uno_load_solver_option_file(void* solver, const char* file_name) {

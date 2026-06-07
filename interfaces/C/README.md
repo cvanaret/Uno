@@ -129,6 +129,13 @@ uno_set_solver_bool_option(solver, "print_solution", true);
 uno_set_solver_string_option(solver, "hessian_model", "exact");
 ```
 
+To get the type, name, and index of a Uno option:
+```c
+uno_get_solver_option_type(solver, "max_iterations");
+uno_int index = uno_get_solver_option_index("max_iterations"); // -1 if not found
+const char* name = uno_get_solver_option_name(0); // nullptr if not found
+```
+
 Options can also be loaded from a file that contains an `option value` pair per line (the example file `uno_default.opt` in the root directory contains Uno's default options). The options are set in this particular order. Anything that follows a `#` is treated as a comment and is ignored.
 ```c
 uno_load_solver_option_file(solver, "uno.opt");

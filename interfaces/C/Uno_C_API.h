@@ -297,6 +297,16 @@ extern "C" {
    // the possible types are integer, double, bool and string.
    uno_int uno_get_solver_option_type(void* solver, const char* option_name);
 
+   // gets the index of a particular option in the Uno solver.
+   // takes as input the name of the option.
+   // returns the index of the option.
+   uno_int uno_get_solver_option_index(const char* option_name);
+
+   // gets the name of a particular option in the Uno solver.
+   // takes as input the index of the option.
+   // returns the name of the option.
+   const char* uno_get_solver_option_name(uno_int option_index);
+
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.
    // returns true if it succeeded, false otherwise.
