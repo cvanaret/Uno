@@ -31,10 +31,6 @@ namespace uno {
       [[nodiscard]] const std::string& get_string(const std::string& option_name) const;
       [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
       [[nodiscard]] OptionType get_option_type(const std::string& option_name) const;
-      [[nodiscard]] std::map<std::string, int32_t> get_integer_options() const;
-      [[nodiscard]] std::map<std::string, double> get_double_options() const;
-      [[nodiscard]] std::map<std::string, bool> get_bool_options() const;
-      [[nodiscard]] std::map<std::string, std::string> get_string_options() const;
 
       [[nodiscard]] static std::vector<std::pair<std::string, std::string>> get_command_line_options(int argc, char* argv[],
          size_t offset);
