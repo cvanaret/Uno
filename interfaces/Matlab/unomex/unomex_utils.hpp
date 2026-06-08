@@ -4,7 +4,7 @@
 #ifndef UNOMEX_UTILS_H
 #define UNOMEX_UTILS_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 #include <algorithm>
 #include "linear_algebra/Vector.hpp"
@@ -32,12 +32,12 @@ namespace uno {
         return mxGetClassID(arr) == get_mxClassID<T>();
     }
     
-    bool has_size(const mxArray* arr, const size_t nrows, const size_t ncolumns);
+    bool has_size(const mxArray* arr, size_t nrows, size_t ncolumns);
     bool ispositive(const mxArray* arr);
     bool isinteger(const mxArray* arr);
     bool isunitary(const mxArray* arr);
     bool isscalar(const mxArray* arr);
-    bool isvector(const mxArray* arr, const size_t len);
+    bool isvector(const mxArray* arr, size_t len);
 
     template <typename OutType, typename InType>
     Vector<OutType> convert_vector_type(const Vector<InType>& input) {

@@ -67,13 +67,13 @@ options = uno_options(); % default preset
 callbacks = struct();
 
 % Logger stream handle: logger_stream_callback(str)
-% callbacks.logger_stream_callback = @logger_stream_callback;
+% callbacks.logger_stream = @logger_stream_callback;
 
 % Notify acceptable iterate handle: notify_acceptable_iterate_callback(x, yl, yb, y, rho, feas, stat, compl)
-% callbacks.notify_acceptable_iterate_callback = @notify_acceptable_iterate_callback;
+% callbacks.notify_acceptable_iterate = @notify_acceptable_iterate_callback;
 
-% User termination handle: terminate = user_termination_callback(x, yl, yb, y, rho, feas, stat, compl)
-% callbacks.user_termination_callback = @user_termination_callback;
+% User termination handle: terminate = termination_callback(x, yl, yb, y, rho, feas, stat, compl)
+% callbacks.termination = @termination_callback;
 
 %% Solving the model
 result = uno_optimize(model, options, callbacks);

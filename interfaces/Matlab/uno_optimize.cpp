@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdint.h>
-#include <algorithm>
 #include "Uno.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Presets.hpp"
@@ -12,7 +11,6 @@
 #include "cpp_classes/MatlabStreamCallback.hpp"
 #include "cpp_classes/MxStruct.hpp"
 #include "cpp_classes/ErrorString.hpp"
-#include "unomex/unomex_function.hpp"
 #include "unomex/unomex_conversion.hpp"
 #include "unomex/unomex_validation.hpp"
 #include "unomex/unomex_utils.hpp"
@@ -208,24 +206,24 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     }
 
     // callbacks (optional)
-    mxArray* logger_stream_callback = callbacks["logger_stream_callback"];
-    mxArray* notify_acceptable_iterate_callback = callbacks["notify_acceptable_iterate_callback"];
-    mxArray* user_termination_callback = callbacks["user_termination_callback"];
+    mxArray* logger_stream_callback = callbacks["logger_stream"];
+    mxArray* notify_acceptable_iterate_callback = callbacks["notify_acceptable_iterate"];
+    mxArray* termination_callback = callbacks["termination"];
     if (logger_stream_callback != nullptr) {
-        // logger_stream_callback(str)
-        if (!validate_matlab_handle_field(logger_stream_callback, "logger_stream_callback", errmsg)) {
+        // logger_stream(str)
+        if (!validate_matlab_handle_field(logger_stream_callback, "logger_stream", errmsg)) {
             mexErrMsgIdAndTxt("uno:error", "Invalid logger stream callback. %s", errmsg.c_str());
         }
     }
     if (notify_acceptable_iterate_callback != nullptr) {
-        // notify_acceptable_iterate_callback(x, yl, yb, y, rho, feas, stat, compl)
-        if (!validate_matlab_handle_field(notify_acceptable_iterate_callback, "notify_acceptable_iterate_callback", errmsg)) {
+        // notify_acceptable_iterate(x, yl, yb, y, rho, feas, stat, compl)
+        if (!validate_matlab_handle_field(notify_acceptable_iterate_callback, "notify_acceptable_iterate", errmsg)) {
             mexErrMsgIdAndTxt("uno:error", "Invalid notify acceptable iterate callback. %s", errmsg.c_str());
         }
     }
-    if (user_termination_callback != nullptr) {
-        // terminate = user_termination_callback(x, yl, yb, y, rho, feas, stat, compl)
-        if (!validate_matlab_handle_field(user_termination_callback, "user_termination_callback", errmsg)) {
+    if (termination_callback != nullptr) {
+        // terminate = termination(x, yl, yb, y, rho, feas, stat, compl)
+        if (!validate_matlab_handle_field(termination_callback, "termination", errmsg)) {
             mexErrMsgIdAndTxt("uno:error", "Invalid user termination callback. %s", errmsg.c_str());
         }
     }
@@ -236,24 +234,24 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     Logger::set_stream(matlab_ostream);
     
     // create user callbacks
-    MatlabUserCallbacks user_callbacks(notify_acceptable_iterate_callback, user_termination_callback);
+    MatlabUserCallbacks user_callbacks(notify_acceptable_iterate_callback, termination_callback);
 
     // create user model
     MatlabUserModel user_model(mxArray_to_string(problem_type).c_str(), 
         static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), 
         static_cast<int32_t>(mxArray_to_scalar<double>(base_indexing)));
     user_model.number_constraints = static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints));
-    user_model.variables_lower_bounds = variables_lower_bounds;
-    user_model.variables_upper_bounds = variables_upper_bounds;
+    user_model.variables_lower_bounds = mxArray_to_stdvector<double>(variables_lower_bounds);
+    user_model.variables_upper_bounds = mxArray_to_stdvector<double>(variables_upper_bounds);
     // objective
     user_model.objective_function = objective_function;
     user_model.objective_gradient = objective_gradient;
     user_model.optimization_sense = static_cast<int32_t>(mxArray_to_scalar<double>(optimization_sense));
     // constraint
     user_model.constraint_functions = constraint_function;
-    user_model.constraints_lower_bounds = constraints_lower_bounds;
-    user_model.constraints_upper_bounds = constraints_upper_bounds;
-    user_model.constraint_jacobian = constraint_jacobian;
+    user_model.constraints_lower_bounds = mxArray_to_stdvector<double>(constraints_lower_bounds);
+    user_model.constraints_upper_bounds = mxArray_to_stdvector<double>(constraints_upper_bounds);
+    user_model.jacobian = constraint_jacobian;
     user_model.number_jacobian_nonzeros = static_cast<int32_t>(mxArray_to_scalar<double>(number_jacobian_nonzeros));
     Vector jacobian_row_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(jacobian_row_indices) );
     Vector jacobian_column_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(jacobian_column_indices) );
@@ -281,8 +279,15 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     // hessian operator
     user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
     // initial iterates
-    user_model.initial_primal_iterate = initial_primal_iterate;
-    user_model.initial_dual_iterate = initial_dual_iterate;
+    if (initial_primal_iterate != nullptr) {
+        user_model.initial_primal_iterate = mxArray_to_stdvector<double>(initial_primal_iterate);
+    } else {
+        user_model.initial_primal_iterate = std::vector<double>();
+    }
+    if (initial_dual_iterate != nullptr) {
+        user_model.initial_dual_iterate = mxArray_to_stdvector<double>(initial_dual_iterate);
+        user_model.initial_dual_iterate = std::vector<double>();
+    }
 
     // create Uno model
     const MatlabModel uno_model(user_model);
@@ -292,14 +297,11 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
 
     // create Uno options
     Options uno_options;
-    // default options
     DefaultOptions::load(uno_options);
     // add default preset
-    const Options preset_options = Presets::get_preset_options(std::nullopt);
-    uno_options.overwrite_with(preset_options);
-    // overwrite with user options
-    const Options user_options = mxStruct_to_options(options);
-    uno_options.overwrite_with(user_options);   
+    Presets::set_default(uno_options);
+    // add user options
+    mxStruct_to_options(options, uno_options);
 
     // solve
     Logger::set_logger(uno_options.get_string("logger"));

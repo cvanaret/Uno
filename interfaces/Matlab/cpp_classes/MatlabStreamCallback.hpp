@@ -11,7 +11,7 @@ namespace uno {
 
     class MatlabStreamCallback : public UserStreamCallback {
     public: 
-        MatlabStreamCallback(handle_t logger_stream_callback);
+        explicit MatlabStreamCallback(handle_t logger_stream_callback);
         ~MatlabStreamCallback() override = default;
 
     int32_t operator()(const char* buf, int32_t len) const override;

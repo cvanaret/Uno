@@ -17,8 +17,8 @@ namespace uno {
     int32_t MatlabStreamCallback::operator()(const char* buf, int32_t len) const {
         if (this->logger_stream_callback) {
             // logger_stream_callback(str)
-            std::string str(buf, len);
-            std::vector<mxArray*> inputs = { string_to_mxArray(str) };
+            const std::string str(buf, len);
+            const std::vector<mxArray*> inputs = { string_to_mxArray(str) };
             std::vector<mxArray*> outputs(0);
             MxArrayVectorGuard input_guard(inputs);
             // MxArrayVectorGuard output_guard(outputs);

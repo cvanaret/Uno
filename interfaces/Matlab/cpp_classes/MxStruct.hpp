@@ -15,9 +15,9 @@ namespace uno {
     public:
         mxArray* operator[](const std::string& key) const;
         void insert(const std::string& key, mxArray* value);
-        bool contains(const std::string& key) const;
-        auto begin() const { return this->data.begin(); }
-        auto end() const { return this->data.end(); }
+        [[nodiscard]] bool contains(const std::string& key) const;
+        [[nodiscard]] auto begin() const { return this->data.begin(); }
+        [[nodiscard]] auto end() const { return this->data.end(); }
 
     private:
         std::map<std::string, mxArray*> data;

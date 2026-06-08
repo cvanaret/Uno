@@ -8,6 +8,7 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 #include "../../UserModel.hpp"
@@ -16,13 +17,13 @@
 
 namespace uno {
 
-    using MatlabUserModel = UserModel<handle_t, handle_t, handle_t,handle_t, handle_t,handle_t,
-    handle_t, handle_t, mxArray*, void*>; // user data are handled in matlab wrapper
+    using MatlabUserModel = UserModel<handle_t, handle_t, handle_t, handle_t, handle_t, handle_t,
+    handle_t, handle_t, std::vector<double>, void*>; // user data are handled in matlab wrapper
 
     // MatlabModel contains an instance of UserModel and complies with the Model interface
-    class MatlabModel: public Model {
+    class MatlabModel : public Model {
     public:
-        explicit MatlabModel(const MatlabUserModel& user_model);
+        MatlabModel(const MatlabUserModel& user_model);
         ~MatlabModel() override = default;
 
         [[nodiscard]] ProblemType get_problem_type() const override;
@@ -41,12 +42,12 @@ namespace uno {
         void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
         // sparsity patterns of Jacobian and Hessian
-        void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-                MatrixOrder matrix_order) const override;
-        void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override;
-        
+        void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder /*matrix_order*/) const override;
+        void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
+
         // numerical evaluations of Jacobian and Hessian
-        void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;
+        void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const override;
         void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
             double* hessian_values) const override;
 
@@ -57,18 +58,18 @@ namespace uno {
             double* result) const override;
 
         // purely functions
-        [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
-        [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+        [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+        [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
         [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
         [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
-        [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
-
-        [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
+        [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+        [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
 
         [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
         [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
         [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
+        [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override;
 
         void initial_primal_point(Vector<double>& x) const override;
         void initial_dual_point(Vector<double>& multipliers) const override;
@@ -89,12 +90,12 @@ namespace uno {
         mutable NumberModelEvaluations number_model_evaluations;
         const SparseVector<size_t> slacks{};
         Vector<size_t> fixed_variables{};
-        const ForwardRange linear_constraints{0};
+        const IntegerRange linear_constraints{0};
+        const IntegerRange nonlinear_constraints;
         std::vector<size_t> equality_constraints;
         CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
         std::vector<size_t> inequality_constraints;
         CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
-
     };
 
 }; // namespace

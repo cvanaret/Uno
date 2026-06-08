@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Stefano Lovato and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "Uno.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Presets.hpp"
 #include "cpp_classes/ErrorString.hpp"
@@ -30,14 +29,9 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
 
     // create Uno options
     Options uno_options;
-
-    // default options
     DefaultOptions::load(uno_options);
-
     // add default preset
-    const Options preset_options = Presets::get_preset_options(std::nullopt);
-    uno_options.overwrite_with(preset_options);
-
+    Presets::set_default(uno_options);
     // set preset
     if (!preset.empty()) {
         try {

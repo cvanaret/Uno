@@ -13,8 +13,9 @@ namespace uno {
 
     MatlabModel::MatlabModel(const MatlabUserModel& user_model):
             Model("Matlab model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
-            static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
+                  static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention, user_model.base_indexing),
             user_model(user_model),
+            nonlinear_constraints(this->number_constraints),
             equality_constraints_collection(this->equality_constraints),
             inequality_constraints_collection(this->inequality_constraints) {
         this->find_fixed_variables(this->fixed_variables);
@@ -112,12 +113,12 @@ namespace uno {
         }
     }
 
-    void MatlabModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-            MatrixOrder /*matrix_order*/) const {
+    void MatlabModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder /*matrix_order*/) const {
         // copy the indices of the user sparsity patterns to the Uno vectors
         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-            row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
-            column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index];
+            row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index] + row_offset;
+            column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index] + column_offset;
         }
         // TODO matrix_order
 
@@ -131,7 +132,7 @@ namespace uno {
         }
     }
 
-    void MatlabModel::compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
+    void MatlabModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
         // copy the indices of the user sparsity patterns to the Uno vectors
         const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
         for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -149,21 +150,21 @@ namespace uno {
         }
     }
     
-    void MatlabModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
-        // jacobian_values = constraint_jacobian(x);
-        if (this->user_model.constraint_jacobian) {
+    void MatlabModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
+        // jacobian_values = jacobian(x);
+        if (this->user_model.jacobian) {
             std::vector<mxArray*> inputs({vector_to_mxArray(x, this->number_variables)});
             std::vector<mxArray*> outputs(1);
             MxArrayVectorGuard input_guard(inputs);
             MxArrayVectorGuard output_guard(outputs);
             try {
-                call_matlab_function(user_model.constraint_jacobian, inputs, outputs);
+                call_matlab_function(user_model.jacobian, inputs, outputs);
             } catch (const MatlabFunctionError& err) {
                 mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
                 throw GradientEvaluationError();
             }
             if (std::string errmsg; !validate_double_vector_output(outputs[0], this->number_jacobian_nonzeros(), errmsg)) {
-                mexWarnMsgIdAndTxt("uno:warning", "Error in constraint Jacobian.\n%s\n", errmsg.c_str());
+                mexWarnMsgIdAndTxt("uno:warning", "Error in Jacobian.\n%s\n", errmsg.c_str());
                 throw FunctionEvaluationError();
             }
             mxArray_to_pointer(outputs[0], jacobian_values);
@@ -296,14 +297,12 @@ namespace uno {
         }
     }
 
-    double MatlabModel::variable_lower_bound(size_t variable_index) const {
-        Vector<double> variables_lower_bounds = mxArray_to_vector<double>(this->user_model.variables_lower_bounds);
-        return variables_lower_bounds[variable_index];
+    const std::vector<double>& MatlabModel::get_variables_lower_bounds() const {
+        return this->user_model.variables_lower_bounds;
     }
 
-    double MatlabModel::variable_upper_bound(size_t variable_index) const {
-        Vector<double> variables_upper_bounds = mxArray_to_vector<double>(this->user_model.variables_upper_bounds);
-        return variables_upper_bounds[variable_index];
+    const std::vector<double>& MatlabModel::get_variables_upper_bounds() const {
+        return this->user_model.variables_upper_bounds;
     }
 
     const SparseVector<size_t>& MatlabModel::get_slacks() const {
@@ -314,14 +313,12 @@ namespace uno {
         return this->fixed_variables;
     }
 
-    double MatlabModel::constraint_lower_bound(size_t constraint_index) const {
-        Vector<double> constraints_lower_bounds = mxArray_to_vector<double>(this->user_model.constraints_lower_bounds);
-        return constraints_lower_bounds[constraint_index];
+    const std::vector<double>& MatlabModel::get_constraints_lower_bounds() const {
+        return this->user_model.constraints_lower_bounds;
     }
 
-    double MatlabModel::constraint_upper_bound(size_t constraint_index) const {
-        Vector<double> constraints_upper_bounds = mxArray_to_vector<double>(this->user_model.constraints_upper_bounds);
-        return constraints_upper_bounds[constraint_index];
+    const std::vector<double>& MatlabModel::get_constraints_upper_bounds() const {
+        return this->user_model.constraints_upper_bounds;
     }
 
     const Collection<size_t>& MatlabModel::get_equality_constraints() const {
@@ -336,17 +333,21 @@ namespace uno {
         return this->linear_constraints;
     }
 
+    const Collection<size_t>& MatlabModel::get_nonlinear_constraints() const {
+        return this->nonlinear_constraints;
+    }
+
     void MatlabModel::initial_primal_point(Vector<double>& x) const {
         x.fill(0);
-        if (this->user_model.initial_primal_iterate) {
-            mxArray_to_vector(this->user_model.initial_primal_iterate, x);
+        if (this->user_model.initial_primal_iterate.size() > 0) {
+            x = this->user_model.initial_primal_iterate;
         }
     }
 
     void MatlabModel::initial_dual_point(Vector<double>& multipliers) const {
         multipliers.fill(0);
-        if (this->user_model.initial_dual_iterate) {
-            mxArray_to_vector(this->user_model.initial_dual_iterate, multipliers);
+        if (this->user_model.initial_dual_iterate.size() > 0) {
+            multipliers = this->user_model.initial_dual_iterate;
         }
         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             multipliers.scale(-1.);

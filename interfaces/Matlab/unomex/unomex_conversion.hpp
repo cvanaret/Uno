@@ -4,6 +4,7 @@
 #ifndef UNOMEX_CONVERSION_H
 #define UNOMEX_CONVERSION_H
 
+#include <vector>
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
 #include "optimization/Result.hpp"
@@ -58,6 +59,15 @@ namespace uno {
     }
 
     template<typename T>
+    std::vector<T> mxArray_to_stdvector(const mxArray* arr) {
+        const size_t n = mxGetNumberOfElements(arr);
+        const T* ptr = mxGetPr(arr);
+        std::vector<T> vec(n);
+        std::copy(ptr, ptr+n, vec.data());
+        return vec;
+    }
+
+    template<typename T>
     mxArray* vector_to_mxArray(const Vector<T>& vec) {
         const mwSize n = static_cast<mwSize>(vec.size());
         const mxClassID classid = get_mxClassID<T>();
@@ -76,12 +86,12 @@ namespace uno {
     }
 
     std::string mxArray_to_string(const mxArray* arr);
-    mxArray* string_to_mxArray(const std::string str);
+    mxArray* string_to_mxArray(const std::string& str);
 
     MxStruct mxArray_to_mxStruct(const mxArray* s);
     mxArray* mxStruct_to_mxArray(const MxStruct& mxStruct);
     MxStruct options_to_mxStruct(const Options& uno_options);
-    Options mxStruct_to_options(const MxStruct& options);
+    void mxStruct_to_options(const MxStruct& options, Options& uno_options);
     MxStruct result_to_mxStruct(const Result& uno_result);
 
 } // namespace

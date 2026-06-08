@@ -29,8 +29,8 @@ namespace uno {
         {ErrorType::UNO, "Error in UNO. %s"}
     };
 
-    std::string ErrorString::format_error(ErrorType error_type, ...) {
-        auto it = error_strings.find(error_type);
+    std::string ErrorString::format_error(const ErrorType error_type, ...) {
+        const auto it = error_strings.find(error_type);
         if (it == error_strings.end()) {
             return "Unknown error.";
         }
@@ -40,7 +40,7 @@ namespace uno {
         va_start(args1, error_type);
         va_list args2;
         va_copy(args2, args1);
-        int size = std::vsnprintf(nullptr, 0, error_fmt.c_str(), args2);
+        const int size = std::vsnprintf(nullptr, 0, error_fmt.c_str(), args2);
         va_end(args2);
         std::string error_msg(size, '\0');
         std::vsnprintf(error_msg.data(), error_msg.size() + 1, error_fmt.c_str(), args1);

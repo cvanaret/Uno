@@ -13,13 +13,13 @@ namespace uno {
         if (!isvalid(arr)) {
             return str;
         }
-        else if (mxIsChar(arr)) {
+        if (mxIsChar(arr)) {
             char* cstr = mxArrayToString(arr);
             str = std::string(cstr);
             mxFree(cstr);
             return str;
         }
-        else if (mxIsClass(arr,"string")) {
+        if (mxIsClass(arr,"string")) {
             // convert matlab string to char and call mxArray_to_string
             // TODO handle non-scalar matlab string
             mxArray* arr_str = mxDuplicateArray(arr);
@@ -30,19 +30,17 @@ namespace uno {
             mxDestroyArray(arr_char);
             return str;
         }
-        else {
-            return str;
-        }
+        return str;
     }
 
-    mxArray* string_to_mxArray(const std::string str) {
+    mxArray* string_to_mxArray(const std::string& str) {
         return mxCreateString(str.c_str());
     }
 
     MxStruct mxArray_to_mxStruct(const mxArray* s) {
         if (!s) return MxStruct();
         MxStruct result;
-        int nFields = mxGetNumberOfFields(s);
+        const int nFields = mxGetNumberOfFields(s);
         for (int i = 0; i < nFields; ++i) {
             const char* fieldName = mxGetFieldNameByNumber(s, i);
             mxArray* fieldValue = mxGetFieldByNumber(s, 0, i);
@@ -65,31 +63,39 @@ namespace uno {
 
     MxStruct options_to_mxStruct(const Options& uno_options) {
         MxStruct mxStruct;
-        // integer options (matlab double)
-        std::map<std::string, int32_t> integer_options = uno_options.get_integer_options();
-        for (const auto& [option_name, option_value]: integer_options) {
-            mxStruct.insert(option_name, scalar_to_mxArray<double>(static_cast<double>(option_value)));
+        // iterate over options
+        for (const auto& [option_name, option_type]: Options::option_types) {
+            try {
+                switch (option_type) {
+                case OptionType::INTEGER: {
+                    const double option_value = static_cast<double>(uno_options.get_int(option_name));
+                    mxStruct.insert(option_name, scalar_to_mxArray<double>(option_value));
+                    break;
+                }
+                case OptionType::DOUBLE: {
+                    const double option_value = uno_options.get_double(option_name);
+                    mxStruct.insert(option_name, scalar_to_mxArray<double>(option_value));
+                    break;
+                }
+                case OptionType::BOOL: {
+                    const bool option_value = uno_options.get_bool(option_name);
+                    mxStruct.insert(option_name, scalar_to_mxArray<bool>(option_value));
+                    break;
+                }
+                case OptionType::STRING: {
+                    const std::string& option_value = uno_options.get_string(option_name);
+                    mxStruct.insert(option_name, string_to_mxArray(option_value));
+                    break;
+                }
+                }
+            } catch (const std::out_of_range&) {
+                continue;
+            }
         }
-        // double options (matlab double)
-        std::map<std::string, double> double_options = uno_options.get_double_options();
-        for (const auto& [option_name, option_value]: double_options) {
-            mxStruct.insert(option_name, scalar_to_mxArray<double>(option_value));
-        }
-        // bool options (matlab logical)
-        std::map<std::string, bool> bool_options = uno_options.get_bool_options();
-        for (const auto& [option_name, option_value]: bool_options) {
-            mxStruct.insert(option_name, scalar_to_mxArray<bool>(option_value));
-        }
-        // string options (matlab char)
-        std::map<std::string, std::string> string_options = uno_options.get_string_options();
-        for (const auto& [option_name, option_value]: string_options) {
-            mxStruct.insert(option_name, string_to_mxArray(option_value));
-        }        
         return mxStruct;
     }
 
-    Options mxStruct_to_options(const MxStruct& options) {
-        Options uno_options;
+    void mxStruct_to_options(const MxStruct& options, Options& uno_options) {
         for (const auto& [field_name, field_value]: options) {
             try {
                 // set option with check between type and mxArray class
@@ -146,7 +152,6 @@ namespace uno {
                 }
             }
         }
-        return uno_options;
     }
 
     MxStruct result_to_mxStruct(const Result& uno_result) {

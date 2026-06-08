@@ -6,7 +6,7 @@
 namespace uno {
 
     mxArray* MxStruct::operator[](const std::string& key) const {
-        auto it = this->data.find(key);
+        const auto it = this->data.find(key);
         return (it != this->data.end()) ? it->second : nullptr;
     }
 

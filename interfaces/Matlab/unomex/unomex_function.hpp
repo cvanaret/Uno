@@ -4,7 +4,6 @@
 #ifndef UNOMEX_FUNCTION_H
 #define UNOMEX_FUNCTION_H
 
-#include <stdint.h>
 #include <string>
 #include <vector>
 #include "optimization/EvaluationErrors.hpp"
@@ -15,15 +14,15 @@ namespace uno {
     // matlab function handle type
     typedef mxArray* handle_t;
 
-    struct MatlabFunctionError : EvaluationError {
+    struct MatlabFunctionError final : EvaluationError {
         std::string msg;
         explicit MatlabFunctionError(const std::string& str);
-        const char* what() const noexcept override;
+        [[nodiscard]] const char* what() const noexcept override;
     };
 
     void call_matlab_function(handle_t handle, const std::vector<mxArray*>& inputs, std::vector<mxArray*>& outputs);
 
-}; // namespace
+} // namespace
 
 
 #endif // UNOMEX_FUNCTION_H

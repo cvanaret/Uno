@@ -9,7 +9,7 @@
 namespace uno {
 
     // validate Matlab function handle
-    bool validate_matlab_handle_field(handle_t handle, const std::string field_name, std::string& errmsg) {
+    bool validate_matlab_handle_field(handle_t handle, const std::string& field_name, std::string& errmsg) {
         // Matlab throws error when wrong nargin/nargour etc... just check the validity of the handle
         if (!isvalid(handle)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
@@ -34,7 +34,7 @@ namespace uno {
         return true;
     }
 
-    bool validate_char_field(const mxArray* arr, const std::vector<char> chars, const std::string field_name, std::string& errmsg) {
+    bool validate_char_field(const mxArray* arr, const std::vector<char>& chars, const std::string& field_name, std::string& errmsg) {
         if (!isvalid(arr)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
             return false;
@@ -43,11 +43,11 @@ namespace uno {
             errmsg = ErrorString::format_error(ErrorType::FIELD_CHAR, field_name.c_str());
             return false;
         }
-        if (chars.size()>0) {
-            char c = mxArray_to_scalar<char>(arr);
-            if (std::find(chars.begin(), chars.end(), c) == chars.end()) {
+        if (!chars.empty()) {
+            if (const char c = mxArray_to_scalar<char>(arr);
+                std::find(chars.begin(), chars.end(), c) == chars.end()) {
                 errmsg = "Field '" + field_name + "' must be one of { ";
-                for (size_t i: Range(chars.size())) {
+                for (const size_t i: Range(chars.size())) {
                     if (i > 0) {
                         errmsg += ", ";
                     }
@@ -60,7 +60,7 @@ namespace uno {
         return true;
     }
 
-    bool validate_string_field(const mxArray* arr, const std::vector<std::string> strings, const std::string field_name, std::string& errmsg) {
+    bool validate_string_field(const mxArray* arr, const std::vector<std::string>& strings, const std::string& field_name, std::string& errmsg) {
         if (!isvalid(arr)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
             return false;
@@ -69,11 +69,11 @@ namespace uno {
             errmsg = ErrorString::format_error(ErrorType::FIELD_STRING, field_name.c_str());
             return false;
         }
-        if (strings.size()>0) {
-            std::string str = mxArray_to_string(arr);
-            if (std::find(strings.begin(), strings.end(), str) == strings.end()) {
+        if (!strings.empty()) {
+            if (const std::string str = mxArray_to_string(arr);
+                std::find(strings.begin(), strings.end(), str) == strings.end()) {
                 errmsg = "Field '" + field_name + "' must be one of { ";
-                for (size_t i: Range(strings.size())) {
+                for (const size_t i: Range(strings.size())) {
                     if (i > 0) {
                         errmsg += ", ";
                     }
@@ -86,7 +86,7 @@ namespace uno {
         return true;
     }
 
-    bool validate_positive_integer_field(const mxArray* arr, const std::string field_name, std::string& errmsg) {
+    bool validate_positive_integer_field(const mxArray* arr, const std::string& field_name, std::string& errmsg) {
         if (!isvalid(arr)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
             return false;
@@ -98,7 +98,7 @@ namespace uno {
         return true;
     }
 
-    bool validate_unitary_field(const mxArray* arr, const std::string field_name, std::string& errmsg) {
+    bool validate_unitary_field(const mxArray* arr, const std::string& field_name, std::string& errmsg) {
         if (!isvalid(arr)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
             return false;
@@ -110,7 +110,7 @@ namespace uno {
         return true;
     }
 
-    bool validate_double_vector_field(const mxArray* arr, const size_t len, const std::string field_name, std::string& errmsg) {
+    bool validate_double_vector_field(const mxArray* arr, const size_t len, const std::string& field_name, std::string& errmsg) {
         if (!isvalid(arr)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
             return false;
@@ -122,7 +122,7 @@ namespace uno {
         return true;
     }
 
-    bool validate_integer_vector_field(const mxArray* arr, const size_t len, const std::string field_name, std::string& errmsg) {
+    bool validate_integer_vector_field(const mxArray* arr, const size_t len, const std::string& field_name, std::string& errmsg) {
         if (!isvalid(arr)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
             return false;

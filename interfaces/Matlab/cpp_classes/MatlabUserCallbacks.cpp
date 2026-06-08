@@ -22,9 +22,9 @@ constexpr bool utSetInterruptPending(bool) { return false; }
 
 namespace uno {
 
-    MatlabUserCallbacks::MatlabUserCallbacks(handle_t notify_acceptable_iterate_callback, handle_t user_termination_callback) : UserCallbacks(),
+    MatlabUserCallbacks::MatlabUserCallbacks(handle_t notify_acceptable_iterate_callback, handle_t termination_callback) : UserCallbacks(),
         notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
-        user_termination_callback(user_termination_callback) { }
+        termination_callback(termination_callback) { }
 
     void MatlabUserCallbacks::notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double stationarity, double complementarity) {
         // notify_acceptable_iterate_callback(x, yl, yb, y, rho, feas, stat, compl);
@@ -43,20 +43,20 @@ namespace uno {
         }
     }
 
-    bool MatlabUserCallbacks::user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double stationarity, double complementarity) {
+    bool MatlabUserCallbacks::termination(const Vector<double>& primals, const Multipliers& multipliers, const double objective_multiplier, const double primal_feasibility, const double stationarity, const double complementarity) {
         // handle matlab CTRL+C event
         if (utIsInterruptPending()) {
             utSetInterruptPending(false);
             return true;
         }
         // terminate = user_termination_callback(x, yl, yb, y, rho, feas, stat, compl);
-        if (this->user_termination_callback) {
-            std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
+        if (this->termination_callback) {
+            const std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
             std::vector<mxArray*> outputs(1);
             MxArrayVectorGuard input_guard(inputs);
             MxArrayVectorGuard output_guard(outputs);
             try {
-                call_matlab_function(this->user_termination_callback, inputs, outputs);
+                call_matlab_function(this->termination_callback, inputs, outputs);
             }  
             catch (const MatlabFunctionError& err) {
                 mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
