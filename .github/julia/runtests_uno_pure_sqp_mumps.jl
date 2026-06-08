@@ -22,13 +22,19 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_sqp() = Optimizer(["logger=SILENT", "linear_solver=MUMPS", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_sqp() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS",
+                                "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 
 # keep only the equality-constrained instances
 instances = readlines(joinpath(@__DIR__, "MINLPTests/equality-constrained.txt"))
-#print("Instances with equality constraints: ", instances)
+exclude = [
+    # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
+    "nlp_expr_007_010"
+]
+instances = setdiff(instances, exclude)
+print("Instances with equality constraints: ", instances)
 
 # strip the prefix
 function strip_prefix(instances, prefix)
