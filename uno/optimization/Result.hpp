@@ -26,6 +26,7 @@ namespace uno {
       Vector<double> constraint_dual_solution;
       Vector<double> lower_bound_dual_solution;
       Vector<double> upper_bound_dual_solution;
+      Vector<double> constraint_values;
       const size_t number_iterations;
       const double cpu_time;
       const size_t number_objective_evaluations;

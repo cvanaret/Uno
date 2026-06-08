@@ -36,6 +36,9 @@ namespace uno {
       .def_property_readonly("upper_bound_dual_solution", [](const Result& result) {
          return to_owned_array(result.upper_bound_dual_solution);
       })
+      .def_property_readonly("solution_constraints", [](const Result& result) {
+         return to_owned_array(result.constraint_values);
+      })
       .def_readonly("number_iterations", &Result::number_iterations)
       .def_readonly("cpu_time", &Result::cpu_time)
       .def_readonly("number_objective_evaluations", &Result::number_objective_evaluations)

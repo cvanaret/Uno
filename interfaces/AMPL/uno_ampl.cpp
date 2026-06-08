@@ -25,7 +25,7 @@ namespace uno {
       const AMPLModel model(model_name);
       Uno uno{};
       Result result = uno.solve(model, options);
-      if (options.get_bool("AMPL_write_solution_to_file")) {
+      if (options.get_bool("write_solution_to_file")) {
          model.write_solution_to_file(result);
       }
       // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
@@ -59,11 +59,11 @@ int main(int argc, char* argv[]) {
       // the -AMPL flag indicates that the solution should be written to the AMPL solution file
       size_t offset = 2;
       if (argc > 2 && std::string(argv[2]) == "-AMPL") {
-         options.set_bool("AMPL_write_solution_to_file", true);
+         options.set_bool("write_solution_to_file", true);
          ++offset;
       }
       else {
-         options.set_bool("AMPL_write_solution_to_file", false);
+         options.set_bool("write_solution_to_file", false);
       }
       try {
          // get the command line arguments (options start at index offset)

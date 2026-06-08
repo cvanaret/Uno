@@ -58,6 +58,8 @@ protect_actual_reduction_against_roundoff false
 protected_actual_reduction_macheps_coefficient 10
 # Whether the subproblem is printed in DEBUG mode (bool)
 print_subproblem false
+# Whether the solution is printed to a file (used by AMPL and CUTEst) (bool)
+write_solution_to_file false
 
 ## Globalization strategy options
 # Fraction of the predicted reduction that should be achieved by the actual reduction in the Armijo condition (double)

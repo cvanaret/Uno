@@ -306,6 +306,11 @@ function uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
                                                     upper_bound_dual_solution::Ptr{Cdouble})::Cvoid
 end
 
+function uno_get_solution_constraints(solver, constraint_values)
+    @ccall libuno.uno_get_solution_constraints(solver::Ptr{Cvoid},
+                                               constraint_values::Ptr{Cdouble})::Cvoid
+end
+
 function uno_get_solution_primal_feasibility(solver)
     @ccall libuno.uno_get_solution_primal_feasibility(solver::Ptr{Cvoid})::Cdouble
 end

@@ -1,14 +1,10 @@
 # UnoSolver.jl
 
-UnoSolver.jl is a wrapper for [Uno](https://github.com/cvanaret/Uno), a modern and modular solver for nonlinearly constrained optimization.
-
-The package has three components:
+[UnoSolver.jl](https://juliahub.com/ui/Packages/General/UnoSolver) is a Julia wrapper for Uno. The package has three components:
 
 * a thin wrapper around the complete C API,
 * an interface to [NLPModels.jl](https://github.com/JuliaSmoothOptimizers/NLPModels.jl) for solving any optimization problem following the API, such as [CUTEst](https://github.com/JuliaSmoothOptimizers/CUTEst.jl) problems,
 * an interface to [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) for handling [JuMP](https://github.com/jump-dev/JuMP.jl) models.
-
-## Affiliation
 
 This Julia interface is developed and maintained by [Alexis Montoison](https://github.com/amontoison) and [Charlie Vanaret](https://github.com/cvanaret).
 
@@ -21,6 +17,10 @@ julia> using Pkg
 julia> Pkg.add("UnoSolver")
 julia> Pkg.test("UnoSolver")
 ```
+
+## Getting started
+
+To get started with Uno, check out the [official documentation](https://unosolver.readthedocs.io/en/latest).
 
 ## Examples
 

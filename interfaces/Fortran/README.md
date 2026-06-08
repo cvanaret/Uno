@@ -316,6 +316,14 @@ call uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
 call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```
 
+* constraint values:
+
+```fortran
+real(c_double), dimension(number_constraints) :: constraint_values
+
+call uno_get_solution_constraints(solver, constraint_values)
+```
+
 * optimality measures:
 
 ```fortran

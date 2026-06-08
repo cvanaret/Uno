@@ -136,6 +136,7 @@ int main() {
       // the Hessian model was overwritten. Set it again
       uno_set_solver_string_option(solver, "hessian_model", "exact");
       uno_optimize(solver, model);
+      
       printf("Method used: %s\n", uno_get_method_description(solver));
       // get the solution
       optimization_status = uno_get_optimization_status(solver);
@@ -156,6 +157,10 @@ int main() {
       double upper_bound_dual_solution[number_variables];
       uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
       printf("Upper bound dual solution: "); print_vector(upper_bound_dual_solution, number_variables);
+      double solution_constraints[number_constraints];
+      uno_get_solution_constraints(solver, solution_constraints);
+      printf("Solution constraints: "); print_vector(solution_constraints, number_constraints);
+      
       const double solution_primal_feasibility = uno_get_solution_primal_feasibility(solver);
       printf("Primal feasibility at solution = %e\n", solution_primal_feasibility);
       const double solution_stationarity = uno_get_solution_stationarity(solver);

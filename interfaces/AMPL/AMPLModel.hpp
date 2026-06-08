@@ -14,8 +14,8 @@
 #include "tools/NumberModelEvaluations.hpp"
 // include AMPL Solver Library (ASL)
 extern "C" {
-#include "asl_pfgh.h"
-#include "getstub.h"
+#include <asl_pfgh.h>
+#include <getstub.h>
 }
 
 namespace uno {
