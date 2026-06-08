@@ -14,6 +14,10 @@ namespace uno {
     MatlabStreamCallback::MatlabStreamCallback(handle_t logger_stream_callback) :
     UserStreamCallback(), logger_stream_callback(logger_stream_callback) { }
 
+    MatlabStreamCallback::~MatlabStreamCallback() {
+        mexEvalString("pause(0);"); // force output to appear immediately 
+    }
+
     int32_t MatlabStreamCallback::operator()(const char* buf, int32_t len) const {
         if (this->logger_stream_callback) {
             // logger_stream_callback(str)
