@@ -225,7 +225,7 @@ if isfield(options,'HessianFnc')
     if (nargin(HESSIANFNC)~=3) || (nargout(HESSIANFNC)<1)
         error('HESSIANFNC must have 3 input and 1 output argument(s).')
     end
-    LAMBDA.ineqlin = zeros(length(ceq0),1);
+    LAMBDA.eqnonlin = zeros(length(ceq0),1);
     LAMBDA.ineqnonlin = zeros(length(c0),1);
     try
         H0 = HESSIANFNC(X,1,LAMBDA);
