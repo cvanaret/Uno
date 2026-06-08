@@ -262,19 +262,14 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     user_model.jacobian_transposed_operator = jacobian_transposed_operator;
     // hessian
     user_model.lagrangian_sign_convention = static_cast<int32_t>(mxArray_to_scalar<double>(lagrangian_sign_convention));
-    user_model.hessian_triangular_part = mxArray_to_scalar<char>(hessian_triangular_part);
     user_model.lagrangian_hessian = lagrangian_hessian;
-    user_model.number_hessian_nonzeros = static_cast<int32_t>(mxArray_to_scalar<double>(number_hessian_nonzeros));
-    Vector hessian_row_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(hessian_row_indices) );
-    Vector hessian_column_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(hessian_column_indices) );
-    user_model.hessian_row_indices = std::vector(hessian_row_indices_vector.begin(), hessian_row_indices_vector.end());
-    user_model.hessian_column_indices = std::vector(hessian_column_indices_vector.begin(), hessian_column_indices_vector.end());
-    // force lower triangular hessian
     if (user_model.lagrangian_hessian) {
-        if (user_model.hessian_triangular_part == 'U') {
-            std::swap(user_model.hessian_row_indices, user_model.hessian_column_indices);
-            user_model.hessian_triangular_part = 'L';
-        }
+        user_model.hessian_triangular_part = mxArray_to_scalar<char>(hessian_triangular_part);
+        user_model.number_hessian_nonzeros = static_cast<int32_t>(mxArray_to_scalar<double>(number_hessian_nonzeros));
+        Vector hessian_row_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(hessian_row_indices) );
+        Vector hessian_column_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(hessian_column_indices) );
+        user_model.hessian_row_indices = std::vector(hessian_row_indices_vector.begin(), hessian_row_indices_vector.end());
+        user_model.hessian_column_indices = std::vector(hessian_column_indices_vector.begin(), hessian_column_indices_vector.end());
     }
     // hessian operator
     user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
@@ -302,6 +297,12 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     Presets::set_default(uno_options);
     // add user options
     mxStruct_to_options(options, uno_options);
+
+    // check lagrangian hessian
+    if (uno_options.get_string("hessian_model") == std::string("exact") && 
+        user_model.lagrangian_hessian == nullptr && user_model.lagrangian_hessian_operator == nullptr) {
+        mexErrMsgIdAndTxt("uno:error", "Lagrangian Hessian must be provided when hessian_model is 'exact'");
+    }
 
     // solve
     Logger::set_logger(uno_options.get_string("logger"));

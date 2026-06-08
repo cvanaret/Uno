@@ -162,19 +162,19 @@ end
 LB = [LB; -inf(length(X)-length(LB),1)];
 UB = [UB; +inf(length(X)-length(UB),1)];
 
-% Check [fval,grad,hess] = FUN(x)
+% Check [fval,grad] = FUN(x)
 if ~isa(FUN,'function_handle')
     error('FUN must be a function handle.');
 end
-if (nargin(FUN)~=1) || (nargout(FUN)<3)
-    error('FUN must have 1 input and 3 output argument(s).')
+if (nargin(FUN)~=1) || (nargout(FUN)<2)
+    error('FUN must have 1 input and 2 output argument(s).')
 end
 try
-    [fval0,grad0,hess0] = FUN(X);
+    [fval0,grad0] = FUN(X);
 catch
     error('Failure in objective function evaluation.')
 end
-if ~isnumeric(fval0) || ~isnumeric(grad0) || ~isnumeric(hess0)
+if ~isnumeric(fval0) || ~isnumeric(grad0)
     error('FUM must return numeric values.')
 end
 if ~isscalar(fval0)
@@ -183,28 +183,24 @@ end
 if length(grad0) ~= length(X)
     error('Dimension of grad is inconsistent with the length of x.')
 end
-if ~isempty(hess0) && ~isequal(size(hess0), [length(X), length(X)])
-    error('Dimension of hess is inconsistent with the length of x.')
-end
 
-% Check [c,ceq,gradc,gradceq,hessc,hessceq] = NONLCON(x)
+% Check [c,ceq,gradc,gradceq] = NONLCON(x)
 if isempty(NONLCON)
     NONLCON = @(x) deal([]);
 else
     if ~isa(NONLCON,'function_handle')
         error('NLCON must be a function handle.')
     end
-    if (nargin(NONLCON)~=1) || (nargout(NONLCON)<6)
-        error('NONLCON must have 1 input and 6 output argument(s).')
+    if (nargin(NONLCON)~=1) || (nargout(NONLCON)<4)
+        error('NONLCON must have 1 input and 4 output argument(s).')
     end
 end
 try
-    [c0,ceq0,gradc0,gradceq0,hessc0,hessceq0] = NONLCON(X);
+    [c0,ceq0,gradc0,gradceq0] = NONLCON(X);
 catch
     error('Failure in nonlinear constraint function evaluation.')
 end
-if ~isnumeric(c0) || ~isnumeric(ceq0) || ~isnumeric(gradc0) || ~isnumeric(gradceq0) ...
-         || ~isnumeric(hessc0) || ~isnumeric(hessceq0)
+if ~isnumeric(c0) || ~isnumeric(ceq0) || ~isnumeric(gradc0) || ~isnumeric(gradceq0)
     error('NONLCON must return numeric values.')
 end
 if length(c0) ~= size(gradc0,2)
@@ -219,11 +215,29 @@ end
 if ~isempty(ceq0) && length(X) ~= size(gradceq0,1)
     error('Row dimension of gradceq is inconsistent with the length of x.')
 end
-if ~isempty(c0) && ~isempty(hessc0) && ~isequal(size(hessc0), [length(X), length(X), length(c0)])
-    error('Dimension of hess is inconsistent with the length of x and c.')
-end
-if ~isempty(ceq0) && ~isempty(hessceq0) && ~isequal(size(hessceq0), [length(X), length(X), length(ceq0)])
-    error('Dimension of hess is inconsistent with the length of x and ceq.')
+
+% Check H = HESSIANFNC(x,rho,lambda)
+if isfield(options,'HessianFnc')
+    HESSIANFNC = options.HessianFnc;
+    if ~isa(HESSIANFNC,'function_handle')
+        error('HESSIANFNC must be a function handle.')
+    end
+    if (nargin(HESSIANFNC)~=3) || (nargout(HESSIANFNC)<1)
+        error('HESSIANFNC must have 3 input and 1 output argument(s).')
+    end
+    LAMBDA.ineqlin = zeros(length(ceq0),1);
+    LAMBDA.ineqnonlin = zeros(length(c0),1);
+    try
+        H0 = HESSIANFNC(X,1,LAMBDA);
+    catch
+        error('Failure in nonlinear constraint function evaluation.')
+    end
+    if ~isnumeric(H0)
+        error('HESSIANFNC must return numeric values.')
+    end
+    if ~isempty(H0) && ~isequal(size(H0), [length(X), length(X)])
+        error('Dimension of hessian is inconsistent with the length of x.')
+    end
 end
 
 % Constraint indexes
@@ -251,13 +265,22 @@ model.jacobian_column_indices = jcj;
 model.number_jacobian_nonzeros = length(irj);
 model.constraint_jacobian = @(x) constraint_jacobian(x,Aeq,Beq,A,B,NONLCON,irj,jcj);
 model.lagrangian_sign_convention = 1;
-model.hessian_triangular_part = 'L';
-[irh, jch] = find(tril(ones(length(X),length(X))));
-model.hessian_row_indices = irh(:);
-model.hessian_column_indices = jch(:);
-model.number_hessian_nonzeros =  length(irh(:));
-model.lagrangian_hessian = @(x,rho,y) lagrangian_hessian(x,rho,y,FUN,NONLCON,ind_ineqnonlin,ind_eqnonlin,irh,jch);
-model.initial_primal_iterate = X;
+
+% Lagrangian Hessian
+if isfield(options,'HessianFnc')
+    model.hessian_triangular_part = 'L';
+    [irh, jch] = find(tril(ones(length(X),length(X))));
+    model.hessian_row_indices = irh(:);
+    model.hessian_column_indices = jch(:);
+    model.number_hessian_nonzeros =  length(irh(:));
+    model.lagrangian_hessian = @(x,rho,y) lagrangian_hessian(x,rho,y,HESSIANFNC,ind_ineqnonlin,ind_eqnonlin,irh,jch);
+    model.initial_primal_iterate = X;
+else
+    if ~isfield(options,'hessian_model') || strcmp(options.hessian_model,'exact')
+        % fallback to LBFGS when no HessianFnc
+        options.hessian_model = 'LBFGS';
+    end
+end
 
 % Call UNO
 result = uno_optimize(model, options);
@@ -294,7 +317,11 @@ LAMBDA.ineqlin = result.constraint_dual_solution(ind_ineqlin);
 LAMBDA.ineqnonlin = result.constraint_dual_solution(ind_ineqnonlin);
 LAMBDA.eqnonlin = result.constraint_dual_solution(ind_eqnonlin);
 [~,GRAD] = FUN(X);
-HESSIAN = hessian(X, 1, LAMBDA.ineqnonlin, LAMBDA.eqnonlin, FUN, NONLCON);
+if isfield(options,'HessianFnc')
+    HESSIAN = HESSIANFNC(X, 1, LAMBDA);
+else
+    HESSIAN = [];
+end
 
 end
 
@@ -323,23 +350,10 @@ function J = constraint_jacobian(x,Aeq,~,A,~,NONLCON,ir,jc)
          gradceq'];
     J = J(ir + (jc-1)*size(J,1));
 end
-
-function H = hessian(x, rho, yneq, yeq, FUN, NONLCON)
-    [~, ~, hess] = FUN(x);
-    [~,~,~,~,hessc,hessceq] = NONLCON(x);
-    H = zeros(length(x), length(x));
-    if ~isempty(hess)
-        H = H + rho*hess;
-    end
-    if ~isempty(hessc)
-        H = H + sum(hessc .* reshape(yneq, [1,1,length(yneq)]), 3);
-    end
-    if ~isempty(hessceq)
-        H = H + sum(hessceq .* reshape(yeq, [1,1,length(yeq)]), 3);
-    end
-end
  
-function H = lagrangian_hessian(x, rho, y, FUN, NONLCON, icneq, iceq, ir, jc)
-    H = hessian(x, rho, y(icneq), y(iceq), FUN, NONLCON);
+function H = lagrangian_hessian(x, rho, y, HESSIANFNC, icneq, iceq, ir, jc)
+    LAMBDA.ineqlin = y(iceq);
+    LAMBDA.ineqnonlin = y(icneq);
+    H = HESSIANFNC(x, rho, LAMBDA);
     H = H(ir + (jc-1)*size(H,1));
 end
