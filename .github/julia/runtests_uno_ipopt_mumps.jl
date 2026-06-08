@@ -24,10 +24,13 @@ end
 
 Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS", "unbounded_objective_threshold=-1e15"])
 
+# This testset runs https://github.com/jump-dev/MINLPTests.jl
+
 # drop the equality-constrained instances
 bound_constrained_instances = readlines(joinpath(@__DIR__, "MINLPTests/bound-constrained.txt"))
 general_instances = readlines(joinpath(@__DIR__, "MINLPTests/general.txt"))
 instances = vcat(bound_constrained_instances, general_instances)
+print("Instances with inequality constraints: ", instances)
 
 # strip the prefix
 function strip_prefix(instances, prefix)
@@ -39,36 +42,33 @@ function strip_prefix(instances, prefix)
     return cleaned_instances
 end
 
-exclude_nlp_expr = [
-   # Okay to exclude forever: AmplNLWriter does not support user-defined functions.
-   "006_010",
-   # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
-   "007_010",
-]
+primal_target = Dict(
+    MINLPTests.FEASIBLE_PROBLEM => MOI.FEASIBLE_POINT,
+    # If Uno starts writing a .sol file with an infeasible point, change
+    # this to `=> MOI.INFEASIBLE_POINT`
+    MINLPTests.INFEASIBLE_PROBLEM => MOI.NO_SOLUTION,
+)
+objective_tol = 1e-4
+primal_tol = 1e-4
 
-# This testset runs https://github.com/jump-dev/MINLPTests.jl
-@testset "MINLPTests" begin
-    primal_target = Dict(
-        MINLPTests.FEASIBLE_PROBLEM => MOI.FEASIBLE_POINT,
-        # If Uno starts writing a .sol file with an infeasible point, change
-        # this to `=> MOI.INFEASIBLE_POINT`
-        MINLPTests.INFEASIBLE_PROBLEM => MOI.NO_SOLUTION,
-    )
-    objective_tol = 1e-4
-    primal_tol = 1e-4
-    # This function tests (potentially) non-convex nonlinear programs. The tests
-    # are meant to be "easy" in the sense that most NLP solvers can find the
-    # same global minimum, but a test failure can sometimes be allowed.
-    MINLPTests.test_nlp_expr(
-        Optimizer_Uno_ipopt;
-        include = setdiff(strip_prefix(instances, "nlp_expr_"), exclude_nlp_expr),
-        primal_target, objective_tol, primal_tol
-    )
-    # This function tests convex nonlinear programs. Test failures here should
-    # never be allowed, because even local NLP solvers should find the global
-    # optimum.
-    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_ipopt; primal_target, objective_tol, primal_tol)
-end
+# This function tests (potentially) non-convex nonlinear programs. The tests
+# are meant to be "easy" in the sense that most NLP solvers can find the
+# same global minimum, but a test failure can sometimes be allowed.
+MINLPTests.test_directory(
+    "nlp-expr",
+    Optimizer_Uno_ipopt;
+    include = strip_prefix(instances, "nlp_expr_"),
+    primal_target, objective_tol, primal_tol
+)
+# This function tests convex nonlinear programs. Test failures here should
+# never be allowed, because even local NLP solvers should find the global
+# optimum.
+MINLPTests.test_directory(
+    "nlp-cvx-expr",
+    Optimizer_Uno_ipopt;
+    include = strip_prefix(instances, "nlp_cvx_expr_"),
+    primal_target, objective_tol, primal_tol
+)
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
 # tests in here with weird edge cases, so a variety of exclusions are expected.
