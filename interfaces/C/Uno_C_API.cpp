@@ -893,11 +893,14 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
 }
 
 uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
+/*
+   // solver not needed for option type - kept for back-compatibility
    if (solver == nullptr) {
       WARNING << "Please specify a valid solver."  << std::endl;
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
+*/
    try {
       return static_cast<uno_int>(Options::option_types.at(option_name));
    }
