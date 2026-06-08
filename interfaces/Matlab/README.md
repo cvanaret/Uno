@@ -4,8 +4,8 @@ Uno's Matlab interface allows you to solve an optimization model described in Ma
 
 The package can be used in two ways:
 
-- high-level fmincon-style interface through the Matlab function `uno`
-- low-level interface through the Matlab MEX functions `uno_optimize` and `uno_options`; the two functions are compiled via the command `make unomex`.
+- high-level fmincon-style interface through the Matlab function `uno`; this is the simplest way to employ Uno from Matlab;
+- low-level interface through the Matlab MEX functions `uno_optimize` and `uno_options`; this gives more control with advanced solver features.
 
 An example is available in the file [example_hs015.m](example/example_hs015.m).
 
@@ -23,29 +23,27 @@ The high-level interface provides a fmincon-style syntax for defining the optimi
 
 Use `help uno` to display the help text for `uno`.
 
-Define the objective function:
+Define the objective function and its gradient:
 
 ```matlab
-function [fval,grad,hess] = fun(x)
+function [fval,grad] = fun(x)
     % ...
 end
 ```
 
 - the objective value `fval` must be a scalar numeric value;
 - the objective gradient `grad` must be a numeric vector of `length(x)` elements;
-- the objective hessian `hess` must be either a numeric matrix of size `length(x)`-by-`length(x)`.
 
-Define the nonlinear constraint function `c(x)<=0` and `ceq(x)=0`:
+Define the nonlinear constraint function `c(x)<=0` and `ceq(x)=0` and its gradient:
 
 ```matlab
-function [c,ceq,gradc,gradceq,hessc,hessceq] = nlcon(x)
+function [c,ceq,gradc,gradceq] = nlcon(x)
     % ...
 end
 ```
 
 - the inequality `c` and equality `ceq` constraints must be a numeric vector (possibly empty for no constraint);
 - the inequality `gradc` and equality `gradceq` constraint gradients must be numeric matrices with sizes `length(x)`-by-`length(c)` and `length(x)`-by-`length(ceq)`, respectively. Each column is the gradient of a constraint (possibly empty for no constraint);
-- the inequality `hessc` and equality `hessceq` constraint hessians must be multidimensional numeric matrices with sizes `length(x)`-by-`length(x)`-by-`length(c)` and `length(x)`-by-`length(x)`-by-`length(ceq)`, respectively. Each slice is the hessian of a constraint (possibly empty for no constraint).
 
 Define the linear constraints `A*x<=b` and `Aeq*x=beq`:
 
@@ -86,7 +84,21 @@ options = uno('defaults')
 % or options = uno('defaults',preset) to get the options for a given preset
 ```
 
-The low-level interface MEX function `uno_options` can be also used.
+The low-level interface MEX function `uno_options` can be also used to obtain the default options.
+
+Additionaly, define the Lagrangian Hessian function in the options as (similarly to Matlab fmincon):
+
+```matlab
+options.HessianFnc = @(x,rho,lambda) hessian_fnc(x,rho,lambda);
+
+function H = hessian_fnc(x,rho,lambda)
+    % ...
+end
+```
+
+- `rho` is the objective multiplier;
+- `lambda.ineqnonlin` and `lambda.eqnonlin` are the Lagrange multipliers;
+- `H` must be a symmetric numeric matrix with size `length(x)`-by-`length(x)`
 
 Finally, call `uno` function using a fmincon-style syntax:
 
@@ -96,13 +108,12 @@ Finally, call `uno` function using a fmincon-style syntax:
 
 The major differences between `uno` and `fmincon` syntax are that:
 
-- objective and nonlinear constraint gradients must be always given (no finite difference is available);
-- objective and nonlinear constraint hessian are computed in the objective and constraint functions, respectively;
-- if empty hessian matrices are used, these are assumed to be zero.
+- objective and nonlinear constraint gradients must be always given (no finite difference is available); to employ finite difference, users must implement them explicitly;
+- the objective multiplier is also required in the Lagrangian Hessian function; if not provided, LBFGS is employed.
 
 ## Low-level interface
 
-The low-level interface gives you full access to all UNO options and functionality. Use it if you need more control or advanced solver features.
+The low-level interface gives you full access to all UNO options and functionality. Use it if you need more control with advanced solver features.
 
 Use `help uno_options` and `help uno_optimize` to display the help text for `uno_options` and `uno_optimize`.
 
