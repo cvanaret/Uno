@@ -386,9 +386,9 @@ endif()
 # optional Matlab bindings #
 ############################
 
-find_package(Matlab COMPONENTS MAIN_PROGRAM MEX_COMPILER)
+find_package(Matlab 23.2 COMPONENTS MAIN_PROGRAM MEX_COMPILER) # >=23.2 = R2023b
 if(Matlab_FOUND)
-   message(STATUS "Found Matlab")
+   message(STATUS "Found Matlab ${Matlab_VERSION}")
    
    file(GLOB MATLAB_SOURCE_FILES
       interfaces/Matlab/cpp_classes/*.cpp
