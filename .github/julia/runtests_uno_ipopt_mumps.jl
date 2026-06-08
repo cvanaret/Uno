@@ -24,6 +24,28 @@ end
 
 Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS", "unbounded_objective_threshold=-1e15"])
 
+# drop the equality-constrained instances
+bound_constrained_instances = readlines(joinpath(@__DIR__, "MINLPTests/bound-constrained.txt"))
+general_instances = readlines(joinpath(@__DIR__, "MINLPTests/general.txt"))
+instances = vcat(bound_constrained_instances, general_instances)
+
+# strip the prefix
+function strip_prefix(instances, prefix)
+    cleaned_instances = String[]
+    for instance in instances
+        instance = strip(instance)
+        startswith(instance, prefix) && push!(cleaned_instances, replace(instance, prefix => ""; count = 1))
+    end
+    return cleaned_instances
+end
+
+exclude_nlp_expr = [
+   # Okay to exclude forever: AmplNLWriter does not support user-defined functions.
+   "006_010",
+   # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
+   "007_010",
+]
+
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
     primal_target = Dict(
@@ -39,13 +61,7 @@ Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solv
     # same global minimum, but a test failure can sometimes be allowed.
     MINLPTests.test_nlp_expr(
         Optimizer_Uno_ipopt;
-        exclude = [
-            # Okay to exclude forever: AmplNLWriter does not support
-            # user-defined functions.
-            "006_010",
-            # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
-            "007_010",
-        ],
+        include = setdiff(strip_prefix(instances, "nlp_expr_"), exclude_nlp_expr),
         primal_target, objective_tol, primal_tol
     )
     # This function tests convex nonlinear programs. Test failures here should
