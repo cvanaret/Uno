@@ -406,22 +406,22 @@ if(Matlab_FOUND)
 
    # compile the Unomex source files once
    add_library(compiled_unomex_files EXCLUDE_FROM_ALL OBJECT ${MATLAB_SOURCE_FILES})
+   target_link_libraries(compiled_unomex_files PUBLIC uno_dependencies)
    set_property(TARGET compiled_unomex_files PROPERTY POSITION_INDEPENDENT_CODE ON)
-   target_include_directories(compiled_unomex_files PUBLIC ${DIRECTORIES} ${Matlab_INCLUDE_DIRS})
+   target_include_directories(compiled_unomex_files PUBLIC ${Matlab_INCLUDE_DIRS})
 
    # uno_optimize
    matlab_add_mex(NAME unomex-optimize SRC $<TARGET_OBJECTS:compiled_unomex_files> interfaces/Matlab/uno_optimize.cpp
       EXCLUDE_FROM_ALL
       OUTPUT_NAME uno_optimize
-      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
-   target_include_directories(unomex-optimize PUBLIC ${DIRECTORIES})
+      LINK_TO ${DEFAULT_UNO_LIB} uno_dependencies ${MXLIBUT})
    
    # uno_options
    matlab_add_mex(NAME unomex-options SRC $<TARGET_OBJECTS:compiled_unomex_files> interfaces/Matlab/uno_options.cpp
       EXCLUDE_FROM_ALL
       OUTPUT_NAME uno_options
-      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
-   target_include_directories(unomex-options PUBLIC ${DIRECTORIES})
+      LINK_TO ${DEFAULT_UNO_LIB} uno_dependencies ${MXLIBUT})
+   target_include_directories(unomex-options PUBLIC ${directory})
 
    # logical target to compile both mex
    add_custom_target(unomex DEPENDS unomex-optimize unomex-options)
@@ -432,6 +432,12 @@ if(Matlab_FOUND)
       set_target_properties(unomex-optimize PROPERTIES BUILD_RPATH "${MEX_RPATH};${CMAKE_BUILD_RPATH}" INSTALL_RPATH "${MEX_RPATH};${CMAKE_INSTALL_RPATH}")
       set_target_properties(unomex-options PROPERTIES BUILD_RPATH "${MEX_RPATH};${CMAKE_BUILD_RPATH}" INSTALL_RPATH "${MEX_RPATH};${CMAKE_INSTALL_RPATH}")
    endif()
+
+   # install
+   set(MATLAB_INSTALL_FILES "interfaces/Matlab/uno.m;interfaces/Matlab/uno_optimize.m;interfaces/Matlab/uno_options.m")
+   install(TARGETS unomex-optimize LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR})
+   install(TARGETS unomex-options LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR})
+   install(FILES ${MATLAB_INSTALL_FILES} DESTINATION bin)
 endif()
 
 # ======================
