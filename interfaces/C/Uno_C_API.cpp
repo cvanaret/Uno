@@ -379,7 +379,7 @@ private:
 
 class CStreamCallback : public UserStreamCallback {
 public: 
-   CStreamCallback(LoggerStreamUserCallback logger_stream_callback, void* user_data) :
+   CStreamCallback(uno_logger_stream_callback logger_stream_callback, void* user_data) :
    UserStreamCallback(), logger_stream_callback(logger_stream_callback), user_data(user_data) { }
    ~CStreamCallback() override { }
 
@@ -396,26 +396,6 @@ private:
    uno_logger_stream_callback logger_stream_callback;
    void* user_data;
    char* buffer;
-
-   // flush buffer to the logger callback
-   int flush_buffer() {
-      // check for invalid stream callback
-      if (!this->logger_stream_callback) {
-         return -1;
-      }
-      std::ptrdiff_t current_used_buffer_size = this->pptr() - this->pbase();
-      if (current_used_buffer_size > 0) {
-         // call user logger callback
-         const uno_int callback_result = this->logger_stream_callback(this->pbase(), static_cast<uno_int>(current_used_buffer_size),
-            this->user_data);
-         if (callback_result != static_cast<uno_int>(current_used_buffer_size)) {
-            return -1;
-         }
-         // move buffer pointer
-         this->pbump(static_cast<int>(-current_used_buffer_size));
-      }
-      return 0;
-   }
 };
 
 CStreamCallback* c_stream_callback = nullptr;
@@ -910,7 +890,7 @@ bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callba
    return true;
 }
 
-bool uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data) {
+bool uno_set_logger_stream_callback(uno_logger_stream_callback logger_stream_callback, void* user_data) {
    delete c_stream_callback;
    delete ostream;
    c_stream_callback = new CStreamCallback(logger_stream_callback, user_data);
