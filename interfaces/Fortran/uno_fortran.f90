@@ -255,6 +255,72 @@ function uno_get_solver_option_type(solver, option_name) result(solver_option_ty
 end function uno_get_solver_option_type
 
 !---------------------------------------------
+! uno_get_solver_option_index
+!---------------------------------------------
+function uno_get_solver_option_index(option_name) result(solver_option_index)
+   character(len=*) :: option_name
+   integer(uno_int) :: solver_option_index
+   character(c_char), allocatable :: option_name_c(:)
+   integer :: i, n
+
+   interface
+      function uno_get_solver_option_index_c(option_name) &
+         result(solver_option_index) &
+         bind(C, name="uno_get_solver_option_index")
+         import :: c_char, uno_int
+         character(c_char) :: option_name(*)
+         integer(uno_int) :: solver_option_index
+      end function uno_get_solver_option_index_c
+   end interface
+
+   n = len_trim(option_name)
+   allocate(option_name_c(n+1))
+   do i = 1, n
+      option_name_c(i) = option_name(i:i)
+   end do
+   option_name_c(n+1) = c_null_char
+   solver_option_index = uno_get_solver_option_index_c(option_name_c)
+   deallocate(option_name_c)
+end function uno_get_solver_option_index
+
+!---------------------------------------------
+! uno_get_solver_option_name
+!---------------------------------------------
+function uno_get_solver_option_name(option_index) &
+   result(solver_option_name)
+   integer(uno_int), value :: option_index
+   character(:), allocatable :: solver_option_name
+   type(c_ptr) :: ptr_solver_option_name_c
+   integer :: i, n
+   character(c_char), pointer :: solver_option_name_c(:)
+
+   interface
+      function uno_get_solver_option_name_c(option_index) &
+         result(solver_option_name) &
+         bind(C, name="uno_get_solver_option_name")
+         import :: uno_int, c_ptr
+         integer(uno_int), value :: option_index
+         type(c_ptr) :: solver_option_name
+      end function uno_get_solver_option_name_c
+   end interface
+
+   ptr_solver_option_name_c = uno_get_solver_option_name_c(option_index)
+   if (.not. c_associated(ptr_solver_option_name_c)) then
+      solver_option_name = ""
+      return
+   end if
+   call c_f_pointer(ptr_solver_option_name_c, solver_option_name_c, [huge(0)])
+   n = 0
+   do while (solver_option_name_c(n+1) /= c_null_char)
+      n = n + 1
+   end do
+   allocate(character(len=n)::solver_option_name)
+   do i = 1, n
+      solver_option_name(i:i) = solver_option_name_c(i)
+   end do
+end function uno_get_solver_option_name
+
+!---------------------------------------------
 ! uno_load_solver_option_file
 !---------------------------------------------
 function uno_load_solver_option_file(solver, file_name) result(success)

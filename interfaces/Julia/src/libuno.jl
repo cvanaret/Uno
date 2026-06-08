@@ -202,6 +202,14 @@ function uno_get_solver_option_type(solver, option_name)
                                              option_name::Cstring)::Int32
 end
 
+function uno_get_solver_option_index(option_name)
+    @ccall libuno.uno_get_solver_option_index(option_name::Cstring)::Int32
+end
+
+function uno_get_solver_option_name(option_index)
+    @ccall libuno.uno_get_solver_option_name(option_index::Int32)::Cstring
+end
+
 function uno_load_solver_option_file(solver, file_name)
     @ccall libuno.uno_load_solver_option_file(solver::Ptr{Cvoid}, file_name::Cstring)::Bool
 end
