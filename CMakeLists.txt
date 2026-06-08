@@ -437,7 +437,7 @@ if(Matlab_FOUND)
    set(MATLAB_INSTALL_FILES "interfaces/Matlab/uno.m;interfaces/Matlab/uno_optimize.m;interfaces/Matlab/uno_options.m")
    install(TARGETS unomex-optimize LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR})
    install(TARGETS unomex-options LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR})
-   install(FILES ${MATLAB_INSTALL_FILES} DESTINATION bin)
+   install(FILES ${MATLAB_INSTALL_FILES} DESTINATION $<IF:$<PLATFORM_ID:Windows>,bin,lib>)
 endif()
 
 # ======================
