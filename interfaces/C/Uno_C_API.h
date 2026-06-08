@@ -304,7 +304,7 @@ extern "C" {
 
    // gets the name of a particular option in the Uno solver.
    // takes as input the index of the option.
-   // returns the name of the option.
+   // returns the name of the option (NULL when out of range).
    const char* uno_get_solver_option_name(uno_int option_index);
 
    // [optional] loads the options from a given option file.
