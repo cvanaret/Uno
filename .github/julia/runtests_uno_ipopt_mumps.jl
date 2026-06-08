@@ -30,7 +30,7 @@ Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solv
 bound_constrained_instances = readlines(joinpath(@__DIR__, "MINLPTests/bound-constrained.txt"))
 general_instances = readlines(joinpath(@__DIR__, "MINLPTests/general.txt"))
 instances = vcat(bound_constrained_instances, general_instances)
-print("Instances with inequality constraints: ", instances)
+#print("Instances with inequality constraints: ", instances)
 
 # strip the prefix
 function strip_prefix(instances, prefix)
@@ -72,6 +72,13 @@ MINLPTests.test_directory(
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
 # tests in here with weird edge cases, so a variety of exclusions are expected.
+
+# drop the equality-constrained instances
+bound_constrained_instances = readlines(joinpath(@__DIR__, "MOI/bound-constrained.txt"))
+general_instances = readlines(joinpath(@__DIR__, "MOI/general.txt"))
+instances = vcat(bound_constrained_instances, general_instances)
+#print("Instances with inequality constraints: ", instances)
+
 @testset "MathOptInterface.test" begin
     optimizer = MOI.instantiate(
         Optimizer_Uno_ipopt;
@@ -99,6 +106,7 @@ MINLPTests.test_directory(
                 MOI.DualObjectiveValue,
             ],
         );
+        include = [Regex("^" * instance * "\$") for instance in instances],   # exact match
         exclude = [
             # ==================================================================
             # The following tests are bugs.
