@@ -25,7 +25,7 @@ affiliations:
    index: 1
  - name: Mathematics and Computer Science Division, Argonne National Laboratory, USA
    index: 2
-date: 13 April 2026
+date: 8 June 2026
 bibliography: paper.bib
 
 ---
@@ -41,7 +41,7 @@ This allows classical and hybrid methods to be configured and compared within a 
 For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2026].
 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
-Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling interoperability across scientific computing environments. <!-- and allowing seamless integration into existing workflows without requiring users to migrate to a new ecosystem. -->
+Uno has interfaces to Julia, Python, C, Fortran, and AMPL, enabling interoperability across scientific computing environments. <!-- and allowing seamless integration into existing workflows without requiring users to migrate to a new ecosystem. -->
 Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
@@ -143,12 +143,13 @@ Uno is currently used as a nonlinear optimization solver in:
 	* the `JuMP.jl` ecosystem,
 	* `control-toolbox`, a collection of Julia packages for mathematical control and its applications,
 - Python:
-	* DNLP, an extension of CVXPY to general nonlinear programming,
-	* FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
+	* [pyOptSparse](https://github.com/mdolab/pyoptsparse), an object-oriented framework for formulating and solving nonlinear constrained optimization problems in an efficient, reusable, and portable manner,
+	* [DNLP](https://github.com/cvxgrp/DNLP), an extension of CVXPY to general nonlinear programming,
 - Fortran:
+	* [CUTEst](https://github.com/ralna/cuTEst), the Constrained and Unconstrained Testing Environment with safe threads for optimization software,
 	* IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
 
-Ongoing discussions and community interest indicate potential future integrations in CasADi, Pyomo, pyOptSparse, Minotaur, and the NEOS Server.
+Ongoing discussions and community interest indicate potential future integrations in CasADi, Pyomo, Minotaur, and the NEOS Server.
 
 # Acknowledgments
 
