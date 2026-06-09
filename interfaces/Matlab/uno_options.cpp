@@ -14,6 +14,7 @@ using namespace uno;
 void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 #if defined(__APPLE__)
     // lock the mex to prevent matlab crash during cleanup
+    // cf. https://github.com/wmutschl/matlab_openmp_tls_bug
     static bool locked = false;
     if (!locked)
     {
