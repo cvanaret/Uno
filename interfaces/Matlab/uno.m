@@ -217,8 +217,10 @@ if ~isempty(ceq0) && length(X) ~= size(gradceq0,1)
 end
 
 % Check H = HESSIANFNC(x,rho,lambda)
+HESSIANFNC = [];
 if isfield(options,'HessianFnc')
     HESSIANFNC = options.HessianFnc;
+    options = rmfield(options, 'HessianFnc');
     if ~isa(HESSIANFNC,'function_handle')
         error('HESSIANFNC must be a function handle.')
     end
@@ -267,7 +269,7 @@ model.constraint_jacobian = @(x) constraint_jacobian(x,Aeq,Beq,A,B,NONLCON,irj,j
 model.lagrangian_sign_convention = 1;
 
 % Lagrangian Hessian
-if isfield(options,'HessianFnc')
+if ~isempty(HESSIANFNC)
     model.hessian_triangular_part = 'L';
     [irh, jch] = find(tril(ones(length(X),length(X))));
     model.hessian_row_indices = irh(:);
@@ -316,7 +318,7 @@ LAMBDA.ineqlin = result.constraint_dual_solution(ind_ineqlin);
 LAMBDA.ineqnonlin = result.constraint_dual_solution(ind_ineqnonlin);
 LAMBDA.eqnonlin = result.constraint_dual_solution(ind_eqnonlin);
 [~,GRAD] = FUN(X);
-if isfield(options,'HessianFnc')
+if ~isempty(HESSIANFNC)
     HESSIAN = HESSIANFNC(X, 1, LAMBDA);
 else
     HESSIAN = [];
