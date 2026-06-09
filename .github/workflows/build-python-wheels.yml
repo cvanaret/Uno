@@ -26,7 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
+  CIBW_TEST_COMMAND: >
+    python {project}/interfaces/Python/tests/run_wheel_tests.py
+  CIBW_TEST_REQUIRES: numpy
 
 jobs:
   build_wheels:
@@ -51,6 +53,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install unzip (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: C:/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm --needed unzip"
 
       - run: pip install cibuildwheel
         if: runner.os != 'Windows'
@@ -83,17 +90,41 @@ jobs:
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
 
+      - name: Install matching MinGW (GCC 14.2.0 posix-seh-msvcrt)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $url = "https://github.com/niXman/mingw-builds-binaries/releases/download/14.2.0-rt_v12-rev0/x86_64-14.2.0-release-posix-seh-msvcrt-rt_v12-rev0.7z"
+          Invoke-WebRequest $url -OutFile mingw.7z
+          7z x mingw.7z -oC:\mingw1420 -y          # clean dir, NOT C:\mingw64
+          # the archive contains a top-level mingw64\ folder, so the compiler ends up at:
+          C:\mingw1420\mingw64\bin\gcc --version
+          C:\mingw1420\mingw64\bin\g++ --version
+
+      - name: Put 14.2 toolchain first on PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "C:\mingw1420\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           CIBW_BUILD: ${{ matrix.sys.build }}
-          CIBW_SKIP: cp*-*_i686 *-win32
-          CIBW_ENVIRONMENT_LINUX:
+          CIBW_SKIP: cp38-* *_i686 *-win32
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_34
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_34
+          CIBW_ENVIRONMENT_LINUX: >
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+            LD_LIBRARY_PATH=/project/dependencies/lib:/project/dependencies/lib/julia
+            AUDITWHEEL_PLAT=manylinux_2_35_$(uname -m)
+          # Linux wheels need glibc 2.35; test them in a separate job
+          CIBW_TEST_SKIP: "*-manylinux_*"
           CIBW_BEFORE_ALL_LINUX:
             bash dependencies/scripts/download_dependencies.sh
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
+            auditwheel repair --exclude libkrylov.so --exclude 'libjulia*.so*' --exclude 'libopenlibm*.so*' -w {dest_dir} {wheel}
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -125,6 +156,10 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
+          CIBW_CONFIG_SETTINGS_MACOS: >
+            cmake.define.KRYLOV=dependencies/lib/libkrylov.dylib
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies -w {dest_dir} -v {wheel}
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -132,30 +167,68 @@ jobs:
         shell: pwsh
         env:
           CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
-          CIBW_BEFORE_BUILD_WINDOWS: >
+          CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' -w {dest_dir} {wheel}"
+            delvewheel repair --no-mangle-all --add-path 'dependencies/bin;dependencies/lib' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
-            CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
-            CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
-            CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
-            CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
+            CMAKE_MAKE_PROGRAM=C:/mingw1420/mingw64/bin/mingw32-make.exe
+            CMAKE_C_COMPILER=C:/mingw1420/mingw64/bin/gcc.exe
+            CMAKE_CXX_COMPILER=C:/mingw1420/mingw64/bin/g++.exe
+            CMAKE_Fortran_COMPILER=C:/mingw1420/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
+            cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
+        if: success() || failure()
         with:
           name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
-          path: wheelhouse/*.whl
+          path: ${{ github.workspace }}/wheelhouse/*.whl
+          if-no-files-found: warn
+
+  # test the Linux wheels with glibc ≥ 2.35
+  test-linux-wheels:
+    name: Test Linux wheels (${{ matrix.runs-on }})
+    needs: build_wheels
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs-on: ubuntu-24.04
+            pattern: cibw-wheels-ubuntu-latest-*
+          - runs-on: ubuntu-24.04-arm
+            pattern: cibw-wheels-ubuntu-22.04-arm-*
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ matrix.pattern }}
+          path: wheelhouse
+          merge-multiple: true
+
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+
+      - name: Run tests
+        shell: bash
+        run: |
+          ls -R wheelhouse || { echo "no wheels downloaded"; exit 1; }
+          python -m pip install numpy
+          python -m pip install --no-index --find-links "$GITHUB_WORKSPACE/wheelhouse" --only-binary=:all: unopy
+          cd "$RUNNER_TEMP"   # run from outside the repo so 'import unopy' hits the wheel, not the source
+          python "$GITHUB_WORKSPACE/interfaces/Python/tests/run_wheel_tests.py"
 
   build_sdist:
     name: Build source distribution
