@@ -35,6 +35,6 @@ jobs:
           echo "julia --project wrapper_fortran.jl";
           echo "";
           echo "You can also find the instructions at:";
-          echo "https://github.com/cvanaret/Uno/blob/master/interfaces/Julia/README.md";
+          echo "https://github.com/cvanaret/Uno/blob/main/interfaces/Julia/gen/README.md";
           exit 1;
           }
