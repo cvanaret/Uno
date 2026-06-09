@@ -20,6 +20,16 @@ using namespace uno;
 
 // gateway function: result = uno_optimize(model[, options, callbacks])
 void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
+#if defined(__APPLE__)
+    // lock the mex to prevent matlab crash during cleanup
+    static bool locked = false;
+    if (!locked)
+    {
+        mexLock();
+        locked = true;
+    }
+#endif
+
     std::string errmsg; // declare once for all
     // validate argument list
     if (nrhs < 1) {

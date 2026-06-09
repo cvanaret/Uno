@@ -12,6 +12,16 @@ using namespace uno;
 
 // gateway function: options = uno_options([preset]);
 void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
+#if defined(__APPLE__)
+    // lock the mex to prevent matlab crash during cleanup
+    static bool locked = false;
+    if (!locked)
+    {
+        mexLock();
+        locked = true;
+    }
+#endif
+
     // validate arguments
     if (nrhs > 1) {
         const std::string errmsg = ErrorString::format_error(ErrorType::NARGIN_TOOMANY);
