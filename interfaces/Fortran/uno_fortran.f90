@@ -255,70 +255,41 @@ function uno_get_solver_option_type(solver, option_name) result(solver_option_ty
 end function uno_get_solver_option_type
 
 !---------------------------------------------
-! uno_get_solver_option_index
+! uno_option_iterator_name
 !---------------------------------------------
-function uno_get_solver_option_index(option_name) result(solver_option_index)
-   character(len=*) :: option_name
-   integer(uno_int) :: solver_option_index
-   character(c_char), allocatable :: option_name_c(:)
+function uno_option_iterator_name(it) &
+   result(option_iterator_name)
+   type(c_ptr), value :: it
+   character(:), allocatable :: option_iterator_name
+   type(c_ptr) :: ptr_option_iterator_name_c
    integer :: i, n
+   character(c_char), pointer :: option_iterator_name_c(:)
 
    interface
-      function uno_get_solver_option_index_c(option_name) &
-         result(solver_option_index) &
-         bind(C, name="uno_get_solver_option_index")
-         import :: c_char, uno_int
-         character(c_char) :: option_name(*)
-         integer(uno_int) :: solver_option_index
-      end function uno_get_solver_option_index_c
+      function uno_option_iterator_name_c(it) &
+         result(option_iterator_name) &
+         bind(C, name="uno_option_iterator_name")
+         import :: c_ptr
+         type(c_ptr), value :: it
+         type(c_ptr) :: option_iterator_name
+      end function uno_option_iterator_name_c
    end interface
 
-   n = len_trim(option_name)
-   allocate(option_name_c(n+1))
-   do i = 1, n
-      option_name_c(i) = option_name(i:i)
-   end do
-   option_name_c(n+1) = c_null_char
-   solver_option_index = uno_get_solver_option_index_c(option_name_c)
-   deallocate(option_name_c)
-end function uno_get_solver_option_index
-
-!---------------------------------------------
-! uno_get_solver_option_name
-!---------------------------------------------
-function uno_get_solver_option_name(option_index) &
-   result(solver_option_name)
-   integer(uno_int), value :: option_index
-   character(:), allocatable :: solver_option_name
-   type(c_ptr) :: ptr_solver_option_name_c
-   integer :: i, n
-   character(c_char), pointer :: solver_option_name_c(:)
-
-   interface
-      function uno_get_solver_option_name_c(option_index) &
-         result(solver_option_name) &
-         bind(C, name="uno_get_solver_option_name")
-         import :: uno_int, c_ptr
-         integer(uno_int), value :: option_index
-         type(c_ptr) :: solver_option_name
-      end function uno_get_solver_option_name_c
-   end interface
-
-   ptr_solver_option_name_c = uno_get_solver_option_name_c(option_index)
-   if (.not. c_associated(ptr_solver_option_name_c)) then
-      solver_option_name = ""
+   ptr_option_iterator_name_c = uno_option_iterator_name_c(it)
+   if (.not. c_associated(ptr_option_iterator_name_c)) then
+      option_iterator_name = ""
       return
    end if
-   call c_f_pointer(ptr_solver_option_name_c, solver_option_name_c, [huge(0)])
+   call c_f_pointer(ptr_option_iterator_name_c, option_iterator_name_c, [huge(0)])
    n = 0
-   do while (solver_option_name_c(n+1) /= c_null_char)
+   do while (option_iterator_name_c(n+1) /= c_null_char)
       n = n + 1
    end do
-   allocate(character(len=n)::solver_option_name)
+   allocate(character(len=n)::option_iterator_name)
    do i = 1, n
-      solver_option_name(i:i) = solver_option_name_c(i)
+      option_iterator_name(i:i) = option_iterator_name_c(i)
    end do
-end function uno_get_solver_option_name
+end function uno_option_iterator_name
 
 !---------------------------------------------
 ! uno_load_solver_option_file

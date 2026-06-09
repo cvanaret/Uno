@@ -636,6 +636,65 @@ interface
 end interface
 
 !---------------------------------------------
+! uno_option_begin_iterator
+!---------------------------------------------
+interface
+   function uno_option_begin_iterator() &
+      result(option_begin_iterator) &
+      bind(C, name="uno_option_begin_iterator")
+      import :: c_ptr
+      type(c_ptr) :: option_begin_iterator
+   end function uno_option_begin_iterator
+end interface
+
+!---------------------------------------------
+! uno_option_end_iterator
+!---------------------------------------------
+interface
+   function uno_option_end_iterator() &
+      result(option_end_iterator) &
+      bind(C, name="uno_option_end_iterator")
+      import :: c_ptr
+      type(c_ptr) :: option_end_iterator
+   end function uno_option_end_iterator
+end interface
+
+!---------------------------------------------
+! uno_option_next_iterator
+!---------------------------------------------
+interface
+   subroutine uno_option_next_iterator(it) &
+      bind(C, name="uno_option_next_iterator")
+      import :: c_ptr
+      type(c_ptr), value :: it
+   end subroutine uno_option_next_iterator
+end interface
+
+!---------------------------------------------
+! uno_option_iterator_type
+!---------------------------------------------
+interface
+   function uno_option_iterator_type(it) &
+      result(option_iterator_type) &
+      bind(C, name="uno_option_iterator_type")
+      import :: c_ptr, uno_int
+      type(c_ptr), value :: it
+      integer(uno_int) :: option_iterator_type
+   end function uno_option_iterator_type
+end interface
+
+!---------------------------------------------
+! uno_option_destroy_iterator
+!---------------------------------------------
+interface
+   subroutine uno_option_destroy_iterator(it) &
+      bind(C, name="uno_option_destroy_iterator")
+      import :: c_ptr
+      type(c_ptr), value :: it
+   end subroutine uno_option_destroy_iterator
+end interface
+
+!---------------------------------------------
 ! uno_set_solver_callbacks
 !---------------------------------------------
 interface
