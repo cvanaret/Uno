@@ -338,16 +338,16 @@ namespace uno {
     }
 
     void MatlabModel::initial_primal_point(Vector<double>& x) const {
-        x.fill(0);
-        if (this->user_model.initial_primal_iterate.size() > 0) {
-            x = this->user_model.initial_primal_iterate;
+        // copy the initial primal point
+        for (const size_t variable_index: Range(static_cast<size_t>(this->user_model.number_variables))) {
+            x[variable_index] = this->user_model.initial_primal_iterate[variable_index];
         }
     }
 
     void MatlabModel::initial_dual_point(Vector<double>& multipliers) const {
-        multipliers.fill(0);
-        if (this->user_model.initial_dual_iterate.size() > 0) {
-            multipliers = this->user_model.initial_dual_iterate;
+        // copy the initial dual point
+        for (const size_t constraint_index: Range(static_cast<size_t>(this->user_model.number_constraints))) {
+            multipliers[constraint_index] = this->user_model.initial_dual_iterate[constraint_index];
         }
         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             multipliers.scale(-1.);

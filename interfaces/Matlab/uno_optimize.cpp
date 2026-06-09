@@ -288,11 +288,12 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     if (initial_primal_iterate != nullptr) {
         user_model.initial_primal_iterate = mxArray_to_stdvector<double>(initial_primal_iterate);
     } else {
-        user_model.initial_primal_iterate = std::vector<double>();
+        user_model.initial_primal_iterate = std::vector<double>(user_model.number_variables, 0.);
     }
     if (initial_dual_iterate != nullptr) {
         user_model.initial_dual_iterate = mxArray_to_stdvector<double>(initial_dual_iterate);
-        user_model.initial_dual_iterate = std::vector<double>();
+    } else {
+        user_model.initial_dual_iterate = std::vector<double>(user_model.number_constraints, 0.);
     }
 
     // create Uno model
@@ -307,7 +308,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     // handle preset
     Presets::set_default(uno_options);
     if (options.contains("preset")) {
-        std::string preset = mxArray_to_string(options["preset"]);
+        const std::string preset = mxArray_to_string(options["preset"]);
         // set only if it is valid (not empty)
         if (!preset.empty()) {
             Presets::set(uno_options, preset);
