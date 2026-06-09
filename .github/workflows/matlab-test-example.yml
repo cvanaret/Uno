@@ -73,6 +73,7 @@ jobs:
         
       - name: Configure (Windows)
         if: startsWith(matrix.os, 'windows')
+        shell: cmd
         run: |
           cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" ^
             -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a ^
