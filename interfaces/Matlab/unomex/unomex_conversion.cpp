@@ -166,7 +166,11 @@ namespace uno {
         result.insert("constraint_dual_solution", vector_to_mxArray(uno_result.constraint_dual_solution));
         result.insert("lower_bound_dual_solution", vector_to_mxArray(uno_result.lower_bound_dual_solution));
         result.insert("upper_bound_dual_solution", vector_to_mxArray(uno_result.upper_bound_dual_solution));
+        result.insert("constraint_values", vector_to_mxArray(uno_result.constraint_values));
         result.insert("number_iterations", scalar_to_mxArray(static_cast<double>(uno_result.number_iterations)));
+        result.insert("number_variables", scalar_to_mxArray(static_cast<double>(uno_result.number_variables)));
+        result.insert("number_constraints", scalar_to_mxArray(static_cast<double>(uno_result.number_constraints)));
+        result.insert("base_indexing", scalar_to_mxArray(static_cast<double>(uno_result.base_indexing)));
         result.insert("cpu_time", scalar_to_mxArray(uno_result.cpu_time));
         result.insert("number_objective_evaluations", scalar_to_mxArray(static_cast<double>(uno_result.number_objective_evaluations)));
         result.insert("number_constraint_evaluations", scalar_to_mxArray(static_cast<double>(uno_result.number_constraint_evaluations)));
