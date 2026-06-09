@@ -25,37 +25,64 @@ end
 Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS", "hessian_model=identity", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
-@testset "MINLPTests" begin
-    primal_target = Dict(
-        MINLPTests.FEASIBLE_PROBLEM => MOI.FEASIBLE_POINT,
-        # If Uno starts writing a .sol file with an infeasible point, change
-        # this to `=> MOI.INFEASIBLE_POINT`
-        MINLPTests.INFEASIBLE_PROBLEM => MOI.NO_SOLUTION,
-    )
-    objective_tol = 1e-4
-    primal_tol = 1e-4
-    # This function tests (potentially) non-convex nonlinear programs. The tests
-    # are meant to be "easy" in the sense that most NLP solvers can find the
-    # same global minimum, but a test failure can sometimes be allowed.
-    MINLPTests.test_nlp_expr(
-        Optimizer_Uno_ipopt;
-        exclude = [
-            # Okay to exclude forever: AmplNLWriter does not support
-            # user-defined functions.
-            "006_010",
-            # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
-            "007_010",
-        ],
-        primal_target, objective_tol, primal_tol
-    )
-    # This function tests convex nonlinear programs. Test failures here should
-    # never be allowed, because even local NLP solvers should find the global
-    # optimum.
-    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_ipopt; primal_target, objective_tol, primal_tol)
+
+# drop the equality-constrained instances and the LPs
+bound_constrained_instances = readlines(joinpath(@__DIR__, "MINLPTests/bound-constrained.txt"))
+general_instances = readlines(joinpath(@__DIR__, "MINLPTests/general.txt"))
+NLP_instances = readlines(joinpath(@__DIR__, "MINLPTests/NLP.txt"))
+instances = vcat(bound_constrained_instances, general_instances)
+instances = intersect(instances, NLP_instances)
+#print("Instances: ", instances)
+
+# strip the prefix
+function strip_prefix(instances, prefix)
+    cleaned_instances = String[]
+    for instance in instances
+        instance = strip(instance)
+        startswith(instance, prefix) && push!(cleaned_instances, replace(instance, prefix => ""; count = 1))
+    end
+    return cleaned_instances
 end
+
+primal_target = Dict(
+    MINLPTests.FEASIBLE_PROBLEM => MOI.FEASIBLE_POINT,
+    # If Uno starts writing a .sol file with an infeasible point, change
+    # this to `=> MOI.INFEASIBLE_POINT`
+    MINLPTests.INFEASIBLE_PROBLEM => MOI.NO_SOLUTION,
+)
+objective_tol = 1e-4
+primal_tol = 1e-4
+
+# This function tests (potentially) non-convex nonlinear programs. The tests
+# are meant to be "easy" in the sense that most NLP solvers can find the
+# same global minimum, but a test failure can sometimes be allowed.
+MINLPTests.test_directory(
+    "nlp-expr",
+    Optimizer_Uno_ipopt;
+    include = strip_prefix(instances, "nlp_expr_"),
+    primal_target, objective_tol, primal_tol
+)
+# This function tests convex nonlinear programs. Test failures here should
+# never be allowed, because even local NLP solvers should find the global
+# optimum.
+MINLPTests.test_directory(
+    "nlp-cvx-expr",
+    Optimizer_Uno_ipopt;
+    include = strip_prefix(instances, "nlp_cvx_expr_"),
+    primal_target, objective_tol, primal_tol
+)
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
 # tests in here with weird edge cases, so a variety of exclusions are expected.
+
+# drop the equality-constrained instances and the LPs
+bound_constrained_instances = readlines(joinpath(@__DIR__, "MOI/bound-constrained.txt"))
+general_instances = readlines(joinpath(@__DIR__, "MOI/general.txt"))
+NLP_instances = readlines(joinpath(@__DIR__, "MOI/NLP.txt"))
+instances = vcat(bound_constrained_instances, general_instances)
+instances = intersect(instances, NLP_instances)
+#print("Instances: ", instances)
+
 @testset "MathOptInterface.test" begin
     optimizer = MOI.instantiate(
         Optimizer_Uno_ipopt;
@@ -83,6 +110,7 @@ end
                 MOI.DualObjectiveValue,
             ],
         );
+        include = [Regex("^" * instance * "\$") for instance in instances],   # exact match
         exclude = [
             # ==================================================================
             # The following tests are bugs.
