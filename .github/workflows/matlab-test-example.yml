@@ -74,9 +74,9 @@ jobs:
       - name: Configure (Windows)
         if: startsWith(matrix.os, 'windows')
         run: |
-          cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" \
-            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
-            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+          cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" ^
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a ^
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a ^
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a"
         
       - name: Build
