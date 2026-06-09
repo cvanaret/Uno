@@ -7,25 +7,32 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: Debug
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
-       matrix:
+      fail-fast: false
+      matrix:
         include:
           - os: windows-latest
             addpath: install/bin
-          - os: macos-14
+          - os: macos-latest
             addpath: install/lib
         
     steps:
@@ -33,50 +40,50 @@ jobs:
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
-        
-      - name: Download dependency (BQPD)
-        shell: bash
-        run: |
-            VERSION_BQPD="1.0.0"
-            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              PLATFORM="x86_64-w64-mingw32"
-              choco install wget
-            else
-              PLATFORM="aarch64-apple-darwin"
-            fi
-            wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
-            mkdir deps
-            tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
-
-      - name: Add MinGW64 to PATH (Windows)
-        if: matrix.os == 'windows-latest'
-        run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
       
-      - name: Install Fortran compiler (MacOS)
-        if: matrix.os != 'windows-latest'
+      - name: Install Fortran compiler (macOS)
+        if: startsWith(matrix.os, 'macos')
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'
-          version: '13'
+          version: '14'
+      
+      - name: Setup MSYS2 (Windows)
+        if: startsWith(matrix.os, 'windows')
+        uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+          msystem: MINGW64
+          update: true
+          install: |
+            mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
 
-      - name: Configure CMake
-        shell: bash
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure (macOS)
+        if: startsWith(matrix.os, 'macos')
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" \
-              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-              -DBQPD="${{github.workspace}}/deps/lib/libbqpd.a"
-          else
-            cmake -B "${{github.workspace}}/build" \
-              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-              -DBQPD="${{github.workspace}}/deps/lib/libbqpd.a"
-          fi
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+            -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a"
         
-      - name: Build uno
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
+      - name: Configure (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" \
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+            -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a"
+        
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
 
       - name: Build unomex
-        run: cmake --build ${{github.workspace}}/build --target unomex --config ${{env.BUILD_TYPE}} -j4
+        run: cmake --build ${{github.workspace}}/build --target unomex --config ${{env.BUILD_TYPE}} --parallel
 
       - name: Install unomex
         run: cmake --install ${{github.workspace}}/build --prefix ${{github.workspace}}/install
@@ -94,4 +101,3 @@ jobs:
           command: |
             addpath('${{ matrix.addpath }}');
             run('interfaces/Matlab/example/example_hs015.m');
-        
