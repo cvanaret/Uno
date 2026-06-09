@@ -370,12 +370,6 @@ if(SKBUILD)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
    endif()
 
-   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      # link-time optimization
-      target_compile_options(unopy PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
-      target_link_options(unopy PRIVATE -flto=auto)
-   endif()
-
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
