@@ -19,6 +19,9 @@ options = struct();
 % call uno
 [x,fval,exitflag,output,lambda,grad,hessian] = uno(@fun_polak5,x0,[],[],[],[],[],[],@nlcon_polak5,options);
 
+% Pause
+pause(0.5);
+
 %% HS015 functions
 % Objective function
 % objective gradient must be also specified
