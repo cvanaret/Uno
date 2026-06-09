@@ -304,9 +304,16 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     // create Uno options
     Options uno_options;
     DefaultOptions::load(uno_options);
-    // add default preset
+    // handle preset
     Presets::set_default(uno_options);
-    // add user options
+    if (options.contains("preset")) {
+        std::string preset = mxArray_to_string(options["preset"]);
+        // set only if it is valid (not empty)
+        if (!preset.empty()) {
+            Presets::set(uno_options, preset);
+        }
+    }
+    // override with user options
     mxStruct_to_options(options, uno_options);
 
     // check lagrangian hessian
