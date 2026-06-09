@@ -232,13 +232,13 @@ if isfield(options,'HessianFnc')
     try
         H0 = HESSIANFNC(X,1,LAMBDA);
     catch
-        error('Failure in nonlinear constraint function evaluation.')
+        error('Failure in Lagrangian Hessian function evaluation.')
     end
     if ~isnumeric(H0)
         error('HESSIANFNC must return numeric values.')
     end
     if ~isempty(H0) && ~isequal(size(H0), [length(X), length(X)])
-        error('Dimension of hessian is inconsistent with the length of x.')
+        error('Dimension of Lagrangian Hessian is inconsistent with the length of x.')
     end
 end
 
