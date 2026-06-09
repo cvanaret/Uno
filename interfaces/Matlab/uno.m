@@ -267,6 +267,7 @@ model.jacobian_column_indices = jcj;
 model.number_jacobian_nonzeros = length(irj);
 model.constraint_jacobian = @(x) constraint_jacobian(x,Aeq,Beq,A,B,NONLCON,irj,jcj);
 model.lagrangian_sign_convention = 1;
+model.initial_primal_iterate = X;
 
 % Lagrangian Hessian
 if ~isempty(HESSIANFNC)
@@ -276,7 +277,6 @@ if ~isempty(HESSIANFNC)
     model.hessian_column_indices = jch(:);
     model.number_hessian_nonzeros =  length(irh(:));
     model.lagrangian_hessian = @(x,rho,y) lagrangian_hessian(x,rho,y,HESSIANFNC,ind_ineqnonlin,ind_eqnonlin,irh,jch);
-    model.initial_primal_iterate = X;
 else
     if ~isfield(options,'hessian_model') || strcmp(options.hessian_model,'exact')
         % fallback to LBFGS when no HessianFnc
