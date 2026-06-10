@@ -1078,7 +1078,7 @@ const char* uno_get_solver_string_option(void* solver, const char* option_name) 
    }
    catch(const std::out_of_range& e) {
       // handle missing optional options
-      if (std::string(option_name)=="option_file" || std::string(option_name)=="preset") {
+      if (strcmp(option_name, "option_file") == 0 || strcmp(option_name, "preset") == 0){
          return nullptr;
       }
       throw e;
