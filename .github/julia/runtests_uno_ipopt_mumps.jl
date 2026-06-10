@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2025: Charlie Vanaret and contributors
+# Copyright (c) 2018-2026: Charlie Vanaret and contributors
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
