@@ -43,7 +43,7 @@ To get started with Uno, check out the [official documentation](https://unosolve
 
 ## How to cite Uno
 
-Our theory paper published in Mathematical Programming Computation may be cited with the following BibTeX entry:
+Our [theory paper](https://link.springer.com/article/10.1007/s12532-026-00310-9) published in Mathematical Programming Computation may be cited with the following BibTeX entry:
 
 ```
 @article{VanaretLeyffer2026,
