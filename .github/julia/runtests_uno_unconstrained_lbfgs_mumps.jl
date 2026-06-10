@@ -22,19 +22,13 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_sqp() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS",
-                                "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "hessian_model=LBFGS", "linear_solver=MUMPS"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 
-# keep only the equality-constrained instances
-instances = readlines(joinpath(@__DIR__, "MINLPTests/equality-constrained.txt"))
+# keep only the unconstrained NLP instances
+instances = readlines(joinpath(@__DIR__, "MINLPTests/unconstrained.txt"))
 NLP_instances = readlines(joinpath(@__DIR__, "MINLPTests/NLP.txt"))
-exclude = [
-    # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
-    "nlp_expr_007_010"
-]
-instances = setdiff(instances, exclude)
 instances = intersect(instances, NLP_instances)
 #print("Instances: ", instances)
 
@@ -64,7 +58,8 @@ nlp_expr_instances = strip_prefix(instances, "nlp_expr_")
 if !isempty(nlp_expr_instances)
     MINLPTests.test_directory(
         "nlp-expr",
-        Optimizer_Uno_sqp;
+        Optimizer_Uno_ipopt;
+        # debug=true,
         include = nlp_expr_instances,
         primal_target, objective_tol, primal_tol
     )
@@ -76,7 +71,8 @@ nlp_cvx_expr_instances = strip_prefix(instances, "nlp_cvx_expr_")
 if !isempty(nlp_cvx_expr_instances)
     MINLPTests.test_directory(
         "nlp-cvx-expr",
-        Optimizer_Uno_sqp;
+        Optimizer_Uno_ipopt;
+        # debug = true,
         include = nlp_cvx_expr_instances,
         primal_target, objective_tol, primal_tol
     )
@@ -85,8 +81,8 @@ end
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
 # tests in here with weird edge cases, so a variety of exclusions are expected.
 
-# keep only the equality-constrained instances
-instances = readlines(joinpath(@__DIR__, "MOI/equality-constrained.txt"))
+# keep only the unconstrained NLP instances
+instances = readlines(joinpath(@__DIR__, "MOI/unconstrained.txt"))
 NLP_instances = readlines(joinpath(@__DIR__, "MOI/NLP.txt"))
 instances = intersect(instances, NLP_instances)
 MOI_instances = [Regex("^" * instance * "\$") for instance in instances] # exact match
@@ -95,7 +91,7 @@ MOI_instances = [Regex("^" * instance * "\$") for instance in instances] # exact
 if !isempty(MOI_instances)
     @testset "MathOptInterface.test" begin
         optimizer = MOI.instantiate(
-            Optimizer_Uno_sqp;
+            Optimizer_Uno_ipopt;
             with_cache_type = Float64,
             with_bridge_type = Float64,
         )
