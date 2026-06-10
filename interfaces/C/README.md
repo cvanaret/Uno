@@ -129,13 +129,6 @@ uno_set_solver_bool_option(solver, "print_solution", true);
 uno_set_solver_string_option(solver, "hessian_model", "exact");
 ```
 
-To get the type, name, and index of a Uno option:
-```c
-uno_get_solver_option_type(solver, "max_iterations");
-uno_int index = uno_get_solver_option_index("max_iterations"); // -1 if not found
-const char* name = uno_get_solver_option_name(0); // NULL if not found
-```
-
 Options can also be loaded from a file that contains an `option value` pair per line (the example file `uno_default.opt` in the root directory contains Uno's default options). The options are set in this particular order. Anything that follows a `#` is treated as a comment and is ignored.
 ```c
 uno_load_solver_option_file(solver, "uno.opt");
@@ -153,6 +146,32 @@ const char* uno_get_solver_string_option(solver, "hessian_model");
 Setting a preset has Uno mimic an existing solver:
 ```c
 uno_set_solver_preset(solver, "filtersqp");
+```
+
+Getting the type of an option from the Uno solver:
+```c
+uno_int uno_get_solver_option_type(solver, "max_iterations");
+```
+
+Iterating over the Uno options:
+```c
+uno_option_iterator uno_option_begin_iterator();
+uno_option_iterator uno_option_end_iterator();
+void uno_option_next_iterator(&option_iterator);
+const char* uno_option_iterator_name(option_iterator);
+uno_int uno_option_iterator_type(option_iterator);
+void uno_option_destroy_iterator(&option_iterator);
+```
+
+The iterator is automatically destroyed when the end is reached in `uno_option_next_iterator`. After destruction, the iterator is set to null.
+
+Example of iterating over Uno options:
+```c
+for (uno_option_iterator it = uno_option_begin_iterator(); it != uno_option_end_iterator(); uno_option_next_iterator(&it)) {
+   const char* name = uno_option_iterator_name(it);
+   uno_int type = uno_option_iterator_type(it);
+   // user's code ...
+}
 ```
 
 ## Setting solver callbacks
