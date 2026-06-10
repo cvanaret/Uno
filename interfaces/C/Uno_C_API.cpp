@@ -886,6 +886,10 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
    // handle the preset separately
    if (strcmp(option_name, "preset") == 0) {
       return uno_set_solver_preset(solver, option_value);
+   } 
+   // handle the option_file separately
+   else if (strcmp(option_name, "option_file") == 0) {
+      return uno_load_solver_option_file(solver, option_value);
    }
    else {
       Solver* uno_solver = static_cast<Solver*>(solver);
