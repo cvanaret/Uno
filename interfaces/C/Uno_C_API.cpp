@@ -1077,15 +1077,15 @@ const char* uno_get_solver_string_option(void* solver, const char* option_name) 
       throw std::runtime_error("Please specify a valid solver.");
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      return uno_solver->options->get_string(option_name).c_str();
-   }
-   catch(const std::out_of_range& e) {
-      // handle missing optional options
-      if (strcmp(option_name, "option_file") == 0 || strcmp(option_name, "preset") == 0){
+   // handle the preset and option_file separately
+   if (strcmp(option_name, "option_file") == 0 || strcmp(option_name, "preset") == 0) {
+      try {
+         return uno_solver->options->get_string(option_name).c_str();
+      } catch(const std::out_of_range&) {
          return nullptr;
       }
-      throw e;
+   } else {
+      return uno_solver->options->get_string(option_name).c_str();
    }
 }
 
