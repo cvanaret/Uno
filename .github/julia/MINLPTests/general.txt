@@ -60,5 +60,4 @@ nlp_expr_003_016
 nlp_expr_004_010
 nlp_expr_004_011
 nlp_expr_005_010
-nlp_expr_006_010
 nlp_expr_008_010
