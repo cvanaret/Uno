@@ -70,7 +70,7 @@ namespace uno {
    size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = hessian_model.number_nonzeros();
       // proximal contribution
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+      if (this->proximal_center != nullptr) {
          number_nonzeros += this->model.number_variables;
       }
       return number_nonzeros;
@@ -99,7 +99,7 @@ namespace uno {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+      if (this->proximal_center != nullptr) {
          size_t current_index = hessian_model.number_nonzeros();
          for (size_t variable_index: Range(this->model.number_variables)) {
             row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
@@ -221,13 +221,19 @@ namespace uno {
          multipliers.constraints, hessian_values);
 
       // proximal contribution
-      size_t nonzero_index = hessian_model.number_nonzeros();
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
-         for (size_t variable_index: Range(this->model.number_variables)) {
-            const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
-            const double proximal_term = this->proximal_coefficient * scaling * scaling;
-            hessian_values[nonzero_index] = proximal_term;
-            ++nonzero_index;
+      const size_t number_hessian_nonzeros = hessian_model.number_nonzeros();
+      size_t nonzero_index = number_hessian_nonzeros;
+      if (this->proximal_center != nullptr) {
+         if (this->proximal_coefficient == 0.) {
+            view(hessian_values, number_hessian_nonzeros, number_hessian_nonzeros + this->model.number_variables).fill(0.);
+         }
+         else {
+            for (size_t variable_index: Range(this->model.number_variables)) {
+               const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
+               const double proximal_term = this->proximal_coefficient * scaling * scaling;
+               hessian_values[nonzero_index] = proximal_term;
+               ++nonzero_index;
+            }
          }
       }
    }
