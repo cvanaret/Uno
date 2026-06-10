@@ -163,7 +163,7 @@ uno_int uno_option_iterator_type(option_iterator);
 void uno_option_destroy_iterator(&option_iterator);
 ```
 
-The iterator is automatically destroyed when the end is reached in `uno_option_next_iterator`. After destruction, the iterator is set to null.
+The iterator is automatically destroyed when the end is reached in `uno_option_next_iterator` (no call to `uno_option_destroy_iterator` is required). After destruction, the iterator is set to null.
 
 Example of iterating over Uno options:
 ```c
