@@ -30,7 +30,7 @@ Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solv
 bound_constrained_instances = readlines(joinpath(@__DIR__, "MINLPTests/bound-constrained.txt"))
 general_instances = readlines(joinpath(@__DIR__, "MINLPTests/general.txt"))
 instances = vcat(bound_constrained_instances, general_instances)
-#print("Instances with inequality constraints: ", instances)
+#print("Instances: ", instances)
 
 # strip the prefix
 function strip_prefix(instances, prefix)
