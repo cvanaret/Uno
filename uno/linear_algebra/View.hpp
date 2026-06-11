@@ -4,6 +4,7 @@
 #ifndef UNO_VIEW_H
 #define UNO_VIEW_H
 
+#include <cassert>
 #include <cstddef>
 #include "BLAS.hpp"
 #include "symbolic/Inverse.hpp"
@@ -58,10 +59,12 @@ namespace uno {
       }
 
       [[nodiscard]] T& operator[](size_t index) noexcept {
+         assert(index < this->size());
          return this->pointer[index];
       }
 
       [[nodiscard]] const T& operator[](size_t index) const noexcept {
+         assert(index < this->size());
          return this->pointer[index];
       }
 
