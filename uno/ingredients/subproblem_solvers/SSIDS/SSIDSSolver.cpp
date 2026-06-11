@@ -42,14 +42,14 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void SSIDSSolver::solve_indefinite_system(double* result) {
+   void SSIDSSolver::solve_indefinite_system(View<double> result) {
       assert(this->factorization_performed);
 
       // copy rhs into result (overwritten by SSIDS)
       for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
          result[index] = this->linear_system.rhs[index];
       }
-      spral_ssids_solve1(0, result, this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
+      spral_ssids_solve1(0, result.data(), this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
          &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
