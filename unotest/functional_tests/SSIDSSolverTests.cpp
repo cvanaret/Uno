@@ -24,7 +24,7 @@ TEST(SSIDSSolver, SystemSize5) {
    solver.do_numerical_factorization(false);
    Vector<double> result(dimension);
    result.fill(0.);
-   solver.solve_indefinite_system(result.data());
+   solver.solve_indefinite_system(result.view());
 
    const std::array<double, dimension> reference{1., 2., 3., 4., 5.};
    const double tolerance = 1e-8;
