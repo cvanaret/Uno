@@ -58,6 +58,7 @@ namespace uno {
       if (objective_multiplier != this->fixed_objective_multiplier) {
          throw std::runtime_error("The L-SR1 Hessian model was initialized with a different objective multiplier");
       }
+      View<const double> subvector{vector.data(), this->model.number_variables};
 
       // a recomputation of the Hessian representation may be required
       if (this->hessian_recomputation_required) {
@@ -67,7 +68,7 @@ namespace uno {
 
       // diagonal contribution δ I
       for (size_t variable_index: Range(this->model.number_variables)) {
-         result[variable_index] = this->delta * vector[variable_index];
+         result[variable_index] = this->delta * subvector[variable_index];
       }
 
       // rank-1 contribution: U in R^{n x m}
@@ -75,7 +76,7 @@ namespace uno {
       DEBUG << "U = " << this->U << '\n';
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         double U_coefficient = dot(current_U_column, vector) / this->get_correction_column_scaling(column_index);
+         double U_coefficient = dot(current_U_column, subvector) / this->get_correction_column_scaling(column_index);
          assert(!std::isnan(U_coefficient));
          // result += coefficient * column(P⁻¹) * current_column
          blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result.data());
