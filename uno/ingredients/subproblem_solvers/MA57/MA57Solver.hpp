@@ -50,7 +50,7 @@ namespace uno {
 
       void do_symbolic_analysis() override;
       void do_numerical_factorization(bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(double* solution) override;
+      void solve_indefinite_system(View<double> solution) override;
       void solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) override;
 
       [[nodiscard]] Inertia get_inertia() const override;

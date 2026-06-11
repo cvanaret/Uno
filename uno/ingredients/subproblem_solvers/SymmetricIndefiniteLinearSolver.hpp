@@ -6,11 +6,9 @@
 
 #include <cstddef>
 #include "LinearSystem.hpp"
+#include "linear_algebra/View.hpp"
 
 namespace uno {
-   // forward declarations
-   class LinearSystem;
-
    template <typename ElementType>
    class SymmetricIndefiniteLinearSolver {
    public:
@@ -21,7 +19,7 @@ namespace uno {
 
       // solve with a single right-hand side: the right-hand side is read from the linear system
       // (get_linear_system().rhs) and the solution is written to `solution`
-      virtual void solve_indefinite_system(ElementType* solution) = 0;
+      virtual void solve_indefinite_system(View<ElementType> solution) = 0;
 
       // solve with `number_of_rhs` right-hand sides stored column-major (each column has length
       // get_linear_system().dimension): `rhs` is the block of right-hand sides and `solution` receives
@@ -36,7 +34,7 @@ namespace uno {
             const auto rhs_column = view(rhs, column_offset, column_offset + linear_system.dimension);
             // copy the column into linear_system.rhs, then solve into the matching solution column
             linear_system.rhs.view() = rhs_column;
-            double* rhs_solution = solution + column_offset;
+            auto rhs_solution = view(solution, column_offset, column_offset + linear_system.dimension);
             this->solve_indefinite_system(rhs_solution);
          }
       }

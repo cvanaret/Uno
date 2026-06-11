@@ -191,18 +191,17 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA27Solver::solve_indefinite_system(double* solution) {
+   void MA27Solver::solve_indefinite_system(View<double> solution) {
       assert(this->factorization_performed);
 
       int la = static_cast<int>(this->workspace.factor.size());
       int liw = static_cast<int>(this->workspace.iw.size());
 
       // copy rhs into solution (overwritten by MA27)
-      const size_t dimension = static_cast<size_t>(this->workspace.n);
-      view(solution, dimension) = this->linear_system.rhs.view();
+      solution = this->linear_system.rhs.view();
 
       MA27_linear_solve(&this->workspace.n, this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
-         this->workspace.w.data(), &this->workspace.maxfrt, solution, this->workspace.iw1.data(), &this->workspace.nsteps,
+         this->workspace.w.data(), &this->workspace.maxfrt, solution.data(), this->workspace.iw1.data(), &this->workspace.nsteps,
          this->workspace.icntl.data(), this->workspace.info.data());
 
       assert(this->workspace.info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");

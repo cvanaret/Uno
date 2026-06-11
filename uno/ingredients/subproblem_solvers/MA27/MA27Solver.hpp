@@ -44,7 +44,7 @@ namespace uno {
 
       void do_symbolic_analysis() override;
       void do_numerical_factorization(bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(double* solution) override;
+      void solve_indefinite_system(View<double> solution) override;
       // solve_indefinite_system for multiple RHS is that of the base class
       using DirectSymmetricIndefiniteLinearSolver::solve_indefinite_system;
 
