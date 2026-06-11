@@ -261,14 +261,24 @@ extern "C" {
    bool uno_set_user_data(void* model, void* user_data);
 
    // [optional]
-   // sets one component of the initial primal iterate for a given model.
+   // sets one component of the initial primal iterate of a given model.
    // returns true if it succeeded, false otherwise.
    bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double initial_primal_component);
 
    // [optional]
-   // sets one component of the initial dual iterate for a given model.
+   // sets one component of the initial dual iterate of a given model.
    // returns true if it succeeded, false otherwise.
    bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double initial_dual_component);
+
+   // [optional]
+   // sets one component of the initial dual iterate for the lower bounds of a given model.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_lower_bound_dual_iterate_component(void* model, uno_int index, double initial_dual_component);
+
+   // [optional]
+   // sets one component of the initial dual iterate for the upper bounds of a given model.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_upper_bound_dual_iterate_component(void* model, uno_int index, double initial_dual_component);
 
    // [optional]
    // sets the initial primal iterate of a given model.
@@ -276,9 +286,19 @@ extern "C" {
    bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate);
 
    // [optional]
-   // sets the initial dual iterate of a given model.
+   // sets the initial dual iterate for the general constraints of a given model.
    // returns true if it succeeded, false otherwise.
    bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate);
+
+   // [optional]
+   // sets the initial dual iterate for the lower bounds of a given model.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_lower_bound_dual_iterate(void* model, const double* initial_lower_bound_dual_iterate);
+
+   // [optional]
+   // sets the initial dual iterate for the lower bounds of a given model.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_upper_bound_dual_iterate(void* model, const double* initial_upper_bound_dual_iterate);
 
    // creates the Uno solver.
    void* uno_create_solver();
