@@ -373,7 +373,7 @@ void hessian_vector_product(int* int_dimension, const double vector[], const dou
    }
    // otherwise, try to perform a Hessian-vector product if possible
    else if (subproblem->has_hessian_operator()) {
-      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.view(),
+      subproblem->compute_hessian_vector_product(uno::view(subproblem->current_iterate.primals.data(), dimension),
          uno::view(vector, dimension), uno::view(result, dimension));
    }
 }
