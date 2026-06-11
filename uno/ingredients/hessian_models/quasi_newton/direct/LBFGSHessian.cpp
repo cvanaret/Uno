@@ -90,6 +90,7 @@ namespace uno {
       if (objective_multiplier != this->fixed_objective_multiplier) {
          throw std::runtime_error("The quasi-Newton Hessian model was initialized with a different objective multiplier");
       }
+      View<const double> model_vector{vector.data(), this->model.number_variables};
 
       // recompute the Hessian representation if the limited memory was updated
       if (this->hessian_recomputation_required) {
@@ -99,7 +100,7 @@ namespace uno {
 
       // diagonal contribution δ I
       for (size_t variable_index: Range(this->model.number_variables)) {
-         result[variable_index] = this->delta * vector[variable_index];
+         result[variable_index] = this->delta * model_vector[variable_index];
       }
 
       // rank-2 contribution
@@ -107,14 +108,14 @@ namespace uno {
       // work on each column of U (Uᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
+         const double U_coefficient = -dot(current_U_column, model_vector); // minus sign for U
          // result += coefficient * current_column
          blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result.data());
       }
       // work on each column of V (Vᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
-         const double V_coefficient = dot(current_V_column, vector); // plus sign for V
+         const double V_coefficient = dot(current_V_column, model_vector); // plus sign for V
          // result += coefficient * current_column
          blas1::add(this->model.number_variables, V_coefficient, current_V_column.data(), result.data());
       }
