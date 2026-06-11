@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include "../interfaces/C/uno_int.h"
+#include "linear_algebra/View.hpp"
 
 namespace uno {
    // forward declarations
@@ -37,8 +38,8 @@ namespace uno {
          EvaluationCache& evaluation_cache) = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;
-      virtual void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, double* result) = 0;
+      virtual void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> result) = 0;
    };
 } // namespace
 

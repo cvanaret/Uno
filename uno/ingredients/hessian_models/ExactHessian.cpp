@@ -46,8 +46,8 @@ namespace uno {
       ++this->evaluation_count;
    }
 
-   void ExactHessian::compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) {
+   void ExactHessian::compute_hessian_vector_product(View<const double> x, View<const double> vector,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, View<double> result) {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
       ++this->evaluation_count;
    }

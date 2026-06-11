@@ -225,13 +225,13 @@ namespace uno {
       throw std::runtime_error("AMPLModel::compute_jacobian_transposed_vector_product not implemented");
    }
 
-   void AMPLModel::compute_hessian_vector_product(const double* /*x*/, const double* vector, double objective_multiplier,
-         const Vector<double>& multipliers, double* result) const {
+   void AMPLModel::compute_hessian_vector_product(View<const double> /*x*/, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const {
       // scale by the objective sign
       objective_multiplier *= this->optimization_sense;
 
       // compute the Hessian-vector product
-      (this->asl->p.Hvcomp)(this->asl, result, const_cast<double*>(vector), -1, &objective_multiplier,
+      (this->asl->p.Hvcomp)(this->asl, result.data(), const_cast<double*>(vector.data()), -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
    }
 
