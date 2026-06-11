@@ -7,7 +7,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -20,7 +20,7 @@
 #define hessian_vector_product FC_GLOBAL(gdotx, GDOTX)
 
 extern "C" {
-   void hessian_vector_product([[maybe_unused]] int *dimension, const double vector[], const double ws[],
+   void hessian_vector_product([[maybe_unused]] int *int_dimension, const double vector[], const double ws[],
       const int lws[], double result[]);
 
    // fortran common block used in bqpd/bqpd.f
@@ -329,10 +329,11 @@ namespace uno {
    }
 } // namespace
 
-void hessian_vector_product(int* dimension, const double vector[], const double /*ws*/[], const int lws[], double result[]) {
-   assert(dimension != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
+void hessian_vector_product(int* int_dimension, const double vector[], const double /*ws*/[], const int lws[], double result[]) {
+   assert(int_dimension != nullptr && *int_dimension >= 0);
+   const size_t dimension = static_cast<size_t>(*int_dimension);
 
-   for (size_t i = 0; i < static_cast<size_t>(*dimension); i++) {
+   for (size_t i = 0; i < dimension; i++) {
       result[i] = 0.;
    }
 
@@ -372,6 +373,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    }
    // otherwise, try to perform a Hessian-vector product if possible
    else if (subproblem->has_hessian_operator()) {
-      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result);
+      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.view(),
+         uno::view(vector, dimension), uno::view(result, dimension));
    }
 }

@@ -6,8 +6,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
@@ -99,7 +97,7 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_hessian_vector_product(const double* x, const double* vector, double* result) const {
+   void Subproblem::compute_hessian_vector_product(View<const double> x, View<const double> vector, View<double> result) const {
       // unregularized Hessian-vector product
       this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, this->current_iterate.multipliers, result);
 

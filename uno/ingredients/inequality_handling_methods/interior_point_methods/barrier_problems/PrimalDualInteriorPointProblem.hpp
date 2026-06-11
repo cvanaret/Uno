@@ -46,8 +46,8 @@ namespace uno {
       // linear operators
       void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const override;
       void compute_jacobian_transposed_vector_product(const double* vector, double* result, const Evaluations& evaluations) const override;
-      void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const override;
+      void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x, View<const double> vector,
+         const Multipliers& multipliers, View<double> result) const override;
 
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;

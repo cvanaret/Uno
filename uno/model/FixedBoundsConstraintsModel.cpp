@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FixedBoundsConstraintsModel.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Iterate.hpp"
 
 namespace uno {
@@ -133,8 +133,8 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& multipliers, double* result) const {
+   void FixedBoundsConstraintsModel::compute_hessian_vector_product(View<const double> x, View<const double> vector,
+         double objective_multiplier, const Vector<double>& multipliers, View<double> result) const {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
    }
 

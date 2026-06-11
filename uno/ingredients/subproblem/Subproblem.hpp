@@ -8,7 +8,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/IntegerRange.hpp"
 
@@ -41,7 +41,7 @@ namespace uno {
       // regularized Hessian
       void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
       void regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
-      void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector, View<double> result) const;
 
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
