@@ -6,6 +6,14 @@
 #include <stdexcept>
 #include "MA27Solver.hpp"
 #include "tools/Logger.hpp"
+#ifdef HSL_RUNTIME_LOADING
+#include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
+// route the calls through the runtime-resolved function pointers
+#define MA27_set_default_parameters uno::hsl_ma27id
+#define MA27_symbolic_analysis uno::hsl_ma27ad
+#define MA27_numerical_factorization uno::hsl_ma27bd
+#define MA27_linear_solve uno::hsl_ma27cd
+#else
 #include "fortran_interface.h"
 
 #define MA27_set_default_parameters FC_GLOBAL(ma27id, MA27ID)
@@ -25,6 +33,7 @@ extern "C" {
    void MA27_linear_solve(int* N, double A[], int* LA, int IW[], int* LIW, double W[], int* MAXFRT, double RHS[],
       int IW1[], int* NSTEPS, int ICNTL[], int INFO[]);
 }
+#endif
 
 namespace uno {
    enum eICNTL {
@@ -109,6 +118,12 @@ namespace uno {
 
 
    MA27Solver::MA27Solver(): DirectSymmetricIndefiniteLinearSolver() {
+#ifdef HSL_RUNTIME_LOADING
+      if (!ma27_symbols_available()) {
+         throw std::runtime_error("Uno: the MA27 solver was requested but the HSL library could not be loaded at "
+            "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
+      }
+#endif
       // initialization: set the default values of the controlling parameters
       MA27_set_default_parameters(this->workspace.icntl.data(), this->workspace.cntl.data());
       // a suitable pivot order is to be chosen automatically

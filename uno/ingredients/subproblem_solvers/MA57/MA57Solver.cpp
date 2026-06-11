@@ -8,6 +8,17 @@
 #include <vector>
 #include "MA57Solver.hpp"
 #include "tools/Logger.hpp"
+#ifdef HSL_RUNTIME_LOADING
+#include <stdexcept>
+#include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
+// route the calls through the runtime-resolved function pointers
+#define MA57_set_default_parameters uno::hsl_ma57id
+#define MA57_symbolic_analysis uno::hsl_ma57ad
+#define MA57_numerical_factorization uno::hsl_ma57bd
+#define MA57_linear_solve uno::hsl_ma57cd
+#define MA57_linear_solve_with_iterative_refinement uno::hsl_ma57dd
+#define MA57_enlarge_workspace uno::hsl_ma57ed
+#else
 #include "fortran_interface.h"
 
 #define MA57_set_default_parameters FC_GLOBAL(ma57id, MA57ID)
@@ -16,8 +27,10 @@
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
 #define MA57_linear_solve_with_iterative_refinement FC_GLOBAL(ma57dd, MA57DD)
 #define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
+#endif
 
 namespace uno {
+#ifndef HSL_RUNTIME_LOADING
    extern "C" {
       void MA57_set_default_parameters(double cntl[], int icntl[]);
 
@@ -40,6 +53,7 @@ namespace uno {
          double newfac[], const int* lnew, const int ifact[], const int* lifact, int newifc[], const int* linew,
          int info[]);
    }
+#endif
 
    namespace {
       bool is_error_code_insufficient_real_workspace(int error_code) {
@@ -72,6 +86,12 @@ namespace uno {
    }  // anonymous namespace
 
    MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
+#ifdef HSL_RUNTIME_LOADING
+      if (!ma57_symbols_available()) {
+         throw std::runtime_error("Uno: the MA57 solver was requested but the HSL library could not be loaded at "
+            "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
+      }
+#endif
       // set the default values of the controlling parameters
       MA57_set_default_parameters(this->workspace.cntl.data(), this->workspace.icntl.data());
       // suppress warning messages
