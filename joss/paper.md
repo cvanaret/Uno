@@ -92,7 +92,7 @@ While, in theory, all combinations of strategies can be generated, some are not 
 
 Subproblem solvers are treated as interchangeable components: they can be plugged in or swapped out without modifications of the algorithmic logic.
 This allows users and developers to select the most appropriate solver for their problem structure, licensing constraints, or performance requirements.
-Uno currently provides interfaces to several established LP, QP and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], SSIDS [@hogg2016sparse], and `Krylov.jl` [montoison2023krylov].
+Uno currently provides interfaces to several established LP, QP and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], SSIDS [@hogg2016sparse], and `Krylov.jl` [@montoison2023krylov].
 
 # Interfaces
 
@@ -143,7 +143,7 @@ Uno is currently used as a nonlinear optimization solver in:
 	* the `JuMP.jl` ecosystem,
 	* `control-toolbox`, a collection of Julia packages for mathematical control and its applications,
 - C++:
-  * [CasADi](https://github.com/casadi/casadi), an open-source tool for nonlinear optimization and algorithmic differentiation,
+  * [CasADi](https://github.com/casadi/casadi), an open-source tool for nonlinear optimization and algorithmic differentiation [@Andersson2019],
 - Python:
 	* [pyOptSparse](https://github.com/mdolab/pyoptsparse), an object-oriented framework for formulating and solving nonlinear constrained optimization problems in an efficient, reusable, and portable manner,
 	* [DNLP](https://github.com/cvxgrp/DNLP), an extension of CVXPY to general nonlinear programming,
