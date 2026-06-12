@@ -134,7 +134,7 @@ This setting introduces the additional challenge of reoptimization, where consec
 
 # Research impact statement
 
-Uno was used by its original authors to prototype a novel globalization strategy called funnel method [@kiessling2025unified]. Furthermore, it was used as the lower-level solver in derivative-free bilevel optimization [@cesaroni2026derivative], was benchmarked on Euclidean problems with bound constraints [@baran2026riemannian], and was cited in [@gruss2024estimation][@desef2025optimization][@cederberg2026disciplined].
+Uno was used by its original authors to prototype a novel globalization strategy called funnel method [@kiessling2025unified]. Furthermore, it was used as the lower-level solver in derivative-free bilevel optimization [@cesaroni2026derivative], was benchmarked on Euclidean problems with bound constraints [@baran2026riemannian], and was cited in [@gruss2024estimation; @desef2025optimization; @cederberg2026disciplined].
 
 Uno is currently available as a nonlinear optimization solver in:
 
