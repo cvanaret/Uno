@@ -60,11 +60,12 @@ Uno also implements **presets**, that is strategy combinations that mimic existi
 
 ## Who uses Uno?
 
-Uno is currently used as a nonlinear optimization solver in:
+Uno is currently available as a nonlinear optimization solver in:
 
 - [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
-- [pyOptSparse](https://github.com/cvanaret/Uno/issues/318)
-- [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
+- [CasADi](https://github.com/casadi/casadi)
+- [pyOptSparse](https://github.com/mdolab/pyoptsparse)
+- [DNLP](https://github.com/cvxgrp/DNLP), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
 - [CUTEst](https://github.com/ralna/cuTEst/), the Constrained and Unconstrained Testing Environment with safe threads (CUTEst) for optimization software 
 - [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
 - [control-toolbox](https://github.com/control-toolbox), a collection of Julia packages for mathematical control and its applications
@@ -73,7 +74,6 @@ Uno is currently used as a nonlinear optimization solver in:
 
 and more to come:
 
-- [CasADi](https://github.com/casadi/casadi/issues/3908)
 - [Pyomo](https://github.com/cvanaret/Uno/issues/319)
 - [Minotaur](https://github.com/cvanaret/Uno/issues/107)
 - [NEOS Server](https://neos-server.org/neos/solvers/)
