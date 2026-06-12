@@ -232,12 +232,12 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(const double* vector, double* result,
+   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_vector_product(vector, result, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_transposed_vector_product(vector, result, evaluations);
    }

@@ -217,11 +217,12 @@ namespace uno {
       ++this->number_model_evaluations.hessian;
    }
 
-   void AMPLModel::compute_jacobian_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
+   void AMPLModel::compute_jacobian_vector_product(View<const double> /*x*/, View<const double> /*vector*/, View<double> /*result*/) const {
       throw std::runtime_error("AMPLModel::compute_jacobian_vector_product not implemented");
    }
 
-   void AMPLModel::compute_jacobian_transposed_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
+   void AMPLModel::compute_jacobian_transposed_vector_product(View<const double> /*x*/, View<const double> /*vector*/,
+         View<double> /*result*/) const {
       throw std::runtime_error("AMPLModel::compute_jacobian_transposed_vector_product not implemented");
    }
 

@@ -181,11 +181,11 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+   void PythonModel::compute_jacobian_vector_product(View<const double> x, View<const double> vector, View<double> result) const {
       if (this->user_model.jacobian_operator.has_value()) {
-         const auto x_py = to_const_array(x, this->number_variables);
-         const auto vector_py = to_const_array(vector, this->number_variables);
-         auto result_py = to_array(result, this->number_constraints);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         const auto vector_py = to_const_array(vector.data(), this->number_variables);
+         auto result_py = to_array(result.data(), this->number_constraints);
 
          // evaluate Jacobian-vector product
          try {
@@ -200,11 +200,11 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
+   void PythonModel::compute_jacobian_transposed_vector_product(View<const double> x, View<const double> vector, View<double> result) const {
       if (this->user_model.jacobian_transposed_operator.has_value()) {
-         const auto x_py = to_const_array(x, this->number_variables);
-         const auto vector_py = to_const_array(vector, this->number_constraints);
-         auto result_py = to_array(result, this->number_variables);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         const auto vector_py = to_const_array(vector.data(), this->number_constraints);
+         auto result_py = to_array(result.data(), this->number_variables);
 
          // evaluate Jacobian^T-vector product
          try {

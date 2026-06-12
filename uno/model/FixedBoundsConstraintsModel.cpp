@@ -110,7 +110,8 @@ namespace uno {
    }
 
    // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
-   void FixedBoundsConstraintsModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+   void FixedBoundsConstraintsModel::compute_jacobian_vector_product(View<const double> x, View<const double> vector,
+         View<double> result) const {
       this->model.compute_jacobian_vector_product(x, vector, result);
 
       // add the contributions of the fixed variables
@@ -121,8 +122,8 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector,
-         double* result) const {
+   void FixedBoundsConstraintsModel::compute_jacobian_transposed_vector_product(View<const double> x, View<const double> vector,
+         View<double> result) const {
       this->model.compute_jacobian_transposed_vector_product(x, vector, result);
 
       // add the contributions of the fixed variables

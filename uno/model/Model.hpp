@@ -73,8 +73,8 @@ namespace uno {
 
       // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
-      virtual void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const = 0;
-      virtual void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const = 0;
+      virtual void compute_jacobian_vector_product(View<const double> x, View<const double> vector, View<double> result) const = 0;
+      virtual void compute_jacobian_transposed_vector_product(View<const double> x, View<const double> vector, View<double> result) const = 0;
       virtual void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
          const Vector<double>& multipliers, View<double> result) const = 0;
 

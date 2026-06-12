@@ -135,8 +135,8 @@ namespace uno {
       rhs.fill(0.);
 
       // -Jacobian^T-multipliers product
-      this->problem.compute_jacobian_transposed_vector_product(this->current_iterate.multipliers.constraints.data(),
-         rhs.data(), evaluations);
+      this->problem.compute_jacobian_transposed_vector_product(this->current_iterate.multipliers.constraints.view(),
+         rhs.view(), evaluations);
       rhs.scale(-1.);
 
       // objective gradient
@@ -271,7 +271,7 @@ namespace uno {
       const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
       // TODO preallocate
       Vector<double> result(model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(model, primal_direction.data(), result.data());
+      current_evaluations.compute_jacobian_vector_product(model, primal_direction.view(), result.view());
       const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
