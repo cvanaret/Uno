@@ -82,7 +82,7 @@ Inheritance is represented as dashed lines with white arrows, while composition 
 Abstract classes are written in italic, while subclasses are written in bold.
 This modular architecture offers a clear separation between the mathematical logic of the optimization algorithm (the reformulation of the problem, the definition of the subproblem, and the globalization techniques) and the computational aspects (evaluating the model's functions, and solving the subproblems).
 
-Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies.
+Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic to the underlying strategies.
 Strategies are picked by the user at runtime via options.
 Uno also implements presets, that is particular combinations of strategies (and sets of hyperparameters) that correspond to state-of-the-art solvers.
 Uno currently implements an \texttt{ipopt} preset that mimics the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset that mimics the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
@@ -93,6 +93,9 @@ While, in theory, all combinations of strategies can be generated, some are not 
 Subproblem solvers are treated as interchangeable components: they can be plugged in or swapped out without modifications of the algorithmic logic.
 This allows users and developers to select the most appropriate solver for their problem structure, licensing constraints, or performance requirements.
 Uno currently provides interfaces to several established LP, QP and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], SSIDS [@hogg2016sparse], and `Krylov.jl` [@montoison2023krylov].
+
+Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute].
+An up-to-date performance profile is maintained on Uno's GitHub `README` page.
 
 # Interfaces
 
@@ -131,13 +134,9 @@ This setting introduces the additional challenge of reoptimization, where consec
 
 # Research impact statement
 
-Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute].
-An up-to-date performance profile is maintained on Uno's GitHub `README` page.
+Uno was used by its original authors to prototype a novel globalization strategy called funnel method [@kiessling2025unified]. Furthermore, it was used as the lower-level solver in derivative-free bilevel optimization [@cesaroni2026derivative], was benchmarked on Euclidean problems with bound constraints [@baran2026riemannian], and was cited in [@gruss2024estimation, @desef2025optimization, @cederberg2026disciplined].
 
-Uno's ongoing developments were presented at several international conferences over the years (ISMP 2018, SIAM OP 2021, ICCOPT 2022, ISMP 2024, and ICCOPT 2025), and were the subject of invited talks at Zuse-Institut Berlin (2020), Argonne National Laboratory (2022), and KU Leuven (2025).
-This resulted in scientific cooperations with the MECO team at KU Leuven [@kiessling2024almost; @kiessling2025unified] and the HiGHS team in Edinburgh.
-
-Uno is currently used as a nonlinear optimization solver in:
+Uno is currently available as a nonlinear optimization solver in:
 
 - Julia:
 	* the `JuMP.jl` ecosystem,
@@ -150,8 +149,6 @@ Uno is currently used as a nonlinear optimization solver in:
 - Fortran:
 	* [CUTEst](https://github.com/ralna/cuTEst), the Constrained and Unconstrained Testing Environment with safe threads for optimization software,
 	* IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
-
-Ongoing discussions and community interest indicate potential future integrations in CasADi, Pyomo, Minotaur, and the NEOS Server.
 
 # Acknowledgments
 
