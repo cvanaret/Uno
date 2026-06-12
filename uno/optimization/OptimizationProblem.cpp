@@ -104,12 +104,12 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
-   void OptimizationProblem::compute_jacobian_vector_product(const double* vector, double* result,
+   void OptimizationProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_vector_product(this->model, vector, result);
    }
 
-   void OptimizationProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void OptimizationProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
    }

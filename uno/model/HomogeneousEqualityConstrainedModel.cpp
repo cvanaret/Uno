@@ -115,7 +115,8 @@ namespace uno {
    }
 
    // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
-   void HomogeneousEqualityConstrainedModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_vector_product(View<const double> x, View<const double> vector,
+         View<double> result) const {
       this->model.compute_jacobian_vector_product(x, vector, result);
 
       // add the slack contributions
@@ -124,8 +125,8 @@ namespace uno {
       }
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector,
-         double* result) const {
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_transposed_vector_product(View<const double> x, View<const double> vector,
+         View<double> result) const {
       this->model.compute_jacobian_transposed_vector_product(x, vector, result);
 
       // add the slack contributions

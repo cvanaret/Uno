@@ -68,8 +68,8 @@ namespace uno {
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const;
 
       // linear operators
-      virtual void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const;
-      virtual void compute_jacobian_transposed_vector_product(const double* vector, double* result,
+      virtual void compute_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const;
+      virtual void compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x, View<const double> vector,
          const Multipliers& multipliers, View<double> result) const;
