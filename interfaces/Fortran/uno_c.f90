@@ -636,62 +636,62 @@ interface
 end interface
 
 !---------------------------------------------
-! uno_option_begin_iterator
+! uno_options_begin_iterator
 !---------------------------------------------
 interface
-   function uno_option_begin_iterator() &
-      result(option_begin_iterator) &
-      bind(C, name="uno_option_begin_iterator")
+   function uno_options_begin_iterator() &
+      result(options_begin_iterator) &
+      bind(C, name="uno_options_begin_iterator")
       import :: c_ptr
-      type(c_ptr) :: option_begin_iterator
-   end function uno_option_begin_iterator
+      type(c_ptr) :: options_begin_iterator
+   end function uno_options_begin_iterator
 end interface
 
 !---------------------------------------------
-! uno_option_end_iterator
+! uno_options_end_iterator
 !---------------------------------------------
 interface
-   function uno_option_end_iterator() &
-      result(option_end_iterator) &
-      bind(C, name="uno_option_end_iterator")
+   function uno_options_end_iterator() &
+      result(options_end_iterator) &
+      bind(C, name="uno_options_end_iterator")
       import :: c_ptr
-      type(c_ptr) :: option_end_iterator
-   end function uno_option_end_iterator
+      type(c_ptr) :: options_end_iterator
+   end function uno_options_end_iterator
 end interface
 
 !---------------------------------------------
-! uno_option_next_iterator
+! uno_options_next_iterator
 !---------------------------------------------
 interface
-   subroutine uno_option_next_iterator(it) &
-      bind(C, name="uno_option_next_iterator")
+   subroutine uno_options_next_iterator(iterator) &
+      bind(C, name="uno_options_next_iterator")
       import :: c_ptr
-      type(c_ptr), value :: it
-   end subroutine uno_option_next_iterator
+      type(c_ptr), value :: iterator
+   end subroutine uno_options_next_iterator
 end interface
 
 !---------------------------------------------
-! uno_option_iterator_type
+! uno_options_iterator_type
 !---------------------------------------------
 interface
-   function uno_option_iterator_type(it) &
-      result(option_iterator_type) &
-      bind(C, name="uno_option_iterator_type")
+   function uno_options_iterator_type(iterator) &
+      result(options_iterator_type) &
+      bind(C, name="uno_options_iterator_type")
       import :: c_ptr, uno_int
-      type(c_ptr), value :: it
-      integer(uno_int) :: option_iterator_type
-   end function uno_option_iterator_type
+      type(c_ptr), value :: iterator
+      integer(uno_int) :: options_iterator_type
+   end function uno_options_iterator_type
 end interface
 
 !---------------------------------------------
-! uno_option_destroy_iterator
+! uno_options_destroy_iterator
 !---------------------------------------------
 interface
-   subroutine uno_option_destroy_iterator(it) &
-      bind(C, name="uno_option_destroy_iterator")
+   subroutine uno_options_destroy_iterator(iterator) &
+      bind(C, name="uno_options_destroy_iterator")
       import :: c_ptr
-      type(c_ptr), value :: it
-   end subroutine uno_option_destroy_iterator
+      type(c_ptr), value :: iterator
+   end subroutine uno_options_destroy_iterator
 end interface
 
 !---------------------------------------------
