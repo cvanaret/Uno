@@ -71,10 +71,44 @@ void print_vector(const double* vector, uno_int size) {
       printf("\n");
 }
 
+void print_uno_options() {
+       // temporary solver for default options
+      void* solver = uno_create_solver();
+      printf("Uno options:\n");
+      for (uno_option_iterator it = uno_option_begin_iterator(); it != uno_option_end_iterator(); uno_option_next_iterator(&it)) {
+            const char* name = uno_option_iterator_name(it);
+            uno_int type = uno_option_iterator_type(it);
+            if (type==UNO_OPTION_TYPE_DOUBLE) {
+                  double value = uno_get_solver_double_option(solver, name);
+                  printf("\t%s: %f\n", name, value);
+            }
+            else if (type==UNO_OPTION_TYPE_INTEGER) {
+                  int value = uno_get_solver_integer_option(solver, name);
+                  printf("\t%s: %d\n", name, value);
+            }
+            else if (type==UNO_OPTION_TYPE_STRING) {
+                  const char* value = uno_get_solver_string_option(solver, name);
+                  if (value) {
+                        printf("\t%s: %s\n", name, value);
+                  }
+            }
+            else if (type==UNO_OPTION_TYPE_BOOL) {
+                  bool value = uno_get_solver_bool_option(solver, name);
+                  printf("\t%s: %d\n", name, value);
+            }
+      }
+      uno_destroy_solver(solver);
+}
+
 int main() {
       uno_int uno_major, uno_minor, uno_patch;
       uno_get_version(&uno_major, &uno_minor, &uno_patch);
       printf("Uno v%d.%d.%d\n", uno_major, uno_minor, uno_patch);
+
+/*
+      // print all options
+      print_uno_options();
+*/
 
       // model creation
       const uno_int base_indexing = UNO_ZERO_BASED_INDEXING;

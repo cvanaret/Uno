@@ -25,6 +25,8 @@
 
 using namespace uno;
 
+using OptionIterator = decltype(Options::option_types)::const_iterator;
+
 using CUserModel = UserModel<uno_objective_callback, uno_objective_gradient_callback, uno_constraints_callback,
    uno_constraints_jacobian_callback, uno_constraints_jacobian_operator_callback, uno_constraints_jacobian_transposed_operator_callback,
    uno_lagrangian_hessian_callback, uno_lagrangian_hessian_operator_callback, std::vector<double>, void*>;
@@ -884,6 +886,10 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
    // handle the preset separately
    if (strcmp(option_name, "preset") == 0) {
       return uno_set_solver_preset(solver, option_value);
+   } 
+   // handle the option_file separately
+   else if (strcmp(option_name, "option_file") == 0) {
+      return uno_load_solver_option_file(solver, option_value);
    }
    else {
       Solver* uno_solver = static_cast<Solver*>(solver);
@@ -904,6 +910,62 @@ uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
    catch(const std::out_of_range&) {
       return UNO_OPTION_TYPE_NOT_FOUND;
    }
+}
+
+uno_option_iterator uno_option_begin_iterator() {
+   if (Options::option_types.begin()==Options::option_types.end()) {
+      // empty list
+      return nullptr;
+   }
+   return new OptionIterator(Options::option_types.begin());
+}
+
+uno_option_iterator uno_option_end_iterator() {
+   // nullptr is the sentinel for end iterator
+   return nullptr;
+}
+
+void uno_option_next_iterator(uno_option_iterator* it) {
+   if (it == nullptr) {
+      WARNING << "Please specify a valid option iterator."  << std::endl;
+      return;
+   }
+   if (*it == nullptr) {
+      // do not increment if end has been reached
+      return;
+   }
+   auto& iterator = *static_cast<OptionIterator*>(*it);
+   ++iterator;
+   if (iterator == Options::option_types.end()) {
+      // end reached: destroy
+      uno_option_destroy_iterator(it);
+   }  
+}
+
+const char* uno_option_iterator_name(uno_option_iterator it) {
+   if (it == nullptr) {
+      // nullptr if iterator is null
+      return nullptr;
+   }
+   auto& iterator = *static_cast<OptionIterator*>(it);
+   return iterator->first.c_str();
+}
+
+uno_int uno_option_iterator_type(uno_option_iterator it) {
+   if (it == nullptr) {
+      // option not found if iterator is null
+      return UNO_OPTION_TYPE_NOT_FOUND;
+   }
+   auto& iterator = *static_cast<OptionIterator*>(it);
+   return static_cast<uno_int>(iterator->second);
+}
+
+void uno_option_destroy_iterator(uno_option_iterator* it) {
+   if (it == nullptr || *it == nullptr) {
+      return;
+   }
+   delete static_cast<OptionIterator*>(*it);
+   *it = nullptr;
 }
 
 bool uno_load_solver_option_file(void* solver, const char* file_name) {
@@ -1015,7 +1077,16 @@ const char* uno_get_solver_string_option(void* solver, const char* option_name) 
       throw std::runtime_error("Please specify a valid solver.");
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   return uno_solver->options->get_string(option_name).c_str();
+   // handle the preset and option_file separately
+   if (strcmp(option_name, "option_file") == 0 || strcmp(option_name, "preset") == 0) {
+      try {
+         return uno_solver->options->get_string(option_name).c_str();
+      } catch(const std::out_of_range&) {
+         return nullptr;
+      }
+   } else {
+      return uno_solver->options->get_string(option_name).c_str();
+   }
 }
 
 // auxiliary function

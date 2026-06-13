@@ -148,6 +148,32 @@ Setting a preset has Uno mimic an existing solver:
 uno_set_solver_preset(solver, "filtersqp");
 ```
 
+Getting the type of an option from the Uno solver:
+```c
+uno_int uno_get_solver_option_type(solver, "max_iterations");
+```
+
+Iterating over the Uno options:
+```c
+uno_option_iterator uno_option_begin_iterator();
+uno_option_iterator uno_option_end_iterator();
+void uno_option_next_iterator(&option_iterator);
+const char* uno_option_iterator_name(option_iterator);
+uno_int uno_option_iterator_type(option_iterator);
+void uno_option_destroy_iterator(&option_iterator);
+```
+
+The iterator is automatically destroyed when the end is reached in `uno_option_next_iterator` (no call to `uno_option_destroy_iterator` is required). After destruction, the iterator is set to null.
+
+Example of iterating over Uno options:
+```c
+for (uno_option_iterator it = uno_option_begin_iterator(); it != uno_option_end_iterator(); uno_option_next_iterator(&it)) {
+   const char* name = uno_option_iterator_name(it);
+   uno_int type = uno_option_iterator_type(it);
+   // user's code ...
+}
+```
+
 ## Setting solver callbacks
 
 Setting the user callbacks to the Uno solver:

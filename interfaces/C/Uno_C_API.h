@@ -62,6 +62,9 @@ extern "C" {
    const uno_int UNO_VERSION_MINOR = 7;
    const uno_int UNO_VERSION_PATCH = 4;
 
+   // option iterator
+   typedef void* uno_option_iterator;
+
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
@@ -296,6 +299,14 @@ extern "C" {
    // takes as input the name of the option.
    // the possible types are integer, double, bool and string.
    uno_int uno_get_solver_option_type(void* solver, const char* option_name);
+
+   // iterate over the Uno option types and names
+   uno_option_iterator uno_option_begin_iterator();
+   uno_option_iterator uno_option_end_iterator();
+   void uno_option_next_iterator(uno_option_iterator* it);
+   const char* uno_option_iterator_name(uno_option_iterator it);
+   uno_int uno_option_iterator_type(uno_option_iterator it);
+   void uno_option_destroy_iterator(uno_option_iterator* it);
 
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.

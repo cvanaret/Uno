@@ -32,6 +32,7 @@ namespace uno {
       options.set_double("unbounded_objective_threshold", -1e20);
 
       /** main options **/
+      options.set_bool("write_solution_to_file", false);
       // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options.set_string("logger", "INFO");
       // Hessian model (exact|LBFGS|identity|zero)

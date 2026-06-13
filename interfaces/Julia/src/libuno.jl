@@ -38,6 +38,8 @@ const UNO_FEASIBLE_SMALL_STEP = Cint(4)
 const UNO_INFEASIBLE_SMALL_STEP = Cint(5)
 const UNO_UNBOUNDED = Cint(6)
 
+const uno_option_iterator = Ptr{Cvoid}
+
 function uno_get_version(major, minor, patch)
     @ccall libuno.uno_get_version(major::Ptr{Int32}, minor::Ptr{Int32},
                                   patch::Ptr{Int32})::Cvoid
@@ -200,6 +202,30 @@ end
 function uno_get_solver_option_type(solver, option_name)
     @ccall libuno.uno_get_solver_option_type(solver::Ptr{Cvoid},
                                              option_name::Cstring)::Int32
+end
+
+function uno_option_begin_iterator()
+    @ccall libuno.uno_option_begin_iterator()::uno_option_iterator
+end
+
+function uno_option_end_iterator()
+    @ccall libuno.uno_option_end_iterator()::uno_option_iterator
+end
+
+function uno_option_next_iterator(it)
+    @ccall libuno.uno_option_next_iterator(it::Ptr{uno_option_iterator})::Cvoid
+end
+
+function uno_option_iterator_name(it)
+    @ccall libuno.uno_option_iterator_name(it::uno_option_iterator)::Cstring
+end
+
+function uno_option_iterator_type(it)
+    @ccall libuno.uno_option_iterator_type(it::uno_option_iterator)::Int32
+end
+
+function uno_option_destroy_iterator(it)
+    @ccall libuno.uno_option_destroy_iterator(it::Ptr{uno_option_iterator})::Cvoid
 end
 
 function uno_load_solver_option_file(solver, file_name)
