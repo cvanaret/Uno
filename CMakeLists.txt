@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2018-2026 Charlie Vanaret
+# Copyright (c) 2018-2026 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 cmake_minimum_required(VERSION 3.12)
@@ -101,6 +101,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/unotest.cpp
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
+   unotest/functional_tests/MMASolverTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
@@ -186,6 +187,7 @@ if(HIGHS)
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
+           uno/ingredients/subproblem_solvers/MMASolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)

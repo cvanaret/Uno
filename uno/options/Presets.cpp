@@ -116,6 +116,24 @@ namespace uno {
          options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
          options.set_bool("protect_actual_reduction_against_roundoff", false);
       }
+      else if (preset_name == "filtersmma") {
+         options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
+         options.set_string("inequality_handling_method", "inequality_constrained");
+         options.set_string("subproblem_solver", "MMA");
+         options.set_string("hessian_model", "zero"); // MMA acts primarily through the subproblem solve
+         options.set_string("inertia_correction_strategy", "none");
+         options.set_string("globalization_mechanism", "TR");
+         options.set_string("globalization_strategy", "fletcher_filter_method");
+         options.set_string("filter_type", "standard");
+         options.set_string("progress_norm", "L1");
+         options.set_string("residual_norm", "L2");
+         options.set_double("TR_radius", 10);
+         options.set_double("l1_constraint_violation_coefficient", 1.);
+         options.set_double("primal_tolerance", 1e-6);
+         options.set_double("dual_tolerance", 1e-5);
+         options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
+         options.set_bool("protect_actual_reduction_against_roundoff", false);
+      }
       else {
          throw std::runtime_error("The preset " + preset_name + " is not known");
       }

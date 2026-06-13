@@ -11,6 +11,7 @@
 #include "InverseNewtonSolver.hpp"
 #include "QPSolverFactory.hpp"
 #include "WoodburyEQPSolver.hpp"
+#include "MMASolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -36,6 +37,13 @@ namespace uno {
          Iterate& current_iterate, HessianType& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy,
          bool uses_trust_region, const Options& options) {
       const Subproblem subproblem(problem, current_iterate, hessian_model, inertia_correction_strategy);
+
+      if (options.get_string("subproblem_solver") == "MMA") {
+         DEBUG << "Allocating an MMA solver\n";
+         auto subproblem_solver = std::make_unique<MMASolver>(problem.number_variables, problem.number_constraints, options);
+         subproblem_solver->initialize_memory(subproblem);
+         return subproblem_solver;
+      }
 
       // if no curvature, allocate LP solver
       if (!subproblem.has_curvature()) {

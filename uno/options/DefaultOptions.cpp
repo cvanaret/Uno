@@ -77,6 +77,14 @@ namespace uno {
       options.set_integer("funnel_update_strategy", 1);
       options.set_bool("funnel_require_acceptance_wrt_current_iterate", false);
 
+      /** MMA options **/
+      options.set_double("mma_asyinit", 0.1);
+      options.set_double("mma_asyincr", 1.2);
+      options.set_double("mma_asydecr", 0.7);
+      options.set_double("mma_external_move_limit", 0.1);
+      options.set_double("mma_internal_limit", 1e-5);
+      options.set_integer("mma_max_inner_iterations", 200);
+
       /** line search options */
       // backtracking ratio
       options.set_double("LS_backtracking_ratio", 0.5);
