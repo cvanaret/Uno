@@ -94,7 +94,7 @@ Subproblem solvers are treated as interchangeable components: they can be plugge
 This allows users and developers to select the most appropriate solver for their problem structure, licensing constraints, or performance requirements.
 Uno currently provides interfaces to several established LP, QP and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], SSIDS [@hogg2016sparse], and `Krylov.jl` [@montoison2023krylov].
 
-Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute].
+Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances with fewer than 100 variables and constraints [@bongartz1995cute].
 An up-to-date performance profile is maintained on Uno's GitHub `README` page.
 
 # Interfaces
