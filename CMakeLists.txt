@@ -187,7 +187,9 @@ if(HIGHS)
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
+           uno/ingredients/subproblem_solvers/SCPSolver.cpp
            uno/ingredients/subproblem_solvers/MMASolver.cpp
+           uno/ingredients/subproblem_solvers/CONLINSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)

@@ -12,6 +12,7 @@
 #include "QPSolverFactory.hpp"
 #include "WoodburyEQPSolver.hpp"
 #include "MMASolver.hpp"
+#include "CONLINSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -41,6 +42,12 @@ namespace uno {
       if (options.get_string("subproblem_solver") == "MMA") {
          DEBUG << "Allocating an MMA solver\n";
          auto subproblem_solver = std::make_unique<MMASolver>(problem.number_variables, problem.number_constraints, options);
+         subproblem_solver->initialize_memory(subproblem);
+         return subproblem_solver;
+      }
+      else if (options.get_string("subproblem_solver") == "CONLIN") {
+         DEBUG << "Allocating a CONLIN solver\n";
+         auto subproblem_solver = std::make_unique<CONLINSolver>(problem.number_variables, problem.number_constraints, options);
          subproblem_solver->initialize_memory(subproblem);
          return subproblem_solver;
       }

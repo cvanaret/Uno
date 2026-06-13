@@ -4,21 +4,14 @@
 #include "MMASolver.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "LinearSystem.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
-#include "tools/Statistics.hpp"
-#include "tools/Logger.hpp"
 #include <cmath>
 
 namespace uno {
    MMASolver::MMASolver(size_t number_variables, size_t number_constraints, const Options& options) :
-         SubproblemSolver(),
-         number_variables(number_variables),
-         number_constraints(number_constraints),
+         SCPSolver(number_variables, number_constraints, options),
          x_old1(number_variables, 0.0),
          x_old2(number_variables, 0.0),
          lower_asymptotes(number_variables, 0.0),
@@ -28,29 +21,10 @@ namespace uno {
          asydecr(options.get_double("mma_asydecr")),
          external_move_limit(options.get_double("mma_external_move_limit")),
          internal_limit(options.get_double("mma_internal_limit")),
-         max_inner_iterations(options.get_unsigned_int("mma_max_inner_iterations")),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))) {
+         max_inner_iterations(options.get_unsigned_int("mma_max_inner_iterations")) {
    }
 
-   void MMASolver::initialize_memory(const Subproblem& subproblem) {
-      auto& linear_system = this->linear_solver->get_linear_system();
-      linear_system.initialize_augmented_system(subproblem);
-      this->linear_solver->initialize_memory();
-   }
-
-   void MMASolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information) {
-      if (is_finite(trust_region_radius)) {
-         throw std::runtime_error("MMASolver does not support a trust region");
-      }
-
-      auto& linear_system = this->linear_solver->get_linear_system();
-      
-      // Basic initialization for direction
-      direction.set_dimensions(subproblem.number_variables, subproblem.number_constraints);
-      direction.status = SubproblemStatus::OPTIMAL;
-
+   void MMASolver::compute_diagonal_hessian(const Vector<double>& initial_point, Evaluations& current_evaluations, std::vector<double>& Dx) {
       // Update history
       this->x_old2 = this->x_old1;
       std::copy(initial_point.data(), initial_point.data() + this->number_variables, this->x_old1.begin());
@@ -62,8 +36,6 @@ namespace uno {
          }
       }
 
-      // We only compute 1 outer step of MMA here (since globalization wraps us).
-      // Compute p0, q0, pp, qq exactly once per outer step based on current gradients.
       std::vector<double> p0(this->number_variables, 0.0);
       std::vector<double> q0(this->number_variables, 0.0);
       const double raa0 = 1e-5;
@@ -98,57 +70,21 @@ namespace uno {
          }
       }
 
-      // Assemble the sparse augmented KKT system
-      if (warmstart_information.new_iterate) {
-         // Let Uno populate the sparsity pattern and slacks
-         subproblem.evaluate_lagrangian_hessian(statistics, linear_system.matrix_values.data());
-         size_t num_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-         subproblem.evaluate_jacobian(linear_system.matrix_values.data() + num_hessian_nonzeros, current_evaluations);
-         
-         // Overwrite the primal variables Hessian diagonals with MMA Dx
-         // Wait, we just take one Newton step on the MMA approximation (SQP-MMA)
-         // This is mathematically equivalent to the outer loop of SCP but using Uno's globalization!
-         std::vector<double> Dx(this->number_variables, 0.0);
-         for (size_t j = 0; j < this->number_variables; ++j) {
-             double ux = this->upper_asymptotes[j] - initial_point[j];
-             double xl = initial_point[j] - this->lower_asymptotes[j];
-             Dx[j] = 2.0 * p0[j] / (ux*ux*ux) + 2.0 * q0[j] / (xl*xl*xl);
-         }
-         // Add multiplier contributions to Dx
-         for (size_t k = 0; k < num_jacobian_nonzeros; ++k) {
-             size_t i = current_evaluations.jacobian_sparsity->row_indices[k];
-             size_t j = current_evaluations.jacobian_sparsity->column_indices[k];
-             if (j < this->number_variables) {
-                 double ux = this->upper_asymptotes[j] - initial_point[j];
-                 double xl = initial_point[j] - this->lower_asymptotes[j];
-                 double d2f = 2.0 * pp[k] / (ux*ux*ux) + 2.0 * qq[k] / (xl*xl*xl);
-                 // Assuming multipliers are populated in direction from previous iter
-                 Dx[j] += std::max(0.0, current_evaluations.constraints[i]) * d2f; // rough approx
-             }
-         }
-
-         // Override matrix_values
-         for(size_t k = 0; k < num_hessian_nonzeros; ++k) {
-             // In Uno, the COOLinearSystem has row/col indices but we can't easily access them from LinearSystem interface.
-             // But if we use hessian_model = zero, num_hessian_nonzeros is 0!
-             // Let's just use the native Uno Subproblem and solve!
-         }
-         
-         if (!this->analysis_performed) {
-            this->linear_solver->do_symbolic_analysis();
-            this->analysis_performed = true;
-         }
-         subproblem.regularize_augmented_matrix(statistics, linear_system.matrix_values.data(), subproblem.dual_regularization_factor(), *this->linear_solver);
-         subproblem.assemble_augmented_rhs(current_evaluations, linear_system.rhs);
+      for (size_t j = 0; j < this->number_variables; ++j) {
+          double ux = this->upper_asymptotes[j] - initial_point[j];
+          double xl = initial_point[j] - this->lower_asymptotes[j];
+          Dx[j] = 2.0 * p0[j] / (ux*ux*ux) + 2.0 * q0[j] / (xl*xl*xl);
       }
-
-      this->linear_solver->solve_indefinite_system(linear_system.solution.data());
-      subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
-      this->iterations++;
-   }
-
-   SolverWorkspace& MMASolver::get_workspace() {
-      return this->linear_solver->get_linear_system();
+      for (size_t k = 0; k < num_jacobian_nonzeros; ++k) {
+          size_t i = current_evaluations.jacobian_sparsity->row_indices[k];
+          size_t j = current_evaluations.jacobian_sparsity->column_indices[k];
+          if (j < this->number_variables) {
+              double ux = this->upper_asymptotes[j] - initial_point[j];
+              double xl = initial_point[j] - this->lower_asymptotes[j];
+              double d2f = 2.0 * pp[k] / (ux*ux*ux) + 2.0 * qq[k] / (xl*xl*xl);
+              Dx[j] += std::max(0.0, current_evaluations.constraints[i]) * d2f;
+          }
+      }
    }
 
    void MMASolver::update_asymptotes(const Vector<double>& current_x, const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds) {
