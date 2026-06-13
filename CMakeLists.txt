@@ -102,6 +102,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
    unotest/functional_tests/MMASolverTests.cpp
+   unotest/functional_tests/CONLINSolverTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
