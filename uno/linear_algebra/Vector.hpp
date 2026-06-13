@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include <initializer_list>
-#include "VectorView.hpp"
+#include "View.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -149,16 +149,16 @@ namespace uno {
          this->view().scale(factor);
       }
 
+      View<const T> view() const noexcept {
+         return uno::view(this->data(), this->size());
+      }
+
+      View<T> view() noexcept {
+         return uno::view(this->data(), this->size());
+      }
+
    protected:
       std::vector<T> vector;
-
-      VectorView<const T> view() const noexcept {
-         return uno::view(this->data(), this->size());
-      }
-
-      VectorView<T> view() noexcept {
-         return uno::view(this->data(), this->size());
-      }
    };
 
    // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)

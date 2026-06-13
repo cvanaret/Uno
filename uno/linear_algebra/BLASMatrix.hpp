@@ -7,7 +7,7 @@
 #include "Vector.hpp"
 #include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/LAPACK.hpp"
-#include "VectorView.hpp"
+#include "View.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Sum.hpp"

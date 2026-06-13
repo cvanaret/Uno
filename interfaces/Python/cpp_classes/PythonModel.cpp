@@ -5,7 +5,7 @@
 #include <pybind11/numpy.h>
 #include <functional>
 #include "PythonModel.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
@@ -96,7 +96,7 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int row_offset,
+   void PythonModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset,
          uno_int column_offset, uno_int solver_indexing, MatrixOrder /*matrix_format*/) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
       for (size_t index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
@@ -181,11 +181,11 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+   void PythonModel::compute_jacobian_vector_product(View<const double> x, View<const double> vector, View<double> result) const {
       if (this->user_model.jacobian_operator.has_value()) {
-         const auto x_py = to_const_array(x, this->number_variables);
-         const auto vector_py = to_const_array(vector, this->number_variables);
-         auto result_py = to_array(result, this->number_constraints);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         const auto vector_py = to_const_array(vector.data(), this->number_variables);
+         auto result_py = to_array(result.data(), this->number_constraints);
 
          // evaluate Jacobian-vector product
          try {
@@ -200,11 +200,11 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
+   void PythonModel::compute_jacobian_transposed_vector_product(View<const double> x, View<const double> vector, View<double> result) const {
       if (this->user_model.jacobian_transposed_operator.has_value()) {
-         const auto x_py = to_const_array(x, this->number_variables);
-         const auto vector_py = to_const_array(vector, this->number_constraints);
-         auto result_py = to_array(result, this->number_variables);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         const auto vector_py = to_const_array(vector.data(), this->number_constraints);
+         auto result_py = to_array(result.data(), this->number_variables);
 
          // evaluate Jacobian^T-vector product
          try {
@@ -219,18 +219,18 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& multipliers, double* result) const {
+   void PythonModel::compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const {
       if (this->user_model.lagrangian_hessian_operator.has_value()) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const auto x_py = to_const_array(x, this->number_variables);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
          const auto multipliers_py = to_const_array(multipliers.data(), this->number_constraints);
-         const auto vector_py = to_const_array(vector, this->number_variables);
-         auto result_py = to_array(result, this->number_variables);
+         const auto vector_py = to_const_array(vector.data(), this->number_variables);
+         auto result_py = to_array(result.data(), this->number_variables);
 
          // evaluate Hessian-vector product
          try {

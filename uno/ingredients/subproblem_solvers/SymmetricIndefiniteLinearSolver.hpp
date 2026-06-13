@@ -4,6 +4,8 @@
 #ifndef UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
+#include "linear_algebra/View.hpp"
+
 namespace uno {
    // forward declarations
    class LinearSystem;
@@ -15,7 +17,7 @@ namespace uno {
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
       virtual void initialize_memory() = 0;
-      virtual void solve_indefinite_system(ElementType* result) = 0;
+      virtual void solve_indefinite_system(View<double> result) = 0;
       [[nodiscard]] virtual LinearSystem& get_linear_system() = 0;
    };
 } // namespace

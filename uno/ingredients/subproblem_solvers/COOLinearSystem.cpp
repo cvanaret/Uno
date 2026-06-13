@@ -36,8 +36,7 @@ namespace uno {
       this->solution.resize(this->dimension);
    }
 
-   double COOLinearSystem::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/,
-         const Vector<double>& /*vector*/) const {
+   double COOLinearSystem::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
       return 0.;
    }
 } // namespace

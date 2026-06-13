@@ -155,7 +155,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(double* result) {
+   void MA57Solver::solve_indefinite_system(View<double> result) {
       assert(this->factorization_performed);
 
       // solve
@@ -166,7 +166,7 @@ namespace uno {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
             this->linear_system.matrix_values.data(), this->linear_system.matrix_row_indices.data(),
             this->linear_system.matrix_column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), result,
+            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), result.data(),
             this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
       }
@@ -177,7 +177,7 @@ namespace uno {
          }
 
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result, &lrhs,
+            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs,
             this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.info.data());
       }

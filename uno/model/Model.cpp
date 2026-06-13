@@ -6,7 +6,7 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/ScalarMultiple.hpp"
@@ -52,7 +52,7 @@ namespace uno {
       if (0 < this->number_constraints) {
          // TODO test whether λ_k != 0
          evaluations.evaluate_jacobian(*this, primals);
-         evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.data(), lagrangian_gradient.data());
+         evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.view(), lagrangian_gradient.view());
          lagrangian_gradient.scale(-1.);
       }
 

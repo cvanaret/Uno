@@ -24,7 +24,7 @@ namespace uno {
 
       // functions that can be called by WoodburyEQPSolver
       [[nodiscard]] virtual size_t get_correction_rank() const = 0;
-      [[nodiscard]] virtual VectorView<const double> get_correction_column(size_t column_index) const = 0;
+      [[nodiscard]] virtual View<const double> get_correction_column(size_t column_index) const = 0;
       [[nodiscard]] virtual double get_correction_column_scaling(size_t column_index) const = 0;
    };
 } // namespace

@@ -14,7 +14,7 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolverFactory.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
@@ -194,7 +194,7 @@ namespace uno {
          // compute the linearized constraint violation
          // TODO preallocate
          Vector<double> result(model.number_constraints);
-         current_evaluations.compute_jacobian_vector_product(model, direction.primals.data(), result.data());
+         current_evaluations.compute_jacobian_vector_product(model, direction.primals.view(), result.view());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
             step_length * result, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);

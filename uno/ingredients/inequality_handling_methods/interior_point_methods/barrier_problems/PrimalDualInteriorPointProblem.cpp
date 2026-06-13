@@ -5,7 +5,7 @@
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
@@ -232,18 +232,18 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(const double* vector, double* result,
+   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_vector_product(vector, result, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_transposed_vector_product(vector, result, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
-         const double* vector, const Multipliers& multipliers, double* result) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const {
       // original Lagrangian Hessian
       this->inner.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result);
 

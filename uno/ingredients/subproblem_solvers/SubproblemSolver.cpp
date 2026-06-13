@@ -3,7 +3,7 @@
 
 #include "SubproblemSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
 

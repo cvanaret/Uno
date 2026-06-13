@@ -2,11 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "linear_algebra/VectorView.hpp"
+#include <vector>
+#include "linear_algebra/View.hpp"
 
 using namespace uno;
 
-TEST(VectorView, Size) {
+TEST(View, Size) {
    const std::vector<double> x{1., 2., 3., 100., 200., 300.};
    // vector view
    const size_t start_index = 2;

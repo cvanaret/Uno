@@ -7,7 +7,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
@@ -43,8 +43,8 @@ namespace uno {
       if (subproblem.has_hessian_operator()) { // linear operator
          // TODO compute the quadratic form directly without temporary result
          // compute Hv
-         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(),
-            this->hessian_vector_product.data());
+         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.view(), vector.view(),
+            this->hessian_vector_product.view());
          // compute the dot product <v, Hv>
          return dot(view(vector, 0, subproblem.number_variables), this->hessian_vector_product);
       }
