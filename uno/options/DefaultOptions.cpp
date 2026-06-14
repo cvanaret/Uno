@@ -165,5 +165,8 @@ namespace uno {
       if (!linear_solvers.empty()) {
          options.set_string("linear_solver", linear_solvers[0], true);
       }
+      // name of the HSL shared library to dlopen for MA27/MA57 at runtime
+      // (empty = platform default libhsl.{so,dylib,dll}); mirrors IPOPT's hsllib option
+      options.set_string("hsllib", "", true);
    }
 } // namespace
