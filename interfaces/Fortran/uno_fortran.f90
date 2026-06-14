@@ -255,41 +255,41 @@ function uno_get_solver_option_type(solver, option_name) result(solver_option_ty
 end function uno_get_solver_option_type
 
 !---------------------------------------------
-! uno_option_iterator_name
+! uno_options_iterator_name
 !---------------------------------------------
-function uno_option_iterator_name(it) &
-   result(option_iterator_name)
-   type(c_ptr), value :: it
-   character(:), allocatable :: option_iterator_name
-   type(c_ptr) :: ptr_option_iterator_name_c
+function uno_options_iterator_name(iterator) &
+   result(options_iterator_name)
+   type(c_ptr), value :: iterator
+   character(:), allocatable :: options_iterator_name
+   type(c_ptr) :: ptr_options_iterator_name_c
    integer :: i, n
-   character(c_char), pointer :: option_iterator_name_c(:)
+   character(c_char), pointer :: options_iterator_name_c(:)
 
    interface
-      function uno_option_iterator_name_c(it) &
-         result(option_iterator_name) &
-         bind(C, name="uno_option_iterator_name")
+      function uno_options_iterator_name_c(iterator) &
+         result(options_iterator_name) &
+         bind(C, name="uno_options_iterator_name")
          import :: c_ptr
-         type(c_ptr), value :: it
-         type(c_ptr) :: option_iterator_name
-      end function uno_option_iterator_name_c
+         type(c_ptr), value :: iterator
+         type(c_ptr) :: options_iterator_name
+      end function uno_options_iterator_name_c
    end interface
 
-   ptr_option_iterator_name_c = uno_option_iterator_name_c(it)
-   if (.not. c_associated(ptr_option_iterator_name_c)) then
-      option_iterator_name = ""
+   ptr_options_iterator_name_c = uno_options_iterator_name_c(iterator)
+   if (.not. c_associated(ptr_options_iterator_name_c)) then
+      options_iterator_name = ""
       return
    end if
-   call c_f_pointer(ptr_option_iterator_name_c, option_iterator_name_c, [huge(0)])
+   call c_f_pointer(ptr_options_iterator_name_c, options_iterator_name_c, [huge(0)])
    n = 0
-   do while (option_iterator_name_c(n+1) /= c_null_char)
+   do while (options_iterator_name_c(n+1) /= c_null_char)
       n = n + 1
    end do
-   allocate(character(len=n)::option_iterator_name)
+   allocate(character(len=n)::options_iterator_name)
    do i = 1, n
-      option_iterator_name(i:i) = option_iterator_name_c(i)
+      options_iterator_name(i:i) = options_iterator_name_c(i)
    end do
-end function uno_option_iterator_name
+end function uno_options_iterator_name
 
 !---------------------------------------------
 ! uno_load_solver_option_file

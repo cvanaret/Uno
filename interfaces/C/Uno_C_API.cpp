@@ -912,60 +912,60 @@ uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
    }
 }
 
-uno_option_iterator uno_option_begin_iterator() {
-   if (Options::option_types.begin()==Options::option_types.end()) {
+uno_options_iterator uno_options_begin_iterator() {
+   if (Options::option_types.begin() == Options::option_types.end()) {
       // empty list
       return nullptr;
    }
    return new OptionIterator(Options::option_types.begin());
 }
 
-uno_option_iterator uno_option_end_iterator() {
+uno_options_iterator uno_options_end_iterator() {
    // nullptr is the sentinel for end iterator
    return nullptr;
 }
 
-void uno_option_next_iterator(uno_option_iterator* it) {
-   if (it == nullptr) {
-      WARNING << "Please specify a valid option iterator."  << std::endl;
+void uno_options_next_iterator(uno_options_iterator* iterator) {
+   if (iterator == nullptr) {
+      WARNING << "Please specify a valid options iterator."  << std::endl;
       return;
    }
-   if (*it == nullptr) {
+   if (*iterator == nullptr) {
       // do not increment if end has been reached
       return;
    }
-   auto& iterator = *static_cast<OptionIterator*>(*it);
-   ++iterator;
-   if (iterator == Options::option_types.end()) {
+   auto& uno_iterator = *static_cast<OptionIterator*>(*iterator);
+   ++uno_iterator;
+   if (uno_iterator == Options::option_types.end()) {
       // end reached: destroy
-      uno_option_destroy_iterator(it);
+      uno_options_destroy_iterator(iterator);
    }  
 }
 
-const char* uno_option_iterator_name(uno_option_iterator it) {
-   if (it == nullptr) {
+const char* uno_options_iterator_name(uno_options_iterator iterator) {
+   if (iterator == nullptr) {
       // nullptr if iterator is null
       return nullptr;
    }
-   auto& iterator = *static_cast<OptionIterator*>(it);
-   return iterator->first.c_str();
+   const auto& uno_iterator = *static_cast<OptionIterator*>(iterator);
+   return uno_iterator->first.c_str();
 }
 
-uno_int uno_option_iterator_type(uno_option_iterator it) {
-   if (it == nullptr) {
+uno_int uno_options_iterator_type(uno_options_iterator iterator) {
+   if (iterator == nullptr) {
       // option not found if iterator is null
       return UNO_OPTION_TYPE_NOT_FOUND;
    }
-   auto& iterator = *static_cast<OptionIterator*>(it);
-   return static_cast<uno_int>(iterator->second);
+   const auto& uno_iterator = *static_cast<OptionIterator*>(iterator);
+   return static_cast<uno_int>(uno_iterator->second);
 }
 
-void uno_option_destroy_iterator(uno_option_iterator* it) {
-   if (it == nullptr || *it == nullptr) {
+void uno_options_destroy_iterator(uno_options_iterator* iterator) {
+   if (iterator == nullptr || *iterator == nullptr) {
       return;
    }
-   delete static_cast<OptionIterator*>(*it);
-   *it = nullptr;
+   delete static_cast<OptionIterator*>(*iterator);
+   *iterator = nullptr;
 }
 
 bool uno_load_solver_option_file(void* solver, const char* file_name) {
