@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
  
-#include <charconv>
 #include <algorithm>
 #include <cstdio>
 #include "Statistics.hpp"
@@ -40,6 +39,17 @@ namespace uno {
       if (used < width) {
          line.append(width - used, ' ');
       }
+   }
+ 
+   // View the bytes written by snprintf into `buffer`. snprintf returns the would-be length
+   // (excluding the null terminator) or a negative value on error, so clamp to what was
+   // actually written (at most buffer_size - 1). We format numbers with snprintf rather than
+   // std::to_chars because <charconv> is unusable on some target toolchains: the libc++ shipped
+   // in the macOS/FreeBSD SDKs lacks the floating-point overloads at compile time and, for the
+   // minimum deployment target, omits the integer helper symbols (__u32toa/__u64toa) at link time.
+   static std::string_view written_view(const char* buffer, size_t buffer_size, int length) {
+      const size_t count = (0 <= length) ? std::min(static_cast<size_t>(length), buffer_size - 1) : 0;
+      return std::string_view(buffer, count);
    }
  
    size_t Statistics::index_of(std::string_view name) {
@@ -95,28 +105,23 @@ namespace uno {
  
    void Statistics::set(std::string_view name, int value) {
       char buffer[16];
-      auto [pointer, _] = std::to_chars(buffer, buffer + sizeof(buffer), value);
-      this->set_value(this->index_of(name), std::string_view(buffer, static_cast<size_t>(pointer - buffer)));
+      const int length = std::snprintf(buffer, sizeof(buffer), "%d", value);
+      this->set_value(this->index_of(name), written_view(buffer, sizeof(buffer), length));
    }
  
    void Statistics::set(std::string_view name, size_t value) {
       char buffer[24];
-      auto [pointer, _] = std::to_chars(buffer, buffer + sizeof(buffer), value);
-      this->set_value(this->index_of(name), std::string_view(buffer, static_cast<size_t>(pointer - buffer)));
+      const int length = std::snprintf(buffer, sizeof(buffer), "%zu", value);
+      this->set_value(this->index_of(name), written_view(buffer, sizeof(buffer), length));
    }
  
    void Statistics::set(std::string_view name, double value) {
       const size_t index = this->index_of(name);
       char buffer[40];
       const int precision = static_cast<int>(this->columns[index].precision);
-      // Floating-point std::to_chars is unavailable on some target toolchains (notably the
-      // libc++ shipped in the macOS/FreeBSD SDKs), so format via snprintf instead. "%.*e"
-      // reproduces std::chars_format::scientific with a fixed precision. Unlike to_chars,
-      // snprintf null-terminates and returns the would-be length; clamp it to the bytes
-      // actually written (at most sizeof(buffer) - 1).
+      // "%.*e" reproduces std::chars_format::scientific with a fixed precision
       const int length = std::snprintf(buffer, sizeof(buffer), "%.*e", precision, value);
-      const size_t count = (0 <= length) ? std::min(static_cast<size_t>(length), sizeof(buffer) - 1) : 0;
-      this->set_value(index, std::string_view(buffer, count));
+      this->set_value(index, written_view(buffer, sizeof(buffer), length));
    }
  
    void Statistics::print_horizontal_line() {
