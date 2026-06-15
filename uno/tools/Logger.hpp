@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_LOGGER_H
@@ -21,14 +21,7 @@ namespace uno {
        static void flush();
    };
 
-   template <typename T>
-   const Level& operator<<(const Level& level, T& element) {
-      if (level <= Logger::level) {
-         (*Logger::stream) << element;
-      }
-      return level;
-   }
-
+   // single overload: const T& binds to const/non-const lvalues and rvalues alike.
    template <typename T>
    const Level& operator<<(const Level& level, const T& element) {
       if (level <= Logger::level) {
@@ -37,8 +30,8 @@ namespace uno {
       return level;
    }
 
+   // manipulators (std::endl, std::flush, ...) need the function-pointer overload.
    const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&));
-   
 } // namespace
 
 #endif // UNO_LOGGER_H
