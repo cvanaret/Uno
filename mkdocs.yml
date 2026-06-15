@@ -1,6 +1,7 @@
 site_name: Uno
 theme:
   name: material
+  custom_dir: docs/overrides
   features:
     - navigation.expand
     - navigation.footer
@@ -16,6 +17,7 @@ nav:
     - 'Architecture': 'architecture.md'
     - 'Options': 'options.md'
   - 'Unification theory':
+    - 'Notation': 'notation.md'
     - 'Unification framework': 'unification_framework.md'
     - 'Combining the ingredients': 'combining_ingredients.md'
   - 'CUTE benchmark': 'cute_benchmark.md'
@@ -54,3 +56,6 @@ plugins:
 extra_javascript:
   - javascript/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - css/style.css

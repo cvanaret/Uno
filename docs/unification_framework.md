@@ -1,38 +1,4 @@
-# Unification framework
-
-## Notation and stationarity conditions
-
-### Notation
-
-We start by defining the scaled Lagrangian or Fritz John function of (NLP) at $(x, y, z, \pi)$:
-
-$$\mathcal{L}_\pi(x, y, z) \stackrel{\text{def}}{=} \pi f(x) - y^T c(x) - z^T x = \pi f(x) - \sum_{j=1}^m y_j c_j(x) - \sum_{i=1}^n z_i x_i,$$
-
-where $y$ and $z \ge 0$ are the Lagrange multipliers of the general constraints $c(x) = 0$ and the bound constraints $x \ge 0$, respectively, and $\pi \ge 0$ is an objective multiplier that is introduced to handle infeasibility or lack of constraint qualification (CQ) in a consistent way.
-
-$\nabla_x \mathcal{L}_\pi(x, y, z)$ is the gradient of the scaled Lagrangian with respect to $x$:
-
-$$\nabla_x \mathcal{L}_\pi(x, y, z) \stackrel{\text{def}}{=} \pi \nabla f(x) - \sum_{j=1}^m y_j \nabla c_j(x) - z.$$
-
-$\nabla^2_{xx} \mathcal{L}_\pi(x, y)$ is the Hessian of the scaled Lagrangian with respect to $x$:
-
-$$\nabla^2_{xx} \mathcal{L}_\pi(x, y) = \pi \nabla^2 f(x) - \sum_{j=1}^m y_j \nabla^2 c_j(x).$$
-
-### First-order stationarity conditions
-
-We are primarily concerned with first-order stationary points. The first-order optimality conditions (aka Fritz John conditions) of problem (NLP) at a stationary point $x^*$ state that there exist $(\pi^*, y^*, z^*)$ such that:
-
-$$\text{(stationarity)} \quad \nabla_x \mathcal{L}_{\pi^*}(x^*, y^*, z^*) = 0$$
-
-$$\text{(primal feasibility)} \quad c(x^*) = 0, \quad x^* \ge 0$$
-
-$$\text{(dual feasibility)} \quad \pi^* \ge 0, \quad z_i^* \geq 0, \quad (\pi^*, y^*, z^*) \not= (0, 0, 0)$$
-
-$$\text{(complementarity)} \quad x_i^* z_i^* = 0, \quad \forall i \in \{1, \ldots, n\}.$$
-
-If $\pi^* > 0$, the optimality conditions are equivalent to the KKT conditions, which can be recovered by scaling the stationarity equation by $1/\pi^*$. If $\pi^* = 0$, they characterize Fritz John points, that is, feasible points at which a constraint qualification is violated.
-
-## A unifying framework for nonlinearly constrained optimization
+# A unifying framework for nonlinearly constrained optimization
 
 A local quadratic approximation of (NLP) at iteration $k$ about the current primal-dual point is given by:
 

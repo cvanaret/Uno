@@ -1,50 +1,23 @@
-<p align="center">
-   <img src="figures/logo.png" alt="Uno" width="100%" />
-</p>
-
 # Uno, a unified solver for nonlinearly constrained optimization
 
-## Notation
-
-We consider nonlinearly constrained optimization problems of the form
-
-$$
-\begin{array}{ll} \displaystyle
-\min_x      & f(x) \\
-\mbox{s.t.} & l \le
-\begin{Bmatrix}
-c(x) \\
-Ax \\
-x
-\end{Bmatrix}
-\le u,
-\end{array}
-$$
-
-where $x \in \mathbb{R}^n$, $f : \mathbb{R}^n \to \mathbb{R}$, $c: \mathbb{R}^n \to \mathbb{R}^{m_c}$, $A \in \mathbb{R}^{m_A \times n}$, and $l \in (\mathbb{R} \cup \{-\infty\})^{m_c + m_A + n}$ and $u \in (\mathbb{R} \cup \{+\infty\})^{m_c + m_A + n}$. $f$ and $c$ may be nonconvex, which results in a nonconvex optimization problem. This formulation allows for unbounded variables and equality constraints and explicitly separates general nonlinear, linear, and bound constraints, enabling solvers to readily exploit this structure. However, for the sake of simplicity of this presentation and without loss of generality, we consider the problem in the following form:
-
-$$
-\tag{NLP}
-\begin{array}{ll} \displaystyle
-\min_x      & f(x) \\
-\mbox{s.t.} & c(x) = 0 \\
-				& x \ge 0,
-\end{array}
-$$
-
-where $x \in \mathbb{R}^n$, $f : \mathbb{R}^n \to \mathbb{R}$, and $c: \mathbb{R}^n \to \mathbb{R}^m$.
-
-## Unifying nonlinear optimization
-
-We argue that most derivative-based iterative methods for nonlinearly constrained nonconvex optimization share common algorithmic components, such as constraint reformulation, step computation, and globalization.
-
-**Uno** (Unifying Nonlinear Optimization)[^1] is a modular open-source solver for nonlinearly constrained optimization that unifies numerous state-of-the-art methods and organizes existing strategies into a coherent hierarchy (see wheel of strategies below).
+**Uno** (Unifying Nonlinear Optimization)[^1] is a modular open-source solver for nonlinearly constrained optimization.
+It unifies most derivative-based iterative (Lagrange-Newton) methods and organizes common algorithmic components (such as constraint reformulation, step computation, and globalization) into a coherent hierarchy:
 
 <p align="center">
    <img src="figures/wheel.png" alt="Unifying framework: the wheel of strategies." width="60%" />
 </p>
 
-Uno allows the automatic generation of various strategy combinations on the fly with no programming effort from the user. While all combinations do not lead to convergent methods, some of them result in efficient solvers that may not exist as software implementations. Uno currently implements the following strategies:
+Uno allows the automatic generation of various strategy combinations on the fly with no programming effort from the user. While all combinations do not lead to convergent methods, some of them result in efficient solvers that may not exist as software implementations.
+
+For a gentle introduction, watch the talk I gave at [JuMP-dev 2026](https://jump.dev/meetings/jumpdev2026/):
+<div class="video-wrapper">
+   <iframe src="https://www.youtube-nocookie.com/embed/hDPCVBQm8TE" title="Video title" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+   </iframe>
+</div>
+
+## Available methods
+
+Uno currently implements the following strategies:
 
 - **constraint relaxation strategies**: feasibility restoration;
 - **inequality handling methods**: inequality constrained method, interior-point method;
