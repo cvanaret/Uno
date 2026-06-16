@@ -137,5 +137,6 @@ You can pass the following options as `-DOPTION=value`:
 | `MUMPS_MPISEQ_LIBRARY` | path to the MUMPS MPISEQ library                                                                           | `path_to_libmpiseq`         |
 | `MUMPS_INCLUDE_DIR`    | path to MUMPS include directory                                                                            | `path_to_mumps_include_dir` |
 | `SPRAL`                | path to SPRAL library </br> (requires `libhwloc` passed to `AUXILIARY_LIBRARIES`)                          | `path_to_libspral`          |
+| `SPRAL_INCLUDE_DIR`    | path to SPRAL include directory                                                                            | `path_to_spral_include_dir` |
 | `AUXILIARY_LIBRARIES`  | path(s) to additional libraries to link against, separated by `;` </br> (e.g., `libhwloc` and `libstdc++`) | `paths`                     |
 
