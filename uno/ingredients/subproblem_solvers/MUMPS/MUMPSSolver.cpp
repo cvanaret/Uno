@@ -12,11 +12,6 @@
 #define USE_COMM_WORLD (-987654)
 
 namespace uno {
-   int& MUMPSSolver::ICNTL(size_t index) {
-      // handle the Fortran indexing (starting at 1)
-      return this->workspace.icntl[index-1];
-   }
-
    MUMPSSolver::MUMPSSolver(): DirectSymmetricIndefiniteLinearSolver() {
       this->workspace.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
@@ -34,10 +29,12 @@ namespace uno {
       ICNTL(3) = -1; // output stream for global information (off)
       ICNTL(4) = 0; // level of printing for error, warning, and diagnostic message (off)
 
-      ICNTL(6) = 0; // column permutation (none)
-      ICNTL(8) = 0; // scaling strategy (none)
-
+      ICNTL(6) = MUMPSSettings::permuting_scaling; // column permutation (none)
+      ICNTL(7) = MUMPSSettings::pivot_order; // pivot order (AMD)
+      ICNTL(8) = MUMPSSettings::scaling; // scaling strategy (diagonal scaling during factorization)
+      ICNTL(10) = 0; // iterative refinement (none)
       ICNTL(13) = 1; // parallelism of the root nod (ScaLAPACK not used, partly recover parallelism of the root node)
+      ICNTL(14) = MUMPSSettings::mem_percent; // percentage increase in the estimated working space (35)
       ICNTL(24) = 1; // controls the detection of “null pivot rows” (null pivot row detection)
 
       /*
@@ -124,5 +121,12 @@ namespace uno {
 
    COOLinearSystem& MUMPSSolver::get_coo_linear_system() {
       return this->linear_system;
+   }
+
+   // protected member function
+
+   int& MUMPSSolver::ICNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.icntl[index-1];
    }
 } // namespace
