@@ -236,11 +236,14 @@ endif()
 # SPRAL SSIDS
 find_library(SPRAL NAMES spral)
 if(SPRAL)
+   target_link_libraries(uno_dependencies INTERFACE ${SPRAL})
+   target_compile_definitions(uno_dependencies INTERFACE HAS_SPRAL)
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${SPRAL_INCLUDE_DIR})
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
    endif()
-   link_to_uno(spral ${SPRAL})
+   message(STATUS "Found SPRAL")
 endif()
 
 # helper function: resolve a mixed list of -lflags and relative paths to absolute paths
