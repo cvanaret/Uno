@@ -56,8 +56,10 @@ namespace uno {
       bool analysis_performed{false};
       bool factorization_performed{false};
 
-      int& ICNTL(size_t index);
-      double& CNTL(size_t index);
+      [[nodiscard]] int& ICNTL(size_t index);
+      [[nodiscard]] double& CNTL(size_t index);
+      [[nodiscard]] int INFO(size_t index) const;
+      [[nodiscard]] int INFOG(size_t index) const;
    };
 } // namespace
 

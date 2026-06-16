@@ -1,8 +1,9 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2024-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "MUMPSSolver.hpp"
 #include <cassert>
+#include <stdexcept>
+#include "MUMPSSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/Range.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
@@ -58,6 +59,9 @@ namespace uno {
       this->workspace.irn = this->linear_system.matrix_row_indices.data();
       this->workspace.jcn = this->linear_system.matrix_column_indices.data();
       dmumps_c(&this->workspace);
+      if (INFO(1) < 0) {
+         throw std::runtime_error("The MUMPS analysis failed");
+      }
       //ICNTL(8) = 8; // recompute scaling before factorization
       this->analysis_performed = true;
    }
@@ -68,6 +72,15 @@ namespace uno {
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
       this->workspace.a = this->linear_system.matrix_values.data();
       dmumps_c(&this->workspace);
+      if (INFO(1) == -8 || INFO(1) == -9) {
+         throw std::runtime_error("The MUMPS workspace is too small");
+      }
+      else if (INFO(1) == -10) {
+         throw std::runtime_error("MUMPS detected a numerically singular matrix");
+      }
+      else if (INFO(1) < 0) {
+         throw std::runtime_error("The MUMPS factorization failed");
+      }
       this->factorization_performed = true;
    }
 
@@ -81,6 +94,9 @@ namespace uno {
       this->workspace.rhs = result;
       this->workspace.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->workspace);
+      if (INFO(1) < 0) {
+         throw std::runtime_error("The MUMPS solve failed");
+      }
    }
 
    Inertia MUMPSSolver::get_inertia() const {
@@ -93,13 +109,11 @@ namespace uno {
    }
 
    size_t MUMPSSolver::number_negative_eigenvalues() const {
-      // INFOG(12)
-      return static_cast<size_t>(this->workspace.infog[11]);
+      return static_cast<size_t>(INFOG(12));
    }
 
    size_t MUMPSSolver::number_zero_eigenvalues() const {
-      // INFOG(28)
-      return static_cast<size_t>(this->workspace.infog[27]);
+      return static_cast<size_t>(INFOG(28));
    }
 
    bool MUMPSSolver::matrix_is_singular() const {
@@ -128,5 +142,15 @@ namespace uno {
    double& MUMPSSolver::CNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.cntl[index-1];
+   }
+
+   int MUMPSSolver::INFO(size_t index) const {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.info[index-1];
+   }
+
+   int MUMPSSolver::INFOG(size_t index) const {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.infog[index-1];
    }
 } // namespace
