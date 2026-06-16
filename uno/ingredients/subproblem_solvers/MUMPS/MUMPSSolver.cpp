@@ -66,7 +66,7 @@ namespace uno {
       this->workspace.irn = this->linear_system.matrix_row_indices.data();
       this->workspace.jcn = this->linear_system.matrix_column_indices.data();
       dmumps_c(&this->workspace);
-      INCTL(7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
+      INCTL(8) = 8; // recompute scaling before factorization
       this->analysis_performed = true;
    }
 
