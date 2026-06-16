@@ -36,13 +36,8 @@ namespace uno {
       ICNTL(13) = 1; // parallelism of the root nod (ScaLAPACK not used, partly recover parallelism of the root node)
       ICNTL(14) = MUMPSSettings::mem_percent; // percentage increase in the estimated working space (35)
       ICNTL(24) = 1; // controls the detection of “null pivot rows” (null pivot row detection)
-
-      /*
-      // debug for MUMPS team
-      ICNTL(2) = 6;
-      ICNTL(3) = 6;
-      ICNTL(4) = 6;
-       */
+      CNTL(1) = MUMPSSettings::pivtol; // relative threshold for numerical pivoting (1e-6)
+      // debug for MUMPS team ICNTL(2) = 6; ICNTL(3) = 6; ICNTL(4) = 6;
    }
 
    MUMPSSolver::~MUMPSSolver() {
@@ -128,5 +123,10 @@ namespace uno {
    int& MUMPSSolver::ICNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.icntl[index-1];
+   }
+
+   double& MUMPSSolver::CNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.cntl[index-1];
    }
 } // namespace

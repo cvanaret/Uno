@@ -15,7 +15,7 @@ namespace uno {
       static constexpr int mem_percent = 35;
       static constexpr int permuting_scaling = 0;
       static constexpr int pivot_order = 0; // AMD
-      static constexpr double pivtol = 1e-6;
+      static constexpr double pivtol = 1e-6; // relative threshold for numerical pivoting
       static constexpr double pivtolmax = 1e-1;
       static constexpr int scaling = 1; // diagonal scaling computed during the numerical factorization phase
    };
@@ -57,6 +57,7 @@ namespace uno {
       bool factorization_performed{false};
 
       int& ICNTL(size_t index);
+      double& CNTL(size_t index);
    };
 } // namespace
 
