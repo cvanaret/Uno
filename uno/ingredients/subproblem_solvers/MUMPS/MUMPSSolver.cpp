@@ -62,7 +62,7 @@ namespace uno {
       if (INFO(1) < 0) {
          throw std::runtime_error("The MUMPS analysis failed");
       }
-      //ICNTL(8) = 8; // recompute scaling before factorization
+      ICNTL(8) = 8; // recompute scaling before factorization
       this->analysis_performed = true;
    }
 
