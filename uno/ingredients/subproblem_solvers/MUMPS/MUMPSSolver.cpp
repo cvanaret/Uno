@@ -12,6 +12,11 @@
 #define USE_COMM_WORLD (-987654)
 
 namespace uno {
+   int& MUMPSSolver::ICNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.icntl[index-1];
+   }
+
    MUMPSSolver::MUMPSSolver(): DirectSymmetricIndefiniteLinearSolver() {
       this->workspace.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
@@ -24,21 +29,22 @@ namespace uno {
       this->workspace.comm_fortran = USE_COMM_WORLD;
       dmumps_c(&this->workspace);
       // control parameters
-      this->workspace.icntl[0] = -1;
-      this->workspace.icntl[1] = -1;
-      this->workspace.icntl[2] = -1;
-      this->workspace.icntl[3] = 0;
-      this->workspace.icntl[5] = 0; // no scaling
-      this->workspace.icntl[7] = 0; // no scaling
+      ICNTL(1) = -1; // output stream for error messages (off)
+      ICNTL(2) = -1; // output stream for diagnostic printing (off)
+      ICNTL(3) = -1; // output stream for global information (off)
+      ICNTL(4) = 0; // level of printing for error, warning, and diagnostic message (off)
 
-      this->workspace.icntl[12] = 1;
-      this->workspace.icntl[23] = 1; // ICNTL(24) controls the detection of “null pivot rows”
+      ICNTL(6) = 0; // column permutation (none)
+      ICNTL(8) = 0; // scaling strategy (none)
+
+      ICNTL(13) = 1; // parallelism of the root nod (ScaLAPACK not used, partly recover parallelism of the root node)
+      ICNTL(24) = 1; // controls the detection of “null pivot rows” (null pivot row detection)
 
       /*
       // debug for MUMPS team
-      this->workspace.icntl[1] = 6; // ICNTL(2)=6
-      this->workspace.icntl[2] = 6; // ICNTL(3)=6
-      this->workspace.icntl[3] = 6; // ICNTL(4)=2
+      ICNTL(2) = 6;
+      ICNTL(3) = 6;
+      ICNTL(4) = 6;
        */
    }
 
@@ -60,7 +66,7 @@ namespace uno {
       this->workspace.irn = this->linear_system.matrix_row_indices.data();
       this->workspace.jcn = this->linear_system.matrix_column_indices.data();
       dmumps_c(&this->workspace);
-      this->workspace.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
+      INCTL(7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
       this->analysis_performed = true;
    }
 

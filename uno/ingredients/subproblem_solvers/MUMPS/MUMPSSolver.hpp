@@ -45,6 +45,8 @@ namespace uno {
 
       bool analysis_performed{false};
       bool factorization_performed{false};
+
+      int& ICNTL(size_t index);
    };
 } // namespace
 
