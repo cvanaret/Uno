@@ -64,8 +64,8 @@ namespace uno {
       const size_t dimension = static_cast<size_t>(this->workspace.n);
       view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
 
-      spral_ssids_solve(0, static_cast<int>(number_of_rhs), solution, this->workspace.n,
-         this->workspace.akeep, this->workspace.fkeep, &this->workspace.options, &this->workspace.inform);
+      spral_ssids_solve(0, static_cast<int>(number_of_rhs), solution, this->workspace.n, this->workspace.akeep,
+         this->workspace.fkeep, &this->workspace.options, &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
          throw std::runtime_error("SSIDS could not solve the linear system");

@@ -173,9 +173,8 @@ namespace uno {
       }
       else {
          // copy rhs into solution (overwritten by MA57)
-         for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-            solution[index] = this->linear_system.rhs[index];
-         }
+         const size_t dimension = static_cast<size_t>(this->workspace.n);
+         view(solution, dimension) = this->linear_system.rhs.view();
 
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
             this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
