@@ -103,7 +103,7 @@ namespace uno {
    void MUMPSSolver::solve_indefinite_system(double* solution) {
       assert(this->factorization_performed);
 
-      // copy rhs into result (overwritten by MUMPS)
+      // copy rhs into solution (overwritten by MUMPS)
       const size_t dimension = static_cast<size_t>(this->workspace.n);
       view(solution, dimension) = this->linear_system.rhs.view();
 
