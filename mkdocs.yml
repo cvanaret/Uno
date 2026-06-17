@@ -24,6 +24,7 @@ nav:
   - 'Interfaces':
     - 'Python': 'interfaces/python.md'
     - 'Julia': 'interfaces/julia.md'
+    - 'R': 'interfaces/r.md'
     - 'C': 'interfaces/c.md'
     - 'AMPL': 'interfaces/ampl.md'
     - 'Fortran': 'interfaces/fortran.md'
