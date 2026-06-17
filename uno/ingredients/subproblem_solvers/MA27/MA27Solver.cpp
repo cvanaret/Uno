@@ -198,9 +198,8 @@ namespace uno {
       int liw = static_cast<int>(this->workspace.iw.size());
 
       // copy rhs into solution (overwritten by MA27)
-      for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-         solution[index] = this->linear_system.rhs[index];
-      }
+      const size_t dimension = static_cast<size_t>(this->workspace.n);
+      view(solution, dimension) = this->linear_system.rhs.view();
 
       MA27_linear_solve(&this->workspace.n, this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
          this->workspace.w.data(), &this->workspace.maxfrt, solution, this->workspace.iw1.data(), &this->workspace.nsteps,
