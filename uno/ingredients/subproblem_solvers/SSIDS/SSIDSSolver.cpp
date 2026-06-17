@@ -42,15 +42,30 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void SSIDSSolver::solve_indefinite_system(double* result) {
+   void SSIDSSolver::solve_indefinite_system(double* solution) {
       assert(this->factorization_performed);
 
-      // copy rhs into result (overwritten by SSIDS)
-      for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-         result[index] = this->linear_system.rhs[index];
-      }
-      spral_ssids_solve1(0, result, this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
+      // copy rhs into solution (overwritten by SSIDS)
+      const size_t dimension = static_cast<size_t>(this->workspace.n);
+      view(solution, dimension) = this->linear_system.rhs.view();
+
+      spral_ssids_solve1(0, solution, this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
          &this->workspace.inform);
+      if (this->workspace.inform.flag < 0) {
+         spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
+         throw std::runtime_error("SSIDS could not solve the linear system");
+      }
+   }
+
+   void SSIDSSolver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+      assert(this->factorization_performed);
+
+      // copy the rhs block into the solution block (overwritten by SSIDS); both are column-major with leading dimension n
+      const size_t dimension = static_cast<size_t>(this->workspace.n);
+      view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
+
+      spral_ssids_solve(0, static_cast<int>(number_of_rhs), solution, this->workspace.n, this->workspace.akeep,
+         this->workspace.fkeep, &this->workspace.options, &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
          throw std::runtime_error("SSIDS could not solve the linear system");

@@ -66,3 +66,29 @@ TEST(MA27Solver, SingularMatrix) {
    // expected inertia (1, 1, 2)
    ASSERT_TRUE(solver.matrix_is_singular());
 }
+
+TEST(MA27Solver, MultipleRHS) {
+   MA27Solver solver;
+   COOLinearSystem& linear_system = solver.get_coo_linear_system();
+   constexpr size_t dimension = 5;
+   linear_system.dimension = dimension;
+   linear_system.number_nonzeros = 7;
+   // indices with Fortran-based indexing
+   linear_system.matrix_row_indices = {1, 1, 2, 2, 3, 3, 5};
+   linear_system.matrix_column_indices = {1, 2, 3, 5, 3, 4, 5};
+   linear_system.matrix_values = {2., 3., 4., 6., 1., 5., 1.};
+   solver.initialize_memory();
+   solver.do_symbolic_analysis();
+   solver.do_numerical_factorization(false);
+
+   // two right-hand sides stored column-major: column 0 -> [1,2,3,4,5], column 1 -> [1,1,1,1,1]
+   const std::array<double, 2 * dimension> rhs{8., 45., 31., 15., 17.,  5., 13., 10., 5., 7.};
+   std::array<double, 2 * dimension> solution{};
+   solver.solve_indefinite_system(rhs.data(), solution.data(), 2);
+
+   const std::array<double, 2 * dimension> reference{1., 2., 3., 4., 5.,  1., 1., 1., 1., 1.};
+   const double tolerance = 1e-8;
+   for (size_t index: Range(2 * dimension)) {
+      EXPECT_NEAR(solution[index], reference[index], tolerance);
+   }
+}

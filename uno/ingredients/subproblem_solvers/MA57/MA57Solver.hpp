@@ -35,7 +35,6 @@ namespace uno {
       std::array<double, 20> rinfo{};
       std::array<int, 40> info{};
 
-      const int nrhs{1}; // number of right hand side being solved
       const int job{1};
       std::vector<double> residuals;
 
@@ -51,7 +50,8 @@ namespace uno {
 
       void do_symbolic_analysis() override;
       void do_numerical_factorization(bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(double* result) override;
+      void solve_indefinite_system(double* solution) override;
+      void solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;

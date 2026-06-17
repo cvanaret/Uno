@@ -149,9 +149,6 @@ namespace uno {
          this->view().scale(factor);
       }
 
-   protected:
-      std::vector<T> vector;
-
       VectorView<const T> view() const noexcept {
          return uno::view(this->data(), this->size());
       }
@@ -159,6 +156,9 @@ namespace uno {
       VectorView<T> view() noexcept {
          return uno::view(this->data(), this->size());
       }
+
+   protected:
+      std::vector<T> vector;
    };
 
    // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
