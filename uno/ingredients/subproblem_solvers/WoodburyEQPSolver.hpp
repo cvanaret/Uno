@@ -46,7 +46,7 @@ namespace uno {
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
 
-      void compute_low_rank_correction(const Subproblem& subproblem, LinearSystem& linear_system, Vector<double>& b) const;
+      void compute_low_rank_correction(const Subproblem& subproblem, Vector<double>& b) const;
       [[nodiscard]] static bool solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d);
    };
 } // namespace

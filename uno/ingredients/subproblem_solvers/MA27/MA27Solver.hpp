@@ -45,6 +45,8 @@ namespace uno {
       void do_symbolic_analysis() override;
       void do_numerical_factorization(bool is_matrix_positive_definite) override;
       void solve_indefinite_system(double* result) override;
+      // MA27 has no native multiple right-hand side solve: expose the base-class loop implementation
+      using DirectSymmetricIndefiniteLinearSolver<double>::solve_indefinite_system;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;

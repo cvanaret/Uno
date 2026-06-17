@@ -70,7 +70,7 @@ namespace uno {
       }
 
       // compute the low-rank correction
-      this->compute_low_rank_correction(subproblem, linear_system, solution_diagonal_part);
+      this->compute_low_rank_correction(subproblem, solution_diagonal_part);
 
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(solution_diagonal_part, direction);
@@ -82,7 +82,7 @@ namespace uno {
 
    // protected members
 
-   void WoodburyEQPSolver::compute_low_rank_correction(const Subproblem& subproblem, LinearSystem& linear_system, Vector<double>& b) const {
+   void WoodburyEQPSolver::compute_low_rank_correction(const Subproblem& subproblem, Vector<double>& b) const {
       DEBUG << "b = " << b << '\n';
       const size_t correction_rank = this->hessian_model.get_correction_rank();
       DEBUG << "Correction rank: " << correction_rank << '\n';
@@ -90,16 +90,15 @@ namespace uno {
          // compute correction_rank backsolves with the correction columns as RHS
          DenseMatrix<double> E(subproblem.number_variables + subproblem.number_constraints, correction_rank);
          DenseMatrix<double> H(subproblem.number_variables + subproblem.number_constraints, correction_rank);
+         // assemble the correction columns into E (E is taller than the correction matrix; the extra rows stay 0)
          for (size_t column_index: Range(correction_rank)) {
             const auto correction_column = this->hessian_model.get_correction_column(column_index);
-            // copy each correction column into E (note: E is higher than the correction matrix)
             for (size_t row_index: Range(subproblem.problem.model.number_variables)) {
                E.entry(row_index, column_index) = correction_column[row_index];
             }
-            // solve a linear system A H_j = E_j
-            linear_system.rhs = E.column(column_index);
-            this->linear_solver->solve_indefinite_system(H.column(column_index).data());
          }
+         // solve A H = E with all correction columns as right-hand sides at once (column-major blocks)
+         this->linear_solver->solve_indefinite_system(E.data(), H.data(), correction_rank);
          DEBUG2 << "E = " << E;
          DEBUG2 << "H = " << H;
          // compute c = Eᵀ b

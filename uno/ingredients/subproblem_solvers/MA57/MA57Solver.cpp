@@ -155,10 +155,11 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(double* result) {
+   void MA57Solver::solve_indefinite_system(double* solution) {
       assert(this->factorization_performed);
 
       // solve
+      const int nrhs = 1;
       const int lrhs = this->workspace.n; // integer, length of rhs
 
       // solve the linear system
@@ -166,21 +167,46 @@ namespace uno {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
             this->linear_system.matrix_values.data(), this->linear_system.matrix_row_indices.data(),
             this->linear_system.matrix_column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), result,
+            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), solution,
             this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
       }
       else {
-         // copy rhs into result (overwritten by MA57)
+         // copy rhs into solution (overwritten by MA57)
          for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-            result[index] = this->linear_system.rhs[index];
+            solution[index] = this->linear_system.rhs[index];
          }
 
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result, &lrhs,
+            this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
             this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.info.data());
       }
+   }
+
+   void MA57Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+      assert(this->factorization_performed);
+
+      // MA57's iterative-refinement solve (ma57dd) only handles a single right-hand side, so the
+      // multiple-RHS path uses ma57cd directly (no iterative refinement) on a column-major block
+      const int nrhs = static_cast<int>(number_of_rhs);
+      const int lrhs = this->workspace.n; // leading dimension of the right-hand side block
+
+      // copy the rhs block into the solution block (overwritten by MA57)
+      const size_t dimension = static_cast<size_t>(this->workspace.n);
+      view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
+
+      // ma57cd requires a work array of size n*nrhs; enlarge it if needed
+      const int required_lwork = this->workspace.n * nrhs;
+      if (this->workspace.lwork < required_lwork) {
+         this->workspace.lwork = required_lwork;
+         this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
+      }
+
+      MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
+         this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
+         this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
+         this->workspace.info.data());
    }
 
    Inertia MA57Solver::get_inertia() const {

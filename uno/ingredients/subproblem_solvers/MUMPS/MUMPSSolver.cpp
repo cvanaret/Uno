@@ -100,14 +100,33 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MUMPSSolver::solve_indefinite_system(double* result) {
+   void MUMPSSolver::solve_indefinite_system(double* solution) {
       assert(this->factorization_performed);
 
       // copy rhs into result (overwritten by MUMPS)
-      for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-         result[index] = this->linear_system.rhs[index];
+      const size_t dimension = static_cast<size_t>(this->workspace.n);
+      view(solution, dimension) = this->linear_system.rhs.view();
+
+      this->workspace.nrhs = 1;
+      this->workspace.rhs = solution;
+      this->workspace.job = MUMPSSolver::JOB_SOLVE;
+      dmumps_c(&this->workspace);
+      if (INFO(1) < 0) {
+         throw std::runtime_error("The MUMPS solve failed");
       }
-      this->workspace.rhs = result;
+   }
+
+   void MUMPSSolver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+      assert(this->factorization_performed);
+
+      // copy the rhs block into the solution block (overwritten by MUMPS); both are column-major,
+      // with leading dimension n (lrhs)
+      const size_t dimension = static_cast<size_t>(this->workspace.n);
+      view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
+
+      this->workspace.nrhs = static_cast<int>(number_of_rhs);
+      this->workspace.lrhs = this->workspace.n;
+      this->workspace.rhs = solution;
       this->workspace.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->workspace);
       if (INFO(1) < 0) {
