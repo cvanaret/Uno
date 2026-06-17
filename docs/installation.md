@@ -73,7 +73,7 @@ sudo apt install libblas-dev liblapack-dev
     * [MA57](http://www.hsl.rl.ac.uk/catalogue/ma57.html) (sparse indefinite symmetric linear solver)
     * [LIBHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) (collection of solvers for sparse linear systems)
     * [MUMPS](https://mumps-solver.org/index.php?page=dwnld) (sparse indefinite symmetric linear solver)
-    * [SSIDS](https://github.com/ralna/spral) (sparse indefinite symmetric linear solver)
+    * [SSIDS](https://github.com/ralna/spral) (sparse indefinite symmetric linear solver) from the SPRAL library
     * [HiGHS](https://highs.dev) (linear programming and convex quadratic programming solver)
 
 * to compile MUMPS in sequential mode, remove the flag `-fopenmp` at the end of your `Makefile.inc` and set the following variables:
