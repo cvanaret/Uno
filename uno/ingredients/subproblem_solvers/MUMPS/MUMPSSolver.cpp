@@ -5,7 +5,9 @@
 #include <stdexcept>
 #include "MUMPSSolver.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "options/Options.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Logger.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
 #endif
@@ -71,15 +73,29 @@ namespace uno {
 
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
       this->workspace.a = this->linear_system.matrix_values.data();
-      dmumps_c(&this->workspace);
-      if (INFO(1) == -8 || INFO(1) == -9) {
-         throw std::runtime_error("The MUMPS workspace is too small");
-      }
-      else if (INFO(1) == -10) {
-         throw std::runtime_error("MUMPS detected a numerically singular matrix");
-      }
-      else if (INFO(1) < 0) {
-         throw std::runtime_error("The MUMPS factorization failed");
+      bool success = false;
+      while (!success) {
+         dmumps_c(&this->workspace);
+         if (INFO(1) == -8 || INFO(1) == -9) { // workspace too small
+            if (this->number_factorization_failures >= this->max_number_factorization_failures) {
+               this->number_factorization_failures = 0;
+               throw std::runtime_error("The MUMPS factorization failed (workspace too small)");
+            }
+            // increase the workspace size and retry
+            ICNTL(14) = ICNTL(14) * MUMPSSettings::mem_percent_increase;
+            ++this->number_factorization_failures;
+         }
+         else if (INFO(1) == -10) {
+            // singular matrix, should be caught by the calling code via the inertia
+            DEBUG << "MUMPS detected a numerically singular matrix\n";
+            success = true;
+         }
+         else if (INFO(1) < 0) {
+            throw std::runtime_error("The MUMPS factorization failed");
+         }
+         else {
+            success = true;
+         }
       }
       this->factorization_performed = true;
    }
