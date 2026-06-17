@@ -1,10 +1,8 @@
 # Uno
 
-**Contents**
-- [Installation](#installation)
-- [Getting started](#getting-started)
-- [How to cite Uno](#how-to-cite-uno)
-- [Credits](#credits)
+Check out the [official documentation](https://unosolver.readthedocs.io) for instructions on how to compile Uno from source or use the precompiled libraries, and to get started with Uno.
+
+## Unifying Nonlinear Optimization
 
 Uno (Unifying Nonlinear Optimization) is a C++ framework for solving nonlinearly constrained optimization problems of the form:
 
@@ -32,14 +30,6 @@ Uno breaks down these methods into a set of common building blocks that interact
 </p>
 
 Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
-
-## Installation
-
-See the [installation guide](INSTALL.md) file for instructions on how to compile Uno from source, or use the precompiled libraries and executables.
-
-## Getting started
-
-To get started with Uno, check out the [official documentation](https://unosolver.readthedocs.io).
 
 ## How to cite Uno
 
