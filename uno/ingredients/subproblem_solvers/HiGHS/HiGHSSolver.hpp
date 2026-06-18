@@ -4,34 +4,38 @@
 #ifndef UNO_HIGHSSOLVER_H
 #define UNO_HIGHSSOLVER_H
 
+#include <memory>
 #include <highs/Highs.h>
-#include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
-#include "HiGHSWorkspace.hpp"
+#include "../QPSolver.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   class HiGHSQuadraticProgram;
    class Options;
+   class QuadraticProgram;
 
-   class HiGHSSolver : public SubproblemSolver {
+   class HiGHSSolver : public QPSolver {
    public:
       explicit HiGHSSolver(const Options& options);
+      ~HiGHSSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] QuadraticProgram& get_quadratic_program() override;
+
+      void solve(Statistics& statistics, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
+      // HiGHS-native quadratic program (built by IQPSolver before each solve)
+      std::unique_ptr<HiGHSQuadraticProgram> quadratic_program{};
       Highs highs_solver;
-      HiGHSWorkspace workspace;
 
       const bool print_subproblem;
 
-      void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
-      void solve_subproblem(const Subproblem& subproblem, Direction& direction);
+      void solve_subproblem(Direction& direction);
    };
 } // namespace
 

@@ -170,6 +170,7 @@ if(BQPD)
    link_to_uno(bqpd ${BQPD})
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
+           uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp
            uno/ingredients/subproblem_solvers/BQPD/BQPDWorkspace.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp)
@@ -187,6 +188,7 @@ if(HIGHS)
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
+           uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)

@@ -7,8 +7,10 @@
 #include <memory>
 #include "BoxLPSolver.hpp"
 #include "EQPSolver.hpp"
+#include "IQPSolver.hpp"
 #include "LPSolverFactory.hpp"
 #include "InverseNewtonSolver.hpp"
+#include "QPSolver.hpp"
 #include "QPSolverFactory.hpp"
 #include "WoodburyEQPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -32,7 +34,7 @@ namespace uno {
    };
 
    template <typename HessianType>
-   inline std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(const OptimizationProblem& problem,
+   std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(const OptimizationProblem& problem,
          Iterate& current_iterate, HessianType& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy,
          bool uses_trust_region, const Options& options) {
       const Subproblem subproblem(problem, current_iterate, hessian_model, inertia_correction_strategy);
@@ -47,7 +49,7 @@ namespace uno {
          }
          else {
             DEBUG << "No curvature in the subproblem, allocating an LP solver\n";
-            auto subproblem_solver = LPSolverFactory::create(options);
+            auto subproblem_solver = std::make_unique<IQPSolver>(LPSolverFactory::create(options));
             subproblem_solver->initialize_memory(subproblem);
             return subproblem_solver;
          }
@@ -78,7 +80,8 @@ namespace uno {
       // otherwise, allocate QP solver
       else {
          DEBUG << "Curvature in the subproblem, allocating a QP solver\n";
-         auto subproblem_solver = QPSolverFactory::create(options);
+         // wrap the (Subproblem-agnostic) QP backend in an IQPSolver that builds its QuadraticProgram
+         auto subproblem_solver = std::make_unique<IQPSolver>(QPSolverFactory::create(options));
          subproblem_solver->initialize_memory(subproblem);
          return subproblem_solver;
       }
