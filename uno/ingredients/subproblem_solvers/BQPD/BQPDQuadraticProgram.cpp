@@ -26,7 +26,7 @@ namespace uno {
       this->upper_bounds.resize(this->number_variables + this->number_constraints);
    }
 
-   void BQPDQuadraticProgram::build(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+   void BQPDQuadraticProgram::fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate objective gradient + constraint Jacobian (packed into workspace.gradients)
       this->workspace.evaluate_functions(subproblem.problem, subproblem.current_iterate, current_evaluations,
@@ -78,7 +78,7 @@ namespace uno {
       }
    }
 
-   void BQPDQuadraticProgram::build(const Vector<double>& linear_objective,
+   void BQPDQuadraticProgram::fill(const Vector<double>& linear_objective,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
          const Vector<double>& jacobian_values,
          const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,

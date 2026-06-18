@@ -190,6 +190,7 @@ namespace uno {
       // get the Hessian sparsity in COO format
       this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
+      this->hessian_values.resize(number_regularized_hessian_nonzeros);
       subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
          this->hessian_column_indices.data(), Indexing::C_indexing);
       // convert COO -> HiGHS' lower-triangular CSC layout

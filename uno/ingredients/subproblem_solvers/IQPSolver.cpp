@@ -24,7 +24,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // build the QuadraticProgram from the Subproblem at the current iterate
       QuadraticProgram& quadratic_program = this->qp_solver->get_quadratic_program();
-      quadratic_program.build(statistics, subproblem, trust_region_radius, current_evaluations, warmstart_information);
+      quadratic_program.fill(statistics, subproblem, trust_region_radius, current_evaluations, warmstart_information);
 
       // solve the QP
       this->qp_solver->solve(statistics, initial_point, direction, warmstart_information);

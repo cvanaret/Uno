@@ -45,13 +45,13 @@ namespace uno {
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
       // populate from a Subproblem at the current iterate (storage allocated by initialize_memory)
-      virtual void build(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+      virtual void fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) = 0;
 
       // populate directly from data: dense objective gradient, COO constraint Jacobian (row = constraint,
       // column = variable), COO Lagrangian Hessian (one triangle; empty for an LP), and concatenable
       // variable/constraint bounds. Dimensions are inferred and native storage is (re)allocated.
-      virtual void build(const Vector<double>& linear_objective,
+      virtual void fill(const Vector<double>& linear_objective,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
          const Vector<double>& jacobian_values,
          const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,

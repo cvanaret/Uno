@@ -51,7 +51,7 @@ TEST(HiGHSSolver, LP) {
    const std::vector<double> constraints_upper_bounds{7., 15., INF<double>};
 
    QuadraticProgram& quadratic_program = solver.get_quadratic_program();
-   quadratic_program.build(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,
+   quadratic_program.fill(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,
       hessian_row_indices, hessian_column_indices, hessian_values,
       variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds, constraints_upper_bounds);
 

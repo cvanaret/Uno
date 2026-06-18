@@ -15,7 +15,7 @@ namespace uno {
       this->workspace.initialize_memory(subproblem);
    }
 
-   void HiGHSQuadraticProgram::build(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+   void HiGHSQuadraticProgram::fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions and derivatives into the HiGHS model
       this->workspace.evaluate_functions(statistics, subproblem, current_evaluations, warmstart_information);
@@ -32,7 +32,7 @@ namespace uno {
       }
    }
 
-   void HiGHSQuadraticProgram::build(const Vector<double>& linear_objective,
+   void HiGHSQuadraticProgram::fill(const Vector<double>& linear_objective,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
          const Vector<double>& jacobian_values,
          const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,

@@ -21,11 +21,11 @@ namespace uno {
       HiGHSQuadraticProgram() = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
-      void build(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+      void fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
       // data-driven build: dense objective gradient + COO constraint Jacobian + COO Lagrangian Hessian
       // (one triangle; empty for an LP). Converts COO to HiGHS' CSC layout internally.
-      void build(const Vector<double>& linear_objective,
+      void fill(const Vector<double>& linear_objective,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
          const Vector<double>& jacobian_values,
          const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,

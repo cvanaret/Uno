@@ -31,18 +31,17 @@ namespace uno {
    void HiGHSSolver::solve(Statistics& /*statistics*/, const Vector<double>& /*initial_point*/, Direction& direction,
          const WarmstartInformation& /*warmstart_information*/) {
       if (this->print_subproblem) {
-         const HiGHSQuadraticProgram& quadratic_program = *this->quadratic_program;
          DEBUG << "Subproblem:\n";
-         DEBUG << "Hessian: "; print_vector(DEBUG, quadratic_program.workspace.model.hessian_.value_);
-         DEBUG << "Linear objective part: "; print_vector(DEBUG, quadratic_program.workspace.model.lp_.col_cost_);
-         DEBUG << "Jacobian: "; print_vector(DEBUG, quadratic_program.workspace.model.lp_.a_matrix_.value_);
-         for (size_t variable_index = 0; variable_index < quadratic_program.number_variables; variable_index++) {
-            DEBUG << "d" << variable_index << " in [" << quadratic_program.workspace.model.lp_.col_lower_[variable_index] << ", " <<
-               quadratic_program.workspace.model.lp_.col_upper_[variable_index] << "]\n";
+         DEBUG << "Hessian: "; print_vector(DEBUG, this->quadratic_program->workspace.model.hessian_.value_);
+         DEBUG << "Linear objective part: "; print_vector(DEBUG, this->quadratic_program->workspace.model.lp_.col_cost_);
+         DEBUG << "Jacobian: "; print_vector(DEBUG, this->quadratic_program->workspace.model.lp_.a_matrix_.value_);
+         for (size_t variable_index = 0; variable_index < this->quadratic_program->number_variables; variable_index++) {
+            DEBUG << "d" << variable_index << " in [" << this->quadratic_program->workspace.model.lp_.col_lower_[variable_index] << ", " <<
+               this->quadratic_program->workspace.model.lp_.col_upper_[variable_index] << "]\n";
          }
-         for (size_t constraint_index = 0; constraint_index < quadratic_program.number_constraints; constraint_index++) {
-            DEBUG << "linearized c" << constraint_index << " in [" << quadratic_program.workspace.model.lp_.row_lower_[constraint_index] << ", " <<
-               quadratic_program.workspace.model.lp_.row_upper_[constraint_index]<< "]\n";
+         for (size_t constraint_index = 0; constraint_index < this->quadratic_program->number_constraints; constraint_index++) {
+            DEBUG << "linearized c" << constraint_index << " in [" << this->quadratic_program->workspace.model.lp_.row_lower_[constraint_index] << ", " <<
+               this->quadratic_program->workspace.model.lp_.row_upper_[constraint_index]<< "]\n";
          }
       }
       this->solve_subproblem(direction);
@@ -55,10 +54,8 @@ namespace uno {
    // protected member functions
 
    void HiGHSSolver::solve_subproblem(Direction& direction) {
-      HiGHSQuadraticProgram& quadratic_program = *this->quadratic_program;
-
       // solve the subproblem
-      HighsStatus return_status = this->highs_solver.passModel(quadratic_program.workspace.model);
+      HighsStatus return_status = this->highs_solver.passModel(this->quadratic_program->workspace.model);
       if (return_status == HighsStatus::kError) {
          throw std::runtime_error("HiGHS could not read the model.");
       }
@@ -87,7 +84,7 @@ namespace uno {
       direction.status = SubproblemStatus::OPTIMAL;
       const HighsSolution& solution = this->highs_solver.getSolution();
       // read the primal solution and bound dual solution
-      for (size_t variable_index = 0; variable_index < quadratic_program.number_variables; variable_index++) {
+      for (size_t variable_index = 0; variable_index < this->quadratic_program->number_variables; variable_index++) {
          direction.primals[variable_index] = solution.col_value[variable_index];
          const double bound_multiplier = solution.col_dual[variable_index];
          if (0. < bound_multiplier) {
@@ -98,7 +95,7 @@ namespace uno {
          }
       }
       // gather the constraint multipliers (the dual-displacement mapping is performed by IQPSolver)
-      for (size_t constraint_index = 0; constraint_index < quadratic_program.number_constraints; constraint_index++) {
+      for (size_t constraint_index = 0; constraint_index < this->quadratic_program->number_constraints; constraint_index++) {
          direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
       }
       const HighsInfo& info = this->highs_solver.getInfo();
