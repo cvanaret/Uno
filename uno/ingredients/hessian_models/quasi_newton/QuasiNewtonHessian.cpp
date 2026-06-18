@@ -10,7 +10,7 @@
 #include "symbolic/Subtraction.hpp"
 
 namespace uno {
-   QuasiNewtonHessian::QuasiNewtonHessian(const std::string_view name, const Model& model, double objective_multiplier,
+   QuasiNewtonHessian::QuasiNewtonHessian(std::string_view name, const Model& model, double objective_multiplier,
       const Options& options):
          HessianModel(name),
          model(model),
@@ -21,7 +21,9 @@ namespace uno {
          current_lagrangian_gradient(this->model.number_variables),
          trial_lagrangian_gradient(this->model.number_variables),
          latest_s(this->model.number_variables),
-         latest_y(this->model.number_variables) {
+         latest_y(this->model.number_variables),
+         delta_lower_bound(options.get_double("quasi_newton_delta_lower_bound")),
+         delta_upper_bound(options.get_double("quasi_newton_delta_upper_bound")) {
       if (this->memory_size <= 0) {
          throw std::runtime_error("The quasi-Newton memory size should be positive");
       }

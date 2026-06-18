@@ -174,6 +174,6 @@ namespace uno {
       const double sTy = this->R.entry(newest, newest);
       const auto y = this->Y.column(newest);
       const double yTy = dot(y, y);
-      return std::max(1e-8, std::min(1e8, sTy/yTy));
+      return std::max(this->delta_lower_bound, std::min(this->delta_upper_bound, sTy/yTy));
    }
 } // namespace

@@ -16,7 +16,7 @@ namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update
    class QuasiNewtonHessian: public HessianModel {
    public:
-      QuasiNewtonHessian(const std::string_view name, const Model& model, double objective_multiplier, const Options& options);
+      QuasiNewtonHessian(std::string_view name, const Model& model, double objective_multiplier, const Options& options);
       ~QuasiNewtonHessian() override = default;
 
       [[nodiscard]] bool has_hessian_operator() const override;
@@ -41,6 +41,8 @@ namespace uno {
       Vector<double> latest_y;
       double delta{1.};
       bool hessian_recomputation_required{false};
+      const double delta_lower_bound;
+      const double delta_upper_bound;
 
       // compute the candidate pair (s, y) into latest_s/latest_y, WITHOUT modifying the memory
       void compute_candidate_pair(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);

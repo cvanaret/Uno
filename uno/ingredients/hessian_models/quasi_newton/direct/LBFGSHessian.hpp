@@ -46,7 +46,6 @@ namespace uno {
       // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = δ I
       DenseMatrix<double> U;
       DenseMatrix<double> V;
-      const double delta_upper_bound;
       size_t consecutive_skips{0};
       const size_t max_skips_before_reset;
 

@@ -28,7 +28,6 @@ namespace uno {
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
          V(this->model.number_variables, this->memory_size),
-         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")),
          max_skips_before_reset(options.get_unsigned_int("LBFGS_max_skips_before_reset")) {
    }
 
@@ -224,6 +223,6 @@ namespace uno {
       const double sTy = this->D[newest];
       const auto s = this->S.column(newest);
       const double sTs = dot(s, s);
-      return std::max(1e-8, std::min(1e8, sTy/sTs));
+      return std::max(this->delta_lower_bound, std::min(this->delta_upper_bound, sTy/sTs));
    }
 } // namespace
