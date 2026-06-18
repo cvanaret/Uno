@@ -151,7 +151,7 @@ namespace uno {
    }
 
    SolverWorkspace& BQPDSolver::get_workspace() {
-      return this->quadratic_program->get_workspace();
+      return this->quadratic_program->workspace;
    }
 
    // private member functions

@@ -112,10 +112,6 @@ namespace uno {
       this->hessian_operator = nullptr;
    }
 
-   SolverWorkspace& BQPDQuadraticProgram::get_workspace() {
-      return this->workspace;
-   }
-
    void BQPDQuadraticProgram::compute_hessian_vector_product(int dimension, const double* vector, double* result) const {
       for (size_t index = 0; index < static_cast<size_t>(dimension); ++index) {
          result[index] = 0.;
