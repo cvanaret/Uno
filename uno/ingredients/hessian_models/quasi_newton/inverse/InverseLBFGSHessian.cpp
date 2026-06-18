@@ -167,14 +167,13 @@ namespace uno {
       DEBUG << "> R: " << this->R;
    }
 
-   // compute δ = sᵀy / yᵀy at the newest (last) entry
+   // compute (guarded) δ = sᵀy / yᵀy at the newest (last) entry
    double InverseLBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const size_t newest = this->number_entries_in_memory - 1;
       const double sTy = this->R.entry(newest, newest);
       const auto y = this->Y.column(newest);
       const double yTy = dot(y, y);
-      // TODO safeguard
-      return sTy/yTy;
+      return std::max(1e-8, std::min(1e8, sTy/yTy));
    }
 } // namespace

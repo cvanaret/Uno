@@ -217,13 +217,13 @@ namespace uno {
       // note: the newest entry already lives at slot (number_entries_in_memory - 1); there is no circular index to advance
    }
 
-   // compute δ = sᵀy / sᵀs at the newest (last) entry
+   // compute (guarded) δ = sᵀy / sᵀs at the newest (last) entry
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const size_t newest = this->number_entries_in_memory - 1;
       const double sTy = this->D[newest];
       const auto s = this->S.column(newest);
       const double sTs = dot(s, s);
-      return std::min(this->delta_upper_bound, sTy/sTs);
+      return std::max(1e-8, std::min(1e8, sTy/sTs));
    }
 } // namespace
