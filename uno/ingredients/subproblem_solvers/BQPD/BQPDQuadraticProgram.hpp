@@ -37,13 +37,14 @@ namespace uno {
          const Vector<double>& hessian_values,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) override;
-      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
       // whether the QP has a Hessian: determines BQPD's kmax (0 for an LP). Valid after a build().
       [[nodiscard]] bool has_curvature() const { return this->use_explicit_hessian || bool(this->hessian_operator); }
 
       // result <- H * vector, called from the Fortran gdotx callback. Subproblem-free.
       void compute_hessian_vector_product(int dimension, const double* vector, double* result) const;
+
+      SolverWorkspace& get_workspace();
 
       BQPDWorkspace workspace{};
       // lower and upper bounds of variables and constraints (concatenated, length n + m)

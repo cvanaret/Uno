@@ -188,8 +188,7 @@ if(HIGHS)
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
-           uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp
-           uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
+           uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)
    endif()

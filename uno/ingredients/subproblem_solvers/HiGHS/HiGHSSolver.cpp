@@ -32,30 +32,30 @@ namespace uno {
          const WarmstartInformation& /*warmstart_information*/) {
       if (this->print_subproblem) {
          DEBUG << "Subproblem:\n";
-         DEBUG << "Hessian: "; print_vector(DEBUG, this->quadratic_program->workspace.model.hessian_.value_);
-         DEBUG << "Linear objective part: "; print_vector(DEBUG, this->quadratic_program->workspace.model.lp_.col_cost_);
-         DEBUG << "Jacobian: "; print_vector(DEBUG, this->quadratic_program->workspace.model.lp_.a_matrix_.value_);
+         DEBUG << "Hessian: "; print_vector(DEBUG, this->quadratic_program->model.hessian_.value_);
+         DEBUG << "Linear objective part: "; print_vector(DEBUG, this->quadratic_program->model.lp_.col_cost_);
+         DEBUG << "Jacobian: "; print_vector(DEBUG, this->quadratic_program->model.lp_.a_matrix_.value_);
          for (size_t variable_index = 0; variable_index < this->quadratic_program->number_variables; variable_index++) {
-            DEBUG << "d" << variable_index << " in [" << this->quadratic_program->workspace.model.lp_.col_lower_[variable_index] << ", " <<
-               this->quadratic_program->workspace.model.lp_.col_upper_[variable_index] << "]\n";
+            DEBUG << "d" << variable_index << " in [" << this->quadratic_program->model.lp_.col_lower_[variable_index] << ", " <<
+               this->quadratic_program->model.lp_.col_upper_[variable_index] << "]\n";
          }
          for (size_t constraint_index = 0; constraint_index < this->quadratic_program->number_constraints; constraint_index++) {
-            DEBUG << "linearized c" << constraint_index << " in [" << this->quadratic_program->workspace.model.lp_.row_lower_[constraint_index] << ", " <<
-               this->quadratic_program->workspace.model.lp_.row_upper_[constraint_index]<< "]\n";
+            DEBUG << "linearized c" << constraint_index << " in [" << this->quadratic_program->model.lp_.row_lower_[constraint_index] << ", " <<
+               this->quadratic_program->model.lp_.row_upper_[constraint_index]<< "]\n";
          }
       }
       this->solve_subproblem(direction);
    }
 
    SolverWorkspace& HiGHSSolver::get_workspace() {
-      return this->quadratic_program->get_workspace();
+      return *this->quadratic_program;
    }
 
    // protected member functions
 
    void HiGHSSolver::solve_subproblem(Direction& direction) {
       // solve the subproblem
-      HighsStatus return_status = this->highs_solver.passModel(this->quadratic_program->workspace.model);
+      HighsStatus return_status = this->highs_solver.passModel(this->quadratic_program->model);
       if (return_status == HighsStatus::kError) {
          throw std::runtime_error("HiGHS could not read the model.");
       }

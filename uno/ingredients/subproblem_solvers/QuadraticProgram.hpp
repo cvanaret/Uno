@@ -58,9 +58,6 @@ namespace uno {
          const Vector<double>& hessian_values,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) = 0;
-
-      // bridge to the workspace used by the caller for predicted-reduction quadratic forms
-      [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
    };
 } // namespace
 
