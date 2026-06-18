@@ -39,21 +39,21 @@ namespace uno {
 
    void QuasiNewtonHessian::compute_candidate_pair(const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
-      this->update_S(current_iterate, trial_iterate);
-      this->update_Y(current_iterate, trial_iterate, evaluation_cache);
+      this->compute_latest_s(current_iterate, trial_iterate);
+      this->compute_latest_y(current_iterate, trial_iterate, evaluation_cache);
       DEBUG << "Computed candidate (s, y) pair\n";
       DEBUG << "> s: " << this->latest_s;
       DEBUG << "> y: " << this->latest_y;
    }
 
-   void QuasiNewtonHessian::update_S(const Iterate& current_iterate, const Iterate& trial_iterate) {
+   void QuasiNewtonHessian::compute_latest_s(const Iterate& current_iterate, const Iterate& trial_iterate) {
       // TODO check that the S entry isn't too small
       this->latest_s = view(trial_iterate.primals, 0, this->model.number_variables) -
          view(current_iterate.primals, 0, this->model.number_variables);
    }
 
    // fill the latest y: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
-   void QuasiNewtonHessian::update_Y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache) {
+   void QuasiNewtonHessian::compute_latest_y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache) {
       // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers trial_iterate.multipliers
       this->model.evaluate_lagrangian_gradient(current_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
          evaluation_cache.current_evaluations, this->current_lagrangian_gradient);

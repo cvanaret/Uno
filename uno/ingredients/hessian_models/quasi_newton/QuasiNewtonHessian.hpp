@@ -44,8 +44,8 @@ namespace uno {
 
       // compute the candidate pair (s, y) into latest_s/latest_y, WITHOUT modifying the memory
       void compute_candidate_pair(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
-      void update_S(const Iterate& current_iterate, const Iterate& trial_iterate);
-      void update_Y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
+      void compute_latest_s(const Iterate& current_iterate, const Iterate& trial_iterate);
+      void compute_latest_y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
       // append the candidate pair as the newest memory entry, physically dropping the oldest if the memory is full;
       // returns the slot of the new entry (always number_entries_in_memory - 1 afterwards)
       size_t commit_memory_entry();
