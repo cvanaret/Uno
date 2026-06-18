@@ -48,27 +48,31 @@ namespace uno {
 
    void InverseLBFGSHessian::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
-      statistics.set("|BFGS|", this->number_entries_in_memory);
-      DEBUG << "\n*** Adding entries to the BFGS memory at slot " << this->current_index << '\n';
-      // update the matrices S and Y
-      this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
+      // compute the candidate pair (s, y) WITHOUT modifying the memory yet
+      this->compute_candidate_pair(current_iterate, trial_iterate, evaluation_cache);
 
       // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
-      const auto sk = this->S.column(this->current_index);
-      const auto yk = this->Y.column(this->current_index);
-      const double norm_sk = norm_2(sk);
-      const double norm_yk = norm_2(yk);
-      const double sTy = dot(sk, yk);
+      const double norm_sk = norm_2(this->latest_s);
+      const double norm_yk = norm_2(this->latest_y);
+      const double sTy = dot(this->latest_s, this->latest_y);
       // tolerance is √(machine epsilon)
       if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
       }
       else {
+         // append the candidate pair as the newest memory entry, physically shifting out the oldest if the memory is full
+         const size_t newest = this->commit_memory_entry();
+         // R is upper triangular with R(i, j) = sᵢ · yⱼ for i ≤ j. The newest pair (last slot) fills the last column,
+         // including the diagonal: R(i, newest) = sᵢ · y_newest for i ≤ newest.
+         for (size_t row_index: Range(newest)) {
+            this->R.entry(row_index, newest) = dot(this->S.column(row_index), this->Y.column(newest));
+         }
+         this->R.entry(newest, newest) = sTy;
          // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
-         // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
+         // Hessian approximation will be used, we delay the recomputation of δ to its next use.
          this->hessian_recomputation_required = true;
-         this->R.entry(this->current_index, this->current_index) = sTy;
       }
+      statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
    void InverseLBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
@@ -145,35 +149,30 @@ namespace uno {
 
    // protected member functions
 
-   void InverseLBFGSHessian::recompute_hessian_representation() {
-      this->validate_update();
-      assert(0 < this->number_entries_in_memory);
-
-      DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
-      /* update the initial Hessian approximation δ I */
-      this->delta = this->compute_delta();
-      DEBUG << "Initial identity multiple: " << this->delta << "\n";
-
-      /* update the entries of R: they depend on this->current_index (1 row and 1 column) */
-      // column this->current_index (excluding the diagonal)
-      for (size_t row_index: Range(this->current_index)) {
-         this->R.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
-      }
-      // row this->current_index
-      for (size_t column_index: Range(this->current_index+1, this->number_entries_in_memory)) {
-         this->R.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
-      }
-      DEBUG << "> R: " << this->R;
-
-      // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
-      this->current_index = (this->current_index + 1) % this->memory_size;
+   void InverseLBFGSHessian::shift_memory_entries() {
+      // shift the memory entries S and Y (drop the oldest, slot 0)
+      QuasiNewtonHessian::shift_memory_entries();
+      // shift the upper triangular R = upper(Sᵀ Y) (diagonal included)
+      this->shift_upper_triangle(this->R, true);
    }
 
-   // compute δ = yᵀy / sᵀy at the last entry
+   void InverseLBFGSHessian::recompute_hessian_representation() {
+      assert(0 < this->number_entries_in_memory);
+      DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
+
+      // R is fully maintained in notify_trial_iterate (new last column on each accepted update, shifted on wraparound),
+      // so only the initial inverse-Hessian scaling δ needs to be refreshed here
+      this->delta = this->compute_delta();
+      DEBUG << "Initial identity multiple: " << this->delta << "\n";
+      DEBUG << "> R: " << this->R;
+   }
+
+   // compute δ = yᵀy / sᵀy at the newest (last) entry
    double InverseLBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
-      const double sTy = this->R.entry(this->current_index, this->current_index);
-      const auto y = this->Y.column(this->current_index);
+      const size_t newest = this->number_entries_in_memory - 1;
+      const double sTy = this->R.entry(newest, newest);
+      const auto y = this->Y.column(newest);
       const double yTy = dot(y, y);
       // TODO safeguard
       return yTy/sTy;

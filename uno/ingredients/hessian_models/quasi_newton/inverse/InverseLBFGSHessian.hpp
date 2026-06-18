@@ -7,13 +7,11 @@
 #include "../QuasiNewtonHessian.hpp"
 
 namespace uno {
-   // express the Hessian approximation at iteration k by a low-rank update:
-   // Bk = B0 - U Uᵀ + V Vᵀ
-   // where
-   // B0 = δ I
-   // V = Yk Dk^(-1/2)
-   // M = δ Skᵀ Sk + Lk Dk⁻¹ Lkᵀ = J Jᵀ
-   // U = (δ Sk + Yk Dk⁻¹ Lkᵀ) J⁻ᵀ
+   // express the inverse Hessian approximation Hk = Bk⁻¹ at iteration k by a low-rank update (compact inverse BFGS
+   // representation), using the upper triangular matrix R with R(i, j) = sᵢᵀ yⱼ for i ≤ j and H0 = δ⁻¹ I.
+   // Sk, Yk and R are expressed in chronological order (slot 0 oldest, last slot newest); when the memory is full, the
+   // oldest entry is physically shifted out so that the slot order always matches the chronological order. This ordering
+   // is required: R is the upper triangular part of Skᵀ Yk in chronological order, and the BFGS updates do not commute.
    class InverseLBFGSHessian: public QuasiNewtonHessian {
    public:
       InverseLBFGSHessian(const Model& model, const Options& options);
@@ -37,11 +35,12 @@ namespace uno {
       void compute_inverse_hessian_vector_product(const double* x, const double* vector, double* result);
 
    protected:
-      DenseMatrix<double> R; // upper triangular
+      DenseMatrix<double> R; // upper triangular, R(i, j) = sᵢᵀ yⱼ for i ≤ j (diagonal included)
       // temporaries
       Vector<double> STv; // Sᵀv
       Vector<double> YTv; // Yᵀv
 
+      void shift_memory_entries() override;
       void recompute_hessian_representation() override;
       [[nodiscard]] double compute_delta() const;
    };

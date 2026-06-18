@@ -15,6 +15,9 @@ namespace uno {
    // V = Yk Dk^(-1/2)
    // M = δ Skᵀ Sk + Lk Dk⁻¹ Lkᵀ = J Jᵀ
    // U = (δ Sk + Yk Dk⁻¹ Lkᵀ) J⁻ᵀ
+   // Sk, Yk, Lk, Dk are expressed in chronological order (slot 0 oldest, last slot newest): Lk is the strictly lower
+   // triangular part of Skᵀ Yk in that order. When the memory is full, the oldest entry is physically shifted out so
+   // that the slot order always matches the chronological order (see shift_memory_entries).
    class LBFGSHessian: public DirectQuasiNewtonHessian {
    public:
       LBFGSHessian(const Model& model, double objective_multiplier, const Options& options);
@@ -35,10 +38,10 @@ namespace uno {
       [[nodiscard]] double get_correction_column_scaling(size_t column_index) const override;
 
    protected:
-      DenseMatrix<double> L; // lower triangular
+      DenseMatrix<double> L; // strictly lower triangular
       std::vector<double> D; // diagonal
       std::vector<double> invsqrt_D; // diagonal
-      DenseMatrix<double> L_invsqrt_D; // lower triangular
+      DenseMatrix<double> L_invsqrt_D; // strictly lower triangular
       DenseMatrix<double> M;
       // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = δ I
       DenseMatrix<double> U;
@@ -47,6 +50,7 @@ namespace uno {
       size_t consecutive_skips{0};
       const size_t max_skips_before_reset;
 
+      void shift_memory_entries() override;
       void recompute_hessian_representation() override;
       [[nodiscard]] double compute_delta() const;
    };
