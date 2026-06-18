@@ -73,6 +73,7 @@ TEST(MA27Solver, MultipleRHS) {
    constexpr size_t dimension = 5;
    linear_system.dimension = dimension;
    linear_system.number_nonzeros = 7;
+   linear_system.rhs.resize(dimension);
    // indices with Fortran-based indexing
    linear_system.matrix_row_indices = {1, 1, 2, 2, 3, 3, 5};
    linear_system.matrix_column_indices = {1, 2, 3, 5, 3, 4, 5};
