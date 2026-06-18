@@ -140,8 +140,10 @@ threshold_unsuccessful_attempts 8
 ## Quasi-Newton options
 # Size of the quasi-Newton limited memory (integer)
 quasi_newton_memory_size 6
-# Upper bound on delta in L-BFGS (double)
-LBFGS_delta_upper_bound 100
+# Lower bound on delta in quasi-Newton approximations (double)
+quasi_newton_delta_lower_bound 1e-8
+# Upper bound on delta in quasi-Newton approximations (double)
+quasi_newton_delta_upper_bound 1e8
 # Number of consecutive skips before the limited memory is reset (integer)
 LBFGS_max_skips_before_reset 2
 # Maximum magnitude of allowed pivots in L-SR1 (double)

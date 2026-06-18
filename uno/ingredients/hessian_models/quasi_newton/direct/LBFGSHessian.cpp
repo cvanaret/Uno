@@ -28,7 +28,6 @@ namespace uno {
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
          V(this->model.number_variables, this->memory_size),
-         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")),
          max_skips_before_reset(options.get_unsigned_int("LBFGS_max_skips_before_reset")) {
    }
 
@@ -43,18 +42,14 @@ namespace uno {
 
    void LBFGSHessian::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
-      statistics.set("|BFGS|", this->number_entries_in_memory);
-      DEBUG << "\n*** Adding entries to the BFGS memory at slot " << this->current_index << '\n';
-      // update the matrices S and Y
-      this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
+      // compute the candidate pair (s, y) WITHOUT modifying the memory yet, so that a skipped update is a true no-op
+      this->compute_candidate_pair(current_iterate, trial_iterate, evaluation_cache);
 
       // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
       // TODO compare against Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
-      const auto sk = this->S.column(this->current_index);
-      const auto yk = this->Y.column(this->current_index);
-      const double norm_sk = norm_2(sk);
-      const double norm_yk = norm_2(yk);
-      const double sTy = dot(sk, yk);
+      const double norm_sk = norm_2(this->latest_s);
+      const double norm_yk = norm_2(this->latest_y);
+      const double sTy = dot(this->latest_s, this->latest_y);
       // tolerance is √(machine epsilon)
       if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
@@ -63,18 +58,29 @@ namespace uno {
             // reset the limited memory
             DEBUG << "Update was skipped " << this->max_skips_before_reset << " consecutive times, resetting the limited memory\n";
             this->number_entries_in_memory = 0;
-            this->current_index = 0;
             this->consecutive_skips = 0;
+            // nothing to recompute: an empty memory yields Bk = δ I
+            this->hessian_recomputation_required = false;
          }
+         // a skip that does not reset leaves the memory (and therefore the current representation) unchanged
       }
       else {
-         // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
-         // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
          DEBUG << "Update is valid\n";
-         this->hessian_recomputation_required = true;
-         this->D[this->current_index] = sTy;
          this->consecutive_skips = 0;
+         // append the candidate pair as the newest memory entry. If the memory is full, the oldest entry is physically
+         // shifted out (commit_memory_entry -> shift_memory_entries) so that the slots stay in chronological order.
+         const size_t newest = this->commit_memory_entry();
+         this->D[newest] = sTy;
+         // compute the new (last) row of L: L(newest, j) = s_newest · y_j for j < newest. No column update is needed:
+         // the newest pair only contributes lower-triangular interactions, which all lie in this last row.
+         for (size_t column_index: Range(newest)) {
+            this->L.entry(newest, column_index) = dot(this->S.column(newest), this->Y.column(column_index));
+         }
+         // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the Hessian
+         // approximation will be used, we delay the recomputation of the factored representation to its next use.
+         this->hessian_recomputation_required = true;
       }
+      statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = δ I
@@ -140,12 +146,23 @@ namespace uno {
 
    // protected member functions
 
+   void LBFGSHessian::shift_memory_entries() {
+      // shift the memory entries S and Y (drop the oldest, slot 0)
+      QuasiNewtonHessian::shift_memory_entries();
+      // shift the incrementally maintained cached quantities accordingly: the diagonal D and the strictly lower
+      // triangular L. The scalings invsqrt_D, L_invsqrt_D and V are not shifted; they are recomputed from scratch in
+      // recompute_hessian_representation.
+      for (size_t slot: Range(this->memory_size - 1)) {
+         this->D[slot] = this->D[slot + 1];
+      }
+      this->shift_lower_triangle(this->L, false); // L is strictly lower triangular (no diagonal)
+   }
+
    void LBFGSHessian::recompute_hessian_representation() {
-      this->validate_update();
       assert(0 < this->number_entries_in_memory);
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
-      // note: some matrices were allocated with the maximum memory size. We will work with submatrices instead (of size
+      // some matrices were allocated with the maximum memory size. We will work with submatrices instead (of size
       // this->number_entries_in_memory, not this->memory_size)
       const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
       const auto L_invsqrt_Dk = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
@@ -155,22 +172,26 @@ namespace uno {
       this->delta = this->compute_delta();
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
-      /* update the entries of L and L_invsqrt_D = L D^{-1/2} */
-      // update invsqrt_D = 1/sqrt_D
-      this->invsqrt_D[this->current_index] = 1./std::sqrt(this->D[this->current_index]);
-      // the entries of L and L_invsqrt_D depend on this->current_index (1 row and 1 column, possibly empty)
-      // row this->current_index
-      for (size_t column_index: Range(this->current_index)) {
-         this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
-         this->L_invsqrt_D.entry(this->current_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(this->current_index, column_index);
+      /* recompute the diagonal scaling invsqrt_D = D^{-1/2} */
+      for (size_t index: Range(this->number_entries_in_memory)) {
+         this->invsqrt_D[index] = 1./std::sqrt(this->D[index]);
       }
-      // column this->current_index (excluding the diagonal)
-      for (size_t row_index: Range(this->current_index+1, this->number_entries_in_memory)) {
-         this->L.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
-         this->L_invsqrt_D.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->L.entry(row_index, this->current_index);
+
+      /* recompute L_invsqrt_D = L D^{-1/2} (strictly lower triangular) from the chronological L.
+       * L is maintained incrementally (one new row per accepted update, shifted on wraparound); the diagonal and upper
+       * triangle stay zero, so M = L_invsqrt_D L_invsqrt_Dᵀ is correct. */
+      for (size_t row_index: Range(this->number_entries_in_memory)) {
+         for (size_t column_index: Range(row_index)) {
+            this->L_invsqrt_D.entry(row_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(row_index, column_index);
+         }
       }
       DEBUG << "> L: " << this->L;
       DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
+
+      /* recompute V = Y D^{-1/2} */
+      for (size_t index: Range(this->number_entries_in_memory)) {
+         this->V.column(index) = this->invsqrt_D[index] * this->Y.column(index);
+      }
 
       /* form M = L D⁻¹ Lᵀ + Sᵀ B0 S = L_invsqrt_D L_invsqrt_Dᵀ + δ Sᵀ S */
       Mk = L_invsqrt_Dk * transpose(L_invsqrt_Dk);
@@ -182,10 +203,7 @@ namespace uno {
       DEBUG << "Cholesky success: " << success << '\n';
       DEBUG << "> J: " << this->M;
 
-      /* form V and U */
-      // update the current column of V = Y D^{-1/2}
-      this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
-      // form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ
+      /* form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ = (δ S + V L_invsqrt_Dᵀ) J⁻ᵀ */
       const auto Jk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory); // J overwrites M
       auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
       const auto Vk = this->V.submatrix(this->model.number_variables, this->number_entries_in_memory);
@@ -195,16 +213,16 @@ namespace uno {
       DEBUG << "> U: " << this->U;
       DEBUG << "> V: " << this->V << '\n';
 
-      // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
-      this->current_index = (this->current_index + 1) % this->memory_size;
+      // note: the newest entry already lives at slot (number_entries_in_memory - 1); there is no circular index to advance
    }
 
-   // compute δ = yᵀy / sᵀy at the last entry
+   // compute (guarded) δ = sᵀy / sᵀs at the newest (last) entry
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
-      const double sTy = this->D[this->current_index];
-      const auto y = this->Y.column(this->current_index);
-      const double yTy = dot(y, y);
-      return std::min(this->delta_upper_bound, yTy/sTy);
+      const size_t newest = this->number_entries_in_memory - 1;
+      const double sTy = this->D[newest];
+      const auto s = this->S.column(newest);
+      const double sTs = dot(s, s);
+      return std::max(this->delta_lower_bound, std::min(this->delta_upper_bound, sTy/sTs));
    }
 } // namespace
