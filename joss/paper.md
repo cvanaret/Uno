@@ -100,13 +100,13 @@ Uno currently interfaces several established LP, QP, and linear solvers: BQPD [@
 To make Uno accessible across scientific computing environments, we provide five language interfaces, each oriented toward a different user workflow.
 The C interface is the foundation: it expresses the optimization process as the interaction of two opaque objects: a *model* (variables, bounds, constraints, objective, and derivative information) and a *solver* (algorithmic configuration, callbacks, and result such as primal-dual solutions, residuals, and iteration counts), and underpins the other interfaces.
 
-| Interface                            | Distribution                              | Typical workflow                                                       |
-|--------------------------------------|-------------------------------------------|------------------------------------------------------------------------|
-| AMPL [@gay1997hooking]               | standalone binary reading `.nl` files     | solve AMPL [@fourer1990] models without touching the C\texttt{++} core |
-| C                                    | core API (model + solver objects)         | embed Uno in C/C\texttt{++} applications; basis for other bindings     |
-| Fortran                              | source bindings via `iso_c_binding`       | call Uno from Fortran codes across compilers and platforms             |
-| Julia (`UnoSolver.jl`)               | registered package, precompiled artifacts | solve `JuMP.jl` and `NLPModels.jl` models, plug-and-play               |
-| Python (`unopy`)                     | PyPI wheels (`pip install unopy`)         | scripting and Python optimization workflows                            |
+| Interface                           | Distribution                               | Typical workflow                                                       |
+|-------------------------------------|--------------------------------------------|------------------------------------------------------------------------|
+| AMPL [@gay1997hooking]              | standalone binary reading `.nl` files      | solve AMPL [@fourer1990] models without touching the C\texttt{++} core |
+| C                                   | core API (model + solver objects)          | embed Uno in C/C\texttt{++} applications; basis for other bindings     |
+| Fortran                             | source bindings via `iso_c_binding`        | call Uno from Fortran codes across compilers and platforms             |
+| Julia (`UnoSolver.jl`)              | registered package, precompiled artifacts  | solve `JuMP.jl` and `NLPModels.jl` models, plug-and-play               |
+| Python (`unopy`)                    | PyPI wheels (`pip install unopy`)          | scripting and Python optimization workflows                            |
 
 The Julia interface integrates Uno into the Julia ecosystem through a thin wrapper over the C API, an `NLPModels.jl` interface (e.g., `ADNLPModels.jl`, `ExaModels.jl`), and a `MathOptInterface.jl` interface for JuMP models.
 A MATLAB interface is also under development.
