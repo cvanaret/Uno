@@ -43,14 +43,15 @@ Precompiled artifacts are available on GitHub, and the solver can be accessed di
 
 # Statement of need
 
-Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling [@nocedal2006], and plays a key role in mixed-integer nonlinear optimization [@lee2011].
+Nonlinearly constrained optimization is central to engineering, optimal control [@lewis2012optimal], machine learning [@sra2011optimization], and scientific modeling [@nocedal2006], and plays a key role in mixed-integer nonlinear optimization [@lee2011].
 The major solution paradigms (sequential quadratic programming, interior-point methods, and augmented Lagrangian methods) are usually developed and implemented as separate solver families.
 Yet they share the same building blocks: step computation, constraint handling, Hessian models, and globalization strategies.
 Because these building blocks are rigid inside monolithic codes, algorithmic ideas are typically tested at the level of *complete solvers* rather than *building blocks*: evaluating a new globalization strategy or Hessian approximation means reimplementing an entire solver or intrusively modifying an existing one.
 
 Uno targets two audiences.
 For **algorithm developers and optimization researchers**, it makes the building blocks explicit and recombinable across paradigms, so that a single new strategy can be swapped into an otherwise state-of-the-art method and benchmarked in isolation.
-For **practitioners and end users**, it exposes those building blocks, pre-assembled into presets that reproduce established solvers, behind multiple language interfaces.
+For **practitioners and end users**, it exposes those building blocks, pre-assembled into presets that reproduce established solvers, behind multiple language interfaces. Because these presets live in a single framework with a common interface, users can identify the most suitable method for a given class of problems by reconfiguring strategies within Uno, rather than installing and benchmarking several independent solvers.
+
 The gap Uno fills is the absence of a framework in which *production-grade* algorithmic components can be composed across solver paradigms under a unified abstraction.
 
 # State of the field
@@ -61,11 +62,11 @@ A notable exception among production codes is MadNLP.jl [@shin2024accelerating],
 
 Frameworks that do emphasize modularity occupy a different niche.
 General-purpose libraries such as `scipy.optimize`, NLopt, pyOpt, and pyOptSparse let users select among complete solvers, but they do not expose the *internal* algorithmic components for recombination.
-Closest in spirit is modOpt [@joshy2026modopt], a Python environment that builds optimization algorithms from self-contained modules (line searches, Hessian approximations, merit functions) with an educational focus and transparent pedagogical implementations.
+Closest in spirit is modOpt [@joshy2026modopt], a Python environment that builds optimization algorithms from self-contained modules (line searches, Hessian approximations, merit functions) with an educational focus.
 
 Uno is distinct on three counts.
-First, its components are *production-grade* algorithmic building blocks compiled in modern C\texttt{++}, not pedagogical or wrapper modules.
-Second, it composes them *across* paradigms -- SQP, interior-point, and SLP -- under one generic Lagrange-Newton abstraction, rather than within a single algorithm family.
+First, its components are production-grade algorithmic building blocks compiled in modern C\texttt{++}, not pedagogical or wrapper modules.
+Second, it expresses these paradigms as instances of one generic Lagrange-Newton method, so the same components are reused across all of them rather than confined to a single method.
 Third, its presets reproduce state-of-the-art solvers at competitive performance (see below), so a component swapped into Uno is measured against a credible baseline rather than a teaching reference.
 
 # Software design
@@ -84,7 +85,7 @@ Uno also provides *presets*: particular combinations of strategies and hyperpara
 Two presets are currently available: an \texttt{ipopt} preset mimicking the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset mimicking the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
 In principle all combinations of strategies can be generated, although some are not yet supported (e.g., an interior-point method with a trust-region constraint).
 
-![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=80% }
+![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
 These two presets perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances with fewer than 100 variables and constraints [@bongartz1995cute] converted to AMPL.
 An up-to-date performance profile is maintained on Uno's documentation page.
@@ -95,19 +96,36 @@ Uno currently interfaces several established LP, QP, and linear solvers: BQPD [@
 
 # Interfaces
 
-To make Uno accessible across scientific computing environments, we provide five language interfaces, each oriented toward a different user workflow.
-The C interface is the foundation: it expresses the optimization process as the interaction of two opaque objects: a *model* (variables, bounds, constraints, objective, and derivative information) and a *solver* (algorithmic configuration, callbacks, and result such as primal-dual solutions, residuals, and iteration counts), and underpins the other interfaces.
+To make Uno accessible to a wide range of users, we provide multiple language interfaces.
 
-| Interface                           | Distribution                               | Typical workflow                                                       |
-|-------------------------------------|--------------------------------------------|------------------------------------------------------------------------|
-| AMPL [@gay1997hooking]              | standalone binary reading `.nl` files      | solve AMPL [@fourer1990] models without touching the C\texttt{++} core |
-| C                                   | core API (model + solver objects)          | embed Uno in C/C\texttt{++} applications; basis for other bindings     |
-| Fortran                             | source bindings via `iso_c_binding`        | call Uno from Fortran codes across compilers and platforms             |
-| Julia (`UnoSolver.jl`)              | registered package, precompiled artifacts  | solve `JuMP.jl` and `NLPModels.jl` models, plug-and-play               |
-| Python (`unopy`)                    | PyPI wheels (`pip install unopy`)          | scripting and Python optimization workflows                            |
+The AMPL Solver Library [@gay1997hooking] interface gives access to the AMPL [@fourer1990] modeling language for optimization.
+It is distributed as a binary that takes a compiled AMPL model (.nl file) as input, allowing users to solve problems without directly interacting with the C\texttt{++} core.
 
-The Julia interface integrates Uno into the Julia ecosystem through a thin wrapper over the C API, an `NLPModels.jl` interface (e.g., `ADNLPModels.jl`, `ExaModels.jl`), and a `MathOptInterface.jl` interface for JuMP models.
-A MATLAB interface is also under development.
+The C interface provides direct access to Uno's core functionality while maximizing interoperability with other programming languages and tools.
+The optimization process is expressed as the interaction between two independent opaque objects: a model describing the optimization problem and a solver holding the algorithmic configuration and execution state.
+The interface is therefore centered around two main structures:
+
+* **Model**: represents an optimization problem and stores information about variables, bounds, constraints, the objective function, and derivative information. Users create a model and set its components (objective, constraints, derivatives, initial primal-dual point).
+* **Solver**: represents the algorithm used to solve a given model. Users set solver options, attach callbacks, and access results such as primal and dual solutions, residuals, iteration counts, and performance metrics.
+
+The Fortran interface provides access to Uno through the C API using `iso_c_binding`.
+It is split into two files: `uno_c.f90` for low-level C bindings, and `uno_fortran.f90` for Fortran-friendly wrappers that handle string arguments.
+The interface can be included directly in a source file or wrapped in a module for cleaner `use` statements.
+It is provided as source rather than a precompiled Fortran module (.mod) to maximize portability and interoperability across compilers and platforms.
+
+The Julia interface is distributed as the registered package `UnoSolver.jl`.
+It integrates Uno into the Julia optimization ecosystem through:
+
+* a thin wrapper around the full C API,
+* an interface to `NLPModels.jl` for solving problems following the NLPModels API, such as `ADNLPModels.jl` or `ExaModels.jl`,
+* an interface to `MathOptInterface.jl` for handling JuMP models.
+
+Precompiled artifacts are downloaded automatically, making the package plug-and-play without requiring user compilation.
+
+The Python interface is registered on PyPI as `unopy`, providing Uno bindings via precompiled wheels on most platforms.
+
+MATLAB and Rust interfaces are also under development, further expanding Uno's accessibility.
+
 Looking ahead, we plan to integrate Uno as a continuous relaxation solver within MINLP frameworks such as SCIP [@bolusani2024scip], which will require efficient reoptimization that reuses internal solver state (active sets, factorizations, preallocated workspace) across structurally similar solves.
 
 # Research impact statement
