@@ -93,8 +93,6 @@ This benchmark shows that Uno's composability does not come at the cost of perfo
 Subproblem solvers are treated as interchangeable components that can be plugged in or swapped out without modifying the algorithmic logic, letting users match the solver to their problem structure, licensing constraints, or performance requirements.
 Uno currently interfaces several established LP, QP, and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], SSIDS [@hogg2016sparse], and `Krylov.jl` [@montoison2023krylov].
 
-![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% }
-
 # Interfaces
 
 To make Uno accessible across scientific computing environments, we provide five language interfaces, each oriented toward a different user workflow.
@@ -111,6 +109,8 @@ The C interface is the foundation: it expresses the optimization process as the 
 The Julia interface integrates Uno into the Julia ecosystem through a thin wrapper over the C API, an `NLPModels.jl` interface (e.g., `ADNLPModels.jl`, `ExaModels.jl`), and a `MathOptInterface.jl` interface for JuMP models.
 A MATLAB interface is also under development.
 Looking ahead, we plan to integrate Uno as a continuous relaxation solver within MINLP frameworks such as SCIP [@bolusani2024scip], which will require efficient reoptimization that reuses internal solver state (active sets, factorizations, preallocated workspace) across structurally similar solves.
+
+![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% }
 
 # Research impact statement
 
