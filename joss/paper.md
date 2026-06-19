@@ -78,15 +78,13 @@ In Uno's object-oriented architecture, the ingredients of \autoref{fig:wheel} ar
 Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}: inheritance is represented as dashed lines with white arrows, composition as solid lines with black diamonds; abstract classes are written in italic and subclasses in bold.
 This architecture separates the mathematical logic of the algorithm (problem reformulation, subproblem definition, globalization) from the computational aspects (evaluating the model's functions, solving the subproblems).
 
-![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
-
 Uno implements a generic Lagrange-Newton method in which the abstract classes interact and exchange data while remaining agnostic to the underlying strategies.
 Strategies are selected by the user at runtime via options.
 Uno also provides *presets*: particular combinations of strategies and hyperparameters that correspond to state-of-the-art solvers.
 Two presets are currently available: an \texttt{ipopt} preset mimicking the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset mimicking the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
 In principle all combinations of strategies can be generated, although some are not yet supported (e.g., an interior-point method with a trust-region constraint).
 
-![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% }
+![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
 These two presets perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances with fewer than 100 variables and constraints [@bongartz1995cute] converted to AMPL.
 An up-to-date performance profile is maintained on Uno's documentation page.
@@ -94,6 +92,8 @@ This benchmark shows that Uno's composability does not come at the cost of perfo
 
 Subproblem solvers are treated as interchangeable components that can be plugged in or swapped out without modifying the algorithmic logic, letting users match the solver to their problem structure, licensing constraints, or performance requirements.
 Uno currently interfaces several established LP, QP, and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], SSIDS [@hogg2016sparse], and `Krylov.jl` [@montoison2023krylov].
+
+![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% }
 
 # Interfaces
 
