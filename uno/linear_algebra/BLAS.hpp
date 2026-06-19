@@ -4,6 +4,7 @@
 #ifndef UNO_BLAS_H
 #define UNO_BLAS_H
 
+#include <algorithm>
 #include <stdexcept>
 #include "fortran_interface.h"
 #define dcopy FC_GLOBAL_(dcopy, DCOPY)

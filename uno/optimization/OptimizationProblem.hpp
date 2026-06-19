@@ -9,6 +9,7 @@
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/SolutionStatus.hpp"
 #include "../interfaces/C/uno_int.h"
 #include "model/Model.hpp"
@@ -35,7 +36,7 @@ namespace uno {
       explicit OptimizationProblem(const Model& model);
       OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
       virtual ~OptimizationProblem() = default;
-      virtual std::unique_ptr<OptimizationProblem> clone() const;
+      [[nodiscard]] virtual std::unique_ptr<OptimizationProblem> clone() const;
 
       const Model& model;
       const size_t number_variables; /*!< Number of variables */
@@ -67,11 +68,11 @@ namespace uno {
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const;
 
       // linear operators
-      virtual void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const;
-      virtual void compute_jacobian_transposed_vector_product(const double* vector, double* result,
+      virtual void compute_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const;
+      virtual void compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const;
-      virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const;
+      virtual void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x, View<const double> vector,
+         const Multipliers& multipliers, View<double> result) const;
 
       [[nodiscard]] size_t get_number_original_variables() const;
       [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const;

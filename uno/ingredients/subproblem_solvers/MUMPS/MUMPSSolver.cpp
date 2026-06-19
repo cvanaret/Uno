@@ -100,8 +100,8 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MUMPSSolver::solve_indefinite_system(double* solution) {
-      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
+   void MUMPSSolver::solve_indefinite_system(View<double> solution) {
+      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution.data(), 1);
    }
 
    void MUMPSSolver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {

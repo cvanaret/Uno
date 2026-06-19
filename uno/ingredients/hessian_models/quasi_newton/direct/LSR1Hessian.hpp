@@ -24,12 +24,12 @@ namespace uno {
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) override;
 
-      void compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) override;
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, View<double> result) override;
 
       // functions that can be called by WoodburyEQPSolver
       [[nodiscard]] size_t get_correction_rank() const override;
-      [[nodiscard]] VectorView<const double> get_correction_column(size_t column_index) const override;
+      [[nodiscard]] View<const double> get_correction_column(size_t column_index) const override;
       [[nodiscard]] double get_correction_column_scaling(size_t column_index) const override;
 
    protected:

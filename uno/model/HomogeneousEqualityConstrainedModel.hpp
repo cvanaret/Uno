@@ -43,10 +43,11 @@ namespace uno {
          double* hessian_values) const override;
 
       // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
-      void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override;
-      void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override;
-      void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& multipliers, double* result) const override;
+      void compute_jacobian_vector_product(View<const double> x, View<const double> vector, View<double> result) const override;
+      void compute_jacobian_transposed_vector_product(View<const double> x, View<const double> vector,
+         View<double> result) const override;
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const override;
 
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;

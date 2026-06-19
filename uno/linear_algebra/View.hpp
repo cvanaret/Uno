@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_VECTORVIEW_H
-#define UNO_VECTORVIEW_H
+#ifndef UNO_VIEW_H
+#define UNO_VIEW_H
 
+#include <cassert>
 #include <cstddef>
+#include <stdexcept>
 #include "BLAS.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
@@ -17,7 +19,7 @@
 namespace uno {
    // constant contiguous array in memory on which BLAS can be called
    template <typename T>
-   class VectorView {
+   class View {
    protected:
       T* pointer;
       const size_t view_size;
@@ -25,12 +27,20 @@ namespace uno {
    public:
       using value_type = std::remove_const_t<T>;
 
-      VectorView(T* pointer, size_t size): pointer(pointer), view_size(size) { }
-      ~VectorView() = default;
-      VectorView(const VectorView& other) = default;
-      VectorView(VectorView&& other) = default;
-      VectorView<T>& operator=(const VectorView<T>& other) {
+      View(T* pointer, size_t size): pointer(pointer), view_size(size) { }
+      ~View() = default;
+      View(const View& other) = default;
+
+      // conversion View<U> -> View<const U>
+      template <typename U, typename = std::enable_if_t<std::is_same_v<T, const U>>>
+      View(const View<U>& other) noexcept: pointer(other.data()), view_size(other.size()) { }
+
+      View(View&& other) = default;
+      View<T>& operator=(const View<T>& other) {
          if (&other != this) {
+            if (this->size() != other.size()) {
+               throw std::runtime_error("The two views have different sizes");
+            }
             blas1::copy(this->size(), other.data(), this->data());
          }
          return *this;
@@ -53,16 +63,18 @@ namespace uno {
       }
 
       [[nodiscard]] T& operator[](size_t index) noexcept {
+         assert(index < this->size());
          return this->pointer[index];
       }
 
       [[nodiscard]] const T& operator[](size_t index) const noexcept {
+         assert(index < this->size());
          return this->pointer[index];
       }
 
       // specialized operation y = x, when the other vector has the member function data()
       template <typename Vector, decltype(Vector{}.data()) = true>
-      VectorView& operator=(const Vector& other) {
+      View& operator=(const Vector& other) {
          if (other.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
@@ -72,7 +84,7 @@ namespace uno {
 
       // generic operation y = expression
       template <typename Expression>
-      VectorView& operator=(const Expression& expression) {
+      View& operator=(const Expression& expression) {
          // static_assert(std::is_same_v<typename Expression::value_type, T>);
          if (expression.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between expression and y");
@@ -85,7 +97,7 @@ namespace uno {
 
       // specialized operation y = a * x (note: no BLAS operation available)
       template <typename Vector>
-      VectorView& operator=(ScalarMultiple<Vector>&& expression) {
+      View& operator=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
          if (x.size() != this->size()) {
@@ -100,7 +112,7 @@ namespace uno {
       // specialized operation y = x - z
       // note: no BLAS operation available
       template <typename Vector>
-      VectorView& operator=(Subtraction<Vector, Vector>&& expression) {
+      View& operator=(Subtraction<Vector, Vector>&& expression) {
          const auto& x = expression.get_left();
          const auto& z = expression.get_right();
          if (x.size() != z.size()) {
@@ -116,7 +128,7 @@ namespace uno {
 
       // y = Ax (or y = A x + 0 * y)
       template <typename Matrix, typename Vector>
-      VectorView& operator=(Multiplication<Matrix, Vector>&& expression) {
+      View& operator=(Multiplication<Matrix, Vector>&& expression) {
          const auto& x = expression.get_right();
          if (x.data() == this->data()) {
             throw std::invalid_argument("BLASVector::operator= cannot be called with x == y");
@@ -135,7 +147,7 @@ namespace uno {
 
       // specialized operation y += a * x
       template <typename Vector>
-      VectorView& operator+=(ScalarMultiple<Vector>&& expression) {
+      View& operator+=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
          if (x.size() != this->size()) {
@@ -147,7 +159,7 @@ namespace uno {
 
       // generic operation y += x
       template <typename Vector>
-      VectorView& operator+=(const Vector& other) {
+      View& operator+=(const Vector& other) {
          if (other.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
@@ -157,7 +169,7 @@ namespace uno {
 
       // generic operation y -= x
       template <typename Vector>
-      VectorView& operator-=(const Vector& other) {
+      View& operator-=(const Vector& other) {
          if (other.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
@@ -167,7 +179,7 @@ namespace uno {
 
       // x := U⁻ᵀ y with U upper triangular (solve Uᵀ x := y)
       template <typename Matrix, typename Vector>
-      VectorView<T>& operator=(Multiplication<Transpose<Inverse<UpperTriangular<Matrix>>>, Vector>&& expression) {
+      View<T>& operator=(Multiplication<Transpose<Inverse<UpperTriangular<Matrix>>>, Vector>&& expression) {
          const auto& U = expression.get_left().get_matrix().get_matrix().get_matrix();
          const auto& y = expression.get_right();
          if (this->size() != U.number_columns) {
@@ -182,7 +194,7 @@ namespace uno {
 
       // x := U⁻¹ y with U upper triangular (solve U x := y)
       template <typename Matrix, typename Vector>
-      VectorView<T>& operator=(Multiplication<Inverse<UpperTriangular<Matrix>>, Vector>&& expression) {
+      View<T>& operator=(Multiplication<Inverse<UpperTriangular<Matrix>>, Vector>&& expression) {
          const auto& U = expression.get_left().get_matrix().get_matrix();
          const auto& y = expression.get_right();
          if (this->size() != U.number_columns) {
@@ -197,7 +209,7 @@ namespace uno {
 
       // y := A^T x
       template <typename Matrix, typename Vector>
-      VectorView& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
+      View& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
          if (A.number_rows != x.size()) {
@@ -213,7 +225,7 @@ namespace uno {
 
       // y += Ax (or y = A x + y)
       template <typename Matrix, typename Vector>
-      VectorView& operator+=(Multiplication<Matrix, Vector>&& expression) {
+      View& operator+=(Multiplication<Matrix, Vector>&& expression) {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          if (A.number_columns != x.size()) {
@@ -229,7 +241,7 @@ namespace uno {
 
       // y -= Ax (or y = -A x + y)
       template <typename Matrix, typename Vector>
-      VectorView& operator-=(Multiplication<Matrix, Vector>&& expression) {
+      View& operator-=(Multiplication<Matrix, Vector>&& expression) {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          if (A.number_columns != x.size()) {
@@ -262,12 +274,12 @@ namespace uno {
       if (start > end || end > container.size()) {
          throw std::out_of_range("invalid vector view");
       }
-      return VectorView{container.data() + start, end - start};
+      return View{container.data() + start, end - start};
    }
 
    template <typename T>
    auto view(T* pointer, size_t size) {
-      return VectorView{pointer, size};
+      return View{pointer, size};
    }
 
    template <typename T>
@@ -275,11 +287,11 @@ namespace uno {
       if (start > end) {
          throw std::out_of_range("invalid vector view");
       }
-      return VectorView{pointer + start, end - start};
+      return View{pointer + start, end - start};
    }
 
    template <typename Expression>
-   std::ostream& operator<<(std::ostream& stream, const VectorView<Expression>& view) {
+   std::ostream& operator<<(std::ostream& stream, const View<Expression>& view) {
       for (size_t index: Range(view.size())) {
          stream << view[index] << " ";
       }
@@ -294,9 +306,9 @@ namespace uno {
       return blas1::dot(x.size(), x.data(), y.data());
    }
 
-   inline double dot(const VectorView<double>& x, const double* y) {
+   inline double dot(const View<double>& x, const double* y) {
       return blas1::dot(x.size(), x.data(), y);
    }
 } // namespace
 
-#endif //UNO_VECTORVIEW_H
+#endif //UNO_VIEW_H

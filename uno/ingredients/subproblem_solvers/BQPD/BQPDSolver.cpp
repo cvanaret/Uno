@@ -7,7 +7,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -20,8 +20,8 @@
 #define hessian_vector_product FC_GLOBAL(gdotx, GDOTX)
 
 extern "C" {
-   void hessian_vector_product([[maybe_unused]] int *dimension, const double vector[], const double ws[],
-      const int lws[], double result[]);
+   void hessian_vector_product([[maybe_unused]] int *bqpd_dimension, const double bqpd_vector[], const double ws[],
+      const int lws[], double bqpd_result[]);
 
    // fortran common block used in bqpd/bqpd.f
    extern struct {
@@ -329,12 +329,13 @@ namespace uno {
    }
 } // namespace
 
-void hessian_vector_product(int* dimension, const double vector[], const double /*ws*/[], const int lws[], double result[]) {
-   assert(dimension != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
-
-   for (size_t i = 0; i < static_cast<size_t>(*dimension); i++) {
-      result[i] = 0.;
-   }
+void hessian_vector_product(int* bqpd_dimension, const double bqpd_vector[], const double /*ws*/[], const int lws[],
+      double bqpd_result[]) {
+   assert(bqpd_dimension != nullptr && *bqpd_dimension >= 0);
+   const size_t dimension = static_cast<size_t>(*bqpd_dimension);
+   auto result = uno::view(bqpd_result, dimension);
+   result.fill(0.);
+   auto vector = uno::view(bqpd_vector, dimension);
 
    // retrieve workspace, statistics, and subproblem
    uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(0, lws);
@@ -372,6 +373,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    }
    // otherwise, try to perform a Hessian-vector product if possible
    else if (subproblem->has_hessian_operator()) {
-      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result);
+      subproblem->compute_hessian_vector_product(uno::view(subproblem->current_iterate.primals.data(), dimension),
+         vector, result);
    }
 }
