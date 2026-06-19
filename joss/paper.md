@@ -110,8 +110,6 @@ The Julia interface integrates Uno into the Julia ecosystem through a thin wrapp
 A MATLAB interface is also under development.
 Looking ahead, we plan to integrate Uno as a continuous relaxation solver within MINLP frameworks such as SCIP [@bolusani2024scip], which will require efficient reoptimization that reuses internal solver state (active sets, factorizations, preallocated workspace) across structurally similar solves.
 
-![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% }
-
 # Research impact statement
 
 Uno has demonstrated value both as a research tool and as a dependency of established software.
@@ -131,6 +129,8 @@ Uno is currently available as a nonlinear optimization solver in:
 - Fortran:
 	* [CUTEst](https://github.com/ralna/cuTEst), the Constrained and Unconstrained Testing Environment with safe threads for optimization software,
 	* IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries.
+
+![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% }
 
 # Acknowledgments
 
