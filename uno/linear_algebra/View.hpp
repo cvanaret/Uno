@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <stdexcept>
 #include "BLAS.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
@@ -37,6 +38,9 @@ namespace uno {
       View(View&& other) = default;
       View<T>& operator=(const View<T>& other) {
          if (&other != this) {
+            if (this->size() != other.size()) {
+               throw std::runtime_error("The two views have different sizes");
+            }
             blas1::copy(this->size(), other.data(), this->data());
          }
          return *this;
