@@ -87,7 +87,7 @@ In principle all combinations of strategies can be generated, although some are 
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
-These two presets perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances with fewer than 100 variables and constraints [@bongartz1995cute] converted to AMPL.
+These two presets perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances with fewer than 100 variables and constraints [@bongartz1995cute] translated to AMPL by Vanderbei.
 An up-to-date performance profile is maintained on Uno's documentation page.
 This benchmark shows that Uno's composability does not come at the cost of performance: assembling a method from modular components reproduces the behavior of the hand-written solvers it mimics.
 
