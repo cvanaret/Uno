@@ -84,7 +84,7 @@ Uno also provides *presets*: particular combinations of strategies and hyperpara
 Two presets are currently available: an \texttt{ipopt} preset mimicking the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset mimicking the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
 In principle all combinations of strategies can be generated, although some are not yet supported (e.g., an interior-point method with a trust-region constraint).
 
-![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
+![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=80% }
 
 These two presets perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances with fewer than 100 variables and constraints [@bongartz1995cute] converted to AMPL.
 An up-to-date performance profile is maintained on Uno's documentation page.
