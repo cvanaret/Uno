@@ -43,7 +43,7 @@ Precompiled artifacts are available on GitHub, and the solver can be accessed di
 
 # Statement of need
 
-Nonlinearly constrained optimization is central to engineering, optimal control [@lewis2012optimal], machine learning [@sra2011optimization], and scientific modeling [@nocedal2006], and plays a key role in mixed-integer nonlinear optimization [@lee2011].
+Nonlinearly constrained optimization is central to engineering, optimal control [@lewis2012optimal], machine learning [@sra2011optimization], scientific modeling [@nocedal2006], and plays a key role in mixed-integer nonlinear optimization [@lee2011].
 The major solution paradigms (sequential quadratic programming, interior-point methods, and augmented Lagrangian methods) are usually developed and implemented as separate solver families.
 Yet they share the same building blocks: step computation, constraint handling, Hessian models, and globalization strategies.
 Because these building blocks are rigid inside monolithic codes, algorithmic ideas are typically tested at the level of *complete solvers* rather than *building blocks*: evaluating a new globalization strategy or Hessian approximation means reimplementing an entire solver or intrusively modifying an existing one.
