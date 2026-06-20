@@ -14,11 +14,10 @@
 namespace uno {
    #define BIG 1e30
 
-   BQPDQuadraticProgram::BQPDQuadraticProgram(size_t number_variables, size_t number_constraints):
-      QuadraticProgram(number_variables, number_constraints) {
-   }
-
    void BQPDQuadraticProgram::initialize_memory(const Subproblem& subproblem) {
+      this->number_variables = subproblem.number_variables;
+      this->number_constraints = subproblem.number_constraints;
+      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       if (subproblem.has_curvature() && !subproblem.has_hessian_operator() && !subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The Hessian cannot be evaluated implicitly or explicitly");
       }
@@ -77,6 +76,40 @@ namespace uno {
                vector, result);
          };
       }
+   }
+
+   void BQPDQuadraticProgram::build(const Vector<double>& linear_objective,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
+         const Vector<double>& jacobian_values,
+         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
+         const Vector<double>& hessian_values,
+         const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
+         const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) {
+      // infer the dimensions from the data
+      this->number_variables = linear_objective.size();
+      this->number_constraints = constraints_lower_bounds.size();
+
+      // allocate native storage and convert the COO Jacobian to BQPD's packed weak-CSR layout; the COO
+      // Hessian is stored as-is and consumed by the symmetric matvec in compute_hessian_vector_product()
+      this->workspace.set_from_coo(this->number_variables, this->number_constraints, linear_objective,
+         jacobian_row_indices, jacobian_column_indices, jacobian_values,
+         hessian_row_indices, hessian_column_indices, hessian_values);
+
+      // concatenated variable + constraint bounds, with INFs clamped to large finite values
+      this->lower_bounds.resize(this->number_variables + this->number_constraints);
+      this->upper_bounds.resize(this->number_variables + this->number_constraints);
+      for (size_t variable_index: Range(this->number_variables)) {
+         this->lower_bounds[variable_index] = std::max(-BIG, variables_lower_bounds[variable_index]);
+         this->upper_bounds[variable_index] = std::min(BIG, variables_upper_bounds[variable_index]);
+      }
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         this->lower_bounds[this->number_variables + constraint_index] = std::max(-BIG, constraints_lower_bounds[constraint_index]);
+         this->upper_bounds[this->number_variables + constraint_index] = std::min(BIG, constraints_upper_bounds[constraint_index]);
+      }
+
+      // explicit Hessian (no operator) in the data-driven path; an empty Hessian means an LP
+      this->use_explicit_hessian = (0 < hessian_values.size());
+      this->hessian_operator = nullptr;
    }
 
    SolverWorkspace& BQPDQuadraticProgram::get_workspace() {

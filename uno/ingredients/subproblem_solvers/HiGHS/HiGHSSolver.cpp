@@ -13,13 +13,14 @@ namespace uno {
    HiGHSSolver::HiGHSSolver(const Options& options):
          QPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
       this->highs_solver.setOptionValue("output_flag", "false");
+      // construct an empty HiGHS-native quadratic program so that get_quadratic_program() can be used to
+      // build it directly from data (no Subproblem); the full solver instead calls initialize_memory(subproblem)
+      this->quadratic_program = std::make_unique<HiGHSQuadraticProgram>();
    }
 
    HiGHSSolver::~HiGHSSolver() = default;
 
    void HiGHSSolver::initialize_memory(const Subproblem& subproblem) {
-      this->quadratic_program = std::make_unique<HiGHSQuadraticProgram>(subproblem.number_variables,
-         subproblem.number_constraints);
       this->quadratic_program->initialize_memory(subproblem);
    }
 

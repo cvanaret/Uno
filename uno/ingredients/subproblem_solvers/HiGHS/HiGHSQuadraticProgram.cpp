@@ -3,14 +3,15 @@
 
 #include "HiGHSQuadraticProgram.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
-   HiGHSQuadraticProgram::HiGHSQuadraticProgram(size_t number_variables, size_t number_constraints):
-      QuadraticProgram(number_variables, number_constraints) {
-   }
-
    void HiGHSQuadraticProgram::initialize_memory(const Subproblem& subproblem) {
+      this->number_variables = subproblem.number_variables;
+      this->number_constraints = subproblem.number_constraints;
+      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->workspace.initialize_memory(subproblem);
    }
 
@@ -28,6 +29,33 @@ namespace uno {
       if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
          subproblem.set_constraints_bounds(this->workspace.model.lp_.row_lower_, this->workspace.model.lp_.row_upper_,
             this->workspace.constraints);
+      }
+   }
+
+   void HiGHSQuadraticProgram::build(const Vector<double>& linear_objective,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
+         const Vector<double>& jacobian_values,
+         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
+         const Vector<double>& hessian_values,
+         const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
+         const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) {
+      // infer the dimensions from the data
+      this->number_variables = linear_objective.size();
+      this->number_constraints = constraints_lower_bounds.size();
+
+      // allocate the HighsModel and convert the COO Jacobian/Hessian to HiGHS' CSC layout
+      this->workspace.set_from_coo(this->number_variables, this->number_constraints, linear_objective,
+         jacobian_row_indices, jacobian_column_indices, jacobian_values,
+         hessian_row_indices, hessian_column_indices, hessian_values);
+
+      // variable and constraint bounds (HiGHS uses its own infinity, so no clamping is required)
+      for (size_t variable_index: Range(this->number_variables)) {
+         this->workspace.model.lp_.col_lower_[variable_index] = variables_lower_bounds[variable_index];
+         this->workspace.model.lp_.col_upper_[variable_index] = variables_upper_bounds[variable_index];
+      }
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         this->workspace.model.lp_.row_lower_[constraint_index] = constraints_lower_bounds[constraint_index];
+         this->workspace.model.lp_.row_upper_[constraint_index] = constraints_upper_bounds[constraint_index];
       }
    }
 

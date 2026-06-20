@@ -5,6 +5,7 @@
 #define UNO_HIGHSWORKSPACE_H
 
 #include <cstddef>
+#include <vector>
 #include "../SolverWorkspace.hpp"
 #include "Highs.h"
 #include "linear_algebra/Vector.hpp"
@@ -24,6 +25,15 @@ namespace uno {
       ~HiGHSWorkspace() override = default;
 
       void initialize_memory(const Subproblem& subproblem);
+
+      // data-driven setup: dense objective gradient + COO constraint Jacobian (row = constraint,
+      // column = variable) + COO Lagrangian Hessian (one triangle; empty for an LP). Allocates the
+      // HighsModel and converts the Jacobian/Hessian to HiGHS' CSC layout.
+      void set_from_coo(size_t number_variables, size_t number_constraints, const Vector<double>& linear_objective,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
+         const Vector<double>& jacobian_values,
+         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
+         const Vector<double>& hessian_values);
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
@@ -45,6 +55,15 @@ namespace uno {
       Vector<size_t> hessian_permutation_vector{};
 
    protected:
+      // allocate the model dimensions, dense objective and bounds for the given problem shape
+      void allocate_basics(size_t number_variables, size_t number_constraints);
+      // build HiGHS' CSC Jacobian/Hessian from the COO arrays already stored in the *_row/column_indices members
+      void build_csc_jacobian_from_coo(size_t number_variables, size_t number_constraints);
+      void build_csc_hessian_from_coo(size_t number_variables);
+      // scatter the COO values into the CSC value arrays using the sorting permutations
+      void scatter_jacobian_values();
+      void scatter_hessian_values();
+
       void compute_jacobian_sparsity(const Subproblem& subproblem);
       void compute_hessian_sparsity(const Subproblem& subproblem);
       void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals, Evaluations& evaluations);

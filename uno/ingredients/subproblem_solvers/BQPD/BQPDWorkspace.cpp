@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
 #include "BQPDWorkspace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
@@ -10,33 +11,83 @@
 #include "linear_algebra/VectorView.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
+   void BQPDWorkspace::allocate_memory(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, bool allocate_explicit_hessian) {
+      this->constraints.resize(number_constraints);
+
+      // Jacobian + objective gradient: gradients is a concatenation of the dense objective gradient and the
+      // sparse (weak-CSR) constraint Jacobian; gradients_sparsity is BQPD's "la" array
+      this->gradients.resize(number_variables + number_jacobian_nonzeros);
+      this->gradients_sparsity.resize(1 + number_variables + number_jacobian_nonzeros + 1 + number_constraints + 1);
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_values.resize(number_jacobian_nonzeros);
+
+      if (allocate_explicit_hessian) {
+         this->hessian_row_indices.resize(number_hessian_nonzeros);
+         this->hessian_column_indices.resize(number_hessian_nonzeros);
+         this->hessian_values.resize(number_hessian_nonzeros);
+      }
+   }
+
    void BQPDWorkspace::initialize(const Subproblem& subproblem) {
-      this->constraints.resize(subproblem.number_constraints);
-
-      // Jacobian + objective gradient
-      this->gradients.resize(subproblem.number_variables + subproblem.number_jacobian_nonzeros());
-      this->gradients_sparsity.resize(1 + subproblem.number_variables + subproblem.number_jacobian_nonzeros() +
-         1 + subproblem.number_constraints + 1);
-      // save sparsity patterns of objective gradient and constraint Jacobian into BQPD workspace
-      this->compute_gradients_sparsity(subproblem);
-
       // allocate an explicit Hessian matrix if:
       // - the Hessian is not positive definite and must be regularized, or
       // - the Hessian model only has an explicit representation
-      if ((!subproblem.is_hessian_positive_definite() && subproblem.performs_primal_regularization()) ||
-            !subproblem.has_hessian_operator()) {
-         const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-         this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
-         this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
-         this->hessian_values.resize(number_regularized_hessian_nonzeros);
+      const bool allocate_explicit_hessian = (!subproblem.is_hessian_positive_definite() && subproblem.performs_primal_regularization()) ||
+         !subproblem.has_hessian_operator();
+      const size_t number_hessian_nonzeros = allocate_explicit_hessian ? subproblem.number_regularized_hessian_nonzeros() : 0;
+      this->allocate_memory(subproblem.number_variables, subproblem.number_constraints, subproblem.number_jacobian_nonzeros(),
+         number_hessian_nonzeros, allocate_explicit_hessian);
+
+      // save sparsity patterns of objective gradient and constraint Jacobian into the BQPD workspace
+      this->compute_gradients_sparsity(subproblem);
+
+      if (allocate_explicit_hessian) {
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
             this->hessian_column_indices.data(), Indexing::C_indexing);
       }
       if (subproblem.has_hessian_operator()) {
          this->hessian_vector_product.resize(subproblem.number_variables);
       }
+   }
+
+   void BQPDWorkspace::set_from_coo(size_t number_variables, size_t number_constraints, const Vector<double>& linear_objective,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
+         const Vector<double>& jacobian_values,
+         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
+         const Vector<double>& hessian_values) {
+      const size_t number_jacobian_nonzeros = jacobian_values.size();
+      const size_t number_hessian_nonzeros = hessian_values.size();
+      const bool has_explicit_hessian = (0 < number_hessian_nonzeros);
+      this->allocate_memory(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros,
+         has_explicit_hessian);
+
+      // dense objective gradient -> gradients[0 .. number_variables)
+      for (size_t variable_index: Range(number_variables)) {
+         this->gradients[variable_index] = linear_objective[variable_index];
+      }
+
+      // constraint Jacobian: copy the COO sparsity + values, build the weak-CSR sparsity, scatter the values
+      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
+         this->jacobian_row_indices[nonzero_index] = jacobian_row_indices[nonzero_index];
+         this->jacobian_column_indices[nonzero_index] = jacobian_column_indices[nonzero_index];
+         this->jacobian_values[nonzero_index] = jacobian_values[nonzero_index];
+      }
+      this->build_gradients_sparsity_from_jacobian_coo(number_variables, number_constraints);
+      this->scatter_jacobian_values(number_variables);
+
+      // Lagrangian Hessian: stored as COO, consumed directly by the symmetric matvec in
+      // BQPDQuadraticProgram::compute_hessian_vector_product()
+      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
+         this->hessian_row_indices[nonzero_index] = hessian_row_indices[nonzero_index];
+         this->hessian_column_indices[nonzero_index] = hessian_column_indices[nonzero_index];
+         this->hessian_values[nonzero_index] = hessian_values[nonzero_index];
+      }
+      this->hessian_evaluation_required = false;
    }
 
    double BQPDWorkspace::compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const {
@@ -85,24 +136,32 @@ namespace uno {
    // objective gradient + row-major constraint Jacobian
    void BQPDWorkspace::compute_gradients_sparsity(const Subproblem& subproblem) {
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-
-      // header
-      const size_t position_of_row_starts = 1 + subproblem.number_variables + number_jacobian_nonzeros;
-      this->gradients_sparsity[0] = static_cast<int>(position_of_row_starts);
-
-      // dense objective gradient
-      for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->gradients_sparsity[1 + variable_index] = static_cast<int>(variable_index + Indexing::Fortran_indexing);
-      }
-
-      this->gradients_sparsity[position_of_row_starts] = 1; // always starts at 1
-      this->gradients_sparsity[position_of_row_starts + 1] = static_cast<int>(1 + subproblem.number_variables); // dense objective gradient
-
-      // get the Jacobian sparsity in COO format
+      // get the Jacobian sparsity in COO format (row = constraint, column = variable)
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          0, 0, Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
+      // convert COO -> BQPD's packed weak-CSR layout
+      this->build_gradients_sparsity_from_jacobian_coo(subproblem.number_variables, subproblem.number_constraints);
+   }
+
+   // build BQPD's "la" sparsity array (gradients_sparsity) and the sorting permutation from the COO Jacobian
+   // already present in jacobian_row_indices/jacobian_column_indices. Shared by the Subproblem path and the
+   // data-driven path so that both produce exactly the same native layout.
+   void BQPDWorkspace::build_gradients_sparsity_from_jacobian_coo(size_t number_variables, size_t number_constraints) {
+      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
+
+      // header
+      const size_t position_of_row_starts = 1 + number_variables + number_jacobian_nonzeros;
+      this->gradients_sparsity[0] = static_cast<int>(position_of_row_starts);
+
+      // dense objective gradient
+      for (size_t variable_index: Range(number_variables)) {
+         this->gradients_sparsity[1 + variable_index] = static_cast<int>(variable_index + Indexing::Fortran_indexing);
+      }
+
+      this->gradients_sparsity[position_of_row_starts] = 1; // always starts at 1
+      this->gradients_sparsity[position_of_row_starts + 1] = static_cast<int>(1 + number_variables); // dense objective gradient
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
       // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To
@@ -124,7 +183,7 @@ namespace uno {
          const size_t permuted_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
          const uno_int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
-         this->gradients_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] = variable_index +
+         this->gradients_sparsity[1 + number_variables + jacobian_nonzero_index] = variable_index +
             Indexing::Fortran_indexing;
 
          // constraint index
@@ -134,27 +193,28 @@ namespace uno {
          }
          while (current_constraint < constraint_index) {
             ++current_constraint;
-            this->gradients_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 +
-               static_cast<size_t>(current_constraint)] = static_cast<int>(subproblem.number_variables +
+            this->gradients_sparsity[1 + number_variables + number_jacobian_nonzeros + 1 +
+               static_cast<size_t>(current_constraint)] = static_cast<int>(number_variables +
                   jacobian_nonzero_index) + Indexing::Fortran_indexing;
          }
       }
       // since there cannot be empty rows, we don't need to loop over empty rows like we do for the HiGHS Hessian
-      this->gradients_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
-         static_cast<int>(subproblem.number_variables + number_jacobian_nonzeros) + Indexing::Fortran_indexing;
+      this->gradients_sparsity[1 + number_variables + number_jacobian_nonzeros + 1 + number_constraints] =
+         static_cast<int>(number_variables + number_jacobian_nonzeros) + Indexing::Fortran_indexing;
+   }
 
-      // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
-      this->jacobian_values.resize(number_jacobian_nonzeros);
+   void BQPDWorkspace::scatter_jacobian_values(size_t number_variables) {
+      // copy the Jacobian values with permutation into &this->gradients[number_variables]
+      const size_t number_jacobian_nonzeros = this->jacobian_values.size();
+      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
+         const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
+         this->gradients[number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
+      }
    }
 
    void BQPDWorkspace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals,
          Evaluations& evaluations) {
       problem.evaluate_jacobian(primals, this->jacobian_values.data(), evaluations);
-
-      // copy the Jacobian with permutation into &this->gradients[problem.number_variables]
-      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
-         const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
-         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
-      }
+      this->scatter_jacobian_values(problem.number_variables);
    }
 } // namespace

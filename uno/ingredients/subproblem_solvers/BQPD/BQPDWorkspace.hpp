@@ -24,6 +24,15 @@ namespace uno {
 
       void initialize(const Subproblem& subproblem);
 
+      // data-driven setup: dense objective gradient + COO constraint Jacobian (row = constraint,
+      // column = variable) + COO Lagrangian Hessian (one triangle; empty for an LP). Allocates native
+      // storage and converts the Jacobian to BQPD's packed weak-CSR layout; stores the Hessian as COO.
+      void set_from_coo(size_t number_variables, size_t number_constraints, const Vector<double>& linear_objective,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
+         const Vector<double>& jacobian_values,
+         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
+         const Vector<double>& hessian_values);
+
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
       void evaluate_functions(const OptimizationProblem& problem, const Iterate& current_iterate, Evaluations& current_evaluations,
@@ -45,6 +54,15 @@ namespace uno {
       mutable Vector<double> hessian_vector_product{};
 
    protected:
+      // allocate native storage for the given problem shape
+      void allocate_memory(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, bool allocate_explicit_hessian);
+      // build BQPD's packed weak-CSR Jacobian sparsity (header + column indices + row-start pointers) and the
+      // sorting permutation from the COO arrays already stored in jacobian_row_indices/jacobian_column_indices
+      void build_gradients_sparsity_from_jacobian_coo(size_t number_variables, size_t number_constraints);
+      // scatter jacobian_values into gradients[number_variables ..] using the sorting permutation
+      void scatter_jacobian_values(size_t number_variables);
+
       void compute_gradients_sparsity(const Subproblem& subproblem);
       void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals, Evaluations& evaluations);
    };

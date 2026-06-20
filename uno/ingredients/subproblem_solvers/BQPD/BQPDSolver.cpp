@@ -65,6 +65,9 @@ namespace uno {
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          print_subproblem(options.get_bool("print_subproblem")) {
+      // construct an empty BQPD-native quadratic program so that get_quadratic_program() can be used to build
+      // it directly from data (no Subproblem); the full solver instead calls initialize_memory(subproblem)
+      this->quadratic_program = std::make_unique<BQPDQuadraticProgram>();
    }
 
    BQPDSolver::~BQPDSolver() = default;
@@ -74,38 +77,41 @@ namespace uno {
       this->number_constraints = subproblem.number_constraints;
       // build the BQPD-native quadratic program (allocates gradients/Hessian/bounds storage and the
       // iteration-invariant sparsity patterns)
-      this->quadratic_program = std::make_unique<BQPDQuadraticProgram>(subproblem.number_variables,
-         subproblem.number_constraints);
+      this->quadratic_program = std::make_unique<BQPDQuadraticProgram>();
       this->quadratic_program->initialize_memory(subproblem);
+      // allocate the BQPD algorithm scratch
+      this->allocate_workspace(subproblem.number_variables, subproblem.number_constraints, subproblem.number_jacobian_nonzeros(),
+         subproblem.has_curvature());
+   }
 
+   void BQPDSolver::allocate_workspace(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, bool is_qp) {
       // BQPD algorithm scratch
-      this->w.resize(subproblem.number_variables + subproblem.number_constraints);
-      this->gradient_solution.resize(subproblem.number_variables);
-      this->residuals.resize(subproblem.number_variables + subproblem.number_constraints);
-      this->e.resize(subproblem.number_variables + subproblem.number_constraints);
+      this->w.resize(number_variables + number_constraints);
+      this->gradient_solution.resize(number_variables);
+      this->residuals.resize(number_variables + number_constraints);
+      this->e.resize(number_variables + number_constraints);
 
       // default active set
-      this->active_set.resize(subproblem.number_variables + subproblem.number_constraints);
-      for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
+      this->active_set.resize(number_variables + number_constraints);
+      for (size_t variable_index: Range(number_variables + number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index + Indexing::Fortran_indexing);
       }
 
-      // determine whether the subproblem has curvature
-      this->kmax = subproblem.has_curvature() ? pick_kmax(subproblem.number_variables, subproblem.number_constraints) : 0;
+      // kmax (the max size of the nullspace) is 0 for an LP
+      this->kmax = is_qp ? pick_kmax(number_variables, number_constraints) : 0;
 
       // allocation of integer and real workspaces
-      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->nprof = std::max(number_jacobian_nonzeros + this->number_variables, 5 /* heuristic */ * number_jacobian_nonzeros);
       this->mxws = this->compute_mxws();
       // 1 pointer hidden in lws (the quadratic program)
       constexpr size_t hidden_pointers_size = sizeof(intptr_t);
       this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
-         9 * subproblem.number_variables + subproblem.number_constraints /* (required by sparseL.f) */;
+         9 * number_variables + number_constraints /* (required by sparseL.f) */;
       this->ws.resize(this->mxws);
       this->lws.resize(this->mxlws);
    }
 
-   size_t BQPDSolver::compute_mxws() {
+   size_t BQPDSolver::compute_mxws() const {
       return static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * this->number_variables +
          this->number_constraints /* (required by bqpd.f) */ +
          5 * this->number_variables + this->nprof; /* (required by sparseL.f) */
@@ -117,6 +123,16 @@ namespace uno {
 
    void BQPDSolver::solve(Statistics& /*statistics*/, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
+      // lazily allocate the BQPD scratch if the quadratic program was built directly from data (i.e.
+      // initialize_memory(subproblem) was not called). The full solver path allocates it up front, so this
+      // check is a no-op there.
+      const size_t number_variables = this->quadratic_program->number_variables;
+      const size_t number_constraints = this->quadratic_program->number_constraints;
+      if (this->active_set.size() != number_variables + number_constraints) {
+         this->allocate_workspace(number_variables, number_constraints, this->quadratic_program->number_jacobian_nonzeros,
+            this->quadratic_program->has_curvature());
+      }
+
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->mxws);

@@ -19,16 +19,28 @@ namespace uno {
    // BQPD-native QuadraticProgram. The objective gradient and the (weak-CSR) constraint Jacobian are
    // packed into a single "gradients" array held by the workspace; the variable and constraint bounds
    // are concatenated in lower_bounds/upper_bounds; the Lagrangian Hessian is exposed to BQPD's gdotx
-   // callback through hessian_vector_product(), which is Subproblem-free (it uses either the explicit
+   // callback through compute_hessian_vector_product(), which is Subproblem-free (it uses either the explicit
    // regularized Hessian stored in the workspace or an operator captured by build()).
    class BQPDQuadraticProgram : public QuadraticProgram {
    public:
-      BQPDQuadraticProgram(size_t number_variables, size_t number_constraints);
+      BQPDQuadraticProgram() = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
       void build(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
+      // data-driven build: dense objective gradient + COO constraint Jacobian + COO Lagrangian Hessian
+      // (one triangle; empty for an LP). Converts COO to BQPD's weak-CSR layout internally.
+      void build(const Vector<double>& linear_objective,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
+         const Vector<double>& jacobian_values,
+         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
+         const Vector<double>& hessian_values,
+         const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
+         const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) override;
       [[nodiscard]] SolverWorkspace& get_workspace() override;
+
+      // whether the QP has a Hessian: determines BQPD's kmax (0 for an LP). Valid after a build().
+      [[nodiscard]] bool has_curvature() const { return this->use_explicit_hessian || bool(this->hessian_operator); }
 
       // result <- H * vector, called from the Fortran gdotx callback. Subproblem-free.
       void compute_hessian_vector_product(int dimension, const double* vector, double* result) const;
