@@ -20,7 +20,7 @@ globalization_strategy fletcher_filter_method
 #QP_solver 	BQPD
 # QP solver (BQPD|HiGHS)
 #LP_solver 	BQPD
-# linear solver (MA57|MA27|MUMPS|SSIDS)
+# linear solver (MA57|MA27|MUMPS|SSIDS|HIPO)
 #linear_solver 	MA57
 
 ## Termination

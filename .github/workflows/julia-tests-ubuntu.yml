@@ -88,6 +88,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Add uno_ipopt_hipo below once Uno_jll ships a HiGHS_jll built with HiPO
+        # (the test file .github/julia/runtests_uno_ipopt_hipo.jl is already provided).
         UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_lsr1,
                      uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs,
                      uno_ipopt_mumps, uno_ipopt_mumps_lbfgs, uno_ipopt_mumps_identity, uno_ipopt_ssids, uno_filterslp_bqpd,

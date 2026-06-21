@@ -192,6 +192,22 @@ if(HIGHS)
    endif()
 
    message(STATUS "Found HIGHS")
+
+   # HiPO: optional sparse symmetric indefinite linear solver that ships inside libhighs when HiGHS is
+   # built with HiPO. It cannot be auto-detected reliably (HiGHS does not install the FactorHighs C API
+   # header, and HConfig.h defines HIPO even in HiGHS builds that do not expose the FactorHighs C API),
+   # so it is enabled explicitly with -DHIGHS_WITH_HIPO=ON. The C API header is vendored in Uno
+   # (uno/ingredients/subproblem_solvers/HiPO/FactorHighs_c_api.h); the FactorHighs_* symbols are
+   # resolved from the linked libhighs.
+   option(HIGHS_WITH_HIPO "Enable the HiPO linear solver (requires a HiGHS built with HiPO support)" OFF)
+   if(HIGHS_WITH_HIPO)
+      target_compile_definitions(uno_dependencies INTERFACE HAS_HIPO)
+      target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/HiPO/HiPOSolver.cpp)
+      if(ENABLE_TESTS)
+         target_sources(run_unotest PRIVATE unotest/functional_tests/HiPOSolverTests.cpp)
+      endif()
+      message(STATUS "HiPO linear solver enabled (HIGHS_WITH_HIPO=ON)")
+   endif()
 endif()
 
 # MUMPS
