@@ -17,7 +17,7 @@ authors:
   - name: Charlie Vanaret^[corresponding author]
     orcid: 0000-0002-1131-7631
     affiliation: 1
-  - name: Alexis Montoison
+  - name: Alexis Montoison^[Now at Advanced Micro Devices (AMD).]
     orcid: 0000-0002-3403-5450
     affiliation: 2
 affiliations:
