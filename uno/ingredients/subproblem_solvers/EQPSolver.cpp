@@ -47,6 +47,7 @@ namespace uno {
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
+            this->linear_solver->set_expected_inertia(subproblem.problem.get_inertia());
             this->linear_solver->do_symbolic_analysis();
             this->analysis_performed = true;
          }

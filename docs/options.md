@@ -21,7 +21,7 @@ Defaults are taken from `uno/options/DefaultOptions.cpp`.
 | :---       | :---                 |
 | `QP_solver` | `BQPD`, `HiGHS` (if available) |
 | `LP_solver` | `BQPD`, `HiGHS` (if available) |
-| `linear_solver` | `MA57`, `MA27`, `MUMPS`, `SSIDS` (if available) |
+| `linear_solver` | `MA57`, `MA27`, `MUMPS`, `SSIDS`, `HIPO` (if available) |
 
 If not provided, the solver is chosen automatically from the available solvers (if any).
 

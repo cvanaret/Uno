@@ -74,7 +74,9 @@ sudo apt install libblas-dev liblapack-dev
     * [LIBHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) (collection of solvers for sparse linear systems)
     * [MUMPS](https://mumps-solver.org/index.php?page=dwnld) (sparse indefinite symmetric linear solver)
     * [SSIDS](https://github.com/ralna/spral) (sparse indefinite symmetric linear solver) from the SPRAL library
-    * [HiGHS](https://highs.dev) (linear programming and convex quadratic programming solver)
+    * [HiGHS](https://highs.dev) (linear programming and convex quadratic programming solver; it can also ship the HiPO sparse symmetric indefinite linear solver, exposed in Uno as the `HIPO` linear solver)
+
+* the `HIPO` linear solver requires a HiGHS built with HiPO support (HiGHS option `-DHIPO=ON`, off by default). Since HiGHS does not install the FactorHighs C API header (and there is no reliable way to detect HiPO from the installed HiGHS), enable it explicitly when configuring Uno with `-DHIGHS_WITH_HIPO=ON` (HiGHS must be found). Uno vendors the FactorHighs C API header and resolves the symbols from the linked `libhighs`
 
 * to compile MUMPS in sequential mode, remove the flag `-fopenmp` at the end of your `Makefile.inc` and set the following variables:
 ```console
@@ -139,4 +141,3 @@ You can pass the following options as `-DOPTION=value`:
 | `SPRAL`                | path to SPRAL library </br> (requires `libhwloc` passed to `AUXILIARY_LIBRARIES`)                          | `path_to_libspral`          |
 | `SPRAL_INCLUDE_DIR`    | path to SPRAL include directory                                                                            | `path_to_spral_include_dir` |
 | `AUXILIARY_LIBRARIES`  | path(s) to additional libraries to link against, separated by `;` </br> (e.g., `libhwloc` and `libstdc++`) | `paths`                     |
-
