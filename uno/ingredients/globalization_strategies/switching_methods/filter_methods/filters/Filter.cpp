@@ -6,9 +6,10 @@
 #include <algorithm>
 #include <string>
 #include "Filter.hpp"
+#include "options/Options.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
-#include "options/Options.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    Filter::Filter(const Options& options) :
@@ -83,28 +84,6 @@ namespace uno {
       return stream.str();
    }
 
-   void print_line(std::ostream& stream, const std::string& infeasibility, const std::string& objective) {
-      constexpr size_t fixed_length_column1 = 14;
-      constexpr size_t fixed_length_column2 = 10;
-
-      // compute lengths of columns
-      const size_t infeasibility_length = infeasibility.size();
-      const size_t number_infeasibility_spaces = (infeasibility_length < fixed_length_column1) ? fixed_length_column1 - infeasibility_length : 0;
-      const size_t objective_length = objective.size();
-      const size_t number_objective_spaces = (objective_length < fixed_length_column2) ? fixed_length_column2 - objective_length : 0;
-
-      // print line
-      stream << "│ " << infeasibility;
-      for ([[maybe_unused]] size_t k: Range(number_infeasibility_spaces)) {
-         stream << ' ';
-      }
-      stream << "│ " << objective;
-      for ([[maybe_unused]] size_t k: Range(number_objective_spaces)) {
-         stream << ' ';
-      }
-      stream << "│\n";
-   }
-
    // add (infeasibility, objective) to the filter
    void Filter::add(double current_infeasibility, double current_objective) {
       // remove dominated filter entries
@@ -152,15 +131,57 @@ namespace uno {
 
    // print the content of the filter
    std::ostream& operator<<(std::ostream& stream, const Filter& filter) {
-      stream << "┌───────────────┬───────────┐\n";
-      stream << "│ infeasibility │ objective │\n";
-      stream << "├───────────────┼───────────┤\n";
+      std::string table;
+      // header
+      table.append(symbols::top_left_corner);
+      for ([[maybe_unused]] size_t _: Range(Filter::fixed_length_column1 + 1)) {
+         table.append(symbols::hyphen);
+      }
+      table.append(symbols::top_tee);
+      for ([[maybe_unused]] size_t _: Range(Filter::fixed_length_column2 + 1)) {
+         table.append(symbols::hyphen);
+      }
+      table.append(symbols::top_right_corner);
+      table.push_back('\n');
+
+      table.append(symbols::pipe);
+      table.append(" infeasibility ");
+      table.append(symbols::pipe);
+      table.append(" objective ");
+      table.append(symbols::pipe);
+      table.push_back('\n');
+
+      table.append(symbols::left_tee);
+      for ([[maybe_unused]] size_t _: Range(Filter::fixed_length_column1 + 1)) {
+         table.append(symbols::hyphen);
+      }
+      table.append(symbols::cross);
+      for ([[maybe_unused]] size_t _: Range(Filter::fixed_length_column2 + 1)) {
+         table.append(symbols::hyphen);
+      }
+      table.append(symbols::right_tee);
+      table.push_back('\n');
+
+      // values
       for (size_t position: Range(filter.number_entries)) {
-         print_line(stream, to_string(filter.infeasibility[position]), to_string(filter.objective[position]));
+         Filter::print_line(table, to_string(filter.infeasibility[position]), to_string(filter.objective[position]));
       }
       // print upper bound
-      print_line(stream, to_string(filter.infeasibility_upper_bound), "-");
-      stream << "└───────────────┴───────────┘\n";
+      Filter::print_line(table, to_string(filter.infeasibility_upper_bound), "-");
+
+      // footer
+      table.append(symbols::bottom_left_corner);
+      for ([[maybe_unused]] size_t _: Range(Filter::fixed_length_column1 + 1)) {
+         table.append(symbols::hyphen);
+      }
+      table.append(symbols::bottom_tee);
+      for ([[maybe_unused]] size_t _: Range(Filter::fixed_length_column2 + 1)) {
+         table.append(symbols::hyphen);
+      }
+      table.append(symbols::bottom_right_corner);
+      table.push_back('\n');
+
+      stream << table;
       return stream;
    }
 
@@ -188,5 +209,29 @@ namespace uno {
          this->infeasibility[position] = this->infeasibility[position - shift_size];
          this->objective[position] = this->objective[position - shift_size];
       }
+   }
+
+   void Filter::print_line(std::string& table, const std::string& infeasibility, const std::string& objective) {
+      // compute lengths of columns
+      const size_t infeasibility_length = infeasibility.size();
+      const size_t number_infeasibility_spaces = (infeasibility_length < fixed_length_column1) ? fixed_length_column1 - infeasibility_length : 0;
+      const size_t objective_length = objective.size();
+      const size_t number_objective_spaces = (objective_length < fixed_length_column2) ? fixed_length_column2 - objective_length : 0;
+
+      // print line
+      table.append(symbols::pipe);
+      table.push_back(' ');
+      table.append(infeasibility);
+      for ([[maybe_unused]] size_t k: Range(number_infeasibility_spaces)) {
+         table.push_back(' ');
+      }
+      table.append(symbols::pipe);
+      table.push_back(' ');
+      table.append(objective);
+      for ([[maybe_unused]] size_t k: Range(number_objective_spaces)) {
+         table.push_back(' ');
+      }
+      table.append(symbols::pipe);
+      table.push_back('\n');
    }
 } // namespace

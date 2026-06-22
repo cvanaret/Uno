@@ -33,14 +33,6 @@ namespace uno {
       // name -> index mapping
       static const std::map<std::string_view, size_t> column_order;
 
-      // horizontal-rule glyph used by print_horizontal_line. May be multi-byte UTF-8 (e.g. u8"\u2500" = "─")
-      static constexpr std::string_view top_symbol =
-#ifdef _WIN32
-         "-";
-#else
-         u8"\u2500";
-#endif
-
       // one contiguous record per column, ordered by appearance (already sorted by index)
       struct Column {
          std::string_view name;

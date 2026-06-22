@@ -43,12 +43,15 @@ namespace uno {
       double infeasibility_upper_bound{INF<double>}; /*!< Upper bound on infeasibility measure */
       size_t number_entries{0};
       const FilterParameters parameters; /*!< Set of parameters */
+      static constexpr size_t fixed_length_column1 = 14;
+      static constexpr size_t fixed_length_column2 = 10;
 
       [[nodiscard]] bool is_empty() const;
       [[nodiscard]] bool acceptable_wrt_upper_bound(double trial_infeasibility) const;
       [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
       void left_shift(size_t start, size_t shift_size);
       void right_shift(size_t start, size_t shift_size);
+      static void print_line(std::string& table, const std::string& infeasibility, const std::string& objective);
    };
 } // namespace
 

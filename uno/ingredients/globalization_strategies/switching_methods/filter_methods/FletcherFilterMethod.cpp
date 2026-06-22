@@ -6,6 +6,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) { }
@@ -57,7 +58,7 @@ namespace uno {
          DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
       }
-      statistics.set("Status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
+      statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
       return accept;
    }
 
