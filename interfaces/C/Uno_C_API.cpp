@@ -5,6 +5,12 @@
 #include <cstring>
 #include <iostream>
 #include <streambuf>
+#ifdef UNO_HAS_LIBBLASTRAMPOLINE
+#include <cstdint>
+#include <mutex>
+#include <string>
+#include <vector>
+#endif
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
 #include "Uno.hpp"
@@ -462,6 +468,94 @@ void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) {
    *major = UNO_VERSION_MAJOR;
    *minor = UNO_VERSION_MINOR;
    *patch = UNO_VERSION_PATCH;
+}
+
+#ifdef UNO_HAS_LIBBLASTRAMPOLINE
+extern "C" {
+   // libblastrampoline: minimal ABI declarations (kept in sync with libblastrampoline.h, stable in LBT 5.x).
+   int32_t lbt_forward(const char* libname, int32_t clear, int32_t verbose, const char* suffix_hint);
+
+   typedef struct {
+      char* libname;
+      const char* suffix;
+      uint8_t* active_forwards;
+      int32_t interface;
+      int32_t complex_retstyle;
+      int32_t f2c;
+      int32_t cblas;
+   } lbt_library_info_t;
+
+   typedef struct {
+      lbt_library_info_t** loaded_libs; // NULL-terminated
+      uint32_t build_flags;
+      const char** exported_symbols;
+      uint32_t num_exported_symbols;
+   } lbt_config_t;
+
+   const lbt_config_t* lbt_get_config();
+}
+
+namespace {
+   // BLAS/LAPACK forward configuration captured before Uno applied any user-requested change
+   struct ForwardedLibrary {
+      std::string libname;
+      std::string suffix;
+   };
+   std::vector<ForwardedLibrary> initial_backend;
+   std::once_flag initial_backend_flag;
+
+   void capture_initial_backend() {
+      std::call_once(initial_backend_flag, []() {
+         const lbt_config_t* config = lbt_get_config();
+         if (config != nullptr && config->loaded_libs != nullptr) {
+            for (lbt_library_info_t** lib = config->loaded_libs; *lib != nullptr; ++lib) {
+               ForwardedLibrary forwarded;
+               forwarded.libname = ((*lib)->libname != nullptr) ? (*lib)->libname : "";
+               forwarded.suffix = ((*lib)->suffix != nullptr) ? (*lib)->suffix : "";
+               initial_backend.push_back(std::move(forwarded));
+            }
+         }
+      });
+   }
+}
+#endif
+
+bool uno_has_blas_lapack_backend() {
+#ifdef UNO_HAS_LIBBLASTRAMPOLINE
+   return true;
+#else
+   return false;
+#endif
+}
+
+uno_int uno_set_blas_lapack_backend([[maybe_unused]] const char* library_path, [[maybe_unused]] bool clear,
+      [[maybe_unused]] const char* symbol_suffix) {
+#ifdef UNO_HAS_LIBBLASTRAMPOLINE
+   capture_initial_backend(); // remember the startup configuration before changing it
+   return static_cast<uno_int>(lbt_forward(library_path, clear ? 1 : 0, 0, symbol_suffix));
+#else
+   return 0;
+#endif
+}
+
+bool uno_reset_blas_lapack_backend() {
+#ifdef UNO_HAS_LIBBLASTRAMPOLINE
+   capture_initial_backend(); // if reset is called first, the current configuration is the initial one
+   if (initial_backend.empty()) {
+      return false;
+   }
+   bool success = true;
+   bool first = true;
+   for (const ForwardedLibrary& forwarded : initial_backend) {
+      // clear on the first library to wipe any user change, then stack the remaining ones
+      const int32_t forwarded_count = lbt_forward(forwarded.libname.c_str(), first ? 1 : 0, 0, forwarded.suffix.c_str());
+      success = success && (forwarded_count > 0);
+      first = false;
+   }
+   return success;
+#else
+   return false;
+#endif
 }
 
 void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,

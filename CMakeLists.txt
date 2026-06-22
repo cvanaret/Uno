@@ -260,6 +260,14 @@ function(resolve_library_paths input_list output_list)
    set(${output_list} "${result}" PARENT_SCOPE)
 endfunction()
 
+# ==========================================
+# BLAS / LAPACK
+# ==========================================
+# Uno links against whatever BLAS/LAPACK is provided: pass BLAS_LIBRARIES/LAPACK_LIBRARIES explicitly
+# (e.g. a real BLAS/LAPACK, or libblastrampoline), otherwise they are auto-detected. When the linked
+# library is libblastrampoline, Uno's C API can switch the BLAS/LAPACK backend at runtime (see
+# uno_set_blas_lapack_backend / uno_reset_blas_lapack_backend).
+
 # LAPACK
 if(LAPACK_LIBRARIES)
    resolve_library_paths(LAPACK_LIBRARIES ABSOLUTE_LAPACK_LIBRARIES)
@@ -276,6 +284,12 @@ if(BLAS_LIBRARIES)
 else()
    find_package(BLAS REQUIRED)
    target_link_libraries(uno_dependencies INTERFACE BLAS::BLAS)
+endif()
+
+# enable the runtime BLAS/LAPACK backend-switching C API when dispatching through libblastrampoline
+if(BLAS_LIBRARIES MATCHES "blastrampoline" OR LAPACK_LIBRARIES MATCHES "blastrampoline")
+   target_compile_definitions(compiled_uno_files PRIVATE UNO_HAS_LIBBLASTRAMPOLINE)
+   message(STATUS "BLAS/LAPACK dispatched through libblastrampoline; runtime backend switching enabled")
 endif()
 
 # additional libraries to link against

@@ -148,6 +148,24 @@ extern "C" {
    // get the current Uno version as v major.minor.patch
    void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch);
 
+   // returns true if Uno dispatches its BLAS/LAPACK calls through libblastrampoline, in which case the
+   // backend can be switched at runtime with uno_set_blas_lapack_backend. Returns false if Uno was linked
+   // directly against a fixed BLAS/LAPACK.
+   bool uno_has_blas_lapack_backend();
+
+   // redirect all of Uno's BLAS/LAPACK calls to the shared library at "library_path" (e.g. an OpenBLAS or
+   // MKL .so). "clear" resets the previous mappings (pass true to fully switch backend, false to stack a
+   // library on top of the current one). "symbol_suffix" is the Fortran symbol suffix of the library: ""
+   // for a standard LP64 library, "64_" for ILP64, or NULL to autodetect.
+   // returns the number of forwarded symbols, or 0 if Uno does not use libblastrampoline.
+   uno_int uno_set_blas_lapack_backend(const char* library_path, bool clear, const char* symbol_suffix);
+
+   // restore the BLAS/LAPACK backend that was active at startup, undoing any uno_set_blas_lapack_backend
+   // call (useful to recover from a mistaken switch). The initial configuration is captured the first time
+   // a backend routine is used. Returns true on success, false if Uno does not use libblastrampoline or if
+   // no backend was loaded initially.
+   bool uno_reset_blas_lapack_backend();
+
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
