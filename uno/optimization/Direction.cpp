@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Direction.hpp"
-#include "linear_algebra/VectorView.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    Direction::Direction(size_t number_variables, size_t number_constraints) :
@@ -27,13 +27,13 @@ namespace uno {
 
    std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       stream << "Direction:\n";
-      stream << "│ status: " << Direction::status_to_string(direction.status) << '\n';
-      stream << "│ primals = "; print_vector(stream, direction.primals);
-      stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
-      stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
-      stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
-      stream << "│ objective = " << direction.subproblem_objective << '\n';
-      stream << "│ norm = " << direction.norm << '\n';
+      stream << symbols::top_pipe << " status: " << Direction::status_to_string(direction.status) << '\n';
+      stream << symbols::pipe << " primals = "; print_vector(stream, direction.primals);
+      stream << symbols::pipe << " constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
+      stream << symbols::pipe << " lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
+      stream << symbols::pipe << " upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
+      stream << symbols::pipe << " objective = " << direction.subproblem_objective << '\n';
+      stream << symbols::bottom_pipe << " norm = " << direction.norm << '\n';
       return stream;
    }
 

@@ -23,7 +23,9 @@
 #include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Range.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 #include "tools/Timer.hpp"
 #include "tools/UserCallbacks.hpp"
 
@@ -273,7 +275,15 @@ namespace uno {
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {
       DISCRETE << "\nUno " << Uno::current_version() << " (" << this->method_description << ")\n";
       DISCRETE << Timer::get_current_date();
-      DISCRETE << "────────────────────────────────────────\n";
+      // draw a horizontal line
+      constexpr size_t line_length = 40;
+      std::string line;
+      line.reserve(line_length + 1);
+      for ([[maybe_unused]] size_t _: Range(line_length)) {
+         line.append(symbols::hyphen);
+      }
+      line.push_back('\n');
+      DISCRETE << line;
       result.print(print_solution);
    }
 } // namespace

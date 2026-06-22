@@ -8,6 +8,7 @@
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    WaechterFilterMethod::WaechterFilterMethod(const Options& options):
@@ -76,7 +77,7 @@ namespace uno {
          DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
       }
-      statistics.set("Status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
+      statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
       return accept;
    }
 

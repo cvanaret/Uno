@@ -7,6 +7,7 @@
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    FunnelMethod::FunnelMethod(const Options& options) :
@@ -88,7 +89,7 @@ namespace uno {
          scenario = "funnel";
       }
 
-      statistics.set("Status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
+      statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
       if (accept) {
          this->funnel.print();
       }

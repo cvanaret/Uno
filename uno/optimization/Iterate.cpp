@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include "Iterate.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
@@ -19,18 +20,18 @@ namespace uno {
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
       stream << "Primal variables: " << iterate.primals << '\n';
-      stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
-      stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
-      stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
+      stream << "            " << symbols::top_pipe << " Constraint: " << iterate.multipliers.constraints << '\n';
+      stream << "Multipliers " << symbols::pipe << " Lower bound: " << iterate.multipliers.lower_bounds << '\n';
+      stream << "            " << symbols::bottom_pipe << " Upper bound: " << iterate.multipliers.upper_bounds << '\n';
       stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
 
-      stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
-      stream << "Residuals │ Complementarity: " << iterate.residuals.complementarity << '\n';
-      stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient << '\n';
+      stream << "          " << symbols::top_pipe << " Stationarity: " << iterate.residuals.stationarity << '\n';
+      stream << "Residuals " << symbols::pipe << " Complementarity: " << iterate.residuals.complementarity << '\n';
+      stream << "          " << symbols::bottom_pipe << " Lagrangian gradient: " << iterate.residuals.lagrangian_gradient << '\n';
 
-      stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
-      stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
-      stream << "                  └ Auxiliary terms: " << iterate.progress.auxiliary << '\n';
+      stream << "                  " << symbols::top_pipe << " Infeasibility: " << iterate.progress.infeasibility << '\n';
+      stream << "Progress measures " << symbols::pipe << " Optimality: " << iterate.progress.objective(1.) << '\n';
+      stream << "                  " << symbols::bottom_pipe << " Auxiliary terms: " << iterate.progress.auxiliary << '\n';
 
       return stream;
    }

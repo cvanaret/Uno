@@ -6,7 +6,8 @@
 #include "Statistics.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
- 
+#include "tools/Symbols.hpp"
+
 namespace uno {
    size_t Statistics::int_width = 7;
    size_t Statistics::double_width = 10;
@@ -135,9 +136,9 @@ namespace uno {
       }
       // create the horizontal line
       std::string line;
-      line.reserve(glyph_count * top_symbol.size() + 1);
+      line.reserve(glyph_count * symbols::hyphen.size() + 1);
       for (size_t i = 0; i < glyph_count; ++i) {
-         line.append(top_symbol);
+         line.append(symbols::hyphen);
       }
       line.push_back('\n');
       INFO << line; // single insertion

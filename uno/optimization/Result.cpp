@@ -6,6 +6,7 @@
 #include "SolutionStatus.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    void Result::print(bool print_primal_dual_solution) const {
@@ -15,16 +16,16 @@ namespace uno {
       DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution_objective << '\n';
       DISCRETE << "Primal feasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
 
-      DISCRETE << "┌ Stationarity residual:\t\t" << this->solution_stationarity << '\n';
-      DISCRETE << "│ Primal feasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
-      DISCRETE << "└ Complementarity residual:\t\t" << this->solution_complementarity << '\n';
+      DISCRETE << symbols::top_pipe << " Stationarity residual:\t\t" << this->solution_stationarity << '\n';
+      DISCRETE << symbols::pipe << " Primal feasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
+      DISCRETE << symbols::bottom_pipe << " Complementarity residual:\t\t" << this->solution_complementarity << '\n';
 
       if (print_primal_dual_solution) {
          DISCRETE << "Primal solution:\t\t\t"; print_vector(DISCRETE, view(this->primal_solution, 0, this->number_variables));
-         DISCRETE << "┌ Constraint multipliers:\t\t"; print_vector(DISCRETE, this->constraint_dual_solution);
-         DISCRETE << "│ Lower bound multipliers:\t\t"; print_vector(DISCRETE, view(this->lower_bound_dual_solution, 0,
+         DISCRETE << symbols::top_pipe << " Constraint multipliers:\t\t"; print_vector(DISCRETE, this->constraint_dual_solution);
+         DISCRETE << symbols::pipe << " Lower bound multipliers:\t\t"; print_vector(DISCRETE, view(this->lower_bound_dual_solution, 0,
                this->number_variables));
-         DISCRETE << "└ Upper bound multipliers:\t\t"; print_vector(DISCRETE, view(this->upper_bound_dual_solution, 0,
+         DISCRETE << symbols::bottom_pipe << " Upper bound multipliers:\t\t"; print_vector(DISCRETE, view(this->upper_bound_dual_solution, 0,
                this->number_variables));
       }
 

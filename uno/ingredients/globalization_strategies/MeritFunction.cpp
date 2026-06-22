@@ -6,6 +6,7 @@
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    MeritFunction::MeritFunction(const Options& options):
@@ -39,11 +40,11 @@ namespace uno {
       if (accept) {
          DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
          this->smallest_known_infeasibility = std::min(this->smallest_known_infeasibility, trial_progress.infeasibility);
-         statistics.set("Status", "✔ (Armijo)");
+         statistics.set("Status", std::string(symbols::check) + " (Armijo)");
       }
       else {
          DEBUG << "Trial iterate was rejected by Armijo condition\n";
-         statistics.set("Status", "✘ (Armijo)");
+         statistics.set("Status", std::string(symbols::fail) + " (Armijo)");
       }
       return accept;
    }
