@@ -75,6 +75,8 @@ namespace uno {
       }
 
       this->workspace.initialize(subproblem);
+      this->number_variables = subproblem.number_variables;
+      this->number_constraints = subproblem.number_constraints;
 
       this->w.resize(subproblem.number_variables + subproblem.number_constraints);
       this->gradient_solution.resize(subproblem.number_variables);
@@ -94,15 +96,21 @@ namespace uno {
       this->kmax = subproblem.has_curvature() ? pick_kmax(subproblem.number_variables, subproblem.number_constraints) : 0;
 
       // allocation of integer and real workspaces
-      this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * subproblem.number_variables +
-         subproblem.number_constraints /* (required by bqpd.f) */ + 5 * subproblem.number_variables + this->nprof /* (required
-         by sparseL.f) */;
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->nprof = std::max(number_jacobian_nonzeros + this->number_variables, 5 /* heuristic */ * number_jacobian_nonzeros);
+      this->mxws = this->compute_mxws();
       // 3 pointers hidden in lws
       constexpr size_t hidden_pointers_size = 3*sizeof(intptr_t);
       this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
          9 * subproblem.number_variables + subproblem.number_constraints /* (required by sparseL.f) */;
       this->ws.resize(this->mxws);
       this->lws.resize(this->mxlws);
+   }
+
+   size_t BQPDSolver::compute_mxws() {
+      return static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * this->number_variables +
+         this->number_constraints /* (required by bqpd.f) */ +
+         5 * this->number_variables + this->nprof; /* (required by sparseL.f) */
    }
 
    void BQPDSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
@@ -180,7 +188,9 @@ namespace uno {
 
          case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
             // allocate more size for (sparse) factors
-            this->mxws = (this->mxws*4)/3;
+            this->nprof *= 2;
+            this->mxws = this->compute_mxws();
+            // this->mxws = (this->mxws*4)/3;
             this->mxlws = (this->mxlws*4)/3;
             this->ws.resize(this->mxws);
             this->lws.resize(this->mxlws);

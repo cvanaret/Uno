@@ -52,12 +52,13 @@ namespace uno {
 
    private:
       BQPDWorkspace workspace;
+      size_t number_variables, number_constraints;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
 
       int kmax{0};
       int (*pick_kmax)(size_t number_variables, size_t number_constraints);
       int mlp{1000};
-      const size_t nprof{2000000};
+      size_t nprof{};
       std::array<int, 100> info{};
       std::vector<double> alp{};
       std::vector<int> lp{}, active_set{};
@@ -73,6 +74,7 @@ namespace uno {
 
       const bool print_subproblem;
 
+      [[nodiscard]] size_t compute_mxws();
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const;
