@@ -137,15 +137,15 @@ It has since been used as the lower-level solver in derivative-free bilevel opti
 Uno is currently available as a nonlinear optimization solver in:
 
 - Julia:
-	* the `JuMP.jl` ecosystem,
-	* `control-toolbox`, a collection of Julia packages for mathematical control and its applications,
+	* the `JuMP.jl` ecosystem [@dunning2017jump],
+	* `control-toolbox`, a collection of Julia packages for mathematical control and its applications [@OptimalControl_jl],
 - C++:
   * [CasADi](https://github.com/casadi/casadi), an open-source tool for nonlinear optimization and algorithmic differentiation [@Andersson2019],
 - Python:
-	* [pyOptSparse](https://github.com/mdolab/pyoptsparse), an object-oriented framework for formulating and solving nonlinear constrained optimization problems,
-	* [DNLP](https://github.com/cvxgrp/DNLP), an extension of CVXPY to general nonlinear programming,
+	* [pyOptSparse](https://github.com/mdolab/pyoptsparse), an object-oriented framework for formulating and solving nonlinear constrained optimization problems [@Wu2020],
+	* [DNLP](https://github.com/cvxgrp/DNLP), an extension of CVXPY to general nonlinear programming [@cederberg2026disciplined],
 - Fortran:
-	* [CUTEst](https://github.com/ralna/cuTEst), the Constrained and Unconstrained Testing Environment with safe threads for optimization software,
+	* [CUTEst](https://github.com/ralna/cuTEst), the Constrained and Unconstrained Testing Environment with safe threads for optimization software [@gould2015cutest],
 	* IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries.
 
 ![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% }
