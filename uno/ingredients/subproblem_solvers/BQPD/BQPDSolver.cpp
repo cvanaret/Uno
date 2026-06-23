@@ -128,8 +128,9 @@ namespace uno {
       // check is a no-op there.
       const size_t number_variables = this->quadratic_program->number_variables;
       const size_t number_constraints = this->quadratic_program->number_constraints;
+      const size_t number_jacobian_nonzeros = this->quadratic_program->number_jacobian_nonzeros;
       if (this->active_set.size() != number_variables + number_constraints) {
-         this->allocate_workspace(number_variables, number_constraints, this->quadratic_program->number_jacobian_nonzeros,
+         this->allocate_workspace(number_variables, number_constraints, number_jacobian_nonzeros,
             this->quadratic_program->has_curvature());
       }
 
