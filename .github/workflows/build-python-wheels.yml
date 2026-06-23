@@ -38,7 +38,7 @@ jobs:
         sys:
           - { os: ubuntu-latest, shell: bash, build: "*manylinux*" }
           - { os: ubuntu-22.04-arm, shell: bash, build: "*manylinux*" }
-          - { os: macos-latest, shell: bash, build: "*" }
+          - { os: macos-15, shell: bash, build: "*" }
           - { os: macos-15-intel, shell: bash, build: "*" }
           - { os: windows-latest, shell: 'msys2 {0}', build: "*" }
     defaults:
@@ -244,7 +244,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15, macos-15-intel, windows-latest]
         python-version: [ "3.12" ]
 
     steps:
@@ -270,7 +270,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15, macos-15-intel, windows-latest]
         python-version: ["3.12"]
 
     steps:
