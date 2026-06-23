@@ -91,7 +91,7 @@ jobs:
           # Override what setup-fortran set at the step level
           CC: clang
           CXX: clang++
-          MACOSX_DEPLOYMENT_TARGET: 15.0
+          MACOSX_DEPLOYMENT_TARGET: 14.0
           CIBW_SKIP: cp*-*_i686 *-win32
           CIBW_BEFORE_ALL_MACOS: |
             cat > /tmp/clang_toolchain.cmake << 'EOF'
