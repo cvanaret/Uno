@@ -65,7 +65,7 @@ General-purpose libraries such as `scipy.optimize`, NLopt, pyOpt, and pyOptSpars
 Closest in spirit is modOpt [@joshy2026modopt], a Python environment that builds optimization algorithms from self-contained modules (line searches, Hessian approximations, merit functions) with an educational focus.
 
 Uno is distinct on three counts.
-First, its components are production-grade algorithmic building blocks compiled in modern C\texttt{++}, not pedagogical or wrapper modules.
+First, its components are production-grade algorithmic building blocks compiled in modern C\texttt{++}.
 Second, it expresses these paradigms as instances of one generic Lagrange-Newton method, so the same components are reused across all of them rather than confined to a single method.
 Third, its presets reproduce state-of-the-art solvers at competitive performance (see below), so a component swapped into Uno is measured against a credible baseline rather than a teaching reference.
 
@@ -83,7 +83,7 @@ Uno implements a generic Lagrange-Newton method in which the abstract classes in
 Strategies are selected by the user at runtime via options.
 Uno also provides *presets*: particular combinations of strategies and hyperparameters that correspond to state-of-the-art solvers.
 Two presets are currently available: an \texttt{ipopt} preset mimicking the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset mimicking the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
-In principle all combinations of strategies can be generated, although some are not yet supported (e.g., an interior-point method with a trust-region constraint).
+In principle all combinations of strategies can be generated, although some are not yet supported (e.g., an interior-point method with a trust-region globalization mechanism).
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
