@@ -262,6 +262,7 @@ if(SPRAL)
 
    target_include_directories(uno_dependencies SYSTEM INTERFACE ${SPRAL_INCLUDE_DIR})
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
+   
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
    endif()
