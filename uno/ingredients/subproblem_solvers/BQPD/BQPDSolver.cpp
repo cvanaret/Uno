@@ -147,18 +147,18 @@ namespace uno {
    }
 
    SolverWorkspace& BQPDSolver::get_workspace() {
-      return this->quadratic_program->workspace;
+      return *this->quadratic_program;
    }
 
    // private member functions
 
    void BQPDSolver::display_subproblem(const Vector<double>& initial_point) const {
       const BQPDQuadraticProgram& quadratic_program = *this->quadratic_program;
-      const size_t number_jacobian_nonzeros = quadratic_program.workspace.jacobian_values.size();
+      const size_t number_jacobian_nonzeros = quadratic_program.jacobian_values.size();
       DEBUG << "Subproblem:\n";
-      DEBUG << "Linear objective part: " << view(quadratic_program.workspace.gradients, 0, quadratic_program.number_variables) << '\n';
+      DEBUG << "Linear objective part: " << view(quadratic_program.gradients, 0, quadratic_program.number_variables) << '\n';
       // note: Hessian values may not be available yet
-      DEBUG << "Jacobian: " << view(quadratic_program.workspace.gradients, quadratic_program.number_variables,
+      DEBUG << "Jacobian: " << view(quadratic_program.gradients, quadratic_program.number_variables,
          quadratic_program.number_variables + number_jacobian_nonzeros) << '\n';
       for (size_t variable_index: Range(quadratic_program.number_variables)) {
          DEBUG << "d" << variable_index << " in [" << quadratic_program.lower_bounds[variable_index] << ", " <<
@@ -212,8 +212,8 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         BQPD(&n, &m, &this->k, &this->kmax, quadratic_program.workspace.gradients.data(),
-            quadratic_program.workspace.gradients_sparsity.data(), direction.primals.data(),
+         BQPD(&n, &m, &this->k, &this->kmax, quadratic_program.gradients.data(),
+            quadratic_program.gradients_sparsity.data(), direction.primals.data(),
             quadratic_program.lower_bounds.data(), quadratic_program.upper_bounds.data(), &direction.subproblem_objective,
             &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(), this->e.data(),
             this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution,
