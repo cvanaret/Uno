@@ -170,7 +170,7 @@ if(BQPD)
    link_to_uno(bqpd ${BQPD})
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
-           uno/ingredients/subproblem_solvers/BQPD/BQPDWorkspace.cpp)
+           uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp)
    endif()
@@ -187,7 +187,7 @@ if(HIGHS)
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
-           uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
+           uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)
    endif()
@@ -399,7 +399,6 @@ if(ENABLE_TESTS)
    FetchContent_Declare(
       googletest
       URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
    )
    # do not install gtest in install()
    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)

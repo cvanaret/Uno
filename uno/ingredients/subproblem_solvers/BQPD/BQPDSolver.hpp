@@ -5,16 +5,17 @@
 #define UNO_BQPDSOLVER_H
 
 #include <array>
+#include <memory>
 #include <vector>
-#include "../SubproblemSolver.hpp"
-#include "BQPDWorkspace.hpp"
+#include "../QPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 
 namespace uno {
    // forward declarations
+   class BQPDQuadraticProgram;
    class Multipliers;
    class Options;
-   class Subproblem;
+   class QuadraticProgram;
 
    // see bqpd.f
    enum class BQPDStatus {
@@ -39,21 +40,24 @@ namespace uno {
       UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6, // warm start
    };
 
-   class BQPDSolver : public SubproblemSolver {
+   class BQPDSolver : public QPSolver {
    public:
       explicit BQPDSolver(const Options& options);
+      ~BQPDSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] QuadraticProgram& get_quadratic_program() override;
+
+      void solve(Statistics& statistics, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
-      BQPDWorkspace workspace;
-      size_t number_variables, number_constraints;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
+      // BQPD-native quadratic program (built by IQPSolver before each solve)
+      std::unique_ptr<BQPDQuadraticProgram> quadratic_program{};
 
       int kmax{0};
       int (*pick_kmax)(size_t number_variables, size_t number_constraints);
@@ -74,14 +78,13 @@ namespace uno {
 
       const bool print_subproblem;
 
-      [[nodiscard]] size_t compute_mxws();
-      void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
-      void display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const;
-      void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+      [[nodiscard]] size_t compute_mxws() const;
+      void display_subproblem(const Vector<double>& initial_point) const;
+      // allocate the BQPD algorithm scratch (active set, residuals, ws/lws) for the given problem shape
+      void allocate_workspace(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, bool is_qp);
+      void solve_subproblem(const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
-      void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       [[nodiscard]] static BQPDStatus bqpd_status_from_int(int ifail);
       [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);

@@ -3,15 +3,23 @@
 
 #include <gtest/gtest.h>
 #include "ingredients/subproblem_solvers/HiGHS/HiGHSSolver.hpp"
-#include "linear_algebra/SparseVector.hpp"
+#include "ingredients/subproblem_solvers/QuadraticProgram.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
+#include "../interfaces/C/uno_int.h"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Statistics.hpp"
 
 using namespace uno;
 
-/*
+// The quadratic program is described directly from data (no Subproblem): a dense objective gradient, a COO
+// constraint Jacobian (row = constraint, column = variable) and a COO Lagrangian Hessian (empty for an LP).
+// HiGHSQuadraticProgram::build() converts the COO matrices into HiGHS' native CSC layout internally.
+
 TEST(HiGHSSolver, LP) {
    // https://ergo-code.github.io/HiGHS/stable/interfaces/cpp/library/
    // Min    f  =  x_0 +  x_1 + 3
@@ -19,38 +27,39 @@ TEST(HiGHSSolver, LP) {
    //        5 <=  x_0 + 2x_1 <= 15
    //        6 <= 3x_0 + 2x_1
    // 0 <= x_0 <= 4; 1 <= x_1
-
    const size_t number_variables = 2;
    const size_t number_constraints = 3;
-   const size_t number_jacobian_nonzeros = 5;
-   const size_t number_hessian_nonzeros = 0;
-   Options options(false);
-   options["print_subproblem"] = "false";
-   HiGHSSolver highs_solver(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros, options);
 
-   // create the LP
-   SparseVector<double> linear_objective(number_variables);
-   linear_objective.insert(0, 1.);
-   linear_objective.insert(1, 1.);
+   Options options;
+   options.set_bool("print_subproblem", false);
+   HiGHSSolver solver(options);
 
+   // dense objective gradient
+   const Vector<double> linear_objective{1., 1.};
+   // COO constraint Jacobian
+   const Vector<uno_int> jacobian_row_indices{0, 1, 1, 2, 2};
+   const Vector<uno_int> jacobian_column_indices{1, 0, 1, 0, 1};
+   const Vector<double> jacobian_values{1., 1., 2., 3., 2.};
+   // empty Hessian (LP)
+   const Vector<uno_int> hessian_row_indices{};
+   const Vector<uno_int> hessian_column_indices{};
+   const Vector<double> hessian_values{};
+   // bounds
    const std::vector<double> variables_lower_bounds{0., 1.};
    const std::vector<double> variables_upper_bounds{4., INF<double>};
    const std::vector<double> constraints_lower_bounds{-INF<double>, 5., 6.};
    const std::vector<double> constraints_upper_bounds{7., 15., INF<double>};
 
-   RectangularMatrix<double> constraint_jacobian(number_constraints, number_variables);
-   constraint_jacobian[0].insert(1, 1.);
-   constraint_jacobian[1].insert(0, 1.);
-   constraint_jacobian[1].insert(1, 2.);
-   constraint_jacobian[2].insert(0, 3.);
-   constraint_jacobian[2].insert(1, 2.);
+   QuadraticProgram& quadratic_program = solver.get_quadratic_program();
+   quadratic_program.fill(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,
+      hessian_row_indices, hessian_column_indices, hessian_values,
+      variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds, constraints_upper_bounds);
 
    Direction direction(number_variables, number_constraints);
    WarmstartInformation warmstart_information{};
-   Vector<double> initial_point{0., 0.};
-
-   highs_solver.solve_LP(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
-      constraints_upper_bounds, linear_objective, constraint_jacobian, initial_point, direction, warmstart_information);
+   const Vector<double> initial_point{0., 0.};
+   Statistics statistics;
+   solver.solve(statistics, initial_point, direction, warmstart_information);
 
    ASSERT_EQ(direction.status, SubproblemStatus::OPTIMAL);
 
@@ -72,4 +81,3 @@ TEST(HiGHSSolver, LP) {
       EXPECT_NEAR(direction.multipliers.upper_bounds[index], upper_bound_duals_reference[index], tolerance);
    }
 }
-*/

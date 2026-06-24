@@ -3,15 +3,15 @@
 
 #include <cassert>
 #include "BQPDSolver.hpp"
-#include "ingredients/hessian_models/HessianModel.hpp"
+#include "BQPDQuadraticProgram.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -34,8 +34,6 @@ extern "C" {
 }
 
 namespace uno {
-   #define BIG 1e30
-
    // heuristics to select kmax (the maximum size of the nullspace)
 
    // approach implemented in filterSQP
@@ -61,119 +59,115 @@ namespace uno {
 
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
-         SubproblemSolver(),
+         QPSolver(),
          // select a heuristic to pick kmax (the max size of the nullspace)
          pick_kmax(options.get_string("BQPD_kmax_heuristic") == "minotaur" ? pick_kmax_minotaur : pick_kmax_filtersqp),
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          print_subproblem(options.get_bool("print_subproblem")) {
+      // construct an empty BQPD-native quadratic program so that get_quadratic_program() can be used to build
+      // it directly from data (no Subproblem); the full solver instead calls initialize_memory(subproblem)
+      this->quadratic_program = std::make_unique<BQPDQuadraticProgram>();
    }
 
+   BQPDSolver::~BQPDSolver() = default;
+
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
-      if (subproblem.has_curvature() && !subproblem.has_hessian_operator() && !subproblem.has_hessian_matrix()) {
-         throw std::runtime_error("The Hessian cannot be evaluated implicitly or explicitly");
-      }
+      // build the BQPD-native quadratic program (allocates gradients/Hessian/bounds storage and the
+      // iteration-invariant sparsity patterns)
+      this->quadratic_program = std::make_unique<BQPDQuadraticProgram>();
+      this->quadratic_program->initialize_memory(subproblem);
+      // allocate the BQPD algorithm scratch
+      this->allocate_workspace(subproblem.number_variables, subproblem.number_constraints, subproblem.number_jacobian_nonzeros(),
+         subproblem.has_curvature());
+   }
 
-      this->workspace.initialize(subproblem);
-      this->number_variables = subproblem.number_variables;
-      this->number_constraints = subproblem.number_constraints;
-
-      this->w.resize(subproblem.number_variables + subproblem.number_constraints);
-      this->gradient_solution.resize(subproblem.number_variables);
-      this->residuals.resize(subproblem.number_variables + subproblem.number_constraints);
-      this->e.resize(subproblem.number_variables + subproblem.number_constraints);
-
-      this->lower_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
-      this->upper_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
+   void BQPDSolver::allocate_workspace(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, bool is_qp) {
+      // BQPD algorithm scratch
+      this->w.resize(number_variables + number_constraints);
+      this->gradient_solution.resize(number_variables);
+      this->residuals.resize(number_variables + number_constraints);
+      this->e.resize(number_variables + number_constraints);
 
       // default active set
-      this->active_set.resize(subproblem.number_variables + subproblem.number_constraints);
-      for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
+      this->active_set.resize(number_variables + number_constraints);
+      for (size_t variable_index: Range(number_variables + number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index + Indexing::Fortran_indexing);
       }
 
-      // determine whether the subproblem has curvature
-      this->kmax = subproblem.has_curvature() ? pick_kmax(subproblem.number_variables, subproblem.number_constraints) : 0;
+      // kmax (the max size of the nullspace) is 0 for an LP
+      this->kmax = is_qp ? pick_kmax(number_variables, number_constraints) : 0;
 
       // allocation of integer and real workspaces
-      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      this->nprof = std::max(number_jacobian_nonzeros + this->number_variables, 5 /* heuristic */ * number_jacobian_nonzeros);
+      this->nprof = std::max(number_jacobian_nonzeros + number_variables, 5 /* heuristic */ * number_jacobian_nonzeros);
       this->mxws = this->compute_mxws();
-      // 3 pointers hidden in lws
-      constexpr size_t hidden_pointers_size = 3*sizeof(intptr_t);
+      // 1 pointer hidden in lws (the quadratic program)
+      constexpr size_t hidden_pointers_size = sizeof(intptr_t);
       this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
-         9 * subproblem.number_variables + subproblem.number_constraints /* (required by sparseL.f) */;
+         9 * number_variables + number_constraints /* (required by sparseL.f) */;
       this->ws.resize(this->mxws);
       this->lws.resize(this->mxlws);
    }
 
-   size_t BQPDSolver::compute_mxws() {
-      return static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * this->number_variables +
-         this->number_constraints /* (required by bqpd.f) */ +
-         5 * this->number_variables + this->nprof; /* (required by sparseL.f) */
+   size_t BQPDSolver::compute_mxws() const {
+      return static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * this->quadratic_program->number_variables +
+         this->quadratic_program->number_constraints /* (required by bqpd.f) */ +
+         5 * this->quadratic_program->number_variables + this->nprof; /* (required by sparseL.f) */
    }
 
-   void BQPDSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
+   QuadraticProgram& BQPDSolver::get_quadratic_program() {
+      return *this->quadratic_program;
+   }
+
+   void BQPDSolver::solve(Statistics& /*statistics*/, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, trust_region_radius, current_evaluations, warmstart_information);
-      if (this->print_subproblem) {
-         this->display_subproblem(subproblem, initial_point);
+      // lazily allocate the BQPD scratch if the quadratic program was built directly from data (i.e.
+      // initialize_memory(subproblem) was not called). The full solver path allocates it up front, so this
+      // check is a no-op there.
+      if (this->active_set.size() != this->quadratic_program->number_variables + this->quadratic_program->number_constraints) {
+         this->allocate_workspace(this->quadratic_program->number_variables, this->quadratic_program->number_constraints,
+            this->quadratic_program->number_jacobian_nonzeros, this->quadratic_program->has_curvature());
       }
-      this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
-   }
 
-   SolverWorkspace& BQPDSolver::get_workspace() {
-      return this->workspace;
-   }
-
-   // protected member functions
-
-   void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->mxws);
       WSC.mxlws = static_cast<int>(this->mxlws);
+      WSC.kk = 0; // length of ws that is used by gdotx
+      WSC.ll = 0; // length of lws that is used by gdotx
 
-      // evaluate the functions and derivatives
-      this->workspace.evaluate_functions(subproblem.problem, subproblem.current_iterate, current_evaluations,
-         warmstart_information);
+      // hide a pointer to the quadratic program so that the gdotx callback can compute Hessian-vector products
+      hide_pointer(0, this->lws.data(), *this->quadratic_program);
+      WSC.ll += sizeof(intptr_t);
 
-      // variable bounds
-      if (warmstart_information.trust_region_changed) {
-         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, trust_region_radius);
+      if (this->print_subproblem) {
+         this->display_subproblem(initial_point);
       }
-
-      // constraint bounds
-      if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
-         auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
-         auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
-         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->workspace.constraints);
-      }
-
-      // replace INFs with large finite values (TODO: is that really useful?)
-      for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
-         this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
-         this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
-      }
-
-      this->hide_pointers_in_workspace(statistics, subproblem);
+      this->solve_subproblem(initial_point, direction, warmstart_information);
    }
 
-   void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
+   SolverWorkspace& BQPDSolver::get_workspace() {
+      return *this->quadratic_program;
+   }
+
+   // private member functions
+
+   void BQPDSolver::display_subproblem(const Vector<double>& initial_point) const {
+      const BQPDQuadraticProgram& quadratic_program = *this->quadratic_program;
+      const size_t number_jacobian_nonzeros = quadratic_program.jacobian_values.size();
       DEBUG << "Subproblem:\n";
-      DEBUG << "Linear objective part: " << view(this->workspace.gradients, 0, subproblem.number_variables) << '\n';
+      DEBUG << "Linear objective part: " << view(quadratic_program.gradients, 0, quadratic_program.number_variables) << '\n';
       // note: Hessian values may not be available yet
-      // DEBUG << "Hessian: " << this->hessian_values << '\n';
-      DEBUG << "Jacobian: " << view(this->workspace.gradients, subproblem.number_variables, subproblem.number_variables +
-         subproblem.number_jacobian_nonzeros()) << '\n';
-      for (size_t variable_index: Range(subproblem.number_variables)) {
-         DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
+      DEBUG << "Jacobian: " << view(quadratic_program.gradients, quadratic_program.number_variables,
+         quadratic_program.number_variables + number_jacobian_nonzeros) << '\n';
+      for (size_t variable_index: Range(quadratic_program.number_variables)) {
+         DEBUG << "d" << variable_index << " in [" << quadratic_program.lower_bounds[variable_index] << ", " <<
+            quadratic_program.upper_bounds[variable_index] << "]\n";
       }
-      for (size_t constraint_index: Range(subproblem.number_constraints)) {
-         DEBUG << "linearized c" << constraint_index << " in [" << this->lower_bounds[subproblem.number_variables + constraint_index] << ", " <<
-            this->upper_bounds[subproblem.number_variables + constraint_index] << "]\n";
+      for (size_t constraint_index: Range(quadratic_program.number_constraints)) {
+         DEBUG << "linearized c" << constraint_index << " in [" <<
+            quadratic_program.lower_bounds[quadratic_program.number_variables + constraint_index] << ", " <<
+            quadratic_program.upper_bounds[quadratic_program.number_variables + constraint_index] << "]\n";
       }
       DEBUG << "Initial point: " << initial_point << '\n';
    }
@@ -204,11 +198,12 @@ namespace uno {
       return true;
    }
 
-   void BQPDSolver::solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+   void BQPDSolver::solve_subproblem(const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
-      view(direction.primals, 0, subproblem.number_variables) = view(initial_point, 0, subproblem.number_variables);
-      const int n = static_cast<int>(subproblem.number_variables);
-      const int m = static_cast<int>(subproblem.number_constraints);
+      BQPDQuadraticProgram& quadratic_program = *this->quadratic_program;
+      view(direction.primals, 0, quadratic_program.number_variables) = view(initial_point, 0, quadratic_program.number_variables);
+      const int n = static_cast<int>(quadratic_program.number_variables);
+      const int m = static_cast<int>(quadratic_program.number_constraints);
 
       const BQPDMode mode = BQPDSolver::determine_mode(warmstart_information);
       const int mode_integer = static_cast<int>(mode);
@@ -217,11 +212,12 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         BQPD(&n, &m, &this->k, &this->kmax, this->workspace.gradients.data(), this->workspace.gradients_sparsity.data(),
-            direction.primals.data(), this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective,
-            &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(),
-            this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer,
-            &this->ifail, this->info.data(), &this->iprint, &this->nout);
+         BQPD(&n, &m, &this->k, &this->kmax, quadratic_program.gradients.data(),
+            quadratic_program.gradients_sparsity.data(), direction.primals.data(),
+            quadratic_program.lower_bounds.data(), quadratic_program.upper_bounds.data(), &direction.subproblem_objective,
+            &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(), this->e.data(),
+            this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution,
+            this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
          DEBUG2 << "Ran BQPD\n";
          const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
          termination = this->check_sufficient_workspace_size(bqpd_status);
@@ -231,13 +227,12 @@ namespace uno {
       }
 
       // project primal solution into bounds
-      for (size_t variable_index: Range(subproblem.number_variables)) {
-         direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
-            this->upper_bounds[variable_index]);
+      for (size_t variable_index: Range(quadratic_program.number_variables)) {
+         direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index],
+            quadratic_program.lower_bounds[variable_index]), quadratic_program.upper_bounds[variable_index]);
       }
-      // gather the multipliers
-      this->set_multipliers(subproblem.number_variables, direction.multipliers);
-      SubproblemSolver::compute_dual_displacements(subproblem, direction.multipliers);
+      // gather the multipliers (the dual-displacement mapping is performed by IQPSolver)
+      this->set_multipliers(quadratic_program.number_variables, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
@@ -254,21 +249,8 @@ namespace uno {
       return mode;
    }
 
-   // hide pointers to arbitrary objects into this->workspace_sparsity (BQPD's lws)
-   void BQPDSolver::hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem) {
-      WSC.kk = 0; // length of ws that is used by gdotx
-      WSC.ll = 0; // length of lws that is used by gdotx
-
-      // hide pointer to statistics, subproblem, and workspace
-      hide_pointer(0, this->lws.data(), statistics);
-      WSC.ll += sizeof(intptr_t);
-      hide_pointer(1, this->lws.data(), subproblem);
-      WSC.ll += sizeof(intptr_t);
-      hide_pointer(2, this->lws.data(), this->workspace);
-      WSC.ll += sizeof(intptr_t);
-   }
-
    void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const {
+      const BQPDQuadraticProgram& quadratic_program = *this->quadratic_program;
       direction_multipliers.reset();
       // active constraints
       for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
@@ -277,7 +259,7 @@ namespace uno {
          // bound constraint
          if (index < number_variables) {
             // variable is not fixed
-            if (this->lower_bounds[index] < this->upper_bounds[index]) {
+            if (quadratic_program.lower_bounds[index] < quadratic_program.upper_bounds[index]) {
                if (0 <= this->active_set[active_constraint_index]) { // lower bound active
                   direction_multipliers.lower_bounds[index] = this->residuals[index];
                }
@@ -342,46 +324,8 @@ namespace uno {
 void hessian_vector_product(int* dimension, const double vector[], const double /*ws*/[], const int lws[], double result[]) {
    assert(dimension != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
 
-   for (size_t i = 0; i < static_cast<size_t>(*dimension); i++) {
-      result[i] = 0.;
-   }
-
-   // retrieve workspace, statistics, and subproblem
-   uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(0, lws);
-   uno::Subproblem* subproblem = uno::retrieve_pointer<uno::Subproblem>(1, lws);
-   uno::BQPDWorkspace* workspace = uno::retrieve_pointer<uno::BQPDWorkspace>(2, lws);
-   assert(workspace != nullptr);
-   assert(statistics != nullptr);
-   assert(subproblem != nullptr);
-
-   // if the Hessian must be regularized or if no implicit representation exists
-   if ((!subproblem->is_hessian_positive_definite() && subproblem->performs_primal_regularization()) ||
-         !subproblem->has_hessian_operator()) {
-      // compute the explicit matrix
-      if (subproblem->has_hessian_matrix()) {
-         // if the Hessian has not been evaluated at the current point, evaluate it
-         if (workspace->hessian_evaluation_required) {
-            subproblem->evaluate_lagrangian_hessian(*statistics, workspace->hessian_values.data());
-            subproblem->regularize_lagrangian_hessian(*statistics, workspace->hessian_values.data());
-            workspace->hessian_evaluation_required = false;
-         }
-         // Hessian-vector product
-         for (size_t nonzero_index: uno::Range(subproblem->number_regularized_hessian_nonzeros())) {
-            const size_t row_index = static_cast<size_t>(workspace->hessian_row_indices[nonzero_index]);
-            const size_t column_index = static_cast<size_t>(workspace->hessian_column_indices[nonzero_index]);
-            const double entry = workspace->hessian_values[nonzero_index];
-            result[row_index] += entry * vector[column_index];
-            if (row_index != column_index) {
-               result[column_index] += entry * vector[row_index];
-            }
-         }
-      }
-      else {
-         throw std::runtime_error("The Lagrangian Hessian has no appropriate representation");
-      }
-   }
-   // otherwise, try to perform a Hessian-vector product if possible
-   else if (subproblem->has_hessian_operator()) {
-      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result);
-   }
+   // retrieve the quadratic program and delegate the (Subproblem-free) Hessian-vector product
+   uno::BQPDQuadraticProgram* quadratic_program = uno::retrieve_pointer<uno::BQPDQuadraticProgram>(0, lws);
+   assert(quadratic_program != nullptr);
+   quadratic_program->compute_hessian_vector_product(*dimension, vector, result);
 }
