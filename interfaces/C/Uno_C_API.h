@@ -60,7 +60,7 @@ extern "C" {
    // current Uno version
    const uno_int UNO_VERSION_MAJOR = 2;
    const uno_int UNO_VERSION_MINOR = 7;
-   const uno_int UNO_VERSION_PATCH = 4;
+   const uno_int UNO_VERSION_PATCH = 5;
 
    // options iterator
    typedef void* uno_options_iterator;
