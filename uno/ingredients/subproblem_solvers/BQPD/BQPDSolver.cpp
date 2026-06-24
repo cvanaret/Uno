@@ -73,8 +73,6 @@ namespace uno {
    BQPDSolver::~BQPDSolver() = default;
 
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
-      this->number_variables = subproblem.number_variables;
-      this->number_constraints = subproblem.number_constraints;
       // build the BQPD-native quadratic program (allocates gradients/Hessian/bounds storage and the
       // iteration-invariant sparsity patterns)
       this->quadratic_program = std::make_unique<BQPDQuadraticProgram>();
@@ -101,7 +99,7 @@ namespace uno {
       this->kmax = is_qp ? pick_kmax(number_variables, number_constraints) : 0;
 
       // allocation of integer and real workspaces
-      this->nprof = std::max(number_jacobian_nonzeros + this->number_variables, 5 /* heuristic */ * number_jacobian_nonzeros);
+      this->nprof = std::max(number_jacobian_nonzeros + number_variables, 5 /* heuristic */ * number_jacobian_nonzeros);
       this->mxws = this->compute_mxws();
       // 1 pointer hidden in lws (the quadratic program)
       constexpr size_t hidden_pointers_size = sizeof(intptr_t);
@@ -112,9 +110,9 @@ namespace uno {
    }
 
    size_t BQPDSolver::compute_mxws() const {
-      return static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * this->number_variables +
-         this->number_constraints /* (required by bqpd.f) */ +
-         5 * this->number_variables + this->nprof; /* (required by sparseL.f) */
+      return static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * this->quadratic_program->number_variables +
+         this->quadratic_program->number_constraints /* (required by bqpd.f) */ +
+         5 * this->quadratic_program->number_variables + this->nprof; /* (required by sparseL.f) */
    }
 
    QuadraticProgram& BQPDSolver::get_quadratic_program() {
@@ -126,12 +124,9 @@ namespace uno {
       // lazily allocate the BQPD scratch if the quadratic program was built directly from data (i.e.
       // initialize_memory(subproblem) was not called). The full solver path allocates it up front, so this
       // check is a no-op there.
-      const size_t number_variables = this->quadratic_program->number_variables;
-      const size_t number_constraints = this->quadratic_program->number_constraints;
-      const size_t number_jacobian_nonzeros = this->quadratic_program->number_jacobian_nonzeros;
-      if (this->active_set.size() != number_variables + number_constraints) {
-         this->allocate_workspace(number_variables, number_constraints, number_jacobian_nonzeros,
-            this->quadratic_program->has_curvature());
+      if (this->active_set.size() != this->quadratic_program->number_variables + this->quadratic_program->number_constraints) {
+         this->allocate_workspace(this->quadratic_program->number_variables, this->quadratic_program->number_constraints,
+            this->quadratic_program->number_jacobian_nonzeros, this->quadratic_program->has_curvature());
       }
 
       // initialize wsc_ common block (Hessian & workspace for BQPD)

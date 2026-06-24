@@ -55,7 +55,6 @@ namespace uno {
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
-      size_t number_variables, number_constraints;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       // BQPD-native quadratic program (built by IQPSolver before each solve)
       std::unique_ptr<BQPDQuadraticProgram> quadratic_program{};
