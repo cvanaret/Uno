@@ -81,8 +81,8 @@ tar -xzf UnoUtils.tar.gz
 pwd
 
 # download Krylov.jl
-VERSION="v0.0.32"
-REPO="https://github.com/amontoison/Krylov.jl/releases/download/${VERSION}"
+VERSION="v0.10.7"
+REPO="https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases/download/${VERSION}"
 ASSET_NAME="libkrylov-${OS_KRYLOV}-${ARCH_KRYLOV}.${EXTENSION_KRYLOV}"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
