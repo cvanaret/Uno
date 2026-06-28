@@ -148,7 +148,7 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 fi
 
 # download Krylov.jl
-VERSION="v0.0.30"
+VERSION="v0.0.32"
 REPO="https://github.com/amontoison/Krylov.jl/releases/download/${VERSION}"
 ASSET_NAME="libkrylov-${OS_KRYLOV}-${ARCH_KRYLOV}.${EXTENSION_KRYLOV}"
 ASSET_URL="${REPO}/${ASSET_NAME}"
