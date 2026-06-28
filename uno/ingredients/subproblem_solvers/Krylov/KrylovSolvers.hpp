@@ -57,12 +57,17 @@ static void test_krylov_solvers() {
    * Create workspace for CG, double precision, CPU
    * --------------------------------------------------------------------- */
    void *ws = NULL;
-   int ret = krylov_workspace_create(KRYLOV_CG, N, N, KRYLOV_FLOAT64, KRYLOV_CPU, &ws);
+   int ret = krylov_workspace_create(KRYLOV_CG, N, N, KRYLOV_FLOAT64, KRYLOV_CPU,
+                                     NULL,   /* workspace options (NULL = defaults) */
+                                     &ws);
    assert(ret == 0);
 
    /* -----------------------------------------------------------------------
    * Solve
    * --------------------------------------------------------------------- */
+   KrylovOptions opts = krylov_default_options();
+   opts.atol = 1e-10;   /* absolute tolerance */
+   opts.rtol = 1e-10;   /* relative tolerance */
    ret = krylov_solve(ws,
                      matvec_A,   /* y = A*x */
                      NULL,       /* y = A'*x  (CG doesn't need it) */
@@ -70,10 +75,7 @@ static void test_krylov_solvers() {
                      b,          /* right-hand side b (size m) */
                      NULL,       /* c = NULL  (CG only needs one RHS) */
                      &A,         /* userdata forwarded to matvec_A */
-                     1e-10,      /* atol */
-                     1e-10,      /* rtol */
-                     0,          /* itmax: use solver default */
-                     0);         /* verbose: silent */
+                     &opts);     /* solver options (NULL = all defaults) */
    assert(ret == 0);
 
    /* -----------------------------------------------------------------------
