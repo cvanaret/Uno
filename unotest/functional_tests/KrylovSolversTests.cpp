@@ -75,8 +75,9 @@ TEST(Krylov, Example) {
   opts.rtol = 1e-10;   /* relative tolerance */
   ret = krylov_solve(ws,
                      matvec_A,   /* y = A*x */
-                     NULL,       /* y = A'*x  (CG doesn't need it) */
-                     NULL,       /* no preconditioner */
+                     NULL,       /* y = Aᴴ*x  (CG doesn't need it) */
+                     NULL,       /* matvec_M: left/centered preconditioner (none) */
+                     NULL,       /* matvec_N: right preconditioner (none) */
                      b,          /* right-hand side b (size m) */
                      NULL,       /* c = NULL  (CG only needs one RHS) */
                      &A,         /* userdata forwarded to matvec_A */
