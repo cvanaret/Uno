@@ -43,13 +43,6 @@ jobs:
       - name: Checkout Uno
         uses: actions/checkout@v4
 
-      # Match the libgfortran5 ABI of Uno's precompiled dependencies (BQPD, UnoUtils).
-      - name: Install GCC / gfortran 14
-        uses: fortran-lang/setup-fortran@main
-        with:
-          compiler: gcc
-          version: '14'
-
       # ----------------------------------------------------------------
       # 1) Build & install Uno  ->  /usr/local/lib/libuno.so
       #    (this is the path CUTEst's default `uno` package links against)

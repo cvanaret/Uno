@@ -40,13 +40,6 @@ jobs:
           echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
           echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
-      - name: Install compilers (macOS)
-        if: matrix.os == 'macos-15'
-        uses: fortran-lang/setup-fortran@main
-        with:
-          compiler: 'gcc'
-          version: '14'
-
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
