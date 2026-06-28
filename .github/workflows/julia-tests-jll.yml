@@ -26,7 +26,7 @@ jobs:
             arch: 'arm64'
             version: '1'
             allow_failure: false
-          - os: macos-latest
+          - os: macos-15
             arch: 'arm64'
             version: '1'
             allow_failure: false
@@ -41,7 +41,7 @@ jobs:
           echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
       - name: Install compilers (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-15'
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'

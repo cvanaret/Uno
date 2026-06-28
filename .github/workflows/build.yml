@@ -45,7 +45,7 @@ jobs:
           shell: bash
 
         # ---------- MACOS ----------
-        - os: macos-latest
+        - os: macos-15
           toolchain: gcc
           build_type: Debug
           shell: bash
