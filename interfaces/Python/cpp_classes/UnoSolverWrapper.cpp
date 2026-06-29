@@ -4,9 +4,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <memory>
+#include <string>
 #include "UnoSolverWrapper.hpp"
 #include "model/Model.hpp"
 #include "options/DefaultOptions.hpp"
+#include "options/Presets.hpp"
+#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -43,7 +46,7 @@ namespace uno {
    }
 
    UnoSolverWrapper::UnoSolverWrapper() {
-      DefaultOptions::load(this->options);
+      DefaultOptions::load(this->user_options);
    }
 
    void UnoSolverWrapper::set_logger_stream(py::object python_stream) {
@@ -62,10 +65,25 @@ namespace uno {
    }
 
    Result UnoSolverWrapper::optimize(const PythonUserModel& user_model) {
+      // create an instance of PythonModel, a subclass of Model
       const PythonModel model{user_model};
-      Logger::set_logger(this->options.get_string("logger"));
+
+      // set the preset (default: auto) and gather the options starting from the preset
+      Options full_options;
+      std::string preset = "auto";
+      const std::optional<std::string> optional_preset = this->user_options.get_string_optional("preset");
+      if (optional_preset.has_value()) {
+         preset = *optional_preset;
+      }
+      Presets::set(model, full_options, preset);
+
+      // copy the rest of the options
+      full_options.overwrite(this->user_options);
+
+      // solve the model
+      Logger::set_logger(this->user_options.get_string("logger"));
       UnopyUserCallbacks callbacks{this->notify_acceptable_iterate_callback, this->termination_callback};
-      return this->uno_solver.solve(model, this->options, callbacks);
+      return this->uno_solver.solve(model, full_options, callbacks);
    }
 
    const std::string& UnoSolverWrapper::get_method_description() const {
