@@ -69,35 +69,35 @@ int main(int argc, char* argv[]) {
 
          // [optional] read an option file
          std::optional<std::string> optional_option_file{};
-         std::string preset = "auto";
          for (const auto& [option_name, option_value]: command_line_options) {
             if (option_name == "option_file") {
                optional_option_file = option_value;
-            }
-            else if (option_name == "preset") {
-               preset = option_value;
             }
          }
          if (optional_option_file.has_value()) {
             Options::load_option_file(options, *optional_option_file);
          }
+         for (const auto& [option_name, option_value]: command_line_options) {
+            if (option_name == "preset") {
+               options.set_string("preset", option_value);
+            }
+            else if (option_name == "logger") {
+               options.set_string("logger", option_value);
+            }
+         }
+         Logger::set_logger(options.get_string("logger"));
 
          // set the preset (default: auto)
-         const std::optional<std::string> optional_preset = options.get_string_optional("preset");
-         if (optional_preset.has_value()) {
-            preset = *optional_preset;
-         }
-         Presets::set(model, options, preset);
+         Presets::set(model, options, options.get_string("preset"));
 
          // set the rest of the command line options
          for (const auto& [option_name, option_value]: command_line_options) {
-            if (option_name != "option_file") {
+            if (option_name != "option_file" && option_name != "preset" && option_name != "logger") {
                options.set(option_name, option_value);
             }
          }
 
          // solve the model
-         Logger::set_logger(options.get_string("logger"));
          run_uno_ampl(model, options);
       }
       catch (const std::exception& e) {
