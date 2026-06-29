@@ -67,21 +67,16 @@ namespace uno {
    Result UnoSolverWrapper::optimize(const PythonUserModel& user_model) {
       // create an instance of PythonModel, a subclass of Model
       const PythonModel model{user_model};
+      Logger::set_logger(this->user_options.get_string("logger"));
 
-      // set the preset (default: auto) and gather the options starting from the preset
+      // set the preset (default: auto)
       Options full_options;
-      std::string preset = "auto";
-      const std::optional<std::string> optional_preset = this->user_options.get_string_optional("preset");
-      if (optional_preset.has_value()) {
-         preset = *optional_preset;
-      }
-      Presets::set(model, full_options, preset);
+      Presets::set(model, full_options, this->user_options.get_string("preset"));
 
       // copy the rest of the options
       full_options.overwrite(this->user_options);
 
       // solve the model
-      Logger::set_logger(this->user_options.get_string("logger"));
       UnopyUserCallbacks callbacks{this->notify_acceptable_iterate_callback, this->termination_callback};
       return this->uno_solver.solve(model, full_options, callbacks);
    }
