@@ -1018,25 +1018,19 @@ void uno_optimize(void* solver, void* model) {
 
    // create an instance of UnoModel, a subclass of Model
    const UnoModel uno_model(*user_model);
+   Logger::set_logger(uno_solver->user_options->get_string("logger"));
 
    // set the preset (default: auto) and gather the options starting from the preset
    Options full_options;
-   std::string preset = "auto";
-   const std::optional<std::string> optional_preset = uno_solver->user_options->get_string_optional("preset");
-   if (optional_preset.has_value()) {
-      preset = *optional_preset;
-   }
-   Presets::set(uno_model, full_options, preset);
+   Presets::set(uno_model, full_options, uno_solver->user_options->get_string("preset"));
 
    // copy the rest of the options
    full_options.overwrite(*uno_solver->user_options);
 
    // solve the model
-   Logger::set_logger(uno_solver->user_options->get_string("logger"));
    Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
-   // clean up the previous result (if any)
+   // clean up the previous result (if any) and move the new result into uno_solver
    delete uno_solver->result;
-   // move the new result into uno_solver
    uno_solver->result = new Result(std::move(result));
    // flush the logger
    Logger::flush();
