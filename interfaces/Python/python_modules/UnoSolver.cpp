@@ -24,7 +24,7 @@ namespace uno {
          const auto type = Options::option_types.find(option_name);
          if (type != Options::option_types.end()) { // key found
             if (type->second == OptionType::BOOL) { // correct type
-               solver.options.set_bool(option_name, option_value);
+               solver.user_options.set_bool(option_name, option_value);
             }
             else { // incorrect type
                throw py::type_error(option_name + " is not of type bool");
@@ -39,7 +39,7 @@ namespace uno {
          const auto type = Options::option_types.find(option_name);
          if (type != Options::option_types.end()) { // key found
             if (type->second == OptionType::INTEGER) { // correct type
-               solver.options.set_integer(option_name, option_value);
+               solver.user_options.set_integer(option_name, option_value);
             }
             else { // incorrect type
                throw py::type_error(option_name + " is not of type int");
@@ -54,7 +54,7 @@ namespace uno {
          const auto type = Options::option_types.find(option_name);
          if (type != Options::option_types.end()) { // key found
             if (type->second == OptionType::DOUBLE) { // correct type
-               solver.options.set_double(option_name, option_value);
+               solver.user_options.set_double(option_name, option_value);
             }
             else { // incorrect type
                throw py::type_error(option_name + " is not of type double");
@@ -69,7 +69,7 @@ namespace uno {
          const auto type = Options::option_types.find(option_name);
          if (type != Options::option_types.end()) { // key found
             if (type->second == OptionType::STRING) { // correct type
-               solver.options.set_string(option_name, option_value);
+               solver.user_options.set_string(option_name, option_value);
             }
             else { // incorrect type
                throw py::type_error(option_name + " is not of type string");
@@ -83,7 +83,7 @@ namespace uno {
       .def("set_logger_stream", &UnoSolverWrapper::set_logger_stream)
 
       .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
-         Presets::set(solver.options, preset_name);
+         Presets::set(solver.user_options, preset_name);
       }, py::arg("preset_name"))
 
       .def("set_notify_acceptable_iterate_callback", [](UnoSolverWrapper& solver, NotifyAcceptableIterateCallback callback) {
