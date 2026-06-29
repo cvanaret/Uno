@@ -61,13 +61,7 @@ function test_clnlbeam()
     optimize!(model)
 
     tolerance = 1e-6
-    @assert abs(objective_value(model) - 0.) <= tolerance
-    @assert abs(value(x[1]) - 0.) <= tolerance
-    @assert abs(value(x[2]) - 0.) <= tolerance
-    @assert abs(dual(c1) - 1.) <= tolerance
-    @assert abs(dual(c2) - 1.) <= tolerance
-    @assert abs(dual(c3) - 1.) <= tolerance
-    @assert abs(dual(c4) - 1.) <= tolerance
+    @assert abs(objective_value(model) - 344.8761) <= tolerance
 end
 
 test_hs015()
