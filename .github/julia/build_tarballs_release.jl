@@ -16,9 +16,9 @@ sources = [
     # MUMPS v5.9.0
     ArchiveSource("https://mumps-solver.org/MUMPS_5.9.0.tar.gz",
                   "02c6efdb91749ec0f82351d40f3f860547272a1eb1d899126a4265b4d6bcc4ca"),
-    # HiGHS v1.14.0 with symbol mangling
+    # HiGHS v1.15.0
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
-              "f65a6838e3daa4fa23f06ffffc7c895370dbd3dc"),
+              "83960019015b0d5152df73110ff142f328edcfd2"),
     # Hwloc v2.13.0
     ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
                   "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
