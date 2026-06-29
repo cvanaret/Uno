@@ -32,37 +32,50 @@ function test_hs015()
     @assert abs(dual(c3) - (-1751.)) <= tolerance
 end
 
-function test_clnlbeam()
+function test_camshape_6400()
     model = Model(() -> Optimizer(["logger=INFO"]))
 
-    ni    = 20000
-    alpha = 350.0
-    h     = 1 / ni
+    n       = 6400                       # number of discretization points
+    R_v     = 1.0                        # design parameter related to the valve shape
+    R_min   = 1.0                        # minimum allowed radius of the cam
+    R_max   = 2.0                        # maximum allowed radius of the cam
+    alpha   = 1.5                        # curvature limit parameter
+    d_theta = 2 * pi / (5 * (n + 1))     # angle between discretization points
+    cos_dt  = cos(d_theta)               # constant: d_theta is a parameter, not a variable
 
-    @variable(model, -1.0  <= t[i in 0:ni] <= 1.0,  start = 0.05 * cos(i * h))
-    @variable(model, -0.05 <= x[i in 0:ni] <= 0.05, start = 0.05 * cos(i * h))
-    @variable(model, u[0:ni])     # free, no bounds
+    # radius of the cam at discretization points; start at the circle of radius (R_min+R_max)/2
+    @variable(model, R_min <= r[1:n] <= R_max, start = (R_min + R_max) / 2)
 
-    @objective(model, Min, sum(0.5 * h * (u[i+1]^2 + u[i]^2) +
-            0.5 * alpha * h * (cos(t[i+1]) + cos(t[i])) for i in 0:ni-1))
+    @objective(model, Max, (pi * R_v / n) * sum(r[i] for i in 1:n))
 
-    @constraint(model, cons1[i in 0:ni-1],
-        x[i+1] - x[i] - 0.5 * h * (sin(t[i+1]) + sin(t[i])) == 0)
+    # Convexity (bilinear in r; cos_dt is a precomputed constant)
+    @constraint(model, convexity[i in 2:n-1],
+        -r[i-1] * r[i] - r[i] * r[i+1] + 2 * r[i-1] * r[i+1] * cos_dt <= 0)
+    @constraint(model, convex_edge1,
+        -R_min * r[1] - r[1] * r[2] + 2 * R_min * r[2] * cos_dt <= 0)
+    @constraint(model, convex_edge2,
+        -R_min^2 - R_min * r[1] + 2 * R_min * r[1] * cos_dt <= 0)
+    @constraint(model, convex_edge3,
+        -r[n-1] * r[n] - r[n] * R_max + 2 * r[n-1] * R_max * cos_dt <= 0)
+    @constraint(model, convex_edge4,
+        -2 * R_max * r[n] + 2 * r[n]^2 * cos_dt <= 0)
 
-    @constraint(model, cons2[i in 0:ni-1],
-        t[i+1] - t[i] - 0.5 * h * u[i+1] - 0.5 * h * u[i] == 0)
+    # Curvature, lower bound
+    @constraint(model, curvature[i in 1:n-1], -alpha * d_theta <= r[i+1] - r[i])
+    @constraint(model, curvature_edge1,       -alpha * d_theta <= r[1] - R_min)
+    @constraint(model, curvature_edge2,       -alpha * d_theta <= R_max - r[n])
 
-    # fix boundary values (force=true overrides existing bounds)
-    fix(x[0],  0.0; force = true)
-    fix(x[ni], 0.0; force = true)
-    fix(t[0],  0.0; force = true)
-    fix(t[ni], 0.0; force = true)
+    # Curvature, upper bound
+    @constraint(model, curvature1[i in 1:n-1], r[i+1] - r[i] <= alpha * d_theta)
+    @constraint(model, curvature_edge11,       r[1] - R_min  <= alpha * d_theta)
+    @constraint(model, curvature_edge21,       R_max - r[n]  <= alpha * d_theta)
+
 
     optimize!(model)
 
     tolerance = 1e-6
-    @assert abs(objective_value(model) - 344.8761) <= tolerance
+    @assert abs(objective_value(model) - 4.448378) <= tolerance
 end
 
 test_hs015()
-test_clnlbeam()
+test_camshape_6400()
