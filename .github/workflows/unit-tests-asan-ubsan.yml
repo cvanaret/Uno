@@ -1,4 +1,4 @@
-name: Unit tests
+name: Unit tests with ASAN/UBSAN
 
 on:
   push:
@@ -104,9 +104,14 @@ jobs:
       # CONFIGURE
       # =========================================================
 
-      - name: Configure (Linux)
+      - name: Configure (Linux with ASan + UBSan)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          SANITIZER_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all -O1 -g"
+
+          echo "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1" >> $GITHUB_ENV
+          echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1" >> $GITHUB_ENV
+
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
             -DENABLE_TESTS=ON \
@@ -119,7 +124,6 @@ jobs:
             -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
-            -DKRYLOV_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
             -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -129,7 +133,6 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
-            -DKRYLOV=${{github.workspace}}/dependencies/lib/libkrylov.so \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
 
@@ -151,7 +154,6 @@ jobs:
             -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
-            -DKRYLOV_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
             -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -161,7 +163,6 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
-            -DKRYLOV=${{github.workspace}}/dependencies/lib/libkrylov.dylib \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -178,7 +179,6 @@ jobs:
             -DCMAKE_Fortran_COMPILER=gfortran \
             -DMUMPS_INCLUDE_DIR=${GITHUB_WORKSPACE}/dependencies/include \
             -DMETIS_INCLUDE_DIR=/mingw64/include \
-            -DKRYLOV_INCLUDE_DIR=${GITHUB_WORKSPACE}/dependencies/include \
             -DBQPD=${GITHUB_WORKSPACE}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=/mingw64/lib/libmetis.a \
             -DMUMPS_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libdmumps.a \
@@ -188,7 +188,6 @@ jobs:
             -DBLAS_LIBRARIES="${GITHUB_WORKSPACE}/dependencies/lib/libcblas.a;${GITHUB_WORKSPACE}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${GITHUB_WORKSPACE}/dependencies/lib/liblapack.a \
             -DHIGHS=${GITHUB_WORKSPACE}/dependencies/lib/libhighs.a \
-            -DKRYLOV=${GITHUB_WORKSPACE}/dependencies/bin/libkrylov.dll \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -202,12 +201,6 @@ jobs:
       # =========================================================
       # TEST
       # =========================================================
-
-      - name: Set PATH (Windows)
-        if: matrix.toolchain == 'mingw'
-        shell: msys2 {0}
-        run: |
-          echo "PATH=${GITHUB_WORKSPACE}/dependencies/bin:$PATH" >> $GITHUB_ENV
 
       - name: Run tests
         working-directory: build

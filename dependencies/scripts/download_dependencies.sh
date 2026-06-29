@@ -5,24 +5,56 @@ set -e
 OS_NAME="$(uname -s)"
 case "$OS_NAME" in
     Linux*)
-      if [[ "$CIBW_BUILD" == *musllinux* ]] || ldd --version 2>&1 | grep -qi musl; then
-        OS="linux-musl"
+      if ldd --version 2>&1 | grep -qi musl; then
+        echo "Unsupported OS: linux-musl"
+        exit 1
       else
         OS="linux-gnu"
+        OS_KRYLOV="linux"
+        EXTENSION_KRYLOV="tar.gz"
       fi
       ;;
-    Darwin*) OS="apple-darwin";;
-    Windows*) OS="w64-mingw32";;
-    MINGW64_NT*) OS="w64-mingw32";;
-    MSYS_NT*) OS="w64-mingw32";;
-    *) echo "Unsupported OS: $OS_NAME"; exit 1;;
+    Darwin*)
+		OS="apple-darwin"
+		OS_KRYLOV="macos"
+		EXTENSION_KRYLOV="tar.gz"
+		;;
+    Windows*|MINGW64_NT*|MSYS_NT*)
+		OS="w64-mingw32"
+		OS_KRYLOV="windows"
+		EXTENSION_KRYLOV="zip"
+		;;
+    *)
+		echo "Unsupported OS: $OS_NAME"
+		exit 1
+		;;
 esac
 # detect architecture
 ARCH_NAME="$(uname -m)"
 case "$ARCH_NAME" in
-    x86_64|amd64) ARCH="x86_64";;
-    arm64|aarch64) ARCH="aarch64";;
-    *) echo "Unknown architecture '$ARCH_NAME'."; exit 1;;
+    x86_64|amd64)
+		ARCH="x86_64"
+		ARCH_KRYLOV="x86_64"
+		;;
+    arm64|aarch64)
+		ARCH="aarch64";
+		case "$OS_KRYLOV" in
+			linux*)
+				ARCH_KRYLOV="aarch64"
+				;;
+			macos*)
+				ARCH_KRYLOV="arm64"
+				;;
+			*)
+				echo "Unsupported aarch64 OS: $OS_KRYLOV"
+				exit 1
+				;;
+		esac
+		;;
+    *)
+		echo "Unknown architecture '$ARCH_NAME'."
+		exit 1
+		;;
 esac
 
 # change directory
@@ -46,6 +78,21 @@ ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o UnoUtils.tar.gz "$ASSET_URL"
 tar -xzf UnoUtils.tar.gz
+pwd
+
+# download Krylov.jl
+VERSION="v0.10.8"
+REPO="https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases/download/${VERSION}"
+ASSET_NAME="libkrylov-${OS_KRYLOV}-${ARCH_KRYLOV}.${EXTENSION_KRYLOV}"
+ASSET_URL="${REPO}/${ASSET_NAME}"
+echo "Downloading: ${ASSET_URL}"
+if [[ "$OS_KRYLOV" == "windows" ]]; then
+	curl -L -o libkrylov.zip "$ASSET_URL"
+	unzip libkrylov.zip
+else
+	curl -L -o libkrylov.tar.gz "$ASSET_URL"
+	tar -xzf libkrylov.tar.gz
+fi
 pwd
 
 # delete unwanted directories

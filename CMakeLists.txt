@@ -256,6 +256,26 @@ if(SPRAL)
    message(STATUS "Found SPRAL")
 endif()
 
+# Krylov
+find_library(KRYLOV krylov)
+if(KRYLOV)
+   target_link_libraries(uno_dependencies INTERFACE ${KRYLOV})
+   target_compile_definitions(uno_dependencies INTERFACE HAS_KRYLOV)
+
+   get_filename_component(KRYLOV_DIRECTORY ${KRYLOV} DIRECTORY)
+   # The bundle ships krylov.h in an 'include' folder sibling to the library
+   # directory (lib/ on Linux/macOS, bin/ on Windows).
+   find_path(KRYLOV_INCLUDE_DIR krylov.h
+             HINTS "${KRYLOV_DIRECTORY}/../include" "${KRYLOV_DIRECTORY}")
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${KRYLOV_INCLUDE_DIR})
+
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/KrylovSolversTests.cpp)
+   endif()
+
+   message(STATUS "Found Krylov")
+endif()
+
 # helper function: resolve a mixed list of -lflags and relative paths to absolute paths
 function(resolve_library_paths input_list output_list)
    set(result)
@@ -383,10 +403,73 @@ if(SKBUILD)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
    endif()
 
+   # The installed extension loads libkrylov from a 'lib' subdirectory of the
+   # package. Point a relative RPATH there so @rpath/libkrylov.dylib (macOS) /
+   # libkrylov.so (Linux) resolves to unopy/lib/ at runtime. Windows has no
+   # RPATH; unopy/__init__.py adds unopy/lib via os.add_dll_directory().
+   if(APPLE)
+      set_target_properties(unopy PROPERTIES INSTALL_RPATH "@loader_path/lib")
+   elseif(UNIX)
+      set_target_properties(unopy PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+   endif()
+
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
    )
+
+   # =========================================================================
+   # Bundle the Krylov + Julia runtime into the wheel, INTACT
+   # =========================================================================
+   # juliac emits a *relocatable tree* that the repair tools (delocate/auditwheel/
+   # delvewheel) cannot place correctly: libkrylov finds its Julia runtime through
+   # baked-in relative paths and runtime dlopen(), neither of which the repair
+   # tools follow. So we install the tree ourselves into unopy/lib on every
+   # platform; the difference is only the source layout.
+   #
+   # Unix (macOS/Linux): libkrylov carries rpaths assuming it lives in a directory
+   # named 'lib' with the public libjulia.* alongside it and the internal kernel in
+   # a 'julia/' sibling (@loader_path/../lib, @loader_path/../lib/julia; the $ORIGIN
+   # equivalents on Linux). We copy the whole lib/ tree verbatim so those resolve.
+   #
+   # Windows: juliac output is flat (libkrylov.dll and all Julia DLLs together in
+   # dependencies/bin, no rpath, no julia/ subdir). delvewheel can't vendor them
+   # (libkrylov isn't in the .pyd's traceable import graph, and Julia loads its
+   # kernel by dlopen), so we install the flat DLL set into unopy/lib and
+   # unopy/__init__.py adds that directory via os.add_dll_directory().
+   if(KRYLOV AND NOT WIN32)
+      get_filename_component(KRYLOV_ABS "${KRYLOV}" ABSOLUTE)
+      get_filename_component(KRYLOV_DIR "${KRYLOV_ABS}" DIRECTORY)
+
+      # Copy the ENTIRE dependency lib/ tree into unopy/lib, preserving structure:
+      #   lib/libkrylov.dylib        -> unopy/lib/libkrylov.dylib
+      #   lib/libjulia.*.dylib       -> unopy/lib/libjulia.*.dylib   (Julia public)
+      #   lib/julia/*.dylib          -> unopy/lib/julia/*.dylib      (Julia internal)
+      # This reproduces juliac's build-time layout exactly, so every one of
+      # libkrylov's baked-in rpaths resolves: @loader_path/../lib finds the public
+      # libjulia.*, @loader_path/../lib/julia finds the internal kernel. Installing
+      # only libkrylov + the julia/ subdir (as before) missed libjulia.*, which
+      # sits at the top of lib/, not inside lib/julia/.
+      #
+      # Static archives are excluded: they're linked into the extension at build
+      # time, not loaded at runtime, so they would only bloat the wheel.
+      install(DIRECTORY "${KRYLOV_DIR}/"
+              DESTINATION unopy/lib
+              USE_SOURCE_PERMISSIONS
+              PATTERN "*.a"   EXCLUDE
+              PATTERN "*.lib" EXCLUDE)
+   elseif(KRYLOV AND WIN32)
+      get_filename_component(KRYLOV_ABS "${KRYLOV}" ABSOLUTE)
+      get_filename_component(KRYLOV_DIR "${KRYLOV_ABS}" DIRECTORY)
+
+      # Flat layout: install every DLL sitting next to libkrylov.dll (the Julia
+      # kernel + Julia's own MinGW runtime + libkrylov itself) into unopy/lib.
+      # __init__.py puts unopy/lib on the DLL search path so the .pyd finds
+      # libkrylov and libkrylov's dlopen()s of the Julia kernel resolve.
+      install(DIRECTORY "${KRYLOV_DIR}/"
+              DESTINATION unopy/lib
+              FILES_MATCHING PATTERN "*.dll")
+   endif()
 endif()
 
 # ======================
