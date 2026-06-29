@@ -39,20 +39,20 @@ namespace uno {
 
       // 1. large/sparse => barrier
       if (large_problem_dimension <= total_dimension || large_problem_nonzeros <= total_nonzeros) {
-         INFO << "Automatically picking the ipopt preset\n";
+         INFO << "Automatically picked the ipopt preset\n";
          return Preset::IPOPT;
       }
       /*
       // 2. many potential active constraints, and more than the DOF => barrier
       if (many_inequalities_floor < number_potential_active_constraints &&
             model.number_variables < number_potential_active_constraints) {
-         INFO << "Automatically picking the ipopt preset\n";
+         INFO << "Automatically picked the ipopt preset\n";
          return Preset::IPOPT;
       }
       */
       // 3. small/medium with modest inequalities (and the specialized cases) => active-set SQP
       else {
-         INFO << "Automatically picking the filtersqp preset\n";
+         INFO << "Automatically picked the filtersqp preset\n";
          return Preset::FILTERSQP;
       }
    }
