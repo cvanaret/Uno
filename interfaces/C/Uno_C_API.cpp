@@ -957,7 +957,13 @@ void uno_options_destroy_iterator(uno_options_iterator* iterator) {
 }
 
 bool uno_load_solver_option_file(void* solver, const char* file_name) {
-   return uno_set_solver_string_option(solver, "option_file", file_name);
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   Options::load_option_file(*uno_solver->user_options, file_name);
+   return true;
 }
 
 bool uno_set_solver_preset(void* solver, const char* preset_name) {
