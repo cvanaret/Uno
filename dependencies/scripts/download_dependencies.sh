@@ -115,7 +115,7 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	cp -a "${BUILD_ROOT}/install/include/." include
 	rm -rf "${BUILD_ROOT}"
 
-	if [[ -n "${CIBW_BUILD:-}" ]]; then            # wheel build only; tests link libstdc++ dynamically
+	if [[ -n "${UNO_BUNDLE_RUNTIME:-}" ]]; then            # wheel build only; tests link libstdc++ dynamically
 		LIBSTDCXX="$("$CXX_BIN" -print-file-name=libstdc++.a || true)"
 		[[ "$LIBSTDCXX" != "libstdc++.a" ]] && command -v cygpath >/dev/null 2>&1 && LIBSTDCXX="$(cygpath -u "$LIBSTDCXX")"
 		if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
