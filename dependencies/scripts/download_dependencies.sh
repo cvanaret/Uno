@@ -53,15 +53,17 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	# delete UnoUtils' HiGHS
 	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
 
-	# clone HiGHS
+	# fetch HiGHS source
 	BUILD_ROOT="$(mktemp -d)"
 	VERSION="v1.15.0"
-	REPO="https://github.com/ERGO-Code/HiGHS.git"
-	GEN_FLAGS=(-G "MinGW Makefiles")
+	ASSET_URL="https://github.com/ERGO-Code/HiGHS/archive/refs/tags/${VERSION}.tar.gz"
+	echo "Downloading: ${ASSET_URL}"
+	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
+	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "$SRC_DIR" --strip-components=1
 
-	git clone --depth 1 --branch "${VERSION}" "${REPO}" "${BUILD_ROOT}/HiGHS"
+	# build
 	cmake -S "${BUILD_ROOT}/HiGHS" -B "${BUILD_ROOT}/build" \
-		"${GEN_FLAGS[@]}" \
+		-G "MinGW Makefiles" \
 		-DCMAKE_INSTALL_PREFIX="${BUILD_ROOT}/install" \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
@@ -70,7 +72,7 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 		-DBUILD_EXAMPLES=OFF \
 		-DBUILD_TESTING=OFF \
 		-DBUILD_CXX_EXE=OFF \
-		-DBLAS_LIBRARIES=lib/libblas.a \
+		-DBLAS_LIBRARIES="${PWD}/lib/libblas.a" \
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
 		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
@@ -81,14 +83,13 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	cp -a "${BUILD_ROOT}/install/include/." include
 	rm -rf "${BUILD_ROOT}"
 
-
-    CXX="${CXX:-g++}"
-    LIBSTDCXX="$("$CXX" -print-file-name=libstdc++.a)"
-    if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
-        echo "Could not locate libstdc++.a via $CXX"; exit 1
-    fi
-    echo "Using $LIBSTDCXX ($($CXX -dumpversion))"
-    cp "$LIBSTDCXX" "lib/libstdc++.a"
+	CXX="${CXX:-g++}"
+	LIBSTDCXX="$("$CXX" -print-file-name=libstdc++.a)"
+	if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
+	  echo "Could not locate libstdc++.a via $CXX"; exit 1
+	fi
+	echo "Using $LIBSTDCXX ($($CXX -dumpversion))"
+	cp "$LIBSTDCXX" "lib/libstdc++.a"
 fi
 
 # delete unwanted directories
