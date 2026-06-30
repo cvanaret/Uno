@@ -135,8 +135,18 @@ jobs:
     # DEPENDENCIES
     # =========================================================
 
-    - name: Download dependencies
+    - name: Download dependencies (not MinGW)
+      if: matrix.toolchain != 'mingw'
       run: bash dependencies/scripts/download_dependencies.sh
+      
+    - name: Download dependencies (MinGW)
+      if: matrix.toolchain == 'mingw'
+      run: bash dependencies/scripts/download_dependencies.sh
+      env:
+        CC:  C:/mingw64/bin/gcc.exe
+        CXX: C:/mingw64/bin/g++.exe
+        CMAKE_C_COMPILER:   C:/mingw64/bin/gcc.exe
+        CMAKE_CXX_COMPILER: C:/mingw64/bin/g++.exe
 
     # =========================================================
     # MSVC: Download BLAS/LAPACK
