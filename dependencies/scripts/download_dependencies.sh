@@ -52,19 +52,17 @@ pwd
 if [[ "$OS" == "w64-mingw32" ]]; then
 	# delete UnoUtils' HiGHS
 	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
-
-	# cibuildwheel's shell has a minimal PATH; pull cmake + ninja from PyPI
-	PY="$(command -v python3 || command -v python)"
-	[[ -z "$PY" ]] && { echo "python not on PATH"; exit 1; }
-	"$PY" -m pip install --quiet "cmake<4" ninja
-	CMAKE_BIN="$("$PY" -c 'import cmake;  print(cmake.CMAKE_BIN_DIR)')"
-	NINJA_BIN="$("$PY" -c 'import ninja;  print(ninja.BIN_DIR)')"
-	if command -v cygpath >/dev/null 2>&1; then        # normalise C:\… -> /c/… for bash
-		CMAKE_BIN="$(cygpath -u "$CMAKE_BIN")"
-		NINJA_BIN="$(cygpath -u "$NINJA_BIN")"
+	
+	# This runs in cibuildwheel's MSYS2 (MSYS) login shell. /mingw64/bin -- the
+	# toolchain we actually build with -- is not on PATH here, and the Windows
+	# CPython isn't either, so pip is out. Use pacman, and expose mingw64.
+	export PATH="/mingw64/bin:$PATH"
+	if ! command -v cmake >/dev/null 2>&1 || ! command -v ninja >/dev/null 2>&1; then
+		pacman -Sy --needed --noconfirm mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
 	fi
-	export PATH="${CMAKE_BIN}:${NINJA_BIN}:$PATH"
-	GEN_FLAGS=(-G Ninja)
+	GEN_FLAGS=(-G Ninja
+		-DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc
+		-DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++)
 
 	# fetch HiGHS source
 	BUILD_ROOT="$(mktemp -d)"
