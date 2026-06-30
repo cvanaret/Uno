@@ -53,6 +53,19 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	# delete UnoUtils' HiGHS
 	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
 
+	# cibuildwheel's shell has a minimal PATH; pull cmake + ninja from PyPI
+	PY="$(command -v python3 || command -v python)"
+	[[ -z "$PY" ]] && { echo "python not on PATH"; exit 1; }
+	"$PY" -m pip install --quiet "cmake<4" ninja
+	CMAKE_BIN="$("$PY" -c 'import cmake;  print(cmake.CMAKE_BIN_DIR)')"
+	NINJA_BIN="$("$PY" -c 'import ninja;  print(ninja.BIN_DIR)')"
+	if command -v cygpath >/dev/null 2>&1; then        # normalise C:\… -> /c/… for bash
+		CMAKE_BIN="$(cygpath -u "$CMAKE_BIN")"
+		NINJA_BIN="$(cygpath -u "$NINJA_BIN")"
+	fi
+	export PATH="${CMAKE_BIN}:${NINJA_BIN}:$PATH"
+	GEN_FLAGS=(-G Ninja)
+
 	# fetch HiGHS source
 	BUILD_ROOT="$(mktemp -d)"
 	mkdir "${BUILD_ROOT}/HiGHS"
@@ -64,7 +77,7 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 
 	# build
 	cmake -S "${BUILD_ROOT}/HiGHS" -B "${BUILD_ROOT}/build" \
-		-G "MinGW Makefiles" \
+		"${GEN_FLAGS[@]}" \
 		-DCMAKE_INSTALL_PREFIX="${BUILD_ROOT}/install" \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
