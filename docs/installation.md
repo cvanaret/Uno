@@ -129,7 +129,8 @@ You can pass the following options as `-DOPTION=value`:
 | `MA27`                 | path to the MA27 library                                                                                   | `path_to_libma27`           |
 | `MA57`                 | path to the MA57 library                                                                                   | `path_to_libma57`           |
 | `HSL`                  | path to the HSL library                                                                                    | `path_to_libhsl`            |
-| `HIGHS`                | path to the HiGHS library                                                                                  | `path_to_libhighs`          |
+| `HIGHS`                | path to the HiGHS libraries (typically `libhighs` and `libhighs_extras`)                                   | `path_to_libhighs`          |
+| `HIGHS_INCLUDE_DIR`    | path to HiGHS include directory                                                                            | `path_to_highs_include_dir` |
 | `METIS`                | path to the METIS library                                                                                  | `path_to_libmetis`          |
 | `MUMPS_LIBRARY`        | path to the MUMPS library                                                                                  | `path_to_libdmumps`         |
 | `MUMPS_COMMON_LIBRARY` | path to the MUMPS common library                                                                           | `path_to_libmumps_common`   |
