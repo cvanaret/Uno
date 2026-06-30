@@ -48,47 +48,40 @@ curl -L -o UnoUtils.tar.gz "$ASSET_URL"
 tar -xzf UnoUtils.tar.gz
 pwd
 
-# delete unwanted directories
-# rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
-rm -rf lib/cmake lib/pkgconfig
-
-# delete UnoUtils' HiGHS
-rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
-
-# clone HiGHS
-BUILD_ROOT="$(mktemp -d)"
-VERSION="v1.15.0"
-REPO="https://github.com/ERGO-Code/HiGHS.git"
-GEN_FLAGS=()
-if [[ -n "${HIGHS_CMAKE_GENERATOR:-}" ]]; then
-    GEN_FLAGS=(-G "${HIGHS_CMAKE_GENERATOR}")
-elif [[ "$OS" == "w64-mingw32" ]]; then
-    GEN_FLAGS=(-G "MinGW Makefiles")
-fi
-
-git clone --depth 1 --branch "${VERSION}" "${REPO}" "${BUILD_ROOT}/HiGHS"
-cmake -S "${BUILD_ROOT}/HiGHS" -B "${BUILD_ROOT}/build" \
-	"${GEN_FLAGS[@]}" \
-	-DCMAKE_INSTALL_PREFIX="${BUILD_ROOT}/install" \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DBUILD_SHARED_LIBS=OFF \
-	-DZLIB=OFF \
-	-DHIPO=ON \
-	-DBUILD_EXAMPLES=OFF \
-	-DBUILD_TESTING=OFF \
-	-DBUILD_CXX_EXE=OFF \
-	-DBLAS_LIBRARIES=lib/libblas.a \
-	-DBUILD_SHARED_EXTRAS_LIB=OFF \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=ON
-
-cmake --build "${BUILD_ROOT}/build" --config Release --parallel
-cmake --install "${BUILD_ROOT}/build" --config Release
-
-cp -a "${BUILD_ROOT}/install/lib/."     lib
-cp -a "${BUILD_ROOT}/install/include/." include
-rm -rf "${BUILD_ROOT}"
-
+# on Windows, compile HiGHS on the fly and replace that of UnoUtils
 if [[ "$OS" == "w64-mingw32" ]]; then
+	# delete UnoUtils' HiGHS
+	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
+
+	# clone HiGHS
+	BUILD_ROOT="$(mktemp -d)"
+	VERSION="v1.15.0"
+	REPO="https://github.com/ERGO-Code/HiGHS.git"
+	GEN_FLAGS=(-G "MinGW Makefiles")
+
+	git clone --depth 1 --branch "${VERSION}" "${REPO}" "${BUILD_ROOT}/HiGHS"
+	cmake -S "${BUILD_ROOT}/HiGHS" -B "${BUILD_ROOT}/build" \
+		"${GEN_FLAGS[@]}" \
+		-DCMAKE_INSTALL_PREFIX="${BUILD_ROOT}/install" \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_SHARED_LIBS=OFF \
+		-DZLIB=OFF \
+		-DHIPO=ON \
+		-DBUILD_EXAMPLES=OFF \
+		-DBUILD_TESTING=OFF \
+		-DBUILD_CXX_EXE=OFF \
+		-DBLAS_LIBRARIES=lib/libblas.a \
+		-DBUILD_SHARED_EXTRAS_LIB=OFF \
+		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+	cmake --build "${BUILD_ROOT}/build" --config Release --parallel
+	cmake --install "${BUILD_ROOT}/build" --config Release
+
+	cp -a "${BUILD_ROOT}/install/lib/."     lib
+	cp -a "${BUILD_ROOT}/install/include/." include
+	rm -rf "${BUILD_ROOT}"
+
+
     CXX="${CXX:-g++}"
     LIBSTDCXX="$("$CXX" -print-file-name=libstdc++.a)"
     if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
@@ -97,3 +90,7 @@ if [[ "$OS" == "w64-mingw32" ]]; then
     echo "Using $LIBSTDCXX ($($CXX -dumpversion))"
     cp "$LIBSTDCXX" "lib/libstdc++.a"
 fi
+
+# delete unwanted directories
+# rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
+rm -rf lib/cmake lib/pkgconfig
