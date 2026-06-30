@@ -38,7 +38,7 @@ curl -L -o BQPD.tar.gz "$ASSET_URL"
 tar -xzf BQPD.tar.gz
 pwd
 
-# download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
+# download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK)
 VERSION="2026.7.2"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5-cxx11.tar.gz"
@@ -52,10 +52,48 @@ pwd
 # rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
 rm -rf lib/cmake lib/pkgconfig
 
+# delete UnoUtils' HiGHS
+rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
+
+# clone HiGHS
+BUILD_ROOT="$(mktemp -d)"
+VERSION="v1.15.0"
+REPO="https://github.com/ERGO-Code/HiGHS.git"
+GEN_FLAGS=()
+if [[ -n "${HIGHS_CMAKE_GENERATOR:-}" ]]; then
+    GEN_FLAGS=(-G "${HIGHS_CMAKE_GENERATOR}")
+elif [[ "$OS" == "w64-mingw32" ]]; then
+    GEN_FLAGS=(-G "MinGW Makefiles")
+fi
+
+git clone --depth 1 --branch "${VERSION}" "${REPO}" "${BUILD_ROOT}/HiGHS"
+cmake -S "${BUILD_ROOT}/HiGHS" -B "${BUILD_ROOT}/build" \
+	"${GEN_FLAGS[@]}" \
+	-DCMAKE_INSTALL_PREFIX="${BUILD_ROOT}/install" \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DBUILD_SHARED_LIBS=OFF \
+	-DZLIB=OFF \
+	-DHIPO=ON \
+	-DBUILD_EXAMPLES=OFF \
+	-DBUILD_TESTING=OFF \
+	-DBUILD_CXX_EXE=OFF \
+	-DBLAS_LIBRARIES=lib/libblas.a \
+	-DBUILD_SHARED_EXTRAS_LIB=OFF \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+cmake --build "${BUILD_ROOT}/build" --config Release --parallel
+cmake --install "${BUILD_ROOT}/build" --config Release
+
+cp -a "${BUILD_ROOT}/install/lib/."     lib
+cp -a "${BUILD_ROOT}/install/include/." include
+rm -rf "${BUILD_ROOT}"
+
 if [[ "$OS" == "w64-mingw32" ]]; then
-    cd ..
-    ASSET_URL="https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz"
-    curl -L -o libstdc++.tar.gz "$ASSET_URL"
-    tar -xzf libstdc++.tar.gz
-    cp ./mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ./dependencies/lib/libstdc++.a
+    CXX="${CXX:-g++}"
+    LIBSTDCXX="$("$CXX" -print-file-name=libstdc++.a)"
+    if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
+        echo "Could not locate libstdc++.a via $CXX"; exit 1
+    fi
+    echo "Using $LIBSTDCXX ($($CXX -dumpversion))"
+    cp "$LIBSTDCXX" "lib/libstdc++.a"
 fi
