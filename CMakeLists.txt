@@ -182,8 +182,7 @@ if(HIGHS)
    target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
    target_compile_definitions(uno_dependencies INTERFACE HAS_HIGHS)
 
-   get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_DIRECTORY}/../include/highs)
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_INCLUDE_DIR})
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp

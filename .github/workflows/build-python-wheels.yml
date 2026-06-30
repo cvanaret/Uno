@@ -137,7 +137,7 @@ jobs:
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
-            cmake.define.AUXILIARY_LIBRARIES="dependencies/lib/libhighs_extras.a;dependencies/lib/libstdc++.a"
+            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
