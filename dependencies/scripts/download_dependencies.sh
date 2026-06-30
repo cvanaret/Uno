@@ -53,10 +53,9 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	# delete UnoUtils' HiGHS
 	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
 	
-	# This runs in cibuildwheel's MSYS2 (MSYS) login shell. /mingw64/bin -- the
-	# toolchain we actually build with -- is not on PATH here, and the Windows
-	# CPython isn't either, so pip is out. Use pacman, and expose mingw64.
-	export PATH="/mingw64/bin:$PATH"
+	# This runs in cibuildwheel's MSYS2 (MSYS) login shell
+	# The Windows is not on PATH here, CPython isn't either, so pip is out
+	# Use pacman, and expose mingw64.
 	if ! command -v cmake >/dev/null 2>&1 || ! command -v ninja >/dev/null 2>&1; then
 		pacman -Sy --needed --noconfirm mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
 	fi
