@@ -145,7 +145,7 @@ cmake .. \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
     -DBLAS_LIBRARIES=${libdir}/libopenblas.${dlext} \
-    -DBUILD_SHARED_EXTRAS_LIB=OFF \
+    -DBUILD_SHARED_EXTRAS_LIB=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
 if [[ "${target}" == *-linux* ]]; then
