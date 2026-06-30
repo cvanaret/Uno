@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.7.1"
+version = v"2026.7.2"
 
 # Collection of sources
 sources = [
@@ -291,6 +291,6 @@ build_tarballs(
     products,
     dependencies;
     julia_compat = "1.6",
-    preferred_gcc_version = v"13.2.0",
+    preferred_gcc_version = v"13.2.0", # with BinaryBuilder{Base} developed
     clang_use_lld=false,
 )
