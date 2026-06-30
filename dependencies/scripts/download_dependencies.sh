@@ -70,10 +70,22 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
 	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "${BUILD_ROOT}/HiGHS" --strip-components=1
 
+	# Build HiGHS with the SAME compiler the consuming workflow links with.
+	# A mismatch here is what produces the __emutls_v._ZSt*__once_call* and
+	# libstdc++ undefined references (e.g. GCC 8.1.0 emutls vs GCC 16 native TLS).
+	towin() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi; }
+	CC_BIN="${CMAKE_C_COMPILER:-${CC:-$(command -v gcc || true)}}"
+	CXX_BIN="${CMAKE_CXX_COMPILER:-${CXX:-$(command -v g++ || true)}}"
+	MAKE_BIN="${CMAKE_MAKE_PROGRAM:-$(command -v mingw32-make || command -v make || true)}"
+	if [[ -z "$CC_BIN" || -z "$CXX_BIN" || -z "$MAKE_BIN" ]]; then
+		echo "No MinGW toolchain found; set CMAKE_{C,CXX}_COMPILER/CMAKE_MAKE_PROGRAM or put gcc/g++/make on PATH"; exit 1
+	fi
+	echo "Building HiGHS with $CXX_BIN ($("$CXX_BIN" -dumpversion))"
+
 	GEN_FLAGS=(-G "Unix Makefiles"
-		-DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
-		-DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
-		-DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe)
+		-DCMAKE_MAKE_PROGRAM="$(towin "$MAKE_BIN")"
+		-DCMAKE_C_COMPILER="$(towin "$CC_BIN")"
+		-DCMAKE_CXX_COMPILER="$(towin "$CXX_BIN")")
 		
 	# native cmake needs Windows paths, not MSYS ones
 	SRC_W="$(cygpath -m "${BUILD_ROOT}/HiGHS")"
@@ -103,16 +115,15 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	cp -a "${BUILD_ROOT}/install/include/." include
 	rm -rf "${BUILD_ROOT}"
 
-	CXX="${CXX:-C:/mingw64/bin/g++.exe}"
-	LIBSTDCXX="$("$CXX" -print-file-name=libstdc++.a || true)"
-	if [[ "$LIBSTDCXX" != "libstdc++.a" ]] && command -v cygpath >/dev/null 2>&1; then
-		LIBSTDCXX="$(cygpath -u "$LIBSTDCXX")"   # C:/… -> /c/… for bash cp/-f
+	if [[ -n "${CIBW_BUILD:-}" ]]; then            # wheel build only; tests link libstdc++ dynamically
+		LIBSTDCXX="$("$CXX_BIN" -print-file-name=libstdc++.a || true)"
+		[[ "$LIBSTDCXX" != "libstdc++.a" ]] && command -v cygpath >/dev/null 2>&1 && LIBSTDCXX="$(cygpath -u "$LIBSTDCXX")"
+		if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
+			echo "Could not locate libstdc++.a via $CXX_BIN"; exit 1
+		fi
+		echo "Bundling $LIBSTDCXX"
+		cp "$LIBSTDCXX" "lib/libstdc++.a"
 	fi
-	if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
-		echo "Could not locate libstdc++.a via $CXX"; exit 1
-	fi
-	echo "Using $LIBSTDCXX ($("$CXX" -dumpversion))"
-	cp "$LIBSTDCXX" "lib/libstdc++.a"
 fi
 
 # delete unwanted directories
