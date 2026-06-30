@@ -51,12 +51,13 @@ cmake \
     -DCMAKE_EXE_LINKER_FLAGS="${SANITIZER_FLAGS}" \
     -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
-    -DHIGHS=${libdir}/libhighs.${dlext} \
+    -DHIGHS="${libdir}/libhighs.${dlext};${libdir}/libhighs_extras.${dlext}" \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DBLA_VENDOR="libblastrampoline" \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
+    -DHIGHS_INCLUDE_DIR=${includedir}/highs \
     -DSPRAL_INCLUDE_DIR=${includedir} \
     -DMUMPS_LIBRARY="${libdir}/libdmumps.${dlext}" \
     -DMUMPS_COMMON_LIBRARY="${libdir}/libmumps_common.${dlext}" \
