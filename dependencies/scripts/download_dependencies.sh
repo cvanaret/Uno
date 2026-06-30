@@ -60,9 +60,6 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	if ! command -v cmake >/dev/null 2>&1 || ! command -v ninja >/dev/null 2>&1; then
 		pacman -Sy --needed --noconfirm mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
 	fi
-	GEN_FLAGS=(-G Ninja
-		-DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc
-		-DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++)
 
 	# fetch HiGHS source
 	BUILD_ROOT="$(mktemp -d)"
@@ -73,10 +70,21 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
 	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "${BUILD_ROOT}/HiGHS" --strip-components=1
 
+	GEN_FLAGS=(-G "Unix Makefiles"
+		-DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
+		-DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
+		-DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe)
+		
+	# native cmake needs Windows paths, not MSYS ones
+	SRC_W="$(cygpath -m "${BUILD_ROOT}/HiGHS")"
+	BLD_W="$(cygpath -m "${BUILD_ROOT}/build")"
+	PREFIX_W="$(cygpath -m "${BUILD_ROOT}/install")"
+	BLAS_W="$(cygpath -m "${PWD}/lib/libblas.a")"
+
 	# build
-	cmake -S "${BUILD_ROOT}/HiGHS" -B "${BUILD_ROOT}/build" \
+	cmake -S "$SRC_W" -B "$BLD_W" \
 		"${GEN_FLAGS[@]}" \
-		-DCMAKE_INSTALL_PREFIX="${BUILD_ROOT}/install" \
+		-DCMAKE_INSTALL_PREFIX="$PREFIX_W" \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DZLIB=OFF \
@@ -84,12 +92,12 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 		-DBUILD_EXAMPLES=OFF \
 		-DBUILD_TESTING=OFF \
 		-DBUILD_CXX_EXE=OFF \
-		-DBLAS_LIBRARIES="${PWD}/lib/libblas.a" \
+		-DBLAS_LIBRARIES="$BLAS_W" \
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
 		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-	cmake --build "${BUILD_ROOT}/build" --config Release --parallel
-	cmake --install "${BUILD_ROOT}/build" --config Release
+	cmake --build "$BLD_W" --config Release --parallel
+	cmake --install "$BLD_W" --config Release
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
 	cp -a "${BUILD_ROOT}/install/include/." include
