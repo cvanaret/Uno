@@ -59,7 +59,7 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	ASSET_URL="https://github.com/ERGO-Code/HiGHS/archive/refs/tags/${VERSION}.tar.gz"
 	echo "Downloading: ${ASSET_URL}"
 	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
-	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "$SRC_DIR" --strip-components=1
+	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "${BUILD_ROOT}/HiGHS" --strip-components=1
 
 	# build
 	cmake -S "${BUILD_ROOT}/HiGHS" -B "${BUILD_ROOT}/build" \
