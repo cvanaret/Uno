@@ -294,7 +294,6 @@ jobs:
           -DCMAKE_Fortran_COMPILER=ifx ^
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-          -DHIGHS_INCLUDE_DIR=${{github.workspace}}\dependencies\include\highs ^
           -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
           -DMETIS_LIBRARY=${{github.workspace}}\dependencies\lib\libmetis.a ^
           -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
@@ -303,7 +302,6 @@ jobs:
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
           -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
-          -DHIGHS="${{github.workspace}}\dependencies\lib\libhighs.a;${{github.workspace}}\dependencies\lib\libhighs_extras.a" ^
           -DBUILD_STATIC_LIBS=ON ^
           -DBUILD_SHARED_LIBS=OFF .
 
