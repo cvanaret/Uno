@@ -55,6 +55,7 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 
 	# fetch HiGHS source
 	BUILD_ROOT="$(mktemp -d)"
+	mkdir "${BUILD_ROOT}/HiGHS"
 	VERSION="v1.15.0"
 	ASSET_URL="https://github.com/ERGO-Code/HiGHS/archive/refs/tags/${VERSION}.tar.gz"
 	echo "Downloading: ${ASSET_URL}"
