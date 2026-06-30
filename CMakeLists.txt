@@ -270,6 +270,13 @@ function(resolve_library_paths input_list output_list)
    set(${output_list} "${result}" PARENT_SCOPE)
 endfunction()
 
+# additional libraries to link against
+set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
+if(AUXILIARY_LIBRARIES)
+   resolve_library_paths(AUXILIARY_LIBRARIES ABSOLUTE_AUXILIARY_LIBRARIES)
+   target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_AUXILIARY_LIBRARIES})
+endif()
+
 # LAPACK
 if(LAPACK_LIBRARIES)
    resolve_library_paths(LAPACK_LIBRARIES ABSOLUTE_LAPACK_LIBRARIES)
@@ -286,13 +293,6 @@ if(BLAS_LIBRARIES)
 else()
    find_package(BLAS REQUIRED)
    target_link_libraries(uno_dependencies INTERFACE BLAS::BLAS)
-endif()
-
-# additional libraries to link against
-set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
-if(AUXILIARY_LIBRARIES)
-   resolve_library_paths(AUXILIARY_LIBRARIES ABSOLUTE_AUXILIARY_LIBRARIES)
-   target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_AUXILIARY_LIBRARIES})
 endif()
 
 # ======================
