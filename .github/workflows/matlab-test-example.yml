@@ -1,0 +1,104 @@
+name: Test the Matlab interface on the example 
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            addpath: install/bin
+          - os: macos-latest
+            addpath: install/lib
+        
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+      
+      - name: Install Fortran compiler (macOS)
+        if: startsWith(matrix.os, 'macos')
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '14'
+      
+      - name: Setup MSYS2 (Windows)
+        if: startsWith(matrix.os, 'windows')
+        uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+          msystem: MINGW64
+          update: true
+          install: |
+            mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+            -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a"
+        
+      - name: Configure (Windows)
+        if: startsWith(matrix.os, 'windows')
+        shell: cmd
+        run: |
+          cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" ^
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a ^
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a ^
+            -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a"
+        
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Build unomex
+        run: cmake --build ${{github.workspace}}/build --target unomex --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Install unomex
+        run: cmake --install ${{github.workspace}}/build --prefix ${{github.workspace}}/install
+
+      - name: Run example (high-level interface)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            addpath('${{ matrix.addpath }}'); 
+            run('interfaces/Matlab/example/example_uno.m');
+
+      - name: Run example (low-level interface)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            addpath('${{ matrix.addpath }}');
+            run('interfaces/Matlab/example/example_hs015.m');

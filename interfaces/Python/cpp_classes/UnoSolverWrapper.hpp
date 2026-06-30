@@ -4,6 +4,7 @@
 #ifndef UNO_UNOSOLVERWRAPPER_H
 #define UNO_UNOSOLVERWRAPPER_H
 
+#include <iostream>
 #include <optional>
 #include "Uno.hpp"
 #include "options/Options.hpp"
