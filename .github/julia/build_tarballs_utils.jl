@@ -208,6 +208,7 @@ cmake .. \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
     -DBLAS_LIBRARIES=${prefix}/lib/libblas.a \
+    -DBUILD_SHARED_EXTRAS_LIB=OFF \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
 if [[ "${target}" == *-linux* ]]; then
@@ -268,6 +269,7 @@ products = [
     FileProduct("lib/libmumps_common.a", :libmumps_common_a),
     FileProduct("lib/libdmumps.a", :libdmumps_a),
     FileProduct("lib/libhighs.a", :libhighs_a),
+    FileProduct("lib/libhighs_extras.a", :libhighs_extras_a),
     FileProduct("lib/libspral.a", :libspral_a),
     # FileProduct("lib/libhwloc.a", :libhwloc_a),
 ]
