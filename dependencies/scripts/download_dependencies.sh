@@ -103,12 +103,15 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	cp -a "${BUILD_ROOT}/install/include/." include
 	rm -rf "${BUILD_ROOT}"
 
-	CXX="${CXX:-g++}"
-	LIBSTDCXX="$("$CXX" -print-file-name=libstdc++.a)"
-	if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
-	  echo "Could not locate libstdc++.a via $CXX"; exit 1
+	CXX="${CXX:-C:/mingw64/bin/g++.exe}"
+	LIBSTDCXX="$("$CXX" -print-file-name=libstdc++.a || true)"
+	if [[ "$LIBSTDCXX" != "libstdc++.a" ]] && command -v cygpath >/dev/null 2>&1; then
+		LIBSTDCXX="$(cygpath -u "$LIBSTDCXX")"   # C:/… -> /c/… for bash cp/-f
 	fi
-	echo "Using $LIBSTDCXX ($($CXX -dumpversion))"
+	if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
+		echo "Could not locate libstdc++.a via $CXX"; exit 1
+	fi
+	echo "Using $LIBSTDCXX ($("$CXX" -dumpversion))"
 	cp "$LIBSTDCXX" "lib/libstdc++.a"
 fi
 
