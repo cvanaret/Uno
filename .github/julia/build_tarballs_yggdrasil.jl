@@ -51,7 +51,7 @@ cmake \
     -DCMAKE_EXE_LINKER_FLAGS="${SANITIZER_FLAGS}" \
     -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
-    -DHIGHS="${libdir}/libhighs.${dlext};${libdir}/libhighs_extras.${dlext}" \
+    -DHIGHS=${libdir}/libhighs.${dlext} \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DBLA_VENDOR="libblastrampoline" \
