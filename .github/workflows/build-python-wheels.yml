@@ -132,6 +132,8 @@ jobs:
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
+            CC=C:/mingw64/bin/gcc.exe
+            CXX=C:/mingw64/bin/g++.exe
             CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
             CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
