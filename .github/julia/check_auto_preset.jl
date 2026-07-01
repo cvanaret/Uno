@@ -6,7 +6,7 @@
 using UnoSolver, JuMP
 
 function test_hs015()
-    model = Model(() -> UnoSolver.Optimizer(["logger=INFO"]))
+    model = Model(() -> UnoSolver.Optimizer(; logger = "INFO"))
 
     @variable(model, x, start = -2.)
     @variable(model, y, start = 1.)
@@ -33,7 +33,7 @@ function test_hs015()
 end
 
 function test_camshape_6400()
-    model = Model(() -> UnoSolver.Optimizer(["logger=INFO"]))
+    model = Model(() -> UnoSolver.Optimizer(; logger = "INFO"))
 
     n       = 6400                       # number of discretization points
     R_v     = 1.0                        # design parameter related to the valve shape
