@@ -379,8 +379,7 @@ if(SKBUILD)
    target_link_libraries(unopy PUBLIC uno_dependencies)
    
    if(MINGW)
-	   target_link_options(unopy PRIVATE
-         -static-libstdc++ -static-libgcc -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic)
+	   target_link_options(unopy PRIVATE -static-libstdc++)
 	endif()
 
    if(UNO_PYBIND11_DETAILED_ERRORS)
