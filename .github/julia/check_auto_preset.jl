@@ -29,7 +29,7 @@ function test_hs015()
     # check the preset
     optimizer = unsafe_backend(model)
     uno_method = uno_get_method_description(optimizer.solver)
-    @assert occursin(uno_method, "SQP")
+    @assert occursin("SQP", uno_method)
 end
 
 function test_camshape_6400()
@@ -78,7 +78,7 @@ function test_camshape_6400()
     # check the preset
     optimizer = unsafe_backend(model)
     uno_method = uno_get_method_description(optimizer.solver)
-    @assert occursin(uno_method, "interior-point")
+    @assert occursin("interior-point", uno_method)
 end
 
 test_hs015()
