@@ -23,6 +23,10 @@ namespace uno {
 }
 #endif
 
+#ifdef HSL_RUNTIME_LOADING
+#include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
+#endif
+
 #ifdef HAS_MUMPS
 #include "ingredients/subproblem_solvers/MUMPS/MUMPSSolver.hpp"
 #endif
@@ -32,7 +36,12 @@ namespace uno {
 #endif
 
 namespace uno {
-   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(const std::string& linear_solver) {
+   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(
+         const std::string& linear_solver, [[maybe_unused]] const std::string& hsllib) {
+#ifdef HSL_RUNTIME_LOADING
+      // honour the requested HSL library name before LIBHSL_isfunctional() triggers the (cached) load
+      load_hsl_library(hsllib);
+#endif
 #if defined(HAS_HSL) || defined(HAS_MA57)
       if (linear_solver == "MA57"
    #ifdef HAS_HSL
