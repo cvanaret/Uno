@@ -120,9 +120,13 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
+          CC: C:/mingw64/bin/gcc.exe
+          CXX: C:/mingw64/bin/g++.exe
+          CMAKE_C_COMPILER: C:/mingw64/bin/gcc.exe
+          CMAKE_CXX_COMPILER: C:/mingw64/bin/g++.exe
           UNO_BUNDLE_RUNTIME: "1"
           CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
-          CIBW_BEFORE_BUILD_WINDOWS: >
+          CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
             ForEach-Object { $_.LastWriteTime = Get-Date }"
@@ -133,10 +137,6 @@ jobs:
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
-            CC=C:/mingw64/bin/gcc.exe
-            CXX=C:/mingw64/bin/g++.exe
-            CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
-            CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
