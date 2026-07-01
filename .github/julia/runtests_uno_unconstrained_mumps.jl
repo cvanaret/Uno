@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2025: Charlie Vanaret and contributors
+# Copyright (c) 2018-2026: Charlie Vanaret and contributors
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -22,16 +22,12 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS", "hessian_model=LBFGS", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "hessian_model=exact", "linear_solver=MUMPS"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 
-# drop the equality-constrained instances and the LPs
-bound_constrained_instances = readlines(joinpath(@__DIR__, "MINLPTests/bound-constrained.txt"))
-general_instances = readlines(joinpath(@__DIR__, "MINLPTests/general.txt"))
-NLP_instances = readlines(joinpath(@__DIR__, "MINLPTests/NLP.txt"))
-instances = vcat(bound_constrained_instances, general_instances)
-instances = intersect(instances, NLP_instances)
+# keep only the unconstrained instances
+instances = readlines(joinpath(@__DIR__, "MINLPTests/unconstrained.txt"))
 #print("Instances: ", instances)
 
 # strip the prefix
@@ -61,6 +57,7 @@ if !isempty(nlp_expr_instances)
     MINLPTests.test_directory(
         "nlp-expr",
         Optimizer_Uno_ipopt;
+        # debug=true,
         include = nlp_expr_instances,
         primal_target, objective_tol, primal_tol
     )
@@ -73,6 +70,7 @@ if !isempty(nlp_cvx_expr_instances)
     MINLPTests.test_directory(
         "nlp-cvx-expr",
         Optimizer_Uno_ipopt;
+        # debug = true,
         include = nlp_cvx_expr_instances,
         primal_target, objective_tol, primal_tol
     )
@@ -81,12 +79,8 @@ end
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
 # tests in here with weird edge cases, so a variety of exclusions are expected.
 
-# drop the equality-constrained instances and the LPs
-bound_constrained_instances = readlines(joinpath(@__DIR__, "MOI/bound-constrained.txt"))
-general_instances = readlines(joinpath(@__DIR__, "MOI/general.txt"))
-NLP_instances = readlines(joinpath(@__DIR__, "MOI/NLP.txt"))
-instances = vcat(bound_constrained_instances, general_instances)
-instances = intersect(instances, NLP_instances)
+# keep only the unconstrained instances
+instances = readlines(joinpath(@__DIR__, "MOI/unconstrained.txt"))
 MOI_instances = [Regex("^" * instance * "\$") for instance in instances] # exact match
 #print("Instances: ", instances)
 
@@ -135,9 +129,6 @@ if !isempty(MOI_instances)
                 r"^test_linear_INFEASIBLE$",
                 r"^test_linear_INFEASIBLE_2$",
                 r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
-                # this test passes with exact Hessian but fails with L-BFGS Hessian
-                # OK to exclude for now, but should be investigated
-                r"^test_objective_qp_ObjectiveFunction_edge_cases",
                 # ==================================================================
                 # The following tests are okay to exclude forever.
                 #
