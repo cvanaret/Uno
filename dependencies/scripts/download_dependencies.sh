@@ -53,12 +53,11 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	# delete UnoUtils' HiGHS
 	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
 	
-	# This runs in cibuildwheel's MSYS2 (MSYS) login shell. /mingw64/bin -- the
-	# toolchain we actually build with -- is not on PATH here, and the Windows
-	# CPython isn't either, so pip is out. Use pacman, and expose mingw64.
+	# The toolchain is C:/mingw64 via the pinned CMAKE_*_COMPILER/CC/CXX;
+	# /mingw64/bin supplies only cmake/make
 	export PATH="$PATH:/mingw64/bin"
-	if ! command -v cmake >/dev/null 2>&1 || ! command -v ninja >/dev/null 2>&1; then
-		pacman -Sy --needed --noconfirm mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
+	if ! command -v cmake >/dev/null 2>&1; then
+		pacman -Sy --needed --noconfirm mingw-w64-x86_64-cmake
 	fi
 
 	# fetch HiGHS source
@@ -114,16 +113,6 @@ if [[ "$OS" == "w64-mingw32" ]]; then
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
 	cp -a "${BUILD_ROOT}/install/include/." include
 	rm -rf "${BUILD_ROOT}"
-
-	if [[ -n "${UNO_BUNDLE_RUNTIME:-}" ]]; then            # wheel build only; tests link libstdc++ dynamically
-		LIBSTDCXX="$("$CXX_BIN" -print-file-name=libstdc++.a || true)"
-		[[ "$LIBSTDCXX" != "libstdc++.a" ]] && command -v cygpath >/dev/null 2>&1 && LIBSTDCXX="$(cygpath -u "$LIBSTDCXX")"
-		if [[ "$LIBSTDCXX" == "libstdc++.a" || ! -f "$LIBSTDCXX" ]]; then
-			echo "Could not locate libstdc++.a via $CXX_BIN"; exit 1
-		fi
-		echo "Bundling $LIBSTDCXX"
-		cp "$LIBSTDCXX" "lib/libstdc++.a"
-	fi
 fi
 
 # delete unwanted directories

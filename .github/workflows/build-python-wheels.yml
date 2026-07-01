@@ -124,7 +124,6 @@ jobs:
           CXX: C:/mingw64/bin/g++.exe
           CMAKE_C_COMPILER: C:/mingw64/bin/gcc.exe
           CMAKE_CXX_COMPILER: C:/mingw64/bin/g++.exe
-          UNO_BUNDLE_RUNTIME: "1"
           CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
           CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
@@ -132,15 +131,14 @@ jobs:
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' -w {dest_dir} {wheel}"
+            delvewheel repair --add-path 'C:/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
-            CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+            CMAKE_BUILD_PARALLEL_LEVEL=$NUMBER_OF_PROCESSORS
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
-            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
