@@ -48,8 +48,8 @@ curl -L -o UnoUtils.tar.gz "$ASSET_URL"
 tar -xzf UnoUtils.tar.gz
 pwd
 
-# on Windows, compile HiGHS on the fly and replace that of UnoUtils
-if [[ "$OS" == "w64-mingw32" ]]; then
+# on MinGW, compile HiGHS on the fly and replace that of UnoUtils
+if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	# delete UnoUtils' HiGHS
 	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
 	

@@ -120,6 +120,7 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
+          UNO_TOOLCHAIN: mingw
           CC: C:/mingw64/bin/gcc.exe
           CXX: C:/mingw64/bin/g++.exe
           CMAKE_C_COMPILER: C:/mingw64/bin/gcc.exe
