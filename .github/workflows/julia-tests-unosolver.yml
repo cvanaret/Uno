@@ -36,6 +36,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
       # Install Julia 1.7 for BinaryBuilder. Note that this is an old version of
       # Julia, but it is required for compatibility with BinaryBuilder.
       - uses: julia-actions/setup-julia@v2
@@ -65,6 +66,7 @@ jobs:
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+
       # Now install a newer version of Julia to actually test Uno_jll.jl.
       # We choose v1.10 because it is the current Long-Term Support (LTS).
       - uses: julia-actions/setup-julia@v2
@@ -81,4 +83,5 @@ jobs:
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
           Pkg.develop(path="/home/runner/work/Uno/Uno/interfaces/Julia")
+          include("/home/runner/work/Uno/Uno/.github/julia/check_auto_preset.jl")
           Pkg.test("UnoSolver")

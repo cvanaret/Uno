@@ -3,14 +3,10 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-using JuMP, AmplNLWriter, Uno_jll
-
-function Optimizer(options)
-    return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
-end
+using UnoSolver, JuMP
 
 function test_hs015()
-    model = Model(() -> Optimizer(["logger=INFO"]))
+    model = Model(() -> UnoSolver.Optimizer(["logger=INFO"]))
 
     @variable(model, x, start = -2.)
     @variable(model, y, start = 1.)
@@ -30,10 +26,14 @@ function test_hs015()
     @assert abs(dual(c1) - 700.) <= tolerance
     @assert abs(dual(c2) - 0.) <= tolerance
     @assert abs(dual(c3) - (-1751.)) <= tolerance
+    # check the preset
+    optimizer = unsafe_backend(model)
+    uno_method = uno_get_method_description(optimizer.solver)
+    @assert occursin(uno_method, "SQP")
 end
 
 function test_camshape_6400()
-    model = Model(() -> Optimizer(["logger=INFO"]))
+    model = Model(() -> UnoSolver.Optimizer(["logger=INFO"]))
 
     n       = 6400                       # number of discretization points
     R_v     = 1.0                        # design parameter related to the valve shape
@@ -75,6 +75,10 @@ function test_camshape_6400()
 
     tolerance = 1e-6
     @assert abs(objective_value(model) - 4.448378) <= tolerance
+    # check the preset
+    optimizer = unsafe_backend(model)
+    uno_method = uno_get_method_description(optimizer.solver)
+    @assert occursin(uno_method, "interior-point")
 end
 
 test_hs015()
