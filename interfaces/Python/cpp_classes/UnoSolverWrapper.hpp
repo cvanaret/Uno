@@ -32,7 +32,7 @@ namespace uno {
    class UnoSolverWrapper {
    public:
       Uno uno_solver{};
-      Options options{};
+      Options user_options{};
 
       UnoSolverWrapper();
 

@@ -11,6 +11,9 @@ namespace uno {
    void DefaultOptions::load(Options& options) {
       DefaultOptions::determine_subproblem_solvers(options);
 
+      // preset
+      options.set_string("preset", "auto");
+
       /** termination **/
       // primal tolerance (constraint violation)
       options.set_double("primal_tolerance", 1e-8);
