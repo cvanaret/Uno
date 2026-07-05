@@ -40,6 +40,13 @@ jobs:
           echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
           echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
+      - name: Symlink gfortran (macOS)
+        if: matrix.os == 'macos-15'
+        run: |
+          gfbin=$(ls "$(brew --prefix)"/bin/gfortran-* | sort -V | tail -1)
+          ln -sf "$gfbin" "$(brew --prefix)/bin/gfortran"
+          gfortran --version
+
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
