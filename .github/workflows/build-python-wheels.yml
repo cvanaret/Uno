@@ -27,7 +27,7 @@ concurrency:
 
 env:
   CIBW_TEST_COMMAND: >
-    python {project}/interfaces/Python/tests/run_wheel_tests.py
+    python -X faulthandler {project}/interfaces/Python/tests/run_wheel_tests.py
   CIBW_TEST_REQUIRES: numpy
 
 jobs:
