@@ -267,6 +267,7 @@ if(KRYLOV)
    find_path(KRYLOV_INCLUDE_DIR krylov.h
              HINTS "${KRYLOV_DIRECTORY}/../include" "${KRYLOV_DIRECTORY}")
    target_include_directories(uno_dependencies SYSTEM INTERFACE ${KRYLOV_INCLUDE_DIR})
+   target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/Krylov/KrylovSolvers.cpp)
 
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/KrylovSolversTests.cpp)
