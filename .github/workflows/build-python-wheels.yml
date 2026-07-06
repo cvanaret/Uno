@@ -197,11 +197,10 @@ jobs:
 
           $pyd = "C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\site-packages\unopy\unopy.cp311-win_amd64.pyd"
           Write-Host "=== pyd built: $((Get-Item $pyd).LastWriteTime) ==="
-          if (Select-String -Path $pyd -Pattern "krylov_workspace_create failed" -Encoding Byte -Quiet) {
-            Write-Host "NEW CODE PRESENT"
-          } else {
-            Write-Host "STALE WHEEL — build did not pick up the source change"
-          }
+          $u = ($pyd -replace '\\','/')
+          $count = C:/msys64/usr/bin/bash -lc "strings -f '$u' 2>/dev/null | grep -c 'krylov_workspace_create failed'"
+          Write-Host "occurrences of new error string: $count"
+          if ([int]$count -gt 0) { Write-Host "NEW CODE PRESENT" } else { Write-Host "STALE / STRING ABSENT" }
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
