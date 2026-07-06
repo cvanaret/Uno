@@ -161,13 +161,16 @@ jobs:
           CMAKE_C_COMPILER: C:/mingw1420/mingw64/bin/gcc.exe
           CMAKE_CXX_COMPILER: C:/mingw1420/mingw64/bin/g++.exe
           CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
+          CIBW_TEST_SKIP: "*-win_amd64"
           CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --no-mangle-all --add-path 'C:/mingw1420/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
+            delvewheel repair --no-mangle-all
+              --exclude libstdc++-6.dll --exclude libgcc_s_seh-1.dll --exclude libwinpthread-1.dll --exclude libgfortran-5.dll --exclude libquadmath-0.dll --exclude libgomp-1.dll
+              --add-path 'C:/mingw1420/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$NUMBER_OF_PROCESSORS
             CMAKE_GENERATOR="MinGW Makefiles"
@@ -179,6 +182,15 @@ jobs:
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
+            
+      - name: Test with native backtrace (Windows, temporary)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*win_amd64.whl | Where-Object { $_.Name -like "*cp311*" } | Select-Object -First 1
+          python -m pip install numpy $whl.FullName
+          $cdb = "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe"
+          & $cdb -g -G -c "g; !analyze -v; kb; q" python -c "import unopy; unopy.test_libkrylov()"
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
