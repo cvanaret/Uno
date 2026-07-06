@@ -5,9 +5,9 @@
 #define UNO_KRYLOVSOLVERS_H
 
 #include <krylov.h>
-#include <cassert>
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 
 static void test_krylov_solvers() {
    /*
@@ -60,7 +60,9 @@ static void test_krylov_solvers() {
    int ret = krylov_workspace_create(KRYLOV_CG, N, N, KRYLOV_FLOAT64, KRYLOV_CPU,
                                      NULL,   /* workspace options (NULL = defaults) */
                                      &ws);
-   assert(ret == 0);
+   if (ret != 0 || ws == NULL) {
+      throw std::runtime_error("krylov_workspace_create failed, ret=" + std::to_string(ret));
+   }
 
    /* -----------------------------------------------------------------------
    * Solve
@@ -76,13 +78,17 @@ static void test_krylov_solvers() {
                      NULL,       /* c = NULL  (CG only needs one RHS) */
                      &A,         /* userdata forwarded to matvec_A */
                      &opts);     /* solver options (NULL = all defaults) */
-   assert(ret == 0);
+   if (ret != 0) {
+      throw std::runtime_error("krylov_solve failed");
+   }
 
    /* -----------------------------------------------------------------------
    * Retrieve results
    * --------------------------------------------------------------------- */
    ret = krylov_get_x(ws, x, N);
-   assert(ret == 0);
+   if (ret != 0) {
+      throw std::runtime_error("krylov_get_x failed");
+   }
 
    std::cout << "KrylovSolvers: CG solution (should be a vector of 1):";
    for (int i = 0; i < N; i++) {
