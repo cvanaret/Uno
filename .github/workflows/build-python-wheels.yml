@@ -185,6 +185,7 @@ jobs:
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
+            cmake.define.CMAKE_BUILD_TYPE=RelWithDebInfo
             
       - name: Test with native backtrace (Windows, temporary)
         if: always() && runner.os == 'Windows'
