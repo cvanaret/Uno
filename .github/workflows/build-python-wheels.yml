@@ -190,17 +190,33 @@ jobs:
         if: always() && runner.os == 'Windows'
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Continue'
+
+          # --- pick the fresh cp311 wheel and prove its provenance ---
           $whl = Get-ChildItem ${{ github.workspace }}/wheelhouse/*cp311*win_amd64.whl | Select-Object -First 1
+          if (-not $whl) { Write-Error "no cp311 win_amd64 wheel in wheelhouse"; exit 1 }
           Write-Host "=== Testing: $($whl.FullName)  (built $($whl.LastWriteTime)) ==="
+
           python -m pip install --force-reinstall --no-deps $whl.FullName
           python -m pip install numpy
 
           $pyd = "C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\site-packages\unopy\unopy.cp311-win_amd64.pyd"
           Write-Host "=== pyd built: $((Get-Item $pyd).LastWriteTime) ==="
+
+          # --- is the binding even registered, and is it our code? ---
+          python -c "import unopy; print('has test_libkrylov:', hasattr(unopy, 'test_libkrylov'))"
+
           $u = ($pyd -replace '\\','/')
-          $count = C:/msys64/usr/bin/bash -lc "strings -f '$u' 2>/dev/null | grep -c 'krylov_workspace_create failed'"
-          Write-Host "occurrences of new error string: $count"
-          if ([int]$count -gt 0) { Write-Host "NEW CODE PRESENT" } else { Write-Host "STALE / STRING ABSENT" }
+          Write-Host "=== krylov-related literals present in the .pyd ==="
+          C:/msys64/usr/bin/bash -lc "strings -f '$u' | grep -iE 'krylov_workspace_create failed|KrylovSolvers: CG solution|test_krylov' | head"
+
+          # --- run the call under cdb for a native backtrace ---
+          $cdb = "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe"
+          if (-not (Test-Path $cdb)) {
+            $cdb = (Get-ChildItem "C:\Program Files (x86)\Windows Kits" -Recurse -Filter cdb.exe -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+          }
+          Write-Host "=== cdb: $cdb ==="
+          & $cdb -g -G -c "g; !analyze -v; kb; q" python -c "import unopy; unopy.test_libkrylov()"
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
