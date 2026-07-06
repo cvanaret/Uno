@@ -7,7 +7,9 @@
 #include <krylov.h>
 
 namespace uno {
+#ifdef HAS_KRYLOV
    void test_krylov_solvers();
+#endif
 } // namespace
 
 #endif // UNO_KRYLOVSOLVERS_H

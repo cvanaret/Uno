@@ -5,7 +5,9 @@
 #include <pybind11/stl.h>
 #include "unopy.hpp"
 #include "Uno.hpp"
+#ifdef HAS_KRYLOV
 #include "ingredients/subproblem_solvers/Krylov/KrylovSolvers.hpp"
+#endif
 
 namespace py = pybind11;
 
