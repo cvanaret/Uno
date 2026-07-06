@@ -211,14 +211,13 @@ jobs:
 
           # --- native backtrace via gdb (reads MinGW DWARF; cdb cannot) ---
           $py = (Get-Command python).Source
+          $env:PYTHONHOME = ""          # stop MinGW's opt\Python from hijacking
           $gdb = "C:/mingw1420/mingw64/bin/gdb.exe"
           Write-Host "=== gdb: $gdb ; python: $py ==="
           & $gdb --batch `
             -ex "set pagination off" `
             -ex "run" `
-            -ex "echo \n===== BACKTRACE =====\n" `
             -ex "bt full" `
-            -ex "echo \n===== THREADS =====\n" `
             -ex "thread apply all bt" `
             --args $py -c "import unopy; unopy.test_libkrylov()"
 
