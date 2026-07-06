@@ -42,7 +42,7 @@ jobs:
           - { os: ubuntu-22.04-arm, shell: bash, build: "*manylinux*" }
           - { os: macos-15, shell: bash, build: "*" }
           - { os: macos-15-intel, shell: bash, build: "*" }
-          - { os: windows-latest, shell: 'msys2 {0}', build: "*" }
+          - { os: windows-latest, shell: 'msys2 {0}', build: "cp311-*" }
     defaults:
       run:
         shell: ${{ matrix.sys.shell }}
