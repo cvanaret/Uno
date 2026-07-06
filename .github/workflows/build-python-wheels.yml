@@ -127,6 +127,7 @@ jobs:
           CC: clang
           CXX: clang++
           MACOSX_DEPLOYMENT_TARGET: 15.0
+          CIBW_BUILD: ${{ matrix.sys.build }}
           CIBW_SKIP: cp*-*_i686 *-win32
           CIBW_BEFORE_ALL_MACOS: |
             cat > /tmp/clang_toolchain.cmake << 'EOF'
