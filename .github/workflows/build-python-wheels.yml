@@ -168,9 +168,7 @@ jobs:
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --no-mangle-all
-              --exclude libstdc++-6.dll --exclude libgcc_s_seh-1.dll --exclude libwinpthread-1.dll --exclude libgfortran-5.dll --exclude libquadmath-0.dll --exclude libgomp-1.dll
-              --add-path 'C:/mingw1420/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
+            delvewheel repair --no-mangle-all --exclude "libstdc++-6.dll;libgcc_s_seh-1.dll;libwinpthread-1.dll;libgfortran-5.dll;libquadmath-0.dll;libgomp-1.dll" --add-path "C:/mingw1420/mingw64/bin;dependencies/bin" -w {dest_dir} {wheel}
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$NUMBER_OF_PROCESSORS
             CMAKE_GENERATOR="MinGW Makefiles"
