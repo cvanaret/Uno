@@ -29,7 +29,7 @@ env:
   CIBW_TEST_EXTRAS: test
   CIBW_TEST_COMMAND: >-
     python -m pytest {project}/interfaces/Python/tests &&
-    python {project}/interfaces/Python/tests/run_wheel_tests.py &&
+    python -X faulthandler {project}/interfaces/Python/tests/run_wheel_tests.py &&
     python {project}/interfaces/Python/examples/example_hs015.py &&
     python {project}/interfaces/Python/examples/example_hs001.py
   CIBW_TEST_REQUIRES: numpy

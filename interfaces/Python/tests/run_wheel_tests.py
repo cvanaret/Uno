@@ -1,10 +1,10 @@
 # Copyright (c) 2026 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-import unopy
+import unopy; print("import OK", flush=True)
 
 # test libkrylov (raises on failure)
-unopy.test_libkrylov()
+unopy.test_libkrylov(); print("call OK", flush=True)
 
 # run the hs015 example
 import runpy, os
