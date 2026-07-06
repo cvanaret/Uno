@@ -204,20 +204,23 @@ jobs:
           $pyd = "C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\site-packages\unopy\unopy.cp311-win_amd64.pyd"
           Write-Host "=== pyd built: $((Get-Item $pyd).LastWriteTime) ==="
 
-          # --- is the binding even registered, and is it our code? ---
+          # --- is the binding registered, and is our error string in the binary? ---
           python -c "import unopy; print('has test_libkrylov:', hasattr(unopy, 'test_libkrylov'))"
-
           $u = ($pyd -replace '\\','/')
-          Write-Host "=== krylov-related literals present in the .pyd ==="
-          C:/msys64/usr/bin/bash -lc "strings -f '$u' | grep -iE 'krylov_workspace_create failed|KrylovSolvers: CG solution|test_krylov' | head"
+          C:/msys64/usr/bin/bash -lc "grep -a -c 'krylov_workspace_create failed' '$u' || echo 'error string NOT found'"
 
-          # --- run the call under cdb for a native backtrace ---
-          $cdb = "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe"
-          if (-not (Test-Path $cdb)) {
-            $cdb = (Get-ChildItem "C:\Program Files (x86)\Windows Kits" -Recurse -Filter cdb.exe -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
-          }
-          Write-Host "=== cdb: $cdb ==="
-          & $cdb -g -G -c "g; !analyze -v; kb; q" python -c "import unopy; unopy.test_libkrylov()"
+          # --- native backtrace via gdb (reads MinGW DWARF; cdb cannot) ---
+          $py = (Get-Command python).Source
+          $gdb = "C:/mingw1420/mingw64/bin/gdb.exe"
+          Write-Host "=== gdb: $gdb ; python: $py ==="
+          & $gdb --batch `
+            -ex "set pagination off" `
+            -ex "run" `
+            -ex "echo \n===== BACKTRACE =====\n" `
+            -ex "bt full" `
+            -ex "echo \n===== THREADS =====\n" `
+            -ex "thread apply all bt" `
+            --args $py -c "import unopy; unopy.test_libkrylov()"
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
