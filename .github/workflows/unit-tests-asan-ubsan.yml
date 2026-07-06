@@ -124,6 +124,7 @@ jobs:
             -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
             -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
             -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -154,6 +155,7 @@ jobs:
             -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
             -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
             -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -179,6 +181,7 @@ jobs:
             -DCMAKE_Fortran_COMPILER=gfortran \
             -DMUMPS_INCLUDE_DIR=${GITHUB_WORKSPACE}/dependencies/include \
             -DMETIS_INCLUDE_DIR=/mingw64/include \
+            -DHIGHS_INCLUDE_DIR=${GITHUB_WORKSPACE}/dependencies/include/highs \
             -DBQPD=${GITHUB_WORKSPACE}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=/mingw64/lib/libmetis.a \
             -DMUMPS_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libdmumps.a \
