@@ -397,10 +397,6 @@ if(SKBUILD)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC uno_dependencies)
-   
-   if(MINGW)
-	   target_link_options(unopy PRIVATE -static-libstdc++)
-	endif()
 
    if(UNO_PYBIND11_DETAILED_ERRORS)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)

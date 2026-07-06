@@ -156,10 +156,10 @@ jobs:
         shell: pwsh
         env:
           UNO_TOOLCHAIN: mingw
-          CC: C:/mingw64/bin/gcc.exe
-          CXX: C:/mingw64/bin/g++.exe
-          CMAKE_C_COMPILER: C:/mingw64/bin/gcc.exe
-          CMAKE_CXX_COMPILER: C:/mingw64/bin/g++.exe
+          CC: C:/mingw1420/mingw64/bin/gcc.exe
+          CXX: C:/mingw1420/mingw64/bin/g++.exe
+          CMAKE_C_COMPILER: C:/mingw1420/mingw64/bin/gcc.exe
+          CMAKE_CXX_COMPILER: C:/mingw1420/mingw64/bin/g++.exe
           CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
           CIBW_BEFORE_ALL_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
@@ -167,7 +167,7 @@ jobs:
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --no-mangle-all --add-path 'C:/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
+            delvewheel repair --no-mangle-all --add-path 'C:/mingw1420/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$NUMBER_OF_PROCESSORS
             CMAKE_GENERATOR="MinGW Makefiles"
@@ -178,6 +178,7 @@ jobs:
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.KRYLOV=dependencies/bin/libkrylov.dll
+            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
