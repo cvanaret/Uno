@@ -33,6 +33,15 @@ namespace uno {
          this->rhs.data(), direction.primals.data());
    }
 
+   bool InverseNewtonSolver::has_second_order_corrections() const {
+      return false;
+   }
+
+   void InverseNewtonSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+         Evaluations& /*trial_evaluations*/) {
+      INFO << "No SOC implemented in InverseNewtonSolver\n";
+   }
+
    SolverWorkspace& InverseNewtonSolver::get_workspace() {
       return this->workspace;
    }
