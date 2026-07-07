@@ -138,6 +138,11 @@ option(HSL_RUNTIME_LOADING "Load HSL (MA27/MA57) at runtime via dlopen instead o
 set(_compile_ma57 OFF)
 set(_compile_ma27 OFF)
 if(HSL_RUNTIME_LOADING)
+   # dlopen-based loading targets a shared libuno; a static-only build never links and
+   # would silently accept unresolved HSL symbols. Require a shared build.
+   if(NOT BUILD_SHARED_LIBS)
+      message(FATAL_ERROR "HSL_RUNTIME_LOADING=ON requires a shared build. Set -DBUILD_SHARED_LIBS=ON.")
+   endif()
    message(STATUS "HSL: IPOPT-style runtime loading enabled (libhsl resolved via dlopen)")
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/HSL/HSLLoader.cpp)
    target_compile_definitions(uno_dependencies INTERFACE HAS_HSL HSL_RUNTIME_LOADING)
@@ -262,7 +267,6 @@ if(SPRAL)
 
    target_include_directories(uno_dependencies SYSTEM INTERFACE ${SPRAL_INCLUDE_DIR})
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
-   
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
    endif()

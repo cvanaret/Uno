@@ -162,6 +162,8 @@ namespace uno {
          options.set_string("LP_solver", *LPSolverFactory::available_solvers.begin(), true);
       }
       // linear solver
+      // HSL runtime loading: this runs before user options are parsed, so it can't see "hsllib" below.
+      // Set UNO_HSL_LIBRARY to auto-select MA27/MA57, or choose linear_solver explicitly.
       const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
       if (!linear_solvers.empty()) {
          options.set_string("linear_solver", linear_solvers[0], true);

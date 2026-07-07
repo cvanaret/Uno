@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2026 Joris Gillis, Alexis Montoison and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "HSLLoader.hpp"
@@ -49,6 +49,7 @@ namespace uno {
 #endif
 
       LibraryHandle hsl_handle = nullptr;
+      std::string hsl_loaded_name{}; // the library name that was actually dlopen'd (for the mismatch warning)
 
       // Resolve a Fortran symbol trying the manglings IPOPT tries, so the runtime
       // libhsl can have been built by any compiler regardless of how Uno was:
@@ -73,12 +74,8 @@ namespace uno {
    } // anonymous namespace
 
    bool load_hsl_library(const std::string& library_name) {
-      // cache success only: a failed probe (e.g. the early available_solvers() check
-      // with no name) must not block a later load with an explicit hsllib path.
-      if (hsl_handle != nullptr) {
-         return true;
-      }
-
+      // resolve the effective library name (explicit request > UNO_HSL_LIBRARY env > platform default),
+      // done unconditionally so we can compare it against an already-loaded library below.
       std::string name = library_name;
       if (name.empty()) {
          if (const char* env = std::getenv("UNO_HSL_LIBRARY")) {
@@ -89,11 +86,23 @@ namespace uno {
          name = UNO_HSL_DEFAULT_LIBRARY;
       }
 
+      // cache success only: a failed probe (e.g. the early available_solvers() check
+      // with no name) must not block a later load with an explicit hsllib path.
+      if (hsl_handle != nullptr) {
+         // the first successful load wins; warn if an explicit, different library was requested too late
+         if (!library_name.empty() && name != hsl_loaded_name) {
+            WARNING << "Uno: the HSL library '" << hsl_loaded_name << "' is already loaded; ignoring the request for '"
+               << name << "' (the first load wins)\n";
+         }
+         return true;
+      }
+
       hsl_handle = open_library(name.c_str());
       if (hsl_handle == nullptr) {
          DEBUG << "Uno: could not load the HSL library '" << name << "' at runtime\n";
          return false;
       }
+      hsl_loaded_name = name;
       DEBUG << "Uno: loaded the HSL library '" << name << "' at runtime\n";
 
       resolve(hsl_handle, hsl_ma57id, "ma57id");

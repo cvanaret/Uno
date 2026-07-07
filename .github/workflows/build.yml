@@ -326,3 +326,41 @@ jobs:
     - name: Build (MSVC)
       if: matrix.toolchain == 'msvc'
       run: nmake
+
+  # Compile-check both HSL modes: linked (OFF) and IPOPT-style dlopen runtime loading (ON).
+  # No HSL library is needed — OFF builds without HSL, ON compiles the loader + MA27/MA57.
+  hsl-runtime-loading:
+    name: Compile Uno (HSL_RUNTIME_LOADING=${{ matrix.mode }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [ON, OFF]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake gfortran libblas-dev liblapack-dev g++-mingw-w64-x86-64
+
+      # Shared only: a static build just archives objects without linking, so it would not
+      # catch an unresolved LIBHSL_isfunctional / MA27/MA57 symbol. Only shared links.
+      - name: Configure and build (native Linux, shared)
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DHSL_RUNTIME_LOADING=${{ matrix.mode }} \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+          cmake --build build --parallel
+
+      # A native Linux build never compiles the loader's Windows branch (LoadLibraryA/
+      # GetProcAddress). Syntax-check it with MinGW so ON stays buildable on Windows.
+      - name: Compile-check the Windows dlopen branch (MinGW)
+        if: matrix.mode == 'ON'
+        run: |
+          x86_64-w64-mingw32-g++ -std=c++17 -DHSL_RUNTIME_LOADING -Iuno -fsyntax-only \
+            uno/ingredients/subproblem_solvers/HSL/HSLLoader.cpp
