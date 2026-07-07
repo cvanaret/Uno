@@ -77,6 +77,15 @@ namespace uno {
       subproblem.assemble_primal_dual_direction(solution_diagonal_part, direction);
    }
 
+   bool WoodburyEQPSolver::has_second_order_corrections() const {
+      return false;
+   }
+
+   void WoodburyEQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+         Evaluations& /*trial_evaluations*/) {
+      INFO << "No SOC implemented in WoodburyEQPSolver\n";
+   }
+
    SolverWorkspace& WoodburyEQPSolver::get_workspace() {
       return this->linear_solver->get_linear_system();
    }
