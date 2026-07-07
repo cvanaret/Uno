@@ -91,6 +91,7 @@ namespace uno {
          UserCallbacks& user_callbacks) const {
       double step_length = 1.;
       bool termination = false;
+      bool in_soc = false;
       size_t number_iterations = 0;
       while (!termination) {
          ++number_iterations;
@@ -123,6 +124,12 @@ namespace uno {
             termination = true;
             GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
             if (Logger::level == INFO) statistics.print_current_line();
+         }
+         // from here on, the trial iterate was rejected
+         else if (number_iterations == 1) {
+            // enter second-order corrections
+            in_soc = true;
+            WARNING << "Entering second-order corrections\n";
          }
          else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);
