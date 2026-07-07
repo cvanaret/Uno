@@ -41,6 +41,9 @@ namespace uno {
       virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
 
+      // second-order corrections
+      [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
+
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,

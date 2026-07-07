@@ -164,6 +164,15 @@ namespace uno {
       warmstart_information.whole_problem_changed();
    }
 
+   bool FeasibilityRestoration::has_second_order_corrections() const {
+      if (this->current_phase == Phase::OPTIMALITY) {
+         return this->subproblem_solver->has_second_order_corrections();
+      }
+      else {
+         return this->feasibility_subproblem_solver->has_second_order_corrections();
+      }
+   }
+
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
          SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
