@@ -42,11 +42,12 @@ If not provided, the solver is chosen automatically from the available solvers (
 ## Main options
 
 ### String options
-| Option             | Possible values                                                      | Default  | Description                         |
-| :---               |:---------------------------------------------------------------------|:---------|:------------------------------------|
-| `logger`           | `SILENT`, `DISCRETE`, `WARNING`, `INFO`, `DEBUG`, `DEBUG2`, `DEBUG3` | `INFO`   | Verbosity level of the logger       |
-| `progress_norm`    | `L1`, `L2`, `INF`                                                    | `L1`     | Norm used for the progress measures |
-| `residual_norm`    | `L1`, `L2`, `INF`                                                    | `INF`    | Norm used for the residuals         |
+| Option          | Possible values                                                      | Default | Description                         |
+|:----------------|:---------------------------------------------------------------------|:--------|:------------------------------------|
+| `preset`        | `filtersqp`, `ipopt`, `auto`                                         | `auto`  | Uno preset                          |
+| `logger`        | `SILENT`, `DISCRETE`, `WARNING`, `INFO`, `DEBUG`, `DEBUG2`, `DEBUG3` | `INFO`  | Verbosity level of the logger       |
+| `progress_norm` | `L1`, `L2`, `INF`                                                    | `L1`    | Norm used for the progress measures |
+| `residual_norm` | `L1`, `L2`, `INF`                                                    | `INF`   | Norm used for the residuals         |
 
 ### Numerical options
 | Option                                           | Type   | Default  | Description                                                               |
