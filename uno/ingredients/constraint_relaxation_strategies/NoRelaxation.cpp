@@ -91,6 +91,10 @@ namespace uno {
       throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 
+   bool NoRelaxation::has_second_order_corrections() const {
+      return this->subproblem_solver->has_second_order_corrections();
+   }
+
    bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
          EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
