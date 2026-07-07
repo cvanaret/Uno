@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       # Install Julia 1.7 for BinaryBuilder. Note that this is an old version of
       # Julia, but it is required for compatibility with BinaryBuilder.
       - uses: julia-actions/setup-julia@v2
@@ -83,5 +83,4 @@ jobs:
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
           Pkg.develop(path="/home/runner/work/Uno/Uno/interfaces/Julia")
-          include("/home/runner/work/Uno/Uno/.github/julia/check_auto_preset.jl")
           Pkg.test("UnoSolver")
