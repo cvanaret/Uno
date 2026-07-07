@@ -17,3 +17,7 @@ end
 @testset "Interface for MathOptInterface.jl" begin
   include("MOI_wrapper.jl")
 end
+
+@testset "Interface for JuMP.jl" begin
+  include("check_auto_preset.jl")
+end

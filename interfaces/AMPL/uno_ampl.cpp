@@ -21,8 +21,7 @@ void* operator new(size_t size) {
 */
 
 namespace uno {
-   void run_uno_ampl(const std::string& model_name, Options& options) {
-      const AMPLModel model(model_name);
+   void run_uno_ampl(const AMPLModel& model, Options& options) {
       Uno uno{};
       Result result = uno.solve(model, options);
       if (options.get_bool("write_solution_to_file")) {
@@ -49,12 +48,11 @@ int main(int argc, char* argv[]) {
       // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value, ...]
       // model name
       const char* model_name = argv[1];
+      const AMPLModel model(model_name);
 
-      // gather the options
+      // set the default options
       Options options;
       DefaultOptions::load(options);
-      // set default preset
-      Presets::set_default(options);
 
       // the -AMPL flag indicates that the solution should be written to the AMPL solution file
       size_t offset = 2;
@@ -68,37 +66,39 @@ int main(int argc, char* argv[]) {
       try {
          // get the command line arguments (options start at index offset)
          const auto command_line_options = Options::get_command_line_options(argc, argv, offset);
+
+         // [optional] read an option file
          std::optional<std::string> optional_option_file{};
-         std::optional<std::string> optional_preset{};
          for (const auto& [option_name, option_value]: command_line_options) {
             if (option_name == "option_file") {
                optional_option_file = option_value;
             }
-            else if (option_name == "preset") {
-               optional_preset = option_value;
-            }
          }
-
-         // [optional] set options from an option file
          if (optional_option_file.has_value()) {
             Options::load_option_file(options, *optional_option_file);
          }
-
-         // [optional] set a preset
-         if (optional_preset.has_value()) {
-            Presets::set(options, *optional_preset);
-         }
-
-         // set the rest of the command line options (note: we add preset to the options for debugging purposes)
          for (const auto& [option_name, option_value]: command_line_options) {
-            if (option_name != "option_file") {
+            if (option_name == "preset") {
+               options.set_string("preset", option_value);
+            }
+            else if (option_name == "logger") {
+               options.set_string("logger", option_value);
+            }
+         }
+         Logger::set_logger(options.get_string("logger"));
+
+         // set the preset (default: auto)
+         Presets::set(model, options, options.get_string("preset"));
+
+         // set the rest of the command line options
+         for (const auto& [option_name, option_value]: command_line_options) {
+            if (option_name != "option_file" && option_name != "preset" && option_name != "logger") {
                options.set(option_name, option_value);
             }
          }
 
          // solve the model
-         Logger::set_logger(options.get_string("logger"));
-         run_uno_ampl(model_name, options);
+         run_uno_ampl(model, options);
       }
       catch (const std::exception& e) {
          std::cout << "uno_ampl failed with the following error: " << e.what() << '\n';
