@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 # define the project
-project(Uno VERSION 2.7.5
+project(Uno VERSION 2.7.6
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -205,8 +205,7 @@ if(HIGHS)
    target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
    target_compile_definitions(uno_dependencies INTERFACE HAS_HIGHS)
 
-   get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_DIRECTORY}/../include/highs)
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_INCLUDE_DIR})
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
@@ -401,6 +400,10 @@ if(SKBUILD)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC uno_dependencies)
+   
+   if(MINGW)
+	   target_link_options(unopy PRIVATE -static-libstdc++)
+	endif()
 
    if(UNO_PYBIND11_DETAILED_ERRORS)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)

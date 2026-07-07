@@ -145,6 +145,7 @@ cmake .. \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
     -DBLAS_LIBRARIES=${libdir}/libopenblas.${dlext} \
+    -DBUILD_SHARED_EXTRAS_LIB=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
 if [[ "${target}" == *-linux* ]]; then
@@ -181,6 +182,7 @@ cmake \
     -DSPRAL=${libdir}/libspral.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
+    -DHIGHS_INCLUDE_DIR=${includedir}/highs \
     -DSPRAL_INCLUDE_DIR=${includedir} \
     -DMUMPS_LIBRARY="${libdir}/libdmumps.${dlext}" \
     -DMUMPS_COMMON_LIBRARY="${libdir}/libmumps_common.${dlext}" \

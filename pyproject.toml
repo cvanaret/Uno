@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "unopy"
-version = "0.4.11"
+version = "0.4.12"
 description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
@@ -29,7 +29,7 @@ Issues = "https://github.com/cvanaret/Uno/issues"
 
 [tool.scikit-build]
 cmake.source-dir = "."
-cmake.verbose = true
+build.verbose = true
 wheel.cmake = true
 wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init__.py
 
@@ -48,4 +48,5 @@ MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
 MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
 MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
 # HiGHS
-HIGHS = "dependencies/lib/libhighs.a"
+HIGHS = "dependencies/lib/libhighs.a;dependencies/lib/libhighs_extras.a"
+HIGHS_INCLUDE_DIR = "dependencies/include/highs"

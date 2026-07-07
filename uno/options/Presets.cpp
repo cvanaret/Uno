@@ -1,31 +1,83 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2024-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
 #include "Presets.hpp"
 #include "Options.hpp"
-#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "model/Model.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
-   void Presets::set_default(Options& options) {
-      // default preset
-      const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
-      if constexpr (0 < QPSolverFactory::available_solvers.size()) {
-         Presets::set(options, "filtersqp");
+   Preset Presets::from_string(const std::string& preset) {
+      if (preset == "filtersqp") {
+         return Preset::FILTERSQP;
       }
-      else if (!linear_solvers.empty()) {
-         Presets::set(options, "ipopt");
+      if (preset == "ipopt") {
+         return Preset::IPOPT;
       }
-      else if constexpr (0 < LPSolverFactory::available_solvers.size()) {
-         Presets::set(options, "filterslp");
+      if (preset == "funnelsqp") {
+         return Preset::FUNNELSQP;
+      }
+      if (preset == "filterslp") {
+         return Preset::FILTERSLP;
+      }
+      throw std::runtime_error("Unknown preset");
+   }
+
+   Preset Presets::pick_auto_preset(const Model& model) {
+      // thresholds encode "dense active-set QP stops scaling around here"
+      // TODO: calibrate on a representative benchmark set (CUTEst, MINLPTests)
+      constexpr size_t large_problem_dimension = 2000;       // n + m
+      constexpr size_t large_problem_nonzeros = 50'000;      // Jacobian + Hessian nnz
+      // constexpr size_t many_inequalities_floor = 500;        // absolute floor for the ratio rule
+
+      const size_t total_dimension = model.number_variables + model.number_constraints;
+      size_t total_nonzeros = model.number_jacobian_nonzeros();
+      if (model.has_hessian_matrix()) {
+         total_nonzeros += model.number_hessian_nonzeros();
+      }
+
+      // 1. large/sparse => barrier
+      if (large_problem_dimension <= total_dimension || large_problem_nonzeros <= total_nonzeros) {
+         INFO << "Automatically picked the ipopt preset\n";
+         return Preset::IPOPT;
+      }
+      /*
+      // 2. many potential active constraints, and more than the DOF => barrier
+      if (many_inequalities_floor < number_potential_active_constraints &&
+            model.number_variables < number_potential_active_constraints) {
+         INFO << "Automatically picked the ipopt preset\n";
+         return Preset::IPOPT;
+      }
+      */
+      // 3. small/medium with modest inequalities (and the specialized cases) => active-set SQP
+      else {
+         INFO << "Automatically picked the filtersqp preset\n";
+         return Preset::FILTERSQP;
       }
    }
 
-   void Presets::set(Options& options, const std::string& preset_name) {
+   void Presets::set(Options& options, const std::string& preset) {
+      if (preset == "auto") {
+         throw std::runtime_error("The auto preset requires the model");
+      }
+      else {
+         set(options, from_string(preset));
+      }
+   }
+
+   void Presets::set(const Model& model, Options& options, const std::string& preset) {
+      if (preset == "auto") {
+         set(options, pick_auto_preset(model));
+      }
+      else {
+         set(options, from_string(preset));
+      }
+   }
+
+   void Presets::set(Options& options, Preset preset) {
       // shortcuts for state-of-the-art combinations
-      if (preset_name == "ipopt") {
+      if (preset == Preset::IPOPT) {
          options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          options.set_string("inequality_handling_method", "interior_point");
          options.set_string("barrier_function", "log");
@@ -57,7 +109,7 @@ namespace uno {
          options.set_bool("LS_scale_duals_with_step_length", true);
          options.set_bool("protect_actual_reduction_against_roundoff", true);
       }
-      else if (preset_name == "filtersqp") {
+      else if (preset == Preset::FILTERSQP) {
          options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          options.set_string("inequality_handling_method", "inequality_constrained");
          options.set_string("hessian_model", "exact");
@@ -74,7 +126,7 @@ namespace uno {
          options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
          options.set_bool("protect_actual_reduction_against_roundoff", false);
       }
-      else if (preset_name == "funnelsqp") {
+      else if (preset == Preset::FUNNELSQP) {
          options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          options.set_string("inequality_handling_method", "inequality_constrained");
          options.set_string("hessian_model", "exact");
@@ -99,7 +151,7 @@ namespace uno {
          options.set_double("funnel_switching_infeasibility_exponent", 2);
          options.set_integer("funnel_update_strategy", 2);
       }
-      else if (preset_name == "filterslp") {
+      else if (preset == Preset::FILTERSLP) {
          options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          options.set_string("inequality_handling_method", "inequality_constrained");
          options.set_string("hessian_model", "zero");
@@ -117,7 +169,7 @@ namespace uno {
          options.set_bool("protect_actual_reduction_against_roundoff", false);
       }
       else {
-         throw std::runtime_error("The preset " + preset_name + " is not known");
+         throw std::runtime_error("The preset is not known");
       }
    }
 } // namespace

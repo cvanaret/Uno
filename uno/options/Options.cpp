@@ -6,7 +6,6 @@
 #include <sstream>
 #include "Options.hpp"
 #include "DefaultOptions.hpp"
-#include "Presets.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -146,6 +145,21 @@ namespace uno {
       }
    }
 
+   void Options::overwrite(const Options& options) {
+      for (const auto& [option_name, option_value]: options.integer_options) {
+         this->integer_options[option_name] = option_value;
+      }
+      for (const auto& [option_name, option_value]: options.double_options) {
+         this->double_options[option_name] = option_value;
+      }
+      for (const auto& [option_name, option_value]: options.bool_options) {
+         this->bool_options[option_name] = option_value;
+      }
+      for (const auto& [option_name, option_value]: options.string_options) {
+         this->string_options[option_name] = option_value;
+      }
+   }
+
    // getters
    uno_int Options::get_int(const std::string& option_name) const {
       this->used[option_name] = true;
@@ -210,7 +224,7 @@ namespace uno {
 
    OptionType Options::get_option_type(const std::string& option_name) const {
       try {
-         return this->option_types.at(option_name);
+         return option_types.at(option_name);
       }
       catch(const std::out_of_range&) {
          throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
@@ -260,10 +274,6 @@ namespace uno {
             std::istringstream iss;
             iss.str(line);
             if (iss >> option_name >> option_value) {
-               // handle preset separately
-               if (option_name == "preset") {
-                  Presets::set(options, option_value);
-               }
                // set option (with unknown type)
                options.set(option_name, option_value);
             }
@@ -273,9 +283,9 @@ namespace uno {
    }
 
    void Options::dump_default_options() {
+      std::cout << "preset\tauto\n";
       Options default_options;
       DefaultOptions::load(default_options);
-      Presets::set_default(default_options);
 
       for (const auto& [option_name, option_type]: option_types) {
          try {

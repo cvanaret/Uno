@@ -59,6 +59,7 @@ jobs:
             -DCMAKE_FORTRAN_COMPILER=gfortran \
             -DMUMPS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include \
+            -DHIGHS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include/highs \
             -DBQPD=${{ github.workspace }}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=${{ github.workspace }}/dependencies/lib/libmetis.a \
             -DMUMPS_LIBRARY=${{ github.workspace }}/dependencies/lib/libdmumps.a \
@@ -67,7 +68,7 @@ jobs:
             -DMUMPS_MPISEQ_LIBRARY=${{ github.workspace }}/dependencies/lib/libmpiseq.a \
             -DBLAS_LIBRARIES="${{ github.workspace }}/dependencies/lib/libcblas.a;${{ github.workspace }}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{ github.workspace }}/dependencies/lib/liblapack.a \
-            -DHIGHS=${{ github.workspace }}/dependencies/lib/libhighs.a \
+            -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
 

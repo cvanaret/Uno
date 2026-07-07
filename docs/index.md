@@ -26,10 +26,12 @@ Uno currently implements the following strategies:
 - **globalization strategies**: filter method, funnel method, merit function;
 - **globalization mechanisms**: backtracking line search, trust-region method.
 
-Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
+Uno also implements [presets](presets.md), that is strategy combinations that mimic existing solvers:
 
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
+
+The default preset `auto` decides between `filtersqp` and `ipopt`, depending on the properties of the problem.
 
 ## Who uses Uno?
 

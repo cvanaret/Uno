@@ -76,6 +76,7 @@ jobs:
 
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
+      UNO_TOOLCHAIN: ${{ matrix.toolchain }}
 
     defaults:
       run:
@@ -135,8 +136,18 @@ jobs:
     # DEPENDENCIES
     # =========================================================
 
-    - name: Download dependencies
+    - name: Download dependencies (not MinGW)
+      if: matrix.toolchain != 'mingw'
       run: bash dependencies/scripts/download_dependencies.sh
+      
+    - name: Download dependencies (MinGW)
+      if: matrix.toolchain == 'mingw'
+      run: bash dependencies/scripts/download_dependencies.sh
+      env:
+        CC:  C:/mingw64/bin/gcc.exe
+        CXX: C:/mingw64/bin/g++.exe
+        CMAKE_C_COMPILER:   C:/mingw64/bin/gcc.exe
+        CMAKE_CXX_COMPILER: C:/mingw64/bin/g++.exe
 
     # =========================================================
     # MSVC: Download BLAS/LAPACK
@@ -192,6 +203,7 @@ jobs:
           -DCMAKE_FORTRAN_COMPILER=gfortran \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
           -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
           -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -200,7 +212,7 @@ jobs:
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
           -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
           -DBUILD_STATIC_LIBS=ON \
           -DBUILD_SHARED_LIBS=ON
         
@@ -214,6 +226,7 @@ jobs:
           -DCMAKE_FORTRAN_COMPILER=ifx \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
           -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
           -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -222,7 +235,7 @@ jobs:
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
           -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
           -DBUILD_STATIC_LIBS=ON \
           -DBUILD_SHARED_LIBS=ON
 
@@ -243,6 +256,7 @@ jobs:
           -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
           -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
           -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
@@ -251,7 +265,7 @@ jobs:
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
           -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
           -DBUILD_STATIC_LIBS=ON \
           -DBUILD_SHARED_LIBS=ON
 
@@ -265,6 +279,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
+          -DHIGHS_INCLUDE_DIR=${{github.workspace}}\dependencies\include\highs ^
           -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
           -DMETIS_LIBRARY=${{github.workspace}}\dependencies\bin\libmetis.dll ^
           -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
@@ -273,8 +288,7 @@ jobs:
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
           -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.a;${{github.workspace}}\dependencies\lib\libblas.a" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
-          -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
-          -DAUXILIARY_LIBRARIES=${{github.workspace}}\dependencies\lib\libstdc++.a ^
+          -DHIGHS="${{github.workspace}}\dependencies\lib\libhighs.a;${{github.workspace}}\dependencies\lib\libhighs_extras.a" ^
           -DBUILD_STATIC_LIBS=ON ^
           -DBUILD_SHARED_LIBS=ON .
 

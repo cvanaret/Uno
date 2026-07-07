@@ -24,7 +24,7 @@ end
 
 function test_MOI_Test()
     model = MOI.instantiate(
-        UnoSolver.Optimizer;
+        () -> UnoSolver.Optimizer(preset="filtersqp");
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
@@ -59,7 +59,7 @@ function test_MOI_Test()
 end
 
 function test_Name()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     @test MOI.supports(model, MOI.Name())
     @test MOI.get(model, MOI.Name()) == ""
     MOI.set(model, MOI.Name(), "Model")
@@ -68,7 +68,7 @@ function test_Name()
 end
 
 function test_ConstraintDualStart()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
     c = MOI.add_constraint(
@@ -92,7 +92,7 @@ function test_ConstraintDualStart()
 end
 
 function test_ConstraintDualStart_ScalarNonlinearFunction()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.Interval(0.0, 0.8))
@@ -114,7 +114,7 @@ function test_ConstraintDualStart_ScalarNonlinearFunction()
 end
 
 function test_solve_time()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     MOI.add_variable(model)
     @test isnan(MOI.get(model, MOI.SolveTimeSec()))
@@ -124,7 +124,7 @@ function test_solve_time()
 end
 
 function test_barrier_iterations()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     f = (x - 1.0)^2 + 2.0 * x + 3.0
@@ -151,7 +151,7 @@ function MOI.eval_constraint_jacobian(::Issue136, J, x)
 end
 
 function test_empty_optimize()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     @test MOI.get(model, MOI.RawStatusString()) == "Optimize not called"
     MOI.optimize!(model)
@@ -188,7 +188,7 @@ function test_get_model()
         3.0 * z * z + z == 27.0
         """,
     )
-    uno = UnoSolver.Optimizer()
+    uno = UnoSolver.Optimizer(preset="filtersqp")
     index_map = MOI.copy_to(uno, model)
     attr = MOI.ListOfConstraintTypesPresent()
     @test sort(MOI.get(model, attr); by = string) ==
@@ -225,7 +225,7 @@ function test_get_model()
 end
 
 function test_parameter_number_of_variables()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -233,7 +233,7 @@ function test_parameter_number_of_variables()
 end
 
 function test_parameter_is_valid()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     @test MOI.is_valid(model, p)
     @test MOI.is_valid(model, ci)
@@ -243,12 +243,12 @@ function test_parameter_is_valid()
 end
 
 function test_parameter_list_of_variable_indices()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [x, p]
     # Now reversed
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [p, x]
@@ -256,7 +256,7 @@ function test_parameter_list_of_variable_indices()
 end
 
 function test_scalar_nonlinear_function_is_valid()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     F, S = MOI.ScalarNonlinearFunction, MOI.EqualTo{Float64}
     @test MOI.is_valid(model, MOI.ConstraintIndex{F,S}(1)) == false
@@ -268,7 +268,7 @@ function test_scalar_nonlinear_function_is_valid()
 end
 
 function test_scalar_nonlinear_function_nlp_block()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:^, Any[x, 4])
@@ -281,7 +281,7 @@ function test_scalar_nonlinear_function_nlp_block()
 end
 
 function test_parameter()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
     x = MOI.add_variable(model)
@@ -302,7 +302,7 @@ function test_parameter()
 end
 
 function test_parameter_replace_parameters()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
     x = MOI.add_variable(model)
@@ -330,7 +330,7 @@ function test_parameter_replace_parameters()
 end
 
 function test_parameter_reverse()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
@@ -351,7 +351,7 @@ function test_parameter_reverse()
 end
 
 function test_parameter_scalar_affine_objective()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
@@ -378,7 +378,7 @@ end
 
 # Uno is dead-lock in this test!
 # function test_parameter_variable_index_objective()
-#     model = UnoSolver.Optimizer()
+#     model = UnoSolver.Optimizer(preset="filtersqp")
 #     MOI.set(model, MOI.Silent(), true)
 #     x = MOI.add_variable(model)
 #     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
@@ -401,7 +401,7 @@ end
 # end
 
 function test_ListOfSupportedNonlinearOperators()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     ops = MOI.get(model, MOI.ListOfSupportedNonlinearOperators())
     @test ops isa Vector{Symbol}
     @test :|| in ops
@@ -415,7 +415,7 @@ function test_ListOfSupportedNonlinearOperators()
 end
 
 function test_ad_backend()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     attr = MOI.AutomaticDifferentiationBackend()
@@ -435,14 +435,14 @@ end
 
 function test_mixing_new_old_api()
     # new then old
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     bounds = MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0])
     block_data = MOI.NLPBlockData(bounds, MOI.Test.HS071(true), true)
     err = ErrorException("Cannot mix the new and legacy nonlinear APIs")
     @test_throws err MOI.set(model, MOI.NLPBlock(), block_data)
     # old then new
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     bounds = MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0])
     block_data = MOI.NLPBlockData(bounds, MOI.Test.HS071(true), true)
     MOI.set(model, MOI.NLPBlock(), block_data)
@@ -452,7 +452,7 @@ function test_mixing_new_old_api()
 end
 
 function test_nlp_model_objective_function_type()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:sqrt, Any[x])
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -463,7 +463,7 @@ function test_nlp_model_objective_function_type()
 end
 
 function test_nlp_model_set_set()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:sqrt, Any[x])
     c = MOI.add_constraint(model, f, MOI.LessThan(2.0))
@@ -475,7 +475,7 @@ end
 
 function test_VariablePrimalStart()
     attr = MOI.VariablePrimalStart()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     @test MOI.supports(model, attr, typeof(x))
     @test MOI.get(model, attr, x) === nothing
@@ -494,7 +494,7 @@ function test_VariablePrimalStart()
 end
 
 function test_RawOptimizerAttribute()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     attr = MOI.RawOptimizerAttribute("print_solution")
     @test_throws MOI.GetAttributeNotAllowed{typeof(attr)} MOI.get(model, attr)
     @test MOI.supports(model, attr)
@@ -504,7 +504,7 @@ function test_RawOptimizerAttribute()
 end
 
 function test_empty_nlp_evaluator()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     block = MOI.get(model, MOI.NLPBlock())
     evaluator = block.evaluator
     @test MOI.features_available(evaluator) == [:Grad, :Jac, :Hess, :JacVec, :HessVec]
@@ -520,7 +520,7 @@ function test_empty_nlp_evaluator()
 end
 
 function test_NLPBlockDualStart()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 1.0)
@@ -537,7 +537,7 @@ function test_NLPBlockDualStart()
 end
 
 function test_function_type_to_func()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
@@ -546,7 +546,7 @@ function test_function_type_to_func()
 end
 
 function test_error_adding_option()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     name, value = "print_solution", :yes
     MOI.set(model, MOI.RawOptimizerAttribute(name), value)
@@ -561,7 +561,7 @@ function test_error_adding_option()
 end
 
 function test_scalar_nonlinear_function_attributes()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variable(model)
     F, S = MOI.ScalarNonlinearFunction, MOI.LessThan{Float64}
     @test isempty(MOI.get(model, MOI.ListOfConstraintTypesPresent()))
@@ -602,7 +602,7 @@ function test_vector_nonlinear_oracle_two()
             return
         end,
     )
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 3)
     MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
@@ -659,7 +659,7 @@ function test_vector_nonlinear_oracle_optimization()
             return
         end,
     )
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     t = MOI.add_variable(model)
@@ -720,7 +720,7 @@ function test_vector_nonlinear_oracle_optimization_min_sense()
             return
         end,
     )
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     t = MOI.add_variable(model)
@@ -764,7 +764,7 @@ function test_vector_nonlinear_oracle_optimization_min_sense()
 end
 
 function test_vector_nonlinear_oracle_scalar_nonlinear_equivalent()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     t = MOI.add_variable(model)
@@ -820,7 +820,7 @@ function test_vector_nonlinear_oracle_no_hessian()
             return
         end,
     )
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 3)
     MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
@@ -834,7 +834,7 @@ function test_vector_nonlinear_oracle_no_hessian()
 end
 
 function test_issue_491()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     x = MOI.add_variables(model, 2)
     g = [MOI.ScalarNonlinearFunction(:log, Any[x[i]]) for i in 1:2]
     c = MOI.add_constraint.(model, g, MOI.LessThan(1.0))
@@ -846,7 +846,7 @@ function test_issue_491()
 end
 
 function test_issue_491_model_example()
-    model = MOI.instantiate(UnoSolver.Optimizer; with_cache_type = Float64)
+    model = MOI.instantiate(() -> UnoSolver.Optimizer(preset="filtersqp"); with_cache_type = Float64)
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.Interval(1.0, 4.0))
@@ -868,7 +868,7 @@ function test_issue_491_model_example()
 end
 
 function test_default_objective_function()
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     @test F == MOI.ScalarAffineFunction{Float64}
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
@@ -878,7 +878,7 @@ end
 
 function test_comprehensive_duals_variable_bounds()
     model = MOI.instantiate(
-        UnoSolver.Optimizer;
+        () -> UnoSolver.Optimizer(preset="filtersqp");
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
@@ -915,7 +915,7 @@ end
 
 function test_comprehensive_duals_scalar_affine()
     model = MOI.instantiate(
-        UnoSolver.Optimizer;
+        () -> UnoSolver.Optimizer(preset="filtersqp");
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
@@ -951,7 +951,7 @@ end
 
 function test_comprehensive_duals_scalar_nonlinear()
     model = MOI.instantiate(
-        UnoSolver.Optimizer;
+        () -> UnoSolver.Optimizer(preset="filtersqp");
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
@@ -989,7 +989,7 @@ end
 
 function test_Parameter_basic()
     F, S = MOI.VariableIndex, MOI.Parameter{Float64}
-    model = UnoSolver.Optimizer()
+    model = UnoSolver.Optimizer(preset="filtersqp")
     @test MOI.supports_add_constrained_variable(model, S)
     @test !MOI.supports_constraint(model, F, S)
     @test isempty(MOI.get(model, MOI.ListOfConstraintTypesPresent()))

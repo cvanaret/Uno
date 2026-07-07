@@ -57,6 +57,7 @@ cmake \
     -DBLA_VENDOR="libblastrampoline" \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
+    -DHIGHS_INCLUDE_DIR=${includedir}/highs \
     -DSPRAL_INCLUDE_DIR=${includedir} \
     -DMUMPS_LIBRARY="${libdir}/libdmumps.${dlext}" \
     -DMUMPS_COMMON_LIBRARY="${libdir}/libmumps_common.${dlext}" \

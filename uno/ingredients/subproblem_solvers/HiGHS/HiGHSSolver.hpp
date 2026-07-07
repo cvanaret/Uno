@@ -5,7 +5,7 @@
 #define UNO_HIGHSSOLVER_H
 
 #include <memory>
-#include <highs/Highs.h>
+#include <Highs.h>
 #include "../QPSolver.hpp"
 
 namespace uno {

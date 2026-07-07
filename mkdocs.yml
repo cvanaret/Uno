@@ -16,6 +16,7 @@ nav:
   - 'The Uno solver':
     - 'Architecture': 'architecture.md'
     - 'Options': 'options.md'
+    - 'Presets': 'presets.md'
   - 'Unification theory':
     - 'Notation': 'notation.md'
     - 'Unification framework': 'unification_framework.md'

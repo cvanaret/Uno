@@ -40,6 +40,13 @@ jobs:
           echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
           echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
+      - name: Symlink gfortran (macOS)
+        if: matrix.os == 'macos-15'
+        run: |
+          gfbin=$(ls "$(brew --prefix)"/bin/gfortran-* | sort -V | tail -1)
+          ln -sf "$gfbin" "$(brew --prefix)/bin/gfortran"
+          gfortran --version
+
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
@@ -51,4 +58,4 @@ jobs:
           (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[UnoSolver.jl] Release'))
         shell: bash
         run: |
-          julia --color=no -e 'using Pkg; Pkg.develop(path="interfaces/Julia"); Pkg.test("UnoSolver")'
+          julia --color=no -e 'using Pkg; Pkg.update(); Pkg.develop(path="interfaces/Julia"); Pkg.test("UnoSolver")'
