@@ -34,7 +34,7 @@ The solver is created as follows:
 
 ### Setting a preset
 
-Presets are strategy combinations that mimic existing solvers (like filterSQP or IPOPT). A preset may be set as follows:
+[Presets](presets.md) are strategy combinations that mimic existing solvers (like filterSQP or IPOPT). A preset may be set as follows:
 
 === "Python"
 
@@ -47,6 +47,8 @@ Presets are strategy combinations that mimic existing solvers (like filterSQP or
     ```julia
     solver = () -> UnoSolver.Optimizer(preset="filtersqp")
     ```
+
+The default preset `auto` decides between `filtersqp` and `ipopt`, depending on the properties of the problem.
 
 ### Setting options
 

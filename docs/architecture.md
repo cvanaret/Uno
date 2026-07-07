@@ -21,11 +21,6 @@ Uno implements state-of-the-art strategies that can be combined automatically th
 
 At the moment, Uno prohibits the combination of interior-point methods and trust-region strategies. A possible strategy is KNITRO's step decomposition: the direction is decomposed into a normal step that minimizes the constraint violation within the trust region, and a tangential step that minimizes the objective for a given constraint violation target within the trust region. This limitation will be resolved in later Uno versions.
 
-Some strategy combinations are available as "presets" that automatically connect the eight ingredients and set values for the hyperparameters. The following presets are available:
-
-- **`filtersqp`**: A trust-region restoration filter SQP method à la filterSQP. Second-order correction steps were not implemented.
-- **`ipopt`**: A line-search restoration filter interior-point method à la IPOPT. Second-order correction steps, scaling, least-square multipliers, iterative refinement, iterative bound relaxations, non-monotone techniques, and soft feasibility restoration were not implemented.
-
 ## Features of Uno
 
 ### Interfaces to subproblem solvers

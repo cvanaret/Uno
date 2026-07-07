@@ -29,7 +29,7 @@ namespace uno {
       // TODO: calibrate on a representative benchmark set (CUTEst, MINLPTests)
       constexpr size_t large_problem_dimension = 2000;       // n + m
       constexpr size_t large_problem_nonzeros = 50'000;      // Jacobian + Hessian nnz
-      constexpr size_t many_inequalities_floor = 500;        // absolute floor for the ratio rule
+      // constexpr size_t many_inequalities_floor = 500;        // absolute floor for the ratio rule
 
       const size_t total_dimension = model.number_variables + model.number_constraints;
       size_t total_nonzeros = model.number_jacobian_nonzeros();
