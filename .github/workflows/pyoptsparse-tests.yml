@@ -7,6 +7,8 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
       - 'docs/**'
   pull_request:
     branches: [ "main" ]
@@ -14,12 +16,16 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
       - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
 
 jobs:
   test-pyoptsparse-unopy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30           # backstop, since we drop pytest's thread-timeout under gdb
 
     strategy:
       fail-fast: false
@@ -35,13 +41,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build cmake build-essential gdb
-
       # -------------------------
-      # Install Uno / unopy  (Debug build so gdb has symbols to unwind)
+      # Install Uno / unopy
       # -------------------------
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
@@ -49,13 +50,17 @@ jobs:
       - name: Compile and install unopy
         run: |
           pip install numpy scipy
-          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v \
-            -C cmake.build-type=Debug \
-            -C build.verbose=true
+          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
 
       # -------------------------
       # Install pyOptSparse
       # -------------------------
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake build-essential
+
       - name: Install Python build tools
         run: |
           pip install --upgrade pip setuptools wheel
@@ -73,57 +78,11 @@ jobs:
           pip install .
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Install test deps
-        run: pip install pytest pytest-timeout parameterized
-
       # -------------------------
-      # Diagnostic runs under gdb (native backtrace on crash)
+      # Run Uno tests
       # -------------------------
-      # Helper: run any command under gdb -batch; on a fatal signal, dump C frames
-      # + loaded libraries (answers the two-libgfortran/libgomp question for free),
-      # then fail loud so the step goes red.
-      - name: Run failing test in isolation (native backtrace)
-        continue-on-error: true       # let the full-suite run proceed regardless
-        working-directory: pyoptsparse
+      - name: Run pyOptSparse tests (unopy only)
         run: |
-          run_gdb() {
-            gdb -batch \
-              -ex 'set pagination off' \
-              -ex 'set print thread-events off' \
-              -ex run \
-              -ex 'echo \n===== bt (crashing thread) =====\n' \
-              -ex 'bt full' \
-              -ex 'echo \n===== bt (all threads) =====\n' \
-              -ex 'thread apply all bt' \
-              -ex 'echo \n===== loaded shared libraries =====\n' \
-              -ex 'info sharedlibrary' \
-              --args "$@" 2>&1 | tee gdb.log
-            if grep -Eq 'SIGSEGV|SIGABRT|Segmentation fault|received signal' gdb.log; then
-              echo "::error::native crash captured in isolated run (see backtrace above)"
-              return 139
-            fi
-          }
-          run_gdb python -m pytest tests/test_hs071.py -v \
-            -k test_uno_log_filename --maxfail=1
-
-      - name: Run full Uno suite (native backtrace)
-        working-directory: pyoptsparse
-        run: |
-          run_gdb() {
-            gdb -batch \
-              -ex 'set pagination off' \
-              -ex 'set print thread-events off' \
-              -ex run \
-              -ex 'echo \n===== bt (crashing thread) =====\n' \
-              -ex 'bt full' \
-              -ex 'echo \n===== bt (all threads) =====\n' \
-              -ex 'thread apply all bt' \
-              -ex 'echo \n===== loaded shared libraries =====\n' \
-              -ex 'info sharedlibrary' \
-              --args "$@" 2>&1 | tee gdb.log
-            if grep -Eq 'SIGSEGV|SIGABRT|Segmentation fault|received signal' gdb.log; then
-              echo "::error::native crash captured in full run (see backtrace above)"
-              return 139
-            fi
-          }
-          run_gdb python -m pytest tests -v -k "Uno" --maxfail=1 --timeout=120
+          pip install pytest pytest-timeout parameterized
+          cd pyoptsparse
+          pytest tests -v -k "Uno" --maxfail=1 --timeout=120 --timeout-method=thread
