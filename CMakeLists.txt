@@ -131,12 +131,13 @@ endfunction()
 # Dependencies
 # ======================
 
-# HSL (MA27/MA57)
-# runtime loading: don't link libhsl, dlopen it on first use and resolve MA27/MA57 by symbol name
+# HSL (MA27/MA57/MA86)
+# runtime loading: don't link libhsl, dlopen it on first use and resolve MA27/MA57/MA86 by symbol name
 # (see uno/ingredients/subproblem_solvers/HSL).
-option(HSL_RUNTIME_LOADING "Load HSL (MA27/MA57) at runtime via dlopen instead of linking" OFF)
+option(HSL_RUNTIME_LOADING "Load HSL (MA27/MA57/MA86) at runtime via dlopen instead of linking" OFF)
 set(_compile_ma57 OFF)
 set(_compile_ma27 OFF)
+set(_compile_ma86 OFF)
 if(HSL_RUNTIME_LOADING)
    # dlopen-based loading targets a shared libuno; a static-only build never links and
    # would silently accept unresolved HSL symbols. Require a shared build.
@@ -149,12 +150,14 @@ if(HSL_RUNTIME_LOADING)
    target_link_libraries(uno_dependencies INTERFACE ${CMAKE_DL_LIBS})
    set(_compile_ma57 ON)
    set(_compile_ma27 ON)
+   set(_compile_ma86 ON)
 else()
    find_library(HSL hsl)
    if(HSL)
       link_to_uno(hsl ${HSL})
       set(_compile_ma57 ON)
       set(_compile_ma27 ON)
+      set(_compile_ma86 ON)
    else()
       find_library(MA57 ma57)
       if(MA57)
@@ -165,6 +168,11 @@ else()
       if(MA27)
          link_to_uno(ma27 ${MA27})
          set(_compile_ma27 ON)
+      endif()
+      find_library(MA86 ma86)
+      if(MA86)
+         link_to_uno(ma86 ${MA86})
+         set(_compile_ma86 ON)
       endif()
    endif()
 endif()
@@ -178,6 +186,13 @@ if(_compile_ma27)
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/MA27SolverTests.cpp)
+   endif()
+endif()
+if(_compile_ma86)
+   target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MA86/MA86Solver.cpp)
+   target_compile_definitions(uno_dependencies INTERFACE HAS_MA86)
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/MA86SolverTests.cpp)
    endif()
 endif()
 
@@ -245,7 +260,7 @@ if(MUMPS_LIBRARY)
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
    endif()
-   
+
    find_package(METIS REQUIRED)
    target_link_libraries(uno_dependencies INTERFACE ${METIS_LIBRARY})
    target_include_directories(uno_dependencies SYSTEM INTERFACE ${METIS_INCLUDE_DIRS})
@@ -266,6 +281,7 @@ if(SPRAL)
 
    target_include_directories(uno_dependencies SYSTEM INTERFACE ${SPRAL_INCLUDE_DIR})
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
+
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
    endif()
@@ -400,7 +416,7 @@ if(SKBUILD)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC uno_dependencies)
-   
+
    if(MINGW)
 	   target_link_options(unopy PRIVATE -static-libstdc++)
 	endif()

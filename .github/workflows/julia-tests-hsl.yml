@@ -93,7 +93,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix:
-        HSL_SOLVER: [ma27, ma57]
+        HSL_SOLVER: [ma27, ma57, ma86]
     name: Run Julia tests for the ipopt preset with ${{matrix.HSL_SOLVER}}
     steps:
     - uses: actions/checkout@v4

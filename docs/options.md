@@ -17,17 +17,17 @@ Defaults are taken from `uno/options/DefaultOptions.cpp`.
 
 ## Subproblem solver
 
-| Ingredient      | Available strategies                            |
-|:----------------|:------------------------------------------------|
-| `QP_solver`     | `BQPD`, `HiGHS` (if available)                  |
-| `LP_solver`     | `BQPD`, `HiGHS` (if available)                  |
-| `linear_solver` | `MA57`, `MA27`, `MUMPS`, `SSIDS` (if available) |
+| Ingredient      | Available strategies                                    |
+|:----------------|:-------------------------------------------------------|
+| `QP_solver`     | `BQPD`, `HiGHS` (if available)                          |
+| `LP_solver`     | `BQPD`, `HiGHS` (if available)                          |
+| `linear_solver` | `MA57`, `MA27`, `MA86`, `MUMPS`, `SSIDS` (if available) |
 
 If not provided, the solver is chosen automatically from the available solvers (if any).
 
 | Option    | Type   | Default | Description |
 | :---      | :---   | :---    | :---        |
-| `hsllib`  | string | `""`    | Name/path of the HSL shared library to `dlopen` for `MA27`/`MA57` (only used when Uno is built with `-DHSL_RUNTIME_LOADING=ON`). An empty value resolves at runtime to the platform default `libhsl.{so,dylib,dll}` — same effect as IPOPT's `hsllib`, whose default is spelled out as `libhsl.so`. See the [installation guide](installation.md#cmake-options) for the resolution order and the `UNO_HSL_LIBRARY` environment variable. |
+| `hsllib`  | string | `""`    | Name/path of the HSL shared library to `dlopen` for `MA27`/`MA57`/`MA86` (only used when Uno is built with `-DHSL_RUNTIME_LOADING=ON`). An empty value resolves at runtime to the platform default `libhsl.{so,dylib,dll}`. See the [installation guide](installation.md#cmake-options) for the resolution order and the `UNO_HSL_LIBRARY` environment variable. |
 
 ## Termination
 

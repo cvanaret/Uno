@@ -25,6 +25,13 @@ namespace uno {
    ma27ad_fp hsl_ma27ad = nullptr;
    ma27bd_fp hsl_ma27bd = nullptr;
    ma27cd_fp hsl_ma27cd = nullptr;
+   ma86_default_control_fp hsl_ma86_default_control = nullptr;
+   ma86_analyse_fp hsl_ma86_analyse = nullptr;
+   ma86_factor_fp hsl_ma86_factor = nullptr;
+   ma86_solve_fp hsl_ma86_solve = nullptr;
+   ma86_finalise_fp hsl_ma86_finalise = nullptr;
+   mc68_default_control_fp hsl_mc68_default_control = nullptr;
+   mc68_order_fp hsl_mc68_order = nullptr;
 
    namespace {
       LibraryHandle hsl_handle = nullptr;
@@ -65,6 +72,13 @@ namespace uno {
       resolve(hsl_handle, hsl_ma27ad, "ma27ad");
       resolve(hsl_handle, hsl_ma27bd, "ma27bd");
       resolve(hsl_handle, hsl_ma27cd, "ma27cd");
+      resolve(hsl_handle, hsl_ma86_default_control, "ma86_default_control_d");
+      resolve(hsl_handle, hsl_ma86_analyse, "ma86_analyse_d");
+      resolve(hsl_handle, hsl_ma86_factor, "ma86_factor_d");
+      resolve(hsl_handle, hsl_ma86_solve, "ma86_solve_d");
+      resolve(hsl_handle, hsl_ma86_finalise, "ma86_finalise_d");
+      resolve(hsl_handle, hsl_mc68_default_control, "mc68_default_control_i");
+      resolve(hsl_handle, hsl_mc68_order, "mc68_order_i");
       return true;
    }
 
@@ -76,6 +90,12 @@ namespace uno {
    bool ma27_symbols_available() {
       load_hsl_library();
       return hsl_ma27id && hsl_ma27ad && hsl_ma27bd && hsl_ma27cd;
+   }
+
+   bool ma86_symbols_available() {
+      load_hsl_library();
+      return hsl_ma86_default_control && hsl_ma86_analyse && hsl_ma86_factor && hsl_ma86_solve && hsl_ma86_finalise &&
+         hsl_mc68_default_control && hsl_mc68_order;
    }
 } // namespace
 
