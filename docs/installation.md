@@ -129,6 +129,7 @@ You can pass the following options as `-DOPTION=value`:
 | `MA27`                 | path to the MA27 library                                                                                   | `path_to_libma27`           |
 | `MA57`                 | path to the MA57 library                                                                                   | `path_to_libma57`           |
 | `HSL`                  | path to the HSL library                                                                                    | `path_to_libhsl`            |
+| `HSL_RUNTIME_LOADING`  | load HSL linear solvers at runtime via `dlopen`; requires `BUILD_SHARED_LIBS=ON`                           | `ON`, `OFF`                 |
 | `HIGHS`                | path to the HiGHS libraries (typically `libhighs` and `libhighs_extras`)                                   | `path_to_libhighs`          |
 | `HIGHS_INCLUDE_DIR`    | path to HiGHS include directory                                                                            | `path_to_highs_include_dir` |
 | `METIS`                | path to the METIS library                                                                                  | `path_to_libmetis`          |
@@ -141,3 +142,12 @@ You can pass the following options as `-DOPTION=value`:
 | `SPRAL_INCLUDE_DIR`    | path to SPRAL include directory                                                                            | `path_to_spral_include_dir` |
 | `AUXILIARY_LIBRARIES`  | path(s) to additional libraries to link against, separated by `;` </br> (e.g., `libhwloc` and `libstdc++`) | `paths`                     |
 
+> [!NOTE]
+> `-DHSL_RUNTIME_LOADING=ON` requires a shared build (`-DBUILD_SHARED_LIBS=ON`): the mode is meant to `dlopen` and hot-swap `libhsl` from a shared `libuno`, so a static-only build is rejected by CMake.
+>
+> With `-DHSL_RUNTIME_LOADING=ON`, Uno is built without linking any HSL library and instead `dlopen`s it on first use (as IPOPT does), so the same binary can be shipped with or without HSL. At runtime, the shared library is resolved in this order:
+> 1. the `hsllib` [option](options.md) (empty by default);
+> 2. the `UNO_HSL_LIBRARY` environment variable;
+> 3. the platform default `libhsl.so` / `libhsl.dylib` / `libhsl.dll`.
+>
+> Since the default `linear_solver` is auto-selected before user options are parsed, use `UNO_HSL_LIBRARY` (rather than the `hsllib` option) if you want `MA27`/`MA57` to be picked automatically when the library is not on the default search path.
