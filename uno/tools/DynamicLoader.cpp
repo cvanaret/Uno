@@ -18,7 +18,7 @@ namespace uno {
       return reinterpret_cast<void*>(GetProcAddress(handle, symbol));
    }
 #else
-   // match upstream IPOPT: resolve now, do not export the HSL symbols globally
+   // resolve now, do not export the HSL symbols globally
    LibraryHandle open_library(const char* name) {
       return dlopen(name, RTLD_NOW);
    }
@@ -28,8 +28,7 @@ namespace uno {
    }
 #endif
 
-   // Resolve a Fortran symbol trying the manglings IPOPT tries, so the runtime
-   // libhsl can have been built by any compiler regardless of how Uno was:
+   // resolve a Fortran symbol by trying different manglings (the runtime libhsl may have been built by any compiler):
    // base, base_, lower_, lower, UPPER_, UPPER.
    void* resolve_symbol(LibraryHandle handle, const std::string& base) {
       std::string lower = base, upper = base;
