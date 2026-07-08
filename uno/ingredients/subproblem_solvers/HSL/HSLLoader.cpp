@@ -5,13 +5,8 @@
 #include <cctype>
 #include <cstdlib>
 #include <string>
+#include "tools/DynamicLoader.hpp"
 #include "tools/Logger.hpp"
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
 
 // default library name: libhsl.<platform shared-lib extension> (matches IPOPT's hsllib)
 #if defined(_WIN32)
@@ -35,42 +30,8 @@ namespace uno {
    ma27cd_fp hsl_ma27cd = nullptr;
 
    namespace {
-#ifdef _WIN32
-      using LibraryHandle = HMODULE;
-      LibraryHandle open_library(const char* name) { return LoadLibraryA(name); }
-      void* raw_symbol(LibraryHandle handle, const char* symbol) {
-         return reinterpret_cast<void*>(GetProcAddress(handle, symbol));
-      }
-#else
-      using LibraryHandle = void*;
-      // match upstream IPOPT: resolve now, do not export the HSL symbols globally
-      LibraryHandle open_library(const char* name) { return dlopen(name, RTLD_NOW); }
-      void* raw_symbol(LibraryHandle handle, const char* symbol) { return dlsym(handle, symbol); }
-#endif
-
       LibraryHandle hsl_handle = nullptr;
       std::string hsl_loaded_name{}; // the library name that was actually dlopen'd (for the mismatch warning)
-
-      // Resolve a Fortran symbol trying the manglings IPOPT tries, so the runtime
-      // libhsl can have been built by any compiler regardless of how Uno was:
-      // base, base_, lower_, lower, UPPER_, UPPER.
-      void* resolve_symbol(LibraryHandle handle, const std::string& base) {
-         std::string lower = base, upper = base;
-         for (char& c: lower) { c = static_cast<char>(std::tolower(static_cast<unsigned char>(c))); }
-         for (char& c: upper) { c = static_cast<char>(std::toupper(static_cast<unsigned char>(c))); }
-         const std::string candidates[] = {base, base + "_", lower + "_", lower, upper + "_", upper};
-         for (const std::string& candidate: candidates) {
-            if (void* symbol = raw_symbol(handle, candidate.c_str())) {
-               return symbol;
-            }
-         }
-         return nullptr;
-      }
-
-      template <typename FunctionPointer>
-      void resolve(LibraryHandle handle, FunctionPointer& function_pointer, const std::string& base) {
-         function_pointer = reinterpret_cast<FunctionPointer>(resolve_symbol(handle, base));
-      }
    } // anonymous namespace
 
    bool load_hsl_library(const std::string& library_name) {
@@ -78,7 +39,8 @@ namespace uno {
       // done unconditionally so we can compare it against an already-loaded library below.
       std::string name = library_name;
       if (name.empty()) {
-         if (const char* env = std::getenv("UNO_HSL_LIBRARY")) {
+         const char* env = std::getenv("UNO_HSL_LIBRARY");
+         if (env != nullptr) {
             name = env;
          }
       }
