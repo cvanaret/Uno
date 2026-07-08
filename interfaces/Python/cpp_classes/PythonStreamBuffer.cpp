@@ -10,18 +10,21 @@ namespace uno {
    }
 
    std::streamsize PythonStreamBuffer::xsputn(const char* s, std::streamsize n) {
+      pybind11::gil_scoped_acquire gil;
       this->write_function(std::string(s, n));
       return n;
    }
 
    int PythonStreamBuffer::overflow(int c) {
       if (c != EOF) {
+         pybind11::gil_scoped_acquire gil;
          this->write_function(std::string(1, static_cast<char>(c)));
       }
       return c;
    }
 
    int PythonStreamBuffer::sync() {
+      pybind11::gil_scoped_acquire gil;
       this->flush_function();
       return 0;
    }
