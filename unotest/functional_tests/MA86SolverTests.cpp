@@ -9,11 +9,6 @@
 
 using namespace uno;
 
-// MA86 expects the lower triangle of the matrix (row >= column) in C/0-based indexing. These are the
-// same symmetric systems used in the MA57 tests, transposed to the lower triangle and 0-indexed.
-// The *FortranIndexing tests below feed the same systems in 1-based indexing to check that
-// MA86Solver builds a 1-based CSC and drives MA86/MC68 through their C interface (f_arrays=1).
-
 TEST(MA86Solver, SystemSize5) {
    MA86Solver solver;
    COOLinearSystem& linear_system = solver.get_coo_linear_system();
@@ -57,8 +52,7 @@ TEST(MA86Solver, Inertia) {
 }
 
 TEST(MA86Solver, SingularMatrix) {
-   // comes from hs015 solved with byrd preset (lower triangle, 0-based); relies on the summation of
-   // duplicate (row, column) entries during the COO -> CSC conversion
+   // comes from hs015 solved with byrd preset (lower triangle, 0-based)
    MA86Solver solver;
    COOLinearSystem& linear_system = solver.get_coo_linear_system();
    linear_system.dimension = 4;

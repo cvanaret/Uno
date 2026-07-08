@@ -110,7 +110,7 @@ namespace uno {
       void* keep{nullptr};
       int n{0};
 
-      // base of the COO matrix Uno assembles (Indexing::C_indexing or Indexing::Fortran_indexing)
+      // base of the Uno COO matrix (Indexing::C_indexing or Indexing::Fortran_indexing)
       const int solver_indexing;
       // Uno assembles the matrix in COO format; build_csc_from_coo converts it to the 0-based CSC below
       COOLinearSystem linear_system;

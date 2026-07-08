@@ -90,8 +90,8 @@ namespace uno {
    // told about it via f_arrays / f_array_in / f_array_out.
    void MA86Solver::build_csc_from_coo() {
       const size_t coo_number_nonzeros = this->linear_system.number_nonzeros;
-      const std::vector<uno_int>& coo_rows = this->linear_system.matrix_row_indices;
-      const std::vector<uno_int>& coo_columns = this->linear_system.matrix_column_indices;
+      const auto& coo_rows = this->linear_system.matrix_row_indices;
+      const auto& coo_columns = this->linear_system.matrix_column_indices;
       const uno_int base = static_cast<uno_int>(this->solver_indexing);
 
       // sort the COO entries by (column, row): this is the order of a lower-triangular CSC matrix
