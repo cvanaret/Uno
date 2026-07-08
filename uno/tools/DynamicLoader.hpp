@@ -22,4 +22,7 @@ namespace uno {
    void resolve(LibraryHandle handle, FunctionPointer& function_pointer, const std::string& base) {
       function_pointer = reinterpret_cast<FunctionPointer>(resolve_symbol(handle, base));
    }
+
+   [[nodiscard]] std::string resolve_library_name(const std::string& user_library_name, const char* env_library_name,
+      const char* default_library);
 } // namespace

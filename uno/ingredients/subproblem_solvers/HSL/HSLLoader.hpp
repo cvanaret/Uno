@@ -51,7 +51,7 @@ namespace uno {
 
    // dlopen the HSL library (default name per platform, overridable via the
    // UNO_HSL_LIBRARY environment variable) and resolve the symbols. Idempotent.
-   bool load_hsl_library(const std::string& library_name = "");
+   bool load_hsl_library(const std::string& user_library_name = "");
    bool ma57_symbols_available();
    bool ma27_symbols_available();
 } // namespace

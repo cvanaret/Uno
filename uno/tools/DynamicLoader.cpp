@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "DynamicLoader.hpp"
-
+#include <cstring>
+#include <cctype>
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -46,5 +47,19 @@ namespace uno {
          }
       }
       return nullptr;
+   }
+
+   // resolve the effective library name (explicit request > env > platform default)
+   std::string resolve_library_name(const std::string& user_library_name, const char* env_library_name, const char* default_library) {
+      std::string name = "";
+      if (!user_library_name.empty()) {
+         return user_library_name;
+      }
+      // user_library_name empty
+      const char* env_path = std::getenv(env_library_name);
+      if (env_path != nullptr && 0 < strlen(env_path)) {
+         return env_path;
+      }
+      return default_library;
    }
 } // namespace
