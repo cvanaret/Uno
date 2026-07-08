@@ -43,7 +43,7 @@ namespace uno {
    std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(
          const std::string& linear_solver, [[maybe_unused]] const std::string& hsllib) {
 #ifdef HSL_RUNTIME_LOADING
-      // honour the requested HSL library name before LIBHSL_isfunctional() triggers the (cached) load
+      // honor the requested HSL library name before LIBHSL_isfunctional() triggers the (cached) load
       load_hsl_library(hsllib);
 #endif
 #if defined(HAS_HSL) || defined(HAS_MA57)

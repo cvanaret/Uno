@@ -73,10 +73,8 @@ Each subproblem solver possesses an object that inherits from the abstract class
 
 - BQPD expects a Jacobian in Compressed Sparse Row (CSR) format;
 - MA27, MA57, MUMPS, and SSIDS expect a matrix in COOrdinate (COO) format;
+- MA86 expects the lower triangle in Compressed Sparse Column (CSC) format;
 - HiGHS expects the Jacobian in Compressed Sparse (Row or Column) format.
-
-> [!NOTE]
-> MA86 internally requires the lower triangle in Compressed Sparse Column (CSC) format. It is still fed a COO matrix like the other HSL solvers; the COO-to-CSC conversion is performed inside `MA86Solver`.
 
 ### Termination criteria
 
