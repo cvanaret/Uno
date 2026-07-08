@@ -132,8 +132,8 @@ endfunction()
 # ======================
 
 # HSL (MA27/MA57)
-# IPOPT-style runtime loading: don't link libhsl, dlopen it on first use and
-# resolve MA27/MA57 by symbol name (see uno/ingredients/subproblem_solvers/HSL).
+# runtime loading: don't link libhsl, dlopen it on first use and resolve MA27/MA57 by symbol name
+# (see uno/ingredients/subproblem_solvers/HSL).
 option(HSL_RUNTIME_LOADING "Load HSL (MA27/MA57) at runtime via dlopen instead of linking" OFF)
 set(_compile_ma57 OFF)
 set(_compile_ma27 OFF)
@@ -143,7 +143,7 @@ if(HSL_RUNTIME_LOADING)
    if(NOT BUILD_SHARED_LIBS)
       message(FATAL_ERROR "HSL_RUNTIME_LOADING=ON requires a shared build. Set -DBUILD_SHARED_LIBS=ON.")
    endif()
-   message(STATUS "HSL: IPOPT-style runtime loading enabled (libhsl resolved via dlopen)")
+   message(STATUS "HSL: runtime loading enabled (libhsl resolved via dlopen)")
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/HSL/HSLLoader.cpp)
    target_compile_definitions(uno_dependencies INTERFACE HAS_HSL HSL_RUNTIME_LOADING)
    target_link_libraries(uno_dependencies INTERFACE ${CMAKE_DL_LIBS})
