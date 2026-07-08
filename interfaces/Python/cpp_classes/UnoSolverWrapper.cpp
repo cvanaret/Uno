@@ -49,6 +49,13 @@ namespace uno {
       DefaultOptions::load(this->user_options);
    }
 
+   UnoSolverWrapper::~UnoSolverWrapper() {
+      // Logger holds a non-owning reference to *this->ostream. Repoint it at a process-lifetime sink now: the
+      // destructor body runs *before* stream_buffer/ostream are destroyed. Otherwise the next Logger write
+      // dereferences a freed ostream -> SIGSEGV in sentry
+      Logger::set_stream(std::cout);
+   }
+
    void UnoSolverWrapper::set_logger_stream(py::object python_stream) {
       this->stream = python_stream;  // keep Python object alive
       this->stream_buffer = std::make_unique<PythonStreamBuffer>(python_stream);

@@ -35,6 +35,7 @@ namespace uno {
       Options user_options{};
 
       UnoSolverWrapper();
+      ~UnoSolverWrapper();
 
       void set_logger_stream(py::object py_stream);
       void set_notify_acceptable_iterate_callback(NotifyAcceptableIterateCallback notify_acceptable_iterate_callback);

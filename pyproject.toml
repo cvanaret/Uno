@@ -37,6 +37,9 @@ wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init
 [tool.scikit-build.cmake.define]
 BLAS_LIBRARIES = "dependencies/lib/libcblas.a;dependencies/lib/libblas.a"
 LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
+# enable dynamic loading of libhsl
+HSL_RUNTIME_LOADING = "ON"
+BUILD_SHARED_LIBS = "ON"
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
 BQPD = "dependencies/lib/libbqpd.a"
 # MUMPS

@@ -46,7 +46,7 @@ jobs:
       # -------------------------
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
-      
+
       - name: Compile and install unopy
         run: |
           pip install numpy scipy
@@ -55,17 +55,17 @@ jobs:
       # -------------------------
       # Install pyOptSparse
       # -------------------------
-      
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build cmake build-essential
-            
+
       - name: Install Python build tools
         run: |
           pip install --upgrade pip setuptools wheel
           pip install numpy scipy ninja cmake
-      
+
       - name: Clone pyOptSparse
         run: |
           git clone https://github.com/mdolab/pyoptsparse
