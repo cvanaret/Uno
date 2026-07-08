@@ -207,17 +207,7 @@ namespace uno {
    }
 
    void MA86Solver::solve_indefinite_system(double* solution) {
-      assert(this->factorization_performed);
-
-      // copy rhs into solution (overwritten by MA86 with the solution)
-      const size_t dimension = static_cast<size_t>(this->n);
-      view(solution, dimension) = this->linear_system.rhs.view();
-
-      MA86_solve(MA86_SOLVE_FULL_SYSTEM, 1, this->n, solution, this->order.data(), &this->keep, &this->control,
-         &this->info, nullptr);
-      if (this->info.flag < 0) {
-         throw std::runtime_error("MA86 could not solve the linear system (flag = " + std::to_string(this->info.flag) + ")");
-      }
+      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
    }
 
    void MA86Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
