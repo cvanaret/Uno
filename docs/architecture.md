@@ -28,7 +28,7 @@ At the moment, Uno prohibits the combination of interior-point methods and trust
 Interfaces to the following subproblem solvers are available:
 
 - **BQPD**: a null-space active-set solver for nonconvex QPs. BQPD accepts Hessian-vector products instead of an explicit matrix;
-- **MA57**, **MA27**, **MUMPS**, and **SSIDS**: direct solvers for sparse symmetric indefinite linear systems;
+- **MA57**, **MA27**, **MA86**, **MUMPS**, and **SSIDS**: direct solvers for sparse symmetric indefinite linear systems;
 - **HiGHS**: a parallel simplex implementation for linear programming.
 
 ### Definition of the subproblem
@@ -72,8 +72,11 @@ Most ingredients are picked by the user via options. The following ingredients m
 Each subproblem solver possesses an object that inherits from the abstract class `EvaluationSpace` in which they store the Jacobian matrix, the Hessian matrix, or the augmented matrix in specific sparse formats:
 
 - BQPD expects a Jacobian in Compressed Sparse Row (CSR) format;
-- MA57, MA27, and MUMPS expect a matrix in COOrdinate (COO) format;
+- MA27, MA57, MUMPS, and SSIDS expect a matrix in COOrdinate (COO) format;
 - HiGHS expects the Jacobian in Compressed Sparse (Row or Column) format.
+
+> [!NOTE]
+> MA86 internally requires the lower triangle in Compressed Sparse Column (CSC) format. It is still fed a COO matrix like the other HSL solvers; the COO-to-CSC conversion is performed inside `MA86Solver`.
 
 ### Termination criteria
 

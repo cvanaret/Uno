@@ -93,7 +93,7 @@ stats = uno_statistics(solver, model)
 
 ## Linear solvers
 
-`UnoSolver.jl` supports a number of linear solvers. If not specified by the user, the default linear solver is picked in this order (if available): MA57, MA27, MUMPS.
+`UnoSolver.jl` supports a number of linear solvers. If not specified by the user, the default linear solver is picked in this order (if available): MA57, MA27, MA86, MUMPS, SSIDS.
 
 ### LibHSL
 
@@ -103,7 +103,7 @@ import Pkg
 Pkg.develop(path = "/full/path/to/HSL_jll.jl")
 ```
 
-This optional dependency provides access to more reliable and powerful linear solvers. Currently, `UnoSolver.jl` supports `MA27` and `MA57`.
+This optional dependency provides access to more reliable and powerful linear solvers. Currently, `UnoSolver.jl` supports `MA27`, `MA57`, and `MA86`.
 Pick a linear solver by setting the `linear_solver` attribute:
 ```julia
 using JuMP, UnoSolver

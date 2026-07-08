@@ -157,9 +157,9 @@ end
 end
 
 @testset "preset = $preset" for preset in ("ipopt",)
-    for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57")
+    for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57", "MA86")
         (linear_solver == "SSIDS") && (!haskey(ENV, "OMP_CANCELLATION") || !haskey(ENV, "OMP_PROC_BIND")) && continue
-        (linear_solver == "MA27" || linear_solver == "MA57") && !(@ccall HSL_jll.libhsl.LIBHSL_isfunctional()::Bool) && continue
+        (linear_solver in ("MA27", "MA57", "MA86")) && !(@ccall HSL_jll.libhsl.LIBHSL_isfunctional()::Bool) && continue
 
         @testset "linear solver = $linear_solver" begin
             @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS")

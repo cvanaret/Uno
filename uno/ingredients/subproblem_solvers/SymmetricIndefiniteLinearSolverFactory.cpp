@@ -15,6 +15,10 @@
 #include "ingredients/subproblem_solvers/MA27/MA27Solver.hpp"
 #endif
 
+#ifdef HAS_MA86
+#include "ingredients/subproblem_solvers/MA86/MA86Solver.hpp"
+#endif
+
 #ifdef HAS_HSL
 namespace uno {
    extern "C" {
@@ -62,6 +66,18 @@ namespace uno {
       }
 #endif // HAS_HSL || HAS_MA27
 
+#ifdef HAS_MA86
+      if (linear_solver == "MA86"
+   #if defined(HSL_RUNTIME_LOADING)
+         && ma86_symbols_available()
+   #elif defined(HAS_HSL)
+         && LIBHSL_isfunctional()
+   #endif
+      ) {
+         return std::make_unique<MA86Solver>();
+      }
+#endif
+
 #ifdef HAS_MUMPS
       if (linear_solver == "MUMPS") {
          return std::make_unique<MUMPSSolver>();
@@ -92,6 +108,20 @@ namespace uno {
    #endif
    #ifdef HAS_MA27
       solvers.emplace_back("MA27");
+   #endif
+#endif
+
+#ifdef HAS_MA86
+   #if defined(HSL_RUNTIME_LOADING)
+      if (ma86_symbols_available()) {
+         solvers.emplace_back("MA86");
+      }
+   #elif defined(HAS_HSL)
+      if (LIBHSL_isfunctional()) {
+         solvers.emplace_back("MA86");
+      }
+   #else
+      solvers.emplace_back("MA86");
    #endif
 #endif
 
