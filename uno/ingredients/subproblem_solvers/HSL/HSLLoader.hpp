@@ -13,68 +13,10 @@
 
 namespace uno {
    extern "C" {
-      struct ma86_control {
-         int f_arrays;
-         int diagnostics_level;
-         int unit_diagnostics;
-         int unit_error;
-         int unit_warning;
-         int nemin;
-         int nb;
-         int action;
-         int nbi;
-         int pool_size;
-         double small_;
-         double static_;
-         double u;
-         double umin;
-         int scaling;
-      };
-
-      struct ma86_info {
-         double detlog;
-         int detsign;
-         int flag;
-         int matrix_rank;
-         int maxdepth;
-         int num_delay;
-         long num_factor;
-         long num_flops;
-         int num_neg;
-         int num_nodes;
-         int num_nothresh;
-         int num_perturbed;
-         int num_two;
-         int pool_size;
-         int stat;
-         double usmall;
-      };
-
-      struct mc68_control {
-         int f_array_in;
-         int f_array_out;
-         int min_l_workspace;
-         int lp;
-         int wp;
-         int mp;
-         int nemin;
-         int print_level;
-         int row_full_thresh;
-         int row_search;
-      };
-
-      struct mc68_info {
-         int flag;
-         int iostat;
-         int stat;
-         int out_range;
-         int duplicate;
-         int n_compressions;
-         int n_zero_eigs;
-         long l_workspace;
-         int zb01_info;
-         int n_dense_rows;
-      };
+      struct ma86_control;
+      struct ma86_info;
+      struct mc68_control;
+      struct mc68_info;
 
       // MA57
       using ma57id_fp = void (*)(double cntl[], int icntl[]);
