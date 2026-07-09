@@ -11,7 +11,7 @@ In preparation for an Uno release, use the following checklist. These steps can 
 ````
 ## Pre-release
 
-- [ ] Change the version number in `CITATION.cff` (twice)
+- [ ] Change the version number in `CITATION.cff`
 - [ ] Change the version number in `CMakeLists.txt`
 - [ ] Change the version number in `interfaces/C/Uno_C_API.h`
 - [ ] Change the version number in `interfaces/Fortran/uno_c.f90`
