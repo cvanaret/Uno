@@ -90,7 +90,7 @@ jobs:
       run: |
         rm -rf $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
         cp -L ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin
-        cp -L ${{github.workspace}}/build/libuno.so $RUNNER_PATH/Uno_jll.jl/override/bin
+        cp -L ${{github.workspace}}/build/libuno.so $RUNNER_PATH/Uno_jll.jl/override/lib
 
   preset-ipopt:
     needs: compilation-uno-hsl
