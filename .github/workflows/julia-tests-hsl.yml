@@ -22,7 +22,8 @@ on:
 
 env:
   BUILD_TYPE: Debug
-  VENV: ~/myenv
+  VENV: /home/optimi/cvanaret/myenv
+  RUNNER_PATH: /home/optimi/cvanaret/actions-runner
 
 jobs:
   compilation-uno-hsl:
@@ -38,7 +39,7 @@ jobs:
 
 #    - name: Compile BLAS and LAPACK
 #      run: |
-#        cd ~/actions-runner/lapack
+#        cd $RUNNER_PATH/lapack
 #        rm -rf builddir
 #        mkdir builddir && cd builddir
 #        cmake .. \
@@ -52,7 +53,7 @@ jobs:
       run: |
         BLAS_PATH="/usr/lib/x86_64-linux-gnu"
         LAPACK_PATH="/usr/lib/x86_64-linux-gnu"
-        cd ~/actions-runner/libhsl
+        cd $RUNNER_PATH/libhsl
         rm -rf builddir
         meson setup builddir --buildtype=debug \
                              -Dlibblas=blas \
@@ -64,7 +65,7 @@ jobs:
 
     - name: Compile AMPL
       run: |
-        cd ~/actions-runner/ampl
+        cd $RUNNER_PATH/ampl
         make -f makefile.u clean
         make -f makefile.u CC=gcc CFLAGS="-O2 -fPIC"
 
@@ -72,8 +73,8 @@ jobs:
       run: |
         LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.a"
         LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.a"
-        LIBHSL_PATH="~/actions-runner/libhsl/builddir/libhsl.so"
-        LIBAMPL_PATH="~/actions-runner/ampl/amplsolver.a"
+        LIBHSL_PATH="$RUNNER_PATH/libhsl/builddir/libhsl.so"
+        LIBAMPL_PATH="$RUNNER_PATH/ampl/amplsolver.a"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
@@ -85,8 +86,8 @@ jobs:
 
     - name: Install -- Uno
       run: |
-        rm -rf ~/actions-runner/Uno_jll.jl/override/bin/uno_ampl
-        cp ${{github.workspace}}/build/uno_ampl ~/actions-runner/Uno_jll.jl/override/bin
+        rm -rf $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
+        cp ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin
 
   preset-ipopt:
     needs: compilation-uno-hsl
@@ -106,5 +107,5 @@ jobs:
       run: |
         using Pkg
         Pkg.instantiate()
-        Pkg.develop(path="~/actions-runner/Uno_jll.jl")
-        include("~/actions-runner/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl")
+        Pkg.develop(path="$RUNNER_PATH/Uno_jll.jl")
+        include("$RUNNER_PATH/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl")
