@@ -72,7 +72,7 @@ jobs:
       run: |
         LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.a"
         LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.a"
-        LIBHSL_PATH="~/actions-runner/libhsl/builddir/libhsl.a"
+        LIBHSL_PATH="~/actions-runner/libhsl/builddir/libhsl.so"
         LIBAMPL_PATH="~/actions-runner/ampl/amplsolver.a"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
