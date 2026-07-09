@@ -87,7 +87,7 @@ jobs:
     - name: Install -- Uno
       run: |
         rm -rf $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
-        cp ${{github.workspace}}/build/uno_ampl ~/.julia/dev/Uno_jll/override/bin
+        cp ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin
 
   preset-ipopt:
     needs: compilation-uno-hsl
@@ -107,5 +107,5 @@ jobs:
       run: |
         using Pkg
         Pkg.instantiate()
-        Pkg.develop("Uno_jll")
-        include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl")
+        Pkg.develop(path="${{ env.RUNNER_PATH }}/Uno_jll.jl")
+        include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt_${{ matrix.HSL_SOLVER }}.jl")
