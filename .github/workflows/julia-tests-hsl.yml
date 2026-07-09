@@ -79,8 +79,8 @@ jobs:
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
                                              -DHSL=${LIBHSL_PATH} \
-                                             -DAMPLSOLVER=${LIBAMPL_PATH}
-                                             -DBUILD_SHARED_LIBS=ON
+                                             -DAMPLSOLVER=${LIBAMPL_PATH} \
+                                             -DBUILD_SHARED_LIBS=ON \
                                              -DBUILD_STATIC_LIBS=OFF
 
     - name: Build -- Uno
