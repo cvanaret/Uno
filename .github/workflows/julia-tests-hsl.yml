@@ -108,4 +108,4 @@ jobs:
         using Pkg
         Pkg.instantiate()
         Pkg.develop("Uno_jll")
-        include("$RUNNER_PATH/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl")
+        include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl")
