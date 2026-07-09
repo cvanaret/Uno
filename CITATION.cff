@@ -1,14 +1,15 @@
-cff-version: 2.7.6
-message: "If you use this software, please cite it as below."
+cff-version: 1.2.0
+message: "If you use Uno, please cite both the software (Zenodo DOI) and the article below."
+title: "Uno"
+version: 2.7.6
+doi: 10.5281/zenodo.21103041
+url: "https://github.com/cvanaret/Uno"
 authors:
 - family-names: "Vanaret"
   given-names: "Charlie"
   orcid: "https://orcid.org/0000-0002-1131-7631"
-title: "Uno"
-version: 2.7.6
-url: "https://github.com/cvanaret/Uno"
 preferred-citation:
-  type: unpublished
+  type: article
   authors:
   - family-names: "Vanaret"
     given-names: "Charlie"
@@ -17,4 +18,6 @@ preferred-citation:
     given-names: "Sven"
     orcid: "https://orcid.org/0000-0001-8839-5876"
   title: "Implementing a unified solver for nonlinearly constrained optimization"
+  journal: "Mathematical Programming Computation"
   year: 2026
+  doi: 10.1007/s12532-026-00310-9
