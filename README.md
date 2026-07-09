@@ -63,6 +63,6 @@ Uno itself was designed and implemented by Charlie Vanaret.
 It is released under the [MIT license](LICENSE).
 
 The contributors are (in alphabetical order):
-[Oscar Dowson](https://github.com/odow), [Marcel Jacobse](https://github.com/mjacobse), [Arnav Kapoor](https://github.com/arnavk23), [David Kiessling](https://github.com/david0oo), [Rujia Liu](https://github.com/rujialiu), [Stefano Lovato](https://github.com/stefphd), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).
+[Oscar Dowson](https://github.com/odow), [Joris Gillis](https://github.com/jgillis), [Marcel Jacobse](https://github.com/mjacobse), [Arnav Kapoor](https://github.com/arnavk23), [David Kiessling](https://github.com/david0oo), [Rujia Liu](https://github.com/rujialiu), [Stefano Lovato](https://github.com/stefphd), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).
 
 The Uno logo was created by Charlie Vanaret based on a [saddle point icon by luimonts](https://thenounproject.com/icon/saddle-point-258207/) (CC BY 3.0).
