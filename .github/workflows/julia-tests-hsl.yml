@@ -95,6 +95,7 @@ jobs:
     strategy:
       matrix:
         HSL_SOLVER: [ma27, ma57, ma86]
+        fail-fast: false
     name: Run Julia tests for the ipopt preset with ${{matrix.HSL_SOLVER}}
     steps:
     - uses: actions/checkout@v4
