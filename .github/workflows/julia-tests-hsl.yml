@@ -80,8 +80,8 @@ jobs:
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
                                              -DHSL=${LIBHSL_PATH} \
                                              -DAMPLSOLVER=${LIBAMPL_PATH}
-                                             -BUILD_SHARED_LIBS=ON
-                                             -BUILD_STATIC_LIBS=OFF
+                                             -DBUILD_SHARED_LIBS=ON
+                                             -DBUILD_STATIC_LIBS=OFF
 
     - name: Build -- Uno
       run: cmake --build ${{github.workspace}}/build --target uno_ampl --config ${{env.BUILD_TYPE}}
