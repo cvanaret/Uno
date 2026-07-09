@@ -71,8 +71,8 @@ jobs:
 
     - name: Configure CMake -- Uno
       run: |
-        LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.a"
-        LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.a"
+        LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
+        LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
         LIBHSL_PATH="$RUNNER_PATH/libhsl/builddir/libhsl.so"
         LIBAMPL_PATH="$RUNNER_PATH/ampl/amplsolver.a"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
@@ -80,6 +80,8 @@ jobs:
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
                                              -DHSL=${LIBHSL_PATH} \
                                              -DAMPLSOLVER=${LIBAMPL_PATH}
+                                             -BUILD_SHARED_LIBS=ON
+                                             -BUILD_STATIC_LIBS=OFF
 
     - name: Build -- Uno
       run: cmake --build ${{github.workspace}}/build --target uno_ampl --config ${{env.BUILD_TYPE}}
@@ -87,7 +89,8 @@ jobs:
     - name: Install -- Uno
       run: |
         rm -rf $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
-        cp ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin
+        cp -L ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin
+        cp -L ${{github.workspace}}/build/libuno.so $RUNNER_PATH/Uno_jll.jl/override/bin
 
   preset-ipopt:
     needs: compilation-uno-hsl
