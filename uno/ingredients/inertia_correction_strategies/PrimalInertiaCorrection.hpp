@@ -38,7 +38,7 @@ namespace uno {
 
    protected:
       const std::string& optional_linear_solver_name;
-      const std::string hsllib;
+      const std::string libhsl_path;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double regularization_factor{0.};
       const double regularization_initial_factor{};

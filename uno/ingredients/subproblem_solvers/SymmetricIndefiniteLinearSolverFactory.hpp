@@ -15,9 +15,9 @@ namespace uno {
 
    class SymmetricIndefiniteLinearSolverFactory {
    public:
-      // hsllib: runtime HSL library name for MA27/MA57 (empty = platform default libhsl.<ext>)
+      // libhsl_path: runtime HSL library name for MA27/MA57 (empty = platform default libhsl.<ext>)
       static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver,
-         const std::string& hsllib = "");
+         const std::string& libhsl_path = "");
 
       // return the list of available solvers
       static std::vector<std::string> available_solvers();

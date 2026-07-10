@@ -148,8 +148,8 @@ You can pass the following options as `-DOPTION=value`:
 > `-DHSL_RUNTIME_LOADING=ON` requires a shared build (`-DBUILD_SHARED_LIBS=ON`): the mode is meant to `dlopen` a shared library `libhsl` from a shared `libuno`, so a static-only build is rejected by CMake.
 >
 > With `-DHSL_RUNTIME_LOADING=ON`, Uno is built without linking any HSL library and instead `dlopen`s it on first use (as IPOPT does), so the same binary can be shipped with or without HSL. At runtime, the shared library is resolved in this order:
-> 1. the `hsllib` [option](options.md) (empty by default);
+> 1. the `libhsl_path` [option](options.md) (empty by default);
 > 2. the `UNO_HSL_LIBRARY` environment variable;
 > 3. the platform default `libhsl.so` / `libhsl.dylib` / `libhsl.dll`.
 >
-> Since the default `linear_solver` is auto-selected before user options are parsed, use `UNO_HSL_LIBRARY` (rather than the `hsllib` option) if you want `MA27`/`MA57`/`MA86` to be picked automatically when the library is not on the default search path.
+> Since the default `linear_solver` is auto-selected before user options are parsed, use `UNO_HSL_LIBRARY` (rather than the `libhsl_path` option) if you want `MA27`/`MA57`/`MA86` to be picked automatically when the library is not on the default search path.
