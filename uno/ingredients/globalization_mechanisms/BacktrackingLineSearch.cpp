@@ -21,7 +21,8 @@ namespace uno {
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")),
-         max_iterations_SOC(options.get_unsigned_int("max_iterations_SOC")) {
+         SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
+         SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")) {
       // check the initial and minimal step lengths
       assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
       assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
@@ -133,11 +134,10 @@ namespace uno {
          }
          // from here on, the trial iterate was rejected
          else if (number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
-               this->max_iterations_SOC >= 1 && trial_iterate.progress.infeasibility > current_iterate.progress.infeasibility) {
+               this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility > current_iterate.progress.infeasibility) {
             // enter second-order corrections
             DEBUG << "\nEntering second-order corrections\n";
             Direction direction_soc(direction);
-            const double kappa_soc = 0.99;
             double theta_soc_old = current_iterate.progress.infeasibility;
             Vector<double> c_k_soc(evaluation_cache.current_evaluations.constraints.size());
             c_k_soc = evaluation_cache.trial_evaluations.constraints;
@@ -162,8 +162,8 @@ namespace uno {
                   direction = direction_soc;
                   DEBUG << "SOC direction acceptable " << '\n';
                }
-               else if (SOC_iteration >= this->max_iterations_SOC ||
-                     trial_soc_iterate.progress.infeasibility > kappa_soc * theta_soc_old) {
+               else if (SOC_iteration >= this->SOC_max_iterations ||
+                     trial_soc_iterate.progress.infeasibility > this->SOC_infeasibility_fraction * theta_soc_old) {
                   // terminate the SOCs and keep backtracking
                   SOC_termination = true;
                   DEBUG << "SOC done, resume backtracking " << '\n';

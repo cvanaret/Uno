@@ -27,8 +27,6 @@ namespace uno {
       options.set_integer("loose_tolerance_iteration_threshold", 15);
       // maximum number of outer iterations
       options.set_integer("max_iterations", 2000);
-      // maximum number of SOC (Second-Order Corrections) iterations
-      options.set_integer("max_iterations_SOC", 4);
       // CPU time limit (in seconds)
       options.set_double("time_limit", INF<double>);
       // print optimal solution (yes|no)
@@ -90,6 +88,12 @@ namespace uno {
       options.set_double("LS_min_step_length", 1e-12);
       // use the primal-dual and dual step lengths to scale the dual directions when assembling the trial iterate
       options.set_bool("LS_scale_duals_with_step_length", true);
+
+      /** Second-Order Corrections (SOC) options */
+      // maximum number of SOC iterations
+      options.set_integer("SOC_max_iterations", 0);
+      // fraction of the infeasibility in the SOC termination criterion
+      options.set_double("SOC_infeasibility_fraction", 0.99);
 
       /* quasi-Newton options */
       options.set_integer("quasi_newton_memory_size", 6);
