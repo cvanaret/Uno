@@ -41,9 +41,9 @@ namespace uno {
    }
 
    void LBFGSHessian::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
-         EvaluationCache& evaluation_cache) {
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       // compute the candidate pair (s, y) WITHOUT modifying the memory yet, so that a skipped update is a true no-op
-      this->compute_candidate_pair(current_iterate, trial_iterate, evaluation_cache);
+      this->compute_candidate_pair(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
 
       // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
       // TODO compare against Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization

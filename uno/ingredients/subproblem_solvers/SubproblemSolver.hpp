@@ -29,7 +29,7 @@ namespace uno {
 
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       virtual void compute_second_order_correction(const Subproblem& subproblem, Direction& direction,
-         Evaluations& trial_evaluations) = 0;
+         const Vector<double>& constraints) = 0;
 
       [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
    };

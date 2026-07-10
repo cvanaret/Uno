@@ -11,6 +11,7 @@
 #include "optimization/Iterate.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/EvaluationCache.hpp"
+#include "symbolic/Sum.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
@@ -87,11 +88,10 @@ namespace uno {
    // go a fraction along the direction by finding an acceptable step length
    // returns true upon success, false upon failure
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
+         Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) const {
       double step_length = 1.;
       bool termination = false;
-      bool in_soc = false;
       size_t number_iterations = 0;
       while (!termination) {
          ++number_iterations;
@@ -112,7 +112,8 @@ namespace uno {
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-               trial_iterate, direction, step_length, false, evaluation_cache, warmstart_information, user_callbacks);
+               trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
+               warmstart_information, user_callbacks);
             BacktrackingLineSearch::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          }
          catch (const EvaluationError&) {
@@ -126,10 +127,23 @@ namespace uno {
             if (Logger::level == INFO) statistics.print_current_line();
          }
          // from here on, the trial iterate was rejected
-         else if (number_iterations == 1) {
+         else if (number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
+               trial_iterate.progress.infeasibility > current_iterate.progress.infeasibility) {
             // enter second-order corrections
-            in_soc = true;
-            WARNING << "Entering second-order corrections\n";
+            INFO << "Entering second-order corrections\n";
+            double theta_soc_old = current_iterate.progress.infeasibility;
+            Vector<double> c_k_soc(evaluation_cache.trial_evaluations.constraints);
+            c_k_soc += direction.primal_dual_step_length * evaluation_cache.current_evaluations.constraints;
+            /*
+            this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate, direction, c_k_soc);
+            //Iterate iterate_k_soc();
+            Vector<double> x_k_soc = current_iterate.primals + direction.primal_dual_step_length * direction.primals;
+
+            Evaluations soc_evaluations(evaluation_cache.current_evaluations);
+            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+               trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
+               warmstart_information, user_callbacks);
+            */
          }
          else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);

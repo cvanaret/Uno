@@ -173,6 +173,20 @@ namespace uno {
       }
    }
 
+   void FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate, Direction& direction,
+         const Vector<double>& constraints) {
+      if (this->current_phase == Phase::OPTIMALITY) {
+         const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
+         return this->subproblem_solver->compute_second_order_correction(subproblem, direction, constraints);
+      }
+      else {
+         const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
+            *this->feasibility_inertia_correction_strategy);
+         return this->feasibility_subproblem_solver->compute_second_order_correction(feasibility_subproblem, direction,
+            constraints);
+      }
+   }
+
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
          SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
@@ -226,8 +240,8 @@ namespace uno {
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) {
+         bool uses_trust_region, Evaluations& current_evaluations, Evaluations& trial_evaluations,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
@@ -235,9 +249,10 @@ namespace uno {
             *this->inertia_correction_strategy);
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, *this->globalization_strategy,
             subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
-            evaluation_cache);
+            current_evaluations, trial_evaluations);
          if (uses_trust_region || accept_iterate) {
-            this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+            this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+               trial_evaluations);
          }
       }
       else {
@@ -245,15 +260,16 @@ namespace uno {
             *this->feasibility_inertia_correction_strategy);
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->feasibility_globalization_strategy,
             feasibility_subproblem, this->feasibility_subproblem_solver->get_workspace(), current_iterate, trial_iterate,
-            direction, step_length, evaluation_cache);
+            direction, step_length, current_evaluations, trial_evaluations);
          if (uses_trust_region || accept_iterate) {
-            this->feasibility_hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+            this->feasibility_hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+               trial_evaluations);
          }
       }
 
       // possibly go from restoration phase to optimality phase
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model, trial_iterate,
-            direction, step_length, evaluation_cache.current_evaluations)) {
+            direction, step_length, current_evaluations)) {
          this->switch_back_to_optimality_phase(current_iterate, trial_iterate);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
@@ -264,9 +280,8 @@ namespace uno {
 
       // check termination
       if (this->current_phase == Phase::OPTIMALITY) {
-         this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
-         trial_iterate.status = this->check_termination(this->original_problem, trial_iterate,
-            evaluation_cache.trial_evaluations);
+         this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
                this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
@@ -274,9 +289,8 @@ namespace uno {
          }
       }
       else {
-         this->compute_residuals(this->feasibility_problem, trial_iterate, evaluation_cache.trial_evaluations);
-         trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate,
-            evaluation_cache.trial_evaluations);
+         this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
+         trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
                this->feasibility_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
