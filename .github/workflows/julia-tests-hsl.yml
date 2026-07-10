@@ -35,6 +35,7 @@ jobs:
       run: |
         ${{env.VENV}}/bin/pip install meson==1.7.1
         ${{env.VENV}}/bin/pip install ninja
+        ${{env.VENV}}/bin/pip install patchelf
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
 #    - name: Compile BLAS and LAPACK
@@ -89,8 +90,11 @@ jobs:
     - name: Install -- Uno
       run: |
         rm -rf $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
-        cp -L ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin
-        cp -L ${{github.workspace}}/build/libuno.so $RUNNER_PATH/Uno_jll.jl/override/lib
+        cp -L ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin/
+        cp -L ${{github.workspace}}/build/libuno.so $RUNNER_PATH/Uno_jll.jl/override/lib/
+        ${{env.VENV}}/bin/patchelf --set-rpath '$ORIGIN/../lib' $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
+        ${{env.VENV}}/bin/patchelf --print-rpath $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
+        ldd $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
 
   preset-ipopt:
     needs: compilation-uno-hsl
