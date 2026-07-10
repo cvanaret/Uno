@@ -31,7 +31,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Meson and Ninja
+    - name: Install Meson, Ninja, and patchelf
       run: |
         ${{env.VENV}}/bin/pip install meson==1.7.1
         ${{env.VENV}}/bin/pip install ninja
