@@ -25,8 +25,10 @@ namespace uno {
       options.set_double("loose_dual_tolerance", 1e-6);
       // number of iterations during which the loose tolerance is monitored
       options.set_integer("loose_tolerance_iteration_threshold", 15);
-      // maximum outer iterations
+      // maximum number of outer iterations
       options.set_integer("max_iterations", 2000);
+      // maximum number of SOC (Second-Order Corrections) iterations
+      options.set_integer("max_iterations_SOC", 4);
       // CPU time limit (in seconds)
       options.set_double("time_limit", INF<double>);
       // print optimal solution (yes|no)
