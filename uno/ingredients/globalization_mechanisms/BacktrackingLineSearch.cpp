@@ -134,7 +134,7 @@ namespace uno {
          }
          // from here on, the trial iterate was rejected
          else if (number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
-               this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility > current_iterate.progress.infeasibility) {
+               this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
             // enter second-order corrections
             DEBUG << "\nEntering second-order corrections\n";
             Direction direction_soc(direction);
@@ -153,8 +153,8 @@ namespace uno {
                Evaluations soc_evaluations(evaluation_cache.current_evaluations);
                soc_evaluations.reset();
                is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-                  trial_soc_iterate, direction_soc, step_length, false, evaluation_cache.current_evaluations, soc_evaluations,
-                  warmstart_information, user_callbacks);
+                  trial_soc_iterate, direction /* this is correct, see IPOPT paper */, step_length, false,
+                  evaluation_cache.current_evaluations, soc_evaluations, warmstart_information, user_callbacks);
                if (is_acceptable) {
                   // terminate the SOCs and the backtracking
                   SOC_termination = true;
