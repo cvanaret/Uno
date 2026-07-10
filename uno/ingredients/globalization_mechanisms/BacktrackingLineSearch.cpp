@@ -129,8 +129,6 @@ namespace uno {
 
          if (is_acceptable) {
             termination = true;
-            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
-            if (Logger::level == INFO) statistics.print_current_line();
          }
          // from here on, the trial iterate was rejected
          else if (number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
@@ -146,15 +144,23 @@ namespace uno {
             bool SOC_termination = false;
             while (!SOC_termination) {
                DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
-               this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate, direction_soc, c_k_soc);
-               //Iterate iterate_k_soc();
+
                Iterate trial_soc_iterate(trial_iterate);
-               assemble_trial_iterate(model, current_iterate, trial_soc_iterate, direction_soc, 1.);
                Evaluations soc_evaluations(evaluation_cache.current_evaluations);
                soc_evaluations.reset();
-               is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-                  trial_soc_iterate, direction /* this is correct, see IPOPT paper */, step_length, false,
-                  evaluation_cache.current_evaluations, soc_evaluations, warmstart_information, user_callbacks);
+
+               try {
+                  this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate, direction_soc, c_k_soc);
+                  assemble_trial_iterate(model, current_iterate, trial_soc_iterate, direction_soc, 1.);
+
+                  is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+                     trial_soc_iterate, direction /* this is correct, see IPOPT paper */, step_length, false,
+                     evaluation_cache.current_evaluations, soc_evaluations, warmstart_information, user_callbacks);
+               }
+               catch (const EvaluationError&) {
+                  is_acceptable = false;
+               }
+               
                if (is_acceptable) {
                   // terminate the SOCs and the backtracking
                   SOC_termination = true;
@@ -195,6 +201,11 @@ namespace uno {
                statistics.set("Status", "small step length");
                return false;
             }
+         }
+
+         if (is_acceptable) {
+            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
+            if (Logger::level == INFO) statistics.print_current_line();
          }
       } // end while loop
       return true;
