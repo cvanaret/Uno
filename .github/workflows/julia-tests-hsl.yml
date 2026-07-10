@@ -21,8 +21,9 @@ on:
       - 'docs/**'
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Debug
+  VENV: /home/optimi/cvanaret/myenv
+  RUNNER_PATH: /home/optimi/cvanaret/actions-runner
 
 jobs:
   compilation-uno-hsl:
@@ -30,63 +31,74 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Meson and Ninja
+    - name: Install Meson, Ninja, and patchelf
       run: |
-        pip install meson==1.7.1
-        pip install ninja
+        ${{env.VENV}}/bin/pip install meson==1.7.1
+        ${{env.VENV}}/bin/pip install ninja
+        ${{env.VENV}}/bin/pip install patchelf
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Compile BLAS and LAPACK
-      run: |
-        cd /scratch/github-actions/actions_runner_uno/lapack
-        rm -rf builddir
-        mkdir builddir && cd builddir
-        cmake .. \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DBUILD_SHARED_LIBS=OFF \
-          -DBUILD_INDEX64_EXT_API=OFF \
-          -DTEST_FORTRAN_COMPILER=OFF
-        make -j4
+#    - name: Compile BLAS and LAPACK
+#      run: |
+#        cd $RUNNER_PATH/lapack
+#        rm -rf builddir
+#        mkdir builddir && cd builddir
+#        cmake .. \
+#          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+#          -DBUILD_SHARED_LIBS=OFF \
+#          -DBUILD_INDEX64_EXT_API=OFF \
+#          -DTEST_FORTRAN_COMPILER=OFF
+#        make -j4
 
     - name: Compile libHSL
       run: |
-        BLAS_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib"
-        LAPACK_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib"
-        cd /scratch/github-actions/actions_runner_uno/libhsl
+        BLAS_PATH="/usr/lib/x86_64-linux-gnu"
+        LAPACK_PATH="/usr/lib/x86_64-linux-gnu"
+        cd $RUNNER_PATH/libhsl
         rm -rf builddir
         meson setup builddir --buildtype=debug \
                              -Dlibblas=blas \
                              -Dliblapack=lapack \
                              -Dlibblas_path=${BLAS_PATH} \
                              -Dliblapack_path=${LAPACK_PATH} \
-                             -Ddefault_library=static
+                             -Ddefault_library=shared
         meson compile -C builddir
 
     - name: Compile AMPL
       run: |
-        cd /scratch/github-actions/actions_runner_uno/ampl
+        cd $RUNNER_PATH/ampl
         make -f makefile.u clean
         make -f makefile.u CC=gcc CFLAGS="-O2 -fPIC"
 
     - name: Configure CMake -- Uno
       run: |
-        LIBBLAS_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib/libblas.a"
-        LIBLAPACK_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib/liblapack.a"
-        LIBHSL_PATH="/scratch/github-actions/actions_runner_uno/libhsl/builddir/libhsl.a"
-        LIBAMPL_PATH="/scratch/github-actions/actions_runner_uno/ampl/amplsolver.a"
+        LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
+        LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
+        LIBHSL_PATH="$RUNNER_PATH/libhsl/builddir/libhsl.so"
+        LIBAMPL_PATH="$RUNNER_PATH/ampl/amplsolver.a"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
                                              -DHSL=${LIBHSL_PATH} \
-                                             -DAMPLSOLVER=${LIBAMPL_PATH}
+                                             -DAMPLSOLVER=${LIBAMPL_PATH} \
+                                             -DBUILD_SHARED_LIBS=ON \
+                                             -DBUILD_STATIC_LIBS=OFF
 
     - name: Build -- Uno
       run: cmake --build ${{github.workspace}}/build --target uno_ampl --config ${{env.BUILD_TYPE}}
 
     - name: Install -- Uno
       run: |
-        rm -rf /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin/uno_ampl
-        cp ${{github.workspace}}/build/uno_ampl /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin
+        rm -rf $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
+        cp -L ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin/
+        cp -L ${{github.workspace}}/build/libuno.so $RUNNER_PATH/Uno_jll.jl/override/lib/
+        ${{env.VENV}}/bin/patchelf --set-rpath '$ORIGIN/../lib' $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
+        LIB=$RUNNER_PATH/Uno_jll.jl/override/lib/libuno.so
+        RPATH=$(${{env.VENV}}/bin/patchelf --print-rpath "$LIB")
+        echo "libuno.so rpath: $RPATH"
+        ${{env.VENV}}/bin/patchelf --set-rpath "$RPATH" --force-rpath "$LIB"
+        ${{env.VENV}}/bin/patchelf --print-rpath $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
+        ldd $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
 
   preset-ipopt:
     needs: compilation-uno-hsl
@@ -94,6 +106,7 @@ jobs:
     strategy:
       matrix:
         HSL_SOLVER: [ma27, ma57, ma86]
+      fail-fast: false
     name: Run Julia tests for the ipopt preset with ${{matrix.HSL_SOLVER}}
     steps:
     - uses: actions/checkout@v4
@@ -106,5 +119,5 @@ jobs:
       run: |
         using Pkg
         Pkg.instantiate()
-        Pkg.develop(path="/scratch/github-actions/actions_runner_uno/Uno_jll.jl")
-        include("/scratch/github-actions/actions_runner_uno/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl")
+        Pkg.develop(path="${{ env.RUNNER_PATH }}/Uno_jll.jl")
+        include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt_${{ matrix.HSL_SOLVER }}.jl")
