@@ -19,7 +19,7 @@ namespace uno {
          SubproblemSolver(),
          hessian_model(hessian_model),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"),
-            options.get_string_optional("hsllib").value_or(""))) {
+            options.get_string_optional("libhsl_path").value_or(""))) {
       assert(!this->hessian_model.has_hessian_matrix());
    }
 

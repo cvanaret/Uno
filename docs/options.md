@@ -25,9 +25,9 @@ Defaults are taken from `uno/options/DefaultOptions.cpp`.
 
 If not provided, the solver is chosen automatically from the available solvers (if any).
 
-| Option    | Type   | Default | Description |
-| :---      | :---   | :---    | :---        |
-| `hsllib`  | string | `""`    | Name/path of the HSL shared library to `dlopen` for `MA27`/`MA57`/`MA86` (only used when Uno is built with `-DHSL_RUNTIME_LOADING=ON`). An empty value resolves at runtime to the platform default `libhsl.{so,dylib,dll}`. See the [installation guide](installation.md#cmake-options) for the resolution order and the `UNO_HSL_LIBRARY` environment variable. |
+| Option         | Type   | Default | Description                                                                                                                                                                                                                                                                                                                                                      |
+|:---------------| :---   | :---    |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `libhsl_path`  | string | `""`    | Name/path of the HSL shared library to `dlopen` for `MA27`/`MA57`/`MA86` (only used when Uno is built with `-DHSL_RUNTIME_LOADING=ON`). An empty value resolves at runtime to the platform default `libhsl.{so,dylib,dll}`. See the [installation guide](installation.md#cmake-options) for the resolution order and the `UNO_HSL_LIBRARY` environment variable. |
 
 ## Termination
 

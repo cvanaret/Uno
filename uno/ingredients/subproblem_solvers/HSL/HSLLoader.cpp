@@ -5,7 +5,7 @@
 #include "tools/DynamicLoader.hpp"
 #include "tools/Logger.hpp"
 
-// default library name: libhsl.<platform shared-lib extension> (matches IPOPT's hsllib)
+// default library name: libhsl.<platform shared-lib extension>
 #if defined(_WIN32)
 #define UNO_HSL_DEFAULT_LIBRARY "libhsl.dll"
 #elif defined(__APPLE__)
@@ -44,7 +44,7 @@ namespace uno {
       const std::string name = resolve_library_name(user_library_name, "UNO_HSL_LIBRARY", UNO_HSL_DEFAULT_LIBRARY);
 
       // cache success only: a failed probe (e.g. the early available_solvers() check with no name) must not block a
-      // later load with an explicit hsllib path.
+      // later load with an explicit libhsl_path.
       if (hsl_handle != nullptr) {
          // the first successful load wins; warn if an explicit, different library was requested too late
          if (!user_library_name.empty() && name != hsl_loaded_name) {
