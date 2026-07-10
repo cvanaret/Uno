@@ -23,7 +23,8 @@ namespace uno {
       const double backtracking_ratio;
       const double minimum_step_length;
       const bool scale_duals_with_step_length;
-      const size_t max_iterations_SOC;
+      const size_t SOC_max_iterations;
+      const double SOC_infeasibility_fraction;
 
       void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) const;

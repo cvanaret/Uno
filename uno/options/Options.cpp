@@ -16,7 +16,6 @@ namespace uno {
       {"loose_dual_tolerance", OptionType::DOUBLE},
       {"loose_tolerance_iteration_threshold", OptionType::INTEGER},
       {"max_iterations", OptionType::INTEGER},
-      {"max_iterations_SOC", OptionType::INTEGER},
       {"time_limit", OptionType::DOUBLE},
       {"print_solution", OptionType::BOOL},
       {"unbounded_objective_threshold", OptionType::DOUBLE},
@@ -101,6 +100,8 @@ namespace uno {
       {"preset", OptionType::STRING},
       {"option_file", OptionType::STRING},
       {"write_solution_to_file", OptionType::BOOL},
+      {"SOC_max_iterations", OptionType::INTEGER},
+      {"SOC_infeasibility_fraction", OptionType::DOUBLE},
    };
 
    // setters
