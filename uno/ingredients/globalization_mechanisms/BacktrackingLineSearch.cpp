@@ -197,7 +197,8 @@ namespace uno {
                evaluation_cache.current_evaluations, soc_evaluations, warmstart_information, user_callbacks);
          }
          catch (const EvaluationError&) {
-            is_acceptable = false;
+            // terminate the SOCs and keep backtracking
+            SOC_termination = true;
          }
 
          if (is_acceptable) {
