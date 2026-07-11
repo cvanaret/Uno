@@ -31,7 +31,9 @@ Uno breaks down these methods into a set of common building blocks that interact
 
 Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
 
-## How to cite Uno
+## How to support Uno
+
+### Cite Uno
 
 Our [theory paper](https://link.springer.com/article/10.1007/s12532-026-00310-9) published in Mathematical Programming Computation may be cited with the following BibTeX entry:
 
@@ -54,6 +56,10 @@ We also submitted a [software article](https://github.com/openjournals/joss-revi
   note = {Submitted to the Journal of Open Source Software}
 }
 ```
+
+### Sponsor Uno
+
+Uno is a [generic cake recipe for nonlinear optimization](https://youtu.be/hDPCVBQm8TE?is=ftCKIdDEYfiHK7ja): one set of instructions, ingredients you swap for your own. If it's useful to you, [sponsor it on GitHub](https://github.com/sponsors/cvanaret) and help keep the baking going.
 
 ## Credits
 
