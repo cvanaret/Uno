@@ -36,7 +36,7 @@ Uno is a composable software framework for nonlinearly constrained optimization 
 It unifies the workflows of Lagrange-Newton methods, i.e., gradient-based algorithms that iteratively solve the KKT optimality conditions using Newton's method.
 The central idea is to decompose these methods into reusable, interchangeable components (constraint reformulation, step computation, globalization techniques, and acceptance criteria) so that classical and hybrid algorithms can be assembled, compared, and tested within a single framework rather than reimplemented as separate solvers.
 As of July 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, sequential linear programming, and unconstrained optimization.
-For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2026].
+For full mathematical details of the algorithms implemented in Uno, see @VanaretLeyffer2026.
 
 Uno has interfaces to Julia, Python, C, Fortran, and AMPL, enabling interoperability across scientific computing environments.
 Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
