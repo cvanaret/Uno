@@ -25,7 +25,7 @@ affiliations:
    index: 1
  - name: Mathematics and Computer Science Division, Argonne National Laboratory, USA
    index: 2
-date: 8 June 2026
+date: 14 July 2026
 bibliography: paper.bib
 
 ---
@@ -84,6 +84,8 @@ Strategies are selected by the user at runtime via options.
 Uno also provides *presets*: particular combinations of strategies and hyperparameters that correspond to state-of-the-art solvers.
 Two presets are currently available: an \texttt{ipopt} preset mimicking the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset mimicking the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
 In principle all combinations of strategies can be generated, although some are not yet supported (e.g., an interior-point method with a trust-region globalization mechanism).
+When no preset is specified, Uno automatically dispatches to the \texttt{filtersqp} or \texttt{ipopt} preset based on the problem size, sparing users the choice of the underlying method.
+Acting as an oracle, this selection mechanism can be readily extended to dispatch to new presets as they become available.
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
@@ -92,13 +94,13 @@ An up-to-date performance profile is maintained on Uno's documentation page.
 This benchmark shows that Uno's composability does not come at the cost of performance: assembling a method from modular components reproduces the behavior of the hand-written solvers it mimics.
 
 Subproblem solvers are treated as interchangeable components that can be plugged in or swapped out without modifying the algorithmic logic, letting users match the solver to their problem structure, licensing constraints, or performance requirements.
-Uno currently interfaces several established LP, QP, and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], SSIDS [@hogg2016sparse], and `Krylov.jl` [@montoison2023krylov].
+Uno currently interfaces several established LP, QP, and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], MA86 [@hogg2010indefinite], SSIDS [@hogg2016sparse], and `Krylov.jl` [@montoison2023krylov].
 
 # Interfaces
 
 To make Uno accessible to a wide range of users, we provide multiple language interfaces.
 
-The AMPL Solver Library [@gay1997hooking] interface gives access to the AMPL [@fourer1990] modeling language for optimization.
+The AMPL Solver Library [@gay1997hooking] interface gives access to the AMPL [@fourer1989] modeling language for optimization.
 It is distributed as a binary that takes a compiled AMPL model (.nl file) as input, allowing users to solve problems without directly interacting with the C\texttt{++} core.
 
 The C interface provides direct access to Uno's core functionality while maximizing interoperability with other programming languages and tools.
