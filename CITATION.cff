@@ -1,15 +1,43 @@
 cff-version: 1.2.0
-message: "If you use Uno, please cite both the software (Zenodo DOI) and the article below."
+message: "If you use Uno, please cite it using the metadata from this file."
 title: "Uno"
 version: 2.8.0
-doi: 10.5281/zenodo.21103041
+doi: 10.5281/zenodo.18795863
 url: "https://github.com/cvanaret/Uno"
 authors:
 - family-names: "Vanaret"
   given-names: "Charlie"
   orcid: "https://orcid.org/0000-0002-1131-7631"
+- family-names: "Montoison"
+  given-names: "Alexis"
+  orcid: "https://orcid.org/0000-0002-3403-5450"
+contact:
+- family-names: "Vanaret"
+  given-names: "Charlie"
+  orcid: "https://orcid.org/0000-0002-1131-7631"
 preferred-citation:
   type: article
+  authors:
+  - family-names: "Vanaret"
+    given-names: "Charlie"
+    orcid: "https://orcid.org/0000-0002-1131-7631"
+  - family-names: "Montoison"
+    given-names: "Alexis"
+    orcid: "https://orcid.org/0000-0002-3403-5450"
+  title: "Uno: a composable framework for nonlinearly constrained optimization"
+  journal: "Journal of Open Source Software"
+  publisher:
+    name: "Open Journals"
+  year: 2026
+  date-published: 2026-07-14
+  doi: 10.21105/joss.10229
+  issn: 2475-9066
+  volume: 11
+  issue: 123
+  start: 10229
+  url: "https://joss.theoj.org/papers/10.21105/joss.10229"
+references:
+- type: article
   authors:
   - family-names: "Vanaret"
     given-names: "Charlie"
