@@ -274,14 +274,14 @@ public:
    }
 
    void initial_primal_point(Vector<double>& x) const override {
-      // copy the initial primal point
+      // copy the initial primal iterate
       for (size_t variable_index: Range(static_cast<size_t>(this->user_model.number_variables))) {
          x[variable_index] = this->user_model.initial_primal_iterate[variable_index];
       }
    }
 
    void initial_dual_point(Vector<double>& multipliers) const override {
-      // copy the initial dual point
+      // copy the initial dual iterate
       for (size_t constraint_index: Range(static_cast<size_t>(this->user_model.number_constraints))) {
          multipliers[constraint_index] = this->user_model.initial_dual_iterate[constraint_index];
       }
@@ -491,11 +491,10 @@ void* uno_create_unconstrained_model(const char* problem_type, uno_int number_va
    const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
    user_model->variables_lower_bounds.resize(unsigned_number_variables, -INF<double>);
    user_model->variables_upper_bounds.resize(unsigned_number_variables, INF<double>);
-   // create the initial primal point
-   user_model->initial_primal_iterate.resize(unsigned_number_variables);
-   for (size_t variable_index: Range(unsigned_number_variables)) {
-      user_model->initial_primal_iterate[variable_index] = 0.;
-   }
+   // create the initial primal iterate and bound dual iterates
+   user_model->initial_primal_iterate.resize(unsigned_number_variables, 0.);
+   user_model->initial_lower_bound_dual_iterate.resize(unsigned_number_variables, 0.);
+   user_model->initial_upper_bound_dual_iterate.resize(unsigned_number_variables, 0.);
    return user_model;
 }
 
@@ -504,12 +503,13 @@ bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_b
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
+   if (variables_lower_bounds == nullptr) {
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // copy the bounds internally
-   if (variables_lower_bounds != nullptr) {
-      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-         user_model->variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index];
-      }
+   for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+      user_model->variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index];
    }
    return true;
 }
@@ -519,14 +519,14 @@ bool uno_set_variables_upper_bounds(void* model, const double* variables_upper_b
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
+   if (variables_upper_bounds == nullptr) {
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // copy the bounds internally
-   if (variables_upper_bounds != nullptr) {
-      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-         user_model->variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index];
-      }
+   for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+      user_model->variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index];
    }
-
    return true;
 }
 
@@ -608,11 +608,8 @@ bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraint
       user_model->jacobian_column_indices[index] = jacobian_column_indices[index];
    }
    user_model->jacobian = jacobian;
-   // create the initial dual point
-   user_model->initial_dual_iterate.resize(unsigned_number_constraints);
-   for (size_t constraint_index: Range(unsigned_number_constraints)) {
-      user_model->initial_dual_iterate[constraint_index] = 0.;
-   }
+   // create the initial dual iterate
+   user_model->initial_dual_iterate.resize(unsigned_number_constraints, 0.);
    return true;
 }
 
@@ -621,12 +618,13 @@ bool uno_set_constraints_lower_bounds(void* model, const double* constraints_low
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
+   if (constraints_lower_bounds == nullptr) {
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // copy the bounds internally
-   if (constraints_lower_bounds != nullptr) {
-      for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
-         user_model->constraints_lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];
-      }
+   for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
+      user_model->constraints_lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];
    }
    return true;
 }
@@ -636,12 +634,13 @@ bool uno_set_constraints_upper_bounds(void* model, const double* constraints_upp
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
+   if (constraints_upper_bounds == nullptr) {
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // copy the bounds internally
-   if (constraints_upper_bounds != nullptr) {
-      for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
-         user_model->constraints_upper_bounds[constraint_index] = constraints_upper_bounds[constraint_index];
-      }
+   for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
+      user_model->constraints_upper_bounds[constraint_index] = constraints_upper_bounds[constraint_index];
    }
    return true;
 }
@@ -800,20 +799,50 @@ bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double i
    return false;
 }
 
+bool uno_set_initial_lower_bound_dual_iterate_component(void* model, uno_int index, double initial_dual_component) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   index -= user_model->base_indexing;
+   if (0 <= index && index < user_model->number_variables) {
+      user_model->initial_lower_bound_dual_iterate[static_cast<size_t>(index)] = initial_dual_component;
+      return true;
+   }
+   return false;
+}
+
+bool uno_set_initial_upper_bound_dual_iterate_component(void* model, uno_int index, double initial_dual_component) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   index -= user_model->base_indexing;
+   if (0 <= index && index < user_model->number_variables) {
+      user_model->initial_upper_bound_dual_iterate[static_cast<size_t>(index)] = initial_dual_component;
+      return true;
+   }
+   return false;
+}
+
 bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate) {
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
-   if (initial_primal_iterate != nullptr) {
-      CUserModel* user_model = static_cast<CUserModel*>(model);
-      // copy the initial primal point
-      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-         user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
-      }
-      return true;
+   if (initial_primal_iterate == nullptr) {
+      return false;
    }
-   return false;
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the initial primal iterate
+   for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+      user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
+   }
+   return true;
 }
 
 bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate) {
@@ -821,15 +850,47 @@ bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterat
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
-   if (initial_dual_iterate != nullptr) {
-      CUserModel* user_model = static_cast<CUserModel*>(model);
-      // copy the initial dual point
-      for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
-         user_model->initial_dual_iterate[constraint_index] = initial_dual_iterate[constraint_index];
-      }
-      return true;
+   if (initial_dual_iterate == nullptr) {
+      return false;
    }
-   return false;
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the initial dual iterate
+   for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
+      user_model->initial_dual_iterate[constraint_index] = initial_dual_iterate[constraint_index];
+   }
+   return true;
+}
+
+bool uno_set_initial_lower_bound_dual_iterate(void* model, const double* initial_lower_bound_dual_iterate) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   if (initial_lower_bound_dual_iterate == nullptr) {
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the initial lower bound dual iterate
+   for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+      user_model->initial_lower_bound_dual_iterate[variable_index] = initial_lower_bound_dual_iterate[variable_index];
+   }
+   return true;
+}
+
+bool uno_set_initial_upper_bound_dual_iterate(void* model, const double* initial_upper_bound_dual_iterate) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   if (initial_upper_bound_dual_iterate == nullptr) {
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the initial lower bound dual iterate
+   for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+      user_model->initial_upper_bound_dual_iterate[variable_index] = initial_upper_bound_dual_iterate[variable_index];
+   }
+   return true;
 }
 
 void* uno_create_solver() {
