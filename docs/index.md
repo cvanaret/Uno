@@ -40,6 +40,7 @@ Uno is currently available as a nonlinear optimization solver in:
 - [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
 - [CasADi](https://github.com/casadi/casadi)
 - [pyOptSparse](https://github.com/mdolab/pyoptsparse)
+- [OpenMDAO](https://github.com/OpenMDAO/OpenMDAO)
 - [DNLP](https://github.com/cvxgrp/DNLP), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
 - [CUTEst](https://github.com/ralna/cuTEst/), the Constrained and Unconstrained Testing Environment with safe threads (CUTEst) for optimization software 
 - [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
