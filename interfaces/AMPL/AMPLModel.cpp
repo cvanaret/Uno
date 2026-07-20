@@ -200,7 +200,7 @@ namespace uno {
       fint error_flag = 0;
       this->asl->p.Jacval(this->asl, const_cast<double*>(x.data()), jacobian_values, &error_flag);
       if (0 < error_flag) {
-         throw GradientEvaluationError();
+         throw JacobianEvaluationError();
       }
       ++this->number_model_evaluations.jacobian;
    }
