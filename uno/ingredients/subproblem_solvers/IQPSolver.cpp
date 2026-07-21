@@ -7,6 +7,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    IQPSolver::IQPSolver(std::unique_ptr<LPSolver> qp_solver):
@@ -31,6 +32,15 @@ namespace uno {
 
       // compute the dual direction
       compute_dual_direction(subproblem, direction.multipliers);
+   }
+
+   bool IQPSolver::has_second_order_corrections() const {
+      return false;
+   }
+
+   void IQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+         const Vector<double>& /*constraints*/) {
+      INFO << "No SOC implemented in IQPSolver\n";
    }
 
    SolverWorkspace& IQPSolver::get_workspace() {

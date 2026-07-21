@@ -39,6 +39,9 @@ namespace uno {
       void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
+      [[nodiscard]] bool has_second_order_corrections() const override;
+      void compute_second_order_correction(const Subproblem& subproblem, Direction& direction, const Vector<double>& constraints) override;
+
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:

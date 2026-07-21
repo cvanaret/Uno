@@ -100,6 +100,8 @@ namespace uno {
       {"preset", OptionType::STRING},
       {"option_file", OptionType::STRING},
       {"write_solution_to_file", OptionType::BOOL},
+      {"SOC_max_iterations", OptionType::INTEGER},
+      {"SOC_infeasibility_fraction", OptionType::DOUBLE},
    };
 
    // setters

@@ -45,7 +45,7 @@ namespace uno {
 
    bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, EvaluationCache& evaluation_cache) const {
+         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
       subproblem.problem.postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
@@ -57,25 +57,25 @@ namespace uno {
          subproblem.problem.set_auxiliary_measure(current_iterate);
          //this->subproblem_definition_changed = false;
       //}
-      this->evaluate_progress_measures(subproblem.problem, trial_iterate, evaluation_cache.trial_evaluations);
+      this->evaluate_progress_measures(subproblem.problem, trial_iterate, trial_evaluations);
 
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
-         evaluation_cache.trial_evaluations.objective = subproblem.problem.model.evaluate_objective(trial_iterate.primals);
+         trial_evaluations.objective = subproblem.problem.model.evaluate_objective(trial_iterate.primals);
          accept_iterate = true;
          statistics.set("Status", "0 primal step");
       }
       else {
          // determine acceptance wrt the globalization strategy
          const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(direction, step_length,
-            this->progress_norm, evaluation_cache.current_evaluations, solver_workspace);
+            this->progress_norm, current_evaluations, solver_workspace);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reductions, objective_multiplier);
          // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
          if (accept_iterate) {
-            evaluation_cache.trial_evaluations.evaluate_objective_gradient(subproblem.problem.model, trial_iterate.primals);
-            evaluation_cache.trial_evaluations.evaluate_jacobian(subproblem.problem.model, trial_iterate.primals);
+            trial_evaluations.evaluate_objective_gradient(subproblem.problem.model, trial_iterate.primals);
+            trial_evaluations.evaluate_jacobian(subproblem.problem.model, trial_iterate.primals);
          }
       }
       return accept_iterate;

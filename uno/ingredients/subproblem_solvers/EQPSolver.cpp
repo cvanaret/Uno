@@ -7,6 +7,7 @@
 #include "LinearSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -59,6 +60,37 @@ namespace uno {
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_evaluations, linear_system.rhs);
       }
+
+      // solve the linear system
+      this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+      if (this->linear_solver->matrix_is_singular()) {
+         direction.status = SubproblemStatus::INFEASIBLE;
+         return;
+      }
+      // assemble the full primal-dual direction
+      subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
+   }
+
+   bool EQPSolver::has_second_order_corrections() const {
+      return true;
+   }
+
+   // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
+   void EQPSolver::compute_second_order_correction(const Subproblem& subproblem, Direction& direction,
+         const Vector<double>& constraints) {
+      // access the linear system
+      auto& linear_system = this->linear_solver->get_linear_system();
+
+      // copy the constraints at the end of the RHS
+      auto rhs_constraints = view(linear_system.rhs, subproblem.number_variables, subproblem.number_variables +
+         subproblem.number_constraints);
+      rhs_constraints = constraints;
+      // shift the bound (lb == ub)
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         rhs_constraints[constraint_index] -= subproblem.problem.get_constraints_lower_bounds()[constraint_index];
+      }
+      // flip sign
+      rhs_constraints.scale(-1.);
 
       // solve the linear system
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());

@@ -20,7 +20,9 @@ namespace uno {
          GlobalizationMechanism(model, false, options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),
-         scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
+         scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")),
+         SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
+         SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")) {
       // check the initial and minimal step lengths
       assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
       assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
@@ -84,10 +86,21 @@ namespace uno {
 
    // protected member functions
 
+   void BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, double step_length) const {
+      GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
+         // primal step length
+         step_length * direction.primal_dual_step_length,
+         // constraint dual step length: scale or not with the LS step length
+         (this->scale_duals_with_step_length ? step_length : 1.) * direction.primal_dual_step_length,
+         // bound dual step length
+         direction.bound_dual_step_length);
+   }
+
    // go a fraction along the direction by finding an acceptable step length
    // returns true upon success, false upon failure
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
+         Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) const {
       double step_length = 1.;
       bool termination = false;
@@ -101,17 +114,12 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
-               // primal step length
-               step_length * direction.primal_dual_step_length,
-               // constraint dual step length: scale or not with the LS step length
-               (this->scale_duals_with_step_length ? step_length : 1.) * direction.primal_dual_step_length,
-               // bound dual step length
-               direction.bound_dual_step_length);
+            assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length);
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-               trial_iterate, direction, step_length, false, evaluation_cache, warmstart_information, user_callbacks);
+               trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
+               warmstart_information, user_callbacks);
             BacktrackingLineSearch::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          }
          catch (const EvaluationError&) {
@@ -121,8 +129,16 @@ namespace uno {
 
          if (is_acceptable) {
             termination = true;
-            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
-            if (Logger::level == INFO) statistics.print_current_line();
+         }
+         // from here on, the trial iterate was rejected
+         // try second-order corrections if the full step was rejected
+         else if (number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
+               this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
+            is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
+               evaluation_cache, warmstart_information, user_callbacks);
+            if (is_acceptable) {
+               termination = true;
+            }
          }
          else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);
@@ -142,8 +158,71 @@ namespace uno {
                return false;
             }
          }
+
+         if (is_acceptable) {
+            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
+            if (Logger::level == INFO) statistics.print_current_line();
+         }
       } // end while loop
       return true;
+   }
+
+   bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,
+         Iterate& current_iterate, const Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
+      // enter second-order corrections
+      DEBUG << "\nEntering second-order corrections\n";
+      Direction direction_soc(direction);
+      double theta_soc_old = current_iterate.progress.infeasibility;
+      Vector<double> c_k_soc(evaluation_cache.current_evaluations.constraints.size());
+      c_k_soc = evaluation_cache.trial_evaluations.constraints;
+      c_k_soc += direction_soc.primal_dual_step_length * evaluation_cache.current_evaluations.constraints;
+
+      size_t SOC_iteration = 1;
+      bool SOC_termination = false;
+      bool is_acceptable = false;
+      while (!SOC_termination) {
+         DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
+
+         Iterate trial_soc_iterate(trial_iterate);
+         Evaluations soc_evaluations(evaluation_cache.current_evaluations);
+         soc_evaluations.reset();
+
+         try {
+            this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate, direction_soc, c_k_soc);
+            assemble_trial_iterate(model, current_iterate, trial_soc_iterate, direction_soc, 1.);
+
+            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+               trial_soc_iterate, direction /* this is correct, see IPOPT paper */, 1., false,
+               evaluation_cache.current_evaluations, soc_evaluations, warmstart_information, user_callbacks);
+         }
+         catch (const EvaluationError&) {
+            // terminate the SOCs and keep backtracking
+            SOC_termination = true;
+         }
+
+         if (is_acceptable) {
+            // terminate the SOCs and the backtracking
+            SOC_termination = true;
+            direction = direction_soc;
+            DEBUG << "SOC direction acceptable " << '\n';
+         }
+         else if (SOC_iteration >= this->SOC_max_iterations ||
+               trial_soc_iterate.progress.infeasibility > this->SOC_infeasibility_fraction * theta_soc_old) {
+            // terminate the SOCs and keep backtracking
+            SOC_termination = true;
+            DEBUG << "SOC done, resume backtracking " << '\n';
+         }
+         else {
+            // continue the SOCs
+            c_k_soc.scale(direction_soc.primal_dual_step_length);
+            c_k_soc += soc_evaluations.constraints;
+            theta_soc_old = trial_soc_iterate.progress.infeasibility;
+            ++SOC_iteration;
+            DEBUG << "SOC direction rejected, continue SOCs" << '\n';
+         }
+      }
+      return is_acceptable;
    }
 
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...

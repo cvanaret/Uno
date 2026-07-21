@@ -41,10 +41,16 @@ namespace uno {
       virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
 
+      // second-order corrections
+      [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
+      virtual void compute_second_order_correction(Iterate& current_iterate, Direction& direction,
+         const Vector<double>& constraints) = 0;
+
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
@@ -65,7 +71,7 @@ namespace uno {
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Subproblem& subproblem,
          const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length, EvaluationCache& evaluation_cache) const;
+         double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;

@@ -91,23 +91,35 @@ namespace uno {
       throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 
+   bool NoRelaxation::has_second_order_corrections() const {
+      return this->subproblem_solver->has_second_order_corrections();
+   }
+
+   void NoRelaxation::compute_second_order_correction(Iterate& current_iterate, Direction& direction,
+         const Vector<double>& constraints) {
+      const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
+      this->subproblem_solver->compute_second_order_correction(subproblem, direction, constraints);
+   }
+
    bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) {
       const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model,
          *this->inertia_correction_strategy);
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->globalization_strategy,
          subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
-         evaluation_cache);
-      this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
-      trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+         current_evaluations, trial_evaluations);
+      this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+      trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
             trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
       }
       if (uses_trust_region || accept_iterate) {
-         this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+         this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+            trial_evaluations);
       }
       warmstart_information.no_changes();
       return accept_iterate;

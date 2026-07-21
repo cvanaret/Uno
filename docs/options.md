@@ -115,11 +115,18 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 ## Line search options
 
-| Option                            | Type   | Default | Description                                                      |
-| :---                              | :---   | :---    |:-----------------------------------------------------------------|
-| `LS_backtracking_ratio`           | double | 0.5     | Decrease ratio of the step length for backtracking line search   |
-| `LS_min_step_length`              | double | 1e-12   | Minimum acceptable step length before failure is reported        |
-| `LS_scale_duals_with_step_length` | bool   | `true`  | Whether the Lagrange multipliers are scaled with the step length |
+| Option                            | Type    | Default | Description                                                      |
+|:----------------------------------|:--------|:--------|:-----------------------------------------------------------------|
+| `LS_backtracking_ratio`           | double  | 0.5     | Decrease ratio of the step length for backtracking line search   |
+| `LS_min_step_length`              | double  | 1e-12   | Minimum acceptable step length before failure is reported        |
+| `LS_scale_duals_with_step_length` | bool    | `true`  | Whether the Lagrange multipliers are scaled with the step length |
+
+## Second-Order Corrections (SOC) options
+
+| Option                        | Type    | Default | Description                                                    |
+|:------------------------------|:--------|:--------|:---------------------------------------------------------------|
+| `SOC_max_iterations_SOC`      | integer | 4       | Maximum number of SOC iterations                               |
+| `SOC_infeasibility_fraction`  | double  | 0.99    | Fraction of the infeasibility in the SOC termination criterion |
 
 ## Inertia correction options
 

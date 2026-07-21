@@ -5,6 +5,7 @@
 #include "BoxLPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    void BoxLPSolver::initialize_memory(const Subproblem& subproblem) {
@@ -50,6 +51,15 @@ namespace uno {
          }
          direction.subproblem_objective += this->workspace.objective_gradient[variable_index] * direction.primals[variable_index];
       }
+   }
+
+   bool BoxLPSolver::has_second_order_corrections() const {
+      return false;
+   }
+
+   void BoxLPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+         const Vector<double>& /*constraints*/) {
+      INFO << "No SOC implemented in BoxLPSolver\n";
    }
 
    SolverWorkspace& BoxLPSolver::get_workspace() {

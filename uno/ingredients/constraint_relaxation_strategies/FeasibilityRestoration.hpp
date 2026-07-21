@@ -36,10 +36,16 @@ namespace uno {
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
+      // second-order corrections
+      [[nodiscard]] bool has_second_order_corrections() const override;
+      void compute_second_order_correction(Iterate& current_iterate, Direction& direction,
+         const Vector<double>& constraints) override;
+
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
 
