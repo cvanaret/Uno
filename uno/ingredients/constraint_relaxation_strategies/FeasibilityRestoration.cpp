@@ -253,22 +253,27 @@ namespace uno {
          warmstart_information.no_changes();
       }
 
-      // check termination
-      if (this->current_phase == Phase::OPTIMALITY) {
-         this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
-         trial_iterate.status = this->check_termination(this->original_problem, trial_iterate,
-            evaluation_cache.trial_evaluations);
-         if (accept_iterate) {
+      // Rejected line-search trials only need function values. Trust-region trials still need residuals because their
+      // derivatives can update the Hessian model before the subproblem is solved again with a smaller radius.
+      if (uses_trust_region || accept_iterate) {
+         // check termination
+         if (this->current_phase == Phase::OPTIMALITY) {
+            this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+            trial_iterate.status = this->check_termination(this->original_problem, trial_iterate,
+               evaluation_cache.trial_evaluations);
+         }
+         else {
+            this->compute_residuals(this->feasibility_problem, trial_iterate, evaluation_cache.trial_evaluations);
+            trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate,
+               evaluation_cache.trial_evaluations);
+         }
+
+         if (accept_iterate && this->current_phase == Phase::OPTIMALITY) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
                this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
                trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
          }
-      }
-      else {
-         this->compute_residuals(this->feasibility_problem, trial_iterate, evaluation_cache.trial_evaluations);
-         trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate,
-            evaluation_cache.trial_evaluations);
-         if (accept_iterate) {
+         else if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
                this->feasibility_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
                trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);

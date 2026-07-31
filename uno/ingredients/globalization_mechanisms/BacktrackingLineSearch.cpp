@@ -131,16 +131,10 @@ namespace uno {
          }
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
-            // check if we can terminate at a first-order point
-            if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
-               statistics.set("Status", "accepted (small step length)");
-               termination = true;
-            }
-            else {
-               // switch to solving the feasibility problem
-               statistics.set("Status", "small step length");
-               return false;
-            }
+            // Do not evaluate derivatives at a rejected line-search trial merely to test first-order termination.
+            // Let the caller switch to the feasibility problem or report line-search failure instead.
+            statistics.set("Status", "small step length");
+            return false;
          }
       } // end while loop
       return true;

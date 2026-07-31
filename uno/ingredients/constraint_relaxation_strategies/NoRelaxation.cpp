@@ -99,12 +99,16 @@ namespace uno {
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->globalization_strategy,
          subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
          evaluation_cache);
-      this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
-      trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
-      if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-            this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
-            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+      // Rejected line-search trials only need function values. Trust-region trials retain their existing derivative-based
+      // residual and Hessian-model updates before the subproblem is solved again with a smaller radius.
+      if (uses_trust_region || accept_iterate) {
+         this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+         trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+         if (accept_iterate) {
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+               this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+               trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+         }
       }
       if (uses_trust_region || accept_iterate) {
          this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
