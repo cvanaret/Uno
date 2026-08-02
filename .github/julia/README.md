@@ -5,14 +5,14 @@ We have partitioned the instances in order to target particular tests (e.g., ine
 
 | Script                                          | unconstrained | bound-constrained | equality-constrained | general | LP | NLP |
 |:------------------------------------------------|:--------------|:------------------|:---------------------|:--------|:---|:----|
-| `runtests_uno_filterslp_bqpd`                   |               |                   |                      |         |    |     |
-| `runtests_uno_filterslp_highs`                  |               |                   |                      |         |    |     |
-| `runtests_uno_filtersqp_bqpd`                   |               |                   |                      |         |    |     |
-| `runtests_uno_filtersqp_bqpd_identity`          |               |                   |                      |         |    |     |
-| `runtests_uno_filtersqp_bqpd_ls_lbfgs`          |               |                   |                      |         |    |     |
-| `runtests_uno_filtersqp_bqpd_lsr1`              |               |                   |                      |         |    |     |
-| `runtests_uno_filtersqp_bqpd_regularization_ls` |               |                   |                      |         |    |     |
-| `runtests_uno_filtersqp_bqpd_regularization_tr` |               |                   |                      |         |    |     |
+| `runtests_uno_filterslp_bqpd`                   | x             | x                 | x                    | x       | x  | x   |
+| `runtests_uno_filterslp_highs`                  | x             | x                 | x                    | x       | x  | x   |
+| `runtests_uno_filtersqp_bqpd`                   | x             | x                 | x                    | x       | x  | x   |
+| `runtests_uno_filtersqp_bqpd_identity`          | x             | x                 | x                    | x       | x  | x   |
+| `runtests_uno_filtersqp_bqpd_ls_lbfgs`          | x             | x                 | x                    | x       | x  | x   |
+| `runtests_uno_filtersqp_bqpd_lsr1`              | x             | x                 | x                    | x       | x  | x   |
+| `runtests_uno_filtersqp_bqpd_regularization_ls` | x             | x                 | x                    | x       | x  | x   |
+| `runtests_uno_filtersqp_bqpd_regularization_tr` | x             | x                 | x                    | x       | x  | x   |
 | `runtests_uno_ipopt_ma27`                       |               | x                 |                      | x       | x  | x   |
 | `runtests_uno_ipopt_ma57`                       |               | x                 |                      | x       | x  | x   |
 | `runtests_uno_ipopt_mumps`                      |               | x                 |                      | x       | x  | x   |
