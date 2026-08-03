@@ -105,7 +105,7 @@ jobs:
         ldd $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
 
   uno-test:
-    name: Run Julia tests with ${{matrix.HSL_SOLVER}}
+    name: Julia tests of ${{matrix.UNO_TEST}} with ${{matrix.HSL_SOLVER}}
     needs: compilation-uno-hsl
     runs-on: self-hosted
     strategy:
