@@ -39,7 +39,7 @@ namespace uno {
    }
 
    void IQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
-         const Vector<double>& /*constraints*/) {
+         const Vector<double>& /*constraints_SOC*/) {
       INFO << "No SOC implemented in IQPSolver\n";
    }
 

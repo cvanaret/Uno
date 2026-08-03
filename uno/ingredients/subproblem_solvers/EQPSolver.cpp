@@ -77,14 +77,14 @@ namespace uno {
 
    // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
    void EQPSolver::compute_second_order_correction(const Subproblem& subproblem, Direction& direction,
-         const Vector<double>& constraints) {
+         const Vector<double>& constraints_SOC) {
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
 
       // copy the constraints at the end of the RHS
       auto rhs_constraints = view(linear_system.rhs, subproblem.number_variables, subproblem.number_variables +
          subproblem.number_constraints);
-      rhs_constraints = constraints;
+      rhs_constraints = constraints_SOC;
       // shift the bound (lb == ub)
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          rhs_constraints[constraint_index] -= subproblem.problem.get_constraints_lower_bounds()[constraint_index];
