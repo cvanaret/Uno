@@ -105,7 +105,7 @@ namespace uno {
          std::max(this->linear_system.dimension, this->linear_system.number_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
       this->workspace.iwork.resize(5 * this->linear_system.dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(this->linear_system.dimension));
+      this->workspace.lwork = static_cast<int>(static_cast<double>(this->linear_system.dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
       this->workspace.residuals.resize(this->linear_system.dimension);
    }
@@ -124,8 +124,8 @@ namespace uno {
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
-      this->workspace.lfact = 2 * this->workspace.info[8];
-      this->workspace.lifact = 2 * this->workspace.info[9];
+      this->workspace.lfact = static_cast<int>(MA57Settings::allocation_safety_factor * this->workspace.info[8]);
+      this->workspace.lifact = static_cast<int>(MA57Settings::allocation_safety_factor * this->workspace.info[9]);
       this->workspace.fact.resize(static_cast<size_t>(this->workspace.lfact));
       this->workspace.ifact.resize(static_cast<size_t>(this->workspace.lifact));
       this->analysis_performed = true;

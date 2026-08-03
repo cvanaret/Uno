@@ -15,6 +15,7 @@ namespace uno {
    struct MA57Settings {
       static constexpr int mc64_scaling = 0;
       static constexpr double pivoting_threshold = 1e-8;
+      static constexpr double allocation_safety_factor = 1.05;
    };
 
    // forward declarations
