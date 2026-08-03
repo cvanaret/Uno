@@ -141,7 +141,6 @@ namespace uno {
             this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
             &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
-         std::cout << "DONE\n";
 
          if (is_error_code_insufficient_real_workspace(INFO(1)) ||
              is_error_code_insufficient_integer_workspace(INFO(1))) {
