@@ -105,13 +105,14 @@ jobs:
         ldd $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
 
   preset-ipopt:
+    name: Run Julia tests for the ipopt preset with ${{matrix.HSL_SOLVER}}
     needs: compilation-uno-hsl
     runs-on: self-hosted
     strategy:
       matrix:
         HSL_SOLVER: [MA27, MA57, MA86]
       fail-fast: false
-    name: Run Julia tests for the ipopt preset with ${{matrix.HSL_SOLVER}}
+    
     steps:
     - uses: actions/checkout@v4
 

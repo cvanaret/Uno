@@ -89,10 +89,10 @@ jobs:
       fail-fast: false
       matrix:
         UNO_TEST: [uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd_charlies_instances,
-                     uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_lsr1,
-                     uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs,
-                     uno_ipopt_mumps_lbfgs, uno_ipopt_mumps_identity,
-                     uno_pure_sqp_mumps, uno_unconstrained_lbfgs_mumps, uno_unconstrained_mumps]
+                   uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_lsr1,
+                   uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs,
+                   uno_ipopt_mumps_lbfgs, uno_ipopt_mumps_identity,
+                   uno_pure_sqp_mumps, uno_unconstrained_lbfgs_mumps, uno_unconstrained_mumps]
         include:
           - UNO_TEST: uno_ipopt
             ARGS: MUMPS
@@ -132,11 +132,7 @@ jobs:
           echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
           echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
 
-<<<<<<< HEAD
       - name: Test ${{matrix.UNO_TEST}} ${{matrix.ARGS}}
-=======
-      - name: Test ${{matrix.UNO_PRESET}} ${{matrix.ARGS}} preset on .github/julia/runtests.jl
->>>>>>> ca6bd075 (Enabled Julia Ubuntu tests)
         env:
           UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
         shell: julia --color=yes --project=.github/julia {0}
@@ -146,8 +142,4 @@ jobs:
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
           test_args = "${{ matrix.ARGS }}"
           isempty(test_args) || push!(ARGS, test_args)
-<<<<<<< HEAD
           include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_TEST}}.jl")
-=======
-          include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_PRESET}}.jl")
->>>>>>> ca6bd075 (Enabled Julia Ubuntu tests)
