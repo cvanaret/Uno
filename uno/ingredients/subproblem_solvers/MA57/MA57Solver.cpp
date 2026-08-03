@@ -16,7 +16,6 @@
 #define MA57_symbolic_analysis uno::hsl_ma57ad
 #define MA57_numerical_factorization uno::hsl_ma57bd
 #define MA57_linear_solve uno::hsl_ma57cd
-#define MA57_linear_solve_with_iterative_refinement uno::hsl_ma57dd
 #define MA57_enlarge_workspace uno::hsl_ma57ed
 #else
 #include "fortran_interface.h"
@@ -25,7 +24,6 @@
 #define MA57_symbolic_analysis FC_GLOBAL(ma57ad, MA57AD)
 #define MA57_numerical_factorization FC_GLOBAL(ma57bd, MA57BD)
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
-#define MA57_linear_solve_with_iterative_refinement FC_GLOBAL(ma57dd, MA57DD)
 #define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
 #endif
 
@@ -43,10 +41,6 @@ namespace uno {
 
       void MA57_linear_solve(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs,
          double rhs[], const int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
-
-      void MA57_linear_solve_with_iterative_refinement(const int* job, const int* n, int* ne, const double a[], const int irn[],
-         const int jcn[], double fact[], int* lfact, int ifact[], int* lifact, const double rhs[], double x[], double resid[],
-         double work[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
 
       // enlarging of workspaces when numerical factorization runs out of memory
       void MA57_enlarge_workspace(const int* n, const int* ic, int keep[], const double fact[], const int* lfact,
@@ -96,8 +90,6 @@ namespace uno {
       MA57_set_default_parameters(this->workspace.cntl.data(), this->workspace.icntl.data());
       // suppress warning messages
       this->workspace.icntl[4] = 0;
-      // iterative refinement enabled
-      this->workspace.icntl[8] = 1;
    }
 
    void MA57Solver::initialize_memory() {
@@ -176,38 +168,12 @@ namespace uno {
    }
 
    void MA57Solver::solve_indefinite_system(double* solution) {
-      assert(this->factorization_performed);
-
-      // solve
-      const int nrhs = 1;
-      const int lrhs = this->workspace.n; // integer, length of rhs
-
-      // solve the linear system
-      if (this->use_iterative_refinement) {
-         MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            this->linear_system.matrix_values.data(), this->linear_system.matrix_row_indices.data(),
-            this->linear_system.matrix_column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), solution,
-            this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
-            this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
-      }
-      else {
-         // copy rhs into solution (overwritten by MA57)
-         const size_t dimension = static_cast<size_t>(this->workspace.n);
-         view(solution, dimension) = this->linear_system.rhs.view();
-
-         MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
-            this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
-            this->workspace.info.data());
-      }
+      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
    }
 
    void MA57Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
-      // MA57's iterative-refinement solve (ma57dd) only handles a single right-hand side, so the
-      // multiple-RHS path uses ma57cd directly (no iterative refinement) on a column-major block
       const int nrhs = static_cast<int>(number_of_rhs);
       const int lrhs = this->workspace.n; // leading dimension of the right-hand side block
 
