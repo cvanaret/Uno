@@ -109,7 +109,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix:
-        HSL_SOLVER: [ma27, ma57, ma86]
+        HSL_SOLVER: [MA27, MA57, MA86]
       fail-fast: false
     name: Run Julia tests for the ipopt preset with ${{matrix.HSL_SOLVER}}
     steps:
@@ -118,10 +118,10 @@ jobs:
     - name: Install Julia
       uses: julia-actions/setup-julia@v2
 
-    - name: Run runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl
-      shell: julia --color=yes --project=.github/julia {0}
+    - name: Run runtests_uno_ipopt.jl with ${{matrix.HSL_SOLVER}}
+      shell: julia --color=yes --project=.github/julia {0} ${{matrix.HSL_SOLVER}}
       run: |
         using Pkg
         Pkg.instantiate()
         Pkg.develop(path="${{ env.RUNNER_PATH }}/Uno_jll.jl")
-        include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt_${{ matrix.HSL_SOLVER }}.jl")
+        include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt.jl")

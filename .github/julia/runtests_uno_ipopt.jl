@@ -22,7 +22,11 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS", "unbounded_objective_threshold=-1e15"])
+# this script is parameterized by the linear solver passed as command line argument (e.g., runtests_uno_ipopt.jl MA57)
+length(ARGS) == 1 || error("The linear solver name is missing or you supplied more than one command line arguments")
+linear_solver = ARGS[1]
+
+Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=$linear_solver", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 
