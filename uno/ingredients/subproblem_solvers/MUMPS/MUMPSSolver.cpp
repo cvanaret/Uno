@@ -154,7 +154,7 @@ namespace uno {
       return this->linear_system;
    }
 
-   // protected member function
+   // protected member functions
 
    int& MUMPSSolver::ICNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)

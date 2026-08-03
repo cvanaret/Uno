@@ -11,6 +11,13 @@
 #include "linear_algebra/Indexing.hpp"
 
 namespace uno {
+   // settings taken from IPOPT
+   struct MA57Settings {
+      static constexpr int mc64_scaling = 0;
+      static constexpr double pivoting_threshold = 1e-8;
+      static constexpr double allocation_safety_factor = 1.05;
+   };
+
    // forward declarations
    class Statistics;
    class Subproblem;
@@ -68,7 +75,9 @@ namespace uno {
       bool analysis_performed{false};
       bool factorization_performed{false};
 
-      bool use_iterative_refinement{false};
+      [[nodiscard]] int& ICNTL(size_t index);
+      [[nodiscard]] double& CNTL(size_t index);
+      [[nodiscard]] int INFO(size_t index) const;
    };
 } // namespace
 

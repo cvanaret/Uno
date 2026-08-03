@@ -16,7 +16,6 @@
 #define MA57_symbolic_analysis uno::hsl_ma57ad
 #define MA57_numerical_factorization uno::hsl_ma57bd
 #define MA57_linear_solve uno::hsl_ma57cd
-#define MA57_linear_solve_with_iterative_refinement uno::hsl_ma57dd
 #define MA57_enlarge_workspace uno::hsl_ma57ed
 #else
 #include "fortran_interface.h"
@@ -25,7 +24,6 @@
 #define MA57_symbolic_analysis FC_GLOBAL(ma57ad, MA57AD)
 #define MA57_numerical_factorization FC_GLOBAL(ma57bd, MA57BD)
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
-#define MA57_linear_solve_with_iterative_refinement FC_GLOBAL(ma57dd, MA57DD)
 #define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
 #endif
 
@@ -43,10 +41,6 @@ namespace uno {
 
       void MA57_linear_solve(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs,
          double rhs[], const int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
-
-      void MA57_linear_solve_with_iterative_refinement(const int* job, const int* n, int* ne, const double a[], const int irn[],
-         const int jcn[], double fact[], int* lfact, int ifact[], int* lifact, const double rhs[], double x[], double resid[],
-         double work[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
 
       // enlarging of workspaces when numerical factorization runs out of memory
       void MA57_enlarge_workspace(const int* n, const int* ic, int keep[], const double fact[], const int* lfact,
@@ -94,10 +88,14 @@ namespace uno {
 #endif
       // set the default values of the controlling parameters
       MA57_set_default_parameters(this->workspace.cntl.data(), this->workspace.icntl.data());
-      // suppress warning messages
-      this->workspace.icntl[4] = 0;
-      // iterative refinement enabled
-      this->workspace.icntl[8] = 1;
+      ICNTL(5) = 0; // suppress warning messages
+      ICNTL(6) = 5; // pivot order (auto between METIS and MC47)
+      ICNTL(7) = 1; // numerical pivoting (uses threshold in CNTL(1))
+      ICNTL(11) = 16; // block size used by the Level 3 BLAS
+      ICNTL(12) = 16; // assembly tree
+      ICNTL(15) = MA57Settings::mc64_scaling; // MC64 scaling (disabled)
+      ICNTL(16) = 0; // small entries removed (disabled)
+      CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
    }
 
    void MA57Solver::initialize_memory() {
@@ -107,7 +105,7 @@ namespace uno {
          std::max(this->linear_system.dimension, this->linear_system.number_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
       this->workspace.iwork.resize(5 * this->linear_system.dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(this->linear_system.dimension));
+      this->workspace.lwork = static_cast<int>(static_cast<double>(this->linear_system.dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
       this->workspace.residuals.resize(this->linear_system.dimension);
    }
@@ -126,13 +124,10 @@ namespace uno {
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
-      int lfact = 2 * this->workspace.info[8];
-      int lifact = 2 * this->workspace.info[9];
-      this->workspace.fact.resize(static_cast<size_t>(lfact));
-      this->workspace.ifact.resize(static_cast<size_t>(lifact));
-      // store the sizes of the symbolic analysis
-      this->workspace.lfact = lfact;
-      this->workspace.lifact = lifact;
+      this->workspace.lfact = static_cast<int>(MA57Settings::allocation_safety_factor * this->workspace.info[8]);
+      this->workspace.lifact = static_cast<int>(MA57Settings::allocation_safety_factor * this->workspace.info[9]);
+      this->workspace.fact.resize(static_cast<size_t>(this->workspace.lfact));
+      this->workspace.ifact.resize(static_cast<size_t>(this->workspace.lifact));
       this->analysis_performed = true;
    }
 
@@ -147,8 +142,8 @@ namespace uno {
             &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
-         if (is_error_code_insufficient_real_workspace(this->workspace.info[0]) ||
-             is_error_code_insufficient_integer_workspace(this->workspace.info[0])) {
+         if (is_error_code_insufficient_real_workspace(INFO(1)) ||
+             is_error_code_insufficient_integer_workspace(INFO(1))) {
             const bool is_real_workspace = is_error_code_insufficient_real_workspace(this->workspace.info[0]);
 
             const int lnewfact = !is_real_workspace ? 0 : get_larger_real_workspace_size(this->workspace);
@@ -157,6 +152,7 @@ namespace uno {
             std::vector<int> newifact(static_cast<size_t>(lnewifact));
             const int enlarge_target = is_real_workspace ? 0 : 1;
 
+            DEBUG << "Enlarging the MA57 workspace\n";
             MA57_enlarge_workspace(&this->workspace.n, &enlarge_target, this->workspace.keep.data(), this->workspace.fact.data(),
                &this->workspace.lfact, newfact.data(), &lnewfact, this->workspace.ifact.data(), &this->workspace.lifact,
                newifact.data(), &lnewifact, this->workspace.info.data());
@@ -164,11 +160,13 @@ namespace uno {
             if (is_real_workspace) {
                this->workspace.fact = std::move(newfact);
                this->workspace.lfact = lnewfact;
-            } else {
+            }
+            else {
                this->workspace.ifact = std::move(newifact);
                this->workspace.lifact = lnewifact;
             }
-         } else {
+         }
+         else {
             factorization_done = true;
          }
       }
@@ -176,38 +174,12 @@ namespace uno {
    }
 
    void MA57Solver::solve_indefinite_system(double* solution) {
-      assert(this->factorization_performed);
-
-      // solve
-      const int nrhs = 1;
-      const int lrhs = this->workspace.n; // integer, length of rhs
-
-      // solve the linear system
-      if (this->use_iterative_refinement) {
-         MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            this->linear_system.matrix_values.data(), this->linear_system.matrix_row_indices.data(),
-            this->linear_system.matrix_column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), solution,
-            this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
-            this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
-      }
-      else {
-         // copy rhs into solution (overwritten by MA57)
-         const size_t dimension = static_cast<size_t>(this->workspace.n);
-         view(solution, dimension) = this->linear_system.rhs.view();
-
-         MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
-            this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
-            this->workspace.info.data());
-      }
+      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
    }
 
    void MA57Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
-      // MA57's iterative-refinement solve (ma57dd) only handles a single right-hand side, so the
-      // multiple-RHS path uses ma57cd directly (no iterative refinement) on a column-major block
       const int nrhs = static_cast<int>(number_of_rhs);
       const int lrhs = this->workspace.n; // leading dimension of the right-hand side block
 
@@ -263,5 +235,22 @@ namespace uno {
 
    COOLinearSystem& MA57Solver::get_coo_linear_system() {
       return this->linear_system;
+   }
+
+   // protected member functions
+
+   int& MA57Solver::ICNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.icntl[index-1];
+   }
+
+   double& MA57Solver::CNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.cntl[index-1];
+   }
+
+   int MA57Solver::INFO(size_t index) const {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.info[index-1];
    }
 } // namespace
