@@ -119,9 +119,10 @@ jobs:
       uses: julia-actions/setup-julia@v2
 
     - name: Run runtests_uno_ipopt.jl with ${{matrix.HSL_SOLVER}}
-      shell: julia --color=yes --project=.github/julia {0} ${{matrix.HSL_SOLVER}}
+      shell: julia --color=yes --project=.github/julia {0}
       run: |
         using Pkg
         Pkg.instantiate()
         Pkg.develop(path="${{ env.RUNNER_PATH }}/Uno_jll.jl")
+        push!(ARGS, "${{ matrix.HSL_SOLVER }}")
         include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt.jl")
