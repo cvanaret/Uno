@@ -174,16 +174,16 @@ namespace uno {
    }
 
    void FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate, Direction& direction,
-         const Vector<double>& constraints) {
+         const Vector<double>& constraints_SOC) {
       if (this->current_phase == Phase::OPTIMALITY) {
          const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
-         return this->subproblem_solver->compute_second_order_correction(subproblem, direction, constraints);
+         return this->subproblem_solver->compute_second_order_correction(subproblem, direction, constraints_SOC);
       }
       else {
          const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
             *this->feasibility_inertia_correction_strategy);
          return this->feasibility_subproblem_solver->compute_second_order_correction(feasibility_subproblem, direction,
-            constraints);
+            constraints_SOC);
       }
    }
 

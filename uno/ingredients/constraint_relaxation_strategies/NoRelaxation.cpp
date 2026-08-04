@@ -96,9 +96,9 @@ namespace uno {
    }
 
    void NoRelaxation::compute_second_order_correction(Iterate& current_iterate, Direction& direction,
-         const Vector<double>& constraints) {
+         const Vector<double>& constraints_SOC) {
       const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
-      this->subproblem_solver->compute_second_order_correction(subproblem, direction, constraints);
+      this->subproblem_solver->compute_second_order_correction(subproblem, direction, constraints_SOC);
    }
 
    bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
