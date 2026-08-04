@@ -36,7 +36,7 @@ namespace uno {
    }
 
    void ZeroHessian::notify_trial_iterate(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
-         const Iterate& /*trial_iterate*/, EvaluationCache& /*evaluation_cache*/) {
+         const Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/) {
    }
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,

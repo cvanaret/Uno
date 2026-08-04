@@ -11,7 +11,7 @@
 
 namespace uno {
    // forward declarations
-   class EvaluationCache;
+   class Evaluations;
    class Iterate;
    class Statistics;
    template <typename ElementType>
@@ -34,7 +34,7 @@ namespace uno {
 
       virtual void initialize_statistics(Statistics& statistics) const = 0;
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
-         EvaluationCache& evaluation_cache) = 0;
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;
       virtual void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
