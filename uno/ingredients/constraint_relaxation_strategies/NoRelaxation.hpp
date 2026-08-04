@@ -7,6 +7,7 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/Parameterization.hpp"
 
@@ -22,11 +23,11 @@ namespace uno {
       NoRelaxation(const Model& model, Options& options);
       ~NoRelaxation() override;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+      Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -55,6 +56,7 @@ namespace uno {
       std::unique_ptr<SubproblemSolver> subproblem_solver{};
       Parameterization parameterization;
       Vector<double> initial_point;
+      Direction direction;
    };
 } // namespace
 

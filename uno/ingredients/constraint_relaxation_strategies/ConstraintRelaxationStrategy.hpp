@@ -31,12 +31,12 @@ namespace uno {
       explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
-      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) = 0;
+      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, Options& options) = 0;
 
       // direction computation
-      virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
+      virtual Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;

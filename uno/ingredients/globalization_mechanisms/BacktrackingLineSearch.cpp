@@ -30,8 +30,7 @@ namespace uno {
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, false,
-         evaluation_cache, options);
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, false, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Steplength", Statistics::double_width + 1, 2);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
@@ -45,11 +44,11 @@ namespace uno {
 
       // compute a feasible direction
       try {
-         this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, this->direction,
+         Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
             INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-         BacktrackingLineSearch::check_unboundedness(this->direction);
+         BacktrackingLineSearch::check_unboundedness(direction);
          const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
-            this->direction, evaluation_cache, warmstart_information, user_callbacks);
+            direction, evaluation_cache, warmstart_information, user_callbacks);
          if (backtracking_success) {
             return;
          }
@@ -58,23 +57,23 @@ namespace uno {
             if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
                throw std::runtime_error("The line search failed");
             }
-            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, this->direction,
+            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
                evaluation_cache.current_evaluations, warmstart_information);
          }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
-         this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, this->direction,
-            evaluation_cache.current_evaluations, warmstart_information);
+         // TODO this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
+         //   evaluation_cache.current_evaluations, warmstart_information);
       }
 
       // solve the feasibility problem
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
-      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, this->direction,
+      Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-      BacktrackingLineSearch::check_unboundedness(this->direction);
+      BacktrackingLineSearch::check_unboundedness(direction);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
-         trial_iterate, this->direction, evaluation_cache, warmstart_information, user_callbacks);
+         trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
       if (!backtracking_success) {
          throw std::runtime_error("The line search failed");
       }

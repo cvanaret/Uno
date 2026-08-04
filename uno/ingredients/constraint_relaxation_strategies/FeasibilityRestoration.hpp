@@ -10,6 +10,7 @@
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Parameterization.hpp"
 
 namespace uno {
@@ -26,12 +27,12 @@ namespace uno {
       FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options);
       ~FeasibilityRestoration() override;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
+      Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
@@ -62,6 +63,8 @@ namespace uno {
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<GlobalizationStrategy> globalization_strategy;
       MeritFunction feasibility_globalization_strategy;
+      Direction optimality_direction;
+      Direction feasibility_direction;
 
       std::unique_ptr<OptimizationProblem> reformulated_problem{};
       std::unique_ptr<OptimizationProblem> reformulated_feasibility_problem{};

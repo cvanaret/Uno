@@ -20,7 +20,7 @@ namespace uno {
       size_t number_variables{};
       size_t number_constraints{};
 
-      std::vector<SearchSegment> search_segments{};
+      // std::vector<SearchSegment> search_segments{};
       Vector<double> primals{}; /*!< Primal variables */
       Multipliers multipliers{}; /*!< Multipliers */
       double primal_dual_step_length{1.};

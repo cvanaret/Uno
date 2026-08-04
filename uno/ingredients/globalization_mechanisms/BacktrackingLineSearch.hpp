@@ -5,6 +5,8 @@
 #define UNO_BACKTRACKINGLINESEARCH_H
 
 #include "GlobalizationMechanism.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "optimization/Direction.hpp"
 
 namespace uno {
    class BacktrackingLineSearch : public GlobalizationMechanism {

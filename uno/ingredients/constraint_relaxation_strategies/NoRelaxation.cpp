@@ -33,10 +33,10 @@ namespace uno {
    NoRelaxation::~NoRelaxation() = default;
 
    void NoRelaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) {
+         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) {
       this->initial_point.resize(this->original_problem.number_variables);
 
-      direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
+      this->direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
 
       // reformulation of the original problem
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
@@ -60,11 +60,11 @@ namespace uno {
       this->hessian_model->initialize_statistics(statistics);
    }
 
-   void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+   Direction& NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-      direction.reset();
+      this->direction.reset();
       DEBUG << "Solving the subproblem\n";
-      direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);
+      this->direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics,
          this->original_problem, current_iterate, this->parameterization);
       const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model,
@@ -75,11 +75,12 @@ namespace uno {
          subproblem.problem.set_auxiliary_measure(current_iterate);
       }
       this->initial_point.fill(0.);
-      this->subproblem_solver->solve(statistics, subproblem, trust_region_radius, this->initial_point, direction,
+      this->subproblem_solver->solve(statistics, subproblem, trust_region_radius, this->initial_point, this->direction,
          current_evaluations, warmstart_information);
-      direction.norm = norm_inf(view(direction.primals, 0, this->original_problem.get_number_original_variables()));
-      DEBUG3 << direction << '\n';
+      this->direction.norm = norm_inf(view(this->direction.primals, 0, this->original_problem.get_number_original_variables()));
+      DEBUG3 << this->direction << '\n';
       warmstart_information.no_changes();
+      return this->direction;
    }
 
    bool NoRelaxation::solving_feasibility_problem() const {
