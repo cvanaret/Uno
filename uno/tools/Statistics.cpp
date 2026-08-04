@@ -142,6 +142,7 @@ namespace uno {
       }
       line.push_back('\n');
       INFO << line; // single insertion
+      Logger::flush();
    }
  
    void Statistics::print_header() {
@@ -158,6 +159,7 @@ namespace uno {
       }
       line.push_back('\n');
       INFO << line; // single insertion
+      Logger::flush();
  
       this->print_horizontal_line();
    }
@@ -174,6 +176,7 @@ namespace uno {
       }
       line.push_back('\n');
       INFO << line; // single insertion
+      Logger::flush();
    }
  
    void Statistics::print_footer() {
