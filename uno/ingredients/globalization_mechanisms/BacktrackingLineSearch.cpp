@@ -101,7 +101,7 @@ namespace uno {
    // returns true upon success, false upon failure
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) const {
+         UserCallbacks& user_callbacks) {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -170,14 +170,18 @@ namespace uno {
 
    bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       // enter second-order corrections
       DEBUG << "\nEntering second-order corrections\n";
-      Direction direction_SOC(direction);
+      // initialize upon the first time
+      if (!this->SOC_initialized) {
+         this->constraints_SOC.resize(evaluation_cache.current_evaluations.constraints.size());
+         this->direction_SOC = Direction(direction.number_variables, direction.number_constraints);
+         this->SOC_initialized = true;
+      }
+      this->constraints_SOC = evaluation_cache.trial_evaluations.constraints;
+      this->constraints_SOC += direction.primal_dual_step_length * evaluation_cache.current_evaluations.constraints;
       double old_infeasibility_SOC = current_iterate.progress.infeasibility;
-      Vector<double> constraints_SOC(evaluation_cache.current_evaluations.constraints.size());
-      constraints_SOC = evaluation_cache.trial_evaluations.constraints;
-      constraints_SOC += direction_SOC.primal_dual_step_length * evaluation_cache.current_evaluations.constraints;
 
       size_t SOC_iteration = 1;
       bool SOC_termination = false;
@@ -189,8 +193,9 @@ namespace uno {
          soc_evaluations.reset();
 
          try {
-            this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate, direction_SOC, constraints_SOC);
-            assemble_trial_iterate(model, current_iterate, trial_iterate, direction_SOC, 1.);
+            this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate, this->direction_SOC,
+               this->constraints_SOC);
+            assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction_SOC, 1.);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction /* this is correct, see IPOPT paper */, 1., false,
@@ -204,7 +209,7 @@ namespace uno {
          if (is_acceptable) {
             // terminate the SOCs and the backtracking
             SOC_termination = true;
-            direction = direction_SOC;
+            direction = this->direction_SOC;
             DEBUG << "SOC direction acceptable " << '\n';
          }
          else if (SOC_iteration >= this->SOC_max_iterations ||
@@ -215,8 +220,8 @@ namespace uno {
          }
          else {
             // continue the SOCs
-            constraints_SOC.scale(direction_SOC.primal_dual_step_length);
-            constraints_SOC += soc_evaluations.constraints;
+            this->constraints_SOC.scale(this->direction_SOC.primal_dual_step_length);
+            this->constraints_SOC += soc_evaluations.constraints;
             old_infeasibility_SOC = trial_iterate.progress.infeasibility;
             ++SOC_iteration;
             DEBUG << "SOC direction rejected, continue SOCs" << '\n';
