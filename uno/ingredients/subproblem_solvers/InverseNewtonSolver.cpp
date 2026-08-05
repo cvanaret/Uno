@@ -37,9 +37,9 @@ namespace uno {
       return false;
    }
 
-   void InverseNewtonSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+   const Direction& InverseNewtonSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
          const Vector<double>& /*constraints_SOC*/) {
-      INFO << "No SOC implemented in InverseNewtonSolver\n";
+      throw std::runtime_error("No SOC implemented in InverseNewtonSolver");
    }
 
    SolverWorkspace& InverseNewtonSolver::get_workspace() {

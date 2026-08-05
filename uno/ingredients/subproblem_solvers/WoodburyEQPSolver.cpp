@@ -81,9 +81,9 @@ namespace uno {
       return false;
    }
 
-   void WoodburyEQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+   const Direction& WoodburyEQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
          const Vector<double>& /*constraints_SOC*/) {
-      INFO << "No SOC implemented in WoodburyEQPSolver\n";
+      throw std::runtime_error("No SOC implemented in WoodburyEQPSolver");
    }
 
    SolverWorkspace& WoodburyEQPSolver::get_workspace() {

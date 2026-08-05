@@ -76,8 +76,13 @@ namespace uno {
    }
 
    // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
-   void EQPSolver::compute_second_order_correction(const Subproblem& subproblem, Direction& direction,
-         const Vector<double>& constraints_SOC) {
+   const Direction& EQPSolver::compute_second_order_correction(const Subproblem& subproblem, const Vector<double>& constraints_SOC) {
+      // initialize upon the first time
+      if (!this->SOC_initialized) {
+         this->direction_SOC = Direction(subproblem.number_variables, subproblem.number_constraints);
+         this->SOC_initialized = true;
+      }
+
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
 
@@ -95,11 +100,11 @@ namespace uno {
       // solve the linear system
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       if (this->linear_solver->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-         return;
+         this->direction_SOC.status = SubproblemStatus::INFEASIBLE;
       }
       // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
+      subproblem.assemble_primal_dual_direction(linear_system.solution, this->direction_SOC);
+      return this->direction_SOC;
    }
 
    SolverWorkspace& EQPSolver::get_workspace() {

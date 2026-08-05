@@ -28,8 +28,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
-      virtual void compute_second_order_correction(const Subproblem& subproblem, Direction& direction,
-         const Vector<double>& constraints_SOC) = 0;
+      virtual const Direction& compute_second_order_correction(const Subproblem& subproblem, const Vector<double>& constraints_SOC) = 0;
 
       [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
    };

@@ -38,9 +38,8 @@ namespace uno {
       return false;
    }
 
-   void IQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
-         const Vector<double>& /*constraints_SOC*/) {
-      INFO << "No SOC implemented in IQPSolver\n";
+   const Direction& IQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, const Vector<double>& /*constraints_SOC*/) {
+      throw std::runtime_error("No SOC implemented in IQPSolver");
    }
 
    SolverWorkspace& IQPSolver::get_workspace() {

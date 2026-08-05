@@ -43,8 +43,7 @@ namespace uno {
 
       // second-order corrections
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
-      virtual void compute_second_order_correction(Iterate& current_iterate, Direction& direction,
-         const Vector<double>& constraints_SOC) = 0;
+      virtual const Direction& compute_second_order_correction(Iterate& current_iterate, const Vector<double>& constraints_SOC) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,

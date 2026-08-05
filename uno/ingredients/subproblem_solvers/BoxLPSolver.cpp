@@ -57,9 +57,8 @@ namespace uno {
       return false;
    }
 
-   void BoxLPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
-         const Vector<double>& /*constraints_SOC*/) {
-      INFO << "No SOC implemented in BoxLPSolver\n";
+   const Direction& BoxLPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, const Vector<double>& /*constraints_SOC*/) {
+      throw std::runtime_error("No SOC implemented in BoxLPSolver");
    }
 
    SolverWorkspace& BoxLPSolver::get_workspace() {

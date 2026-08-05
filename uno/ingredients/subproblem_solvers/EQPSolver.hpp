@@ -6,6 +6,7 @@
 
 #include <memory>
 #include "SubproblemSolver.hpp"
+#include "optimization/Direction.hpp"
 
 namespace uno {
    // forward declarations
@@ -24,13 +25,16 @@ namespace uno {
          Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] bool has_second_order_corrections() const override;
-      void compute_second_order_correction(const Subproblem& subproblem, Direction& direction, const Vector<double>& constraints_SOC) override;
+      const Direction& compute_second_order_correction(const Subproblem& subproblem, const Vector<double>& constraints_SOC) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
+
+      bool SOC_initialized{false};
+      Direction direction_SOC;
    };
 } // namespace
 

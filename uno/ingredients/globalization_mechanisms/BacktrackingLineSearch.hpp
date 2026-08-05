@@ -6,9 +6,11 @@
 
 #include "GlobalizationMechanism.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/Direction.hpp"
 
 namespace uno {
+   // forward declaration
+   class Direction;
+
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:
       BacktrackingLineSearch(const Model& model, Options& options);
@@ -30,7 +32,6 @@ namespace uno {
       const double SOC_infeasibility_fraction;
       bool SOC_initialized{false};
       Vector<double> constraints_SOC;
-      Direction direction_SOC;
 
       void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) const;
