@@ -15,6 +15,8 @@ namespace uno {
    void Iterate::set_number_variables(size_t new_number_variables) {
       this->number_variables = new_number_variables;
       this->primals.resize(new_number_variables);
+      this->multipliers.lower_bounds.resize(new_number_variables);
+      this->multipliers.upper_bounds.resize(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
