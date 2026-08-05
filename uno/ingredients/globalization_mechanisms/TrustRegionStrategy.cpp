@@ -34,8 +34,7 @@ namespace uno {
 
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, true,
-         evaluation_cache, options);
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, true, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Radius", Statistics::double_width, 2);
       statistics.set("Radius", this->radius);
@@ -60,12 +59,12 @@ namespace uno {
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, this->direction,
+            Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
                this->radius, evaluation_cache.current_evaluations, warmstart_information);
-            statistics.set("||Step||", this->direction.norm);
+            statistics.set("||Step||", direction.norm);
 
             // deal with errors in the subproblem
-            if (this->direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+            if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
                statistics.set("Status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
@@ -73,7 +72,7 @@ namespace uno {
                warmstart_information.trust_region_changed = true;
                evaluation_cache.trial_evaluations.reset();
             }
-            else if (this->direction.status == SubproblemStatus::ERROR) {
+            else if (direction.status == SubproblemStatus::ERROR) {
                statistics.set("Status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
@@ -83,11 +82,11 @@ namespace uno {
             }
             else {
                // take full primal-dual step
-               GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction,
-                  this->direction.primal_dual_step_length, this->direction.primal_dual_step_length, this->direction.bound_dual_step_length);
-               this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
+               GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
+                  direction.primal_dual_step_length, direction.primal_dual_step_length, direction.bound_dual_step_length);
+               this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, this->direction,
+               is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
                   evaluation_cache, warmstart_information, user_callbacks);
                GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                if (is_acceptable) {
@@ -95,7 +94,7 @@ namespace uno {
                   termination = true;
                }
                else {
-                  this->decrease_radius(this->direction.norm);
+                  this->decrease_radius(direction.norm);
                   warmstart_information.trust_region_changed = true;
                   evaluation_cache.trial_evaluations.reset();
                }

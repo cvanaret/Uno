@@ -30,8 +30,7 @@ namespace uno {
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, false,
-         evaluation_cache, options);
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, false, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Steplength", Statistics::double_width + 1, 2);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
@@ -45,11 +44,11 @@ namespace uno {
 
       // compute a feasible direction
       try {
-         this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, this->direction,
+         Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
             INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-         BacktrackingLineSearch::check_unboundedness(this->direction);
+         BacktrackingLineSearch::check_unboundedness(direction);
          const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
-            this->direction, evaluation_cache, warmstart_information, user_callbacks);
+            direction, evaluation_cache, warmstart_information, user_callbacks);
          if (backtracking_success) {
             return;
          }
@@ -58,23 +57,23 @@ namespace uno {
             if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
                throw std::runtime_error("The line search failed");
             }
-            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, this->direction,
+            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
                evaluation_cache.current_evaluations, warmstart_information);
          }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
-         this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, this->direction,
-            evaluation_cache.current_evaluations, warmstart_information);
+         // TODO this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
+         //   evaluation_cache.current_evaluations, warmstart_information);
       }
 
       // solve the feasibility problem
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
-      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, this->direction,
+      Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-      BacktrackingLineSearch::check_unboundedness(this->direction);
+      BacktrackingLineSearch::check_unboundedness(direction);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
-         trial_iterate, this->direction, evaluation_cache, warmstart_information, user_callbacks);
+         trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
       if (!backtracking_success) {
          throw std::runtime_error("The line search failed");
       }
@@ -176,7 +175,6 @@ namespace uno {
       // initialize upon the first time
       if (!this->SOC_initialized) {
          this->constraints_SOC.resize(evaluation_cache.current_evaluations.constraints.size());
-         this->direction_SOC = Direction(direction.number_variables, direction.number_constraints);
          this->SOC_initialized = true;
       }
       this->constraints_SOC = evaluation_cache.trial_evaluations.constraints;
@@ -193,38 +191,38 @@ namespace uno {
          soc_evaluations.reset();
 
          try {
-            this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate, this->direction_SOC,
+            const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate,
                this->constraints_SOC);
-            assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction_SOC, 1.);
+            assemble_trial_iterate(model, current_iterate, trial_iterate, direction_SOC, 1.);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction /* this is correct, see IPOPT paper */, 1., false,
                evaluation_cache.current_evaluations, soc_evaluations, warmstart_information, user_callbacks);
+
+            if (is_acceptable) {
+               // terminate the SOCs and the backtracking
+               SOC_termination = true;
+               direction = direction_SOC;
+               DEBUG << "SOC direction acceptable " << '\n';
+            }
+            else if (SOC_iteration >= this->SOC_max_iterations ||
+                  trial_iterate.progress.infeasibility > this->SOC_infeasibility_fraction * old_infeasibility_SOC) {
+               // terminate the SOCs and keep backtracking
+               SOC_termination = true;
+               DEBUG << "SOC done, resume backtracking " << '\n';
+            }
+            else {
+               // continue the SOCs
+               this->constraints_SOC.scale(direction_SOC.primal_dual_step_length);
+               this->constraints_SOC += soc_evaluations.constraints;
+               old_infeasibility_SOC = trial_iterate.progress.infeasibility;
+               ++SOC_iteration;
+               DEBUG << "SOC direction rejected, continue SOCs" << '\n';
+            }
          }
          catch (const EvaluationError&) {
             // terminate the SOCs and keep backtracking
             SOC_termination = true;
-         }
-
-         if (is_acceptable) {
-            // terminate the SOCs and the backtracking
-            SOC_termination = true;
-            direction = this->direction_SOC;
-            DEBUG << "SOC direction acceptable " << '\n';
-         }
-         else if (SOC_iteration >= this->SOC_max_iterations ||
-               trial_iterate.progress.infeasibility > this->SOC_infeasibility_fraction * old_infeasibility_SOC) {
-            // terminate the SOCs and keep backtracking
-            SOC_termination = true;
-            DEBUG << "SOC done, resume backtracking " << '\n';
-         }
-         else {
-            // continue the SOCs
-            this->constraints_SOC.scale(this->direction_SOC.primal_dual_step_length);
-            this->constraints_SOC += soc_evaluations.constraints;
-            old_infeasibility_SOC = trial_iterate.progress.infeasibility;
-            ++SOC_iteration;
-            DEBUG << "SOC direction rejected, continue SOCs" << '\n';
          }
       }
       return is_acceptable;

@@ -16,13 +16,14 @@ namespace uno {
    }
 
    void InverseNewtonSolver::initialize_memory(const Subproblem& subproblem) {
+      this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
       this->rhs.resize(subproblem.number_variables);
    }
 
-   void InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, [[maybe_unused]] double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
-         const WarmstartInformation& /*warmstart_information*/) {
+   Direction& InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, [[maybe_unused]] double trust_region_radius,
+         const Vector<double>& /*initial_point*/, Evaluations& current_evaluations, const WarmstartInformation& /*warmstart_information*/) {
       assert(is_infinite(trust_region_radius));
+      this->direction.reset();
 
       // store -gradient in this->rhs
       current_evaluations.evaluate_objective_gradient(subproblem.problem.model, subproblem.current_iterate.primals);
@@ -30,16 +31,17 @@ namespace uno {
 
       // compute the Newton step d = -H⁻¹ g
       this->hessian_model.compute_inverse_hessian_vector_product(subproblem.current_iterate.primals.data(),
-         this->rhs.data(), direction.primals.data());
+         this->rhs.data(), this->direction.primals.data());
+      return this->direction;
    }
 
    bool InverseNewtonSolver::has_second_order_corrections() const {
       return false;
    }
 
-   void InverseNewtonSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+   const Direction& InverseNewtonSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
          const Vector<double>& /*constraints_SOC*/) {
-      INFO << "No SOC implemented in InverseNewtonSolver\n";
+      throw std::runtime_error("No SOC implemented in InverseNewtonSolver");
    }
 
    SolverWorkspace& InverseNewtonSolver::get_workspace() {

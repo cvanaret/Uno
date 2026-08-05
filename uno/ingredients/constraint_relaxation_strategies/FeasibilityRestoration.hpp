@@ -14,6 +14,7 @@
 
 namespace uno {
    // forward declaration
+   class Direction;
    class HessianModel;
    class InequalityHandlingMethod;
    class InertiaCorrectionStrategy;
@@ -26,20 +27,19 @@ namespace uno {
       FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options);
       ~FeasibilityRestoration() override;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
+      Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
       // second-order corrections
       [[nodiscard]] bool has_second_order_corrections() const override;
-      void compute_second_order_correction(Iterate& current_iterate, Direction& direction,
-         const Vector<double>& constraints_SOC) override;
+      const Direction& compute_second_order_correction(Iterate& current_iterate, const Vector<double>& constraints_SOC) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -78,10 +78,9 @@ namespace uno {
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
 
-      void solve_subproblem(Statistics& statistics, const Subproblem& subproblem, SubproblemSolver& subproblem_solver,
+      Direction& solve_subproblem(Statistics& statistics, const Subproblem& subproblem, SubproblemSolver& subproblem_solver,
          const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy, Iterate& current_iterate,
-         Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information);
+         double trust_region_radius, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,

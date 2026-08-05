@@ -6,7 +6,6 @@
 
 #include <memory>
 #include <string>
-#include "optimization/Direction.hpp"
 
 namespace uno {
    // forward declarations
@@ -36,7 +35,6 @@ namespace uno {
 
    protected:
       const std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy{};
-      Direction direction{};
 
       static void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double primal_step_length, double constraint_dual_step_length, double bound_dual_step_length);

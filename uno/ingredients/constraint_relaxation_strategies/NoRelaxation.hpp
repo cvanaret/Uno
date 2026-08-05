@@ -12,6 +12,7 @@
 
 namespace uno {
    // forward declarations
+   class Direction;
    class HessianModel;
    class InequalityHandlingMethod;
    class InertiaCorrectionStrategy;
@@ -22,11 +23,11 @@ namespace uno {
       NoRelaxation(const Model& model, Options& options);
       ~NoRelaxation() override;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+      Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -34,8 +35,7 @@ namespace uno {
 
       // second-order corrections
       [[nodiscard]] bool has_second_order_corrections() const override;
-      void compute_second_order_correction(Iterate& current_iterate, Direction& direction,
-         const Vector<double>& constraints_SOC) override;
+      const Direction& compute_second_order_correction(Iterate& current_iterate, const Vector<double>& constraints_SOC) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,

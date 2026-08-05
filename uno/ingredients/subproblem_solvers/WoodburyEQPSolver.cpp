@@ -24,18 +24,20 @@ namespace uno {
    }
 
    void WoodburyEQPSolver::initialize_memory(const Subproblem& subproblem) {
+      this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
       // access the linear system of the linear solver
       auto& linear_system = this->linear_solver->get_linear_system();
       linear_system.initialize_augmented_system(subproblem);
       this->linear_solver->initialize_memory();
    }
 
-   void WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
+   Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The direct linear solver does not support a trust region");
       }
+      this->direction.reset();
 
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
@@ -66,24 +68,25 @@ namespace uno {
       Vector<double> solution_diagonal_part(subproblem.number_variables + subproblem.number_constraints);
       this->linear_solver->solve_indefinite_system(solution_diagonal_part.data());
       if (this->linear_solver->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-         return;
+         this->direction.status = SubproblemStatus::INFEASIBLE;
       }
+      else {
+         // compute the low-rank correction
+         this->compute_low_rank_correction(subproblem, solution_diagonal_part);
 
-      // compute the low-rank correction
-      this->compute_low_rank_correction(subproblem, solution_diagonal_part);
-
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(solution_diagonal_part, direction);
+         // assemble the full primal-dual direction
+         subproblem.assemble_primal_dual_direction(solution_diagonal_part, this->direction);
+      }
+      return this->direction;
    }
 
    bool WoodburyEQPSolver::has_second_order_corrections() const {
       return false;
    }
 
-   void WoodburyEQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, Direction& /*direction*/,
+   const Direction& WoodburyEQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
          const Vector<double>& /*constraints_SOC*/) {
-      INFO << "No SOC implemented in WoodburyEQPSolver\n";
+      throw std::runtime_error("No SOC implemented in WoodburyEQPSolver");
    }
 
    SolverWorkspace& WoodburyEQPSolver::get_workspace() {

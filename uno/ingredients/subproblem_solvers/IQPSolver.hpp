@@ -6,6 +6,7 @@
 
 #include <memory>
 #include "SubproblemSolver.hpp"
+#include "optimization/Direction.hpp"
 
 namespace uno {
    // forward declarations
@@ -26,16 +27,16 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] Direction& solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] bool has_second_order_corrections() const override;
-      void compute_second_order_correction(const Subproblem& subproblem, Direction& direction, const Vector<double>& constraints_SOC) override;
+      const Direction& compute_second_order_correction(const Subproblem& subproblem, const Vector<double>& constraints_SOC) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
+      Direction direction;
       std::unique_ptr<LPSolver> qp_solver;
 
       static void compute_dual_direction(const Subproblem& subproblem, Multipliers& direction_multipliers);
