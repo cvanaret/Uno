@@ -7,12 +7,12 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/Parameterization.hpp"
 
 namespace uno {
    // forward declarations
+   class Direction;
    class HessianModel;
    class InequalityHandlingMethod;
    class InertiaCorrectionStrategy;
@@ -55,7 +55,6 @@ namespace uno {
       std::unique_ptr<SubproblemSolver> subproblem_solver{};
       Parameterization parameterization;
       Vector<double> initial_point;
-      Direction direction;
    };
 } // namespace
 

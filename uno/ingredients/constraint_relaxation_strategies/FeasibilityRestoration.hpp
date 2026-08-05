@@ -10,11 +10,11 @@
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Parameterization.hpp"
 
 namespace uno {
    // forward declaration
+   class Direction;
    class HessianModel;
    class InequalityHandlingMethod;
    class InertiaCorrectionStrategy;
@@ -62,8 +62,6 @@ namespace uno {
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<GlobalizationStrategy> globalization_strategy;
       MeritFunction feasibility_globalization_strategy;
-      Direction optimality_direction;
-      Direction feasibility_direction;
 
       std::unique_ptr<OptimizationProblem> reformulated_problem{};
       std::unique_ptr<OptimizationProblem> reformulated_feasibility_problem{};
@@ -80,10 +78,9 @@ namespace uno {
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
 
-      void solve_subproblem(Statistics& statistics, const Subproblem& subproblem, SubproblemSolver& subproblem_solver,
+      Direction& solve_subproblem(Statistics& statistics, const Subproblem& subproblem, SubproblemSolver& subproblem_solver,
          const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy, Iterate& current_iterate,
-         Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information);
+         double trust_region_radius, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,

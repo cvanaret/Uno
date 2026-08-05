@@ -60,8 +60,6 @@ namespace uno {
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
       this->reformulated_feasibility_problem = this->feasibility_inequality_handling_method->reformulate(this->feasibility_problem, this->parameterization);
-      this->optimality_direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
-      this->feasibility_direction = Direction(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
 
       // creation of the Hessian models and the subproblem solvers
       std::tie(this->hessian_model, this->subproblem_solver) = HessianSubproblemSolverJointFactory::create(model,
@@ -97,19 +95,19 @@ namespace uno {
          statistics.set("Phase", "OPT");
          const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
          this->initial_point.fill(0.);
-         this->optimality_direction.reset();
-         this->solve_subproblem(statistics, subproblem, *this->subproblem_solver, this->original_problem, *this->globalization_strategy,
-            current_iterate, this->optimality_direction, trust_region_radius, current_evaluations, warmstart_information);
-         if (this->optimality_direction.status == SubproblemStatus::INFEASIBLE) {
+         Direction& optimality_direction = this->solve_subproblem(statistics, subproblem, *this->subproblem_solver,
+            this->original_problem, *this->globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
+            warmstart_information);
+         if (optimality_direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
-            this->initial_point = view(this->optimality_direction.primals, 0, this->original_problem.number_variables);
-            this->switch_to_feasibility_problem(statistics, current_iterate, this->optimality_direction, current_evaluations, warmstart_information);
+            this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
+            this->switch_to_feasibility_problem(statistics, current_iterate, optimality_direction, current_evaluations, warmstart_information);
          }
          else {
             warmstart_information.no_changes();
-            return this->optimality_direction;
+            return optimality_direction;
          }
       }
 
@@ -119,11 +117,10 @@ namespace uno {
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
       const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
          *this->feasibility_inertia_correction_strategy);
-      this->feasibility_direction.reset();
-      this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver, this->feasibility_problem,
-         this->feasibility_globalization_strategy, current_iterate, this->feasibility_direction, trust_region_radius, current_evaluations,
+      Direction& feasibility_direction = this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver,
+         this->feasibility_problem, this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
          warmstart_information);
-      return this->feasibility_direction;
+      return feasibility_direction;
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -184,9 +181,9 @@ namespace uno {
       }
    }
 
-   void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
+   Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
          SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
+         Iterate& current_iterate, double trust_region_radius, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       // update the parameterization
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics, problem,
@@ -196,12 +193,13 @@ namespace uno {
          globalization_strategy.reset();
          subproblem.problem.set_auxiliary_measure(current_iterate);
       }
-      subproblem_solver.solve(statistics, subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
-         warmstart_information);
+      Direction& direction = subproblem_solver.solve(statistics, subproblem, trust_region_radius, this->initial_point,
+         current_evaluations, warmstart_information);
       ++this->number_subproblems_solved;
       direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       this->initial_point.fill(0.);
       DEBUG3 << direction << '\n';
+      return direction;
    }
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,

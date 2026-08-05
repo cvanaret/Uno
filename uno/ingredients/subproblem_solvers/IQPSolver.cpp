@@ -17,21 +17,24 @@ namespace uno {
    IQPSolver::~IQPSolver() = default;
 
    void IQPSolver::initialize_memory(const Subproblem& subproblem) {
+      this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
       this->qp_solver->initialize_memory(subproblem);
    }
 
-   void IQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
+   Direction& IQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
+      this->direction.reset();
       // build the QuadraticProgram from the Subproblem at the current iterate
       QuadraticProgram& quadratic_program = this->qp_solver->get_quadratic_program();
       quadratic_program.fill(statistics, subproblem, trust_region_radius, current_evaluations, warmstart_information);
 
       // solve the QP
-      this->qp_solver->solve(statistics, initial_point, direction, warmstart_information);
+      this->qp_solver->solve(statistics, initial_point, this->direction, warmstart_information);
 
       // compute the dual direction
-      compute_dual_direction(subproblem, direction.multipliers);
+      compute_dual_direction(subproblem, this->direction.multipliers);
+      return this->direction;
    }
 
    bool IQPSolver::has_second_order_corrections() const {

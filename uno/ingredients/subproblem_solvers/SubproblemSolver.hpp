@@ -23,8 +23,8 @@ namespace uno {
 
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
-      virtual void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
+      [[nodiscard]] virtual Direction& solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;

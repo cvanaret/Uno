@@ -23,18 +23,20 @@ namespace uno {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
+      this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
       // access the linear system of the linear solver
       auto& linear_system = this->linear_solver->get_linear_system();
       linear_system.initialize_augmented_system(subproblem);
       this->linear_solver->initialize_memory();
    }
 
-   void EQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
+   Direction& EQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The direct linear solver does not support a trust region");
       }
+      this->direction.reset();
 
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
@@ -64,11 +66,13 @@ namespace uno {
       // solve the linear system
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       if (this->linear_solver->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-         return;
+         this->direction.status = SubproblemStatus::INFEASIBLE;
       }
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
+      else {
+         // assemble the full primal-dual direction
+         subproblem.assemble_primal_dual_direction(linear_system.solution, this->direction);
+      }
+      return this->direction;
    }
 
    bool EQPSolver::has_second_order_corrections() const {

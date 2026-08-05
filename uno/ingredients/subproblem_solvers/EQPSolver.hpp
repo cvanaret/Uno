@@ -21,8 +21,8 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] Direction& solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] bool has_second_order_corrections() const override;
       const Direction& compute_second_order_correction(const Subproblem& subproblem, const Vector<double>& constraints_SOC) override;
@@ -30,6 +30,7 @@ namespace uno {
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
+      Direction direction;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
 
