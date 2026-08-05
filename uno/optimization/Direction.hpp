@@ -4,11 +4,9 @@
 #ifndef UNO_DIRECTION_H
 #define UNO_DIRECTION_H
 
-#include <vector>
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Multipliers.hpp"
-#include "optimization/SearchSegment.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -19,8 +17,7 @@ namespace uno {
 
       size_t number_variables{};
       size_t number_constraints{};
-
-      // std::vector<SearchSegment> search_segments{};
+      
       Vector<double> primals{}; /*!< Primal variables */
       Multipliers multipliers{}; /*!< Multipliers */
       double primal_dual_step_length{1.};
