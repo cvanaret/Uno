@@ -37,15 +37,11 @@ namespace uno {
       if (!subproblem.has_curvature()) {
          if (subproblem.number_constraints == 0) {
             DEBUG << "No curvature and only bound constraints in the subproblem, allocating a box LP solver\n";
-            auto subproblem_solver = std::make_unique<BoxLPSolver>();
-            subproblem_solver->initialize_memory(subproblem);
-            return subproblem_solver;
+            return std::make_unique<BoxLPSolver>();
          }
          else {
             DEBUG << "No curvature in the subproblem, allocating an LP solver\n";
-            auto subproblem_solver = std::make_unique<IQPSolver>(LPSolverFactory::create(options));
-            subproblem_solver->initialize_memory(subproblem);
-            return subproblem_solver;
+            return std::make_unique<IQPSolver>(LPSolverFactory::create(options));
          }
       }
       // if no inequality constraint and no trust region, allocate EQP solver
@@ -53,31 +49,23 @@ namespace uno {
          if constexpr (std::is_same_v<HessianType, InverseLBFGSHessian>) { // unconstrained
             DEBUG << "No constraints in the subproblem, allocating a Newton solver with inverse quasi-Newton Hessian\n";
             // the hessian_model we pass has type QuasiNewtonHessian
-            auto subproblem_solver = std::make_unique<InverseNewtonSolver>(hessian_model);
-            subproblem_solver->initialize_memory(subproblem);
-            return subproblem_solver;
+            return std::make_unique<InverseNewtonSolver>(hessian_model);
          }
          else if constexpr (std::is_base_of_v<DirectQuasiNewtonHessian, HessianType>) { // equality-constrained
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with quasi-Newton Hessian\n";
             // the hessian_model we pass has type QuasiNewtonHessian
-            auto subproblem_solver = std::make_unique<WoodburyEQPSolver>(hessian_model, options);
-            subproblem_solver->initialize_memory(subproblem);
-            return subproblem_solver;
+            return std::make_unique<WoodburyEQPSolver>(hessian_model, options);
          }
          else {
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver\n";
-            auto subproblem_solver = std::make_unique<EQPSolver>(options);
-            subproblem_solver->initialize_memory(subproblem);
-            return subproblem_solver;
+            return std::make_unique<EQPSolver>(options);
          }
       }
       // otherwise, allocate QP solver
       else {
          DEBUG << "Curvature in the subproblem, allocating a QP solver\n";
          // wrap the (Subproblem-agnostic) QP backend in an IQPSolver that builds its QuadraticProgram
-         auto subproblem_solver = std::make_unique<IQPSolver>(QPSolverFactory::create(options));
-         subproblem_solver->initialize_memory(subproblem);
-         return subproblem_solver;
+         return std::make_unique<IQPSolver>(QPSolverFactory::create(options));
       }
    }
 } // namespace

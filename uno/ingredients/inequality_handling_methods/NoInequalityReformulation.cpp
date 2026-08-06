@@ -16,6 +16,7 @@ namespace uno {
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->problem, uses_trust_region, objective_multiplier, options);
       this->subproblem = std::make_unique<Subproblem>(this->problem, *this->hessian_model, *this->inertia_correction_strategy);
+      this->subproblem_solver->initialize_memory(*this->subproblem);
    }
 
    void NoInequalityReformulation::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {

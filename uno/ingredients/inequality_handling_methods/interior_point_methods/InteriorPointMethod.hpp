@@ -98,6 +98,7 @@ namespace uno {
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier, options);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
+      this->subproblem_solver->initialize_memory(*this->subproblem);
    }
 
    template <typename BarrierProblem>

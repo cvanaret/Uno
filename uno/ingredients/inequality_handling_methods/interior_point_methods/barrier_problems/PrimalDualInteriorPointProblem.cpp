@@ -55,8 +55,10 @@ namespace uno {
       // set the slack variables (if any)
       if (!this->model.get_slacks().is_empty()) {
          evaluations.evaluate_constraints(this->model, initial_iterate.primals);
+         std::cout << "CONSTRAINTS: " << evaluations.constraints << '\n';
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
+            std::cout << "Slack index " << slack_index << " associated with constraint " << constraint_index << '\n';
             initial_iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
                variables_lower_bounds[slack_index], variables_upper_bounds[slack_index]);
          }
