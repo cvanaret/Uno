@@ -38,8 +38,8 @@ namespace uno {
       virtual Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
-      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
+      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
+         WarmstartInformation& warmstart_information) = 0;
 
       // second-order corrections
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
@@ -55,7 +55,6 @@ namespace uno {
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:
-      const Norm progress_norm;
       const Norm residual_norm;
       const double residual_scaling_threshold;
       const double primal_tolerance;

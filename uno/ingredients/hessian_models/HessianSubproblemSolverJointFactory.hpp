@@ -7,7 +7,6 @@
 #include <array>
 #include <memory>
 #include <tuple>
-#include "ingredients/subproblem/Subproblem.hpp"
 
 namespace uno {
    // forward declarations
@@ -17,11 +16,16 @@ namespace uno {
    class Options;
    class SubproblemSolver;
 
+   using Ingredients = std::tuple<std::unique_ptr<InertiaCorrectionStrategy>,
+                                  std::unique_ptr<HessianModel>,
+                                  std::unique_ptr<SubproblemSolver>
+                                 >;
+
    class HessianSubproblemSolverJointFactory {
    public:
-      // joint factory of Hessian models, subproblem, and subproblem solvers
-      static std::tuple<std::unique_ptr<HessianModel>, Subproblem, std::unique_ptr<SubproblemSolver>> create(const OptimizationProblem& problem,
-         InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region, double objective_multiplier, Options& options);
+      // joint factory of inertia correction strategy, Hessian models, and subproblem solver
+      static Ingredients create(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier,
+         Options& options);
 
       constexpr static std::array available_strategies{"exact", "LFBGS", "LSR1", "identity", "zero"};
    };

@@ -63,7 +63,6 @@ namespace uno {
       if (allocate_explicit_hessian) {
          this->hessian_row_indices.resize(number_hessian_nonzeros);
          this->hessian_column_indices.resize(number_hessian_nonzeros);
-         std::cout << "ALLOCATING " << number_hessian_nonzeros << " FOR THE HESSIAN\n";
          this->hessian_values.resize(number_hessian_nonzeros);
       }
    }

@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include "InequalityHandlingMethod.hpp"
+#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 
 namespace uno {
@@ -23,6 +24,7 @@ namespace uno {
          double objective_multiplier, Options& options);
       ~NoInequalityReformulation() override = default;
 
+      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
@@ -36,6 +38,7 @@ namespace uno {
       [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate,
          const Vector<double>& constraints_SOC) override;
 
+      void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) const override;
@@ -48,15 +51,8 @@ namespace uno {
       const std::string name;
       std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
       std::unique_ptr<HessianModel> hessian_model;
-      Subproblem subproblem;
       std::unique_ptr<SubproblemSolver> subproblem_solver;
-
-      NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
-         std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy, bool uses_trust_region, double objective_multiplier,
-         Options& options);
-      NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
-         std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy,
-         std::tuple<std::unique_ptr<HessianModel>, Subproblem, std::unique_ptr<SubproblemSolver>> ingredients);
+      std::unique_ptr<Subproblem> subproblem;
    };
 } // namespace
 

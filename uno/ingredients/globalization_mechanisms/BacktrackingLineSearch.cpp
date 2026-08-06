@@ -57,14 +57,14 @@ namespace uno {
             if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
                throw std::runtime_error("The line search failed");
             }
-            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
+            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
                evaluation_cache.current_evaluations, warmstart_information);
          }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
-         // TODO this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
-         //   evaluation_cache.current_evaluations, warmstart_information);
+         this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+               evaluation_cache.current_evaluations, warmstart_information);
       }
 
       // solve the feasibility problem

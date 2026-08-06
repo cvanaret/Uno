@@ -51,6 +51,7 @@ namespace uno {
          uses_trust_region, 0., options);
 
       // initial iterate
+      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
@@ -78,8 +79,7 @@ namespace uno {
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
             this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
-            this->switch_to_feasibility_problem(statistics, current_iterate, optimality_direction, current_evaluations,
-               warmstart_information);
+            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
          }
          else {
             warmstart_information.no_changes();
@@ -103,7 +103,7 @@ namespace uno {
 
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         Direction& direction, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
@@ -115,7 +115,6 @@ namespace uno {
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-      direction.set_dimensions(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
       this->initial_point.resize(this->feasibility_problem.number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);

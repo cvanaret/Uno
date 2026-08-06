@@ -37,6 +37,7 @@ namespace uno {
       //initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
 
       // initial iterate
+      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
@@ -70,7 +71,7 @@ namespace uno {
    }
 
    void NoRelaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
-         Direction& /*direction*/, Evaluations& /*current_evaluations*/, WarmstartInformation& /*warmstart_information*/) {
+         Evaluations& /*current_evaluations*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 

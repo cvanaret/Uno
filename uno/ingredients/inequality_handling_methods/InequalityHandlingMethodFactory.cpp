@@ -41,7 +41,8 @@ namespace uno {
       else if (inequality_handling_method == "interior_point") {
          const std::string barrier_function = options.get_string("barrier_function");
          if (barrier_function == "log") {
-            return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(problem, options);
+            return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(problem, uses_trust_region,
+               objective_multiplier, options);
          }
          else {
             throw std::invalid_argument("The barrier function " + barrier_function + " is not supported");

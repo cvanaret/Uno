@@ -5,34 +5,21 @@
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
-#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 
 namespace uno {
    NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
-      bool uses_trust_region, double objective_multiplier, Options& options):
-            NoInequalityReformulation(std::move(name), problem, InertiaCorrectionStrategyFactory::create(options),
-               uses_trust_region, objective_multiplier, options) {
+         bool uses_trust_region, double objective_multiplier, Options& options):
+      InequalityHandlingMethod(problem, options), name(std::move(name)) {
+      // create the ingredients
+      std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
+         HessianSubproblemSolverJointFactory::create(this->problem, uses_trust_region, objective_multiplier, options);
+      this->subproblem = std::make_unique<Subproblem>(this->problem, *this->hessian_model, *this->inertia_correction_strategy);
    }
 
-   NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
-      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy, bool uses_trust_region, double objective_multiplier,
-      Options& options):
-         NoInequalityReformulation(std::move(name), problem, std::move(inertia_correction_strategy),
-            HessianSubproblemSolverJointFactory::create(problem, *inertia_correction_strategy, uses_trust_region,
-            objective_multiplier, options)) {
-   }
-
-   NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
-      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy,
-      std::tuple<std::unique_ptr<HessianModel>, Subproblem, std::unique_ptr<SubproblemSolver>> ingredients):
-         InequalityHandlingMethod(problem), name(std::move(name)),
-         inertia_correction_strategy(std::move(inertia_correction_strategy)),
-         hessian_model(std::move(std::get<0>(ingredients))),
-         subproblem(std::move(std::get<1>(ingredients))),
-         subproblem_solver(std::move(std::get<2>(ingredients))) {
+   void NoInequalityReformulation::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
+      this->problem.generate_initial_iterate(initial_iterate, evaluations);
    }
 
    void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
@@ -47,7 +34,7 @@ namespace uno {
 
    Direction& NoInequalityReformulation::solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      return this->subproblem_solver->solve(statistics, this->subproblem, current_iterate, trust_region_radius, initial_point,
+      return this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius, initial_point,
          current_evaluations, warmstart_information);
    }
 
@@ -76,13 +63,17 @@ namespace uno {
 
    const Direction& NoInequalityReformulation::compute_second_order_correction(const Iterate& current_iterate,
          const Vector<double>& constraints_SOC) {
-      return this->subproblem_solver->compute_second_order_correction(this->subproblem, current_iterate, constraints_SOC);
+      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate, constraints_SOC);
+   }
+
+   void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
+      InequalityHandlingMethod::evaluate_progress_measures(this->problem, iterate, evaluations);
    }
 
    bool NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, this->subproblem,
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
          this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, current_evaluations,
          trial_evaluations);
    }

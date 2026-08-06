@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include "linear_algebra/Norm.hpp"
 
 namespace uno {
    // forward declarations
@@ -15,7 +16,7 @@ namespace uno {
    class Iterate;
    class l1RelaxedProblem;
    class OptimizationProblem;
-   class Parameterization;
+   class Options;
    class Statistics;
    class SolverWorkspace;
    class Subproblem;
@@ -25,9 +26,10 @@ namespace uno {
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const OptimizationProblem& problem): problem(problem) { }
+      InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
+      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) = 0;
       [[nodiscard]] virtual Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
@@ -41,7 +43,7 @@ namespace uno {
       [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate,
          const Vector<double>& constraints_SOC) = 0;
 
-      void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const;
+      virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) const = 0;
@@ -52,7 +54,9 @@ namespace uno {
 
    protected:
       const OptimizationProblem& problem;
+      const Norm progress_norm;
 
+      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
