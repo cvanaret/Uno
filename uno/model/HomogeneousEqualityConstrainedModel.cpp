@@ -4,7 +4,6 @@
 #include "HomogeneousEqualityConstrainedModel.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Range.hpp"
 
 namespace uno {
    // Transform the problem into an equality-constrained problem with constraints c(x) = 0. This implies:

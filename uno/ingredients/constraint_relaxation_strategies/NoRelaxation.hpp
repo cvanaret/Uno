@@ -8,7 +8,6 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "optimization/Parameterization.hpp"
 
 namespace uno {
    // forward declarations

@@ -12,7 +12,6 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/OptimizationProblem.hpp"

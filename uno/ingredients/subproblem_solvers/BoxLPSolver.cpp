@@ -5,7 +5,6 @@
 #include "BoxLPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
-#include "tools/Logger.hpp"
 
 namespace uno {
    void BoxLPSolver::initialize_memory(const Subproblem& subproblem) {

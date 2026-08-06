@@ -10,7 +10,6 @@
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/Parameterization.hpp"
 
 namespace uno {
    // forward declaration

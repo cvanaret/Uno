@@ -14,7 +14,6 @@
 #include "ZeroHessian.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
-#include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolverFactory.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"

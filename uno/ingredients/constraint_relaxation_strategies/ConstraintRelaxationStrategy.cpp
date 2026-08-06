@@ -13,7 +13,6 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Statistics.hpp"
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):

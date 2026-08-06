@@ -6,7 +6,6 @@
 
 #include <memory>
 #include <string>
-#include <tuple>
 #include "InequalityHandlingMethod.hpp"
 #include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"

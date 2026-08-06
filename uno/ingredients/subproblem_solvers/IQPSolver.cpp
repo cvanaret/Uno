@@ -7,7 +7,6 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "tools/Logger.hpp"
 
 namespace uno {
    IQPSolver::IQPSolver(std::unique_ptr<LPSolver> qp_solver):
