@@ -60,7 +60,6 @@ namespace uno {
       this->initial_point.fill(0.);
       Direction& direction = this->inequality_handling_method->solve(statistics, current_iterate, trust_region_radius,
          this->initial_point, current_evaluations, warmstart_information);
-      direction.norm = norm_inf(view(direction.primals, 0, this->original_problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
       return direction;

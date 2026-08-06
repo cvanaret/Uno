@@ -7,6 +7,7 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
+#include "optimization/Direction.hpp"
 
 namespace uno {
    NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
@@ -35,8 +36,10 @@ namespace uno {
 
    Direction& NoInequalityReformulation::solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      return this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius, initial_point,
-         current_evaluations, warmstart_information);
+      Direction& direction = this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius,
+         initial_point, current_evaluations, warmstart_information);
+      direction.norm = norm_inf(view(direction.primals, 0, this->problem.get_number_original_variables()));
+      return direction;
    }
 
    void NoInequalityReformulation::initialize_feasibility_problem(Iterate& /*current_iterate*/) {

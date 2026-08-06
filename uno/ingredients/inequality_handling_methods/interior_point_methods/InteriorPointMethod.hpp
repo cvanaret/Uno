@@ -131,8 +131,10 @@ namespace uno {
    Direction& InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
-      return this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius, initial_point,
-         current_evaluations, warmstart_information);
+      Direction& direction = this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius,
+         initial_point, current_evaluations, warmstart_information);
+      direction.norm = norm_inf(view(direction.primals, 0, this->barrier_problem.get_number_original_variables()));
+      return direction;
    }
 
    template <typename BarrierProblem>
