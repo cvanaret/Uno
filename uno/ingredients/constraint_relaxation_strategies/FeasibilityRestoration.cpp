@@ -113,6 +113,8 @@ namespace uno {
       this->reference_optimality_primals = current_iterate.primals;
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
+      // re-evaluate the progress measures at the current iterate
+      this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       this->initial_point.resize(this->feasibility_problem.number_variables);
@@ -156,13 +158,12 @@ namespace uno {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (inequality_handling_method.update_parameterization(statistics, current_iterate)) {
          globalization_strategy.reset();
-         this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations); // TODO
+         inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO
       }
 
       Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius, this->initial_point,
          current_evaluations, warmstart_information);
       ++this->number_subproblems_solved;
-      direction.norm = norm_inf(direction.primals); // TODO norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       this->initial_point.fill(0.);
       DEBUG3 << direction << '\n';
       return direction;
@@ -224,8 +225,8 @@ namespace uno {
       }
 
       // possibly go from restoration phase to optimality phase
-      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && accept_iterate &&
-            this->can_switch_to_optimality_phase(model, trial_iterate, direction, step_length, current_evaluations)) {
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model, trial_iterate,
+            direction, step_length, current_evaluations)) {
          this->switch_back_to_optimality_phase(current_iterate, trial_iterate);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
