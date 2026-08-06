@@ -19,26 +19,20 @@
 
 namespace uno {
    // forward declarations
-   class InertiaCorrectionStrategy;
    class InverseLBFGSHessian;
    class DirectQuasiNewtonHessian;
    class Options;
-   class Subproblem;
 
    class SubproblemSolverFactory {
    public:
       template <typename HessianType>
-      static std::unique_ptr<SubproblemSolver> create(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianType& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy,
+      static std::unique_ptr<SubproblemSolver> create(HessianType& hessian_model, const Subproblem& subproblem,
          bool uses_trust_region, const Options& options);
    };
 
    template <typename HessianType>
-   std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(const OptimizationProblem& problem,
-         Iterate& current_iterate, HessianType& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy,
+   std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(HessianType& hessian_model, const Subproblem& subproblem,
          bool uses_trust_region, const Options& options) {
-      const Subproblem subproblem(problem, current_iterate, hessian_model, inertia_correction_strategy);
-
       // if no curvature, allocate LP solver
       if (!subproblem.has_curvature()) {
          if (subproblem.number_constraints == 0) {

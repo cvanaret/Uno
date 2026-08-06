@@ -31,7 +31,7 @@ namespace uno {
       explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
-      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+      virtual void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
          EvaluationCache& evaluation_cache, Options& options) = 0;
 
       // direction computation
@@ -67,10 +67,6 @@ namespace uno {
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
 
-      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
-      bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Subproblem& subproblem,
-         const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;

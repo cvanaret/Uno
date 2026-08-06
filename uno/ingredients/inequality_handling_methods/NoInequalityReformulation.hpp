@@ -6,28 +6,57 @@
 
 #include <memory>
 #include <string>
+#include <tuple>
 #include "InequalityHandlingMethod.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 
 namespace uno {
+   // forward declaration
+   class HessianModel;
+   class InertiaCorrectionStrategy;
+   class Options;
+   class SubproblemSolver;
+
    class NoInequalityReformulation : public InequalityHandlingMethod {
    public:
-      explicit NoInequalityReformulation(std::string name);
+      NoInequalityReformulation(std::string name, const OptimizationProblem& problem, bool uses_trust_region,
+         double objective_multiplier, Options& options);
       ~NoInequalityReformulation() override = default;
 
       void initialize_statistics(Statistics& statistics) override;
-      [[nodiscard]] std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem,
-         Parameterization& parameterization) override;
-      [[nodiscard]] bool update_parameterization(Statistics& statistics, const OptimizationProblem& problem,
-         const Iterate& current_iterate, Parameterization& parameterization) override;
+      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
+      [[nodiscard]] Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
+         const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
+      [[nodiscard]] bool has_second_order_corrections() const override;
+      [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate,
+         const Vector<double>& constraints_SOC) override;
+
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) const override;
+      void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
+
       [[nodiscard]] std::string get_name() const override;
 
    protected:
       const std::string name;
+      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
+      std::unique_ptr<HessianModel> hessian_model;
+      Subproblem subproblem;
+      std::unique_ptr<SubproblemSolver> subproblem_solver;
+
+      NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
+         std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy, bool uses_trust_region, double objective_multiplier,
+         Options& options);
+      NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
+         std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy,
+         std::tuple<std::unique_ptr<HessianModel>, Subproblem, std::unique_ptr<SubproblemSolver>> ingredients);
    };
 } // namespace
 

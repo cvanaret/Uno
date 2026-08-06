@@ -20,17 +20,18 @@ namespace uno {
       this->rhs.resize(subproblem.number_variables);
    }
 
-   Direction& InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, [[maybe_unused]] double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Evaluations& current_evaluations, const WarmstartInformation& /*warmstart_information*/) {
+   Direction& InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
+         [[maybe_unused]] double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
+         const WarmstartInformation& /*warmstart_information*/) {
       assert(is_infinite(trust_region_radius));
       this->direction.reset();
 
       // store -gradient in this->rhs
-      current_evaluations.evaluate_objective_gradient(subproblem.problem.model, subproblem.current_iterate.primals);
+      current_evaluations.evaluate_objective_gradient(subproblem.problem.model, current_iterate.primals);
       this->rhs = -current_evaluations.objective_gradient;
 
       // compute the Newton step d = -H⁻¹ g
-      this->hessian_model.compute_inverse_hessian_vector_product(subproblem.current_iterate.primals.data(),
+      this->hessian_model.compute_inverse_hessian_vector_product(current_iterate.primals.data(),
          this->rhs.data(), this->direction.primals.data());
       return this->direction;
    }
@@ -40,11 +41,11 @@ namespace uno {
    }
 
    const Direction& InverseNewtonSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
-         const Vector<double>& /*constraints_SOC*/) {
+         const Iterate& /*current_iterate*/, const Vector<double>& /*constraints_SOC*/) {
       throw std::runtime_error("No SOC implemented in InverseNewtonSolver");
    }
 
-   SolverWorkspace& InverseNewtonSolver::get_workspace() {
+   const SolverWorkspace& InverseNewtonSolver::get_workspace() const {
       return this->workspace;
    }
 } // namespace

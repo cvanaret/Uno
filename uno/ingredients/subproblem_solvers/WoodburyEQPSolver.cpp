@@ -31,8 +31,8 @@ namespace uno {
       this->linear_solver->initialize_memory();
    }
 
-   Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
+   Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The direct linear solver does not support a trust region");
@@ -54,8 +54,8 @@ namespace uno {
          View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
          View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
 
-         subproblem.evaluate_lagrangian_hessian(statistics, hessian);
-         subproblem.evaluate_jacobian(jacobian, current_evaluations);
+         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, hessian);
+         subproblem.evaluate_jacobian(current_iterate, jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
@@ -69,7 +69,7 @@ namespace uno {
             subproblem.dual_regularization_factor(), *this->linear_solver);
 
          // assemble the RHS
-         subproblem.assemble_augmented_rhs(current_evaluations, linear_system.rhs);
+         subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
       }
 
       // solve the linear system with only the diagonal part and store the result in solution_diagonal_part
@@ -83,7 +83,7 @@ namespace uno {
          this->compute_low_rank_correction(subproblem, solution_diagonal_part);
 
          // assemble the full primal-dual direction
-         subproblem.assemble_primal_dual_direction(solution_diagonal_part, this->direction);
+         subproblem.assemble_primal_dual_direction(current_iterate, solution_diagonal_part, this->direction);
       }
       return this->direction;
    }
@@ -93,11 +93,11 @@ namespace uno {
    }
 
    const Direction& WoodburyEQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
-         const Vector<double>& /*constraints_SOC*/) {
+         const Iterate& /*current_iterate*/, const Vector<double>& /*constraints_SOC*/) {
       throw std::runtime_error("No SOC implemented in WoodburyEQPSolver");
    }
 
-   SolverWorkspace& WoodburyEQPSolver::get_workspace() {
+   const SolverWorkspace& WoodburyEQPSolver::get_workspace() const {
       return this->linear_solver->get_linear_system();
    }
 

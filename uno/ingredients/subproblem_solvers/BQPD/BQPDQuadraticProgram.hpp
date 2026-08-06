@@ -29,7 +29,7 @@ namespace uno {
       BQPDQuadraticProgram() = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
-      void fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+      void fill(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
       // data-driven build: dense objective gradient + COO constraint Jacobian + COO Lagrangian Hessian
       // (one triangle; empty for an LP). Converts COO to BQPD's weak-CSR layout internally.
@@ -54,7 +54,8 @@ namespace uno {
          const Vector<double>& jacobian_values, const Vector<uno_int>& hessian_row_indices,
          const Vector<uno_int>& hessian_column_indices, const Vector<double>& hessian_values);
 
-      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
+      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
+         const Vector<double>& vector) const override;
 
       void evaluate_functions(const OptimizationProblem& problem, const Iterate& current_iterate, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);

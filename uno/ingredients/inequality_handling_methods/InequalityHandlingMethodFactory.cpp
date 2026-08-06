@@ -14,17 +14,19 @@
 
 namespace uno {
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const OptimizationProblem& problem,
-         bool uses_trust_region, const Options& options) {
+         bool uses_trust_region, double objective_multiplier, Options& options) {
       // figure out whether there are inequality constraints altogether
       if (!problem.has_inequality_constraints() && !problem.has_bound_constraints() && !uses_trust_region) {
          // no reformulation
          if (0 < problem.number_constraints) {
             INFO << "The problem has no inequalities, picking a pure SQP method\n";
-            return std::make_unique<NoInequalityReformulation>("pure SQP method");
+            return std::make_unique<NoInequalityReformulation>("pure SQP method", problem, uses_trust_region,
+               objective_multiplier, options);
          }
          else {
             INFO << "The problem has no constraints, picking a pure Newton method\n";
-            return std::make_unique<NoInequalityReformulation>("pure Newton method");
+            return std::make_unique<NoInequalityReformulation>("pure Newton method", problem, uses_trust_region,
+               objective_multiplier, options);
          }
       }
       // from now on, the problem has inequalities
@@ -32,13 +34,14 @@ namespace uno {
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
          // no inequality reformulation: let the subproblem solver handle them
-         return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method");
+         return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method", problem, uses_trust_region,
+            objective_multiplier, options);
       }
       // interior-point method
       else if (inequality_handling_method == "interior_point") {
          const std::string barrier_function = options.get_string("barrier_function");
          if (barrier_function == "log") {
-            return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(options);
+            return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(problem, options);
          }
          else {
             throw std::invalid_argument("The barrier function " + barrier_function + " is not supported");

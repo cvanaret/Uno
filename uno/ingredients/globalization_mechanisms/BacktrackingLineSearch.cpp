@@ -30,7 +30,7 @@ namespace uno {
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, false, evaluation_cache, options);
+      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Steplength", Statistics::double_width + 1, 2);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);

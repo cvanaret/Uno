@@ -13,17 +13,14 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class HessianModel;
    class InequalityHandlingMethod;
-   class InertiaCorrectionStrategy;
-   class SubproblemSolver;
 
    class NoRelaxation : public ConstraintRelaxationStrategy {
    public:
       NoRelaxation(const Model& model, Options& options);
       ~NoRelaxation() override;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+      void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
          EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
@@ -48,12 +45,7 @@ namespace uno {
    private:
       const OptimizationProblem original_problem;
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
-      std::unique_ptr<HessianModel> hessian_model;
-      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
       MeritFunction globalization_strategy;
-      std::unique_ptr<OptimizationProblem> reformulated_problem{};
-      std::unique_ptr<SubproblemSolver> subproblem_solver{};
-      Parameterization parameterization;
       Vector<double> initial_point;
    };
 } // namespace

@@ -18,10 +18,10 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
+   Subproblem::Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model,
       InertiaCorrectionStrategy& inertia_correction_strategy):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
-         problem(problem), current_iterate(current_iterate), hessian_model(hessian_model),
+         problem(problem), hessian_model(hessian_model),
          inertia_correction_strategy(inertia_correction_strategy) {
    }
 
@@ -79,14 +79,14 @@ namespace uno {
       }
    }
 
-   void Subproblem::evaluate_jacobian(View<double> jacobian_values, Evaluations& evaluations) const {
-      this->problem.evaluate_jacobian(this->current_iterate.primals, jacobian_values, evaluations);
+   void Subproblem::evaluate_jacobian(const Iterate& current_iterate, View<double> jacobian_values, Evaluations& evaluations) const {
+      this->problem.evaluate_jacobian(current_iterate.primals, jacobian_values, evaluations);
    }
 
-   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const {
+   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, const Iterate& current_iterate, View<double> hessian_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
-      this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_iterate.multipliers, hessian_values);
+      this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, current_iterate.primals,
+         current_iterate.multipliers, hessian_values);
    }
 
    void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const {
@@ -101,9 +101,9 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_hessian_vector_product(const double* x, const double* vector, double* result) const {
+   void Subproblem::compute_hessian_vector_product(const Iterate& current_iterate, const double* x, const double* vector, double* result) const {
       // unregularized Hessian-vector product
-      this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, this->current_iterate.multipliers, result);
+      this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, current_iterate.multipliers, result);
 
       // contribution of the regularization strategy
       const double regularization_factor = this->inertia_correction_strategy.get_primal_regularization_factor();
@@ -132,19 +132,19 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, Vector<double>& rhs) const {
+   void Subproblem::assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const {
       rhs.fill(0.);
 
       // -Jacobian^T-multipliers product
-      this->problem.compute_jacobian_transposed_vector_product(this->current_iterate.multipliers.constraints.data(),
+      this->problem.compute_jacobian_transposed_vector_product(current_iterate.multipliers.constraints.data(),
          rhs.data(), evaluations);
       rhs.scale(-1.);
 
       // objective gradient
-      this->problem.evaluate_objective_gradient(this->current_iterate, rhs.data(), evaluations);
+      this->problem.evaluate_objective_gradient(current_iterate, rhs.data(), evaluations);
 
       // constraints
-      this->problem.evaluate_constraints(this->current_iterate, rhs.data() + this->number_variables, evaluations);
+      this->problem.evaluate_constraints(current_iterate, rhs.data() + this->number_variables, evaluations);
       // shift the bound (lb == ub)
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          rhs[this->number_variables + constraint_index] -= this->problem.get_constraints_lower_bounds()[constraint_index];
@@ -155,25 +155,25 @@ namespace uno {
       DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
 
-   void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {
-      this->problem.assemble_primal_dual_direction(this->current_iterate, solution, direction);
+   void Subproblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const {
+      this->problem.assemble_primal_dual_direction(current_iterate, solution, direction);
    }
 
-   void Subproblem::set_variables_bounds(std::vector<double>& subproblem_variables_lower_bounds,
+   void Subproblem::set_variables_bounds(const Iterate& current_iterate, std::vector<double>& subproblem_variables_lower_bounds,
          std::vector<double>& subproblem_variables_upper_bounds, double trust_region_radius) const {
       const auto& variables_lower_bounds = this->problem.get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->problem.get_variables_upper_bounds();
       // bounds of original variables intersected with trust region
       for (size_t variable_index: Range(this->problem.get_number_original_variables())) {
          subproblem_variables_lower_bounds[variable_index] = std::max(-trust_region_radius,
-            variables_lower_bounds[variable_index] - this->current_iterate.primals[variable_index]);
+            variables_lower_bounds[variable_index] - current_iterate.primals[variable_index]);
          subproblem_variables_upper_bounds[variable_index] = std::min(trust_region_radius,
-            variables_upper_bounds[variable_index] - this->current_iterate.primals[variable_index]);
+            variables_upper_bounds[variable_index] - current_iterate.primals[variable_index]);
       }
       // bounds of additional variables (no trust region!)
       for (size_t variable_index: Range(this->problem.get_number_original_variables(), this->problem.number_variables)) {
-         subproblem_variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index] - this->current_iterate.primals[variable_index];
-         subproblem_variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index] - this->current_iterate.primals[variable_index];
+         subproblem_variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index] - current_iterate.primals[variable_index];
+         subproblem_variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index] - current_iterate.primals[variable_index];
       }
    }
 
@@ -266,11 +266,11 @@ namespace uno {
    }
 
    // local models of progress measures
-   double Subproblem::compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
-         double step_length, Norm norm, Evaluations& current_evaluations) const {
+   double Subproblem::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      current_evaluations.evaluate_constraints(model, this->current_iterate.primals);
-      current_evaluations.evaluate_jacobian(model, this->current_iterate.primals);
+      current_evaluations.evaluate_constraints(model, current_iterate.primals);
+      current_evaluations.evaluate_jacobian(model, current_iterate.primals);
 
       const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
       // TODO preallocate
@@ -281,27 +281,29 @@ namespace uno {
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
-   std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const Vector<double>& primal_direction,
-         double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
+   std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, const Evaluations& current_evaluations,
+         const SolverWorkspace& solver_workspace) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(view(primal_direction, 0, this->problem.model.number_variables), current_evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
       const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() || this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
-         solver_workspace.compute_hessian_quadratic_form(*this, primal_direction);
+         solver_workspace.compute_hessian_quadratic_form(*this, current_iterate, primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };
    }
 
-   ProgressMeasures Subproblem::compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
-         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
+   ProgressMeasures Subproblem::compute_predicted_reductions(const Iterate& current_iterate, const Direction& direction,
+         double step_length, Norm norm, Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       return {
-         this->compute_predicted_infeasibility_reduction(this->problem.model, direction.primals, step_length, norm,
-            current_evaluations),
-         this->compute_predicted_objective_reduction(direction.primals, step_length, current_evaluations, solver_workspace),
-         this->problem.compute_predicted_auxiliary_reduction(this->current_iterate, direction.primals, step_length)
+         this->compute_predicted_infeasibility_reduction(this->problem.model, current_iterate, direction.primals, step_length,
+            norm, current_evaluations),
+         this->compute_predicted_objective_reduction(current_iterate, direction.primals, step_length, current_evaluations,
+            solver_workspace),
+         this->problem.compute_predicted_auxiliary_reduction(current_iterate, direction.primals, step_length)
       };
    }
 } // namespace

@@ -6,24 +6,22 @@
 
 #include <array>
 #include <memory>
-#include <utility>
+#include <tuple>
+#include "ingredients/subproblem/Subproblem.hpp"
 
 namespace uno {
    // forward declarations
    class HessianModel;
    class InertiaCorrectionStrategy;
-   class Iterate;
-   class Model;
    class OptimizationProblem;
    class Options;
    class SubproblemSolver;
 
    class HessianSubproblemSolverJointFactory {
    public:
-      // joint factory of Hessian models and subproblem solvers
-      static std::pair<std::unique_ptr<HessianModel>, std::unique_ptr<SubproblemSolver>> create(const Model& model,
-         const OptimizationProblem& problem, Iterate& current_iterate, InertiaCorrectionStrategy& inertia_correction_strategy,
-         bool uses_trust_region, double objective_multiplier, Options& options);
+      // joint factory of Hessian models, subproblem, and subproblem solvers
+      static std::tuple<std::unique_ptr<HessianModel>, Subproblem, std::unique_ptr<SubproblemSolver>> create(const OptimizationProblem& problem,
+         InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region, double objective_multiplier, Options& options);
 
       constexpr static std::array available_strategies{"exact", "LFBGS", "LSR1", "identity", "zero"};
    };

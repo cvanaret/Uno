@@ -4,24 +4,51 @@
 #include "NoInequalityReformulation.hpp"
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
+#include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 
 namespace uno {
-   NoInequalityReformulation::NoInequalityReformulation(std::string name): name(std::move(name)) {
+   NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
+      bool uses_trust_region, double objective_multiplier, Options& options):
+            NoInequalityReformulation(std::move(name), problem, InertiaCorrectionStrategyFactory::create(options),
+               uses_trust_region, objective_multiplier, options) {
    }
 
-   void NoInequalityReformulation::initialize_statistics(Statistics& /*statistics*/) {
-      // do nothing
+   NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
+      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy, bool uses_trust_region, double objective_multiplier,
+      Options& options):
+         NoInequalityReformulation(std::move(name), problem, std::move(inertia_correction_strategy),
+            HessianSubproblemSolverJointFactory::create(problem, *inertia_correction_strategy, uses_trust_region,
+            objective_multiplier, options)) {
    }
 
-   std::unique_ptr<OptimizationProblem> NoInequalityReformulation::reformulate(const OptimizationProblem& problem,
-         Parameterization& /*parameterization*/) {
-      return problem.clone(); // the problem is not reformulated, simply make a copy
+   NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
+      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy,
+      std::tuple<std::unique_ptr<HessianModel>, Subproblem, std::unique_ptr<SubproblemSolver>> ingredients):
+         InequalityHandlingMethod(problem), name(std::move(name)),
+         inertia_correction_strategy(std::move(inertia_correction_strategy)),
+         hessian_model(std::move(std::get<0>(ingredients))),
+         subproblem(std::move(std::get<1>(ingredients))),
+         subproblem_solver(std::move(std::get<2>(ingredients))) {
    }
 
-   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
-         const Iterate& /*current_iterate*/, Parameterization& /*parameterization*/) {
+   void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
+      this->hessian_model->initialize_statistics(statistics);
+      this->inertia_correction_strategy->initialize_statistics(statistics);
+   }
+
+   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/) {
       // the parameterization is not updated
       return false;
+   }
+
+   Direction& NoInequalityReformulation::solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
+         const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+      return this->subproblem_solver->solve(statistics, this->subproblem, current_iterate, trust_region_radius, initial_point,
+         current_evaluations, warmstart_information);
    }
 
    void NoInequalityReformulation::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
@@ -43,7 +70,30 @@ namespace uno {
       return 0.;
    }
 
+   bool NoInequalityReformulation::has_second_order_corrections() const {
+      return this->subproblem_solver->has_second_order_corrections();
+   }
+
+   const Direction& NoInequalityReformulation::compute_second_order_correction(const Iterate& current_iterate,
+         const Vector<double>& constraints_SOC) {
+      return this->subproblem_solver->compute_second_order_correction(this->subproblem, current_iterate, constraints_SOC);
+   }
+
+   bool NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, this->subproblem,
+         this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, current_evaluations,
+         trial_evaluations);
+   }
+
+   void NoInequalityReformulation::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,
+         const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);
+   }
+
    std::string NoInequalityReformulation::get_name() const {
-      return this->name;
+      return this->name + " with " + this->hessian_model->name + " Hessian and " + this->inertia_correction_strategy->get_name()
+         + " inertia correction";
    }
 } // namespace

@@ -8,6 +8,7 @@ namespace uno {
    // forward declarations
    class Direction;
    class Evaluations;
+   class Iterate;
    class Multipliers;
    class Statistics;
    class SolverWorkspace;
@@ -23,14 +24,15 @@ namespace uno {
 
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
-      [[nodiscard]] virtual Direction& solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Evaluations& current_evaluations,
+      [[nodiscard]] virtual Direction& solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
-      virtual const Direction& compute_second_order_correction(const Subproblem& subproblem, const Vector<double>& constraints_SOC) = 0;
+      virtual const Direction& compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate,
+         const Vector<double>& constraints_SOC) = 0;
 
-      [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
+      [[nodiscard]] virtual const SolverWorkspace& get_workspace() const = 0;
    };
 } // namespace
 

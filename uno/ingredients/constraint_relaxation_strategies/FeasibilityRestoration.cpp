@@ -7,13 +7,8 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
-#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
-#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "ingredients/subproblem_solvers/SubproblemSolverFactory.hpp"
 #include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
@@ -35,8 +30,6 @@ namespace uno {
          original_problem(model),
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
          feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region),
-         inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
-         feasibility_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          feasibility_globalization_strategy(options),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
@@ -45,43 +38,27 @@ namespace uno {
 
    FeasibilityRestoration::~FeasibilityRestoration() = default;
 
-   void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) {
+   void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, Options& options) {
       this->initial_point.resize(this->original_problem.number_variables);
       this->reference_optimality_primals.resize(this->original_problem.number_variables);
+      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       // reformulation of the original problem and the feasibility problem
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
-         options);
+         1., options);
       this->feasibility_inequality_handling_method = InequalityHandlingMethodFactory::create(this->feasibility_problem,
-         uses_trust_region, options);
-      this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
-      initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
-      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
-      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-      this->reformulated_feasibility_problem = this->feasibility_inequality_handling_method->reformulate(this->feasibility_problem, this->parameterization);
-
-      // creation of the Hessian models and the subproblem solvers
-      std::tie(this->hessian_model, this->subproblem_solver) = HessianSubproblemSolverJointFactory::create(model,
-         *this->reformulated_problem, initial_iterate, *this->inertia_correction_strategy, uses_trust_region, 1., options);
-      std::tie(this->feasibility_hessian_model, this->feasibility_subproblem_solver) = HessianSubproblemSolverJointFactory::create(model,
-         *this->reformulated_feasibility_problem, initial_iterate, *this->feasibility_inertia_correction_strategy, uses_trust_region,
-         0., options);
+         uses_trust_region, 0., options);
 
       // initial iterate
-      this->reformulated_problem->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
-      this->evaluate_progress_measures(*this->reformulated_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
       this->feasibility_globalization_strategy.initialize(statistics, initial_iterate);
 
       // statistics
-      this->inertia_correction_strategy->initialize_statistics(statistics);
       this->inequality_handling_method->initialize_statistics(statistics);
-      this->feasibility_inertia_correction_strategy->initialize_statistics(statistics);
       this->feasibility_inequality_handling_method->initialize_statistics(statistics);
-      this->hessian_model->initialize_statistics(statistics);
-      this->feasibility_hessian_model->initialize_statistics(statistics);
       statistics.add_column("Phase", Statistics::int_width - 1, 3);
       statistics.set("Phase", "OPT");
    }
@@ -93,17 +70,16 @@ namespace uno {
       if (this->current_phase == Phase::OPTIMALITY) {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
-         const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
          this->initial_point.fill(0.);
-         Direction& optimality_direction = this->solve_subproblem(statistics, subproblem, *this->subproblem_solver,
-            this->original_problem, *this->inequality_handling_method, *this->globalization_strategy, current_iterate,
-            trust_region_radius, current_evaluations, warmstart_information);
+         Direction& optimality_direction = this->solve_subproblem(statistics, *this->inequality_handling_method,
+            *this->globalization_strategy, current_iterate, trust_region_radius, current_evaluations, warmstart_information);
          if (optimality_direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
             this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
-            this->switch_to_feasibility_problem(statistics, current_iterate, optimality_direction, current_evaluations, warmstart_information);
+            this->switch_to_feasibility_problem(statistics, current_iterate, optimality_direction, current_evaluations,
+               warmstart_information);
          }
          else {
             warmstart_information.no_changes();
@@ -115,11 +91,9 @@ namespace uno {
       DEBUG << "Solving the feasibility subproblem\n";
       statistics.set("Phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-      const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
-         *this->feasibility_inertia_correction_strategy);
-      Direction& feasibility_direction = this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver,
-         this->feasibility_problem, *this->feasibility_inequality_handling_method, this->feasibility_globalization_strategy,
-         current_iterate, trust_region_radius, current_evaluations, warmstart_information);
+      Direction& feasibility_direction = this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
+         this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
+         warmstart_information);
       return feasibility_direction;
    }
 
@@ -149,7 +123,6 @@ namespace uno {
       this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
-      // TODO pass the parameterization
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
@@ -162,41 +135,35 @@ namespace uno {
 
    bool FeasibilityRestoration::has_second_order_corrections() const {
       if (this->current_phase == Phase::OPTIMALITY) {
-         return this->subproblem_solver->has_second_order_corrections();
+         return this->inequality_handling_method->has_second_order_corrections();
       }
       else {
-         return this->feasibility_subproblem_solver->has_second_order_corrections();
+         return this->feasibility_inequality_handling_method->has_second_order_corrections();
       }
    }
 
    const Direction& FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate, const Vector<double>& constraints_SOC) {
       if (this->current_phase == Phase::OPTIMALITY) {
-         const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
-         return this->subproblem_solver->compute_second_order_correction(subproblem, constraints_SOC);
+         return this->inequality_handling_method->compute_second_order_correction(current_iterate, constraints_SOC);
       }
       else {
-         const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
-            *this->feasibility_inertia_correction_strategy);
-         return this->feasibility_subproblem_solver->compute_second_order_correction(feasibility_subproblem, constraints_SOC);
+         return this->feasibility_inequality_handling_method->compute_second_order_correction(current_iterate, constraints_SOC);
       }
    }
 
-   Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
-         SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information) {
-      // update the parameterization
-      const bool parameterization_updated = inequality_handling_method.update_parameterization(statistics, problem,
-         current_iterate, this->parameterization);
+   Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
-      if (parameterization_updated) {
+      if (inequality_handling_method.update_parameterization(statistics, current_iterate)) {
          globalization_strategy.reset();
-         subproblem.problem.set_auxiliary_measure(current_iterate);
+         this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations); // TODO
       }
-      Direction& direction = subproblem_solver.solve(statistics, subproblem, trust_region_radius, this->initial_point,
+
+      Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius, this->initial_point,
          current_evaluations, warmstart_information);
       ++this->number_subproblems_solved;
-      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
+      direction.norm = norm_inf(direction.primals); // TODO norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       this->initial_point.fill(0.);
       DEBUG3 << direction << '\n';
       return direction;
@@ -240,25 +207,20 @@ namespace uno {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
-         const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model,
-            *this->inertia_correction_strategy);
-         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, *this->globalization_strategy,
-            subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
-            current_evaluations, trial_evaluations);
+         accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, *this->globalization_strategy,
+            current_iterate, trial_iterate, direction, step_length, current_evaluations, trial_evaluations);
          if (uses_trust_region || accept_iterate) {
-            this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+            this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
                trial_evaluations);
          }
       }
       else {
-         const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
-            *this->feasibility_inertia_correction_strategy);
-         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->feasibility_globalization_strategy,
-            feasibility_subproblem, this->feasibility_subproblem_solver->get_workspace(), current_iterate, trial_iterate,
-            direction, step_length, current_evaluations, trial_evaluations);
+         accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
+            this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length, current_evaluations,
+            trial_evaluations);
          if (uses_trust_region || accept_iterate) {
-            this->feasibility_hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
-               trial_evaluations);
+            this->feasibility_inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate,
+               current_evaluations, trial_evaluations);
          }
       }
 
@@ -296,9 +258,6 @@ namespace uno {
    }
 
    std::string FeasibilityRestoration::get_name() const {
-      const std::string hessian_model_name = (this->hessian_model != nullptr) ? this->hessian_model->name : "unknown";
-      return this->globalization_strategy->get_name() + " restoration " + this->inequality_handling_method->get_name() +
-         " with " + hessian_model_name + " Hessian and " + this->inertia_correction_strategy->get_name() +
-         " inertia correction";
+      return this->globalization_strategy->get_name() + " restoration " + this->inequality_handling_method->get_name();
    }
 } // namespace

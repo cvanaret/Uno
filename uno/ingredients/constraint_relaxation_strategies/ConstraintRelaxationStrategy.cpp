@@ -36,51 +36,6 @@ namespace uno {
 
    // protected member functions
 
-   void ConstraintRelaxationStrategy::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,
-         Evaluations& evaluations) const {
-      problem.set_infeasibility_measure(iterate, evaluations, this->progress_norm);
-      problem.set_objective_measure(iterate, evaluations);
-      problem.set_auxiliary_measure(iterate);
-   }
-
-   bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
-      subproblem.problem.postprocess_iterate(trial_iterate);
-      const double objective_multiplier = subproblem.problem.get_objective_multiplier();
-
-      // evaluate progress measures
-      trial_iterate.objective_multiplier = objective_multiplier;
-      //if (this->subproblem_definition_changed) {
-         //DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
-         //globalization_strategy.reset();
-         subproblem.problem.set_auxiliary_measure(current_iterate);
-         //this->subproblem_definition_changed = false;
-      //}
-      this->evaluate_progress_measures(subproblem.problem, trial_iterate, trial_evaluations);
-
-      bool accept_iterate = false;
-      if (direction.norm == 0.) {
-         DEBUG << "Zero step acceptable\n";
-         trial_evaluations.objective = subproblem.problem.model.evaluate_objective(trial_iterate.primals);
-         accept_iterate = true;
-         statistics.set("Status", "0 primal step");
-      }
-      else {
-         // determine acceptance wrt the globalization strategy
-         const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(direction, step_length,
-            this->progress_norm, current_evaluations, solver_workspace);
-         accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
-            predicted_reductions, objective_multiplier);
-         // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
-         if (accept_iterate) {
-            trial_evaluations.evaluate_objective_gradient(subproblem.problem.model, trial_iterate.primals);
-            trial_evaluations.evaluate_jacobian(subproblem.problem.model, trial_iterate.primals);
-         }
-      }
-      return accept_iterate;
-   }
-
    // stationarity errors:
    // - for KKT conditions: with standard multipliers and current objective multiplier
    // - for FJ conditions: with standard multipliers and 0 objective multiplier

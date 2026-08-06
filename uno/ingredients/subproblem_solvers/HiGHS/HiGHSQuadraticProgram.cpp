@@ -34,14 +34,14 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   void HiGHSQuadraticProgram::fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+   void HiGHSQuadraticProgram::fill(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         double trust_region_radius, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions and derivatives into the HiGHS model
-      this->evaluate_functions(statistics, subproblem, current_evaluations, warmstart_information);
+      this->evaluate_functions(statistics, subproblem, current_iterate, current_evaluations, warmstart_information);
 
       // variable bounds
       if (warmstart_information.trust_region_changed) {
-         subproblem.set_variables_bounds(this->model.lp_.col_lower_, this->model.lp_.col_upper_, trust_region_radius);
+         subproblem.set_variables_bounds(current_iterate, this->model.lp_.col_lower_, this->model.lp_.col_upper_, trust_region_radius);
       }
       // constraint bounds
       if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
@@ -89,7 +89,8 @@ namespace uno {
       }
    }
 
-   double HiGHSQuadraticProgram::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
+   double HiGHSQuadraticProgram::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,
+         const Vector<double>& vector) const {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -177,19 +178,18 @@ namespace uno {
       }
    }
 
-   void HiGHSQuadraticProgram::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
+   void HiGHSQuadraticProgram::evaluate_functions(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.new_iterate) {
          for (size_t index: Range(subproblem.number_variables)) {
             this->model.lp_.col_cost_[index] = 0.;
          }
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),
-            current_evaluations);
-         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints.data(), current_evaluations);
-         this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate.primals, current_evaluations);
+         subproblem.problem.evaluate_objective_gradient(current_iterate, this->model.lp_.col_cost_.data(), current_evaluations);
+         subproblem.problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
+         this->evaluate_jacobian(subproblem.problem, current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
-         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.view());
+         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
          // copy the Hessian with permutation into this->model.hessian_.value_
          this->scatter_hessian_values();
          View hessian(this->model.hessian_.value_.data(), subproblem.number_regularized_hessian_nonzeros());
