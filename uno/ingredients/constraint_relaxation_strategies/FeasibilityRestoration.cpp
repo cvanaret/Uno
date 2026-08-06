@@ -158,7 +158,7 @@ namespace uno {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (inequality_handling_method.update_parameterization(statistics, current_iterate)) {
          globalization_strategy.reset();
-         inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO
+         inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
       }
 
       Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius, this->initial_point,

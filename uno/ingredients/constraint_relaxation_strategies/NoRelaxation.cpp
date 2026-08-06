@@ -54,7 +54,7 @@ namespace uno {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (parameterization_updated) {
          this->globalization_strategy.reset();
-         this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations); // TODO
+         this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
       }
 
       this->initial_point.fill(0.);
