@@ -96,8 +96,8 @@ namespace uno {
          const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
          this->initial_point.fill(0.);
          Direction& optimality_direction = this->solve_subproblem(statistics, subproblem, *this->subproblem_solver,
-            this->original_problem, *this->globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
-            warmstart_information);
+            this->original_problem, *this->inequality_handling_method, *this->globalization_strategy, current_iterate,
+            trust_region_radius, current_evaluations, warmstart_information);
          if (optimality_direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("Status", std::string("infeasible"));
@@ -118,8 +118,8 @@ namespace uno {
       const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
          *this->feasibility_inertia_correction_strategy);
       Direction& feasibility_direction = this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver,
-         this->feasibility_problem, this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
-         warmstart_information);
+         this->feasibility_problem, *this->feasibility_inequality_handling_method, this->feasibility_globalization_strategy,
+         current_iterate, trust_region_radius, current_evaluations, warmstart_information);
       return feasibility_direction;
    }
 
@@ -182,11 +182,11 @@ namespace uno {
    }
 
    Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
-         SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, double trust_region_radius, Evaluations& current_evaluations,
+         SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       // update the parameterization
-      const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics, problem,
+      const bool parameterization_updated = inequality_handling_method.update_parameterization(statistics, problem,
          current_iterate, this->parameterization);
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (parameterization_updated) {
