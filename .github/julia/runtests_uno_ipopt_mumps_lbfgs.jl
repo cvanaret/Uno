@@ -22,7 +22,7 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_ipopt() = Optimizer(["logger=DEBUG3", "preset=ipopt", "linear_solver=MUMPS", "hessian_model=LBFGS", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS", "hessian_model=LBFGS", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 
@@ -44,6 +44,39 @@ function strip_prefix(instances, prefix)
     return cleaned_instances
 end
 
+primal_target = Dict(
+    MINLPTests.FEASIBLE_PROBLEM => MOI.FEASIBLE_POINT,
+    # If Uno starts writing a .sol file with an infeasible point, change
+    # this to `=> MOI.INFEASIBLE_POINT`
+    MINLPTests.INFEASIBLE_PROBLEM => MOI.NO_SOLUTION,
+)
+objective_tol = 1e-4
+primal_tol = 1e-4
+
+# This function tests (potentially) non-convex nonlinear programs. The tests
+# are meant to be "easy" in the sense that most NLP solvers can find the
+# same global minimum, but a test failure can sometimes be allowed.
+nlp_expr_instances = strip_prefix(instances, "nlp_expr_")
+if !isempty(nlp_expr_instances)
+    MINLPTests.test_directory(
+        "nlp-expr",
+        Optimizer_Uno_ipopt;
+        include = nlp_expr_instances,
+        primal_target, objective_tol, primal_tol
+    )
+end
+# This function tests convex nonlinear programs. Test failures here should
+# never be allowed, because even local NLP solvers should find the global
+# optimum.
+nlp_cvx_expr_instances = strip_prefix(instances, "nlp_cvx_expr_")
+if !isempty(nlp_cvx_expr_instances)
+    MINLPTests.test_directory(
+        "nlp-cvx-expr",
+        Optimizer_Uno_ipopt;
+        include = nlp_cvx_expr_instances,
+        primal_target, objective_tol, primal_tol
+    )
+end
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
 # tests in here with weird edge cases, so a variety of exclusions are expected.
@@ -55,7 +88,6 @@ NLP_instances = readlines(joinpath(@__DIR__, "MOI/NLP.txt"))
 instances = vcat(bound_constrained_instances, general_instances)
 instances = intersect(instances, NLP_instances)
 MOI_instances = [Regex("^" * instance * "\$") for instance in instances] # exact match
-MOI_instances = String["test_nonlinear_expression_hs109"]
 #print("Instances: ", instances)
 
 if !isempty(MOI_instances)
