@@ -44,9 +44,8 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       if (warmstart_information.new_iterate) {
          // assemble the augmented matrix
-         subproblem.evaluate_lagrangian_hessian(statistics, linear_system.matrix_values.data());
-         const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-         subproblem.evaluate_jacobian(linear_system.matrix_values.data() + number_hessian_nonzeros, current_evaluations);
+         subproblem.evaluate_lagrangian_hessian(statistics, linear_system.hessian);
+         subproblem.evaluate_jacobian(linear_system.jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {

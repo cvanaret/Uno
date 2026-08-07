@@ -18,6 +18,11 @@ namespace uno {
       size_t number_nonzeros{0};
 
       Vector<double> matrix_values{};
+      // views into the blocks
+      View<double> hessian;
+      View<double> jacobian;
+      View<double> primal_inertia_correction;
+      View<double> dual_inertia_correction;
 
       Vector<double> rhs{};
       Vector<double> solution{};

@@ -36,10 +36,10 @@ namespace uno {
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
 
-      void evaluate_jacobian(double* jacobian_values, Evaluations& evaluations) const;
+      void evaluate_jacobian(View<double> jacobian_values, Evaluations& evaluations) const;
 
       // regularized Hessian
-      void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
+      void evaluate_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const;
       void regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
       void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
 
@@ -74,7 +74,8 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const;
       [[nodiscard]] size_t number_hessian_nonzeros() const;
       [[nodiscard]] size_t number_regularized_hessian_nonzeros() const;
-      [[nodiscard]] size_t number_regularized_augmented_system_nonzeros() const;
+      [[nodiscard]] size_t number_primal_inertia_correction_nonzeros() const;
+      [[nodiscard]] size_t number_dual_inertia_correction_nonzeros() const;
 
       [[nodiscard]] double dual_regularization_factor() const;
 

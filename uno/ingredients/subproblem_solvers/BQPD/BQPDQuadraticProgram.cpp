@@ -100,7 +100,7 @@ namespace uno {
          }
          // evaluate + regularize the explicit Hessian once per iterate
          if (this->hessian_evaluation_required) {
-            subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
+            subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.view());
             subproblem.regularize_lagrangian_hessian(statistics, this->hessian_values.data());
             this->hessian_evaluation_required = false;
          }
@@ -336,7 +336,7 @@ namespace uno {
 
    void BQPDQuadraticProgram::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals,
          Evaluations& evaluations) {
-      problem.evaluate_jacobian(primals, this->jacobian_values.data(), evaluations);
+      problem.evaluate_jacobian(primals, this->jacobian_values.view(), evaluations);
       this->scatter_jacobian_values(problem.number_variables);
    }
 } // namespace

@@ -43,7 +43,7 @@ namespace uno {
    // forms the diagonal part of the L-BFGS Hessian approximation
    // this can only be called by WoodburyEQPSolver
    void DirectQuasiNewtonHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> hessian_values) {
       // recompute the Hessian representation if the limited memory was updated
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();

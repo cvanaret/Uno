@@ -189,7 +189,7 @@ namespace uno {
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints.data(), current_evaluations);
          this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
-         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
+         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.view());
          // copy the Hessian with permutation into this->model.hessian_.value_
          this->scatter_hessian_values();
          subproblem.regularize_lagrangian_hessian(statistics, this->model.hessian_.value_.data());
@@ -198,7 +198,7 @@ namespace uno {
 
    void HiGHSQuadraticProgram::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals,
          Evaluations& evaluations) {
-      problem.evaluate_jacobian(primals, this->jacobian_values.data(), evaluations);
+      problem.evaluate_jacobian(primals, this->jacobian_values.view(), evaluations);
       this->scatter_jacobian_values();
    }
 

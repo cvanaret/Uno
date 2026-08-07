@@ -20,18 +20,28 @@ namespace uno {
    class View {
    protected:
       T* pointer;
-      const size_t view_size;
+      size_t view_size;
 
    public:
       using value_type = std::remove_const_t<T>;
 
       View(T* pointer, size_t size): pointer(pointer), view_size(size) { }
+      View(): pointer(nullptr), view_size(0) { }
       ~View() = default;
       View(const View& other) = default;
       View(View&& other) = default;
       View<T>& operator=(const View<T>& other) {
          if (&other != this) {
             blas1::copy(this->size(), other.data(), this->data());
+         }
+         return *this;
+      }
+      View<T>& operator=(View<T>&& other) noexcept {
+         if (&other != this) {
+            this->pointer = other.pointer;
+            this->view_size = other.view_size;
+            other.pointer = nullptr;
+            other.view_size = 0;
          }
          return *this;
       }
@@ -50,6 +60,18 @@ namespace uno {
 
       [[nodiscard]] const T* data() const noexcept {
          return this->pointer;
+      }
+
+      // this returns a pointer to the end of the view
+      // careful: this may not be a valid element, do not dereference
+      [[nodiscard]] T* end() noexcept {
+         return this->pointer + this->size();
+      }
+
+      // this returns a pointer to the end of the view
+      // careful: this may not be a valid element, do not dereference
+      [[nodiscard]] const T* end() const noexcept {
+         return this->pointer + this->size();
       }
 
       [[nodiscard]] T& operator[](size_t index) noexcept {

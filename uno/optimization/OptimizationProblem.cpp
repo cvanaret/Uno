@@ -85,7 +85,7 @@ namespace uno {
       }
    }
 
-   void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const {
       evaluations.evaluate_jacobian(this->model, primals);
       for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
          jacobian_values[nonzero_index] = evaluations.jacobian_values[nonzero_index];
@@ -99,7 +99,7 @@ namespace uno {
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
-         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
+         const Vector<double>& primal_variables, const Multipliers& multipliers, View<double> hessian_values) const {
       hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
    }

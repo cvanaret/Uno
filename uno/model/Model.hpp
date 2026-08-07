@@ -8,6 +8,7 @@
 #include <vector>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/ProblemType.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "../interfaces/C/uno_int.h"
@@ -68,7 +69,7 @@ namespace uno {
       void evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          Evaluations& evaluations, Vector<double>& lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         double* hessian_values) const = 0;
+         View<double> hessian_values) const = 0;
 
       // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
