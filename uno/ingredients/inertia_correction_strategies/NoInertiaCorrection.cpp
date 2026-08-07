@@ -21,20 +21,16 @@ namespace uno {
    }
 
    void NoInertiaCorrection::regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-         double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, double* /*primal_regularization_values*/,
-         double* /*dual_regularization_values*/) {
+         double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, View<double> /*primal_inertia_correction_block*/,
+         View<double> /*dual_inertia_correction_block*/) {
       // do nothing
    }
 
    void NoInertiaCorrection::regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         double* primal_regularization_values, double* dual_regularization_values) {
-      for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
-         primal_regularization_values[index] = 0.;
-      }
-      for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
-         dual_regularization_values[index] = 0.;
-      }
+         View<double> primal_inertia_correction_block, View<double> dual_inertia_correction_block) {
+      primal_inertia_correction_block.fill(0.);
+      dual_inertia_correction_block.fill(0.);
    }
 
    [[nodiscard]] bool NoInertiaCorrection::performs_primal_regularization() const {

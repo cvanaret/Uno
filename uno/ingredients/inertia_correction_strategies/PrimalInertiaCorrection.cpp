@@ -87,8 +87,8 @@ namespace uno {
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, double* primal_regularization_values,
-         double* dual_regularization_values) {
+         double dual_regularization_parameter, const Inertia& expected_inertia, View<double> primal_inertia_correction_block,
+         View<double> dual_inertia_correction_block) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
@@ -97,13 +97,14 @@ namespace uno {
          this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
-         *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
+         *this->optional_linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         double* primal_regularization_values, double* /*dual_regularization_values*/) {
-      this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, primal_regularization_values);
+         View<double> /*primal_inertia_correction_block*/, View<double> /*dual_inertia_correction_block*/) {
+      // this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, primal_regularization_values);
+      throw std::runtime_error("NOT IMPLEMENTED YET");
    }
 
    bool PrimalInertiaCorrection::performs_primal_regularization() const {

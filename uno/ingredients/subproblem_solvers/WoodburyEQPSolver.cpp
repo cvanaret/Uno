@@ -56,8 +56,8 @@ namespace uno {
          }
 
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, linear_system.matrix_values.data(),
-            subproblem.dual_regularization_factor(), *this->linear_solver);
+         subproblem.regularize_augmented_matrix(statistics, linear_system.primal_inertia_correction,
+            linear_system.dual_inertia_correction, subproblem.dual_regularization_factor(), *this->linear_solver);
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_evaluations, linear_system.rhs);

@@ -44,8 +44,9 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
 
       // augmented system
-      void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
-         double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
+      void regularize_augmented_matrix(Statistics& statistics, View<double> primal_inertia_correction_block,
+         View<double> dual_inertia_correction_block, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       void assemble_augmented_rhs(Evaluations& evaluations, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
