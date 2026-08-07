@@ -5,7 +5,6 @@
 #include "BoxLPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
-#include "tools/Logger.hpp"
 
 namespace uno {
    void BoxLPSolver::initialize_memory(const Subproblem& subproblem) {
@@ -15,8 +14,8 @@ namespace uno {
       this->workspace.objective_gradient.resize(subproblem.number_variables);
    }
 
-   Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
+   Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
+         double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {
          throw std::runtime_error("BoxLPSolver cannot solve problems with general constraints");
@@ -24,11 +23,11 @@ namespace uno {
       this->direction.reset();
       // compute the objective gradient
       this->workspace.objective_gradient.fill(0.);
-      subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->workspace.objective_gradient.data(),
+      subproblem.problem.evaluate_objective_gradient(current_iterate, this->workspace.objective_gradient.data(),
         current_evaluations);
 
       // compute the variables bounds
-      subproblem.set_variables_bounds(this->variable_lower_bounds, this->variable_upper_bounds, trust_region_radius);
+      subproblem.set_variables_bounds(current_iterate, this->variable_lower_bounds, this->variable_upper_bounds, trust_region_radius);
 
       // move the variables to one of their bounds
       this->direction.subproblem_objective = 0.;
@@ -60,11 +59,12 @@ namespace uno {
       return false;
    }
 
-   const Direction& BoxLPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, const Vector<double>& /*constraints_SOC*/) {
+   const Direction& BoxLPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,
+         const Vector<double>& /*constraints_SOC*/) {
       throw std::runtime_error("No SOC implemented in BoxLPSolver");
    }
 
-   SolverWorkspace& BoxLPSolver::get_workspace() {
+   const SolverWorkspace& BoxLPSolver::get_workspace() const {
       return this->workspace;
    }
 } // namespace

@@ -16,7 +16,7 @@ namespace uno {
    class InequalityHandlingMethodFactory {
       public:
          static std::unique_ptr<InequalityHandlingMethod> create(const OptimizationProblem& problem, bool uses_trust_region,
-            const Options& options);
+            double objective_multiplier, Options& options);
 
          static std::vector<std::string> available_strategies();
    };

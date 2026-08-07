@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <iostream>
 #include <numeric>
 #include <stdexcept>
 #include "BQPDQuadraticProgram.hpp"
@@ -66,15 +67,15 @@ namespace uno {
       }
    }
 
-   void BQPDQuadraticProgram::fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+   void BQPDQuadraticProgram::fill(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         double trust_region_radius, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate objective gradient + constraint Jacobian (packed into workspace.gradients)
-      this->evaluate_functions(subproblem.problem, subproblem.current_iterate, current_evaluations,
+      this->evaluate_functions(subproblem.problem, current_iterate, current_evaluations,
          warmstart_information);
 
       // variable bounds
       if (warmstart_information.trust_region_changed) {
-         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, trust_region_radius);
+         subproblem.set_variables_bounds(current_iterate, this->lower_bounds, this->upper_bounds, trust_region_radius);
       }
       // constraint bounds
       if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
@@ -100,20 +101,16 @@ namespace uno {
          }
          // evaluate + regularize the explicit Hessian once per iterate
          if (this->hessian_evaluation_required) {
-            subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.view());
+            subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
             subproblem.regularize_lagrangian_hessian(statistics, this->hessian_values.view());
             this->hessian_evaluation_required = false;
          }
          this->hessian_operator = nullptr;
       }
       else {
-         // matrix-free Hessian-vector product evaluated at the current iterate. The Subproblem outlives
-         // this build()/solve() pair (it is owned by the caller for the duration of the solve), so
-         // capturing it by pointer is safe; the operator is rebuilt on every build().
-         const Subproblem* subproblem_pointer = &subproblem;
-         this->hessian_operator = [subproblem_pointer](const double* vector, double* result) {
-            subproblem_pointer->compute_hessian_vector_product(subproblem_pointer->current_iterate.primals.data(),
-               vector, result);
+         // matrix-free Hessian-vector product evaluated at the current iterate
+         this->hessian_operator = [&current_iterate, &subproblem](const double* vector, double* result) {
+            subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.data(), vector, result);
          };
       }
    }
@@ -212,11 +209,12 @@ namespace uno {
       this->hessian_evaluation_required = false;
    }
 
-   double BQPDQuadraticProgram::compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const {
+   double BQPDQuadraticProgram::compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
+         const Vector<double>& vector) const {
       if (subproblem.has_hessian_operator()) { // linear operator
          // TODO compute the quadratic form directly without temporary result
          // compute Hv
-         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(),
+         subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.data(), vector.data(),
             this->hessian_vector_product.data());
          // compute the dot product <v, Hv>
          return dot(view(vector, 0, subproblem.number_variables), this->hessian_vector_product);

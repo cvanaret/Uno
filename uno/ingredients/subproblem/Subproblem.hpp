@@ -27,8 +27,7 @@ namespace uno {
    public:
       const size_t number_variables, number_constraints;
 
-      Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy& inertia_correction_strategy);
+      Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
       void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
@@ -36,22 +35,22 @@ namespace uno {
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
 
-      void evaluate_jacobian(View<double> jacobian_values, Evaluations& evaluations) const;
+      void evaluate_jacobian(const Iterate& current_iterate, View<double> jacobian_values, Evaluations& evaluations) const;
 
       // regularized Hessian
-      void evaluate_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const;
+      void evaluate_lagrangian_hessian(Statistics& statistics, const Iterate& current_iterate, View<double> hessian_values) const;
       void regularize_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const;
-      void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
+      void compute_hessian_vector_product(const Iterate& current_iterate, const double* x, const double* vector, double* result) const;
 
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, View<double> primal_inertia_correction_block,
          View<double> dual_inertia_correction_block, double dual_regularization_parameter,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
-      void assemble_augmented_rhs(Evaluations& evaluations, Vector<double>& rhs) const;
-      void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
+      void assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
-      void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
+      void set_variables_bounds(const Iterate& current_iterate, std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
          double trust_region_radius) const;
 
       // constraints bounds
@@ -81,15 +80,15 @@ namespace uno {
       [[nodiscard]] double dual_regularization_factor() const;
 
       // local models of progress measures
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
-         double step_length, Norm norm, Evaluations& current_evaluations) const;
-      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Vector<double>& primal_direction,
-         double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
-         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, const Evaluations& current_evaluations,
+         const SolverWorkspace& solver_workspace) const;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Iterate& current_iterate, const Direction& direction,
+         double step_length, Norm norm, Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
 
       const OptimizationProblem& problem;
-      Iterate& current_iterate;
 
    protected:
       HessianModel& hessian_model;
@@ -102,12 +101,6 @@ namespace uno {
          Vector<double>& constraints) const {
       view(constraints_lower_bounds, 0, this->number_constraints) = this->problem.get_constraints_lower_bounds() - constraints;
       view(constraints_upper_bounds, 0, this->number_constraints) = this->problem.get_constraints_upper_bounds() - constraints;
-      /*
-      for (size_t constraint_index: Range(this->problem.number_constraints)) {
-         constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
-         constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];
-      }
-      */
    }
 } // namespace
 

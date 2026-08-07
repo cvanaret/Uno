@@ -3,7 +3,6 @@
 
 #include "QuasiNewtonHessian.hpp"
 #include "model/Model.hpp"
-#include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Range.hpp"

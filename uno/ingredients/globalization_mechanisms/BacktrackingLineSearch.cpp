@@ -30,7 +30,7 @@ namespace uno {
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, false, evaluation_cache, options);
+      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Steplength", Statistics::double_width + 1, 2);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
@@ -57,14 +57,14 @@ namespace uno {
             if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
                throw std::runtime_error("The line search failed");
             }
-            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
+            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
                evaluation_cache.current_evaluations, warmstart_information);
          }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
-         // TODO this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, direction,
-         //   evaluation_cache.current_evaluations, warmstart_information);
+         this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+            evaluation_cache.current_evaluations, warmstart_information);
       }
 
       // solve the feasibility problem

@@ -31,15 +31,15 @@ namespace uno {
       explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
-      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, bool uses_trust_region,
+      virtual void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
          EvaluationCache& evaluation_cache, Options& options) = 0;
 
       // direction computation
       virtual Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
-      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
+      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
+         WarmstartInformation& warmstart_information) = 0;
 
       // second-order corrections
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
@@ -55,7 +55,6 @@ namespace uno {
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:
-      const Norm progress_norm;
       const Norm residual_norm;
       const double residual_scaling_threshold;
       const double primal_tolerance;
@@ -67,10 +66,6 @@ namespace uno {
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
 
-      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
-      bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Subproblem& subproblem,
-         const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;

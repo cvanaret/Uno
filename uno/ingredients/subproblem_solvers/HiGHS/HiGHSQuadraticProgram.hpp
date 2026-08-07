@@ -24,7 +24,7 @@ namespace uno {
       HiGHSQuadraticProgram() = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
-      void fill(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+      void fill(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
       // data-driven build: dense objective gradient + COO constraint Jacobian + COO Lagrangian Hessian
       // (one triangle; empty for an LP). Converts COO to HiGHS' CSC layout internally.
@@ -35,7 +35,8 @@ namespace uno {
          const Vector<double>& hessian_values,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) override;
-      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
+      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
+         const Vector<double>& vector) const override;
 
       HighsModel model;
       Vector<double> constraints{};
@@ -62,8 +63,8 @@ namespace uno {
          const Vector<double>& jacobian_values, const Vector<uno_int>& hessian_row_indices,
          const Vector<uno_int>& hessian_column_indices, const Vector<double>& hessian_values);
 
-      void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information);
+      void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals, Evaluations& evaluations);
 
       // build HiGHS' CSC Jacobian/Hessian from the COO arrays already stored in the *_row/column_indices members
