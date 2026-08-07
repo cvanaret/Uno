@@ -45,8 +45,17 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       if (warmstart_information.new_iterate) {
          // assemble the augmented matrix with only the diagonal part of the quasi-Newton Hessian
-         subproblem.evaluate_lagrangian_hessian(statistics, linear_system.hessian);
-         subproblem.evaluate_jacobian(linear_system.jacobian, current_evaluations);
+         const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+         const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+         const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+         const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
+         View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
+         View jacobian(hessian.end(), number_jacobian_nonzeros);
+         View primal_inertia_correction(jacobian.end(), number_primal_inertia_correction_nonzeros);
+         View dual_inertia_correction(primal_inertia_correction.end(), number_dual_inertia_correction_nonzeros);
+
+         subproblem.evaluate_lagrangian_hessian(statistics, hessian);
+         subproblem.evaluate_jacobian(jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
@@ -56,8 +65,8 @@ namespace uno {
          }
 
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, linear_system.primal_inertia_correction,
-            linear_system.dual_inertia_correction, subproblem.dual_regularization_factor(), *this->linear_solver);
+         subproblem.regularize_augmented_matrix(statistics, primal_inertia_correction, dual_inertia_correction,
+            subproblem.dual_regularization_factor(), *this->linear_solver);
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_evaluations, linear_system.rhs);

@@ -36,15 +36,6 @@ namespace uno {
          }
          return *this;
       }
-      View<T>& operator=(View<T>&& other) noexcept {
-         if (&other != this) {
-            this->pointer = other.pointer;
-            this->view_size = other.view_size;
-            other.pointer = nullptr;
-            other.view_size = 0;
-         }
-         return *this;
-      }
 
       [[nodiscard]] size_t size() const noexcept {
          return this->view_size;

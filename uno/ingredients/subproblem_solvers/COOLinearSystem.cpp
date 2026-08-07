@@ -22,11 +22,6 @@ namespace uno {
       this->matrix_values.resize(this->number_nonzeros);
       this->rhs.resize(this->dimension);
       this->solution.resize(this->dimension);
-      // create the views
-      this->hessian = view(this->matrix_values.data(), number_hessian_nonzeros);
-      this->jacobian = view(this->hessian.end(), 0);
-      this->primal_inertia_correction = view(this->jacobian.end(), number_primal_inertia_correction_nonzeros);
-      this->dual_inertia_correction = view(this->primal_inertia_correction.end(), 0);
    }
 
    void COOLinearSystem::initialize_augmented_system(const Subproblem& subproblem) {
@@ -46,11 +41,6 @@ namespace uno {
       this->matrix_values.resize(this->number_nonzeros);
       this->rhs.resize(this->dimension);
       this->solution.resize(this->dimension);
-      // create the views
-      this->hessian = view(this->matrix_values.data(), number_hessian_nonzeros);
-      this->jacobian = view(this->hessian.end(), number_jacobian_nonzeros);
-      this->primal_inertia_correction = view(this->jacobian.end(), number_primal_inertia_correction_nonzeros);
-      this->dual_inertia_correction = view(this->primal_inertia_correction.end(), number_dual_inertia_correction_nonzeros);
    }
 
    double COOLinearSystem::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/,
