@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include <initializer_list>
-#include "VectorView.hpp"
+#include "View.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -149,11 +149,11 @@ namespace uno {
          this->view().scale(factor);
       }
 
-      VectorView<const T> view() const noexcept {
+      View<const T> view() const noexcept {
          return uno::view(this->data(), this->size());
       }
 
-      VectorView<T> view() noexcept {
+      View<T> view() noexcept {
          return uno::view(this->data(), this->size());
       }
 

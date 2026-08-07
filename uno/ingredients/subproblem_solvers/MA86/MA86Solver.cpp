@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <vector>
 #include "MA86Solver.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 
 #ifdef HSL_RUNTIME_LOADING
 // route the calls through the runtime-resolved function pointers

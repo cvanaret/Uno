@@ -8,7 +8,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/IntegerRange.hpp"
 

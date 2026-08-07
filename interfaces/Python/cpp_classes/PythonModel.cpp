@@ -5,7 +5,7 @@
 #include <pybind11/numpy.h>
 #include <functional>
 #include "PythonModel.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
