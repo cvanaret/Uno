@@ -45,13 +45,13 @@ namespace uno {
       if (warmstart_information.new_iterate) {
          // assemble the augmented matrix
          const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-         const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
          const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+         const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
          const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
          View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
-         View jacobian(hessian.end(), number_jacobian_nonzeros);
-         View primal_inertia_correction(jacobian.end(), number_primal_inertia_correction_nonzeros);
-         View dual_inertia_correction(primal_inertia_correction.end(), number_dual_inertia_correction_nonzeros);
+         View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
+         View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
+         View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
 
          subproblem.evaluate_lagrangian_hessian(statistics, hessian);
          subproblem.evaluate_jacobian(jacobian, current_evaluations);

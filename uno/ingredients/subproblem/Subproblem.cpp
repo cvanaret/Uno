@@ -51,15 +51,8 @@ namespace uno {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
-      // copy Jacobian of general constraints into the (2, 1) block
+      // primal inertia correction (if applicable)
       size_t nonzero_index = this->number_hessian_nonzeros();
-      const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
-      constexpr uno_int column_offset = 0;
-      this->problem.compute_jacobian_sparsity(row_indices + nonzero_index, column_indices + nonzero_index,
-         row_offset, column_offset, solver_indexing, MatrixOrder::COLUMN_MAJOR);
-
-      // regularize the augmented matrix only if required (diagonal regularization)
-      nonzero_index += this->problem.number_jacobian_nonzeros();
       if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
             row_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
@@ -67,6 +60,15 @@ namespace uno {
             ++nonzero_index;
          }
       }
+
+      // copy Jacobian of general constraints into the (2, 1) block
+      const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
+      constexpr uno_int column_offset = 0;
+      this->problem.compute_jacobian_sparsity(row_indices + nonzero_index, column_indices + nonzero_index,
+         row_offset, column_offset, solver_indexing, MatrixOrder::COLUMN_MAJOR);
+
+      // dual inertia correction (if applicable)
+      nonzero_index += this->problem.number_jacobian_nonzeros();
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
             const uno_int shifted_constraint_index = static_cast<uno_int>(this->number_variables + constraint_index);
