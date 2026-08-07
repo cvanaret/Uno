@@ -37,11 +37,11 @@ namespace uno {
       // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
       void evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const override;
       void evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const override;
-      void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const override;
+      void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const override;
       void evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
          Vector<double>& lagrangian_gradient) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const override;
+         const Multipliers& multipliers, View<double> hessian_values) const override;
 
       // linear operators
       void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const override;

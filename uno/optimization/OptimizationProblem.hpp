@@ -9,6 +9,7 @@
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/SolutionStatus.hpp"
 #include "../interfaces/C/uno_int.h"
 #include "model/Model.hpp"
@@ -35,7 +36,7 @@ namespace uno {
       explicit OptimizationProblem(const Model& model);
       OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
       virtual ~OptimizationProblem() = default;
-      virtual std::unique_ptr<OptimizationProblem> clone() const;
+      [[nodiscard]] virtual std::unique_ptr<OptimizationProblem> clone() const;
 
       const Model& model;
       const size_t number_variables; /*!< Number of variables */
@@ -60,11 +61,11 @@ namespace uno {
       // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
       virtual void evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const;
       virtual void evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const;
-      virtual void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const;
+      virtual void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const;
       virtual void evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
          Vector<double>& lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
-         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const;
+         const Vector<double>& primal_variables, const Multipliers& multipliers, View<double> hessian_values) const;
 
       // linear operators
       virtual void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const;

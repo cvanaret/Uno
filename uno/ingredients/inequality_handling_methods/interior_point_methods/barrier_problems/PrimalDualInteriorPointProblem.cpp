@@ -5,7 +5,7 @@
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
@@ -171,7 +171,8 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+   void PrimalDualInteriorPointProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values,
+         Evaluations& evaluations) const {
       this->inner.evaluate_jacobian(primals, jacobian_values, evaluations);
    }
 
@@ -205,7 +206,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const {
+         const Multipliers& multipliers, View<double> hessian_values) const {
       // original Lagrangian Hessian
       this->inner.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
 

@@ -32,7 +32,7 @@ namespace uno {
    }
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
-         const Inertia& expected_inertia, double* hessian_values) {
+         const Inertia& expected_inertia, View<double> hessian_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
@@ -45,7 +45,7 @@ namespace uno {
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         double* /*hessian_values*/) {
+         View<double> /*hessian_values*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       // TODO fix
       throw std::runtime_error("PrimalDualInertiaCorrection::regularize_hessian not implemented yet");
@@ -53,8 +53,8 @@ namespace uno {
 
    // the augmented matrix has been factorized prior to calling this function
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, double* primal_regularization_values,
-         double* dual_regularization_values) {
+         double dual_regularization_parameter, const Inertia& expected_inertia, View<double> primal_inertia_correction_block,
+         View<double> dual_inertia_correction_block) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
          this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
@@ -62,20 +62,17 @@ namespace uno {
          this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
-         *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
+         *this->optional_linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
    }
 
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         double* primal_regularization_values, double* dual_regularization_values) {
+         View<double> primal_inertia_correction_block, View<double> dual_inertia_correction_block) {
       this->primal_regularization = 0.;
       this->dual_regularization = 0.;
-      for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
-         primal_regularization_values[index] = this->primal_regularization;
-      }
-      for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
-         dual_regularization_values[index] = -this->dual_regularization;
-      }
+      primal_inertia_correction_block.fill(this->primal_regularization);
+      dual_inertia_correction_block.fill(-this->dual_regularization);
+
       DEBUG2 << '\n';
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
@@ -108,12 +105,8 @@ namespace uno {
       }
 
       // regularize the augmented matrix
-      for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
-         primal_regularization_values[index] = this->primal_regularization;
-      }
-      for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
-         dual_regularization_values[index] = -this->dual_regularization;
-      }
+      primal_inertia_correction_block.fill(this->primal_regularization);
+      dual_inertia_correction_block.fill(-this->dual_regularization);
 
       bool good_inertia = false;
       while (!good_inertia) {
@@ -143,12 +136,8 @@ namespace uno {
 
             if (this->primal_regularization <= this->regularization_failure_threshold) {
                // regularize the augmented matrix
-               for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
-                  primal_regularization_values[index] = this->primal_regularization;
-               }
-               for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
-                  dual_regularization_values[index] = -this->dual_regularization;
-               }
+               primal_inertia_correction_block.fill(this->primal_regularization);
+               dual_inertia_correction_block.fill(-this->dual_regularization);
             }
             else {
                throw UnstableInertiaCorrection();

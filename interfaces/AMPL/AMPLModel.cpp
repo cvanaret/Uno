@@ -211,9 +211,9 @@ namespace uno {
    //this->asl->i.x_known = 0;
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
-         double* hessian_values) const {
+         View<double> hessian_values) const {
       objective_multiplier *= this->optimization_sense;
-      this->asl->p.Sphes(this->asl, nullptr, hessian_values, -1, &objective_multiplier, const_cast<double*>(multipliers.data()));
+      this->asl->p.Sphes(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier, const_cast<double*>(multipliers.data()));
       ++this->number_model_evaluations.hessian;
    }
 

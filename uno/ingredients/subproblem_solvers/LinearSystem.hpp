@@ -16,6 +16,7 @@ namespace uno {
 
       size_t dimension{0};
       size_t number_nonzeros{0};
+
       Vector<double> matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};

@@ -9,9 +9,11 @@ namespace uno {
    }
 
    void COOLinearSystem::initialize_hessian(const Subproblem& subproblem) {
+      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
       // Hessian
       this->dimension = subproblem.number_variables;
-      this->number_nonzeros = subproblem.number_regularized_hessian_nonzeros();
+      this->number_nonzeros = number_hessian_nonzeros + number_primal_inertia_correction_nonzeros;
       this->matrix_row_indices.resize(this->number_nonzeros);
       this->matrix_column_indices.resize(this->number_nonzeros);
       // compute the COO sparse representation
@@ -23,9 +25,14 @@ namespace uno {
    }
 
    void COOLinearSystem::initialize_augmented_system(const Subproblem& subproblem) {
+      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+      const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
       // augmented system
       this->dimension = subproblem.number_variables + subproblem.number_constraints;
-      this->number_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
+      this->number_nonzeros = number_hessian_nonzeros + number_jacobian_nonzeros + number_primal_inertia_correction_nonzeros +
+         number_dual_inertia_correction_nonzeros;
       this->matrix_row_indices.resize(this->number_nonzeros);
       this->matrix_column_indices.resize(this->number_nonzeros);
       // compute the COO sparse representation

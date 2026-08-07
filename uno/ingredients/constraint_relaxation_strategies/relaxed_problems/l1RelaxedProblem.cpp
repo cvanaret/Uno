@@ -3,7 +3,7 @@
 
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
@@ -153,7 +153,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const {
       evaluations.evaluate_jacobian(this->model, primals);
       for (size_t nonzeros_index: Range(this->model.number_jacobian_nonzeros())) {
          jacobian_values[nonzeros_index] = evaluations.jacobian_values[nonzeros_index];
@@ -216,7 +216,7 @@ namespace uno {
    }
 
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const {
+         const Multipliers& multipliers, View<double> hessian_values) const {
       hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
 
@@ -225,7 +225,7 @@ namespace uno {
       size_t nonzero_index = number_hessian_nonzeros;
       if (this->proximal_center != nullptr) {
          if (this->proximal_coefficient == 0.) {
-            view(hessian_values, number_hessian_nonzeros, number_hessian_nonzeros + this->model.number_variables).fill(0.);
+            view(hessian_values.data(), number_hessian_nonzeros, number_hessian_nonzeros + this->model.number_variables).fill(0.);
          }
          else {
             for (size_t variable_index: Range(this->model.number_variables)) {

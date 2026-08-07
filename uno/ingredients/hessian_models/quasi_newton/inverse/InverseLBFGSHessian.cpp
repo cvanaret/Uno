@@ -6,7 +6,7 @@
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
@@ -76,7 +76,7 @@ namespace uno {
    }
 
    void InverseLBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> /*hessian_values*/) {
       throw std::runtime_error("InverseLBFGSHessian::evaluate_hessian should not be called.");
    }
 

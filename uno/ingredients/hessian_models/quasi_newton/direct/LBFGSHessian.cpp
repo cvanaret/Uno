@@ -6,7 +6,7 @@
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "linear_algebra/BLAS.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
@@ -125,7 +125,7 @@ namespace uno {
    }
 
    // get a column of (U V)
-   VectorView<const double> LBFGSHessian::get_correction_column(size_t column_index) const {
+   View<const double> LBFGSHessian::get_correction_column(size_t column_index) const {
       if (column_index < this->number_entries_in_memory) {
          return this->U.column(column_index);
       }

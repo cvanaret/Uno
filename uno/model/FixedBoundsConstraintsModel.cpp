@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FixedBoundsConstraintsModel.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/Iterate.hpp"
 
 namespace uno {
@@ -105,7 +105,7 @@ namespace uno {
    }
 
    void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
-         const Vector<double>& multipliers, double* hessian_values) const {
+         const Vector<double>& multipliers, View<double> hessian_values) const {
       this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 

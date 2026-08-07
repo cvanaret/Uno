@@ -159,7 +159,7 @@ public:
    }
 
    void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         double* hessian_values) const override {
+         View<double> hessian_values) const override {
       if (this->user_model.lagrangian_hessian != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
@@ -169,7 +169,7 @@ public:
          const uno_int number_hessian_nonzeros = static_cast<uno_int>(this->number_hessian_nonzeros());
          const uno_int return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
             this->user_model.number_constraints, number_hessian_nonzeros, x.data(), objective_multiplier,
-            multipliers.data(), hessian_values, this->user_model.user_data);
+            multipliers.data(), hessian_values.data(), this->user_model.user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);

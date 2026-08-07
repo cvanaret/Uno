@@ -7,7 +7,7 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
@@ -35,7 +35,7 @@ namespace uno {
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
       // regularize the Hessian only if required (diagonal regularization)
-      if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
+      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          size_t current_index = this->number_hessian_nonzeros();
          for (size_t variable_index: this->get_primal_regularization_variables()) {
             row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
@@ -51,22 +51,24 @@ namespace uno {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
-      // copy Jacobian of general constraints into the (2, 1) block
+      // primal inertia correction (if applicable)
       size_t nonzero_index = this->number_hessian_nonzeros();
-      const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
-      constexpr uno_int column_offset = 0;
-      this->problem.compute_jacobian_sparsity(row_indices + nonzero_index, column_indices + nonzero_index,
-         row_offset, column_offset, solver_indexing, MatrixOrder::COLUMN_MAJOR);
-
-      // regularize the augmented matrix only if required (diagonal regularization)
-      nonzero_index += this->problem.number_jacobian_nonzeros();
-      if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
+      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
             row_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             column_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             ++nonzero_index;
          }
       }
+
+      // copy Jacobian of general constraints into the (2, 1) block
+      const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
+      constexpr uno_int column_offset = 0;
+      this->problem.compute_jacobian_sparsity(row_indices + nonzero_index, column_indices + nonzero_index,
+         row_offset, column_offset, solver_indexing, MatrixOrder::COLUMN_MAJOR);
+
+      // dual inertia correction (if applicable)
+      nonzero_index += this->problem.number_jacobian_nonzeros();
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
             const uno_int shifted_constraint_index = static_cast<uno_int>(this->number_variables + constraint_index);
@@ -77,19 +79,19 @@ namespace uno {
       }
    }
 
-   void Subproblem::evaluate_jacobian(double* jacobian_values, Evaluations& evaluations) const {
+   void Subproblem::evaluate_jacobian(View<double> jacobian_values, Evaluations& evaluations) const {
       this->problem.evaluate_jacobian(this->current_iterate.primals, jacobian_values, evaluations);
    }
 
-   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
+   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
          this->current_iterate.multipliers, hessian_values);
    }
 
-   void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
+   void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const {
       // regularize the Hessian only if necessary
-      if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
+      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          const Inertia problem_inertia = this->problem.get_inertia();
          const Inertia expected_inertia = {problem_inertia.positive, 0, problem_inertia.zero};
          if (expected_inertia.positive + expected_inertia.zero != this->number_variables) {
@@ -112,21 +114,18 @@ namespace uno {
       }
    }
 
-   void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
-         double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
-      if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) ||
+   void Subproblem::regularize_augmented_matrix(Statistics& statistics, View<double> primal_inertia_correction_block,
+         View<double> dual_inertia_correction_block, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
+      if ((!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
          const Inertia expected_inertia = this->problem.get_inertia();
          if (expected_inertia.positive + expected_inertia.negative + expected_inertia.zero !=
                this->number_variables + this->number_constraints) {
             throw std::runtime_error("Mismatch in expected inertia");
          }
-
-         const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
-         double* primal_regularization_values = augmented_matrix_values + offset;
-         double* dual_regularization_values = augmented_matrix_values + offset + this->get_primal_regularization_variables().size();
          this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, dual_regularization_parameter,
-            expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
+            expected_inertia, linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
       }
       else {
          linear_solver.do_numerical_factorization(false);
@@ -198,7 +197,7 @@ namespace uno {
       }
       else {
          // otherwise, the regularization strategy may introduce curvature
-         if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
+         if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
             return !this->problem.get_primal_regularization_variables().empty();
          }
          return false;
@@ -222,7 +221,7 @@ namespace uno {
    }
 
    const Collection<size_t>& Subproblem::get_primal_regularization_variables() const {
-      if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
+      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          return this->problem.get_primal_regularization_variables();
       }
       return this->empty_set;
@@ -248,15 +247,18 @@ namespace uno {
       return number_nonzeros;
    }
 
-   size_t Subproblem::number_regularized_augmented_system_nonzeros() const {
-      size_t number_nonzeros = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
+   size_t Subproblem::number_primal_inertia_correction_nonzeros() const {
       if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
-         number_nonzeros += this->get_primal_regularization_variables().size();
+         return this->get_primal_regularization_variables().size();
       }
+      return 0;
+   }
+
+   size_t Subproblem::number_dual_inertia_correction_nonzeros() const {
       if (this->performs_dual_regularization()) {
-         number_nonzeros += this->get_dual_regularization_constraints().size();
+         return this->get_dual_regularization_constraints().size();
       }
-      return number_nonzeros;
+      return 0;
    }
 
    double Subproblem::dual_regularization_factor() const {

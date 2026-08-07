@@ -86,7 +86,7 @@ namespace uno {
       return this->number_entries_in_memory;
    }
 
-   VectorView<const double> LSR1Hessian::get_correction_column(size_t column_index) const {
+   View<const double> LSR1Hessian::get_correction_column(size_t column_index) const {
       return this->U.column(column_index);
    }
 

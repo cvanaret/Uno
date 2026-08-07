@@ -5,7 +5,7 @@
 #include <pybind11/numpy.h>
 #include <functional>
 #include "PythonModel.hpp"
-#include "linear_algebra/VectorView.hpp"
+#include "linear_algebra/View.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
@@ -148,7 +148,7 @@ namespace uno {
    }
 
    void PythonModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         double* hessian_values) const {
+         View<double> hessian_values) const {
       if (this->user_model.lagrangian_hessian.has_value()) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
@@ -157,7 +157,7 @@ namespace uno {
          }
          const auto x_py = to_const_array(x.data(), this->number_variables);
          const auto multipliers_py = to_const_array(multipliers.data(), this->number_constraints);
-         auto hessian_py = to_array(hessian_values, this->number_hessian_nonzeros());
+         auto hessian_py = to_array(hessian_values.data(), this->number_hessian_nonzeros());
 
          // evaluate Lagrangian Hessian
          try {

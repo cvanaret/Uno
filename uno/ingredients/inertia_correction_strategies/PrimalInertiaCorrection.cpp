@@ -27,7 +27,7 @@ namespace uno {
 
    // Nocedal and Wright, p51
    void PrimalInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
-         const Inertia& expected_inertia, double* hessian_values) {
+         const Inertia& expected_inertia, View<double> hessian_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
@@ -42,7 +42,7 @@ namespace uno {
          matrix[nonzero_index] = hessian_values[nonzero_index];
       }
       // figure out where to set the regularization terms in the linear system
-      double* primal_regularization_values = matrix + number_hessian_nonzeros;
+      View<double> primal_regularization_values(matrix + number_hessian_nonzeros, subproblem.number_primal_inertia_correction_nonzeros());
       // regularize the Hessian
       this->regularize_hessian(statistics, subproblem, expected_inertia, *this->optional_linear_solver, primal_regularization_values);
       // copy the regularization terms back into the Hessian
@@ -53,14 +53,12 @@ namespace uno {
 
    void PrimalInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         double* primal_regularization_values) {
+         View<double> primal_regularization_values) {
       this->regularization_factor = 0.;
       bool good_inertia = false;
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factor " << this->regularization_factor << '\n';
-         for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
-            primal_regularization_values[index] = this->regularization_factor;
-         }
+         primal_regularization_values.fill(this->regularization_factor);
          DEBUG << '\n';
 
          // perform factorization to get an estimate of the inertia
@@ -87,8 +85,8 @@ namespace uno {
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, double* primal_regularization_values,
-         double* dual_regularization_values) {
+         double dual_regularization_parameter, const Inertia& expected_inertia, View<double> primal_inertia_correction_block,
+         View<double> dual_inertia_correction_block) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
@@ -97,13 +95,13 @@ namespace uno {
          this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
-         *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
+         *this->optional_linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         double* primal_regularization_values, double* /*dual_regularization_values*/) {
-      this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, primal_regularization_values);
+         View<double> primal_inertia_correction_block, View<double> /*dual_inertia_correction_block*/) {
+      this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, primal_inertia_correction_block);
    }
 
    bool PrimalInertiaCorrection::performs_primal_regularization() const {

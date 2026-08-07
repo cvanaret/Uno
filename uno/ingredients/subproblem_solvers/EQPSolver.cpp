@@ -44,9 +44,17 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       if (warmstart_information.new_iterate) {
          // assemble the augmented matrix
-         subproblem.evaluate_lagrangian_hessian(statistics, linear_system.matrix_values.data());
          const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-         subproblem.evaluate_jacobian(linear_system.matrix_values.data() + number_hessian_nonzeros, current_evaluations);
+         const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+         const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+         const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
+         View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
+         View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
+         View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
+         View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
+
+         subproblem.evaluate_lagrangian_hessian(statistics, hessian);
+         subproblem.evaluate_jacobian(jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
@@ -56,7 +64,7 @@ namespace uno {
          }
 
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, linear_system.matrix_values.data(),
+         subproblem.regularize_augmented_matrix(statistics, primal_inertia_correction, dual_inertia_correction,
             subproblem.dual_regularization_factor(), *this->linear_solver);
 
          // assemble the RHS
