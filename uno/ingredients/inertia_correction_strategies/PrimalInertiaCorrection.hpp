@@ -21,9 +21,9 @@ namespace uno {
       void initialize_statistics(Statistics& statistics) override;
 
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
-         double* hessian_values) override;
+         View<double> hessian_values) override;
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, double* hessian_values) override;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> hessian_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, View<double> primal_inertia_correction_block,
          View<double> dual_inertia_correction_block) override;

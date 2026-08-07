@@ -87,7 +87,7 @@ namespace uno {
          this->current_iterate.multipliers, hessian_values);
    }
 
-   void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
+   void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const {
       // regularize the Hessian only if necessary
       if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          const Inertia problem_inertia = this->problem.get_inertia();

@@ -10,13 +10,13 @@ namespace uno {
    }
 
    void NoInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-         const Inertia& /*expected_inertia*/, double* /*hessian_values*/) {
+         const Inertia& /*expected_inertia*/, View<double> /*hessian_values*/) {
       // do nothing
    }
 
    void NoInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         double* /*hessian_values*/) {
+         View<double> /*hessian_values*/) {
       // do nothing
    }
 

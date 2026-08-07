@@ -192,7 +192,8 @@ namespace uno {
          subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.view());
          // copy the Hessian with permutation into this->model.hessian_.value_
          this->scatter_hessian_values();
-         subproblem.regularize_lagrangian_hessian(statistics, this->model.hessian_.value_.data());
+         View hessian(this->model.hessian_.value_.data(), subproblem.number_regularized_hessian_nonzeros());
+         subproblem.regularize_lagrangian_hessian(statistics, hessian);
       }
    }
 

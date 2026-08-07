@@ -101,7 +101,7 @@ namespace uno {
          // evaluate + regularize the explicit Hessian once per iterate
          if (this->hessian_evaluation_required) {
             subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.view());
-            subproblem.regularize_lagrangian_hessian(statistics, this->hessian_values.data());
+            subproblem.regularize_lagrangian_hessian(statistics, this->hessian_values.view());
             this->hessian_evaluation_required = false;
          }
          this->hessian_operator = nullptr;

@@ -40,7 +40,7 @@ namespace uno {
 
       // regularized Hessian
       void evaluate_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const;
-      void regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
+      void regularize_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const;
       void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
 
       // augmented system

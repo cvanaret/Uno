@@ -32,7 +32,7 @@ namespace uno {
    }
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
-         const Inertia& expected_inertia, double* hessian_values) {
+         const Inertia& expected_inertia, View<double> hessian_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
@@ -45,7 +45,7 @@ namespace uno {
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         double* /*hessian_values*/) {
+         View<double> /*hessian_values*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       // TODO fix
       throw std::runtime_error("PrimalDualInertiaCorrection::regularize_hessian not implemented yet");
