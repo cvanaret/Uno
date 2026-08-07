@@ -64,7 +64,7 @@ namespace uno {
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
          this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
-               evaluation_cache.current_evaluations, warmstart_information);
+            evaluation_cache.current_evaluations, warmstart_information);
       }
 
       // solve the feasibility problem

@@ -113,8 +113,6 @@ namespace uno {
       this->reference_optimality_primals = current_iterate.primals;
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-      // re-evaluate the progress measures at the current iterate
-      this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       this->initial_point.resize(this->feasibility_problem.number_variables);
@@ -127,6 +125,8 @@ namespace uno {
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
+      // re-evaluate the progress measures at the current iterate
+      this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
 
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
