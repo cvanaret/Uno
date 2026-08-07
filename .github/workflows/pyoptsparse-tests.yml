@@ -85,4 +85,4 @@ jobs:
         run: |
           pip install pytest pytest-timeout parameterized
           cd pyoptsparse
-          pytest tests -v -k "Uno" --maxfail=1 --timeout=120 --timeout-method=thread
+          pytest tests -v -k "Uno" --maxfail=1 --timeout=10 --timeout-method=thread
