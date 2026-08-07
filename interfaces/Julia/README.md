@@ -201,7 +201,7 @@ switch to AOCL by adding `using AOCL` to your code:
 
 ```julia
 using AOCL
-using Ipopt
+using UnoSolver
 ```
 
 ### AppleAccelerate
