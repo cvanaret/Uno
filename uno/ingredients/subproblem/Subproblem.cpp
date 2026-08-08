@@ -51,14 +51,13 @@ namespace uno {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
-      // primal inertia correction (if applicable)
+      // primal inertia correction. This block is always allocated (even if not applicable - it may be used for computing
+      // least-squares multipliers)
       size_t nonzero_index = this->number_hessian_nonzeros();
-      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
-         for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
-            column_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
-            ++nonzero_index;
-         }
+      for (size_t variable_index: Range(this->number_variables)) {
+         row_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+         column_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+         ++nonzero_index;
       }
 
       // copy Jacobian of general constraints into the (2, 1) block
@@ -248,10 +247,8 @@ namespace uno {
    }
 
    size_t Subproblem::number_primal_inertia_correction_nonzeros() const {
-      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
-         return this->get_primal_regularization_variables().size();
-      }
-      return 0;
+      // always allocate the full block (see compute_regularized_augmented_matrix_sparsity())
+      return this->number_variables;
    }
 
    size_t Subproblem::number_dual_inertia_correction_nonzeros() const {
