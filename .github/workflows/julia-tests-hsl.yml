@@ -25,6 +25,10 @@ env:
   VENV: /home/optimi/cvanaret/myenv
   RUNNER_PATH: /home/optimi/cvanaret/actions-runner
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   compilation-uno-hsl:
     runs-on: self-hosted
