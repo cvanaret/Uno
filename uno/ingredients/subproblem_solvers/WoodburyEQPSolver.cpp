@@ -82,6 +82,7 @@ namespace uno {
          subproblem.number_variables + subproblem.number_constraints);
       if (norm_inf(least_squares_multipliers) <= 1000.) {
          initial_iterate.multipliers.constraints = least_squares_multipliers;
+         DEBUG << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
       }
    }
 
