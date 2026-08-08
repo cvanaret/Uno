@@ -33,8 +33,7 @@ namespace uno {
    }
 
    void WoodburyEQPSolver::generate_initial_iterate(Iterate& initial_iterate, Evaluations& /*evaluations*/) const {
-      // temporarily set nonzero multipliers, until we have least-square multipliers
-      initial_iterate.multipliers.constraints.fill(-1.);
+
    }
 
    Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
