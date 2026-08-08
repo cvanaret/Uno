@@ -9,6 +9,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Multiplication.hpp"
@@ -29,6 +30,11 @@ namespace uno {
       auto& linear_system = this->linear_solver->get_linear_system();
       linear_system.initialize_augmented_system(subproblem);
       this->linear_solver->initialize_memory();
+   }
+
+   void WoodburyEQPSolver::generate_initial_iterate(Iterate& initial_iterate, Evaluations& /*evaluations*/) const {
+      // temporarily set nonzero multipliers, until we have least-square multipliers
+      initial_iterate.multipliers.constraints.fill(1.);
    }
 
    Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,

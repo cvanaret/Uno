@@ -80,8 +80,6 @@ namespace uno {
       Iterate current_iterate(model.number_variables, model.number_constraints);
       model.initial_primal_point(current_iterate.primals);
       model.initial_dual_point(current_iterate.multipliers.constraints);
-      // temporarily set nonzero multipliers, until we have least-square multipliers
-      current_iterate.multipliers.constraints.fill(1.);
       model.reset_number_evaluations();
       EvaluationCache evaluation_cache{model};
       Statistics statistics = Uno::create_statistics(model);

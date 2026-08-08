@@ -26,6 +26,7 @@ namespace uno {
       ~IQPSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
+      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] Direction& solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,

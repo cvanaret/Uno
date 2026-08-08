@@ -14,6 +14,10 @@ namespace uno {
       this->workspace.objective_gradient.resize(subproblem.number_variables);
    }
 
+   void BoxLPSolver::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+      // do nothing
+   }
+
    Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
