@@ -20,7 +20,8 @@ namespace uno {
       this->qp_solver->initialize_memory(subproblem);
    }
 
-   void IQPSolver::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+   void IQPSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
+         Evaluations& /*evaluations*/) {
       // do nothing
    }
 

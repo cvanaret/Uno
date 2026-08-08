@@ -20,7 +20,8 @@ namespace uno {
       this->rhs.resize(subproblem.number_variables);
    }
 
-   void InverseNewtonSolver::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+   void InverseNewtonSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
+         Evaluations& /*evaluations*/) {
       // do nothing
    }
 

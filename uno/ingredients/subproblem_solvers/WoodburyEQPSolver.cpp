@@ -9,6 +9,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
@@ -32,8 +33,56 @@ namespace uno {
       this->linear_solver->initialize_memory();
    }
 
-   void WoodburyEQPSolver::generate_initial_iterate(Iterate& initial_iterate, Evaluations& /*evaluations*/) const {
+   void WoodburyEQPSolver::generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate,
+         Evaluations& evaluations) {
+      INFO << "Computing least-square multipliers at initial point\n";
 
+      // compute least-square multipliers
+      auto& linear_system = this->linear_solver->get_linear_system();
+
+      // set up the linear system
+      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
+      View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
+      View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
+      View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
+      View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
+
+      hessian.fill(0.); // no Hessian contribution
+      primal_inertia_correction.fill(1.); // Identity block
+      subproblem.evaluate_jacobian(initial_iterate, jacobian, evaluations);
+      dual_inertia_correction.fill(0.); // no dual regularization
+
+      // perform the symbolic analysis once and for all
+      if (!this->analysis_performed) {
+         DEBUG << "Performing symbolic analysis of the indefinite system\n";
+         this->linear_solver->do_symbolic_analysis();
+         this->analysis_performed = true;
+      }
+
+      // factorize the matrix
+      this->linear_solver->do_numerical_factorization(false);
+
+      // assemble the RHS
+      linear_system.rhs.fill(0.);
+      evaluations.evaluate_objective_gradient(subproblem.problem.model, initial_iterate.primals);
+      view(linear_system.rhs.data(), subproblem.number_variables) = evaluations.objective_gradient;
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         linear_system.rhs[variable_index] -= (initial_iterate.multipliers.lower_bounds[variable_index] +
+            initial_iterate.multipliers.upper_bounds[variable_index]);
+      }
+
+      // solve the linear system
+      this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+
+      // set the constraint multipliers if their norm is reasonable
+      const auto least_squares_multipliers = view(linear_system.solution.data(), subproblem.number_variables,
+         subproblem.number_variables + subproblem.number_constraints);
+      if (norm_inf(least_squares_multipliers) <= 1000.) {
+         initial_iterate.multipliers.constraints = least_squares_multipliers;
+      }
    }
 
    Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
