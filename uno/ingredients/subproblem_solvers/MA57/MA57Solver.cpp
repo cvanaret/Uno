@@ -107,25 +107,25 @@ namespace uno {
       this->workspace.iwork.resize(5 * this->linear_system.dimension);
       this->workspace.lwork = static_cast<int>(static_cast<double>(this->linear_system.dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(this->linear_system.dimension);
    }
 
    void MA57Solver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 
-      // symbolic analysis
       MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
          this->linear_system.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
-      assert(0 <= this->workspace.info[0] && "MA57: the symbolic analysis failed");
-      if (0 < this->workspace.info[0]) {
-         WARNING << "MA57 has issued a warning: info(1) = " << workspace.info[0] << '\n';
+      if (INFO(1) < 0) {
+         throw std::runtime_error("MA57: the symbolic analysis failed");
+      }
+      if (0 < INFO(1)) {
+         WARNING << "MA57 has issued a warning: info(1) = " << INFO(1) << '\n';
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
-      this->workspace.lfact = static_cast<int>(MA57Settings::allocation_safety_factor * this->workspace.info[8]);
-      this->workspace.lifact = static_cast<int>(MA57Settings::allocation_safety_factor * this->workspace.info[9]);
+      this->workspace.lfact = static_cast<int>(MA57Settings::allocation_safety_factor * INFO(11));
+      this->workspace.lifact = static_cast<int>(MA57Settings::allocation_safety_factor * INFO(12));
       this->workspace.fact.resize(static_cast<size_t>(this->workspace.lfact));
       this->workspace.ifact.resize(static_cast<size_t>(this->workspace.lifact));
       this->analysis_performed = true;
@@ -142,7 +142,10 @@ namespace uno {
             &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
-         if (is_error_code_insufficient_real_workspace(INFO(1)) ||
+         if (INFO(1) == 0) {
+            factorization_done = true;
+         }
+         else if (is_error_code_insufficient_real_workspace(INFO(1)) ||
              is_error_code_insufficient_integer_workspace(INFO(1))) {
             const bool is_real_workspace = is_error_code_insufficient_real_workspace(this->workspace.info[0]);
 
@@ -166,8 +169,8 @@ namespace uno {
                this->workspace.lifact = lnewifact;
             }
          }
-         else {
-            factorization_done = true;
+         else if (INFO(1) < 0) {
+            throw std::runtime_error("MA57 fatal error");
          }
       }
       this->factorization_performed = true;
@@ -211,7 +214,7 @@ namespace uno {
    }
 
    size_t MA57Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(this->workspace.info[23]);
+      return static_cast<size_t>(INFO(24));
    }
 
    /*
@@ -222,7 +225,7 @@ namespace uno {
    */
 
    bool MA57Solver::matrix_is_singular() const {
-      return (this->workspace.info[0] == 4);
+      return (INFO(1) == 4);
    }
 
    size_t MA57Solver::rank() const {

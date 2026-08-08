@@ -43,7 +43,6 @@ namespace uno {
       std::array<int, 40> info{};
 
       const int job{1};
-      std::vector<double> residuals;
 
       MA57Workspace() = default;
    };
