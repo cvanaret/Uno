@@ -142,11 +142,7 @@ namespace uno {
             &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
-         if (INFO(1) == 0) {
-            factorization_done = true;
-         }
-         else if (is_error_code_insufficient_real_workspace(INFO(1)) ||
-             is_error_code_insufficient_integer_workspace(INFO(1))) {
+         if (is_error_code_insufficient_real_workspace(INFO(1)) || is_error_code_insufficient_integer_workspace(INFO(1))) {
             const bool is_real_workspace = is_error_code_insufficient_real_workspace(this->workspace.info[0]);
 
             const int lnewfact = !is_real_workspace ? 0 : get_larger_real_workspace_size(this->workspace);
@@ -171,6 +167,9 @@ namespace uno {
          }
          else if (INFO(1) < 0) {
             throw std::runtime_error("MA57 fatal error");
+         }
+         else {
+            factorization_done = true;
          }
       }
       this->factorization_performed = true;
