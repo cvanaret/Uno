@@ -33,61 +33,90 @@ namespace uno {
       DEBUG << "Current filter:\n" << *this->filter;
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
-      std::string scenario;
-      bool accept = false;
       if (!this->filter->acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
          DEBUG << "Trial iterate not acceptable wrt infeasibility upper bound\n";
-         scenario = "upper bound";
+         statistics.set("Status", std::string(symbols::fail) + " (upper bound)");
+         return false;
       }
       // now acceptable wrt infeasibility upper bound
-      else if (!this->filter->filter_acceptable(trial_progress.infeasibility, trial_merit)) {
-         DEBUG << "Trial iterate not filter acceptable\n";
-         scenario = "filter";
-      }
-      // now filter acceptable
-      else {
-         const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
-         DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
 
-         const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_factor * std::max(1., this->initial_infeasibility);
-         const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction, current_progress.infeasibility);
-         const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction);
+      const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
+         trial_merit);
+      DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
 
-         // switching condition: the unconstrained predicted reduction is sufficiently positive
-         if (small_infeasibility && switching) {
-            DEBUG << "Switching condition satisfied\n";
-            // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
-            if (sufficient_decrease) {
-               DEBUG << "Trial iterate (f-type) was accepted by satisfying Armijo condition\n";
-               accept = true;
-            }
-            else {
-               DEBUG << "Armijo condition not satisfied\n";
-            }
-            scenario = "f-type";
+      const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_factor *
+         std::max(1., this->initial_infeasibility);
+      const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction,
+         current_progress.infeasibility);
+      const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction);
+
+      // switching condition: the unconstrained predicted reduction is sufficiently positive
+      if (switching && small_infeasibility) {
+         DEBUG << "Switching condition satisfied\n";
+         // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
+         if (sufficient_decrease) {
+            DEBUG << "Trial iterate (f-type) was accepted by satisfying Armijo condition\n";
          }
          else {
-            DEBUG << "Switching condition violated\n";
-            if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
-               DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";
-               accept = true;
-            }
-            else {
-               DEBUG << "Trial iterate (h-type) not acceptable with respect to current point\n";
-            }
-            scenario = "h-type";
-         }
-         // possibly augment the filter
-         if (accept && (!switching || !sufficient_decrease)) {
-            DEBUG << "Adding current iterate to the filter\n";
-            this->filter->add(current_progress.infeasibility, current_merit);
+            DEBUG << "Armijo condition not satisfied\n";
+            statistics.set("Status", std::string(symbols::fail) + " (Armijo)");
+            this->last_rejection_due_to_filter = false;
+            return false;
          }
       }
-      statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
-      return accept;
+      else {
+         DEBUG << "Switching condition violated\n";
+         if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
+               trial_progress.infeasibility, trial_merit)) {
+            DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";
+         }
+         else {
+            DEBUG << "Trial iterate (h-type) not acceptable with respect to current point\n";
+            statistics.set("Status", std::string(symbols::fail) + " (current)");
+            this->last_rejection_due_to_filter = false;
+            return false;
+         }
+      }
+
+      // check acceptability wrt filter
+      if (!this->filter->filter_acceptable(trial_progress.infeasibility, trial_merit)) {
+         DEBUG << "Trial iterate not filter acceptable\n";
+         statistics.set("Status", std::string(symbols::fail) + " (filter)");
+         this->last_rejection_due_to_filter = true;
+         return false;
+      }
+      // now filter acceptable
+
+      // filter reset heuristic
+      if (this->number_filter_resets < this->max_filter_resets) {
+         if (this->last_rejection_due_to_filter) {
+            ++this->number_successive_filter_rejections;
+            if (this->number_successive_filter_rejections >= this->filter_reset_trigger) {
+               DEBUG << "Resetting the filter\n";
+               this->filter->reset();
+               ++this->number_filter_resets;
+            }
+         }
+         else {
+            this->number_successive_filter_rejections = 0;
+         }
+      }
+      else {
+         DEBUG << "The filter cannot be reset (max number of resets exceeded)\n";
+      }
+      this->last_rejection_due_to_filter = false;
+
+      // possibly augment the filter
+      if (!switching || !sufficient_decrease) {
+         DEBUG << "Adding current iterate to the filter\n";
+         this->filter->add(current_progress.infeasibility, current_merit);
+      }
+      statistics.set("Status", std::string(symbols::check) + " (filter)");
+      return true;
    }
 
-   bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const {
+   bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,
+         const ProgressMeasures& trial_progress) const {
       return trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_progress.infeasibility &&
          this->filter->filter_acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
    }

@@ -34,7 +34,8 @@ namespace uno {
          scenario = "filter";
       }
       // now filter acceptable
-      else if (!this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
+      else if (!this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
+         trial_progress.infeasibility, trial_merit)) {
          DEBUG << "Trial iterate not acceptable with respect to current point\n";
          scenario = "current";
       }
@@ -42,7 +43,8 @@ namespace uno {
       // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
       else if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
          // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
-         const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
+         const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
+            trial_merit);
          DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
          if (this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction)) {
             DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
@@ -65,7 +67,8 @@ namespace uno {
       return accept;
    }
 
-   bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*reference_progress*/, const ProgressMeasures& trial_progress) const {
+   bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*reference_progress*/,
+         const ProgressMeasures& trial_progress) const {
       // if the trial infeasibility improves upon the best known infeasibility
       return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_progress.infeasibility);
    }
