@@ -26,10 +26,11 @@ namespace uno {
       const double sufficient_infeasibility_decrease_factor;
       const double small_infeasibility_factor;
       bool last_rejection_due_to_filter{false};
-      const size_t max_filter_resets{5};
-      size_t number_filter_resets{0};
+      // filter resets
       size_t number_successive_filter_rejections{0};
-      size_t filter_reset_trigger{5};
+      const size_t filter_reset_iteration_threshold; // >= 1
+      size_t number_filter_resets{0};
+      const size_t max_number_filter_resets; // >= 0
    };
 } // namespace
 

@@ -14,7 +14,9 @@ namespace uno {
    WaechterFilterMethod::WaechterFilterMethod(const Options& options):
          FilterMethod(options),
          sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")),
-         small_infeasibility_factor(options.get_double("barrier_small_infeasibility_factor")) {
+         small_infeasibility_factor(options.get_double("barrier_small_infeasibility_factor")),
+         filter_reset_iteration_threshold(options.get_unsigned_int("filter_reset_iteration_threshold")),
+         max_number_filter_resets(options.get_unsigned_int("max_number_filter_resets")) {
    }
 
    void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate) {
@@ -88,10 +90,10 @@ namespace uno {
       // now filter acceptable
 
       // filter reset heuristic
-      if (this->number_filter_resets < this->max_filter_resets) {
+      if (this->number_filter_resets < this->max_number_filter_resets) {
          if (this->last_rejection_due_to_filter) {
             ++this->number_successive_filter_rejections;
-            if (this->number_successive_filter_rejections >= this->filter_reset_trigger) {
+            if (this->number_successive_filter_rejections >= this->filter_reset_iteration_threshold) {
                DEBUG << "Resetting the filter\n";
                this->filter->reset();
                ++this->number_filter_resets;

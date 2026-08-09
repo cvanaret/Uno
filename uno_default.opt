@@ -92,6 +92,10 @@ filter_fact 1.25
 filter_capacity 50
 # Infeasibility decrease factor in the infeasibility sufficient decrease condition (double)
 filter_sufficient_infeasibility_decrease_factor 0.9
+# Number of consecutive filter rejections before the filter is reset
+filter_reset_iteration_threshold 5
+# Maximum number of filter resets
+max_number_filter_resets 5
 
 ## Funnel options
 # Convex combination coefficient in funnel update rule (double)

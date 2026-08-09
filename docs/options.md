@@ -93,13 +93,15 @@ If not provided, the solver is chosen automatically from the available solvers (
 ### Numerical options
 
 | Option                                            | Type    | Default | Description                                                                            |
-| :---                                              | :---    | :---    |:---------------------------------------------------------------------------------------|
+|:--------------------------------------------------|:--------|:--------|:---------------------------------------------------------------------------------------|
 | `filter_beta`                                     | double  | 0.999   | Fraction in the infeasibility sufficient reduction condition                           |
 | `filter_gamma`                                    | double  | 0.001   | Slope in the objective sufficient reduction condition                                  |
 | `filter_ubd`                                      | double  | 1e2     | Minimum value for the initial upper bound on the infeasibility                         |
 | `filter_fact`                                     | double  | 1.25    | Multiple of the initial infeasibility for the initial upper bound on the infeasibility |
 | `filter_capacity`                                 | integer | 50      | Maximum number of filter entries                                                       |
 | `filter_sufficient_infeasibility_decrease_factor` | double  | 0.9     | Infeasibility decrease factor in the infeasibility sufficient decrease condition       |
+| `filter_reset_iteration_threshold`                | integer | 5       | Number of consecutive filter rejections before the filter is reset                     |
+| `max_number_filter_resets`                        | integer | 5       | Maximum number of filter resets                                                        |
 
 ## Funnel options
 
