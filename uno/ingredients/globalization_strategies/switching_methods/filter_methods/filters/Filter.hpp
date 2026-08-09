@@ -20,19 +20,20 @@ namespace uno {
    class Filter {
    public:
       explicit Filter(const Options& options);
-      virtual ~Filter() = default;
+      ~Filter() = default;
 
       void reset();
       [[nodiscard]] double get_smallest_infeasibility() const;
       void set_infeasibility_upper_bound(double new_upper_bound);
 
-      [[nodiscard]] virtual bool acceptable(double trial_infeasibility, double trial_objective);
-      [[nodiscard]] virtual bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective,
+      [[nodiscard]] bool acceptable_wrt_infeasibility_upper_bound(double trial_infeasibility) const;
+      [[nodiscard]] bool filter_acceptable(double trial_infeasibility, double trial_objective) const;
+      [[nodiscard]] bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective,
          double trial_infeasibility, double trial_objective) const;
       [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;
-      [[nodiscard]] virtual double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective);
+      [[nodiscard]] double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective);
 
-      virtual void add(double current_infeasibility, double current_objective);
+      void add(double current_infeasibility, double current_objective);
 
       friend std::ostream& operator<<(std::ostream& stream, const Filter& filter);
 
@@ -47,7 +48,6 @@ namespace uno {
       static constexpr size_t fixed_length_column2 = 10;
 
       [[nodiscard]] bool is_empty() const;
-      [[nodiscard]] bool acceptable_wrt_upper_bound(double trial_infeasibility) const;
       [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
       void left_shift(size_t start, size_t shift_size);
       void right_shift(size_t start, size_t shift_size);

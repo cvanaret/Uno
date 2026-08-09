@@ -24,39 +24,42 @@ namespace uno {
 
       std::string scenario;
       bool accept = false;
-      if (this->filter->acceptable(trial_progress.infeasibility, trial_merit)) {
-         if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
-            // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
-            if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
-               // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
-               const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
-               DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
-               if (this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction)) {
-                  DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
-                  accept = true;
-               }
-               else { // switching condition holds, but not Armijo condition
-                  DEBUG << "Trial iterate (f-type) was rejected by violating the Armijo condition\n";
-               }
-               scenario = "f-type";
-            }
-               // switching condition violated: predicted reduction is not promising (h-type)
-            else {
-               DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
-               accept = true;
-               this->filter->add(current_progress.infeasibility, current_merit);
-               DEBUG << "Current iterate was added to the filter\n";
-               scenario = "h-type";
-            }
-         }
-         else {
-            DEBUG << "Trial iterate not acceptable with respect to current point\n";
-            scenario = "current";
-         }
+      if (!this->filter->acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
+         DEBUG << "Trial iterate not acceptable wrt infeasibility upper bound\n";
+         scenario = "upper bound";
       }
-      else {
+      // now acceptable wrt infeasibility upper bound
+      else if (!this->filter->filter_acceptable(trial_progress.infeasibility, trial_merit)) {
          DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
+      }
+      // now filter acceptable
+      else if (!this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
+         DEBUG << "Trial iterate not acceptable with respect to current point\n";
+         scenario = "current";
+      }
+      // now acceptable wrt current iterate
+      // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
+      else if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
+         // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
+         const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
+         DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
+         if (this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction)) {
+            DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
+            accept = true;
+         }
+         else { // switching condition holds, but not Armijo condition
+            DEBUG << "Trial iterate (f-type) was rejected by violating the Armijo condition\n";
+         }
+         scenario = "f-type";
+      }
+      // switching condition violated: predicted reduction is not promising (h-type)
+      else {
+         DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
+         accept = true;
+         this->filter->add(current_progress.infeasibility, current_merit);
+         DEBUG << "Current iterate was added to the filter\n";
+         scenario = "h-type";
       }
       statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
       return accept;
