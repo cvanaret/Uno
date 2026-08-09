@@ -65,7 +65,7 @@ namespace uno {
          *this->optional_linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
    }
 
-   void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
+   void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          View<double> primal_inertia_correction_block, View<double> dual_inertia_correction_block) {
       this->primal_regularization = 0.;
