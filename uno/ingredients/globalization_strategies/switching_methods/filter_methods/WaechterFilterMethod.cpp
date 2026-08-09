@@ -35,7 +35,17 @@ namespace uno {
 
       std::string scenario;
       bool accept = false;
-      if (this->filter->acceptable(trial_progress.infeasibility, trial_merit)) {
+      if (!this->filter->acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
+         DEBUG << "Trial iterate not acceptable wrt infeasibility upper bound\n";
+         scenario = "upper bound";
+      }
+      // now acceptable wrt infeasibility upper bound
+      else if (!this->filter->filter_acceptable(trial_progress.infeasibility, trial_merit)) {
+         DEBUG << "Trial iterate not filter acceptable\n";
+         scenario = "filter";
+      }
+      // now filter acceptable
+      else {
          const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
          DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
 
@@ -73,17 +83,13 @@ namespace uno {
             this->filter->add(current_progress.infeasibility, current_merit);
          }
       }
-      else {
-         DEBUG << "Trial iterate not filter acceptable\n";
-         scenario = "filter";
-      }
       statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
       return accept;
    }
 
    bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const {
       return trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_progress.infeasibility &&
-         this->filter->acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
+         this->filter->filter_acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
    }
 
    std::string WaechterFilterMethod::get_name() const {

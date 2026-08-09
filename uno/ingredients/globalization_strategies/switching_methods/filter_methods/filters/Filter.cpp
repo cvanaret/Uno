@@ -37,14 +37,13 @@ namespace uno {
       this->infeasibility_upper_bound = new_upper_bound;
    }
 
-   // return true if (infeasibility, objective) acceptable, false otherwise
-   bool Filter::acceptable(double trial_infeasibility, double trial_objective) {
-      // check upper bound first
-      if (!this->acceptable_wrt_upper_bound(trial_infeasibility)) {
-         DEBUG << "Rejected because of filter upper bound\n";
-         return false;
-      }
+   bool Filter::acceptable_wrt_infeasibility_upper_bound(double trial_infeasibility) const {
+      return this->infeasibility_sufficient_reduction(this->infeasibility_upper_bound, trial_infeasibility);
+   }
 
+   // return true if (infeasibility, objective) acceptable, false otherwise
+   // note: the infeasibility upper bound must be tested separately (see acceptable_wrt_infeasibility_upper_bound)
+   bool Filter::filter_acceptable(double trial_infeasibility, double trial_objective) const {
       // TODO: use binary search (use some form of https://en.cppreference.com/w/cpp/algorithm/binary_search.html)
       size_t position = 0;
       while (position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[position], trial_infeasibility)) {
@@ -187,10 +186,6 @@ namespace uno {
 
    bool Filter::is_empty() const {
       return (this->number_entries == 0);
-   }
-
-   bool Filter::acceptable_wrt_upper_bound(double trial_infeasibility) const {
-      return this->infeasibility_sufficient_reduction(this->infeasibility_upper_bound, trial_infeasibility);
    }
 
    bool Filter::objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const {
