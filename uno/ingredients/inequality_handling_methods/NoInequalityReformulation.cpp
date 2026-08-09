@@ -22,6 +22,7 @@ namespace uno {
 
    void NoInequalityReformulation::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
       this->problem.generate_initial_iterate(initial_iterate, evaluations);
+      this->subproblem_solver->generate_initial_iterate(*this->subproblem, initial_iterate, evaluations);
    }
 
    void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {

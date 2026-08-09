@@ -20,6 +20,11 @@ namespace uno {
       this->rhs.resize(subproblem.number_variables);
    }
 
+   void InverseNewtonSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
+         Evaluations& /*evaluations*/) {
+      // do nothing
+   }
+
    Direction& InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
          [[maybe_unused]] double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {

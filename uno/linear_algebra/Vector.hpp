@@ -83,10 +83,12 @@ namespace uno {
       }
 
       T& operator[](size_t index) {
+         assert(index < this->size());
          return this->vector[index];
       }
 
       const T& operator[](size_t index) const {
+         assert(index < this->size());
          return this->vector[index];
       }
 

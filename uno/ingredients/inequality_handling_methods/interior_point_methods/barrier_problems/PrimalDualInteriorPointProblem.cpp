@@ -75,10 +75,6 @@ namespace uno {
             initial_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
       }
-
-      // TODO compute least-square multipliers
-      if (0 < this->number_constraints) {
-      }
    }
 
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {

@@ -100,8 +100,9 @@ namespace uno {
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         View<double> primal_inertia_correction_block, View<double> /*dual_inertia_correction_block*/) {
+         View<double> primal_inertia_correction_block, View<double> dual_inertia_correction_block) {
       this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, primal_inertia_correction_block);
+      dual_inertia_correction_block.fill(0.);
    }
 
    bool PrimalInertiaCorrection::performs_primal_regularization() const {

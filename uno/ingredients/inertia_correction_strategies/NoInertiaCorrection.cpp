@@ -21,9 +21,10 @@ namespace uno {
    }
 
    void NoInertiaCorrection::regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-         double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, View<double> /*primal_inertia_correction_block*/,
-         View<double> /*dual_inertia_correction_block*/) {
-      // do nothing
+         double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, View<double> primal_inertia_correction_block,
+         View<double> dual_inertia_correction_block) {
+      primal_inertia_correction_block.fill(0.);
+      dual_inertia_correction_block.fill(0.);
    }
 
    void NoInertiaCorrection::regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
