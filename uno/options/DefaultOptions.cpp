@@ -93,7 +93,7 @@ namespace uno {
 
       /** Second-Order Corrections (SOC) options */
       // maximum number of SOC iterations
-      options.set_integer("SOC_max_iterations", 0); // temporarily disabled
+      options.set_integer("SOC_max_iterations", 4);
       // fraction of the infeasibility in the SOC termination criterion
       options.set_double("SOC_infeasibility_fraction", 0.99);
 
