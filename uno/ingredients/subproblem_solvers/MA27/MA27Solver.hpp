@@ -15,12 +15,20 @@ namespace uno {
    template <typename ElementType>
    class Vector;
 
+   // settings taken from IPOPT
+   struct MA27Settings {
+      static constexpr double pivoting_threshold = 1e-8;
+      static constexpr int liw_init_factor = 5;
+      static constexpr int la_init_factor = 5;
+   };
+
    struct MA27Workspace {
       int n{};                         // dimension of current factorisation (maximal value here is <= max_dimension)
       int nnz{};                     // number of nonzeros of current factorisation
       std::array<int, 30> icntl{};      // integer array of length 30; integer control values
       std::array<double, 5> cntl{};     // double array of length 5; double control values
 
+      int liw{};
       std::vector<int> iw{};           // integer workspace of length liw
       std::vector<int> ikeep{};        // integer array of 3*n; pivot sequence
       std::vector<int> iw1{};          // integer workspace array of length n
@@ -29,6 +37,7 @@ namespace uno {
       std::array<int, 20> info{};       // integer array of length 20
       double ops{};                    // double, operations count
 
+      int la{};
       std::vector<double> factor{};    // data array of length la;
       int maxfrt{};                    // integer, to be set by ma27
       std::vector<double> w{};         // double workspace
@@ -64,8 +73,11 @@ namespace uno {
       bool analysis_performed{false};
       bool factorization_performed{false};
 
-      // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
-      void check_factorization_status();
+      void check_factorization_status() const;
+
+      [[nodiscard]] int& ICNTL(size_t index);
+      [[nodiscard]] double& CNTL(size_t index);
+      [[nodiscard]] int INFO(size_t index) const;
    };
 } // namespace
 
