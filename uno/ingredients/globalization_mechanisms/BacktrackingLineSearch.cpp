@@ -72,7 +72,7 @@ namespace uno {
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
       Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-      BacktrackingLineSearch::check_unboundedness(direction);
+      check_unboundedness(direction);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
       if (!backtracking_success) {
@@ -117,10 +117,15 @@ namespace uno {
             assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length);
             statistics.set("||Step||", step_length * direction.norm);
 
-            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+            if (number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
+               is_acceptable = true;
+            }
+            else {
+               is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
                warmstart_information, user_callbacks);
-            BacktrackingLineSearch::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+            }
+            set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
@@ -164,6 +169,19 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_current_line();
       } // end while loop
+      return true;
+   }
+
+   bool BacktrackingLineSearch::is_tiny_direction(const Iterate& current_iterate, const Direction& direction) {
+      constexpr double macheps = std::numeric_limits<double>::epsilon();
+      for (size_t variable_index: Range(current_iterate.number_variables)) {
+         if (std::abs(direction.primals[variable_index]) / (1. + std::abs(current_iterate.primals[variable_index])) >= 10.*macheps) {
+            return false;
+         }
+      }
+      if (current_iterate.primal_feasibility > 1e-4) { // TODO add option
+         return false;
+      }
       return true;
    }
 
