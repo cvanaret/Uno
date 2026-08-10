@@ -118,21 +118,21 @@ namespace uno {
             assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length);
             statistics.set("||Step||", step_length * direction.norm);
 
-            if (number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
-               is_acceptable = true;
-               statistics.set("Status", std::string(symbols::check) + " (tiny)");
-            }
-            else {
-               is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
                warmstart_information, user_callbacks);
-            }
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
          }
          statistics.set("Minor", number_iterations);
+
+         // tiny direction test
+         if (!is_acceptable && number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
+            is_acceptable = true;
+            statistics.set("Status", std::string(symbols::check) + " (tiny)");
+         }
 
          if (is_acceptable) {
             termination = true;
