@@ -14,6 +14,7 @@
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, Options& options):
@@ -119,6 +120,7 @@ namespace uno {
 
             if (number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
                is_acceptable = true;
+               statistics.set("Status", std::string(symbols::check) + " (tiny)");
             }
             else {
                is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
