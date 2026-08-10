@@ -174,7 +174,7 @@ namespace uno {
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
-      return 0.;
+      return 1.;
    }
    
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
