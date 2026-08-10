@@ -27,6 +27,9 @@ namespace uno {
       const double backtracking_ratio;
       const double minimum_step_length;
       const bool scale_duals_with_step_length;
+      // tiny directions
+      size_t number_consecutive_tiny_directions{0};
+      const size_t consecutive_tiny_directions_threshold{2}; // TODO add option
       // second-order corrections
       const size_t SOC_max_iterations;
       const double SOC_infeasibility_fraction;
@@ -38,6 +41,7 @@ namespace uno {
       [[nodiscard]] bool backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks);
+      [[nodiscard]] static bool is_tiny_direction(const Iterate& current_iterate, const Direction& direction);
       [[nodiscard]] bool compute_second_order_directions(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);

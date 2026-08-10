@@ -14,6 +14,7 @@
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, Options& options):
@@ -72,7 +73,7 @@ namespace uno {
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
       Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-      BacktrackingLineSearch::check_unboundedness(direction);
+      check_unboundedness(direction);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
       if (!backtracking_success) {
@@ -120,12 +121,23 @@ namespace uno {
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
                warmstart_information, user_callbacks);
-            BacktrackingLineSearch::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+            set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
          }
          statistics.set("Minor", number_iterations);
+
+         // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
+         // accept the step unconditionally
+         if (!is_acceptable && number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
+            ++this->number_consecutive_tiny_directions;
+            if (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold) {
+               is_acceptable = true;
+               statistics.set("Status", std::string(symbols::check) + " (tiny)");
+               this->number_consecutive_tiny_directions = 0;
+            }
+         }
 
          if (is_acceptable) {
             termination = true;
@@ -164,6 +176,19 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_current_line();
       } // end while loop
+      return true;
+   }
+
+   bool BacktrackingLineSearch::is_tiny_direction(const Iterate& current_iterate, const Direction& direction) {
+      constexpr double macheps = std::numeric_limits<double>::epsilon();
+      for (size_t variable_index: Range(current_iterate.number_variables)) {
+         if (std::abs(direction.primals[variable_index]) / (1. + std::abs(current_iterate.primals[variable_index])) >= 10.*macheps) {
+            return false;
+         }
+      }
+      if (current_iterate.primal_feasibility > 1e-4) { // TODO add option
+         return false;
+      }
       return true;
    }
 
