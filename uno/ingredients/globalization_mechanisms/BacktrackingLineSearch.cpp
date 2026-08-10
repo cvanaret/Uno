@@ -128,10 +128,15 @@ namespace uno {
          }
          statistics.set("Minor", number_iterations);
 
-         // tiny direction test
+         // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
+         // accept the step unconditionally
          if (!is_acceptable && number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
-            is_acceptable = true;
-            statistics.set("Status", std::string(symbols::check) + " (tiny)");
+            ++this->number_consecutive_tiny_directions;
+            if (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold) {
+               is_acceptable = true;
+               statistics.set("Status", std::string(symbols::check) + " (tiny)");
+               this->number_consecutive_tiny_directions = 0;
+            }
          }
 
          if (is_acceptable) {
