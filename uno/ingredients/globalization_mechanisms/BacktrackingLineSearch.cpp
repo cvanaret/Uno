@@ -227,7 +227,6 @@ namespace uno {
                // terminate the SOCs and the backtracking
                SOC_termination = true;
                direction = direction_SOC;
-               // evaluation_cache.trial_evaluations.are_constraints_computed = false;
                DEBUG << "SOC direction acceptable " << '\n';
             }
             else if (SOC_iteration >= this->SOC_max_iterations ||
