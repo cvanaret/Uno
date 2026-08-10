@@ -22,7 +22,6 @@ namespace uno {
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")),
-         tolerance(options.get_double("primal_tolerance")),
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")) {
       // check the initial and minimal step lengths
@@ -63,9 +62,8 @@ namespace uno {
       }
 
       // if the line search failed, switch to solving the feasibility problem (test first if we can)
-      if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained() ||
-            current_iterate.progress.infeasibility <= this->tolerance) {
-         throw std::runtime_error("The line search failed, infeasibility is small");
+      if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
+         throw std::runtime_error("The line search failed");
       }
 
       // solve the feasibility problem

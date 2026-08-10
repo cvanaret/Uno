@@ -27,7 +27,6 @@ namespace uno {
       const double backtracking_ratio;
       const double minimum_step_length;
       const bool scale_duals_with_step_length;
-      const double tolerance;
       // tiny directions
       size_t number_consecutive_tiny_directions{0};
       const size_t consecutive_tiny_directions_threshold{2}; // TODO add option
