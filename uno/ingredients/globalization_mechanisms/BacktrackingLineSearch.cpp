@@ -63,6 +63,7 @@ namespace uno {
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
+         statistics.set("Status", "inertia correction");
          this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
             evaluation_cache.current_evaluations, warmstart_information);
       }
@@ -143,7 +144,6 @@ namespace uno {
          else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);
             evaluation_cache.trial_evaluations.reset();
-            if (Logger::level == INFO) statistics.print_current_line();
          }
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
@@ -161,8 +161,8 @@ namespace uno {
 
          if (is_acceptable) {
             GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
-            if (Logger::level == INFO) statistics.print_current_line();
          }
+         if (Logger::level == INFO) statistics.print_current_line();
       } // end while loop
       return true;
    }
