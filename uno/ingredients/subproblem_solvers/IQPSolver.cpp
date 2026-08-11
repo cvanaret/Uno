@@ -7,6 +7,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    IQPSolver::IQPSolver(std::unique_ptr<LPSolver> qp_solver):
@@ -23,6 +24,11 @@ namespace uno {
    void IQPSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
          Evaluations& /*evaluations*/) {
       // do nothing
+   }
+
+   void IQPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
+         Evaluations& /*evaluations*/) {
+      DEBUG << "The EQP solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
    Direction& IQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,

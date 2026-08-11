@@ -42,6 +42,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate,
          const Vector<double>& constraints_SOC) = 0;
+      virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
 
       virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

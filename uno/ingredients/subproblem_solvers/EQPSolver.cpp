@@ -32,6 +32,10 @@ namespace uno {
    }
 
    void EQPSolver::generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) {
+      compute_least_squares_multipliers(subproblem, initial_iterate, evaluations);
+   }
+
+   void EQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations) {
       INFO << "Computing least-squares multipliers at initial point\n";
 
       // compute least-square multipliers
@@ -49,7 +53,7 @@ namespace uno {
 
       hessian.fill(0.); // no Hessian contribution
       primal_inertia_correction.fill(1.); // Identity block
-      subproblem.evaluate_jacobian(initial_iterate, jacobian, evaluations);
+      subproblem.evaluate_jacobian(iterate, jacobian, evaluations);
       dual_inertia_correction.fill(0.); // no dual regularization
 
       // perform the symbolic analysis once and for all
@@ -64,11 +68,11 @@ namespace uno {
 
       // assemble the RHS
       linear_system.rhs.fill(0.);
-      evaluations.evaluate_objective_gradient(subproblem.problem.model, initial_iterate.primals);
+      evaluations.evaluate_objective_gradient(subproblem.problem.model, iterate.primals);
       view(linear_system.rhs.data(), subproblem.number_variables) = evaluations.objective_gradient;
       for (size_t variable_index: Range(subproblem.number_variables)) {
-         linear_system.rhs[variable_index] -= (initial_iterate.multipliers.lower_bounds[variable_index] +
-            initial_iterate.multipliers.upper_bounds[variable_index]);
+         linear_system.rhs[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
+            iterate.multipliers.upper_bounds[variable_index]);
       }
 
       // solve the linear system
@@ -79,7 +83,7 @@ namespace uno {
       const auto least_squares_multipliers = view(linear_system.solution.data(), subproblem.number_variables,
          subproblem.number_variables + subproblem.number_constraints);
       if (norm_inf(least_squares_multipliers) <= 1000.) {
-         initial_iterate.multipliers.constraints = least_squares_multipliers;
+         iterate.multipliers.constraints = least_squares_multipliers;
          DEBUG << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
       }
       else {

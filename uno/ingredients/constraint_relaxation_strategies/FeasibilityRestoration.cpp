@@ -190,13 +190,17 @@ namespace uno {
       return false;
    }
 
-   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate) {
+   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
+         Evaluations& trial_evaluations) {
       DEBUG << "Switching from restoration back to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
 
-      // swap the iterate's multipliers and the optimality multipliers maintained by the class
+      // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
+      // least-squares multipliers for the original problem
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
+
       current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
@@ -230,7 +234,7 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
             trial_iterate, direction, step_length, current_evaluations)) {
-         this->switch_back_to_optimality_phase(current_iterate, trial_iterate);
+         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, trial_evaluations);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
       }
