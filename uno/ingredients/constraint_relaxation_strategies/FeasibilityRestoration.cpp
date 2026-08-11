@@ -117,9 +117,12 @@ namespace uno {
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       this->initial_point.resize(this->feasibility_problem.number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
-      this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
-      this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
-      this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+      if (this->first_switch_to_feasibility) {
+         this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
+         this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
+         this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+         this->first_switch_to_feasibility = false;
+      }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
@@ -192,9 +195,9 @@ namespace uno {
       this->current_phase = Phase::OPTIMALITY;
       this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
 
-      current_iterate.set_number_variables(this->original_problem.number_variables);
       // swap the iterate's multipliers and the optimality multipliers maintained by the class
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
       this->initial_point.resize(this->original_problem.number_variables);

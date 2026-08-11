@@ -32,7 +32,7 @@ namespace uno {
    }
 
    void EQPSolver::generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) {
-      INFO << "Computing least-square multipliers at initial point\n";
+      INFO << "Computing least-squares multipliers at initial point\n";
 
       // compute least-square multipliers
       auto& linear_system = this->linear_solver->get_linear_system();
@@ -81,6 +81,9 @@ namespace uno {
       if (norm_inf(least_squares_multipliers) <= 1000.) {
          initial_iterate.multipliers.constraints = least_squares_multipliers;
          DEBUG << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
+      }
+      else {
+         DEBUG << "Least-squares multipliers too large\n";
       }
    }
 

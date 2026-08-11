@@ -66,6 +66,7 @@ namespace uno {
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
+      bool first_switch_to_feasibility{true};
 
       Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
