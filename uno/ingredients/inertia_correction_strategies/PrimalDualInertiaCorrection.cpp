@@ -127,7 +127,16 @@ namespace uno {
             this->previous_primal_regularization = this->primal_regularization;
          }
          else {
-            if (this->previous_primal_regularization == 0. || this->threshold_unsuccessful_attempts < number_attempts) {
+            if (linear_solver.matrix_is_singular()) {
+               DEBUG << "Matrix is singular\n";
+               if (this->dual_regularization == 0.) {
+                  this->dual_regularization = this->dual_regularization_fraction * dual_regularization_parameter;
+               }
+               else {
+                  this->dual_regularization *= 10.;
+               }
+            }
+            else if (this->previous_primal_regularization == 0. || this->threshold_unsuccessful_attempts < number_attempts) {
                this->primal_regularization *= this->primal_regularization_fast_increase_factor;
             }
             else {
