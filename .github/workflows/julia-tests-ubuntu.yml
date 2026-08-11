@@ -82,7 +82,7 @@ jobs:
           retention-days: 1
 
   test:
-    name: Julia tests of ${{matrix.UNO_TEST}} - ${{ github.event_name }}
+    name: Julia tests of ${{matrix.UNO_TEST}} ${{matrix.ARGS}} - ${{ github.event_name }}
     needs: build
     runs-on: ubuntu-latest
     strategy:
