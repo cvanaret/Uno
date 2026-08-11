@@ -18,7 +18,7 @@ println("Solving with linear solver ", linear_solver)
 
 function test_bfpc()
     # bfpc instance described here: https://github.com/jump-dev/Ipopt.jl/pull/546
-    # this is a challenging instance numerically. Linear solvers must be equipped
+    # this is a challenging instance numerically. LP solvers must be equipped
     # with a robust dual regularization procedure: estimated zero eigenvalues may
     # appear *during* the regularization loop.
     model = Model(() ->  Optimizer_Uno())
