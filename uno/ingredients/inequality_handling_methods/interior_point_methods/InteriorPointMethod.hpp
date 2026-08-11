@@ -39,6 +39,7 @@ namespace uno {
       [[nodiscard]] bool has_second_order_corrections() const override;
       [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate,
          const Vector<double>& constraints_SOC) override;
+      void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) override;
 
       void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -208,6 +209,11 @@ namespace uno {
    const Direction& InteriorPointMethod<BarrierProblem>::compute_second_order_correction(const Iterate& current_iterate,
          const Vector<double>& constraints_SOC) {
       return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate, constraints_SOC);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations);
    }
 
    template <typename BarrierProblem>

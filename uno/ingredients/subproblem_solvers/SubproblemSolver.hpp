@@ -24,6 +24,7 @@ namespace uno {
 
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
       virtual void generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) = 0;
+      virtual void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations) = 0;
 
       [[nodiscard]] virtual Direction& solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,

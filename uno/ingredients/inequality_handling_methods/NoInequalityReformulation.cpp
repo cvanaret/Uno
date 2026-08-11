@@ -71,6 +71,10 @@ namespace uno {
       return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate, constraints_SOC);
    }
 
+   void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations);
+   }
+
    void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
       InequalityHandlingMethod::evaluate_progress_measures(this->problem, iterate, evaluations);
    }

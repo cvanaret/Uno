@@ -5,6 +5,7 @@
 #include "BoxLPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    void BoxLPSolver::initialize_memory(const Subproblem& subproblem) {
@@ -17,6 +18,11 @@ namespace uno {
    void BoxLPSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
          Evaluations& /*evaluations*/) {
       // do nothing
+   }
+
+   void BoxLPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
+         Evaluations& /*evaluations*/) {
+      DEBUG << "The box LP solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
    Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
