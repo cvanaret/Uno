@@ -14,7 +14,7 @@ length(ARGS) == 1 || error("The linear solver name is missing or you supplied mo
 linear_solver = ARGS[1]
 println("Solving with linear solver ", linear_solver)
 
- Optimizer_Uno() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=$linear_solver","unbounded_objective_threshold=-1e15"])
+ Optimizer_Uno() = Optimizer(["logger=INFO", "preset=ipopt", "linear_solver=$linear_solver","unbounded_objective_threshold=-1e15"])
 
 function test_bfpc()
     # bfpc instance described here: https://github.com/jump-dev/Ipopt.jl/pull/546
