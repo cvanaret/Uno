@@ -104,24 +104,27 @@ jobs:
         ${{env.VENV}}/bin/patchelf --print-rpath $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
         ldd $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
 
-  preset-ipopt:
+  uno-test:
+    name: Julia tests of ${{matrix.UNO_TEST}} with ${{matrix.HSL_SOLVER}}
     needs: compilation-uno-hsl
     runs-on: self-hosted
     strategy:
-      matrix:
-        HSL_SOLVER: [ma27, ma57, ma86]
       fail-fast: false
-    name: Run Julia tests for the ipopt preset with ${{matrix.HSL_SOLVER}}
+      matrix:
+        UNO_TEST: [uno_ipopt] #, uno_ipopt_lbfgs, uno_pure_sqp, uno_unconstrained, uno_unconstrained_lbfgs]
+        HSL_SOLVER: [MA27, MA57, MA86]
+    
     steps:
     - uses: actions/checkout@v4
 
     - name: Install Julia
       uses: julia-actions/setup-julia@v2
 
-    - name: Run runtests_uno_ipopt_${{matrix.HSL_SOLVER}}.jl
+    - name: Test ${{matrix.UNO_TEST}} with ${{matrix.HSL_SOLVER}}
       shell: julia --color=yes --project=.github/julia {0}
       run: |
         using Pkg
         Pkg.instantiate()
         Pkg.develop(path="${{ env.RUNNER_PATH }}/Uno_jll.jl")
-        include("${{ github.workspace }}/.github/julia/runtests_uno_ipopt_${{ matrix.HSL_SOLVER }}.jl")
+        push!(ARGS, "${{ matrix.HSL_SOLVER }}")
+        include("${{ github.workspace }}/.github/julia/runtests_${{matrix.UNO_TEST}}.jl")
