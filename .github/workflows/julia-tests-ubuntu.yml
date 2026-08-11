@@ -82,18 +82,22 @@ jobs:
           retention-days: 1
 
   test:
-    name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
+    name: Julia tests of ${{matrix.UNO_TEST}} - ${{ github.event_name }}
     needs: build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        UNO_PRESET: [uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd_charlies_instances,
+        UNO_TEST: [uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd_charlies_instances,
                      uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_lsr1,
                      uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs,
                      uno_ipopt_mumps, uno_ipopt_mumps_lbfgs, uno_ipopt_ssids,
                      uno_pure_sqp_mumps, uno_unconstrained_lbfgs_mumps, uno_unconstrained_mumps]
-        # uno_ipopt_mumps_identity
+        include:
+          - UNO_TEST: uno_ipopt_bfpc
+            ARGS: MUMPS
+          - UNO_TEST: uno_ipopt_bfpc
+            ARGS: SSIDS
 
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +128,7 @@ jobs:
           echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
           echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
 
-      - name: Test ${{matrix.UNO_PRESET}} preset on .github/julia/runtests.jl
+      - name: Test ${{matrix.UNO_TEST}} ${{matrix.ARGS}}
         env:
           UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
         shell: julia --color=yes --project=.github/julia {0}
@@ -132,4 +136,6 @@ jobs:
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
-          include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_PRESET}}.jl")
+          test_args = "${{ matrix.ARGS }}"
+          isempty(test_args) || push!(ARGS, test_args)
+          include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_TEST}}.jl")
