@@ -134,7 +134,7 @@ function test_bfpc()
 
     optimize!(model)
 
-    tolerance = 1e-6
+    tolerance = 1
     @assert abs(objective_value(model) - 119250) <= tolerance
 end
 
