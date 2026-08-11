@@ -140,6 +140,7 @@ namespace uno {
                dual_inertia_correction_block.fill(-this->dual_regularization);
             }
             else {
+               DEBUG << "The inertia correction failed\n";
                throw UnstableInertiaCorrection();
             }
          }

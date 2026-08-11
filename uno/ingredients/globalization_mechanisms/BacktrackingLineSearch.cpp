@@ -53,23 +53,22 @@ namespace uno {
          if (backtracking_success) {
             return;
          }
-         else {
-            // if the line search failed, switch to solving the feasibility problem (test first if we can)
-            if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
-               throw std::runtime_error("The line search failed");
-            }
-            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
-               evaluation_cache.current_evaluations, warmstart_information);
-         }
+         // if backtracking failed, try to switch to feasibility problem (below)
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
          statistics.set("Status", "inertia correction");
-         this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
-            evaluation_cache.current_evaluations, warmstart_information);
+         // try to switch to feasibility problem (below)
+      }
+
+      // if the line search failed, switch to solving the feasibility problem (test first if we can)
+      if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
+         throw std::runtime_error("The line search failed");
       }
 
       // solve the feasibility problem
+      this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+         evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
       Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
@@ -139,20 +138,18 @@ namespace uno {
             }
          }
 
-         if (is_acceptable) {
-            termination = true;
-         }
-         // from here on, the trial iterate is rejected
          // try second-order corrections if the full step was rejected
-         else if (number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
+         if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
                this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
             assert(step_length == 1.);
             is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
                evaluation_cache, warmstart_information, user_callbacks);
-            if (is_acceptable) {
-               termination = true;
-            }
          }
+
+         if (is_acceptable) {
+            termination = true;
+         }
+         // from here on, the trial iterate is rejected
          else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);
             evaluation_cache.trial_evaluations.reset();
@@ -212,17 +209,15 @@ namespace uno {
       while (!SOC_termination) {
          DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
 
-         Evaluations soc_evaluations(evaluation_cache.current_evaluations);
-         soc_evaluations.reset();
-
          try {
             const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate,
                this->constraints_SOC);
             assemble_trial_iterate(model, current_iterate, trial_iterate, direction_SOC, 1.);
+            evaluation_cache.trial_evaluations.reset();
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction /* this is correct, see IPOPT paper */, 1., false,
-               evaluation_cache.current_evaluations, soc_evaluations, warmstart_information, user_callbacks);
+               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
 
             if (is_acceptable) {
                // terminate the SOCs and the backtracking
@@ -239,7 +234,7 @@ namespace uno {
             else {
                // continue the SOCs
                this->constraints_SOC.scale(direction_SOC.primal_dual_step_length);
-               this->constraints_SOC += soc_evaluations.constraints;
+               this->constraints_SOC += evaluation_cache.trial_evaluations.constraints;
                old_infeasibility_SOC = trial_iterate.progress.infeasibility;
                ++SOC_iteration;
                DEBUG << "SOC direction rejected, continue SOCs" << '\n';
