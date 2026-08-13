@@ -4,17 +4,18 @@
 #ifndef UNO_TIMER_H
 #define UNO_TIMER_H
 
-#include <ctime>
+#include <chrono>
+#include <string>
 
 namespace uno {
    class Timer {
    public:
       Timer();
       [[nodiscard]] double get_duration() const;
-      [[nodiscard]] static char* get_current_date();
+      [[nodiscard]] static std::string get_current_date();
 
    private:
-      std::clock_t start_time;
+      std::chrono::time_point<std::chrono::steady_clock> start;
    };
 } // namespace
 

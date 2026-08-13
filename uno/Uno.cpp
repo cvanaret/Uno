@@ -274,7 +274,7 @@ namespace uno {
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {
       DISCRETE << "\nUno " << Uno::current_version() << " (" << this->method_description << ")\n";
-      DISCRETE << Timer::get_current_date();
+      DISCRETE << Timer::get_current_date() << '\n';
       // draw a horizontal line
       constexpr size_t line_length = 40;
       std::string line;
