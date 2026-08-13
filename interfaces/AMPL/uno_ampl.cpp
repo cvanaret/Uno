@@ -88,6 +88,9 @@ int main(int argc, char* argv[]) {
          const AMPLModel model(model_name);
 
          // set the preset (default: auto)
+         // model name
+         const char* model_name = argv[1];
+         const AMPLModel model(model_name);
          Presets::set(model, options, options.get_string("preset"));
 
          // set the rest of the command line options
