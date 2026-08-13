@@ -23,7 +23,7 @@ on:
 env:
   BUILD_TYPE: Debug
   VENV: /home/optimi/cvanaret/myenv
-  RUNNER_PATH: /home/optimi/cvanaret/actions-runner
+  RUNNER_PATH: /home/optimi/cvanaret
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
