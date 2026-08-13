@@ -46,10 +46,6 @@ int main(int argc, char* argv[]) {
    }
    else { // argc >= 2
       // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value, ...]
-      // model name
-      const char* model_name = argv[1];
-      const AMPLModel model(model_name);
-
       // set the default options
       Options options;
       DefaultOptions::load(options);
@@ -86,6 +82,10 @@ int main(int argc, char* argv[]) {
             }
          }
          Logger::set_logger(options.get_string("logger"));
+
+         // create the model
+         const char* model_name = argv[1];
+         const AMPLModel model(model_name);
 
          // set the preset (default: auto)
          Presets::set(model, options, options.get_string("preset"));
