@@ -26,7 +26,7 @@
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
 #define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
 #endif
-#ifdef HAS_HSL
+#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
 // libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
 // Temporarily rename it with #define
 #define new hsl_new
@@ -93,7 +93,7 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
-#ifdef HAS_HSL
+#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
       INFO << "Running MA57 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
 #else
       INFO << "Running MA57 v1.0.0\n";

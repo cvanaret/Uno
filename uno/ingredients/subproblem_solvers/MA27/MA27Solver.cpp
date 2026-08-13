@@ -33,7 +33,7 @@ extern "C" {
       int IW1[], int* NSTEPS, int ICNTL[], int INFO[]);
 }
 #endif
-#ifdef HAS_HSL
+#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
 // libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
 // Temporarily rename it with #define
 #define new hsl_new
@@ -63,7 +63,7 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
-#ifdef HAS_HSL
+#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
       INFO << "Running MA27 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
 #else
       INFO << "Running MA27 v1.0.0\n";
