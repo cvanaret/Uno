@@ -5,14 +5,14 @@
 #define UNO_TIMER_H
 
 #include <chrono>
-#include <ctime>
+#include <string>
 
 namespace uno {
    class Timer {
    public:
       Timer();
       [[nodiscard]] double get_duration() const;
-      [[nodiscard]] static char* get_current_date();
+      [[nodiscard]] static std::string get_current_date();
 
    private:
       std::chrono::time_point<std::chrono::steady_clock> start;
