@@ -4,6 +4,7 @@
 #ifndef UNO_TIMER_H
 #define UNO_TIMER_H
 
+#include <chrono>
 #include <ctime>
 
 namespace uno {
@@ -14,7 +15,7 @@ namespace uno {
       [[nodiscard]] static char* get_current_date();
 
    private:
-      std::clock_t start_time;
+      std::chrono::time_point<std::chrono::steady_clock> start;
    };
 } // namespace
 

@@ -7,11 +7,12 @@
 
 namespace uno {
    // timer starts upon creation
-   Timer::Timer(): start_time(std::clock()) {
+   Timer::Timer(): start(std::chrono::steady_clock::now()) {
    }
 
    double Timer::get_duration() const {
-      return static_cast<double>(std::clock() - this->start_time) / static_cast<double>(CLOCKS_PER_SEC);
+      const auto now = std::chrono::steady_clock::now();
+      return std::chrono::duration<double>(now - this->start).count();
    }
 
    char* Timer::get_current_date() {
