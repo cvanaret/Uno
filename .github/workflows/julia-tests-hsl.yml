@@ -1,4 +1,4 @@
-name: Julia tests for HSL linear solvers
+name: JuliaCI HSL
 
 on:
   push:
