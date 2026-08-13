@@ -74,9 +74,9 @@ namespace uno {
       bool analysis_performed{false};
       bool factorization_performed{false};
 
-      [[nodiscard]] int& ICNTL(size_t index);
-      [[nodiscard]] double& CNTL(size_t index);
-      [[nodiscard]] int INFO(size_t index) const;
+      [[nodiscard]] int& MA57_ICNTL(size_t index);
+      [[nodiscard]] double& MA57_CNTL(size_t index);
+      [[nodiscard]] int MA57_INFO(size_t index) const;
    };
 } // namespace
 

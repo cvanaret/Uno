@@ -34,6 +34,13 @@ extern "C" {
       int IW1[], int* NSTEPS, int ICNTL[], int INFO[]);
 }
 #endif
+#ifdef HAS_HSL
+// libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
+// Temporarily rename it with #define
+#define new hsl_new
+#include <libhsl.h>
+#undef new
+#endif
 
 namespace uno {
    enum eIFLAG {
@@ -57,12 +64,17 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
+#ifdef HAS_HSL
+      INFO << "Running MA27 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
+#else
+      INFO << "Running MA27 v1.0.0\n";
+#endif
       // initialization: set the default values of the controlling parameters
       MA27_set_default_parameters(this->workspace.icntl.data(), this->workspace.cntl.data());
-      ICNTL(1) = 0; // no warning messages
-      ICNTL(2) = 0; // no diagnostic printing
-      ICNTL(3) = 0; // no diagnostic printing
-      CNTL(1) = MA27Settings::pivoting_threshold;
+      MA27_ICNTL(1) = 0; // no warning messages
+      MA27_ICNTL(2) = 0; // no diagnostic printing
+      MA27_ICNTL(3) = 0; // no diagnostic printing
+      MA27_CNTL(1) = MA27Settings::pivoting_threshold;
       this->workspace.iflag = 0; // a suitable pivot order is to be chosen automatically
    }
 
@@ -85,15 +97,15 @@ namespace uno {
          this->workspace.iw.data(), &this->workspace.liw, this->workspace.ikeep.data(), this->workspace.iw1.data(),  /* solver workspace */
          &this->workspace.nsteps, &this->workspace.iflag, this->workspace.icntl.data(), this->workspace.cntl.data(),
          this->workspace.info.data(), &this->workspace.ops);
-      if (INFO(1) != 0) {
+      if (MA27_INFO(1) != 0) {
          throw std::runtime_error("MA27: the symbolic analysis failed");
       }
       // resize IW
-      const int nirnec = INFO(6);
+      const int nirnec = MA27_INFO(6);
       this->workspace.liw = MA27Settings::liw_init_factor * nirnec;
       this->workspace.iw.reserve(static_cast<size_t>(this->workspace.liw));
       // resize factor (A)
-      const int nrlnec = INFO(5);
+      const int nrlnec = MA27_INFO(5);
       this->workspace.la = MA27Settings::la_init_factor * nrlnec;
       this->workspace.factor.resize(static_cast<size_t>(this->workspace.la));
 
@@ -124,13 +136,13 @@ namespace uno {
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data());
          factorization_done = true;
 
-         if (INFO(1) == eIFLAG::INSUFFICIENTINTEGER) {
+         if (MA27_INFO(1) == eIFLAG::INSUFFICIENTINTEGER) {
             DEBUG << "MA27: insufficient integer workspace, resizing and retrying. \n";
             // increase the size of iw by 50%
             this->workspace.iw.resize(static_cast<size_t>(3 * this->workspace.info[1] / 2));
             factorization_done = false;
          }
-         if (INFO(1) == eIFLAG::INSUFFICIENTREAL) {
+         if (MA27_INFO(1) == eIFLAG::INSUFFICIENTREAL) {
             DEBUG << "MA27: insufficient real workspace, resizing and retrying. \n";
             // increase the size of factor by 50%
             this->workspace.factor.resize(static_cast<size_t>(3 * this->workspace.info[1] / 2));
@@ -153,9 +165,9 @@ namespace uno {
          &this->workspace.liw, this->workspace.w.data(), &this->workspace.maxfrt, solution, this->workspace.iw1.data(),
          &this->workspace.nsteps, this->workspace.icntl.data(), this->workspace.info.data());
 
-      assert(INFO(1) == 0 && "MA27: the linear solve failed");
-      if (INFO(1) != 0) {
-         WARNING << "MA27 has issued a warning: IFLAG = " << INFO(1) << " additional info, IERROR = "
+      assert(MA27_INFO(1) == 0 && "MA27: the linear solve failed");
+      if (MA27_INFO(1) != 0) {
+         WARNING << "MA27 has issued a warning: IFLAG = " << MA27_INFO(1) << " additional info, IERROR = "
             << this->workspace.info[1] << '\n';
       }
    }
@@ -171,15 +183,15 @@ namespace uno {
    }
 
    size_t MA27Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(INFO(15));
+      return static_cast<size_t>(MA27_INFO(15));
    }
 
    bool MA27Solver::matrix_is_singular() const {
-      return (INFO(1) == eIFLAG::SINGULAR || INFO(1) == eIFLAG::RANK_DEFICIENT);
+      return (MA27_INFO(1) == eIFLAG::SINGULAR || MA27_INFO(1) == eIFLAG::RANK_DEFICIENT);
    }
 
    size_t MA27Solver::rank() const {
-      return (INFO(1) == eIFLAG::RANK_DEFICIENT) ?
+      return (MA27_INFO(1) == eIFLAG::RANK_DEFICIENT) ?
          static_cast<size_t>(this->workspace.info[1]) :
          static_cast<size_t>(this->workspace.n);
    }
@@ -195,7 +207,7 @@ namespace uno {
    // protected member functions
 
    void MA27Solver::check_factorization_status() const {
-      switch (INFO(1)) {
+      switch (MA27_INFO(1)) {
          case NSTEPS:
             WARNING << "MA27BD: Value of NSTEPS outside the range 1 ≤ NSTEPS ≤ N" << '\n';
             break;
@@ -226,17 +238,17 @@ namespace uno {
       }
    }
 
-   int& MA27Solver::ICNTL(size_t index) {
+   int& MA27Solver::MA27_ICNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.icntl[index-1];
    }
 
-   double& MA27Solver::CNTL(size_t index) {
+   double& MA27Solver::MA27_CNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.cntl[index-1];
    }
 
-   int MA27Solver::INFO(size_t index) const {
+   int MA27Solver::MA27_INFO(size_t index) const {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.info[index-1];
    }

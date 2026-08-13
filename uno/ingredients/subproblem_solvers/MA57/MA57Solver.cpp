@@ -26,6 +26,13 @@
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
 #define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
 #endif
+#ifdef HAS_HSL
+// libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
+// Temporarily rename it with #define
+#define new hsl_new
+#include <libhsl.h>
+#undef new
+#endif
 
 namespace uno {
 #ifndef HSL_RUNTIME_LOADING
@@ -86,16 +93,21 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
+#ifdef HAS_HSL
+      INFO << "Running MA57 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
+#else
+      INFO << "Running MA57 v1.0.0\n";
+#endif
       // set the default values of the controlling parameters
       MA57_set_default_parameters(this->workspace.cntl.data(), this->workspace.icntl.data());
-      ICNTL(5) = 0; // suppress warning messages
-      ICNTL(6) = 5; // pivot order (auto between METIS and MC47)
-      ICNTL(7) = 1; // numerical pivoting (uses threshold in CNTL(1))
-      ICNTL(11) = 16; // block size used by the Level 3 BLAS
-      ICNTL(12) = 16; // assembly tree
-      ICNTL(15) = MA57Settings::mc64_scaling; // MC64 scaling (disabled)
-      ICNTL(16) = 0; // small entries removed (disabled)
-      CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
+      MA57_ICNTL(5) = 0; // suppress warning messages
+      MA57_ICNTL(6) = 5; // pivot order (auto between METIS and MC47)
+      MA57_ICNTL(7) = 1; // numerical pivoting (uses threshold in CNTL(1))
+      MA57_ICNTL(11) = 16; // block size used by the Level 3 BLAS
+      MA57_ICNTL(12) = 16; // assembly tree
+      MA57_ICNTL(15) = MA57Settings::mc64_scaling; // MC64 scaling (disabled)
+      MA57_ICNTL(16) = 0; // small entries removed (disabled)
+      MA57_CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
    }
 
    void MA57Solver::initialize_memory() {
@@ -116,16 +128,16 @@ namespace uno {
          this->linear_system.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
-      if (INFO(1) < 0) {
+      if (MA57_INFO(1) < 0) {
          throw std::runtime_error("MA57: the symbolic analysis failed");
       }
-      if (0 < INFO(1)) {
-         WARNING << "MA57 has issued a warning: info(1) = " << INFO(1) << '\n';
+      if (0 < MA57_INFO(1)) {
+         WARNING << "MA57 has issued a warning: info(1) = " << MA57_INFO(1) << '\n';
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
-      this->workspace.lfact = static_cast<int>(MA57Settings::allocation_safety_factor * INFO(11));
-      this->workspace.lifact = static_cast<int>(MA57Settings::allocation_safety_factor * INFO(12));
+      this->workspace.lfact = static_cast<int>(MA57Settings::allocation_safety_factor * MA57_INFO(11));
+      this->workspace.lifact = static_cast<int>(MA57Settings::allocation_safety_factor * MA57_INFO(12));
       this->workspace.fact.resize(static_cast<size_t>(this->workspace.lfact));
       this->workspace.ifact.resize(static_cast<size_t>(this->workspace.lifact));
       this->analysis_performed = true;
@@ -142,7 +154,7 @@ namespace uno {
             &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
-         if (is_error_code_insufficient_real_workspace(INFO(1)) || is_error_code_insufficient_integer_workspace(INFO(1))) {
+         if (is_error_code_insufficient_real_workspace(MA57_INFO(1)) || is_error_code_insufficient_integer_workspace(MA57_INFO(1))) {
             const bool is_real_workspace = is_error_code_insufficient_real_workspace(this->workspace.info[0]);
 
             const int lnewfact = !is_real_workspace ? 0 : get_larger_real_workspace_size(this->workspace);
@@ -165,7 +177,7 @@ namespace uno {
                this->workspace.lifact = lnewifact;
             }
          }
-         else if (INFO(1) < 0) {
+         else if (MA57_INFO(1) < 0) {
             throw std::runtime_error("MA57 fatal error");
          }
          else {
@@ -213,7 +225,7 @@ namespace uno {
    }
 
    size_t MA57Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(INFO(24));
+      return static_cast<size_t>(MA57_INFO(24));
    }
 
    /*
@@ -224,7 +236,7 @@ namespace uno {
    */
 
    bool MA57Solver::matrix_is_singular() const {
-      return (INFO(1) == 4);
+      return (MA57_INFO(1) == 4);
    }
 
    size_t MA57Solver::rank() const {
@@ -241,17 +253,17 @@ namespace uno {
 
    // protected member functions
 
-   int& MA57Solver::ICNTL(size_t index) {
+   int& MA57Solver::MA57_ICNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.icntl[index-1];
    }
 
-   double& MA57Solver::CNTL(size_t index) {
+   double& MA57Solver::MA57_CNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.cntl[index-1];
    }
 
-   int MA57Solver::INFO(size_t index) const {
+   int MA57Solver::MA57_INFO(size_t index) const {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.info[index-1];
    }
