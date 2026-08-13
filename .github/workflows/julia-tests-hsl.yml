@@ -111,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        UNO_TEST: [uno_ipopt] #, uno_ipopt_lbfgs, uno_pure_sqp, uno_unconstrained, uno_unconstrained_lbfgs]
+        UNO_TEST: [uno_ipopt, uno_ipopt_bfpc, uno_ipopt_lbfgs, uno_pure_sqp, uno_unconstrained, uno_unconstrained_lbfgs]
         HSL_SOLVER: [MA27, MA57, MA86]
     
     steps:
