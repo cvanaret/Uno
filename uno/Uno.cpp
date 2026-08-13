@@ -41,10 +41,9 @@ namespace uno {
 
    // solve with user callbacks
    Result Uno::solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
-      DISCRETE << "Original model " << model.name << '\n' << model.number_variables << " variables, " <<
-         model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
+      DISCRETE << to_string(model.get_problem_type()) << " model " << model.name << " has " << model.number_variables <<
+         " variables, " << model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
-      INFO << "Problem type: " << to_string(model.get_problem_type()) << '\n';
 
       // reformulate the model if:
       // - the user wants an interior-point method with log barrier function
@@ -58,7 +57,7 @@ namespace uno {
          // slightly relax the bound constraints
          const BoundRelaxedModel bound_relaxed_model(homogeneous_model, options);
 
-         DISCRETE << "Reformulated model " << bound_relaxed_model.name << '\n' << bound_relaxed_model.number_variables << " variables, " <<
+         DISCRETE << "Reformulated model has " << bound_relaxed_model.number_variables << " variables, " <<
             bound_relaxed_model.number_constraints << " constraints (" << bound_relaxed_model.get_equality_constraints().size() <<
             " equality, " << bound_relaxed_model.get_inequality_constraints().size() << " inequality)\n";
          Result result = uno_solve(bound_relaxed_model, options, user_callbacks);

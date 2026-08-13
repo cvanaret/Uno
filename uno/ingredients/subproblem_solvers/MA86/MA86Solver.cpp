@@ -8,6 +8,7 @@
 #include <vector>
 #include "MA86Solver.hpp"
 #include "linear_algebra/View.hpp"
+#include "tools/Logger.hpp"
 
 #ifdef HSL_RUNTIME_LOADING
 // route the calls through the runtime-resolved function pointers
@@ -26,6 +27,13 @@
 #define MA86_finalise ma86_finalise_d
 #define MC68_default_control mc68_default_control_i
 #define MC68_order mc68_order_i
+#endif
+#ifdef HAS_HSL
+// libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
+// Temporarily rename it with #define
+#define new hsl_new
+#include <libhsl.h>
+#undef new
 #endif
 
 namespace uno {
@@ -61,6 +69,11 @@ namespace uno {
             "runtime, or it does not export the MA86/MC68 C interface (set the UNO_HSL_LIBRARY environment variable "
             "to point at a libhsl providing ma86_*_d and mc68_*_i)");
       }
+#endif
+#ifdef HAS_HSL
+      INFO << "Running MA86 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
+#else
+      INFO << "Running MA86 v1.0.0\n";
 #endif
       // set the default values of the controlling parameters
       MA86_default_control(&this->control);

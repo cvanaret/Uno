@@ -15,7 +15,6 @@
 #define MA27_linear_solve uno::hsl_ma27cd
 #else
 #include "fortran_interface.h"
-
 #define MA27_set_default_parameters FC_GLOBAL(ma27id, MA27ID)
 #define MA27_symbolic_analysis FC_GLOBAL(ma27ad, MA27AD)
 #define MA27_numerical_factorization FC_GLOBAL(ma27bd, MA27BD)

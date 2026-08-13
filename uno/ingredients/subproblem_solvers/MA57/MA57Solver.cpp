@@ -8,6 +8,7 @@
 #include <vector>
 #include "MA57Solver.hpp"
 #include "tools/Logger.hpp"
+
 #ifdef HSL_RUNTIME_LOADING
 #include <stdexcept>
 #include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
@@ -19,7 +20,6 @@
 #define MA57_enlarge_workspace uno::hsl_ma57ed
 #else
 #include "fortran_interface.h"
-
 #define MA57_set_default_parameters FC_GLOBAL(ma57id, MA57ID)
 #define MA57_symbolic_analysis FC_GLOBAL(ma57ad, MA57AD)
 #define MA57_numerical_factorization FC_GLOBAL(ma57bd, MA57BD)

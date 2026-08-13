@@ -34,6 +34,7 @@ namespace uno {
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
          // no inequality reformulation: let the subproblem solver handle them
+         INFO << "Picking an inequality-constrained (LP or QP) method\n";
          return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method", problem, uses_trust_region,
             objective_multiplier, options);
       }
@@ -41,6 +42,7 @@ namespace uno {
       else if (inequality_handling_method == "interior_point") {
          const std::string barrier_function = options.get_string("barrier_function");
          if (barrier_function == "log") {
+            INFO << "Picking a barrier method\n";
             return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(problem, uses_trust_region,
                objective_multiplier, options);
          }
