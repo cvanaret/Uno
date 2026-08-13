@@ -3,12 +3,11 @@
 
 #include <cassert>
 #include "SSIDSSolver.hpp"
-#include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
    SSIDSSolver::SSIDSSolver(): DirectSymmetricIndefiniteLinearSolver<double>() {
-      INFO << "Running SPRAL's SSIDS\n";
+      INFO << "Running SPRAL's SSIDS v" << SPRAL_VERSION << '\n';
       spral_ssids_default_options(&this->workspace.options);
       this->workspace.options.array_base = 1; // Fortran indexing
       this->workspace.options.print_level = -1; // no printing
