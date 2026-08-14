@@ -1,0 +1,40 @@
+name: unopy HSL
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Compile and install unopy
+        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v -C cmake.define.UNO_PYBIND11_DETAILED_ERRORS=ON
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: python example_hs015.py
