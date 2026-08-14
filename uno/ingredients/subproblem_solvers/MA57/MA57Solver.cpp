@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
 // route the calls through the runtime-resolved function pointers
+#define LIBHSL_version uno::hsl_libhsl_version
 #define MA57_set_default_parameters uno::hsl_ma57id
 #define MA57_symbolic_analysis uno::hsl_ma57ad
 #define MA57_numerical_factorization uno::hsl_ma57bd
@@ -26,17 +27,12 @@
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
 #define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
 #endif
-#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
-// libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
-// Temporarily rename it with #define
-#define new hsl_new
-#include <libhsl.h>
-#undef new
-#endif
 
 namespace uno {
 #ifndef HSL_RUNTIME_LOADING
    extern "C" {
+      void LIBHSL_version(int *major, int *minor, int *patch);
+
       void MA57_set_default_parameters(double cntl[], int icntl[]);
 
       void MA57_symbolic_analysis(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep,
@@ -93,8 +89,10 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
-#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
-      INFO << "Running MA57 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
+#if defined(HAS_HSL)
+      int major, minor, patch;
+      LIBHSL_version(&major, &minor, &patch);
+      INFO << "Running MA57 v" << major << "." << minor << "." << patch << '\n';
 #else
       INFO << "Running MA57 v1.0.0\n";
 #endif

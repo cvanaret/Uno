@@ -9,6 +9,7 @@
 #ifdef HSL_RUNTIME_LOADING
 #include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
 // route the calls through the runtime-resolved function pointers
+#define LIBHSL_version uno::hsl_libhsl_version
 #define MA27_set_default_parameters uno::hsl_ma27id
 #define MA27_symbolic_analysis uno::hsl_ma27ad
 #define MA27_numerical_factorization uno::hsl_ma27bd
@@ -21,6 +22,8 @@
 #define MA27_linear_solve FC_GLOBAL(ma27cd, MA27CD)
 
 extern "C" {
+   void LIBHSL_version(int *major, int *minor, int *patch);
+
    void MA27_set_default_parameters(int ICNTL[], double CNTL[]);
 
    void MA27_symbolic_analysis(int* N, int* NZ, int IRN[], int ICN[], int IW[], int* LIW, int IKEEP[], int IW1[],
@@ -32,13 +35,6 @@ extern "C" {
    void MA27_linear_solve(int* N, double A[], int* LA, int IW[], int* LIW, double W[], int* MAXFRT, double RHS[],
       int IW1[], int* NSTEPS, int ICNTL[], int INFO[]);
 }
-#endif
-#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
-// libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
-// Temporarily rename it with #define
-#define new hsl_new
-#include <libhsl.h>
-#undef new
 #endif
 
 namespace uno {
@@ -63,8 +59,10 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
-#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
-      INFO << "Running MA27 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
+#if defined(HAS_HSL)
+      int major, minor, patch;
+      LIBHSL_version(&major, &minor, &patch);
+      INFO << "Running MA27 v" << major << "." << minor << "." << patch << '\n';
 #else
       INFO << "Running MA27 v1.0.0\n";
 #endif

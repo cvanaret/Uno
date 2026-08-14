@@ -12,6 +12,7 @@
 
 #ifdef HSL_RUNTIME_LOADING
 // route the calls through the runtime-resolved function pointers
+#define LIBHSL_version uno::hsl_libhsl_version
 #define MA86_default_control uno::hsl_ma86_default_control
 #define MA86_analyse uno::hsl_ma86_analyse
 #define MA86_factor uno::hsl_ma86_factor
@@ -28,17 +29,11 @@
 #define MC68_default_control mc68_default_control_i
 #define MC68_order mc68_order_i
 #endif
-#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
-// libhsl.h declares some functions with a parameter called "new", which is a reserved C++ keyword.
-// Temporarily rename it with #define
-#define new hsl_new
-#include <libhsl.h>
-#undef new
-#endif
 
 namespace uno {
 #ifndef HSL_RUNTIME_LOADING
    extern "C" {
+      void LIBHSL_version(int *major, int *minor, int *patch);
       void MA86_default_control(ma86_control* control);
       void MA86_analyse(const int n, const int ptr[], const int row[], int order[], void** keep,
          const ma86_control* control, ma86_info* info);
@@ -70,8 +65,10 @@ namespace uno {
             "to point at a libhsl providing ma86_*_d and mc68_*_i)");
       }
 #endif
-#if defined(HAS_HSL) && !defined(HSL_RUNTIME_LOADING)
-      INFO << "Running MA86 v" << LIBHSL_VER_MAJOR << "." << LIBHSL_VER_MINOR << "." << LIBHSL_VER_PATCH << '\n';
+#if defined(HAS_HSL)
+      int major, minor, patch;
+      LIBHSL_version(&major, &minor, &patch);
+      INFO << "Running MA86 v" << major << "." << minor << "." << patch << '\n';
 #else
       INFO << "Running MA86 v1.0.0\n";
 #endif

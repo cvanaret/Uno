@@ -15,6 +15,7 @@
 #endif
 
 namespace uno {
+   LIBHSL_version_fp hsl_libhsl_version = nullptr;
    ma57id_fp hsl_ma57id = nullptr;
    ma57ad_fp hsl_ma57ad = nullptr;
    ma57bd_fp hsl_ma57bd = nullptr;
@@ -62,6 +63,7 @@ namespace uno {
       hsl_loaded_name = name;
       DEBUG << "Uno: loaded the HSL library '" << name << "' at runtime\n";
 
+      resolve(hsl_handle, hsl_libhsl_version, "LIBHSL_version");
       resolve(hsl_handle, hsl_ma57id, "ma57id");
       resolve(hsl_handle, hsl_ma57ad, "ma57ad");
       resolve(hsl_handle, hsl_ma57bd, "ma57bd");
