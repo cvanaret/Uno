@@ -1,4 +1,4 @@
-name: unopy HSL
+name: unopy HSL example
 
 on:
   push:
@@ -38,4 +38,7 @@ jobs:
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
-        run: ${{env.VENV}}/bin/python example_hs015.py
+        # replace MUMPS with MA57 in ipopt preset
+        run: |
+          sed -i 's/MUMPS/MA57/' example_hs015.py
+          ${{env.VENV}}/bin/python example_hs015.py
