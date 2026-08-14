@@ -1,4 +1,4 @@
-name: unopy on Python example
+name: unopy example
 
 on:
   push:

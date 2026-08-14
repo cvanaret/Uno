@@ -1,0 +1,63 @@
+name: unopy HSL example
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+  VENV: /home/optimi/cvanaret/myenv
+  RUNNER_PATH: /home/optimi/cvanaret
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Compile and install unopy
+        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) ${{env.VENV}}/bin/pip install . -v
+
+      - name: Set libhsl_path
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        # pass option libhsl_path to load libhsl.so dynamically
+        run: |
+          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.RUNNER_PATH}}/libhsl/builddir/libhsl.so")' example_hs015.py
+
+      - name: Run example with MA57
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        # replace MUMPS with MA57 in ipopt preset
+        run: |
+          sed -i 's/MUMPS/MA57/' example_hs015.py
+          ${{env.VENV}}/bin/python example_hs015.py
+
+      - name: Run example with MA27
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: |
+          sed -i 's/MA57/MA27/' example_hs015.py
+          ${{env.VENV}}/bin/python example_hs015.py
+
+      - name: Run example with MA86
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: |
+          sed -i 's/MA27/MA86/' example_hs015.py
+          ${{env.VENV}}/bin/python example_hs015.py
