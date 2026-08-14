@@ -41,5 +41,5 @@ jobs:
         # replace MUMPS with MA57 in ipopt preset
         run: |
           sed -i 's/MUMPS/MA57/' example_hs015.py
-          sed -i '/uno_solver.set_preset("ipopt")/a uno_solver.set_option("libhsl_path", "$RUNNER_PATH/libhsl/builddir/libhsl.so")' example_hs015.py
+          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "$RUNNER_PATH/libhsl/builddir/libhsl.so")' example_hs015.py
           ${{env.VENV}}/bin/python example_hs015.py
