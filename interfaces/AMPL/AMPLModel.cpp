@@ -124,7 +124,7 @@ namespace uno {
 
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
       fint error_flag = 0;
-      const double result = this->optimization_sense * this->asl->p.Objval(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+      const double result = this->optimization_sense * this->asl->p.Objval(this->asl, 0, x.data(), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
@@ -134,7 +134,7 @@ namespace uno {
 
    void AMPLModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       fint error_flag = 0;
-      this->asl->p.Conval(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
+      this->asl->p.Conval(this->asl, x.data(), constraints.data(), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
@@ -144,7 +144,7 @@ namespace uno {
    // dense gradient
    void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       fint error_flag = 0;
-      this->asl->p.Objgrd(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
+      this->asl->p.Objgrd(this->asl, 0, x.data(), gradient.data(), &error_flag);
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
@@ -198,7 +198,7 @@ namespace uno {
 
    void AMPLModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
       fint error_flag = 0;
-      this->asl->p.Jacval(this->asl, const_cast<double*>(x.data()), jacobian_values, &error_flag);
+      this->asl->p.Jacval(this->asl, x.data(), jacobian_values, &error_flag);
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
@@ -206,14 +206,19 @@ namespace uno {
    }
 
    // register the vector of variables
-   //this->asl->p.Xknown(this->asl, const_cast<double*>(x.data()), nullptr);
+   //this->asl->p.Xknown(this->asl, x.data(), nullptr);
    // unregister the vector of variables
    //this->asl->i.x_known = 0;
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
          View<double> hessian_values) const {
       objective_multiplier *= this->optimization_sense;
-      this->asl->p.Sphes(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier, const_cast<double*>(multipliers.data()));
+      fint error_flag = 0;
+      this->asl->p.Sphese(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier, multipliers.data(),
+         &error_flag);
+      if (0 < error_flag) {
+         throw HessianEvaluationError();
+      }
       ++this->number_model_evaluations.hessian;
    }
 
@@ -231,8 +236,7 @@ namespace uno {
       objective_multiplier *= this->optimization_sense;
 
       // compute the Hessian-vector product
-      (this->asl->p.Hvcomp)(this->asl, result, const_cast<double*>(vector), -1, &objective_multiplier,
-         const_cast<double*>(multipliers.data()));
+      (this->asl->p.Hvcomp)(this->asl, result, vector, -1, &objective_multiplier, multipliers.data());
    }
 
    const std::vector<double>& AMPLModel::get_variables_lower_bounds() const {
