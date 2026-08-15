@@ -96,6 +96,11 @@ namespace uno {
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
+      //current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
+      //DEBUG << "The current iterate is stationary for the feasibility problem\n";
+      //statistics.set("Status", "stationary");
+      //return;
+
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
 
       // save the current point (infeasibility and primals) upon switching
@@ -113,6 +118,10 @@ namespace uno {
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+
+      // approximate the multipliers based on infeasibility
+      this->feasibility_problem.approximate_multipliers(current_iterate, current_evaluations);
+      // test for termination wrt the feasibility problem
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
