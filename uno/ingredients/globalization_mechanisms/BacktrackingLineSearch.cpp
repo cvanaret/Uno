@@ -66,12 +66,17 @@ namespace uno {
          throw std::runtime_error("The line search failed");
       }
 
-      // solve the feasibility problem
+      // switch to solving the feasibility problem
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
-      const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics,
-         current_iterate, INF<double>, evaluation_cache.current_evaluations, warmstart_information);
+      if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         std::swap(current_iterate, trial_iterate);
+         return;
+      }
+
+      const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
+         INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
