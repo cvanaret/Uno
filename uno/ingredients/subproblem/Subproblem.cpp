@@ -54,7 +54,7 @@ namespace uno {
       // primal inertia correction. This block is always allocated (even if not applicable - it may be used for computing
       // least-squares multipliers)
       size_t nonzero_index = this->number_hessian_nonzeros();
-      for (size_t variable_index: Range(this->number_variables)) {
+      for (size_t variable_index: this->get_primal_regularization_variables()) {
          row_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
          column_indices[nonzero_index] = static_cast<uno_int>(variable_index) + solver_indexing;
          ++nonzero_index;
