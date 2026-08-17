@@ -290,7 +290,9 @@ namespace uno {
 
    void l1RelaxedProblem::approximate_multipliers(Iterate& current_iterate, const Evaluations& current_evaluations) const {
       // constraint multipliers
+      std::cout << "approximate_multipliers 1\n";
       current_iterate.multipliers.constraints.fill(0.);
+      std::cout << "approximate_multipliers 2\n";
       for (size_t constraint_index: Range(this->model.number_constraints)) {
          if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
             current_iterate.multipliers.constraints[constraint_index] = this->constraint_violation_coefficient;
@@ -299,6 +301,7 @@ namespace uno {
             current_iterate.multipliers.constraints[constraint_index] = -this->constraint_violation_coefficient;
          }
       }
+      std::cout << "approximate_multipliers 3\n";
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
          if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
             current_iterate.primals[elastic_index] = 0.;
@@ -313,7 +316,9 @@ namespace uno {
             current_iterate.multipliers.lower_bounds[elastic_index] = 2.*this->constraint_violation_coefficient;
          }
       }
+      std::cout << "approximate_multipliers 4\n";
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         std::cout << "[" << constraint_index << ", " << elastic_index << "]\n";
          if (this->get_constraints_upper_bounds()[constraint_index] < current_evaluations.constraints[constraint_index]) {
             current_iterate.primals[elastic_index] = 0.;
             current_iterate.multipliers.lower_bounds[elastic_index] = 2.*this->constraint_violation_coefficient;
@@ -327,6 +332,7 @@ namespace uno {
             current_iterate.multipliers.lower_bounds[elastic_index] = 2.*this->constraint_violation_coefficient;
          }
       }
+      std::cout << "approximate_multipliers 5\n";
    }
 
    SolutionStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
