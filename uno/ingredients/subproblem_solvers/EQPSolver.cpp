@@ -89,7 +89,6 @@ namespace uno {
       }
       else {
          DEBUG << "Least-squares multipliers too large\n";
-         std::cout << "Least-squares multipliers too large\n";
       }
    }
 
