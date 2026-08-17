@@ -82,6 +82,9 @@ namespace uno {
             DEBUG << "/!\\ The subproblem is infeasible\n";
             this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
             this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
+            if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+               throw std::runtime_error("We should end here with an infeasible stationary point\n");
+            }
          }
          else {
             warmstart_information.no_changes();
@@ -124,6 +127,7 @@ namespace uno {
       this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, current_iterate.multipliers,
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
       // TODO check that all duals are not 0
+      DEBUG << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
       if (norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
       }
