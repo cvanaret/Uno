@@ -33,6 +33,7 @@ namespace uno {
       const Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
+      [[nodiscard]] bool test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
          WarmstartInformation& warmstart_information) override;
 

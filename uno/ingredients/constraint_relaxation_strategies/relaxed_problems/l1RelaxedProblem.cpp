@@ -288,19 +288,21 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_multipliers(Iterate& current_iterate, const Evaluations& current_evaluations) const {
-      // constraint multipliers
-      current_iterate.multipliers.constraints.fill(0.);
-      current_iterate.multipliers.lower_bounds.fill(0.);
-      current_iterate.multipliers.upper_bounds.fill(0.);
+   void l1RelaxedProblem::compute_multipliers(Multipliers& multipliers, const Evaluations& current_evaluations) const {
+      multipliers.constraints.fill(0.);
+      multipliers.lower_bounds.fill(0.);
+      multipliers.upper_bounds.fill(0.);
       for (size_t constraint_index: Range(this->model.number_constraints)) {
          if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
-            current_iterate.multipliers.constraints[constraint_index] = this->constraint_violation_coefficient;
+            multipliers.constraints[constraint_index] = this->constraint_violation_coefficient;
          }
          else if (this->get_constraints_upper_bounds()[constraint_index] < current_evaluations.constraints[constraint_index]) {
-            current_iterate.multipliers.constraints[constraint_index] = -this->constraint_violation_coefficient;
+            multipliers.constraints[constraint_index] = -this->constraint_violation_coefficient;
          }
       }
+   }
+
+   void l1RelaxedProblem::compute_elastics(Iterate& current_iterate, const Evaluations& current_evaluations) const {
       // elastic variables: primals and bound multipliers
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
          if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {

@@ -66,6 +66,8 @@ namespace uno {
          throw std::runtime_error("The line search failed");
       }
 
+      // TODO call test_infeasible_stationarity
+
       // switch to solving the feasibility problem
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);

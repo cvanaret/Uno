@@ -81,10 +81,11 @@ namespace uno {
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
             this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
-            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
-            if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+            const bool is_stationary_infeasible = test_infeasible_stationarity(current_iterate, current_evaluations);
+            if (is_stationary_infeasible) {
                throw std::runtime_error("We should end here with an infeasible stationary point\n");
             }
+            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
          }
          else {
             warmstart_information.no_changes();
@@ -106,10 +107,32 @@ namespace uno {
       return (this->current_phase == Phase::FEASIBILITY_RESTORATION);
    }
 
+   bool FeasibilityRestoration::test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const {
+      DEBUG << "\nTesting the termination criteria of the feasibility problem at the current iterate\n";
+      // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
+      Multipliers tentative_multipliers(current_iterate.multipliers);
+      this->feasibility_problem.compute_multipliers(tentative_multipliers, current_evaluations);
+      DEBUG << current_iterate << '\n';
+      // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
+      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, tentative_multipliers,
+         0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
+      // TODO check that all duals are not 0
+      DEBUG << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
+      if (norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
+         current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
+         std::swap(tentative_multipliers, current_iterate.multipliers);
+         DEBUG << "The current iterate is an infeasible stationary point\n";
+         return true;
+      }
+      return false;
+   }
+
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-      DEBUG << "\nTesting the termination criteria of the feasibility problem at the current iterate\n";
+      DEBUG << "Switching from optimality to restoration phase\n";
+      this->current_phase = Phase::FEASIBILITY_RESTORATION;
+      this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
       // initialize the feasibility multipliers and swap the iterate's multipliers and the feasibility multipliers
       if (this->first_switch_to_feasibility) {
          this->other_phase_multipliers.resize(this->feasibility_problem.number_variables,
@@ -120,33 +143,13 @@ namespace uno {
       this->reference_optimality_primals = current_iterate.primals;
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
 
-      // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
-      this->feasibility_problem.compute_multipliers(current_iterate, current_evaluations);
-      DEBUG << current_iterate << '\n';
-      // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
-      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, current_iterate.multipliers,
-         0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
-      // TODO check that all duals are not 0
-      DEBUG << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
-      if (norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
-         current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
-      }
-
-      if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
-         DEBUG << "The current iterate is an infeasible stationary point\n";
-         return;
-      }
-
-      DEBUG << "Switching from optimality to restoration phase\n";
-      this->current_phase = Phase::FEASIBILITY_RESTORATION;
-      this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
-
       // save the current point (progress and primals) upon switching
       this->reference_optimality_progress = current_iterate.progress;
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
+      this->feasibility_problem.compute_elastics(current_iterate, current_evaluations);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
