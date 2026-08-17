@@ -10,11 +10,9 @@
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
-#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/Range.hpp"
-#include "tools/Logger.hpp"
 
 namespace uno {
    #define BIG 1e30
@@ -66,7 +64,7 @@ namespace uno {
          this->hessian_row_indices.resize(number_hessian_nonzeros);
          this->hessian_column_indices.resize(number_hessian_nonzeros);
          this->hessian_values.resize(number_hessian_nonzeros);
-         this->hessian_buffer.resize(number_hessian_nonzeros);
+         this->hessian_buffer.initialize(number_hessian_nonzeros);
       }
    }
 
@@ -104,16 +102,7 @@ namespace uno {
          }
          // evaluate + regularize the explicit Hessian once per iterate
          if (this->hessian_evaluation_required) {
-            // try to evaluate the Hessian. Upon failure, keep the previous one
-            try {
-               subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_buffer.view());
-               // success: copy the new Hessian into the workspace
-               this->hessian_values = this->hessian_buffer;
-            }
-            catch (const HessianEvaluationError&) {
-               // keep the existing Hessian in hessian
-               DEBUG << "The Hessian could not be evaluated by BQPD, using the previous one\n";
-            }
+            this->hessian_buffer.evaluate_hessian(statistics, subproblem, current_iterate, this->hessian_values.view());
             subproblem.regularize_lagrangian_hessian(statistics, this->hessian_values.view());
             this->hessian_evaluation_required = false;
          }

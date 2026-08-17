@@ -223,7 +223,6 @@ namespace uno {
       }
       this->asl->i.err_jmp_ = save;      // restore, always
       if (failed) {
-         std::cout << "Hessian eval error\n";
          throw HessianEvaluationError();
       }
    }

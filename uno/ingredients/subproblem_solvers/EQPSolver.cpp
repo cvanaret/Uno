@@ -7,7 +7,6 @@
 #include "LinearSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -26,7 +25,7 @@ namespace uno {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
       this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
-      this->hessian_buffer.resize(subproblem.number_hessian_nonzeros());
+      this->hessian_buffer.initialize(subproblem.number_hessian_nonzeros());
       // access the linear system of the linear solver
       auto& linear_system = this->linear_solver->get_linear_system();
       linear_system.initialize_augmented_system(subproblem);
@@ -118,15 +117,7 @@ namespace uno {
          View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
 
          // try to evaluate the Hessian. Upon failure, keep the previous one
-         try {
-            subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_buffer.view());
-            // success: copy the new Hessian into the linear system
-            hessian = this->hessian_buffer;
-         }
-         catch (const HessianEvaluationError&) {
-            // keep the existing Hessian in hessian
-            DEBUG << "The Hessian could not be evaluated by the EQP solver, using the previous one\n";
-         }
+         this->hessian_buffer.evaluate_hessian(statistics, subproblem, current_iterate, hessian);
          subproblem.evaluate_jacobian(current_iterate, jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all
