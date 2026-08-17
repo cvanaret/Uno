@@ -74,7 +74,8 @@ namespace uno {
       // COO Hessian
       Vector<uno_int> hessian_row_indices{};
       Vector<uno_int> hessian_column_indices{};
-      Vector<double> hessian_values{};
+      Vector<double> hessian_values{}; // workspace
+      Vector<double> hessian_buffer{}; // buffer used to evaluate the Hessian. Upon success, copy into the workspace
       bool hessian_evaluation_required{false};
       mutable Vector<double> hessian_vector_product{};
 

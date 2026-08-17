@@ -5,9 +5,11 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    void HiGHSQuadraticProgram::initialize_memory(const Subproblem& subproblem) {
@@ -129,6 +131,7 @@ namespace uno {
       this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_values.resize(number_regularized_hessian_nonzeros);
+      this->hessian_buffer.resize(number_regularized_hessian_nonzeros);
       subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
          this->hessian_column_indices.data(), Indexing::C_indexing);
       // convert COO -> HiGHS' lower-triangular CSC layout
@@ -189,7 +192,16 @@ namespace uno {
          subproblem.problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
          this->evaluate_jacobian(subproblem.problem, current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
-         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
+         // try to evaluate the Hessian. Upon failure, keep the previous one
+         try {
+            subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_buffer.view());
+            // success: copy the new Hessian into the workspace
+            this->hessian_values = this->hessian_buffer;
+         }
+         catch (const HessianEvaluationError&) {
+            // keep the existing Hessian in hessian
+            DEBUG << "The Hessian could not be evaluated by BQPD, using the previous one\n";
+         }
          // copy the Hessian with permutation into this->model.hessian_.value_
          this->scatter_hessian_values();
          View hessian(this->model.hessian_.value_.data(), subproblem.number_regularized_hessian_nonzeros());
