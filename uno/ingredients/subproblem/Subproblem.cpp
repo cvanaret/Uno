@@ -247,8 +247,10 @@ namespace uno {
    }
 
    size_t Subproblem::number_primal_inertia_correction_nonzeros() const {
-      // always allocate the full block (see compute_regularized_augmented_matrix_sparsity())
-      return this->number_variables;
+      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
+         return this->get_primal_regularization_variables().size();
+      }
+      return 0;
    }
 
    size_t Subproblem::number_dual_inertia_correction_nonzeros() const {
