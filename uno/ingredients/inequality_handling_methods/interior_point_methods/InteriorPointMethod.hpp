@@ -17,6 +17,7 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/Parameterization.hpp"
 #include "options/Options.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -213,7 +214,8 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations);
+      // no threshold on the multipliers
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
    }
 
    template <typename BarrierProblem>

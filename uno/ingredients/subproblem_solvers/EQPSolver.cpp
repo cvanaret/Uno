@@ -32,10 +32,11 @@ namespace uno {
    }
 
    void EQPSolver::generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) {
-      compute_least_squares_multipliers(subproblem, initial_iterate, evaluations);
+      compute_least_squares_multipliers(subproblem, initial_iterate, evaluations, 1000. /* TODO add option */);
    }
 
-   void EQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations) {
+   void EQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
+         double multipliers_threshold) {
       INFO << "Computing least-squares multipliers at initial point\n";
 
       // compute least-square multipliers
@@ -82,12 +83,13 @@ namespace uno {
       // set the constraint multipliers if their norm is reasonable
       const auto least_squares_multipliers = view(linear_system.solution.data(), subproblem.number_variables,
          subproblem.number_variables + subproblem.number_constraints);
-      if (norm_inf(least_squares_multipliers) <= 1000.) {
+      if (norm_inf(least_squares_multipliers) <= multipliers_threshold) {
          iterate.multipliers.constraints = least_squares_multipliers;
          DEBUG << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
       }
       else {
          DEBUG << "Least-squares multipliers too large\n";
+         std::cout << "Least-squares multipliers too large\n";
       }
    }
 

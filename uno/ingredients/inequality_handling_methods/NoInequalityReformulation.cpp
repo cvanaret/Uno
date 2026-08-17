@@ -8,6 +8,7 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
@@ -72,7 +73,8 @@ namespace uno {
    }
 
    void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations);
+      // no threshold on the multipliers
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
    }
 
    void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
