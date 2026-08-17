@@ -71,6 +71,7 @@ jobs:
           git clone https://github.com/mdolab/pyoptsparse
           cd pyoptsparse
           git checkout main
+          sed -i 's/solver.set_logger_stream/pass #solver.set_logger_stream/' pyoptsparse/pyUno/pyUno.py
 
       - name: Install pyOptSparse (no external solvers)
         run: |
