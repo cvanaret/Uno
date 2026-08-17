@@ -248,7 +248,7 @@ namespace uno {
 
    size_t Subproblem::number_primal_inertia_correction_nonzeros() const {
       // always allocate the full block (see compute_regularized_augmented_matrix_sparsity())
-      return this->number_variables;
+      return this->get_primal_regularization_variables().size();
    }
 
    size_t Subproblem::number_dual_inertia_correction_nonzeros() const {

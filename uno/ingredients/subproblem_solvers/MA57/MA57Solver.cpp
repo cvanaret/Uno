@@ -120,7 +120,7 @@ namespace uno {
          throw std::runtime_error("MA57: the symbolic analysis failed");
       }
       if (0 < INFO(1)) {
-         WARNING << "MA57 has issued a warning: info(1) = " << INFO(1) << '\n';
+         WARNING << "MA57's symbolic analysis has issued a warning: info(1) = " << INFO(1) << '\n';
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
@@ -166,7 +166,7 @@ namespace uno {
             }
          }
          else if (INFO(1) < 0) {
-            throw std::runtime_error("MA57 fatal error");
+            throw std::runtime_error("MA57: the numerical factorization failed");
          }
          else {
             factorization_done = true;
