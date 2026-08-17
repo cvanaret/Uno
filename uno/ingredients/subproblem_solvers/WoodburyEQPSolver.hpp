@@ -55,6 +55,7 @@ namespace uno {
       const DirectQuasiNewtonHessian& hessian_model;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
+      Vector<double> hessian_buffer; // buffer used to evaluate the Hessian. Upon success, copy into the linear system
 
       void compute_low_rank_correction(const Subproblem& subproblem, Vector<double>& b) const;
       [[nodiscard]] static bool solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d);

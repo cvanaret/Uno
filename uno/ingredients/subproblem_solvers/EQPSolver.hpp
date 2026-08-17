@@ -38,6 +38,7 @@ namespace uno {
       Direction direction;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
+      Vector<double> hessian_buffer; // buffer used to evaluate the Hessian. Upon success, copy into the linear system
 
       bool SOC_initialized{false};
       Direction direction_SOC;
