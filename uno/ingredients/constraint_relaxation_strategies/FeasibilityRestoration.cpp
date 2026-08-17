@@ -94,34 +94,31 @@ namespace uno {
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-      DEBUG << "\nSwitching from optimality to restoration phase\n";
-      this->current_phase = Phase::FEASIBILITY_RESTORATION;
-      //current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
-      //DEBUG << "The current iterate is stationary for the feasibility problem\n";
-      //statistics.set("Status", "stationary");
-      //return;
-
-      this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
-
-      // save the current point (infeasibility and primals) upon switching
-      this->reference_infeasibility = current_iterate.primal_infeasibility;
-      this->reference_optimality_primals = current_iterate.primals;
-      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-
-      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-      this->initial_point.resize(this->feasibility_problem.number_variables);
-      // swap the iterate's multipliers and the feasibility multipliers maintained by the class
+      DEBUG << "Testing the termination criteria of the feasibility problem\n";
+      // initialize the feasibility multipliers and swap the iterate's multipliers and the feasibility multipliers
       if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
-         this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
-         this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+         this->other_phase_multipliers.resize(this->feasibility_problem.number_variables,
+            this->feasibility_problem.number_constraints);
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      // save the current point (infeasibility and primals) upon switching
+      this->reference_infeasibility = current_iterate.primal_infeasibility;
+      this->reference_optimality_primals = current_iterate.primals;
+      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
 
-      // approximate the multipliers based on infeasibility
-      this->feasibility_problem.approximate_multipliers(current_iterate, current_evaluations);
-      // test for termination wrt the feasibility problem
+      // compute the feasibility multipliers and test termination wrt the feasibility problem
+      //this->feasibility_problem.approximate_multipliers(current_iterate, current_evaluations);
+      if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         DEBUG << "The current iterate is an infeasible stationary point\n";
+         return;
+      }
+
+      DEBUG << "\nSwitching from optimality to restoration phase\n";
+      this->current_phase = Phase::FEASIBILITY_RESTORATION;
+      this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
+      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
+      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
@@ -131,6 +128,7 @@ namespace uno {
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      this->initial_point.resize(this->feasibility_problem.number_variables);
 
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 

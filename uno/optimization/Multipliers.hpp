@@ -21,6 +21,7 @@ namespace uno {
       Multipliers& operator=(Multipliers&& other) noexcept = default;
 
       void reset();
+      void resize(size_t number_variables, size_t number_constraints);
       [[nodiscard]] bool not_all_zero(size_t number_variables, double tolerance) const;
    };
 } // namespace
