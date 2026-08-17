@@ -91,42 +91,38 @@ namespace uno {
       return (this->current_phase == Phase::FEASIBILITY_RESTORATION);
    }
 
-   // precondition: this->current_phase == Phase::OPTIMALITY
-   void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+   bool FeasibilityRestoration::test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const {
       DEBUG << "\nTesting the termination criteria of the feasibility problem at the current iterate\n";
-      // initialize the feasibility multipliers and swap the iterate's multipliers and the feasibility multipliers
-      if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.resize(this->feasibility_problem.number_variables,
-            this->feasibility_problem.number_constraints);
-         this->first_switch_to_feasibility = false;
-      }
-      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      // save the current point (infeasibility and primals) upon switching
-      this->reference_infeasibility = current_iterate.primal_infeasibility;
-      this->reference_optimality_primals = current_iterate.primals;
-      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-
       // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
-      this->feasibility_problem.compute_multipliers(current_iterate, current_evaluations);
+      Multipliers tentative_multipliers(current_iterate.multipliers);
+      this->feasibility_problem.compute_multipliers(tentative_multipliers, current_evaluations);
       DEBUG << current_iterate << '\n';
       // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
-      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, current_iterate.multipliers,
+      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, tentative_multipliers,
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
       // TODO check that all duals are not 0
       DEBUG << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
       if (norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
-      }
-
-      if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         std::swap(tentative_multipliers, current_iterate.multipliers);
          DEBUG << "The current iterate is an infeasible stationary point\n";
-         return;
+         return true;
       }
+      return false;
+   }
 
-      DEBUG << "Switching from optimality to restoration phase\n";
+   // precondition: this->current_phase == Phase::OPTIMALITY
+   void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+      DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
+      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      // save the current point (progress and primals) upon switching
+      this->reference_infeasibility = current_iterate.primal_infeasibility;
+      this->reference_optimality_primals = current_iterate.primals;
+      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
+
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
@@ -134,6 +130,7 @@ namespace uno {
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
       this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
+      this->feasibility_problem.compute_elastics(current_iterate, current_evaluations);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
