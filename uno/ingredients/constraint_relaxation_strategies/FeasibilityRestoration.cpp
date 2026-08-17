@@ -120,6 +120,13 @@ namespace uno {
       // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
       this->feasibility_problem.compute_multipliers(current_iterate, current_evaluations);
       // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
+      Vector<double> lagrangian_gradient(this->original_problem.model.number_variables);
+      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, current_iterate.multipliers,
+         0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
+      if (norm_inf(view(lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
+         current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
+      }
+
       if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
          DEBUG << "The current iterate is an infeasible stationary point\n";
          return;
