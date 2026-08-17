@@ -94,7 +94,7 @@ namespace uno {
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-      DEBUG << "Testing the termination criteria of the feasibility problem\n";
+      DEBUG << "\nTesting the termination criteria of the feasibility problem\n";
       // initialize the feasibility multipliers and swap the iterate's multipliers and the feasibility multipliers
       if (this->first_switch_to_feasibility) {
          this->other_phase_multipliers.resize(this->feasibility_problem.number_variables,
@@ -107,14 +107,15 @@ namespace uno {
       this->reference_optimality_primals = current_iterate.primals;
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
 
-      // compute the feasibility multipliers and test termination wrt the feasibility problem
-      //this->feasibility_problem.approximate_multipliers(current_iterate, current_evaluations);
+      // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
+      this->feasibility_problem.compute_multipliers(current_iterate, current_evaluations);
+      // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
       if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
          DEBUG << "The current iterate is an infeasible stationary point\n";
          return;
       }
 
-      DEBUG << "\nSwitching from optimality to restoration phase\n";
+      DEBUG << "Switching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
