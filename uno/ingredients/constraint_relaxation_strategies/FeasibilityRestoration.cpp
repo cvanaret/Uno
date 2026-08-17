@@ -114,6 +114,7 @@ namespace uno {
       this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, current_iterate.multipliers,
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
       // TODO check that all duals are not 0
+      DEBUG << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
       if (norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
       }
