@@ -18,7 +18,7 @@ namespace uno {
       // try to evaluate the Hessian. Upon failure, keep the previous one
       try {
          subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_buffer.view());
-         // success: copy the new Hessian into the linear system
+         // success: copy the new Hessian into the Hessian values
          hessian_values = this->hessian_buffer;
       }
       catch (const HessianEvaluationError&) {
