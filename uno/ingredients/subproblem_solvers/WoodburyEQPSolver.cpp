@@ -47,7 +47,7 @@ namespace uno {
 
       // set up the linear system
       const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+      const size_t number_primal_inertia_correction_nonzeros = subproblem.number_variables; // full block
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
       View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
@@ -110,7 +110,7 @@ namespace uno {
       if (warmstart_information.new_iterate) {
          // assemble the augmented matrix with only the diagonal part of the quasi-Newton Hessian
          const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-         const size_t number_primal_inertia_correction_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+         const size_t number_primal_inertia_correction_nonzeros = subproblem.number_variables; // full block
          const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
          const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
          View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
