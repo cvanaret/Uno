@@ -191,9 +191,11 @@ namespace uno {
    }
 
    void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
-         Evaluations& trial_evaluations) {
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       DEBUG << "Switching from restoration back to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
+      this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
       this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
 
       // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
@@ -234,7 +236,7 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
             trial_iterate, direction, step_length, current_evaluations)) {
-         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, trial_evaluations);
+         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
       }
