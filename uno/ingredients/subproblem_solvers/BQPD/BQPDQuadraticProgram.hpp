@@ -9,6 +9,7 @@
 #include "ingredients/subproblem_solvers/QuadraticProgram.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/HessianBuffer.hpp"
 
 namespace uno {
    // forward declarations
@@ -74,7 +75,8 @@ namespace uno {
       // COO Hessian
       Vector<uno_int> hessian_row_indices{};
       Vector<uno_int> hessian_column_indices{};
-      Vector<double> hessian_values{};
+      Vector<double> hessian_values{}; // workspace
+      HessianBuffer hessian_buffer{}; // buffer used to evaluate the Hessian
       bool hessian_evaluation_required{false};
       mutable Vector<double> hessian_vector_product{};
 

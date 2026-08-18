@@ -129,6 +129,7 @@ namespace uno {
       this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_values.resize(number_regularized_hessian_nonzeros);
+      this->hessian_buffer.initialize(number_regularized_hessian_nonzeros);
       subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
          this->hessian_column_indices.data(), Indexing::C_indexing);
       // convert COO -> HiGHS' lower-triangular CSC layout
@@ -189,9 +190,8 @@ namespace uno {
          subproblem.problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
          this->evaluate_jacobian(subproblem.problem, current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
-         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
-         // copy the Hessian with permutation into this->model.hessian_.value_
-         this->scatter_hessian_values();
+         this->hessian_buffer.evaluate_hessian(statistics, subproblem, current_iterate, this->hessian_values.view());
+         this->scatter_hessian_values(); // copy the Hessian with permutation into this->model.hessian_.value_
          View hessian(this->model.hessian_.value_.data(), subproblem.number_regularized_hessian_nonzeros());
          subproblem.regularize_lagrangian_hessian(statistics, hessian);
       }

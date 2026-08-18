@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cassert>
+#include <csetjmp>
 #include <stdexcept>
 #include "AMPLModel.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -13,7 +14,7 @@
 #include "Uno.hpp"
 
 namespace uno {
-   ASL* generate_asl(const std::string &file_name) {
+   ASL* generate_asl(const std::string& file_name) {
       ASL* asl = ASL_alloc(ASL_read_pfgh);
       if (asl == nullptr) {
          throw std::runtime_error("The ASL could not be allocated");
@@ -212,9 +213,18 @@ namespace uno {
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
          View<double> hessian_values) const {
-      objective_multiplier *= this->optimization_sense;
-      this->asl->p.Sphes(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier, const_cast<double*>(multipliers.data()));
-      ++this->number_model_evaluations.hessian;
+      Jmp_buf b, *save = this->asl->i.err_jmp_;
+      this->asl->i.err_jmp_ = &b;
+      const bool failed = (setjmp(b.jb) != 0);
+      if (!failed) {
+         objective_multiplier *= this->optimization_sense;
+         this->asl->p.Sphes(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier, const_cast<double*>(multipliers.data()));
+         ++this->number_model_evaluations.hessian;
+      }
+      this->asl->i.err_jmp_ = save;      // restore, always
+      if (failed) {
+         throw HessianEvaluationError();
+      }
    }
 
    void AMPLModel::compute_jacobian_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
