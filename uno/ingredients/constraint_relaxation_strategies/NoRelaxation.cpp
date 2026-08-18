@@ -69,6 +69,10 @@ namespace uno {
       return false;
    }
 
+   bool NoRelaxation::test_infeasible_stationarity(Iterate& /*current_iterate*/, Evaluations& /*current_evaluations*/) const {
+      throw std::runtime_error("NoRelaxation::test_infeasible_stationarity should not be called");
+   }
+
    void NoRelaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
          Evaluations& /*current_evaluations*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("Switching to the feasibility problem should not happen");

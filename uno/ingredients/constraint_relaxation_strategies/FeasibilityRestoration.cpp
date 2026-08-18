@@ -77,14 +77,17 @@ namespace uno {
          const Direction& optimality_direction = this->solve_subproblem(statistics, *this->inequality_handling_method,
             *this->globalization_strategy, current_iterate, trust_region_radius, current_evaluations, warmstart_information);
          if (optimality_direction.status == SubproblemStatus::INFEASIBLE) {
-            // switch to the feasibility problem, starting from the current direction
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
-            this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
-            const bool is_stationary_infeasible = test_infeasible_stationarity(current_iterate, current_evaluations);
-            if (is_stationary_infeasible) {
-               throw std::runtime_error("We should end here with an infeasible stationary point\n");
+
+            // test if we can terminate with a stationary infeasible point
+            if (test_infeasible_stationarity(current_iterate, current_evaluations)) {
+               DEBUG << "We should end here with an infeasible stationary point\n";
+               // TODO
             }
+
+            // otherwise, switch to the feasibility problem, starting from the current direction
+            this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
             this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
          }
          else {

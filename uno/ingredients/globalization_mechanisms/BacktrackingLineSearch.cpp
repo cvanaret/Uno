@@ -66,18 +66,15 @@ namespace uno {
          throw std::runtime_error("The line search failed");
       }
 
-      // TODO call test_infeasible_stationarity
-
-      // switch to solving the feasibility problem
-      this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
-         evaluation_cache.current_evaluations, warmstart_information);
-      // first check if the current iterate is an infeasible stationary point
-      if (current_iterate.status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+      // test if we can terminate with a stationary infeasible point
+      if (this->constraint_relaxation_strategy->test_infeasible_stationarity(current_iterate, evaluation_cache.current_evaluations)) {
          std::swap(current_iterate, trial_iterate);
          return;
       }
 
-      // otherwise, carry one with solving the feasibility problem
+      // otherwise, switch to solving the feasibility problem
+      this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+         evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
       const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
