@@ -8,6 +8,7 @@
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Sum.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -346,6 +347,21 @@ namespace uno {
       }
    }
 
+   // progress measures
+
+   void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& /*evaluations*/, Norm /*norm*/) const {
+      iterate.progress.infeasibility = 0.;
+   }
+
+   void l1RelaxedProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      const double scaled_constraint_violation = this->constraint_violation_coefficient *
+         this->model.constraint_violation(evaluations.constraints, Norm::L1);
+      iterate.progress.objective = [=](double /*objective_multiplier*/) {
+         return scaled_constraint_violation;
+      };
+   }
+
    void l1RelaxedProblem::set_auxiliary_measure(Iterate& iterate) const {
       iterate.progress.auxiliary = 0.;
       // form the proximal term: zeta/2 ||D_R (x - x_R)||^2
@@ -359,6 +375,33 @@ namespace uno {
          proximal_term *= (this->proximal_coefficient / 2.);
          iterate.progress.auxiliary = proximal_term;
       }
+   }
+
+   // predicted reductions
+
+   double l1RelaxedProblem::compute_predicted_infeasibility_reduction(const Iterate& /*current_iterate*/,
+         const Vector<double>& /*primal_direction*/, double /*step_length*/, Norm /*norm*/, Evaluations& /*current_evaluations*/) const {
+      return 0.;
+   }
+
+   std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
+         double /*hessian_quadratic_form*/) const {
+      // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+      current_evaluations.evaluate_constraints(this->model, current_iterate.primals);
+      current_evaluations.evaluate_jacobian(this->model, current_iterate.primals);
+
+      const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, Norm::L1);
+      // TODO preallocate
+      Vector<double> result(this->model.number_constraints);
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.data(), result.data());
+      const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
+         step_length * result, Norm::L1);
+      const double predicted_reduction = this->constraint_violation_coefficient * (current_constraint_violation -
+         trial_linearized_constraint_violation);
+      return [=](double /*objective_multiplier*/) {
+         return predicted_reduction;
+      };
    }
 
    double l1RelaxedProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,

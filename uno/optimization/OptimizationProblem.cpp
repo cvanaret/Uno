@@ -4,12 +4,11 @@
 #include "OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "linear_algebra/MatrixOrder.hpp"
-#include "linear_algebra/View.hpp"
-#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Sum.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 
@@ -258,7 +257,8 @@ namespace uno {
       return SolutionStatus::NOT_OPTIMAL;
    }
 
-   // infeasibility measure: constraint violation
+   // progress measures
+
    void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
       iterate.progress.infeasibility = this->model.constraint_violation(evaluations.constraints, norm);
@@ -275,6 +275,34 @@ namespace uno {
 
    void OptimizationProblem::set_auxiliary_measure(Iterate& iterate) const {
       iterate.progress.auxiliary = 0.;
+   }
+
+   // predicted reductions
+
+   double OptimizationProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
+      // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+      current_evaluations.evaluate_constraints(this->model, current_iterate.primals);
+      current_evaluations.evaluate_jacobian(this->model, current_iterate.primals);
+
+      const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
+      // TODO preallocate
+      Vector<double> result(this->model.number_constraints);
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.data(), result.data());
+      const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
+         step_length * result, norm);
+      return current_constraint_violation - trial_linearized_constraint_violation;
+   }
+
+   std::function<double(double)> OptimizationProblem::compute_predicted_objective_reduction(const Iterate& /*current_iterate*/,
+         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
+         double hessian_quadratic_form) const {
+      // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
+      const double directional_derivative = dot(view(primal_direction, 0, this->model.number_variables),
+         current_evaluations.objective_gradient);
+      return [=](double objective_multiplier) {
+         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * hessian_quadratic_form;
+      };
    }
 
    double OptimizationProblem::compute_predicted_auxiliary_reduction(const Iterate& /*current_iterate*/,

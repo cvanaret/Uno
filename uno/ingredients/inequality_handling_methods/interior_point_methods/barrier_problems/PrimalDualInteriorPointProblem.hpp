@@ -71,7 +71,16 @@ namespace uno {
       void postprocess_iterate(Iterate& iterate) const override;
 
       // progress measures
+      void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const override;
+      void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const override;
       void set_auxiliary_measure(Iterate& iterate) const override;
+
+      // predicted reductions
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const override;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
+         double hessian_quadratic_form) const override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
 

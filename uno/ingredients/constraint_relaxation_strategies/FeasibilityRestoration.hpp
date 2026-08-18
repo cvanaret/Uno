@@ -71,7 +71,8 @@ namespace uno {
       Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
-      void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, Evaluations& trial_evaluations);
+      void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, Evaluations& current_evaluations,
+         Evaluations& trial_evaluations);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
          const Direction& direction, double step_length, Evaluations& current_evaluations) const;
