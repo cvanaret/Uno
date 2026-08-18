@@ -41,7 +41,7 @@ namespace uno {
 
    void WoodburyEQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate,
          Evaluations& evaluations, double multipliers_threshold) {
-      INFO << "Computing least-squares multipliers at initial point\n";
+      DEBUG << "Computing least-squares multipliers\n";
 
       // compute least-square multipliers
       auto& linear_system = this->linear_solver->get_linear_system();
@@ -81,7 +81,7 @@ namespace uno {
       }
 
       // solve the linear system
-      DEBUG << "KKT matrix values: " << linear_system.matrix_values << '\n';
+      DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << '\n';
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
 
       // set the constraint multipliers if their norm is reasonable
@@ -139,7 +139,7 @@ namespace uno {
 
       // solve the linear system with only the diagonal part and store the result in solution_diagonal_part
       Vector<double> solution_diagonal_part(subproblem.number_variables + subproblem.number_constraints);
-      DEBUG << "KKT matrix values: " << linear_system.matrix_values << '\n';
+      DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << '\n';
       this->linear_solver->solve_indefinite_system(solution_diagonal_part.data());
       if (this->linear_solver->matrix_is_singular()) {
          this->direction.status = SubproblemStatus::INFEASIBLE;

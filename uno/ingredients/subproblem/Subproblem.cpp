@@ -264,44 +264,14 @@ namespace uno {
       return this->problem.dual_regularization_factor();
    }
 
-   // local models of progress measures
-   double Subproblem::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
-      // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      current_evaluations.evaluate_constraints(model, current_iterate.primals);
-      current_evaluations.evaluate_jacobian(model, current_iterate.primals);
-
-      const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
-      // TODO preallocate
-      Vector<double> result(model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(model, primal_direction.data(), result.data());
-      const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
-         step_length * result, norm);
-      return current_constraint_violation - trial_linearized_constraint_violation;
-   }
-
-   std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, const Evaluations& current_evaluations,
-         const SolverWorkspace& solver_workspace) const {
-      // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-      const double directional_derivative = dot(view(primal_direction, 0, this->problem.model.number_variables), current_evaluations.objective_gradient);
-      // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
-      // predicted reduction with only first-order information (the directional derivative)
-      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() || this->performs_primal_regularization();
-      const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
-         solver_workspace.compute_hessian_quadratic_form(*this, current_iterate, primal_direction);
-      return [=](double objective_multiplier) {
-         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
-      };
-   }
+   // predicted reductions
 
    ProgressMeasures Subproblem::compute_predicted_reductions(const Iterate& current_iterate, const Direction& direction,
          double step_length, Norm norm, Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       return {
-         this->compute_predicted_infeasibility_reduction(this->problem.model, current_iterate, direction.primals, step_length,
-            norm, current_evaluations),
-         this->compute_predicted_objective_reduction(current_iterate, direction.primals, step_length, current_evaluations,
-            solver_workspace),
+         this->problem.compute_predicted_infeasibility_reduction(current_iterate, direction.primals, step_length, norm, current_evaluations),
+         this->problem.compute_predicted_objective_reduction(current_iterate, direction.primals, step_length, current_evaluations,
+            solver_workspace.compute_hessian_quadratic_form(*this, current_iterate, direction.primals)),
          this->problem.compute_predicted_auxiliary_reduction(current_iterate, direction.primals, step_length)
       };
    }

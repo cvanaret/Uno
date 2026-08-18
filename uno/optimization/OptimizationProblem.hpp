@@ -4,6 +4,7 @@
 #ifndef UNO_OPTIMIZATIONPROBLEM_H
 #define UNO_OPTIMIZATIONPROBLEM_H
 
+#include <functional>
 #include <memory>
 #include <vector>
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
@@ -103,6 +104,13 @@ namespace uno {
       virtual void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const;
       virtual void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const;
       virtual void set_auxiliary_measure(Iterate& iterate) const;
+
+      // predicted reductions
+      [[nodiscard]] virtual double compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const;
+      [[nodiscard]] virtual std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
+         double hessian_quadratic_form) const;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;
 

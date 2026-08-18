@@ -496,14 +496,22 @@ namespace uno {
       }
    }
 
+   void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
+      this->inner.set_infeasibility_measure(iterate, evaluations, norm);
+   }
+
+   void PrimalDualInteriorPointProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
+      this->inner.set_objective_measure(iterate, evaluations);
+   }
+
    void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
+      // start with the auxiliary measure of the initial problem
+      this->inner.set_auxiliary_measure(iterate);
+
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       if (is_infinite(barrier_parameter)) {
          throw std::runtime_error("Barrier parameter is infinite");
       }
-
-      // start with the auxiliary measure of the initial problem
-      this->inner.set_auxiliary_measure(iterate);
 
       // add the contribution of the barrier terms
       double barrier_terms = 0.;
@@ -529,6 +537,21 @@ namespace uno {
          throw std::runtime_error("The auxiliary measure is not an number.");
       }
       iterate.progress.auxiliary += barrier_terms;
+   }
+
+   // predicted reductions
+
+   double PrimalDualInteriorPointProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
+      return this->inner.compute_predicted_infeasibility_reduction(current_iterate, primal_direction, step_length, norm,
+         current_evaluations);
+   }
+
+   std::function<double(double)> PrimalDualInteriorPointProblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
+         double hessian_quadratic_form) const {
+      return this->inner.compute_predicted_objective_reduction(current_iterate, primal_direction, step_length,
+         current_evaluations, hessian_quadratic_form);
    }
 
    double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
