@@ -115,7 +115,6 @@ namespace uno {
       // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
       Multipliers tentative_multipliers(current_iterate.multipliers);
       this->feasibility_problem.compute_multipliers(tentative_multipliers, current_evaluations);
-      DEBUG << current_iterate << '\n';
       // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
       this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, tentative_multipliers,
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
@@ -124,6 +123,7 @@ namespace uno {
       if (norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
          std::swap(tentative_multipliers, current_iterate.multipliers);
+         DEBUG << current_iterate << '\n';
          DEBUG << "The current iterate is an infeasible stationary point\n";
          return true;
       }
@@ -133,7 +133,7 @@ namespace uno {
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-      DEBUG << "Switching from optimality to restoration phase\n";
+      DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
       // initialize the feasibility multipliers and swap the iterate's multipliers and the feasibility multipliers
