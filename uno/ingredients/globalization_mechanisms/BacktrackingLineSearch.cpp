@@ -164,6 +164,7 @@ namespace uno {
             else {
                // switch to solving the feasibility problem
                statistics.set("Status", "small step length");
+               evaluation_cache.trial_evaluations.reset();
                return false;
             }
          }
