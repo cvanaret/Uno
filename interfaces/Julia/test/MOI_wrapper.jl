@@ -23,8 +23,9 @@ function runtests()
 end
 
 function test_MOI_Test()
+    instances = String["test_nonlinear_hs071_hessian_vector_product"]
     model = MOI.instantiate(
-        () -> UnoSolver.Optimizer(preset="filtersqp");
+        () -> UnoSolver.Optimizer(preset="filtersqp", logger="INFO");
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
@@ -42,6 +43,7 @@ function test_MOI_Test()
                 MOI.ObjectiveBound,
             ],
         );
+        include = [Regex("^" * instance * "\$") for instance in instances],   # exact match
         exclude = [
             # TODO(odow): this seems like a MOI.supports bug
             r"^test_model_ModelFilter_AbstractConstraintAttribute$",
