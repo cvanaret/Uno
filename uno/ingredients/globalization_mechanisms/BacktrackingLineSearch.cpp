@@ -223,7 +223,6 @@ namespace uno {
             if (is_acceptable) {
                // terminate the SOCs and the backtracking
                SOC_termination = true;
-               direction = direction_SOC;
                DEBUG << "SOC direction acceptable " << '\n';
             }
             else if (SOC_iteration >= this->SOC_max_iterations ||
