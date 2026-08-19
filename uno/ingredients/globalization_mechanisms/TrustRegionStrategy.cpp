@@ -38,8 +38,8 @@ namespace uno {
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Radius", Statistics::double_width, 2);
       statistics.set("Radius", this->radius);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
-      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
+      set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
+      set_dual_residuals_statistics(statistics, current_iterate);
    }
 
    void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -59,9 +59,10 @@ namespace uno {
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics,
+            const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics,
                current_iterate, this->radius, evaluation_cache.current_evaluations, warmstart_information);
             statistics.set("||Step||", direction.norm);
+            warmstart_information.no_changes();
 
             // deal with errors in the subproblem
             if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
@@ -82,15 +83,15 @@ namespace uno {
             }
             else {
                // take full primal-dual step
-               GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
-                  direction.primal_dual_step_length, direction.primal_dual_step_length, direction.bound_dual_step_length);
+               assemble_trial_iterate(model, current_iterate, trial_iterate, direction, direction.primal_dual_step_length,
+                  direction.primal_dual_step_length, direction.bound_dual_step_length);
                this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
                is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
                   evaluation_cache, warmstart_information, user_callbacks);
-               GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+               set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                if (is_acceptable) {
-                  GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
+                  set_dual_residuals_statistics(statistics, trial_iterate);
                   termination = true;
                }
                else {
@@ -146,7 +147,7 @@ namespace uno {
       bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
          warmstart_information, user_callbacks);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+      set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
       if (accept_iterate) {
          // possibly increase the radius if trust region is active
          this->possibly_increase_radius(direction.norm);

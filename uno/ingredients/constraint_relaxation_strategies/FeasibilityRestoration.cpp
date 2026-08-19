@@ -66,44 +66,24 @@ namespace uno {
       statistics.set("Phase", "OPT");
    }
 
-   const Direction& FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-
-      // if we are in the optimality phase, solve the optimality problem
+      // solve the current problem (OPTIMALITY or FEASIBILITY_RESTORATION)
       if (this->current_phase == Phase::OPTIMALITY) {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
          this->initial_point.fill(0.);
-         const Direction& optimality_direction = this->solve_subproblem(statistics, *this->inequality_handling_method,
-            *this->globalization_strategy, current_iterate, trust_region_radius, current_evaluations, warmstart_information);
-         if (optimality_direction.status == SubproblemStatus::INFEASIBLE) {
-            statistics.set("Status", std::string("infeasible"));
-            DEBUG << "/!\\ The subproblem is infeasible\n";
-
-            // test if we can terminate with a stationary infeasible point
-            if (test_infeasible_stationarity(current_iterate, current_evaluations)) {
-               DEBUG << "We should end here with an infeasible stationary point\n";
-               // TODO
-            }
-
-            // otherwise, switch to the feasibility problem, starting from the current direction
-            this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
-            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
-         }
-         else {
-            warmstart_information.no_changes();
-            return optimality_direction;
-         }
+         return this->solve_subproblem(statistics, *this->inequality_handling_method, *this->globalization_strategy,
+            current_iterate, trust_region_radius, current_evaluations, warmstart_information);
       }
-
-      // solve the feasibility problem (minimize the constraint violation)
-      DEBUG << "Solving the feasibility subproblem\n";
-      statistics.set("Phase", "FEAS");
-      // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-      const Direction& feasibility_direction = this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
-         this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
-         warmstart_information);
-      return feasibility_direction;
+      else {
+         // solve the feasibility problem (minimize the constraint violation)
+         DEBUG << "Solving the feasibility subproblem\n";
+         statistics.set("Phase", "FEAS");
+         return this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
+            this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
+            warmstart_information);
+      }
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -159,7 +139,7 @@ namespace uno {
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->initial_point.resize(this->feasibility_problem.number_variables);
 
-      DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
+      DEBUG2 << "Current iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();
