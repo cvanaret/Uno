@@ -1,6 +1,7 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "ExactHessian.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -13,11 +14,13 @@ namespace uno {
 
    void HessianBuffer::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, View<double> hessian_values) {
+      assert(hessian_values.size() >= this->hessian_buffer.size());
+
       // try to evaluate the Hessian. Upon failure, keep the previous one
       try {
          model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian_buffer.view());
          // success: copy the new Hessian into the Hessian values
-         hessian_values = this->hessian_buffer;
+         view(hessian_values, 0, this->hessian_buffer.size()) = this->hessian_buffer;
       }
       catch (const HessianEvaluationError&) {
          if (this->first_evaluation) {
