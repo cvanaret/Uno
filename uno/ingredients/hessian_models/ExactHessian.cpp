@@ -13,8 +13,6 @@ namespace uno {
 
    void HessianBuffer::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, View<double> hessian_values) {
-      assert(this->hessian_buffer.size() == hessian_values.size());
-
       // try to evaluate the Hessian. Upon failure, keep the previous one
       try {
          model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian_buffer.view());
@@ -23,8 +21,8 @@ namespace uno {
       }
       catch (const HessianEvaluationError&) {
          if (this->first_evaluation) {
-            hessian_values.fill(1.);
-            DEBUG << "The initial Hessian could not be evaluated, using the identity\n";
+            hessian_values.fill(0.);
+            DEBUG << "The initial Hessian could not be evaluated, using a zero matrix\n";
          }
          else {
             // keep the existing Hessian
@@ -36,7 +34,7 @@ namespace uno {
 
    // exact Hessian
 
-   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model) {
+   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model), hessian_buffer(model) {
    }
 
    bool ExactHessian::has_hessian_operator() const {
@@ -73,7 +71,9 @@ namespace uno {
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, View<double> hessian_values) {
-      this->model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);
+      // try to evaluate the Hessian. Upon failure, keep the previous one
+      this->hessian_buffer.evaluate_hessian(this->model, primal_variables, objective_multiplier, constraint_multipliers,
+         hessian_values);
       ++this->evaluation_count;
    }
 

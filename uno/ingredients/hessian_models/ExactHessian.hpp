@@ -46,7 +46,7 @@ namespace uno {
 
    protected:
       const Model& model;
-      //HessianBuffer hessian_buffer;
+      HessianBuffer hessian_buffer;
    };
 } // namespace
 
