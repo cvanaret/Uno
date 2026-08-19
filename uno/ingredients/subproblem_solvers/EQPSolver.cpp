@@ -25,7 +25,6 @@ namespace uno {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
       this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
-      this->hessian_buffer.initialize(subproblem.number_hessian_nonzeros());
       // access the linear system of the linear solver
       auto& linear_system = this->linear_solver->get_linear_system();
       linear_system.initialize_augmented_system(subproblem);
@@ -116,8 +115,7 @@ namespace uno {
          View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
          View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
 
-         // try to evaluate the Hessian. Upon failure, keep the previous one
-         this->hessian_buffer.evaluate_hessian(statistics, subproblem, current_iterate, hessian);
+         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, hessian);
          subproblem.evaluate_jacobian(current_iterate, jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all

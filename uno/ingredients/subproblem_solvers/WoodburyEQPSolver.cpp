@@ -27,7 +27,6 @@ namespace uno {
 
    void WoodburyEQPSolver::initialize_memory(const Subproblem& subproblem) {
       this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
-      this->hessian_buffer.initialize(subproblem.number_hessian_nonzeros());
       // access the linear system of the linear solver
       auto& linear_system = this->linear_solver->get_linear_system();
       linear_system.initialize_augmented_system(subproblem);
@@ -119,7 +118,7 @@ namespace uno {
          View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
          View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
 
-         this->hessian_buffer.evaluate_hessian(statistics, subproblem, current_iterate, hessian);
+         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, hessian);
          subproblem.evaluate_jacobian(current_iterate, jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all

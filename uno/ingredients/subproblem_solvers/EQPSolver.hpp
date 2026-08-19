@@ -7,7 +7,6 @@
 #include <memory>
 #include "SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/HessianBuffer.hpp"
 
 namespace uno {
    // forward declarations
@@ -39,7 +38,6 @@ namespace uno {
       Direction direction;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
-      HessianBuffer hessian_buffer; // buffer used to evaluate the Hessian
 
       bool SOC_initialized{false};
       Direction direction_SOC;
