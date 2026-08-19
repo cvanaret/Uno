@@ -25,7 +25,7 @@ namespace uno {
       DEBUG << "The box LP solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
-   Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
+   const Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {
@@ -63,6 +63,7 @@ namespace uno {
          }
          this->direction.subproblem_objective += this->workspace.objective_gradient[variable_index] * this->direction.primals[variable_index];
       }
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       return this->direction;
    }
 

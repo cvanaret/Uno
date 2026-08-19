@@ -27,9 +27,9 @@ namespace uno {
       virtual void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) = 0;
 
-      [[nodiscard]] virtual Direction& solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
-         double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information) = 0;
+      [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Subproblem& subproblem,
+         const Iterate& current_iterate, double trust_region_radius, const Vector<double>& initial_point,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       virtual const Direction& compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate,

@@ -31,7 +31,7 @@ namespace uno {
       DEBUG << "The EQP solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
-   Direction& IQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+   const Direction& IQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       this->direction.reset();
@@ -44,6 +44,7 @@ namespace uno {
 
       // compute the dual direction
       compute_dual_direction(subproblem, current_iterate, this->direction.multipliers);
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       return this->direction;
    }
 

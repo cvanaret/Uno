@@ -24,7 +24,7 @@ namespace uno {
       void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) override;
 
-      [[nodiscard]] Direction& solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+      [[nodiscard]] const Direction& solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) override;
 

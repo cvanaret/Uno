@@ -59,8 +59,8 @@ namespace uno {
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
-               this->radius, evaluation_cache.current_evaluations, warmstart_information);
+            const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics,
+               current_iterate, this->radius, evaluation_cache.current_evaluations, warmstart_information);
             statistics.set("||Step||", direction.norm);
 
             // deal with errors in the subproblem
