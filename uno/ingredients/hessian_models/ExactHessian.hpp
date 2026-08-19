@@ -5,10 +5,24 @@
 #define UNO_EXACTHESSIAN_H
 
 #include "HessianModel.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declaration
    class Model;
+
+   class HessianBuffer {
+   public:
+      HessianBuffer(const Model& model);
+      ~HessianBuffer() = default;
+
+      void evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> hessian_values);
+
+   protected:
+      Vector<double> hessian_buffer;
+      bool first_evaluation{true};
+   };
 
    class ExactHessian : public HessianModel {
    public:
@@ -32,6 +46,7 @@ namespace uno {
 
    protected:
       const Model& model;
+      HessianBuffer hessian_buffer;
    };
 } // namespace
 

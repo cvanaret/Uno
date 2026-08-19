@@ -3,9 +3,40 @@
 
 #include "ExactHessian.hpp"
 #include "model/Model.hpp"
+#include "optimization/EvaluationErrors.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
-   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model) {
+   // Hessian buffer
+   HessianBuffer::HessianBuffer(const Model& model): hessian_buffer(model.number_hessian_nonzeros()) {
+   }
+
+   void HessianBuffer::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> hessian_values) {
+      assert(this->hessian_buffer.size() == hessian_values.size());
+
+      // try to evaluate the Hessian. Upon failure, keep the previous one
+      try {
+         model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian_buffer.view());
+         // success: copy the new Hessian into the Hessian values
+         hessian_values = this->hessian_buffer;
+      }
+      catch (const HessianEvaluationError&) {
+         if (this->first_evaluation) {
+            hessian_values.fill(1.);
+            DEBUG << "The initial Hessian could not be evaluated, using the identity\n";
+         }
+         else {
+            // keep the existing Hessian
+            DEBUG << "The Hessian could not be evaluated, using the previous one\n";
+         }
+      }
+      this->first_evaluation = false;
+   }
+
+   // exact Hessian
+
+   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model), hessian_buffer(model) {
    }
 
    bool ExactHessian::has_hessian_operator() const {

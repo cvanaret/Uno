@@ -64,7 +64,6 @@ namespace uno {
          this->hessian_row_indices.resize(number_hessian_nonzeros);
          this->hessian_column_indices.resize(number_hessian_nonzeros);
          this->hessian_values.resize(number_hessian_nonzeros);
-         this->hessian_buffer.initialize(number_hessian_nonzeros);
       }
    }
 
@@ -102,7 +101,7 @@ namespace uno {
          }
          // evaluate + regularize the explicit Hessian once per iterate
          if (this->hessian_evaluation_required) {
-            this->hessian_buffer.evaluate_hessian(statistics, subproblem, current_iterate, this->hessian_values.view());
+            subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
             subproblem.regularize_lagrangian_hessian(statistics, this->hessian_values.view());
             this->hessian_evaluation_required = false;
          }
