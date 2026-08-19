@@ -138,5 +138,6 @@ jobs:
         using Pkg
         Pkg.instantiate()
         Pkg.develop(path=joinpath("${{env.STAGING_ROOT}}", "${{github.run_id}}", "Uno_jll.jl"))
+        Pkg.add(Pkg.PackageSpec(name="MathOptInterface", rev="bl/model_with_quad"))
         push!(ARGS, "${{ matrix.HSL_SOLVER }}")
         include("${{ github.workspace }}/.github/julia/runtests_${{matrix.UNO_TEST}}.jl")
