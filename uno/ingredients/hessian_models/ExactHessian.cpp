@@ -36,7 +36,7 @@ namespace uno {
 
    // exact Hessian
 
-   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model), hessian_buffer(model) {
+   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model) {
    }
 
    bool ExactHessian::has_hessian_operator() const {
