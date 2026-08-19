@@ -39,11 +39,11 @@ namespace uno {
       void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) const;
       [[nodiscard]] bool backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks);
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       [[nodiscard]] static bool is_tiny_direction(const Iterate& current_iterate, const Direction& direction);
       [[nodiscard]] bool compute_second_order_directions(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);

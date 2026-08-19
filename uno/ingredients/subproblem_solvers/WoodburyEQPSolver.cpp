@@ -95,7 +95,7 @@ namespace uno {
       }
    }
 
-   Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+   const Direction& WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
@@ -150,6 +150,7 @@ namespace uno {
          // assemble the full primal-dual direction
          subproblem.assemble_primal_dual_direction(current_iterate, solution_diagonal_part, this->direction);
       }
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       return this->direction;
    }
 

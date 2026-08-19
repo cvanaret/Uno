@@ -30,7 +30,7 @@ namespace uno {
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
-      [[nodiscard]] Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
+      [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
@@ -131,13 +131,11 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   Direction& InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, const Iterate& current_iterate,
+   const Direction& InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
-      Direction& direction = this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius,
+      return this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius,
          initial_point, current_evaluations, warmstart_information);
-      direction.norm = norm_inf(view(direction.primals, 0, this->barrier_problem.get_number_original_variables()));
-      return direction;
    }
 
    template <typename BarrierProblem>

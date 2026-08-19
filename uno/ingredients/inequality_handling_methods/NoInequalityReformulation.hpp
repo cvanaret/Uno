@@ -26,7 +26,7 @@ namespace uno {
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
-      [[nodiscard]] Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
+      [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;

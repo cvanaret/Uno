@@ -30,7 +30,7 @@ namespace uno {
          EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
-      Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+      const Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
@@ -68,7 +68,7 @@ namespace uno {
       Vector<double> reference_optimality_primals{};
       bool first_switch_to_feasibility{true};
 
-      Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+      const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, Evaluations& current_evaluations,

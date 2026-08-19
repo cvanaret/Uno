@@ -64,7 +64,7 @@ namespace uno {
       statistics.set("Phase", "OPT");
    }
 
-   Direction& FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   const Direction& FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
 
       // if we are in the optimality phase, solve the optimality problem
@@ -72,7 +72,7 @@ namespace uno {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
          this->initial_point.fill(0.);
-         Direction& optimality_direction = this->solve_subproblem(statistics, *this->inequality_handling_method,
+         const Direction& optimality_direction = this->solve_subproblem(statistics, *this->inequality_handling_method,
             *this->globalization_strategy, current_iterate, trust_region_radius, current_evaluations, warmstart_information);
          if (optimality_direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
@@ -91,7 +91,7 @@ namespace uno {
       DEBUG << "Solving the feasibility subproblem\n";
       statistics.set("Phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-      Direction& feasibility_direction = this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
+      const Direction& feasibility_direction = this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
          this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
          warmstart_information);
       return feasibility_direction;
@@ -155,7 +155,7 @@ namespace uno {
       }
    }
 
-   Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+   const Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
@@ -164,8 +164,8 @@ namespace uno {
          inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
       }
 
-      Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius, this->initial_point,
-         current_evaluations, warmstart_information);
+      const Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius,
+         this->initial_point, current_evaluations, warmstart_information);
       ++this->number_subproblems_solved;
       this->initial_point.fill(0.);
       DEBUG3 << direction << '\n';

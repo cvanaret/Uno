@@ -45,7 +45,7 @@ namespace uno {
 
       // compute a feasible direction
       try {
-         Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
+         const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
             INF<double>, evaluation_cache.current_evaluations, warmstart_information);
          BacktrackingLineSearch::check_unboundedness(direction);
          const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
@@ -70,8 +70,8 @@ namespace uno {
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
-      Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
-         INF<double>, evaluation_cache.current_evaluations, warmstart_information);
+      const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics,
+         current_iterate, INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
@@ -100,8 +100,8 @@ namespace uno {
    // go a fraction along the direction by finding an acceptable step length
    // returns true upon success, false upon failure
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) {
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -191,7 +191,7 @@ namespace uno {
    }
 
    bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,
-         Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       // enter second-order corrections
       DEBUG << "\nEntering second-order corrections\n";

@@ -30,7 +30,7 @@ namespace uno {
       DEBUG << "The inverse Newton solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
-   Direction& InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
+   const Direction& InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
          [[maybe_unused]] double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       assert(is_infinite(trust_region_radius));
@@ -43,6 +43,7 @@ namespace uno {
       // compute the Newton step d = -H⁻¹ g
       this->hessian_model.compute_inverse_hessian_vector_product(current_iterate.primals.data(),
          this->rhs.data(), this->direction.primals.data());
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       return this->direction;
    }
 
