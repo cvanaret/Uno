@@ -9,7 +9,8 @@
 
 namespace uno {
    // Hessian buffer
-   HessianBuffer::HessianBuffer(const Model& model): hessian_buffer(model.number_hessian_nonzeros()) {
+   HessianBuffer::HessianBuffer(const Model& model):
+         hessian_buffer(model.has_hessian_matrix() ? model.number_hessian_nonzeros() : 0) {
    }
 
    void HessianBuffer::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
