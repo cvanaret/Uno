@@ -323,13 +323,6 @@ namespace uno {
       DEBUG << "bound dual step length = " << direction.bound_dual_step_length << "\n\n";
    }
 
-   double PrimalDualInteriorPointProblem::dual_regularization_factor() const {
-      const double barrier_parameter = this->parameterization.get("barrier_parameter");
-      return std::pow(barrier_parameter, this->parameters.dual_regularization_exponent);
-   }
-
-   // protected member functions
-
    double PrimalDualInteriorPointProblem::push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const {
       const double range = upper_bound - lower_bound;
       const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(lower_bound)),
@@ -339,6 +332,11 @@ namespace uno {
       variable_value = std::max(variable_value, lower_bound + perturbation_lb);
       variable_value = std::min(variable_value, upper_bound - perturbation_ub);
       return variable_value;
+   }
+
+   double PrimalDualInteriorPointProblem::dual_regularization_factor() const {
+      const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      return std::pow(barrier_parameter, this->parameters.dual_regularization_exponent);
    }
 
    void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
@@ -384,6 +382,8 @@ namespace uno {
       }
    }
 
+   // progress measures
+
    void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
       this->inner.set_infeasibility_measure(iterate, evaluations, norm);
    }
@@ -400,9 +400,6 @@ namespace uno {
       if (is_infinite(barrier_parameter)) {
          throw std::runtime_error("Barrier parameter is infinite");
       }
-
-      // if the primals are too close to their bounds, push the bounds away by a small fraction (Section 3.5)
-
 
       // add the contribution of the barrier terms
       double barrier_terms = 0.;

@@ -59,8 +59,8 @@ namespace uno {
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics,
-               current_iterate, this->radius, evaluation_cache.current_evaluations, warmstart_information);
+            const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
+               this->radius, evaluation_cache.current_evaluations, warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                if (model.number_constraints == 0) {
                   throw std::runtime_error("The model is unconstrained but the iterate is infeasible, should not happen");
@@ -71,7 +71,15 @@ namespace uno {
                statistics.set("Status", std::string("infeasible"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
 
-               // solve the feasibility problem at the next TR iteration with the same radius
+               // test if we can terminate with a stationary infeasible point
+               if (this->constraint_relaxation_strategy->test_infeasible_stationarity(current_iterate,
+                     evaluation_cache.current_evaluations)) {
+                  std::swap(current_iterate, trial_iterate);
+                  return;
+               }
+
+               // otherwise, switch to the feasibility problem and solve the feasibility problem at the next TR iteration
+               // with the same radius
                this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
                   evaluation_cache.current_evaluations, warmstart_information);
                continue;
