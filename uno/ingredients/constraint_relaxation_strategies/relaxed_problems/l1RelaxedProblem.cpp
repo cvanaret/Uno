@@ -292,6 +292,7 @@ namespace uno {
       multipliers.constraints.fill(0.);
       multipliers.lower_bounds.fill(0.);
       multipliers.upper_bounds.fill(0.);
+      // first compute the constraint multipliers
       for (size_t constraint_index: Range(this->model.number_constraints)) {
          if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
             multipliers.constraints[constraint_index] = this->constraint_violation_coefficient;
@@ -300,6 +301,19 @@ namespace uno {
             multipliers.constraints[constraint_index] = -this->constraint_violation_coefficient;
          }
       }
+      // then the bound multipliers from the stationary equation -J^T y - z = 0 => z = -J^T y
+      Vector<double> bound_multipliers(this->model.number_variables); // TODO preallocate
+      current_evaluations.compute_jacobian_transposed_vector_product(this->model, multipliers.constraints.data(), bound_multipliers.data());
+      bound_multipliers.scale(-1.);
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         if (bound_multipliers[variable_index] >= 0.) {
+            multipliers.lower_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+         else {
+            multipliers.upper_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+      }
+      // at this point, the stationary equation is satisfied. Complementarity may not.
    }
 
    void l1RelaxedProblem::compute_elastics(Iterate& current_iterate, const Evaluations& current_evaluations) const {
