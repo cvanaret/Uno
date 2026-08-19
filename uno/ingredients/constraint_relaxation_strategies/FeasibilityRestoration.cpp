@@ -68,7 +68,6 @@ namespace uno {
 
    const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-
       // solve the current problem (OPTIMALITY or FEASIBILITY_RESTORATION)
       if (this->current_phase == Phase::OPTIMALITY) {
          DEBUG << "Solving the optimality subproblem\n";
