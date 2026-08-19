@@ -492,6 +492,8 @@ namespace uno {
       }
    }
 
+   // progress measures
+
    void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
       this->inner.set_infeasibility_measure(iterate, evaluations, norm);
    }
