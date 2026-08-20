@@ -225,7 +225,7 @@ namespace uno {
             const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
             const double entry = this->hessian_values[nonzero_index];
             if (row_index >= vector.size() || column_index >= vector.size()) {
-               throw std::runtime_error("Dimension mismatch");
+               throw std::runtime_error("Dimension mismatch in BQPDQuadraticProgram::compute_hessian_quadratic_form");
             }
 
             const double factor = (row_index != column_index) ? 2. : 1.;
@@ -296,7 +296,7 @@ namespace uno {
          // constraint index
          const uno_int constraint_index = jacobian_row_indices[permuted_nonzero_index];
          if (current_constraint > constraint_index) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in BQPDQuadraticProgram::build_gradients_sparsity_from_jacobian_coo");
          }
          while (current_constraint < constraint_index) {
             ++current_constraint;

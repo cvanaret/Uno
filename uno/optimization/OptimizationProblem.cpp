@@ -188,7 +188,7 @@ namespace uno {
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
          if (variable_index >= primals.size() || variable_index >= multipliers.lower_bounds.size() ||
                variable_index >= multipliers.upper_bounds.size()) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in OptimizationProblem::complementarity_error's variable_complementarity");
          }
 
          if (0. < multipliers.lower_bounds[variable_index]) {
@@ -205,7 +205,7 @@ namespace uno {
       const auto& constraints_upper_bounds = this->model.get_constraints_upper_bounds();
       const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
          if (constraint_index >= constraints.size() || constraint_index >= multipliers.constraints.size()) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in OptimizationProblem::complementarity_error's constraint_complementarity");
          }
 
          if (0. < multipliers.constraints[constraint_index]) { // lower bound

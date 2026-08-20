@@ -74,7 +74,7 @@ namespace uno {
    template <typename T>
    BLASMatrix<T>& BLASMatrix<T>::operator=(const BLASMatrix& other) {
       if (other.number_rows != this->number_rows || other.number_columns != this->number_columns) {
-         throw std::invalid_argument("Dimension mismatch");
+         throw std::invalid_argument("Dimension mismatch in BLASMatrix::operator=(const BLASMatrix&)");
       }
       // copy each column
       for (size_t column_index = 0; column_index < this->number_columns; ++column_index) {
@@ -99,7 +99,7 @@ namespace uno {
          throw std::runtime_error("BLASMatrix::operator= is not defined when C != this");
       }
       if (this->number_rows != A.number_rows || this->number_columns != B.number_rows) {
-         throw std::runtime_error("Dimension mismatch");
+         throw std::runtime_error("Dimension mismatch in BLASMatrix::operator=(Sum)");
       }
       blas3::matrix_matrix_product('N', 'T', A.number_rows, A.number_columns, B.number_rows, B.number_columns,
          this->number_rows, this->number_columns, 1., A.data(), A.leading_dimension, B.data(), B.leading_dimension, beta,
@@ -115,7 +115,7 @@ namespace uno {
       const auto& A = expression.get_left().get_matrix();
       const auto& B = expression.get_right();
       if (A.number_rows != B.number_rows) {
-         throw std::runtime_error("Dimension mismatch");
+         throw std::runtime_error("Dimension mismatch in BLASMatrix::operator+=(Multiplication)");
       }
       blas3::matrix_matrix_product('T', 'N', A.number_rows, A.number_columns, B.number_rows, B.number_columns,
          this->number_rows, this->number_columns, 1., A.data(), A.leading_dimension, B.data(), B.leading_dimension, 1.,

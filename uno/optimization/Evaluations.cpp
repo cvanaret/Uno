@@ -75,7 +75,7 @@ namespace uno {
          const size_t variable_index = static_cast<size_t>(jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
          if (variable_index >= model.number_variables || constraint_index >= model.number_constraints) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in Evaluations::compute_jacobian_vector_product");
          }
 
          result[constraint_index] += derivative * vector[variable_index];
@@ -92,7 +92,7 @@ namespace uno {
          const size_t variable_index = static_cast<size_t>(jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
          if (variable_index >= model.number_variables || constraint_index >= model.number_constraints) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in Evaluations::compute_jacobian_transposed_vector_product");
          }
 
          result[variable_index] += derivative * vector[constraint_index];
