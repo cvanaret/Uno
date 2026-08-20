@@ -93,26 +93,24 @@ namespace uno {
    bool FeasibilityRestoration::test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const {
       DEBUG << "\nTesting the termination criteria of the feasibility problem at the current iterate\n";
       // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
-      std::cout << "x = " << current_iterate.primals << '\n';
-      std::cout << "c(x) = " << current_evaluations.constraints << '\n';
+      DEBUG2 << "x = " << current_iterate.primals << '\n';
+      DEBUG2 << "c(x) = " << current_evaluations.constraints << '\n';
       Multipliers tentative_multipliers(current_iterate.multipliers);
       this->feasibility_problem.compute_multipliers(tentative_multipliers, current_evaluations);
-      std::cout << "Feasibility constraint multipliers: " << tentative_multipliers.constraints << '\n';
-      std::cout << "Feasibility LB multipliers: " << tentative_multipliers.lower_bounds << '\n';
-      std::cout << "Feasibility UB multipliers: " << tentative_multipliers.upper_bounds << '\n';
+      DEBUG2 << "Feasibility constraint multipliers: " << tentative_multipliers.constraints << '\n';
+      DEBUG2 << "Feasibility LB multipliers: " << tentative_multipliers.lower_bounds << '\n';
+      DEBUG2 << "Feasibility UB multipliers: " << tentative_multipliers.upper_bounds << '\n';
 
       // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
       this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, tentative_multipliers,
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
       // TODO check that all duals are not 0
-      std::cout << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
-      if (norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
+      DEBUG2 << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
+      if (false && norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
          std::swap(tentative_multipliers, current_iterate.multipliers);
          compute_residuals(this->feasibility_problem, current_iterate, current_evaluations);
-         std::cout << current_iterate << '\n';
          DEBUG << current_iterate << '\n';
-         std::cout << "The current iterate is an infeasible stationary point\n";
          DEBUG << "The current iterate is an infeasible stationary point\n";
          return true;
       }
