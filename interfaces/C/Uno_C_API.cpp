@@ -589,12 +589,12 @@ bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraint
    uno_set_constraints_lower_bounds(model, constraints_lower_bounds);
    uno_set_constraints_upper_bounds(model, constraints_upper_bounds);
    user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
-   // copy the Jacobian sparsity to allow the calling code to dispose of its vectors
+   // copy the Jacobian sparsity (in C indexing) to allow the calling code to dispose of its vectors
    user_model->jacobian_row_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
    user_model->jacobian_column_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
    for (size_t index: Range(static_cast<size_t>(number_jacobian_nonzeros))) {
-      user_model->jacobian_row_indices[index] = jacobian_row_indices[index];
-      user_model->jacobian_column_indices[index] = jacobian_column_indices[index];
+      user_model->jacobian_row_indices[index] = jacobian_row_indices[index] - user_model->base_indexing;
+      user_model->jacobian_column_indices[index] = jacobian_column_indices[index] - user_model->base_indexing;
    }
    user_model->jacobian = jacobian;
    // create the initial dual point
