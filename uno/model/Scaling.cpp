@@ -22,10 +22,11 @@ namespace uno {
       const auto& jacobian_row_indices = model.get_jacobian_row_indices();
       for (size_t nonzero_index: Range(model.number_jacobian_nonzeros())) {
          const size_t constraint_index = static_cast<size_t>(jacobian_row_indices[nonzero_index]);
-         norm_inf_constraints[constraint_index] = std::max(norm_inf_constraints[constraint_index], jacobian_values[nonzero_index]);
+         norm_inf_constraints[constraint_index] = std::max(norm_inf_constraints[constraint_index], std::abs(jacobian_values[nonzero_index]));
       }
       for (size_t constraint_index: Range(model.number_constraints)) {
-         this->constraint_scaling[constraint_index] = std::min(1., this->gradient_threshold / norm_inf_constraints[constraint_index]);
+         const double row_norm = norm_inf_constraints[constraint_index];
+         this->constraint_scaling[constraint_index] = (row_norm > 0.) ? std::min(1., this->gradient_threshold / row_norm) : 1.;
       }
       DEBUG2 << "Objective scaling: " << this->objective_scaling << '\n';
       DEBUG2 << "Constraint scaling: "; print_vector(DEBUG2, this->constraint_scaling);
