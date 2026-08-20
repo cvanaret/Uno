@@ -17,6 +17,7 @@
 #include "model/FixedBoundsConstraintsModel.hpp"
 #include "model/HomogeneousEqualityConstrainedModel.hpp"
 #include "model/Model.hpp"
+#include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -50,8 +51,12 @@ namespace uno {
       // - the model has bound constraints or inequality constraints
       if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
             (model.has_bound_constraints() || model.has_inequality_constraints())) {
+         // scale the functions
+         Vector<double> initial_primals(model.number_variables);
+         model.initial_primal_point(initial_primals);
+         const ScaledModel scaled_model(model, initial_primals, options);
          // move the fixed variables to the set of general constraints
-         const FixedBoundsConstraintsModel fixed_bound_model(model);
+         const FixedBoundsConstraintsModel fixed_bound_model(scaled_model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
          const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
          // slightly relax the bound constraints
@@ -74,6 +79,7 @@ namespace uno {
    // protected solve function
    Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
+      Statistics statistics = Uno::create_statistics(model);
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
@@ -81,7 +87,6 @@ namespace uno {
       model.initial_dual_point(current_iterate.multipliers.constraints);
       model.reset_number_evaluations();
       EvaluationCache evaluation_cache{model};
-      Statistics statistics = Uno::create_statistics(model);
 
       bool termination = false;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
@@ -238,7 +243,7 @@ namespace uno {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
          evaluations.objective = INF<double>;
       }
-      model.postprocess_solution(iterate);
+      model.postprocess_solution(iterate, evaluations);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 

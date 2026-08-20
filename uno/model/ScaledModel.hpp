@@ -15,7 +15,7 @@ namespace uno {
 
    class ScaledModel: public Model {
    public:
-      ScaledModel(const Model& original_model, Iterate& initial_iterate, Evaluations& evaluations, const Options& options);
+      ScaledModel(const Model& original_model, const Vector<double>& initial_primals, const Options& options);
 
       [[nodiscard]] ProblemType get_problem_type() const override;
 
@@ -33,8 +33,8 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
-         uno_int solver_indexing, MatrixOrder matrix_order) const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override;
       void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
@@ -63,7 +63,7 @@ namespace uno {
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
 
-      void postprocess_solution(Iterate& iterate) const override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
@@ -79,6 +79,8 @@ namespace uno {
       const Model& model;
       Scaling scaling;
       mutable Vector<double> scaled_multipliers{};
+      std::vector<double> constraints_lower_bounds{};
+      std::vector<double> constraints_upper_bounds{};
    };
 } // namespace
 
