@@ -51,11 +51,11 @@ namespace uno {
       }
 
       // sparsity patterns of Jacobian and Hessian
-      [[nodiscard]] const Vector<uno_int>& get_jacobian_row_indices() const override {
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override {
          return this->model.get_jacobian_row_indices();
       }
 
-      [[nodiscard]] const Vector<uno_int>& get_jacobian_column_indices() const override {
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override {
          return this->model.get_jacobian_column_indices();
       }
 

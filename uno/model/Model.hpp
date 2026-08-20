@@ -57,8 +57,8 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // sparsity patterns of Jacobian and Hessian
-      [[nodiscard]] virtual const Vector<uno_int>& get_jacobian_row_indices() const = 0;
-      [[nodiscard]] virtual const Vector<uno_int>& get_jacobian_column_indices() const = 0;
+      [[nodiscard]] virtual View<const uno_int> get_jacobian_row_indices() const = 0;
+      [[nodiscard]] virtual View<const uno_int> get_jacobian_column_indices() const = 0;
       virtual void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian

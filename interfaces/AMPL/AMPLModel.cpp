@@ -158,12 +158,12 @@ namespace uno {
       ++this->number_model_evaluations.objective_gradient;
    }
 
-   const Vector<uno_int>& AMPLModel::get_jacobian_row_indices() const {
-      return this->jacobian_row_indices;
+   View<const uno_int> AMPLModel::get_jacobian_row_indices() const {
+      return this->jacobian_row_indices.view();
    }
 
-   const Vector<uno_int>& AMPLModel::get_jacobian_column_indices() const {
-      return this->jacobian_column_indices;
+   View<const uno_int> AMPLModel::get_jacobian_column_indices() const {
+      return this->jacobian_column_indices.view();
    }
 
    void AMPLModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {

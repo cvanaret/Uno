@@ -23,11 +23,11 @@ namespace uno {
          inertia_correction_strategy(inertia_correction_strategy) {
    }
 
-   const Vector<uno_int>& Subproblem::get_jacobian_row_indices() const {
+   View<const uno_int> Subproblem::get_jacobian_row_indices() const {
       return this->problem.get_jacobian_row_indices();
    }
 
-   const Vector<uno_int>& Subproblem::get_jacobian_column_indices() const {
+   View<const uno_int> Subproblem::get_jacobian_column_indices() const {
       return this->problem.get_jacobian_column_indices();
    }
 

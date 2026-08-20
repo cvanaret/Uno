@@ -73,11 +73,11 @@ namespace uno {
       this->model.evaluate_objective_gradient(x, gradient);
    }
 
-   const Vector<uno_int>& FixedBoundsConstraintsModel::get_jacobian_row_indices() const {
+   View<const uno_int> FixedBoundsConstraintsModel::get_jacobian_row_indices() const {
       return this->model.get_jacobian_row_indices(); // TODO fix
    }
 
-   const Vector<uno_int>& FixedBoundsConstraintsModel::get_jacobian_column_indices() const {
+   View<const uno_int> FixedBoundsConstraintsModel::get_jacobian_column_indices() const {
       return this->model.get_jacobian_column_indices(); // TODO fix
    }
 

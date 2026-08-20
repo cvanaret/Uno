@@ -96,12 +96,12 @@ namespace uno {
       return number_nonzeros;
    }
 
-   const Vector<uno_int>& l1RelaxedProblem::get_jacobian_row_indices() const {
-      return this->jacobian_row_indices;
+   View<const uno_int> l1RelaxedProblem::get_jacobian_row_indices() const {
+      return this->jacobian_row_indices.view();
    }
 
-   const Vector<uno_int>& l1RelaxedProblem::get_jacobian_column_indices() const {
-      return this->jacobian_column_indices;
+   View<const uno_int> l1RelaxedProblem::get_jacobian_column_indices() const {
+      return this->jacobian_column_indices.view();
    }
 
    void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,

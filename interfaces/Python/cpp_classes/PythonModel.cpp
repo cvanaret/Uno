@@ -96,12 +96,12 @@ namespace uno {
       }
    }
 
-   const Vector<uno_int>& PythonModel::get_jacobian_row_indices() const {
-      return this->user_model.jacobian_row_indices;
+   View<const uno_int> PythonModel::get_jacobian_row_indices() const {
+      return view(this->user_model.jacobian_row_indices.data(), 0, this->number_jacobian_nonzeros());
    }
 
-   const Vector<uno_int>& PythonModel::get_jacobian_column_indices() const {
-      return this->user_model.jacobian_column_indices;
+   View<const uno_int> PythonModel::get_jacobian_column_indices() const {
+      return view(this->user_model.jacobian_column_indices.data(), 0, this->number_jacobian_nonzeros());
    }
 
    void PythonModel::compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {

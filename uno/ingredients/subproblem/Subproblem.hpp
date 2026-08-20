@@ -28,8 +28,8 @@ namespace uno {
       Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
-      [[nodiscard]] const Vector<uno_int>& get_jacobian_row_indices() const;
-      [[nodiscard]] const Vector<uno_int>& get_jacobian_column_indices() const;
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const;
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
 

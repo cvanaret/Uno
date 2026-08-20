@@ -109,12 +109,12 @@ public:
    }
 
    // sparsity patterns of Jacobian and Hessian
-   const Vector<uno_int>& get_jacobian_row_indices() const override {
-      return this->user_model.jacobian_row_indices;
+   View<const uno_int> get_jacobian_row_indices() const override {
+      return view(this->user_model.jacobian_row_indices.data(), this->number_jacobian_nonzeros());
    }
 
-   const Vector<uno_int>& get_jacobian_column_indices() const override {
-      return this->user_model.jacobian_column_indices;
+   View<const uno_int> get_jacobian_column_indices() const override {
+      return view(this->user_model.jacobian_column_indices.data(), this->number_jacobian_nonzeros());
    }
 
    void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {

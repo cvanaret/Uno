@@ -92,12 +92,12 @@ namespace uno {
       this->model.evaluate_objective_gradient(x, gradient);
    }
 
-   const Vector<uno_int>& HomogeneousEqualityConstrainedModel::get_jacobian_row_indices() const {
-      return this->jacobian_row_indices;
+   View<const uno_int> HomogeneousEqualityConstrainedModel::get_jacobian_row_indices() const {
+      return this->jacobian_row_indices.view();
    }
 
-   const Vector<uno_int>& HomogeneousEqualityConstrainedModel::get_jacobian_column_indices() const {
-      return this->jacobian_column_indices;
+   View<const uno_int> HomogeneousEqualityConstrainedModel::get_jacobian_column_indices() const {
+      return this->jacobian_column_indices.view();
    }
 
    void HomogeneousEqualityConstrainedModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices,

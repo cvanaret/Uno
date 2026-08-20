@@ -111,11 +111,11 @@ namespace uno {
       return number_nonzeros;
    }
 
-   const Vector<uno_int>& PrimalDualInteriorPointProblem::get_jacobian_row_indices() const {
+   View<const uno_int> PrimalDualInteriorPointProblem::get_jacobian_row_indices() const {
       return this->inner.get_jacobian_row_indices();
    }
 
-   const Vector<uno_int>& PrimalDualInteriorPointProblem::get_jacobian_column_indices() const {
+   View<const uno_int> PrimalDualInteriorPointProblem::get_jacobian_column_indices() const {
       return this->inner.get_jacobian_column_indices();
    }
 
