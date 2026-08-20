@@ -33,6 +33,21 @@ namespace uno {
          this->constraints_upper_bounds[fixed_variable_constraint_index] = fixed_value;
          ++fixed_variable_constraint_index;
       }
+
+      // Jacobian sparsity
+      const size_t number_model_jacobian_nonzeros = this->model.number_jacobian_nonzeros();
+      this->jacobian_row_indices.resize(number_model_jacobian_nonzeros + original_model.get_fixed_variables().size());
+      this->jacobian_column_indices.resize(number_model_jacobian_nonzeros + original_model.get_fixed_variables().size());
+      view(this->jacobian_row_indices.data(), 0, number_model_jacobian_nonzeros) = this->model.get_jacobian_row_indices();
+      view(this->jacobian_column_indices.data(), 0, number_model_jacobian_nonzeros) = this->model.get_jacobian_column_indices();
+      size_t nonzero_index = number_model_jacobian_nonzeros;
+      fixed_variable_constraint_index = original_model.number_constraints;
+      for (size_t fixed_variable_index: original_model.get_fixed_variables()) {
+         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(fixed_variable_constraint_index); // constraint
+         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(fixed_variable_index); // variable
+         ++fixed_variable_constraint_index;
+         ++nonzero_index;
+      }
    }
 
    ProblemType FixedBoundsConstraintsModel::get_problem_type() const {
@@ -74,30 +89,12 @@ namespace uno {
    }
 
    View<const uno_int> FixedBoundsConstraintsModel::get_jacobian_row_indices() const {
-      return this->model.get_jacobian_row_indices(); // TODO fix
+      return this->jacobian_row_indices.view();
    }
 
    View<const uno_int> FixedBoundsConstraintsModel::get_jacobian_column_indices() const {
-      return this->model.get_jacobian_column_indices(); // TODO fix
+      return this->jacobian_column_indices.view();
    }
-
-   /*
-   void FixedBoundsConstraintsModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset,
-         uno_int column_offset, uno_int solver_indexing) const {
-      // original constraints
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing);
-
-      // fixed variables (as linear constraints)
-      int constraint_index = static_cast<int>(this->model.number_constraints);
-      size_t current_index = this->model.number_jacobian_nonzeros();
-      for (size_t fixed_variable_index: this->model.get_fixed_variables()) {
-         row_indices[current_index] = constraint_index + row_offset + solver_indexing;
-         column_indices[current_index] = static_cast<int>(fixed_variable_index) + column_offset + solver_indexing;
-         ++constraint_index;
-         ++current_index;
-      }
-   }
-   */
 
    void FixedBoundsConstraintsModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
       this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);

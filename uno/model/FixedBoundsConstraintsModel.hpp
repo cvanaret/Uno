@@ -88,6 +88,9 @@ namespace uno {
       std::vector<double> variables_upper_bounds;
       std::vector<double> constraints_lower_bounds;
       std::vector<double> constraints_upper_bounds;
+
+      Vector<uno_int> jacobian_row_indices;
+      Vector<uno_int> jacobian_column_indices;
    };
 } // namespace
 
