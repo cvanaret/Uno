@@ -234,7 +234,6 @@ end
     solver = uno_solver()
     uno_set_solver_preset(solver, "filtersqp")
     uno_set_solver_bool_option(solver, "print_solution", true)
-    uno_set_solver_string_option(solver, "logger", "DEBUG3")
     uno_optimize(solver, model)
 
     @test UnoSolver.uno_get_method_description(solver) == "TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction"
