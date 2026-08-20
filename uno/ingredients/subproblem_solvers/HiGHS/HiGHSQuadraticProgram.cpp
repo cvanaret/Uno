@@ -109,14 +109,10 @@ namespace uno {
    // protected member functions
    void HiGHSQuadraticProgram::compute_jacobian_sparsity(const Subproblem& subproblem) {
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      // compute the COO sparsity pattern (column-wise)
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), 0, 0,
-         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
       // convert COO -> HiGHS' CSC layout
-      this->build_csc_jacobian_from_coo(subproblem.number_variables, subproblem.number_constraints);
+      this->build_csc_jacobian_from_coo(subproblem.number_variables, subproblem.number_constraints,
+         subproblem.get_jacobian_row_indices(), subproblem.get_jacobian_column_indices());
    }
 
    // column-wise lower triangular Lagrangian Hessian
@@ -137,9 +133,8 @@ namespace uno {
 
    void HiGHSQuadraticProgram::set_from_coo(size_t number_variables, size_t number_constraints, const Vector<double>& linear_objective,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
-         const Vector<double>& jacobian_values,
-         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
-         const Vector<double>& hessian_values) {
+         const Vector<double>& jacobian_values, const Vector<uno_int>& hessian_row_indices,
+         const Vector<uno_int>& hessian_column_indices, const Vector<double>& hessian_values) {
       const size_t number_jacobian_nonzeros = jacobian_values.size();
       const size_t number_hessian_nonzeros = hessian_values.size();
 
@@ -148,16 +143,12 @@ namespace uno {
          this->model.lp_.col_cost_[variable_index] = linear_objective[variable_index];
       }
 
-      // constraint Jacobian: copy the COO sparsity + values, build the CSC sparsity, scatter the values
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      // constraint Jacobian: copy the values, build the CSC sparsity, scatter the values
       this->jacobian_values.resize(number_jacobian_nonzeros);
       for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
-         this->jacobian_row_indices[nonzero_index] = jacobian_row_indices[nonzero_index];
-         this->jacobian_column_indices[nonzero_index] = jacobian_column_indices[nonzero_index];
          this->jacobian_values[nonzero_index] = jacobian_values[nonzero_index];
       }
-      this->build_csc_jacobian_from_coo(number_variables, number_constraints);
+      this->build_csc_jacobian_from_coo(number_variables, number_constraints, jacobian_row_indices, jacobian_column_indices);
       this->scatter_jacobian_values();
 
       // Lagrangian Hessian: same conversion, or no Hessian (LP) if empty
@@ -204,9 +195,10 @@ namespace uno {
 
    // build HiGHS' CSC Jacobian (a_matrix_) and the sorting permutation from the COO arrays already present in
    // jacobian_row_indices/jacobian_column_indices. Shared by the Subproblem path and the data-driven path.
-   void HiGHSQuadraticProgram::build_csc_jacobian_from_coo(size_t number_variables, size_t number_constraints) {
+   void HiGHSQuadraticProgram::build_csc_jacobian_from_coo(size_t number_variables, size_t number_constraints,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices) {
       (void) number_constraints;
-      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
+      const size_t number_jacobian_nonzeros = jacobian_row_indices.size();
       // column-wise constraint Jacobian
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kColwise;
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
@@ -218,12 +210,12 @@ namespace uno {
       std::iota(this->jacobian_permutation_vector.begin(), this->jacobian_permutation_vector.end(), 0);
       std::sort(this->jacobian_permutation_vector.begin(), this->jacobian_permutation_vector.end(),
           [&](const size_t& i, const size_t& j) {
-             if (this->jacobian_column_indices[i] < this->jacobian_column_indices[j]) {
+             if (jacobian_column_indices[i] < jacobian_column_indices[j]) {
                 return true;
              }
              // within a given column, have the row indices in increasing order
-             else if (this->jacobian_column_indices[i] == this->jacobian_column_indices[j]) {
-               return (this->jacobian_row_indices[i] < this->jacobian_row_indices[j]);
+             else if (jacobian_column_indices[i] == jacobian_column_indices[j]) {
+               return (jacobian_row_indices[i] < jacobian_row_indices[j]);
              }
              return false;
           }
@@ -234,11 +226,11 @@ namespace uno {
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->jacobian_permutation_vector[jacobian_nonzero_index];
          // constraint index is used as is
-         const HighsInt constraint_index = static_cast<HighsInt>(this->jacobian_row_indices[permuted_nonzero_index]);
+         const HighsInt constraint_index = static_cast<HighsInt>(jacobian_row_indices[permuted_nonzero_index]);
          this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = constraint_index;
 
          // variable index is used to build the pointers to the column starts
-         const uno_int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
+         const uno_int variable_index = jacobian_column_indices[permuted_nonzero_index];
          assert(current_variable <= variable_index);
          while (current_variable < variable_index) {
             ++current_variable;

@@ -94,6 +94,9 @@ namespace uno {
 
       // partition equality/inequality constraints
       Model::partition_constraints(this->equality_constraints, this->inequality_constraints);
+
+      // Jacobian sparsity
+      this->compute_jacobian_sparsity();
    }
 
    AMPLModel::~AMPLModel() {
@@ -155,32 +158,12 @@ namespace uno {
       ++this->number_model_evaluations.objective_gradient;
    }
 
-   void AMPLModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset,
-         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
-      // by default, AMPLModel computes the Jacobian in a column-wise order (variable by variable).
-      // if a row-wise evaluation is wished, modify the goff fields of the ASL "Cgrad" structures
-      if (matrix_order == MatrixOrder::ROW_MAJOR) {
-         int nonzero_index = 0;
-         for (size_t constraint_index: Range(this->number_constraints)) {
-            cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
-            while (constraint_gradient != nullptr) {
-               constraint_gradient->goff = nonzero_index;
-               ++nonzero_index;
-               constraint_gradient = constraint_gradient->next;
-            }
-         }
-      }
+   const Vector<uno_int>& AMPLModel::get_jacobian_row_indices() const {
+      return this->jacobian_row_indices;
+   }
 
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
-         while (constraint_gradient != nullptr) {
-            const int variable_index = constraint_gradient->varno;
-            // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
-            row_indices[constraint_gradient->goff] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
-            column_indices[constraint_gradient->goff] = variable_index + column_offset + solver_indexing;
-            constraint_gradient = constraint_gradient->next;
-         }
-      }
+   const Vector<uno_int>& AMPLModel::get_jacobian_column_indices() const {
+      return this->jacobian_column_indices;
    }
 
    void AMPLModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
@@ -368,6 +351,24 @@ namespace uno {
 
    void AMPLModel::reset_number_evaluations() const {
       this->number_model_evaluations.reset();
+   }
+
+   // protected member functions
+
+   void AMPLModel::compute_jacobian_sparsity() {
+      this->jacobian_row_indices.resize(this->number_jacobian_nonzeros());
+      this->jacobian_column_indices.resize(this->number_jacobian_nonzeros());
+
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
+         while (constraint_gradient != nullptr) {
+            const int variable_index = constraint_gradient->varno;
+            // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
+            this->jacobian_row_indices[constraint_gradient->goff] = static_cast<uno_int>(constraint_index);
+            this->jacobian_column_indices[constraint_gradient->goff] = variable_index;
+            constraint_gradient = constraint_gradient->next;
+         }
+      }
    }
 
    size_t AMPLModel::compute_lagrangian_hessian_sparsity() const {

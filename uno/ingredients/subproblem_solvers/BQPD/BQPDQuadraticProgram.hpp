@@ -67,8 +67,8 @@ namespace uno {
       Vector<double> gradients{};
       Vector<uno_int> gradients_sparsity{};
       // COO constraint Jacobian
-      Vector<uno_int> jacobian_row_indices{};
-      Vector<uno_int> jacobian_column_indices{};
+      //Vector<uno_int> jacobian_row_indices{};
+      //Vector<uno_int> jacobian_column_indices{};
       Vector<double> jacobian_values{};
       Vector<size_t> permutation_vector{};
       // COO Hessian
@@ -88,11 +88,11 @@ namespace uno {
          size_t number_hessian_nonzeros, bool allocate_explicit_hessian);
       // build BQPD's packed weak-CSR Jacobian sparsity (header + column indices + row-start pointers) and the
       // sorting permutation from the COO arrays already stored in jacobian_row_indices/jacobian_column_indices
-      void build_gradients_sparsity_from_jacobian_coo(size_t number_variables, size_t number_constraints);
+      void build_gradients_sparsity_from_jacobian_coo(size_t number_variables, size_t number_constraints,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices);
       // scatter jacobian_values into gradients[number_variables ..] using the sorting permutation
       void scatter_jacobian_values(size_t number_variables);
 
-      void compute_gradients_sparsity(const Subproblem& subproblem);
       void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals, Evaluations& evaluations);
    };
 } // namespace

@@ -6,15 +6,13 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
-#include "symbolic/ScalarMultiple.hpp"
-#include "symbolic/Sum.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -25,9 +23,12 @@ namespace uno {
          inertia_correction_strategy(inertia_correction_strategy) {
    }
 
-   void Subproblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int row_offset,
-         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->problem.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
+   const Vector<uno_int>& Subproblem::get_jacobian_row_indices() const {
+      return this->problem.get_jacobian_row_indices();
+   }
+
+   const Vector<uno_int>& Subproblem::get_jacobian_column_indices() const {
+      return this->problem.get_jacobian_column_indices();
    }
 
    void Subproblem::compute_regularized_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
@@ -61,13 +62,23 @@ namespace uno {
       }
 
       // copy Jacobian of general constraints into the (2, 1) block
+      const size_t number_jacobian_nonzeros = this->problem.number_jacobian_nonzeros();
+      view(row_indices + nonzero_index, 0, number_jacobian_nonzeros) = this->problem.get_jacobian_row_indices();
+      view(column_indices + nonzero_index, 0, number_jacobian_nonzeros) = this->problem.get_jacobian_column_indices();
+      // add row offset
       const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
-      constexpr uno_int column_offset = 0;
-      this->problem.compute_jacobian_sparsity(row_indices + nonzero_index, column_indices + nonzero_index,
-         row_offset, column_offset, solver_indexing, MatrixOrder::COLUMN_MAJOR);
+      for (size_t k: Range(number_jacobian_nonzeros)) {
+         row_indices[nonzero_index + k] += row_offset;
+      }
+      if (solver_indexing != Indexing::C_indexing) {
+         for (size_t k: Range(number_jacobian_nonzeros)) {
+            row_indices[nonzero_index + k] += solver_indexing;
+            column_indices[nonzero_index + k] += solver_indexing;
+         }
+      }
 
       // dual inertia correction (if applicable)
-      nonzero_index += this->problem.number_jacobian_nonzeros();
+      nonzero_index += number_jacobian_nonzeros;
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
             const uno_int shifted_constraint_index = static_cast<uno_int>(this->number_variables + constraint_index);

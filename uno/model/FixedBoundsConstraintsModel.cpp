@@ -73,10 +73,19 @@ namespace uno {
       this->model.evaluate_objective_gradient(x, gradient);
    }
 
+   const Vector<uno_int>& FixedBoundsConstraintsModel::get_jacobian_row_indices() const {
+      return this->model.get_jacobian_row_indices(); // TODO fix
+   }
+
+   const Vector<uno_int>& FixedBoundsConstraintsModel::get_jacobian_column_indices() const {
+      return this->model.get_jacobian_column_indices(); // TODO fix
+   }
+
+   /*
    void FixedBoundsConstraintsModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset,
-         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
+         uno_int column_offset, uno_int solver_indexing) const {
       // original constraints
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing);
 
       // fixed variables (as linear constraints)
       int constraint_index = static_cast<int>(this->model.number_constraints);
@@ -88,6 +97,7 @@ namespace uno {
          ++current_index;
       }
    }
+   */
 
    void FixedBoundsConstraintsModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
       this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);

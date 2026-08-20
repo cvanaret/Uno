@@ -59,9 +59,12 @@ namespace uno {
       return hessian_model.number_nonzeros();
    }
 
-   void OptimizationProblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int row_offset,
-         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
+   const Vector<uno_int>& OptimizationProblem::get_jacobian_row_indices() const {
+      return this->model.get_jacobian_row_indices();
+   }
+
+   const Vector<uno_int>& OptimizationProblem::get_jacobian_column_indices() const {
+      return this->model.get_jacobian_column_indices();
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,

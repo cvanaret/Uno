@@ -205,7 +205,7 @@ namespace uno {
       const int n = static_cast<int>(quadratic_program.number_variables);
       const int m = static_cast<int>(quadratic_program.number_constraints);
 
-      const BQPDMode mode = BQPDSolver::determine_mode(warmstart_information);
+      const BQPDMode mode = determine_mode(warmstart_information);
       const int mode_integer = static_cast<int>(mode);
 
       // solve the LP/QP
@@ -219,10 +219,10 @@ namespace uno {
             this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution,
             this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
          DEBUG2 << "Ran BQPD\n";
-         const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
+         const BQPDStatus bqpd_status = bqpd_status_from_int(this->ifail);
          termination = this->check_sufficient_workspace_size(bqpd_status);
          if (termination) {
-            direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
+            direction.status = status_from_bqpd_status(bqpd_status);
          }
       }
 

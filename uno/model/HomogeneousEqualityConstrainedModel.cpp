@@ -35,6 +35,19 @@ namespace uno {
          this->variables_upper_bounds[slack_variable_index] = this->model.get_constraints_upper_bounds()[constraint_index];
          ++inequality_index;
       }
+
+      // compute the Jacobian sparsity
+      const size_t number_jacobian_nonzeros = this->model.number_jacobian_nonzeros();
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros + this->slacks.size());
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros + this->slacks.size());
+      view(this->jacobian_row_indices, 0, number_jacobian_nonzeros) = this->model.get_jacobian_row_indices();
+      view(this->jacobian_column_indices, 0, number_jacobian_nonzeros) = this->model.get_jacobian_column_indices();
+      size_t nonzero_index = number_jacobian_nonzeros;
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index);
+         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(slack_index);
+         ++nonzero_index;
+      }
    }
 
    ProblemType HomogeneousEqualityConstrainedModel::get_problem_type() const {
@@ -79,17 +92,12 @@ namespace uno {
       this->model.evaluate_objective_gradient(x, gradient);
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
-         uno_int row_offset, uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
+   const Vector<uno_int>& HomogeneousEqualityConstrainedModel::get_jacobian_row_indices() const {
+      return this->jacobian_row_indices;
+   }
 
-      // add the slack contributions
-      size_t nonzero_index = this->model.number_jacobian_nonzeros();
-      for (const auto [constraint_index, slack_index]: this->get_slacks()) {
-         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
-         column_indices[nonzero_index] = static_cast<uno_int>(slack_index) + column_offset + solver_indexing;
-         ++nonzero_index;
-      }
+   const Vector<uno_int>& HomogeneousEqualityConstrainedModel::get_jacobian_column_indices() const {
+      return this->jacobian_column_indices;
    }
 
    void HomogeneousEqualityConstrainedModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices,

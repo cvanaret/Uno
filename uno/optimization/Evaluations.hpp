@@ -18,7 +18,6 @@ namespace uno {
       Vector<double> constraints;
       Vector<double> objective_gradient;
       Vector<double> jacobian_values;
-      const COOSparsity* jacobian_sparsity; // Jacobian sparsity computed in EvaluationCache
 
       // flags to perform lazy computations
       bool is_objective_computed{false};
@@ -26,7 +25,7 @@ namespace uno {
       bool is_objective_gradient_computed{false};
       bool is_jacobian_computed{false};
 
-      Evaluations(const Model& model, const COOSparsity* jacobian_sparsity);
+      explicit Evaluations(const Model& model);
       Evaluations(const Evaluations& other) = default;
       Evaluations(Evaluations&& other) noexcept = default;
       Evaluations& operator=(const Evaluations& other) = default;

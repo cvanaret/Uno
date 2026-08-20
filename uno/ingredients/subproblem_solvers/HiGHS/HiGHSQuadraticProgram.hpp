@@ -42,8 +42,8 @@ namespace uno {
       Vector<double> constraints{};
       Vector<double> linear_objective{};
       // constraint Jacobian in COO format
-      Vector<uno_int> jacobian_row_indices{};
-      Vector<uno_int> jacobian_column_indices{};
+      // Vector<uno_int> jacobian_row_indices{};
+      // Vector<uno_int> jacobian_column_indices{};
       Vector<double> jacobian_values{};
       Vector<size_t> jacobian_permutation_vector{};
       // Lagrangian Hessian in COO format
@@ -68,7 +68,8 @@ namespace uno {
       void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals, Evaluations& evaluations);
 
       // build HiGHS' CSC Jacobian/Hessian from the COO arrays already stored in the *_row/column_indices members
-      void build_csc_jacobian_from_coo(size_t number_variables, size_t number_constraints);
+      void build_csc_jacobian_from_coo(size_t number_variables, size_t number_constraints,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices);
       void build_csc_hessian_from_coo(size_t number_variables);
       // scatter the COO values into the CSC value arrays using the sorting permutations
       void scatter_jacobian_values();
