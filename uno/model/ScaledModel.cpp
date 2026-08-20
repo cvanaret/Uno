@@ -3,9 +3,11 @@
 
 #include "ScaledModel.hpp"
 #include "Model.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    ScaledModel::ScaledModel(const Model& original_model, const Vector<double>& initial_primals, const Options& options):
@@ -20,9 +22,14 @@ namespace uno {
          // evaluate the gradients at the current point
          Vector<double> objective_gradient(this->model.number_variables);
          Vector<double> jacobian_values(this->model.number_jacobian_nonzeros());
-         this->model.evaluate_objective_gradient(initial_primals, objective_gradient);
-         this->model.evaluate_jacobian(initial_primals, jacobian_values.data());
-         this->scaling.compute(this->model, objective_gradient, jacobian_values);
+         try {
+            this->model.evaluate_objective_gradient(initial_primals, objective_gradient);
+            this->model.evaluate_jacobian(initial_primals, jacobian_values.data());
+            this->scaling.compute(this->model, objective_gradient, jacobian_values);
+         }
+         catch (const EvaluationError&) {
+            DEBUG << "The gradients could not be evaluated at the initial point, functions will not be scaled\n";
+         }
       }
       // check the scaling factors
       assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
