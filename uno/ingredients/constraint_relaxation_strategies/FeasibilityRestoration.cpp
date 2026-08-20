@@ -106,10 +106,12 @@ namespace uno {
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
       // TODO check that all duals are not 0
       DEBUG2 << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
-      if (false && norm_inf(view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables)) <= 1e-8) {
+      const double complementarity = this->original_problem.complementarity_error(current_iterate.primals,
+         current_evaluations.constraints, current_iterate.multipliers, 0., this->residual_norm);
+      DEBUG2 << "Complementarity: " << complementarity << '\n';
+      if (complementarity <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
          std::swap(tentative_multipliers, current_iterate.multipliers);
-         compute_residuals(this->feasibility_problem, current_iterate, current_evaluations);
          DEBUG << current_iterate << '\n';
          DEBUG << "The current iterate is an infeasible stationary point\n";
          return true;
