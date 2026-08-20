@@ -109,23 +109,12 @@ public:
    }
 
    // sparsity patterns of Jacobian and Hessian
-   void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
-         uno_int solver_indexing, MatrixOrder /*matrix_order*/) const override {
-      // copy the indices of the user sparsity patterns to the Uno vectors
-      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index] + row_offset;
-         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index] + column_offset;
-      }
-      // TODO matrix_order
+   View<const uno_int> get_jacobian_row_indices() const override {
+      return view(this->user_model.jacobian_row_indices.data(), this->number_jacobian_nonzeros());
+   }
 
-      // handle the solver indexing
-      if (this->user_model.base_indexing != solver_indexing) {
-         const uno_int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-            row_indices[nonzero_index] += indexing_difference;
-            column_indices[nonzero_index] += indexing_difference;
-         }
-      }
+   View<const uno_int> get_jacobian_column_indices() const override {
+      return view(this->user_model.jacobian_column_indices.data(), this->number_jacobian_nonzeros());
    }
 
    void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
@@ -600,12 +589,12 @@ bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraint
    uno_set_constraints_lower_bounds(model, constraints_lower_bounds);
    uno_set_constraints_upper_bounds(model, constraints_upper_bounds);
    user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
-   // copy the Jacobian sparsity to allow the calling code to dispose of its vectors
+   // copy the Jacobian sparsity (in C indexing) to allow the calling code to dispose of its vectors
    user_model->jacobian_row_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
    user_model->jacobian_column_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
    for (size_t index: Range(static_cast<size_t>(number_jacobian_nonzeros))) {
-      user_model->jacobian_row_indices[index] = jacobian_row_indices[index];
-      user_model->jacobian_column_indices[index] = jacobian_column_indices[index];
+      user_model->jacobian_row_indices[index] = jacobian_row_indices[index] - user_model->base_indexing;
+      user_model->jacobian_column_indices[index] = jacobian_column_indices[index] - user_model->base_indexing;
    }
    user_model->jacobian = jacobian;
    // create the initial dual point

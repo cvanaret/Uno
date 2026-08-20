@@ -131,7 +131,7 @@ namespace uno {
          const size_t kA = (transa == 'N') ? number_columns_a : number_rows_a;
          const size_t kB = (transb == 'N') ? number_rows_b : number_columns_b;
          if (kA != kB) {
-            throw std::invalid_argument("Dimension mismatch");
+            throw std::invalid_argument("Dimension mismatch between kA and kB");
          }
          if (transa == 'N') {
             if (number_rows_c != number_rows_a) {

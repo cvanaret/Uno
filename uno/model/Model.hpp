@@ -6,7 +6,6 @@
 
 #include <string>
 #include <vector>
-#include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/ProblemType.hpp"
@@ -58,8 +57,8 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // sparsity patterns of Jacobian and Hessian
-      virtual void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
-         uno_int solver_indexing, MatrixOrder matrix_order) const = 0;
+      [[nodiscard]] virtual View<const uno_int> get_jacobian_row_indices() const = 0;
+      [[nodiscard]] virtual View<const uno_int> get_jacobian_column_indices() const = 0;
       virtual void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian

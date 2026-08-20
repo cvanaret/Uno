@@ -14,7 +14,6 @@ namespace uno {
    class EvaluationCache {
    public:
       const size_t number_jacobian_nonzeros;
-      COOSparsity jacobian_sparsity;
       // evaluations at current and trial iterates
       Evaluations current_evaluations;
       Evaluations trial_evaluations;

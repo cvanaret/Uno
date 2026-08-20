@@ -37,7 +37,8 @@ namespace uno {
          number_hessian_nonzeros, allocate_explicit_hessian);
 
       // save sparsity patterns of objective gradient and constraint Jacobian into the BQPD workspace
-      this->compute_gradients_sparsity(subproblem);
+      this->build_gradients_sparsity_from_jacobian_coo(subproblem.number_variables, subproblem.number_constraints,
+         subproblem.get_jacobian_row_indices(), subproblem.get_jacobian_column_indices());
 
       if (allocate_explicit_hessian) {
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
@@ -56,8 +57,6 @@ namespace uno {
       // sparse (weak-CSR) constraint Jacobian; gradients_sparsity is BQPD's "la" array
       this->gradients.resize(number_variables + number_jacobian_nonzeros);
       this->gradients_sparsity.resize(1 + number_variables + number_jacobian_nonzeros + 1 + number_constraints + 1);
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
 
       if (allocate_explicit_hessian) {
@@ -190,13 +189,12 @@ namespace uno {
          this->gradients[variable_index] = linear_objective[variable_index];
       }
 
-      // constraint Jacobian: copy the COO sparsity + values, build the weak-CSR sparsity, scatter the values
+      // constraint Jacobian: copy the values, build the weak-CSR sparsity, scatter the values
       for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
-         this->jacobian_row_indices[nonzero_index] = jacobian_row_indices[nonzero_index];
-         this->jacobian_column_indices[nonzero_index] = jacobian_column_indices[nonzero_index];
          this->jacobian_values[nonzero_index] = jacobian_values[nonzero_index];
       }
-      this->build_gradients_sparsity_from_jacobian_coo(number_variables, number_constraints);
+      this->build_gradients_sparsity_from_jacobian_coo(number_variables, number_constraints, jacobian_row_indices,
+         jacobian_column_indices);
       this->scatter_jacobian_values(number_variables);
 
       // Lagrangian Hessian: stored as COO, consumed directly by the symmetric matvec in
@@ -227,7 +225,7 @@ namespace uno {
             const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
             const double entry = this->hessian_values[nonzero_index];
             if (row_index >= vector.size() || column_index >= vector.size()) {
-               throw std::runtime_error("Dimension mismatch");
+               throw std::runtime_error("Dimension mismatch in BQPDQuadraticProgram::compute_hessian_quadratic_form");
             }
 
             const double factor = (row_index != column_index) ? 2. : 1.;
@@ -253,23 +251,12 @@ namespace uno {
       }
    }
 
-   // objective gradient + row-major constraint Jacobian
-   void BQPDQuadraticProgram::compute_gradients_sparsity(const Subproblem& subproblem) {
-      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      // get the Jacobian sparsity in COO format (row = constraint, column = variable)
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         0, 0, Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
-      // convert COO -> BQPD's packed weak-CSR layout
-      this->build_gradients_sparsity_from_jacobian_coo(subproblem.number_variables, subproblem.number_constraints);
-   }
-
    // build BQPD's "la" sparsity array (gradients_sparsity) and the sorting permutation from the COO Jacobian
    // already present in jacobian_row_indices/jacobian_column_indices. Shared by the Subproblem path and the
    // data-driven path so that both produce exactly the same native layout.
-   void BQPDQuadraticProgram::build_gradients_sparsity_from_jacobian_coo(size_t number_variables, size_t number_constraints) {
-      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
+   void BQPDQuadraticProgram::build_gradients_sparsity_from_jacobian_coo(size_t number_variables, size_t number_constraints,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices) {
+      const size_t number_jacobian_nonzeros = jacobian_row_indices.size();
 
       // header
       const size_t position_of_row_starts = 1 + number_variables + number_jacobian_nonzeros;
@@ -293,7 +280,7 @@ namespace uno {
       // see https://stackoverflow.com/questions/17554242/how-to-obtain-the-index-permutation-after-the-sorting
       std::sort(this->permutation_vector.begin(), this->permutation_vector.end(),
           [&](const size_t& i, const size_t& j) {
-             return (this->jacobian_row_indices[i] < this->jacobian_row_indices[j]);
+             return (jacobian_row_indices[i] < jacobian_row_indices[j]);
           }
       );
 
@@ -302,14 +289,14 @@ namespace uno {
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
-         const uno_int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
+         const uno_int variable_index = jacobian_column_indices[permuted_nonzero_index];
          this->gradients_sparsity[1 + number_variables + jacobian_nonzero_index] = variable_index +
             Indexing::Fortran_indexing;
 
          // constraint index
-         const uno_int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
+         const uno_int constraint_index = jacobian_row_indices[permuted_nonzero_index];
          if (current_constraint > constraint_index) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in BQPDQuadraticProgram::build_gradients_sparsity_from_jacobian_coo");
          }
          while (current_constraint < constraint_index) {
             ++current_constraint;

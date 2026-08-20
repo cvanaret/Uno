@@ -111,10 +111,12 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
-         uno_int row_offset, uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->inner.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset,
-         solver_indexing, matrix_order);
+   View<const uno_int> PrimalDualInteriorPointProblem::get_jacobian_row_indices() const {
+      return this->inner.get_jacobian_row_indices();
+   }
+
+   View<const uno_int> PrimalDualInteriorPointProblem::get_jacobian_column_indices() const {
+      return this->inner.get_jacobian_column_indices();
    }
 
    void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,

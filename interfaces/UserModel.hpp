@@ -8,6 +8,7 @@
 #include <optional>
 #include <vector>
 #include "C/Uno_C_API.h"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/ProblemType.hpp"
 
 namespace uno {

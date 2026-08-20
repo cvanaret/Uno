@@ -59,9 +59,12 @@ namespace uno {
       return hessian_model.number_nonzeros();
    }
 
-   void OptimizationProblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int row_offset,
-         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
+   View<const uno_int> OptimizationProblem::get_jacobian_row_indices() const {
+      return this->model.get_jacobian_row_indices();
+   }
+
+   View<const uno_int> OptimizationProblem::get_jacobian_column_indices() const {
+      return this->model.get_jacobian_column_indices();
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
@@ -185,7 +188,7 @@ namespace uno {
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
          if (variable_index >= primals.size() || variable_index >= multipliers.lower_bounds.size() ||
                variable_index >= multipliers.upper_bounds.size()) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in OptimizationProblem::complementarity_error's variable_complementarity");
          }
 
          if (0. < multipliers.lower_bounds[variable_index]) {
@@ -202,7 +205,7 @@ namespace uno {
       const auto& constraints_upper_bounds = this->model.get_constraints_upper_bounds();
       const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
          if (constraint_index >= constraints.size() || constraint_index >= multipliers.constraints.size()) {
-            throw std::runtime_error("Dimension mismatch");
+            throw std::runtime_error("Dimension mismatch in OptimizationProblem::complementarity_error's constraint_complementarity");
          }
 
          if (0. < multipliers.constraints[constraint_index]) { // lower bound

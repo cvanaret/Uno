@@ -29,10 +29,29 @@ namespace uno {
          objective_multiplier(objective_multiplier),
          constraint_violation_coefficient(constraint_violation_coefficient),
          variables_lower_bounds(this->number_variables, 0.),
-         variables_upper_bounds(this->number_variables, INF<double>) {
+         variables_upper_bounds(this->number_variables, INF<double>),
+         jacobian_row_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),
+         jacobian_column_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()) {
       // copy the original variables. The elastic variables have bounds [0, inf)
       view(this->variables_lower_bounds, 0, model.number_variables) = model.get_variables_lower_bounds();
       view(this->variables_upper_bounds, 0, model.number_variables) = model.get_variables_upper_bounds();
+
+      // create the Jacobian sparsity
+      const size_t number_model_jacobian_nonzeros = this->model.number_jacobian_nonzeros();
+      view(this->jacobian_row_indices, 0, number_model_jacobian_nonzeros) = this->model.get_jacobian_row_indices();
+      view(this->jacobian_column_indices, 0, number_model_jacobian_nonzeros) = this->model.get_jacobian_column_indices();
+      // add the contribution of the elastic variables
+      size_t nonzero_index = this->model.number_jacobian_nonzeros();
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index);
+         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(elastic_index);
+         ++nonzero_index;
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index);
+         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(elastic_index);
+         ++nonzero_index;
+      }
    }
 
    std::unique_ptr<OptimizationProblem> l1RelaxedProblem::clone() const {
@@ -77,22 +96,12 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void l1RelaxedProblem::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset,
-         uno_int column_offset,uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
+   View<const uno_int> l1RelaxedProblem::get_jacobian_row_indices() const {
+      return this->jacobian_row_indices.view();
+   }
 
-      // add the contribution of the elastic variables
-      size_t nonzero_index = this->model.number_jacobian_nonzeros();
-      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
-         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + column_offset + solver_indexing;
-         ++nonzero_index;
-      }
-      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         row_indices[nonzero_index] = static_cast<uno_int>(constraint_index) + row_offset + solver_indexing;
-         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + column_offset + solver_indexing;
-         ++nonzero_index;
-      }
+   View<const uno_int> l1RelaxedProblem::get_jacobian_column_indices() const {
+      return this->jacobian_column_indices.view();
    }
 
    void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,

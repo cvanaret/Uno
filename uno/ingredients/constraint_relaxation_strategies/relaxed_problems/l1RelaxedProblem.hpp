@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include "ElasticVariables.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/IntegerRange.hpp"
 
@@ -29,8 +30,8 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
-         uno_int solver_indexing, MatrixOrder matrix_order) const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices, uno_int* column_indices,
          uno_int solver_indexing) const override;
 
@@ -92,6 +93,9 @@ namespace uno {
 
       std::vector<double> variables_lower_bounds;
       std::vector<double> variables_upper_bounds;
+
+      Vector<uno_int> jacobian_row_indices;
+      Vector<uno_int> jacobian_column_indices;
 
       // delegating constructor
       l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,

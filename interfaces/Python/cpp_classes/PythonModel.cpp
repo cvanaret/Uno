@@ -96,23 +96,12 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int row_offset,
-         uno_int column_offset, uno_int solver_indexing, MatrixOrder /*matrix_format*/) const {
-      // copy the indices of the user sparsity patterns to the Uno vectors
-      for (size_t index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-         row_indices[index] = this->user_model.jacobian_row_indices[index] + row_offset;
-         column_indices[index] = this->user_model.jacobian_column_indices[index] + column_offset;
-      }
-      // TODO matrix_format
+   View<const uno_int> PythonModel::get_jacobian_row_indices() const {
+      return view(this->user_model.jacobian_row_indices.data(), 0, this->number_jacobian_nonzeros());
+   }
 
-      // handle the solver indexing
-      if (this->user_model.base_indexing != solver_indexing) {
-         const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-            row_indices[index] += indexing_difference;
-            column_indices[index] += indexing_difference;
-         }
-      }
+   View<const uno_int> PythonModel::get_jacobian_column_indices() const {
+      return view(this->user_model.jacobian_column_indices.data(), 0, this->number_jacobian_nonzeros());
    }
 
    void PythonModel::compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {

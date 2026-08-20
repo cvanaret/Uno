@@ -45,8 +45,8 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
       // structures of Jacobian and Hessian
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
-         uno_int solver_indexing, MatrixOrder matrix_order) const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override;
       void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
@@ -102,6 +102,10 @@ namespace uno {
       std::vector<double> constraints_lower_bounds;
       std::vector<double> constraints_upper_bounds;
 
+      // sparsity
+      Vector<uno_int> jacobian_row_indices;
+      Vector<uno_int> jacobian_column_indices;
+
       // lists of variables and constraints + corresponding collection objects
       const IntegerRange linear_constraints;
       const IntegerRange nonlinear_constraints;
@@ -115,6 +119,7 @@ namespace uno {
 
       mutable NumberModelEvaluations number_model_evaluations{};
 
+      void compute_jacobian_sparsity();
       [[nodiscard]] size_t compute_lagrangian_hessian_sparsity() const;
       [[nodiscard]] ProblemType determine_problem_type() const;
    };

@@ -4,9 +4,7 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
-#include <functional>
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -30,8 +28,8 @@ namespace uno {
       Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
-         uno_int solver_indexing, MatrixOrder matrix_order) const;
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const;
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
 

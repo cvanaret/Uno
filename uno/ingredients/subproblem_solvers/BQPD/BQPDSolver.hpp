@@ -30,7 +30,7 @@ namespace uno {
       MAX_RESTARTS_REACHED = 8
    };
 
-   enum BQPDMode {
+   enum class BQPDMode {
       COLD_START = 0,
       ACTIVE_SET_EQUALITIES = 1, // cold start
       USER_DEFINED_ACTIVE_SET = 2, // hot start
