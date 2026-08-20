@@ -109,7 +109,7 @@ namespace uno {
       const double complementarity = this->original_problem.complementarity_error(current_iterate.primals,
          current_evaluations.constraints, current_iterate.multipliers, 0., this->residual_norm);
       DEBUG2 << "Complementarity: " << complementarity << '\n';
-      if (complementarity <= 1e-8) {
+      if (false && complementarity <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
          std::swap(tentative_multipliers, current_iterate.multipliers);
          DEBUG << current_iterate << '\n';
