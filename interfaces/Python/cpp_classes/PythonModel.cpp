@@ -290,7 +290,7 @@ namespace uno {
       }
    }
 
-   void PythonModel::postprocess_solution(Iterate& /*iterate*/) const {
+   void PythonModel::postprocess_solution(Iterate& /*iterate*/, Evaluations& /*evaluations*/) const {
       // do nothing
    }
 

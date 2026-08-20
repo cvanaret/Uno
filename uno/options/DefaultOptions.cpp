@@ -51,6 +51,7 @@ namespace uno {
       options.set_bool("protect_actual_reduction_against_roundoff", false);
       options.set_double("protected_actual_reduction_macheps_coefficient", 10.);
       options.set_bool("print_subproblem", false);
+      options.set_double("function_scaling_threshold", 100.);
 
       /** globalization strategy options **/
       options.set_double("armijo_decrease_fraction", 1e-4);

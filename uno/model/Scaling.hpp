@@ -10,14 +10,14 @@
 namespace uno {
    // forward declarations
    class COOSparsity;
+   class Model;
    template <typename ElementType>
    class Vector;
 
    class Scaling {
    public:
       Scaling(size_t number_constraints, double gradient_threshold);
-      void compute(const Vector<double>& objective_gradient, const Vector<double>& jacobian_values,
-         const COOSparsity& jacobian_sparsity);
+      void compute(const Model& model, const Vector<double>& objective_gradient, const Vector<double>& jacobian_values);
       [[nodiscard]] double get_objective_scaling() const;
       [[nodiscard]] double get_constraint_scaling(size_t constraint_index) const;
 
