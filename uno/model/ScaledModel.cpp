@@ -11,7 +11,7 @@ namespace uno {
    ScaledModel::ScaledModel(const Model& original_model, const Vector<double>& initial_primals, const Options& options):
          Model(original_model.name + " -> scaled", original_model.number_variables, original_model.number_constraints,
                original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
-         model(std::move(original_model)),
+         model(original_model),
          scaling(this->model.number_constraints, options.get_double("function_scaling_threshold")),
          scaled_multipliers(this->number_constraints),
          constraints_lower_bounds(this->model.get_constraints_lower_bounds()),
@@ -178,8 +178,9 @@ namespace uno {
          evaluations.objective /= this->scaling.get_objective_scaling();
       }
 
-      // unscale the constraint multipliers
+      // unscale the constraints and the constraint multipliers
       for (size_t constraint_index: Range(iterate.number_constraints)) {
+         evaluations.constraints[constraint_index] /= this->scaling.get_constraint_scaling(constraint_index);
          iterate.multipliers.constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index) /
             this->scaling.get_objective_scaling();
       }
