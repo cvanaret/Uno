@@ -58,4 +58,4 @@ jobs:
           (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[UnoSolver.jl] Release'))
         shell: bash
         run: |
-          julia --color=no -e 'using Pkg; Pkg.update(); Pkg.develop(path="interfaces/Julia"); Pkg.add(Pkg.PackageSpec(name="MathOptInterface", rev="bl/model_with_quad")); Pkg.test("UnoSolver")'
+          julia --color=no -e 'using Pkg; Pkg.update(); Pkg.develop(path="interfaces/Julia"); Pkg.add(Pkg.PackageSpec(name="MathOptInterface", rev="bl/qp_block_data")); Pkg.test("UnoSolver")'
