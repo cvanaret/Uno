@@ -2,9 +2,9 @@
 # constraint relaxation strategy (feasibility_restoration)
 constraint_relaxation_strategy feasibility_restoration
 # inequality handling method (inequality_constrained|interior_point)
-inequality_handling_method 	inequality_constrained
+inequality_handling_method inequality_constrained
 # Hessian model (exact|LBFGS|LSR1|identity|zero)
-hessian_model 	exact
+hessian_model exact
 # inertia correction strategy (primal|primal_dual|none)
 inertia_correction_strategy none
 # globalization mechanism (TR|LS)
@@ -17,11 +17,13 @@ globalization_strategy fletcher_filter_method
 
 ## Subproblem solver (picked by Uno automatically, uncomment to force)
 # QP solver (BQPD|HiGHS)
-#QP_solver 	BQPD
+#QP_solver BQPD
 # QP solver (BQPD|HiGHS)
-#LP_solver 	BQPD
+#LP_solver BQPD
 # linear solver (MA57|MA27|MUMPS|SSIDS)
-#linear_solver 	MA57
+#linear_solver MA57
+# path to the HSL shared library to dlopen for MA27/MA57/MA86 (empty = platform default libhsl.{so,dylib,dll})
+#libhsl_path /path/to/libhsl.{so,dylib,dll}
 
 ## Termination
 # Tolerance on constraint violation (double)
@@ -120,6 +122,12 @@ LS_backtracking_ratio 0.5
 LS_min_step_length 1e-12
 # Whether the Lagrange multipliers are scaled with the step length (bool)
 LS_scale_duals_with_step_length true
+
+## Second-order correction (SOC) options
+# Maximum number of SOC iterations (integer)
+SOC_max_iterations 4
+# Fraction of the infeasibility in the SOC termination criterion (double)
+SOC_infeasibility_fraction 0.99
 
 ## Inertia correction options
 # Threshold for the primal inertia correction coefficient above which failure is reported (double)
