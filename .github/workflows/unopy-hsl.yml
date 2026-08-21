@@ -24,6 +24,11 @@ env:
   BUILD_TYPE: Debug
   VENV: /home/optimi/cvanaret/myenv
   HOME: /home/optimi/cvanaret
+  STAGING_ROOT: /home/optimi/cvanaret/ci-staging
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -34,30 +39,40 @@ jobs:
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
 
-      - name: Compile and install unopy
-        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) ${{env.VENV}}/bin/pip install . -v
-
-      - name: Set libhsl_path
-        working-directory: ${{github.workspace}}/interfaces/Python/example
-        # pass option libhsl_path to load libhsl.so dynamically
+      - name: Build unopy into a run-scoped venv on shared NFS
         run: |
+          RUN_DIR="${{env.STAGING_ROOT}}/${{github.run_id}}"
+          RUN_VENV="$RUN_DIR/venv"
+          mkdir -p "${{env.STAGING_ROOT}}"
+          # prune staging from old runs so the NFS home doesn't fill up
+          find "${{env.STAGING_ROOT}}" -mindepth 1 -maxdepth 1 -type d -mtime +2 -exec rm -rf {} + 2>/dev/null || true
+          rm -rf "$RUN_DIR"
+          mkdir -p "$RUN_DIR"
+          ${{env.VENV}}/bin/python -m venv "$RUN_VENV"
+          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) "$RUN_VENV/bin/pip" install . -v
+
+  run-example:
+    name: Run example with ${{matrix.HSL_SOLVER}}
+    needs: build
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        HSL_SOLVER: [MA57, MA27, MA86]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure example for ${{matrix.HSL_SOLVER}}
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: |
+          # load libhsl.so dynamically
           sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/libhsl/builddir/libhsl.so")' example_hs015.py
+          # substitution of the linear solver
+          sed -i 's/MUMPS/${{matrix.HSL_SOLVER}}/' example_hs015.py
 
-      - name: Run example with MA57
+      - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
-        # replace MUMPS with MA57 in ipopt preset
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
         run: |
-          sed -i 's/MUMPS/MA57/' example_hs015.py
-          ${{env.VENV}}/bin/python example_hs015.py
-
-      - name: Run example with MA27
-        working-directory: ${{github.workspace}}/interfaces/Python/example
-        run: |
-          sed -i 's/MA57/MA27/' example_hs015.py
-          ${{env.VENV}}/bin/python example_hs015.py
-
-      - name: Run example with MA86
-        working-directory: ${{github.workspace}}/interfaces/Python/example
-        run: |
-          sed -i 's/MA27/MA86/' example_hs015.py
-          ${{env.VENV}}/bin/python example_hs015.py
+          "${{env.STAGING_ROOT}}/${{github.run_id}}/venv/bin/python" example_hs015.py
