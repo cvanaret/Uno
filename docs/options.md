@@ -4,6 +4,12 @@ This document lists the configuration options that Uno accepts, their types and 
 Options are grouped by functional area.
 Defaults are taken from `uno/options/DefaultOptions.cpp`.
 
+## Command line
+
+| Option        | Type   | Default | Description                                                                                                       |
+|:--------------|:-------|:--------|:----------------------------------------------------------------------------------------------------------------|
+| `option_file` | string | `""`    | Path to an option file whose entries override the defaults. Applies only when passed on the command line, e.g. `uno_ampl model.nl -option_file uno.opt`; it is not itself a solver option and cannot be set from within an option file. |
+
 ## Ingredients
 
 | Ingredient                         | Available strategies                                                                  |
@@ -127,7 +133,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 | Option                        | Type    | Default | Description                                                    |
 |:------------------------------|:--------|:--------|:---------------------------------------------------------------|
-| `SOC_max_iterations_SOC`      | integer | 4       | Maximum number of SOC iterations                               |
+| `SOC_max_iterations`          | integer | 4       | Maximum number of SOC iterations                               |
 | `SOC_infeasibility_fraction`  | double  | 0.99    | Fraction of the infeasibility in the SOC termination criterion |
 
 ## Inertia correction options

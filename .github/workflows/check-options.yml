@@ -1,0 +1,32 @@
+name: Check options consistency
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'uno/options/Options.cpp'
+      - 'uno/options/DefaultOptions.cpp'
+      - 'uno_default.opt'
+      - 'docs/options.md'
+      - '.github/julia/check_options.jl'
+      - '.github/workflows/check-options.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'uno/options/Options.cpp'
+      - 'uno/options/DefaultOptions.cpp'
+      - 'uno_default.opt'
+      - 'docs/options.md'
+      - '.github/julia/check_options.jl'
+      - '.github/workflows/check-options.yml'
+
+jobs:
+  check-options:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.10"
+      - name: Check that options are declared in all four files
+        run: julia .github/julia/check_options.jl
