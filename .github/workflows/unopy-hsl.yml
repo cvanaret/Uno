@@ -24,7 +24,7 @@ env:
   BUILD_TYPE: Debug
   VENV: /home/optimi/cvanaret/myenv
   HOME: /home/optimi/cvanaret
-  STAGING_ROOT: /scratch/local/cvanaret/ci-staging
+  STAGING_ROOT: /scratch/local/opt-008547/cvanaret/ci-staging
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
