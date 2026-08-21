@@ -13,9 +13,9 @@ sources = [
     # SPRAL v2025.9.18
     GitSource("https://github.com/ralna/spral.git",
               "80bc843ac3847d4a783a0e11213715a70175aee6"),
-    # MUMPS v5.9.0
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.0.tar.gz",
-                  "02c6efdb91749ec0f82351d40f3f860547272a1eb1d899126a4265b4d6bcc4ca"),
+# MUMPS v5.9.1
+ArchiveSource("https://mumps-solver.org/MUMPS_5.9.1.tar.gz",
+"659c9b57646b5a003ac618baa1faf9dd2044e46c732b3daaccbc7158003e1b46"),
     # HiGHS v1.15.1
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
               "04024d701f79feb8e2f18bc3df0dffc04ef05088"),
