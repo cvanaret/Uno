@@ -132,6 +132,12 @@ meson install -C builddir
 # Compile HiGHS
 cd $WORKSPACE/srcdir/HiGHS
 
+# Patch v1.15.1 (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+# fix-cli11.patch
+sed -i 's/(*opt)/opt->count() > 0/' extern/cli11/CLI11.hpp
+# fix-destroy.patch
+sed -i 's/Highs::resetGlobalScheduler(true);//' highs/interfaces/highs_c_api.cpp
+
 mkdir build
 cd build
 cmake .. \
