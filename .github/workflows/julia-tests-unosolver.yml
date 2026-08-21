@@ -83,5 +83,5 @@ jobs:
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
           Pkg.develop(path="/home/runner/work/Uno/Uno/interfaces/Julia")
-          Pkg.add(Pkg.PackageSpec(name="MathOptInterface", rev="bl/model_with_quad"))
+          Pkg.add(Pkg.PackageSpec(name="MathOptInterface", rev="bl/qp_block_data"))
           Pkg.test("UnoSolver")
