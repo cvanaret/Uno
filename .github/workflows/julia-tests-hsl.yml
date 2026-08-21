@@ -93,7 +93,7 @@ jobs:
 
     - name: Copy Uno_jll.jl into workspace
       run: |
-        cp $HOME/Uno_jll.jl ${{github.workspace}}/
+        cp -r $HOME/Uno_jll.jl ${{github.workspace}}/
 
     - name: Install -- Uno
       run: |
