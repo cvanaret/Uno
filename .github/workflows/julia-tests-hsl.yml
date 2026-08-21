@@ -23,7 +23,7 @@ on:
 env:
   BUILD_TYPE: Debug
   VENV: /home/optimi/cvanaret/myenv
-  RUNNER_PATH: /home/optimi/cvanaret
+  HOME: /home/optimi/cvanaret
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -44,7 +44,7 @@ jobs:
 
 #    - name: Compile BLAS and LAPACK
 #      run: |
-#        cd $RUNNER_PATH/lapack
+#        cd $HOME/lapack
 #        rm -rf builddir
 #        mkdir builddir && cd builddir
 #        cmake .. \
@@ -54,32 +54,32 @@ jobs:
 #          -DTEST_FORTRAN_COMPILER=OFF
 #        make -j4
 
-    - name: Compile libHSL
-      run: |
-        BLAS_PATH="/usr/lib/x86_64-linux-gnu"
-        LAPACK_PATH="/usr/lib/x86_64-linux-gnu"
-        cd $RUNNER_PATH/libhsl
-        rm -rf builddir
-        meson setup builddir --buildtype=debug \
-                             -Dlibblas=blas \
-                             -Dliblapack=lapack \
-                             -Dlibblas_path=${BLAS_PATH} \
-                             -Dliblapack_path=${LAPACK_PATH} \
-                             -Ddefault_library=shared
-        meson compile -C builddir
+    #- name: Compile libHSL
+      #run: |
+        #BLAS_PATH="/usr/lib/x86_64-linux-gnu"
+        #LAPACK_PATH="/usr/lib/x86_64-linux-gnu"
+        #cd $HOME/libhsl
+        #rm -rf builddir
+        #meson setup builddir --buildtype=debug \
+                             #-Dlibblas=blas \
+                             #-Dliblapack=lapack \
+                             #-Dlibblas_path=${BLAS_PATH} \
+                             #-Dliblapack_path=${LAPACK_PATH} \
+                             #-Ddefault_library=shared
+        #meson compile -C builddir
 
-    - name: Compile AMPL
-      run: |
-        cd $RUNNER_PATH/ampl
-        make -f makefile.u clean
-        make -f makefile.u CC=gcc CFLAGS="-O2 -fPIC"
+    #- name: Compile AMPL
+      #run: |
+        #cd $HOME/ampl
+        #make -f makefile.u clean
+        #make -f makefile.u CC=gcc CFLAGS="-O2 -fPIC"
 
     - name: Configure CMake -- Uno
       run: |
         LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
         LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
-        LIBHSL_PATH="$RUNNER_PATH/libhsl/builddir/libhsl.so"
-        LIBAMPL_PATH="$RUNNER_PATH/ampl/amplsolver.a"
+        LIBHSL_PATH="$HOME/libhsl/builddir/libhsl.so"
+        LIBAMPL_PATH="$HOME/ampl/amplsolver.a"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
@@ -91,18 +91,22 @@ jobs:
     - name: Build -- Uno
       run: cmake --build ${{github.workspace}}/build --target uno_ampl --config ${{env.BUILD_TYPE}}
 
+    - name: Copy Uno_jll.jl into workspace
+      run: |
+        cp $HOME/Uno_jll.jl ${{github.workspace}}/
+
     - name: Install -- Uno
       run: |
-        rm -rf $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
-        cp -L ${{github.workspace}}/build/uno_ampl $RUNNER_PATH/Uno_jll.jl/override/bin/
-        cp -L ${{github.workspace}}/build/libuno.so $RUNNER_PATH/Uno_jll.jl/override/lib/
-        ${{env.VENV}}/bin/patchelf --set-rpath '$ORIGIN/../lib' $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
-        LIB=$RUNNER_PATH/Uno_jll.jl/override/lib/libuno.so
+        rm -rf ${{github.workspace}}/Uno_jll.jl/override/bin/uno_ampl
+        cp -L ${{github.workspace}}/build/uno_ampl ${{github.workspace}}/Uno_jll.jl/override/bin/
+        cp -L ${{github.workspace}}/build/libuno.so ${{github.workspace}}/Uno_jll.jl/override/lib/
+        ${{env.VENV}}/bin/patchelf --set-rpath '$ORIGIN/../lib' ${{github.workspace}}/Uno_jll.jl/override/bin/uno_ampl
+        LIB=${{github.workspace}}/Uno_jll.jl/override/lib/libuno.so
         RPATH=$(${{env.VENV}}/bin/patchelf --print-rpath "$LIB")
         echo "libuno.so rpath: $RPATH"
         ${{env.VENV}}/bin/patchelf --set-rpath "$RPATH" --force-rpath "$LIB"
-        ${{env.VENV}}/bin/patchelf --print-rpath $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
-        ldd $RUNNER_PATH/Uno_jll.jl/override/bin/uno_ampl
+        ${{env.VENV}}/bin/patchelf --print-rpath ${{github.workspace}}/Uno_jll.jl/override/bin/uno_ampl
+        ldd ${{github.workspace}}/Uno_jll.jl/override/bin/uno_ampl
 
   uno-test:
     name: Julia tests of ${{matrix.UNO_TEST}} with ${{matrix.HSL_SOLVER}}
@@ -125,6 +129,6 @@ jobs:
       run: |
         using Pkg
         Pkg.instantiate()
-        Pkg.develop(path="${{ env.RUNNER_PATH }}/Uno_jll.jl")
+        Pkg.develop(path="${{github.workspace}}/Uno_jll.jl")
         push!(ARGS, "${{ matrix.HSL_SOLVER }}")
         include("${{ github.workspace }}/.github/julia/runtests_${{matrix.UNO_TEST}}.jl")

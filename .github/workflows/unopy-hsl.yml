@@ -23,7 +23,7 @@ on:
 env:
   BUILD_TYPE: Debug
   VENV: /home/optimi/cvanaret/myenv
-  RUNNER_PATH: /home/optimi/cvanaret
+  HOME: /home/optimi/cvanaret
 
 jobs:
   build:
@@ -41,7 +41,7 @@ jobs:
         working-directory: ${{github.workspace}}/interfaces/Python/example
         # pass option libhsl_path to load libhsl.so dynamically
         run: |
-          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.RUNNER_PATH}}/libhsl/builddir/libhsl.so")' example_hs015.py
+          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/libhsl/builddir/libhsl.so")' example_hs015.py
 
       - name: Run example with MA57
         working-directory: ${{github.workspace}}/interfaces/Python/example
