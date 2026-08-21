@@ -54,6 +54,22 @@ namespace uno {
    // ma86_solve job: 0 solves the full system A x = b
    constexpr int MA86_SOLVE_FULL_SYSTEM = 0;
 
+   static void print_version() {
+#if defined(HAS_HSL)
+   #if defined(HSL_RUNTIME_LOADING)
+      if (LIBHSL_version != nullptr) {
+   #endif
+         int major, minor, patch;
+         LIBHSL_version(&major, &minor, &patch);
+         INFO << "Running MA86 v" << major << "." << minor << "." << patch << '\n';
+         return;
+   #if defined(HSL_RUNTIME_LOADING)
+      }
+   #endif
+#endif
+      INFO << "Running MA86\n";
+   }
+
    MA86Solver::MA86Solver(int solver_indexing):
          DirectSymmetricIndefiniteLinearSolver<double>(),
          solver_indexing(solver_indexing),
@@ -65,13 +81,7 @@ namespace uno {
             "to point at a libhsl providing ma86_*_d and mc68_*_i)");
       }
 #endif
-#if defined(HAS_HSL)
-      int major, minor, patch;
-      LIBHSL_version(&major, &minor, &patch);
-      INFO << "Running MA86 v" << major << "." << minor << "." << patch << '\n';
-#else
-      INFO << "Running MA86 v1.0.0\n";
-#endif
+      print_version();
       // set the default values of the controlling parameters
       MA86_default_control(&this->control);
       // build_csc_from_coo emits the CSC in the COO base (solver_indexing); MA86's C interface

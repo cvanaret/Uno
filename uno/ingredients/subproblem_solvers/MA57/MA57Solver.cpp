@@ -82,6 +82,22 @@ namespace uno {
       }
    }  // anonymous namespace
 
+   static void print_version() {
+#if defined(HAS_HSL)
+   #if defined(HSL_RUNTIME_LOADING)
+      if (LIBHSL_version != nullptr) {
+   #endif
+         int major, minor, patch;
+         LIBHSL_version(&major, &minor, &patch);
+         INFO << "Running MA57 v" << major << "." << minor << "." << patch << '\n';
+         return;
+   #if defined(HSL_RUNTIME_LOADING)
+      }
+   #endif
+#endif
+      INFO << "Running MA57\n";
+   }
+
    MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
 #ifdef HSL_RUNTIME_LOADING
       if (!ma57_symbols_available()) {
@@ -89,13 +105,7 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
-#if defined(HAS_HSL)
-      int major, minor, patch;
-      LIBHSL_version(&major, &minor, &patch);
-      INFO << "Running MA57 v" << major << "." << minor << "." << patch << '\n';
-#else
-      INFO << "Running MA57 v1.0.0\n";
-#endif
+      print_version();
       // set the default values of the controlling parameters
       MA57_set_default_parameters(this->workspace.cntl.data(), this->workspace.icntl.data());
       MA57_ICNTL(5) = 0; // suppress warning messages

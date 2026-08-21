@@ -5,6 +5,8 @@
 #include <cassert>
 #include <stdexcept>
 #include "MA27Solver.hpp"
+
+#include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
 #include "tools/Logger.hpp"
 #ifdef HSL_RUNTIME_LOADING
 #include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
@@ -52,6 +54,22 @@ namespace uno {
       RANK_DEFICIENT, // Matrix is rank deficient. In this case, a decomposition will still have been produced which will enable the subsequent solution of consistent equations (MA27B/BD entry only). INFO(2) will be set to the rank of the matrix. Note that this warning will overwrite an INFO(1)=1 or INFO(1)=2 warning.
    };
 
+   static void print_version() {
+#if defined(HAS_HSL)
+   #if defined(HSL_RUNTIME_LOADING)
+      if (LIBHSL_version != nullptr) {
+   #endif
+         int major, minor, patch;
+         LIBHSL_version(&major, &minor, &patch);
+         INFO << "Running MA27 v" << major << "." << minor << "." << patch << '\n';
+         return;
+   #if defined(HSL_RUNTIME_LOADING)
+      }
+   #endif
+#endif
+      INFO << "Running MA27\n";
+   }
+
    MA27Solver::MA27Solver(): DirectSymmetricIndefiniteLinearSolver() {
 #ifdef HSL_RUNTIME_LOADING
       if (!ma27_symbols_available()) {
@@ -59,13 +77,7 @@ namespace uno {
             "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
       }
 #endif
-#if defined(HAS_HSL)
-      int major, minor, patch;
-      LIBHSL_version(&major, &minor, &patch);
-      INFO << "Running MA27 v" << major << "." << minor << "." << patch << '\n';
-#else
-      INFO << "Running MA27 v1.0.0\n";
-#endif
+      print_version();
       // initialization: set the default values of the controlling parameters
       MA27_set_default_parameters(this->workspace.icntl.data(), this->workspace.cntl.data());
       MA27_ICNTL(1) = 0; // no warning messages
