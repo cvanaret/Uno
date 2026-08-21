@@ -77,7 +77,7 @@ namespace uno {
       }
 
       // solve the linear system
-      DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << '\n';
+      DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
 
       // set the constraint multipliers if their norm is reasonable
@@ -134,7 +134,7 @@ namespace uno {
       }
 
       // solve the linear system
-      DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << '\n';
+      DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       if (this->linear_solver->matrix_is_singular()) {
          this->direction.status = SubproblemStatus::INFEASIBLE;

@@ -8,9 +8,11 @@
 #include <vector>
 #include "MA86Solver.hpp"
 #include "linear_algebra/View.hpp"
+#include "tools/Logger.hpp"
 
 #ifdef HSL_RUNTIME_LOADING
 // route the calls through the runtime-resolved function pointers
+#define LIBHSL_version uno::hsl_libhsl_version
 #define MA86_default_control uno::hsl_ma86_default_control
 #define MA86_analyse uno::hsl_ma86_analyse
 #define MA86_factor uno::hsl_ma86_factor
@@ -31,6 +33,7 @@
 namespace uno {
 #ifndef HSL_RUNTIME_LOADING
    extern "C" {
+      void LIBHSL_version(int *major, int *minor, int *patch);
       void MA86_default_control(ma86_control* control);
       void MA86_analyse(const int n, const int ptr[], const int row[], int order[], void** keep,
          const ma86_control* control, ma86_info* info);
@@ -51,6 +54,22 @@ namespace uno {
    // ma86_solve job: 0 solves the full system A x = b
    constexpr int MA86_SOLVE_FULL_SYSTEM = 0;
 
+   static void print_version() {
+#if defined(HAS_HSL)
+   #if defined(HSL_RUNTIME_LOADING)
+      if (LIBHSL_version != nullptr) {
+   #endif
+         int major, minor, patch;
+         LIBHSL_version(&major, &minor, &patch);
+         INFO << "Running MA86 v" << major << "." << minor << "." << patch << '\n';
+         return;
+   #if defined(HSL_RUNTIME_LOADING)
+      }
+   #endif
+#endif
+      INFO << "Running MA86\n";
+   }
+
    MA86Solver::MA86Solver(int solver_indexing):
          DirectSymmetricIndefiniteLinearSolver<double>(),
          solver_indexing(solver_indexing),
@@ -62,6 +81,7 @@ namespace uno {
             "to point at a libhsl providing ma86_*_d and mc68_*_i)");
       }
 #endif
+      print_version();
       // set the default values of the controlling parameters
       MA86_default_control(&this->control);
       // build_csc_from_coo emits the CSC in the COO base (solver_indexing); MA86's C interface

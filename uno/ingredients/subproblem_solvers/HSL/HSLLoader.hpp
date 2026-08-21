@@ -18,6 +18,8 @@ namespace uno {
       struct mc68_control;
       struct mc68_info;
 
+      using LIBHSL_version_fp = void (*)(int *major, int *minor, int *patch);
+
       // MA57
       using ma57id_fp = void (*)(double cntl[], int icntl[]);
       using ma57ad_fp = void (*)(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep,
@@ -59,6 +61,7 @@ namespace uno {
    }
 
    // Resolved by load_hsl_library(); nullptr until loaded or if the symbol is absent.
+   extern LIBHSL_version_fp hsl_libhsl_version;
    extern ma57id_fp hsl_ma57id;
    extern ma57ad_fp hsl_ma57ad;
    extern ma57bd_fp hsl_ma57bd;

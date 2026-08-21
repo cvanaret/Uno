@@ -75,9 +75,9 @@ namespace uno {
 
       void check_factorization_status() const;
 
-      [[nodiscard]] int& ICNTL(size_t index);
-      [[nodiscard]] double& CNTL(size_t index);
-      [[nodiscard]] int INFO(size_t index) const;
+      [[nodiscard]] int& MA27_ICNTL(size_t index);
+      [[nodiscard]] double& MA27_CNTL(size_t index);
+      [[nodiscard]] int MA27_INFO(size_t index) const;
    };
 } // namespace
 

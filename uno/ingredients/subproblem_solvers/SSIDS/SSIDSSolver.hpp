@@ -4,6 +4,7 @@
 #ifndef UNO_SSIDSSOLVER_H
 #define UNO_SSIDSSOLVER_H
 
+#include <spral.h>
 #include <spral_ssids.h>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"

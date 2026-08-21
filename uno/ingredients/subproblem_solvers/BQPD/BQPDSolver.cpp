@@ -65,6 +65,7 @@ namespace uno {
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          print_subproblem(options.get_bool("print_subproblem")) {
+      INFO << "Running BQPD v2011.10.05\n";
       // construct an empty BQPD-native quadratic program so that get_quadratic_program() can be used to build
       // it directly from data (no Subproblem); the full solver instead calls initialize_memory(subproblem)
       this->quadratic_program = std::make_unique<BQPDQuadraticProgram>();

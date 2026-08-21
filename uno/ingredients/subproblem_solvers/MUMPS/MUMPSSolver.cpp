@@ -6,7 +6,6 @@
 #include "MUMPSSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
-#include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
@@ -16,6 +15,7 @@
 
 namespace uno {
    MUMPSSolver::MUMPSSolver(): DirectSymmetricIndefiniteLinearSolver() {
+      INFO << "Running MUMPS v" << MUMPS_VERSION << '\n';
       this->workspace.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
       // TODO load number of processes from option file
@@ -27,19 +27,19 @@ namespace uno {
       this->workspace.comm_fortran = USE_COMM_WORLD;
       dmumps_c(&this->workspace);
       // control parameters
-      ICNTL(1) = -1; // output stream for error messages (off)
-      ICNTL(2) = -1; // output stream for diagnostic printing (off)
-      ICNTL(3) = -1; // output stream for global information (off)
-      ICNTL(4) = 0; // level of printing for error, warning, and diagnostic message (off)
+      MUMPS_ICNTL(1) = -1; // output stream for error messages (off)
+      MUMPS_ICNTL(2) = -1; // output stream for diagnostic printing (off)
+      MUMPS_ICNTL(3) = -1; // output stream for global information (off)
+      MUMPS_ICNTL(4) = 0; // level of printing for error, warning, and diagnostic message (off)
 
-      ICNTL(6) = MUMPSSettings::permuting_scaling; // column permutation (none)
-      ICNTL(7) = MUMPSSettings::pivot_order; // pivot order (AMD)
-      ICNTL(8) = MUMPSSettings::scaling; // scaling strategy (diagonal scaling during factorization)
-      ICNTL(10) = 0; // iterative refinement (none)
-      ICNTL(13) = 1; // parallelism of the root nod (ScaLAPACK not used, partly recover parallelism of the root node)
-      ICNTL(14) = MUMPSSettings::mem_percent; // percentage increase in the estimated working space (35)
-      ICNTL(24) = 1; // controls the detection of “null pivot rows” (null pivot row detection)
-      CNTL(1) = MUMPSSettings::pivtol; // relative threshold for numerical pivoting (1e-6)
+      MUMPS_ICNTL(6) = MUMPSSettings::permuting_scaling; // column permutation (none)
+      MUMPS_ICNTL(7) = MUMPSSettings::pivot_order; // pivot order (AMD)
+      MUMPS_ICNTL(8) = MUMPSSettings::scaling; // scaling strategy (diagonal scaling during factorization)
+      MUMPS_ICNTL(10) = 0; // iterative refinement (none)
+      MUMPS_ICNTL(13) = 1; // parallelism of the root nod (ScaLAPACK not used, partly recover parallelism of the root node)
+      MUMPS_ICNTL(14) = MUMPSSettings::mem_percent; // percentage increase in the estimated working space (35)
+      MUMPS_ICNTL(24) = 1; // controls the detection of “null pivot rows” (null pivot row detection)
+      MUMPS_CNTL(1) = MUMPSSettings::pivtol; // relative threshold for numerical pivoting (1e-6)
       // debug for MUMPS team ICNTL(2) = 6; ICNTL(3) = 6; ICNTL(4) = 6;
    }
 
@@ -61,10 +61,10 @@ namespace uno {
       this->workspace.irn = this->linear_system.matrix_row_indices.data();
       this->workspace.jcn = this->linear_system.matrix_column_indices.data();
       dmumps_c(&this->workspace);
-      if (INFO(1) < 0) {
+      if (MUMPS_INFO(1) < 0) {
          throw std::runtime_error("The MUMPS analysis failed");
       }
-      ICNTL(8) = 8; // recompute scaling before factorization
+      MUMPS_ICNTL(8) = 8; // recompute scaling before factorization
       this->analysis_performed = true;
    }
 
@@ -76,21 +76,21 @@ namespace uno {
       bool success = false;
       while (!success) {
          dmumps_c(&this->workspace);
-         if (INFO(1) == -8 || INFO(1) == -9) { // workspace too small
+         if (MUMPS_INFO(1) == -8 || MUMPS_INFO(1) == -9) { // workspace too small
             if (this->number_factorization_failures >= this->max_number_factorization_failures) {
                this->number_factorization_failures = 0;
                throw std::runtime_error("The MUMPS factorization failed (workspace too small)");
             }
             // increase the workspace size and retry
-            ICNTL(14) = ICNTL(14) * MUMPSSettings::mem_percent_increase;
+            MUMPS_ICNTL(14) = MUMPS_ICNTL(14) * MUMPSSettings::mem_percent_increase;
             ++this->number_factorization_failures;
          }
-         else if (INFO(1) == -10) {
+         else if (MUMPS_INFO(1) == -10) {
             // singular matrix, should be caught by the calling code via the inertia
             DEBUG << "MUMPS detected a numerically singular matrix\n";
             success = true;
          }
-         else if (INFO(1) < 0) {
+         else if (MUMPS_INFO(1) < 0) {
             throw std::runtime_error("The MUMPS factorization failed");
          }
          else {
@@ -116,7 +116,7 @@ namespace uno {
       this->workspace.rhs = solution;
       this->workspace.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->workspace);
-      if (INFO(1) < 0) {
+      if (MUMPS_INFO(1) < 0) {
          throw std::runtime_error("The MUMPS solve failed");
       }
    }
@@ -131,11 +131,11 @@ namespace uno {
    }
 
    size_t MUMPSSolver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(INFOG(12));
+      return static_cast<size_t>(MUMPS_INFOG(12));
    }
 
    size_t MUMPSSolver::number_zero_eigenvalues() const {
-      return static_cast<size_t>(INFOG(28));
+      return static_cast<size_t>(MUMPS_INFOG(28));
    }
 
    bool MUMPSSolver::matrix_is_singular() const {
@@ -156,22 +156,22 @@ namespace uno {
 
    // protected member functions
 
-   int& MUMPSSolver::ICNTL(size_t index) {
+   int& MUMPSSolver::MUMPS_ICNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.icntl[index-1];
    }
 
-   double& MUMPSSolver::CNTL(size_t index) {
+   double& MUMPSSolver::MUMPS_CNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.cntl[index-1];
    }
 
-   int MUMPSSolver::INFO(size_t index) const {
+   int MUMPSSolver::MUMPS_INFO(size_t index) const {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.info[index-1];
    }
 
-   int MUMPSSolver::INFOG(size_t index) const {
+   int MUMPSSolver::MUMPS_INFOG(size_t index) const {
       // handle the Fortran indexing (starting at 1)
       return this->workspace.infog[index-1];
    }

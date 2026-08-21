@@ -61,10 +61,10 @@ namespace uno {
       size_t number_factorization_failures{0};
       const size_t max_number_factorization_failures{MUMPSSettings::max_number_factorization_failures};
 
-      [[nodiscard]] int& ICNTL(size_t index);
-      [[nodiscard]] double& CNTL(size_t index);
-      [[nodiscard]] int INFO(size_t index) const;
-      [[nodiscard]] int INFOG(size_t index) const;
+      [[nodiscard]] int& MUMPS_ICNTL(size_t index);
+      [[nodiscard]] double& MUMPS_CNTL(size_t index);
+      [[nodiscard]] int MUMPS_INFO(size_t index) const;
+      [[nodiscard]] int MUMPS_INFOG(size_t index) const;
    };
 } // namespace
 

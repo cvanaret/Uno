@@ -12,6 +12,7 @@
 namespace uno {
    HiGHSSolver::HiGHSSolver(const Options& options):
          QPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
+      INFO << "Running HiGHS v" << highsVersion() << '\n';
       this->highs_solver.setOptionValue("output_flag", "false");
       // construct an empty HiGHS-native quadratic program so that get_quadratic_program() can be used to
       // build it directly from data (no Subproblem); the full solver instead calls initialize_memory(subproblem)
