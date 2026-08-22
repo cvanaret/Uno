@@ -77,7 +77,8 @@ namespace uno {
    template <typename Problem>
    SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& trial_iterate,
          const Evaluations& trial_evaluations) {
-      if (trial_evaluations.is_objective_computed && trial_evaluations.objective < this->unbounded_objective_threshold) {
+      if (trial_iterate.primal_feasibility <= this->primal_tolerance && trial_evaluations.is_objective_computed &&
+            trial_evaluations.objective < this->unbounded_objective_threshold) {
          return SolutionStatus::UNBOUNDED;
       }
 
