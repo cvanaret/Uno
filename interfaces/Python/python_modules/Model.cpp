@@ -4,7 +4,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
-#include <iostream>
 #include <stdexcept>
 #include "../unopy.hpp"
 #include "tools/Infinity.hpp"
@@ -97,9 +96,7 @@ namespace uno {
          user_model.constraints_lower_bounds = std::move(constraints_lower_bounds);
          user_model.constraints_upper_bounds = std::move(constraints_upper_bounds);
          user_model.number_jacobian_nonzeros = number_jacobian_nonzeros;
-         std::cout << "jacobian_row_indices has size " << user_model.jacobian_row_indices.size() << ", receiving size " << jacobian_row_indices.size() << '\n';
          user_model.jacobian_row_indices = std::move(jacobian_row_indices);
-         std::cout << "jacobian_column_indices has size " << user_model.jacobian_column_indices.size() << ", receiving size " << jacobian_column_indices.size() << '\n';
          user_model.jacobian_column_indices = std::move(jacobian_column_indices);
          user_model.jacobian = std::move(jacobian);
          user_model.initial_dual_iterate.resize(static_cast<size_t>(number_constraints), 0.);
