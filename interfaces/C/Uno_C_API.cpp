@@ -279,7 +279,7 @@ public:
       }
    }
 
-   void postprocess_solution(Iterate& /*iterate*/) const override {
+   void postprocess_solution(Iterate& /*iterate*/, Evaluations& /*evaluations*/) const override {
       // do nothing
    }
 

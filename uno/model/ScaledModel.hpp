@@ -1,22 +1,21 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
-#define UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
+#ifndef UNO_SCALEDMODEL_H
+#define UNO_SCALEDMODEL_H
 
 #include "Model.hpp"
-#include "linear_algebra/SparseVector.hpp"
+#include "Scaling.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
-   // generate an equality-constrained model by:
-   // - introducing slacks in inequality constraints
-   // - subtracting the (possibly nonzero) RHS of equality constraints
-   // all constraints are of the form "c(x) = 0"
-   class HomogeneousEqualityConstrainedModel: public Model {
+   // forward declarations
+   class Evaluations;
+   class Options;
+
+   class ScaledModel: public Model {
    public:
-      explicit HomogeneousEqualityConstrainedModel(const Model& original_model);
+      ScaledModel(const Model& original_model, const Vector<double>& initial_primals, const Options& options);
 
       [[nodiscard]] ProblemType get_problem_type() const override;
 
@@ -63,6 +62,7 @@ namespace uno {
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
+
       void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -75,21 +75,13 @@ namespace uno {
       [[nodiscard]] size_t number_model_hessian_evaluations() const override;
       void reset_number_evaluations() const override;
 
-   protected:
+   private:
       const Model& model;
-
-      IntegerRange equality_constraints;
-      IntegerRange inequality_constraints;
-      SparseVector<size_t> slacks;
-
-      std::vector<double> variables_lower_bounds;
-      std::vector<double> variables_upper_bounds;
-      std::vector<double> constraints_lower_bounds;
-      std::vector<double> constraints_upper_bounds;
-
-      Vector<uno_int> jacobian_row_indices{};
-      Vector<uno_int> jacobian_column_indices{};
+      Scaling scaling;
+      mutable Vector<double> scaled_multipliers{};
+      std::vector<double> constraints_lower_bounds{};
+      std::vector<double> constraints_upper_bounds{};
    };
 } // namespace
 
-#endif // UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
+#endif // UNO_SCALEDMODEL_H

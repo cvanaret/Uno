@@ -187,6 +187,7 @@ namespace uno {
    }
 
    void HomogeneousEqualityConstrainedModel::initial_primal_point(Vector<double>& x) const {
+      x.resize(this->number_variables);
       this->model.initial_primal_point(x);
       // set the slacks
       for (const auto [_, slack_index]: this->get_slacks()) {
@@ -198,10 +199,10 @@ namespace uno {
       this->model.initial_dual_point(multipliers);
    }
 
-   void HomogeneousEqualityConstrainedModel::postprocess_solution(Iterate& iterate) const {
+   void HomogeneousEqualityConstrainedModel::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
       // discard the slacks
       iterate.number_variables = this->model.number_variables;
-      this->model.postprocess_solution(iterate);
+      this->model.postprocess_solution(iterate, evaluations);
    }
 
    size_t HomogeneousEqualityConstrainedModel::number_jacobian_nonzeros() const {
