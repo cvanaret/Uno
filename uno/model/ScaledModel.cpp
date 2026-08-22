@@ -186,14 +186,14 @@ namespace uno {
       }
 
       // unscale the constraints and the constraint multipliers
-      for (size_t constraint_index: Range(iterate.number_constraints)) {
+      for (size_t constraint_index: Range(this->model.number_constraints)) {
          evaluations.constraints[constraint_index] /= this->scaling.get_constraint_scaling(constraint_index);
          iterate.multipliers.constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index) /
             this->scaling.get_objective_scaling();
       }
 
       // unscale the bound multipliers
-      for (size_t variable_index: Range(iterate.number_variables)) {
+      for (size_t variable_index: Range(this->model.number_variables)) {
          iterate.multipliers.lower_bounds[variable_index] /= this->scaling.get_objective_scaling();
          iterate.multipliers.upper_bounds[variable_index] /= this->scaling.get_objective_scaling();
       }
