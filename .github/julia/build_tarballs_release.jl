@@ -13,12 +13,12 @@ sources = [
     # SPRAL v2025.9.18
     GitSource("https://github.com/ralna/spral.git",
               "80bc843ac3847d4a783a0e11213715a70175aee6"),
-    # MUMPS v5.9.0
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.0.tar.gz",
-                  "02c6efdb91749ec0f82351d40f3f860547272a1eb1d899126a4265b4d6bcc4ca"),
-    # HiGHS v1.15.0
+    # MUMPS v5.9.1
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.1.tar.gz",
+                  "659c9b57646b5a003ac618baa1faf9dd2044e46c732b3daaccbc7158003e1b46"),
+    # HiGHS v1.15.1
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
-              "83960019015b0d5152df73110ff142f328edcfd2"),
+              "04024d701f79feb8e2f18bc3df0dffc04ef05088"),
     # Hwloc v2.13.0
     ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
                   "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
@@ -46,7 +46,7 @@ fi
 cd ${prefix}
 cp -rL share/licenses deps/licenses
 mkdir deps/licenses/MUMPS
-cp $WORKSPACE/srcdir/MUMPS_5.9.0/LICENSE deps/licenses/MUMPS/LICENSE
+cp $WORKSPACE/srcdir/MUMPS_5.9.1/LICENSE deps/licenses/MUMPS/LICENSE
 mkdir deps/licenses/spral
 cp $WORKSPACE/srcdir/spral/LICENCE deps/licenses/spral/LICENCE
 chmod -R u=rwx deps
@@ -131,6 +131,12 @@ meson install -C builddir
 
 # Compile HiGHS
 cd $WORKSPACE/srcdir/HiGHS
+
+# Patch v1.15.1 (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+# fix-cli11.patch
+sed -i 's/(*opt)/opt->count() > 0/' extern/cli11/CLI11.hpp
+# fix-destroy.patch
+sed -i 's/Highs::resetGlobalScheduler(true);//' highs/interfaces/highs_c_api.cpp
 
 mkdir build
 cd build
@@ -242,6 +248,6 @@ build_tarballs(
     products,
     dependencies;
     julia_compat = "1.6",
-    preferred_gcc_version = v"10.2.0",
+    preferred_gcc_version = v"11",
     clang_use_lld=false,
 )
