@@ -66,41 +66,57 @@ namespace uno {
       statistics.set("Phase", "OPT");
    }
 
-   const Direction& FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-
-      // if we are in the optimality phase, solve the optimality problem
+      // solve the current problem (OPTIMALITY or FEASIBILITY_RESTORATION)
       if (this->current_phase == Phase::OPTIMALITY) {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
          this->initial_point.fill(0.);
-         const Direction& optimality_direction = this->solve_subproblem(statistics, *this->inequality_handling_method,
-            *this->globalization_strategy, current_iterate, trust_region_radius, current_evaluations, warmstart_information);
-         if (optimality_direction.status == SubproblemStatus::INFEASIBLE) {
-            // switch to the feasibility problem, starting from the current direction
-            statistics.set("Status", std::string("infeasible"));
-            DEBUG << "/!\\ The subproblem is infeasible\n";
-            this->initial_point = view(optimality_direction.primals, 0, this->original_problem.number_variables);
-            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
-         }
-         else {
-            warmstart_information.no_changes();
-            return optimality_direction;
-         }
+         return this->solve_subproblem(statistics, *this->inequality_handling_method, *this->globalization_strategy,
+            current_iterate, trust_region_radius, current_evaluations, warmstart_information);
       }
-
-      // solve the feasibility problem (minimize the constraint violation)
-      DEBUG << "Solving the feasibility subproblem\n";
-      statistics.set("Phase", "FEAS");
-      // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-      const Direction& feasibility_direction = this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
-         this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
-         warmstart_information);
-      return feasibility_direction;
+      else {
+         // solve the feasibility problem (minimize the constraint violation)
+         DEBUG << "Solving the feasibility subproblem\n";
+         statistics.set("Phase", "FEAS");
+         return this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
+            this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
+            warmstart_information);
+      }
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
       return (this->current_phase == Phase::FEASIBILITY_RESTORATION);
+   }
+
+   bool FeasibilityRestoration::test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const {
+      DEBUG << "\nTesting the termination criteria of the feasibility problem at the current iterate\n";
+      // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
+      DEBUG2 << "x = " << current_iterate.primals << '\n';
+      DEBUG2 << "c(x) = " << current_evaluations.constraints << '\n';
+      Multipliers tentative_multipliers(current_iterate.multipliers);
+      this->feasibility_problem.compute_multipliers(tentative_multipliers, current_evaluations);
+      DEBUG2 << "Feasibility constraint multipliers: " << tentative_multipliers.constraints << '\n';
+      DEBUG2 << "Feasibility LB multipliers: " << tentative_multipliers.lower_bounds << '\n';
+      DEBUG2 << "Feasibility UB multipliers: " << tentative_multipliers.upper_bounds << '\n';
+
+      // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
+      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, tentative_multipliers,
+         0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
+      // TODO check that all duals are not 0
+      DEBUG2 << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
+      const double complementarity = this->original_problem.complementarity_error(current_iterate.primals,
+         current_evaluations.constraints, current_iterate.multipliers, 0., this->residual_norm);
+      DEBUG2 << "Complementarity: " << complementarity << '\n';
+      if (false && complementarity <= 1e-8) {
+         current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
+         std::swap(tentative_multipliers, current_iterate.multipliers);
+         DEBUG << current_iterate << '\n';
+         DEBUG << "The current iterate is an infeasible stationary point\n";
+         return true;
+      }
+      return false;
    }
 
    // precondition: this->current_phase == Phase::OPTIMALITY
@@ -109,31 +125,30 @@ namespace uno {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
-
-      // save the current point (progress and primals) upon switching
-      this->reference_optimality_progress = current_iterate.progress;
-      this->reference_optimality_primals = current_iterate.primals;
-      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
-      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-
-      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-      this->initial_point.resize(this->feasibility_problem.number_variables);
-      // swap the iterate's multipliers and the feasibility multipliers maintained by the class
+      // initialize the feasibility multipliers and swap the iterate's multipliers and the feasibility multipliers
       if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
-         this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
-         this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+         this->other_phase_multipliers.resize(this->feasibility_problem.number_variables,
+            this->feasibility_problem.number_constraints);
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      this->reference_optimality_primals = current_iterate.primals;
+      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
+
+      // save the current point (progress and primals) upon switching
+      this->reference_optimality_progress = current_iterate.progress;
+      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
+      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
+      this->feasibility_problem.compute_elastics(current_iterate, current_evaluations);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      this->initial_point.resize(this->feasibility_problem.number_variables);
 
-      DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
+      DEBUG2 << "Current iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();

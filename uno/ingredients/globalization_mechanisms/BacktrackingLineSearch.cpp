@@ -34,8 +34,8 @@ namespace uno {
       this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Steplength", Statistics::double_width + 1, 2);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
-      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
+      set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
+      set_dual_residuals_statistics(statistics, current_iterate);
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -45,33 +45,49 @@ namespace uno {
 
       // compute a feasible direction
       try {
-         const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
+         const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
             INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-         BacktrackingLineSearch::check_unboundedness(direction);
-         const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
-            direction, evaluation_cache, warmstart_information, user_callbacks);
-         if (backtracking_success) {
-            return;
+         if (direction.status != SubproblemStatus::INFEASIBLE) {
+            check_unboundedness(direction);
+            const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
+               direction, evaluation_cache, warmstart_information, user_callbacks);
+            if (backtracking_success) {
+               return;
+            }
+            // switch to the feasibility problem
          }
-         // if backtracking failed, try to switch to feasibility problem (below)
+         else { // infeasible
+            statistics.set("Status", std::string("infeasible"));
+            DEBUG << "/!\\ The subproblem is infeasible\n";
+            // switch to the feasibility problem
+         }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
          statistics.set("Status", "inertia correction");
-         // try to switch to feasibility problem (below)
+         // switch to the feasibility problem
       }
 
-      // if the line search failed, switch to solving the feasibility problem (test first if we can)
-      if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
-         throw std::runtime_error("The line search failed");
+      // feasibility zone: test corner cases
+      if (model.number_constraints == 0) {
+         throw std::runtime_error("The model is unconstrained but the iterate is infeasible, should not happen");
+      }
+      if (this->constraint_relaxation_strategy->solving_feasibility_problem()) {
+         throw std::runtime_error("Uno is solving the feasibility problem but the iterate is infeasible, should not happen");
       }
 
-      // solve the feasibility problem
+      // test if we can terminate with a stationary infeasible point
+      if (this->constraint_relaxation_strategy->test_infeasible_stationarity(current_iterate, evaluation_cache.current_evaluations)) {
+         std::swap(current_iterate, trial_iterate);
+         return;
+      }
+
+      // otherwise, switch to solving the feasibility problem
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
-      const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics,
-         current_iterate, INF<double>, evaluation_cache.current_evaluations, warmstart_information);
+      const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
+         INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);

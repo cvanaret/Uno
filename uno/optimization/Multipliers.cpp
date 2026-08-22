@@ -15,6 +15,12 @@ namespace uno {
       this->upper_bounds.fill(0.);
    }
 
+   void Multipliers::resize(size_t number_variables, size_t number_constraints) {
+      this->constraints.resize(number_constraints);
+      this->lower_bounds.resize(number_variables);
+      this->upper_bounds.resize(number_variables);
+   }
+
    bool Multipliers::not_all_zero(size_t number_variables, double tolerance) const {
       // constraint multipliers
       for (double multiplier_j: this->constraints) {
