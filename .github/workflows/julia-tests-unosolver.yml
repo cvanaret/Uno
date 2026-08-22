@@ -32,7 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-    name: UnoSolver.jl
+      matrix:
+        preset: [filtersqp, ipopt]
+    name: UnoSolver.jl (preset = ${{ matrix.preset }})
 
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +79,7 @@ jobs:
       - name: Unit tests of UnoSolver.jl
         env:
           UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
+          UNO_PRESET_MOI: ${{ matrix.preset }}
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg
