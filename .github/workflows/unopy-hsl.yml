@@ -1,4 +1,4 @@
-name: unopy HSL example
+name: unopy HSL/CoinHSL example
 
 on:
   push:
@@ -52,21 +52,28 @@ jobs:
           CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) "$RUN_VENV/bin/pip" install . -v
 
   run-example:
-    name: Run example with ${{matrix.HSL_SOLVER}}
+    name: Run example with ${{matrix.LIBHSL_NAME}}'s ${{matrix.HSL_SOLVER}}
     needs: build
     runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
+        LIBHSL: [libhsl/builddir/libhsl.so, coinhsl-2024.05.15/build/libcoinhsl.so]
         HSL_SOLVER: [MA57, MA27, MA86]
+        include:
+          - LIBHSL: libhsl/builddir/libhsl.so
+            LIBHSL_NAME: libHSL
+          - LIBHSL: coinhsl-2024.05.15/build/libcoinhsl.so
+            LIBHSL_NAME: CoinHSL
+        # this attaches a label to both paths
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure example for ${{matrix.HSL_SOLVER}}
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: |
-          # load libhsl.so dynamically
-          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/libhsl/builddir/libhsl.so")' example_hs015.py
+          # load the HSL library dynamically
+          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/${{matrix.LIBHSL}}")' example_hs015.py
           # substitution of the linear solver
           sed -i 's/MUMPS/${{matrix.HSL_SOLVER}}/' example_hs015.py
 
