@@ -28,6 +28,7 @@ namespace uno {
          number_elastic_variables(this->elastic_variables.size()),
          objective_multiplier(objective_multiplier),
          constraint_violation_coefficient(constraint_violation_coefficient),
+         dual_regularization_constraints(this->number_constraints),
          variables_lower_bounds(this->number_variables, 0.),
          variables_upper_bounds(this->number_variables, INF<double>),
          jacobian_row_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),

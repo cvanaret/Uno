@@ -89,7 +89,7 @@ namespace uno {
       const double constraint_violation_coefficient;
       double proximal_coefficient{0.};
       double* proximal_center{};
-      const IntegerRange dual_regularization_constraints{0};
+      const IntegerRange dual_regularization_constraints;
 
       std::vector<double> variables_lower_bounds;
       std::vector<double> variables_upper_bounds;
