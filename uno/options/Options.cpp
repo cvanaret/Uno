@@ -18,6 +18,7 @@ namespace uno {
       {"max_iterations", OptionType::INTEGER},
       {"time_limit", OptionType::DOUBLE},
       {"print_solution", OptionType::BOOL},
+      {"diverging_iterate_threshold", OptionType::DOUBLE},
       {"unbounded_objective_threshold", OptionType::DOUBLE},
       {"logger", OptionType::STRING},
       {"constraint_relaxation_strategy", OptionType::STRING},
