@@ -31,6 +31,8 @@ namespace uno {
       options.set_double("time_limit", INF<double>);
       // print optimal solution (yes|no)
       options.set_bool("print_solution", false);
+      // threshold on norm of primal variables to declare diverging iterate
+      options.set_double("diverging_iterate_threshold", 1e20);
       // threshold on objective to declare unbounded NLP
       options.set_double("unbounded_objective_threshold", -1e20);
 

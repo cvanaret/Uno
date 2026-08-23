@@ -42,6 +42,8 @@ max_iterations 2000
 time_limit infinity
 # Whether the primal-dual solution is printed (bool)
 print_solution false
+# Threshold on norm of primal variables to declare diverging iterate (double)
+diverging_iterate_threshold 1e20
 # Objective threshold under which the problem is declared unbounded (double)
 unbounded_objective_threshold -1e20
 

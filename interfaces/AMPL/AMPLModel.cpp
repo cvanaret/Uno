@@ -296,7 +296,8 @@ namespace uno {
       else if (result.solution_status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
          this->asl->p.solve_code_ = 200;
       }
-      else if (result.solution_status == SolutionStatus::UNBOUNDED) {
+      else if (result.solution_status == SolutionStatus::DIVERGING_ITERATE ||
+            result.solution_status == SolutionStatus::UNBOUNDED_OBJECTIVE) {
          this->asl->p.solve_code_ = 300;
       }
       else if (result.solution_status == SolutionStatus::INFEASIBLE_SMALL_STEP) {

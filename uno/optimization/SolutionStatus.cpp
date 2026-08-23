@@ -20,7 +20,10 @@ namespace uno {
       else if (status == SolutionStatus::INFEASIBLE_SMALL_STEP) {
          return "Infeasible small step";
       }
-      else if (status == SolutionStatus::UNBOUNDED) {
+      else if (status == SolutionStatus::DIVERGING_ITERATE) {
+         return "Diverging iterate";
+      }
+      else if (status == SolutionStatus::UNBOUNDED_OBJECTIVE) {
          return "Unbounded problem";
       }
       return "Suboptimal point";

@@ -62,6 +62,7 @@ namespace uno {
       .value("INFEASIBLE_STATIONARY_POINT", SolutionStatus::INFEASIBLE_STATIONARY_POINT)
       .value("FEASIBLE_SMALL_STEP", SolutionStatus::FEASIBLE_SMALL_STEP)
       .value("INFEASIBLE_SMALL_STEP", SolutionStatus::INFEASIBLE_SMALL_STEP)
-      .value("UNBOUNDED", SolutionStatus::UNBOUNDED);
+      .value("DIVERGING_ITERATE", SolutionStatus::DIVERGING_ITERATE)
+      .value("UNBOUNDED_OBJECTIVE", SolutionStatus::UNBOUNDED_OBJECTIVE);
    }
 } // namespace

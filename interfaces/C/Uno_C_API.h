@@ -55,7 +55,8 @@ extern "C" {
    const uno_int UNO_INFEASIBLE_STATIONARY_POINT = 3; // infeasible stationary point of constraint violation
    const uno_int UNO_FEASIBLE_SMALL_STEP = 4;
    const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
-   const uno_int UNO_UNBOUNDED = 6;
+   const uno_int UNO_DIVERGING_ITERATE = 6;
+   const uno_int UNO_UNBOUNDED_OBJECTIVE = 7;
 
    // current Uno version
    const uno_int UNO_VERSION_MAJOR = 2;

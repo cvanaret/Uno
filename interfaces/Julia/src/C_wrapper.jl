@@ -497,7 +497,7 @@ function uno_statistics(model::Model, solver::Solver)
       status = :small_step
     elseif solution_status == UNO_INFEASIBLE_SMALL_STEP
       status = :small_step
-    elseif solution_status == UNO_UNBOUNDED
+    elseif solution_status == UNO_DIVERGING_ITERATE || solution_status == UNO_UNBOUNDED_OBJECTIVE
       status = :unbounded
     else
       @assert solution_status == UNO_NOT_OPTIMAL

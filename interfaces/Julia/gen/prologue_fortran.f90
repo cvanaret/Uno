@@ -63,7 +63,8 @@ integer(uno_int), parameter :: UNO_FEASIBLE_FJ_POINT           = 2
 integer(uno_int), parameter :: UNO_INFEASIBLE_STATIONARY_POINT = 3
 integer(uno_int), parameter :: UNO_FEASIBLE_SMALL_STEP         = 4
 integer(uno_int), parameter :: UNO_INFEASIBLE_SMALL_STEP       = 5
-integer(uno_int), parameter :: UNO_UNBOUNDED                   = 6
+integer(uno_int), parameter :: UNO_DIVERGING_ITERATE           = 6
+integer(uno_int), parameter :: UNO_UNBOUNDED_OBJECTIVE         = 7
 
 !---------------------------------------------
 ! Uno version
