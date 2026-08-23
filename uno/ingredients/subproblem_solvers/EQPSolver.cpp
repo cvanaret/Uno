@@ -40,7 +40,9 @@ namespace uno {
       DEBUG << "Computing least-squares multipliers\n";
 
       // compute least-square multipliers
+      std::cout << "least-squares multipliers 1\n";
       auto& linear_system = this->linear_solver->get_linear_system();
+      std::cout << "least-squares multipliers 2\n";
 
       // set up the linear system
       const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
@@ -51,30 +53,38 @@ namespace uno {
       View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
       View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
       View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
+      std::cout << "least-squares multipliers 3\n";
 
       hessian.fill(0.); // no Hessian contribution
       primal_inertia_correction.fill(1.); // Identity block
       subproblem.evaluate_jacobian(iterate, jacobian, evaluations);
       dual_inertia_correction.fill(0.); // no dual regularization
+      std::cout << "least-squares multipliers 4\n";
 
       // perform the symbolic analysis once and for all
       if (!this->analysis_performed) {
+         std::cout << "least-squares multipliers 5\n";
          DEBUG << "Performing symbolic analysis of the indefinite system\n";
          this->linear_solver->do_symbolic_analysis();
          this->analysis_performed = true;
       }
+      std::cout << "least-squares multipliers 6\n";
 
       // factorize the matrix
       this->linear_solver->do_numerical_factorization(false);
+      std::cout << "least-squares multipliers 7\n";
 
       // assemble the RHS
       linear_system.rhs.fill(0.);
       evaluations.evaluate_objective_gradient(subproblem.problem.model, iterate.primals);
-      view(linear_system.rhs.data(), subproblem.number_variables) = evaluations.objective_gradient;
+      auto obj_grad = view(linear_system.rhs.data(), subproblem.number_variables);
+      subproblem.problem.evaluate_objective_gradient(iterate, obj_grad.data(), evaluations);
+      // view(linear_system.rhs.data(), subproblem.number_variables) = evaluations.objective_gradient;
       for (size_t variable_index: Range(subproblem.number_variables)) {
          linear_system.rhs[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
             iterate.multipliers.upper_bounds[variable_index]);
       }
+      std::cout << "least-squares multipliers 8\n";
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";

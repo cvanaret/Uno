@@ -15,7 +15,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "model/BoundRelaxedModel.hpp"
 #include "model/FixedBoundsConstraintsModel.hpp"
-#include "model/HomogeneousEqualityConstrainedModel.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
@@ -52,10 +51,8 @@ namespace uno {
             (model.has_bound_constraints() || model.has_inequality_constraints())) {
          // move the fixed variables to the set of general constraints
          const FixedBoundsConstraintsModel fixed_bound_model(model);
-         // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
-         const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
          // slightly relax the bound constraints
-         const BoundRelaxedModel bound_relaxed_model(homogeneous_model, options);
+         const BoundRelaxedModel bound_relaxed_model(fixed_bound_model, options);
          
          Result result = uno_solve(bound_relaxed_model, options, user_callbacks);
          // fix the dimensions

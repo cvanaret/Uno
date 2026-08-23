@@ -8,7 +8,6 @@
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
 #include "Uno.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "options/DefaultOptions.hpp"
@@ -230,10 +229,6 @@ public:
       return this->user_model.variables_upper_bounds;
    }
 
-   [[nodiscard]] const SparseVector<size_t>& get_slacks() const override {
-      return this->slacks;
-   }
-
    [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override {
       return this->fixed_variables;
    }
@@ -323,7 +318,6 @@ public:
 protected:
    const CUserModel& user_model;
    mutable NumberModelEvaluations number_model_evaluations{};
-   const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
    const IntegerRange linear_constraints{0};
    const IntegerRange nonlinear_constraints;

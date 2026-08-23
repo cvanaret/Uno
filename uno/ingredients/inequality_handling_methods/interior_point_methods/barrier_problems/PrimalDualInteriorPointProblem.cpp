@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2024-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "PrimalDualInteriorPointProblem.hpp"
@@ -17,17 +17,41 @@
 namespace uno {
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem,
       const InteriorPointParameters& parameters, const Parameterization& parameterization):
-         OptimizationProblem(problem.model, problem.number_variables, problem.number_constraints),
+         OptimizationProblem(problem.model, problem.number_variables + problem.get_inequality_constraints().size(),
+            problem.number_constraints),
          inner(problem),
          parameterization(parameterization),
          parameters(parameters),
-         equality_constraints(problem.number_constraints),
-         barrier_variables_lower_bounds(this->number_variables, -INF<double>),
-         barrier_variables_upper_bounds(this->number_variables, INF<double>) {
-   }
+         slacks(this->inner.get_inequality_constraints().size()),
+         // all constraints are equality constraints
+         equality_constraints(this->number_constraints),
+         variables_lower_bounds(this->number_variables, -INF<double>),
+         variables_upper_bounds(this->number_variables, INF<double>),
+         constraints_lower_bounds(this->number_constraints, 0.),
+         constraints_upper_bounds(this->number_constraints, 0.) {
+      // register the inequality constraint of each slack
+      size_t inequality_index = 0;
+      for (const size_t constraint_index: this->inner.get_inequality_constraints()) {
+         const size_t slack_index = this->inner.number_variables + inequality_index;
+         this->slacks.insert(constraint_index, slack_index);
+         // bounds of the slack
+         this->variables_lower_bounds[slack_index] = this->inner.get_constraints_lower_bounds()[constraint_index];
+         this->variables_upper_bounds[slack_index] = this->inner.get_constraints_upper_bounds()[constraint_index];
+         ++inequality_index;
+      }
 
-   std::unique_ptr<OptimizationProblem> PrimalDualInteriorPointProblem::clone() const {
-      return std::make_unique<PrimalDualInteriorPointProblem>(*this);
+      // compute the Jacobian sparsity
+      const size_t number_jacobian_nonzeros = this->inner.number_jacobian_nonzeros();
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros + this->slacks.size());
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros + this->slacks.size());
+      view(this->jacobian_row_indices, 0, number_jacobian_nonzeros) = this->inner.get_jacobian_row_indices();
+      view(this->jacobian_column_indices, 0, number_jacobian_nonzeros) = this->inner.get_jacobian_column_indices();
+      size_t nonzero_index = number_jacobian_nonzeros;
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index);
+         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(slack_index);
+         ++nonzero_index;
+      }
    }
 
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
@@ -47,18 +71,21 @@ namespace uno {
       const auto& variables_upper_bounds = this->inner.get_variables_upper_bounds();
 
       // make the initial point strictly feasible wrt the bounds
-      for (size_t variable_index: Range(this->number_variables)) {
+      for (size_t variable_index: Range(this->inner.number_variables)) {
          initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
             variables_lower_bounds[variable_index], variables_upper_bounds[variable_index]);
       }
 
       // set the slack variables (if any)
-      if (!this->model.get_slacks().is_empty()) {
+      if (!this->slacks.is_empty()) {
+         initial_iterate.set_number_variables(this->number_variables);
+
          evaluations.evaluate_constraints(this->model, initial_iterate.primals);
          // set the slacks to the constraint values
-         for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
+         for (const auto [constraint_index, slack_index]: this->slacks) {
             initial_iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
-               variables_lower_bounds[slack_index], variables_upper_bounds[slack_index]);
+               this->inner.get_constraints_lower_bounds()[constraint_index],
+               this->inner.get_constraints_upper_bounds()[constraint_index]);
          }
          // since the slacks have been set, the function evaluations should also be updated
          evaluations.are_constraints_computed = false;
@@ -78,7 +105,7 @@ namespace uno {
    }
 
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
-      return this->inner.number_jacobian_nonzeros();
+      return this->inner.number_jacobian_nonzeros() + this->slacks.size();
    }
 
    bool PrimalDualInteriorPointProblem::has_curvature(const HessianModel& hessian_model) const {
@@ -112,11 +139,11 @@ namespace uno {
    }
 
    View<const uno_int> PrimalDualInteriorPointProblem::get_jacobian_row_indices() const {
-      return this->inner.get_jacobian_row_indices();
+      return this->jacobian_row_indices.view();
    }
 
    View<const uno_int> PrimalDualInteriorPointProblem::get_jacobian_column_indices() const {
-      return this->inner.get_jacobian_column_indices();
+      return this->jacobian_column_indices.view();
    }
 
    void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
@@ -139,6 +166,17 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
       this->inner.evaluate_constraints(iterate, constraints, evaluations);
+
+      // inequality constraints: add the slacks
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         constraints[constraint_index] -= iterate.primals[slack_index];
+      }
+
+      // equality constraints: make sure they are homogeneous (c(x) = 0)
+      for (const size_t constraint_index: this->inner.get_equality_constraints()) {
+         const double fixed_bound = this->inner.get_constraints_lower_bounds()[constraint_index];
+         constraints[constraint_index] -= fixed_bound;
+      }
    }
 
    void PrimalDualInteriorPointProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient,
@@ -172,6 +210,13 @@ namespace uno {
    void PrimalDualInteriorPointProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values,
          Evaluations& evaluations) const {
       this->inner.evaluate_jacobian(primals, jacobian_values, evaluations);
+
+      // add the slack contributions
+      size_t nonzero_index = this->inner.number_jacobian_nonzeros();
+      for ([[maybe_unused]] const auto _: this->slacks) {
+         jacobian_values[nonzero_index] = -1.;
+         ++nonzero_index;
+      }
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
@@ -234,11 +279,21 @@ namespace uno {
    void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(const double* vector, double* result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_vector_product(vector, result, evaluations);
+
+      // add the slack contributions
+      for (const auto [constraint_index, slack_variable_index]: this->slacks) {
+         result[constraint_index] -= vector[slack_variable_index];
+      }
    }
 
    void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_transposed_vector_product(vector, result, evaluations);
+
+      // add the slack contributions
+      for (const auto [constraint_index, slack_variable_index]: this->slacks) {
+         result[slack_variable_index] = -vector[constraint_index];
+      }
    }
 
    void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
@@ -268,23 +323,22 @@ namespace uno {
    }
 
    const std::vector<double>& PrimalDualInteriorPointProblem::get_variables_lower_bounds() const {
-      return this->barrier_variables_lower_bounds;
+      return this->variables_lower_bounds;
    }
 
    const std::vector<double>& PrimalDualInteriorPointProblem::get_variables_upper_bounds() const {
-      return this->barrier_variables_upper_bounds;
+      return this->variables_upper_bounds;
    }
-
    const Vector<size_t>& PrimalDualInteriorPointProblem::get_fixed_variables() const {
       return this->fixed_variables;
    }
 
    const std::vector<double>& PrimalDualInteriorPointProblem::get_constraints_lower_bounds() const {
-      return this->inner.get_constraints_lower_bounds();
+      return this->constraints_lower_bounds;
    }
 
    const std::vector<double>& PrimalDualInteriorPointProblem::get_constraints_upper_bounds() const {
-      return this->inner.get_constraints_upper_bounds();
+      return this->constraints_upper_bounds;
    }
 
    const Collection<size_t>& PrimalDualInteriorPointProblem::get_equality_constraints() const {
