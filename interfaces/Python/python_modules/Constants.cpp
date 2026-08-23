@@ -43,9 +43,10 @@ namespace uno {
       module.attr("INFEASIBLE_STATIONARY_POINT") = UNO_INFEASIBLE_STATIONARY_POINT;
       module.attr("FEASIBLE_SMALL_STEP") = UNO_FEASIBLE_SMALL_STEP;
       module.attr("INFEASIBLE_SMALL_STEP") = UNO_INFEASIBLE_SMALL_STEP;
-      module.attr("UNBOUNDED") = UNO_UNBOUNDED;
+      module.attr("DIVERGING_ITERATE") = UNO_DIVERGING_ITERATE;
+      module.attr("UNBOUNDED_OBJECTIVE") = UNO_UNBOUNDED_OBJECTIVE;
 
-      // current Uno version is 2.0.3
+      // current Uno version
       module.attr("VERSION_MAJOR") = UNO_VERSION_MAJOR;
       module.attr("VERSION_MINOR") = UNO_VERSION_MINOR;
       module.attr("VERSION_PATCH") = UNO_VERSION_PATCH;

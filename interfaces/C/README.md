@@ -205,7 +205,7 @@ A set of functions allows you to inspect the result of the optimization:
 ```c
 uno_get_optimization_status(solver);
 ```
-- the solution status (`UNO_NOT_OPTIMAL`, `UNO_FEASIBLE_KKT_POINT`, `UNO_FEASIBLE_FJ_POINT`, `UNO_INFEASIBLE_STATIONARY_POINT`, `UNO_FEASIBLE_SMALL_STEP`, `UNO_INFEASIBLE_SMALL_STEP`, `UNO_UNBOUNDED`):
+- the solution status (`UNO_NOT_OPTIMAL`, `UNO_FEASIBLE_KKT_POINT`, `UNO_FEASIBLE_FJ_POINT`, `UNO_INFEASIBLE_STATIONARY_POINT`, `UNO_FEASIBLE_SMALL_STEP`, `UNO_INFEASIBLE_SMALL_STEP`, `UNO_DIVERGING_ITERATE`, `UNO_UNBOUNDED_OBJECTIVE`):
 ```c
 uno_int uno_get_solution_status(solver);
 ```

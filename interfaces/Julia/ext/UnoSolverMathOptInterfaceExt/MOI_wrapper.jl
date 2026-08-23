@@ -1609,7 +1609,9 @@ function _status_code_mapping(uno_termination_status::Cint, uno_solution_status:
             return (MOI.SLOW_PROGRESS, MOI.FEASIBLE_POINT)
         elseif uno_solution_status == UnoSolver.UNO_INFEASIBLE_SMALL_STEP
             return (MOI.SLOW_PROGRESS, MOI.INFEASIBLE_POINT)
-        elseif uno_solution_status == UnoSolver.UNO_UNBOUNDED
+        elseif uno_solution_status == UnoSolver.UNO_DIVERGING_ITERATE
+            return (MOI.DUAL_INFEASIBLE, MOI.INFEASIBLE_POINT)
+        elseif uno_solution_status == UnoSolver.UNO_UNBOUNDED_OBJECTIVE
             return (MOI.DUAL_INFEASIBLE, MOI.FEASIBLE_POINT)
         else # UNO_NOT_OPTIMAL
             return (MOI.SLOW_PROGRESS, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility

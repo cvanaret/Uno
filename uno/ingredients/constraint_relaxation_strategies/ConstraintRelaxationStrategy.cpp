@@ -23,6 +23,7 @@ namespace uno {
          loose_primal_tolerance(options.get_double("loose_primal_tolerance")),
          loose_dual_tolerance(options.get_double("loose_dual_tolerance")),
          loose_tolerance_iteration_threshold(options.get_unsigned_int("loose_tolerance_iteration_threshold")),
+         diverging_iterate_threshold(options.get_double("diverging_iterate_threshold")),
          unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
    }
 

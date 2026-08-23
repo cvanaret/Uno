@@ -63,6 +63,7 @@ namespace uno {
       const double loose_dual_tolerance;
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_iteration_threshold;
+      const double diverging_iterate_threshold;
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
 
@@ -71,18 +72,22 @@ namespace uno {
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 
       template <typename Problem>
-      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& trial_iterate, const Evaluations& trial_evaluations);
+      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate, const Evaluations& evaluations);
    };
 
    template <typename Problem>
-   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& trial_iterate,
-         const Evaluations& trial_evaluations) {
-      if (trial_evaluations.is_objective_computed && trial_evaluations.objective < this->unbounded_objective_threshold) {
-         return SolutionStatus::UNBOUNDED;
+   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate,
+         const Evaluations& evaluations) {
+      // unbounded iterate or objective
+      if (norm_inf(view(iterate.primals, 0, problem.get_number_original_variables())) > this->diverging_iterate_threshold) {
+         return SolutionStatus::DIVERGING_ITERATE;
+      }
+      if (evaluations.is_objective_computed && evaluations.objective < this->unbounded_objective_threshold) {
+         return SolutionStatus::UNBOUNDED_OBJECTIVE;
       }
 
       // test convergence wrt the tight tolerance
-      const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(trial_iterate, this->primal_tolerance,
+      const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->dual_tolerance);
       if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL || (this->loose_primal_tolerance <= this->primal_tolerance &&
             this->loose_dual_tolerance <= this->dual_tolerance)) {
@@ -90,7 +95,7 @@ namespace uno {
       }
 
       // if not converged, check convergence wrt loose tolerances (provided they are strictly looser than the tight tolerances)
-      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(trial_iterate, this->loose_primal_tolerance,
+      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->loose_primal_tolerance,
          this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != SolutionStatus::NOT_OPTIMAL) {
