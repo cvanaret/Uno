@@ -1,4 +1,4 @@
-name: unopy HSL/CoinHSL example
+name: unopy HSL/CoinHSL
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
           CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) "$RUN_VENV/bin/pip" install . -v
 
   run-example:
-    name: Run example with ${{matrix.LIBHSL_NAME}}'s ${{matrix.HSL_SOLVER}}
+    name: Example with ${{matrix.LIBHSL_NAME}}'s ${{matrix.HSL_SOLVER}}
     needs: build
     runs-on: self-hosted
     strategy:
