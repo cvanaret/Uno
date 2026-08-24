@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.8.21"
+version = v"2026.8.24"
 
 # Collection of sources
 sources = [
@@ -214,7 +214,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DZLIB=OFF \
-    -DHIPO=ON \
+    -DHIPO=OFF \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
