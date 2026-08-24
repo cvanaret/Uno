@@ -93,10 +93,13 @@ namespace uno {
       const IntegerRange equality_constraints;
       const IntegerRange inequality_constraints{0};
 
-      std::vector<double> variables_lower_bounds;
-      std::vector<double> variables_upper_bounds;
+      std::vector<double> explicit_variables_lower_bounds;
+      std::vector<double> explicit_variables_upper_bounds;
       std::vector<double> constraints_lower_bounds;
       std::vector<double> constraints_upper_bounds;
+      // internal bounds
+      std::vector<double> variables_lower_bounds;
+      std::vector<double> variables_upper_bounds;
 
       Vector<uno_int> jacobian_row_indices{};
       Vector<uno_int> jacobian_column_indices{};
