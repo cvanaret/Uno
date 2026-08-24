@@ -38,7 +38,10 @@ namespace uno {
 
       // second-order corrections
       [[nodiscard]] bool has_second_order_corrections() const override;
-      const Direction& compute_second_order_correction(Iterate& current_iterate, const Vector<double>& constraints_SOC) override;
+      void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
+      const Direction& compute_second_order_correction(Iterate& current_iterate) override;
+      void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,

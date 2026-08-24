@@ -148,12 +148,33 @@ namespace uno {
       }
    }
 
-   const Direction& FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate, const Vector<double>& constraints_SOC) {
+   void FeasibilityRestoration::initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       if (this->current_phase == Phase::OPTIMALITY) {
-         return this->inequality_handling_method->compute_second_order_correction(current_iterate, constraints_SOC);
+         this->inequality_handling_method->initialize_second_order_corrections(current_iterate, trial_iterate, current_evaluations,
+            trial_evaluations);
       }
       else {
-         return this->feasibility_inequality_handling_method->compute_second_order_correction(current_iterate, constraints_SOC);
+         this->feasibility_inequality_handling_method->initialize_second_order_corrections(current_iterate, trial_iterate,
+            current_evaluations, trial_evaluations);
+      }
+   }
+
+   const Direction& FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate) {
+      if (this->current_phase == Phase::OPTIMALITY) {
+         return this->inequality_handling_method->compute_second_order_correction(current_iterate);
+      }
+      else {
+         return this->feasibility_inequality_handling_method->compute_second_order_correction(current_iterate);
+      }
+   }
+
+   void FeasibilityRestoration::update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) {
+      if (this->current_phase == Phase::OPTIMALITY) {
+         return this->inequality_handling_method->update_second_order_corrections(trial_iterate, trial_evaluations);
+      }
+      else {
+         return this->feasibility_inequality_handling_method->update_second_order_corrections(trial_iterate, trial_evaluations);
       }
    }
 

@@ -195,13 +195,8 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       // enter second-order corrections
       DEBUG << "\nEntering second-order corrections\n";
-      // initialize upon the first time
-      if (!this->SOC_initialized) {
-         this->constraints_SOC.resize(evaluation_cache.current_evaluations.constraints.size());
-         this->SOC_initialized = true;
-      }
-      this->constraints_SOC = evaluation_cache.trial_evaluations.constraints;
-      this->constraints_SOC += direction.primal_dual_step_length * evaluation_cache.current_evaluations.constraints;
+      this->constraint_relaxation_strategy->initialize_second_order_corrections(current_iterate, trial_iterate,
+         evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
       double old_infeasibility_SOC = current_iterate.progress.infeasibility;
 
       size_t SOC_iteration = 1;
@@ -211,8 +206,7 @@ namespace uno {
          DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
 
          try {
-            const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate,
-               this->constraints_SOC);
+            const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate);
             assemble_trial_iterate(model, current_iterate, trial_iterate, direction_SOC, 1.);
             evaluation_cache.trial_evaluations.reset();
 
@@ -233,8 +227,7 @@ namespace uno {
             }
             else {
                // continue the SOCs
-               this->constraints_SOC.scale(direction_SOC.primal_dual_step_length);
-               this->constraints_SOC += evaluation_cache.trial_evaluations.constraints;
+               this->constraint_relaxation_strategy->update_second_order_corrections(trial_iterate, evaluation_cache.trial_evaluations);
                old_infeasibility_SOC = trial_iterate.progress.infeasibility;
                ++SOC_iteration;
                DEBUG << "SOC direction rejected, continue SOCs" << '\n';

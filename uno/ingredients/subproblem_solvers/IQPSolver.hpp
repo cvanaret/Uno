@@ -35,8 +35,11 @@ namespace uno {
          const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] bool has_second_order_corrections() const override;
-      const Direction& compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate,
-         const Vector<double>& constraints_SOC) override;
+      void initialize_second_order_corrections(const Subproblem& subproblem, const Iterate& current_iterate,
+         const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
+      const Direction& compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate) override;
+      void update_second_order_corrections(const Subproblem& subproblem, const Iterate& trial_iterate,
+         Evaluations& trial_evaluations) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() const override;
 

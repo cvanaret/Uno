@@ -41,8 +41,11 @@ namespace uno {
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
-      [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate,
-         const Vector<double>& constraints_SOC) = 0;
+      virtual void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
+      [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate) = 0;
+      virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
+
       virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
 
       virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
