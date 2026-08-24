@@ -38,8 +38,8 @@ curl -L -o BQPD.tar.gz "$ASSET_URL"
 tar -xzf BQPD.tar.gz
 pwd
 
-# download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK)
-VERSION="2026.7.2"
+# download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
+VERSION="2026.8.24"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5-cxx11.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
@@ -68,6 +68,12 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	echo "Downloading: ${ASSET_URL}"
 	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
 	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "${BUILD_ROOT}/HiGHS" --strip-components=1
+
+	# Patch v1.15.1 (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+	# fix-cli11.patch
+	sed -i 's/(*opt)/opt->count() > 0/' "${BUILD_ROOT}/HiGHS/extern/cli11/CLI11.hpp"
+	# fix-destroy.patch
+	sed -i 's/Highs::resetGlobalScheduler(true);//' "${BUILD_ROOT}/HiGHS/highs/interfaces/highs_c_api.cpp"
 
 	# Build HiGHS with the SAME compiler the consuming workflow links with.
 	# A mismatch here is what produces the __emutls_v._ZSt*__once_call* and
@@ -99,7 +105,7 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DZLIB=OFF \
-		-DHIPO=ON \
+		-DHIPO=OFF \
 		-DBUILD_EXAMPLES=OFF \
 		-DBUILD_TESTING=OFF \
 		-DBUILD_CXX_EXE=OFF \

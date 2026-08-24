@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.7.2"
+version = v"2026.8.24"
 
 # Collection of sources
 sources = [
@@ -28,12 +28,12 @@ sources = [
     # OpenBLAS v0.3.31
     # ArchiveSource("https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.31/OpenBLAS-0.3.31.tar.gz",
     #               "6dd2a63ac9d32643b7cc636eab57bf4e57d0ed1fff926dfbc5d3d97f2d2be3a6"),
-    # MUMPS v5.9.0
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.0.tar.gz",
-                  "02c6efdb91749ec0f82351d40f3f860547272a1eb1d899126a4265b4d6bcc4ca"),
-    # HiGHS v1.15.0
+    # MUMPS v5.9.1
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.1.tar.gz",
+                  "659c9b57646b5a003ac618baa1faf9dd2044e46c732b3daaccbc7158003e1b46"),
+    # HiGHS v1.15.1
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
-              "83960019015b0d5152df73110ff142f328edcfd2"),
+              "04024d701f79feb8e2f18bc3df0dffc04ef05088"),
     # SPRAL v2025.9.18
     GitSource("https://github.com/ralna/spral.git",
               "80bc843ac3847d4a783a0e11213715a70175aee6"),
@@ -62,6 +62,10 @@ if [ $target = "x86_64-w64-mingw32" ] || [ $target = "i686-w64-mingw32" ]; then
     atomic_patch -p1 $WORKSPACE/srcdir/0004-Fix-GKLIB_PATH-default-for-out-of-tree-builds.patch
 fi
 atomic_patch -p1 $WORKSPACE/srcdir/005-add-ifndefs.patch
+
+# fix CMake version
+sed -i 's/VERSION 2.8/VERSION 3.5/' CMakeLists.txt
+
 mkdir -p build
 cd build
 cmake .. \
@@ -195,6 +199,13 @@ meson install -C builddir
 
 ## ----- Compile HiGHS -----
 cd $WORKSPACE/srcdir/HiGHS
+
+# Patch v1.15.1 (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+# fix-cli11.patch
+sed -i 's/(*opt)/opt->count() > 0/' extern/cli11/CLI11.hpp
+# fix-destroy.patch
+sed -i 's/Highs::resetGlobalScheduler(true);//' highs/interfaces/highs_c_api.cpp
+
 mkdir build
 cd build
 cmake .. \
@@ -203,7 +214,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DZLIB=OFF \
-    -DHIPO=ON \
+    -DHIPO=OFF \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
