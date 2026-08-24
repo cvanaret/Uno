@@ -78,8 +78,18 @@ namespace uno {
       return this->inequality_handling_method->has_second_order_corrections();
    }
 
-   const Direction& NoRelaxation::compute_second_order_correction(Iterate& current_iterate, const Vector<double>& constraints_SOC) {
-      return this->inequality_handling_method->compute_second_order_correction(current_iterate, constraints_SOC);
+   void NoRelaxation::initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      this->inequality_handling_method->initialize_second_order_corrections(current_iterate, trial_iterate, current_evaluations,
+         trial_evaluations);
+   }
+
+   const Direction& NoRelaxation::compute_second_order_correction(Iterate& current_iterate) {
+      return this->inequality_handling_method->compute_second_order_correction(current_iterate);
+   }
+
+   void NoRelaxation::update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) {
+      this->inequality_handling_method->update_second_order_corrections(trial_iterate, trial_evaluations);
    }
 
    bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,

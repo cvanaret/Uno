@@ -151,28 +151,35 @@ namespace uno {
       return true;
    }
 
-   // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
-   const Direction& EQPSolver::compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate,
-         const Vector<double>& constraints_SOC) {
-      // initialize upon the first time
+   void EQPSolver::initialize_second_order_corrections(const Subproblem& subproblem, const Iterate& current_iterate,
+         const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       if (!this->SOC_initialized) {
+         this->constraints_SOC.resize(subproblem.number_constraints);
          this->direction_SOC = Direction(subproblem.number_variables, subproblem.number_constraints);
          this->SOC_initialized = true;
       }
+      subproblem.problem.evaluate_constraints(trial_iterate, this->constraints_SOC.data(), trial_evaluations);
+      Vector<double> buffer(subproblem.number_constraints); // TODO preallocate
+      subproblem.problem.evaluate_constraints(current_iterate, buffer.data(), current_evaluations);
+      this->constraints_SOC += this->direction.primal_dual_step_length * buffer;
+   }
 
+   // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
+   const Direction& EQPSolver::compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate) {
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
 
       // copy the constraints at the end of the RHS
       auto rhs_constraints = view(linear_system.rhs, subproblem.number_variables, subproblem.number_variables +
          subproblem.number_constraints);
-      rhs_constraints = constraints_SOC;
+      rhs_constraints = this->constraints_SOC;
       // shift the bound (lb == ub)
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          rhs_constraints[constraint_index] -= subproblem.problem.get_constraints_lower_bounds()[constraint_index];
       }
       // flip sign
       rhs_constraints.scale(-1.);
+      DEBUG << "SOC RHS: " << linear_system.rhs << '\n';
 
       // solve the linear system
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
@@ -182,6 +189,14 @@ namespace uno {
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(current_iterate, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
+   }
+
+   void EQPSolver::update_second_order_corrections(const Subproblem& subproblem, const Iterate& trial_iterate,
+         Evaluations& trial_evaluations) {
+      this->constraints_SOC.scale(this->direction_SOC.primal_dual_step_length);
+      Vector<double> buffer(subproblem.number_constraints); // TODO preallocate
+      subproblem.problem.evaluate_constraints(trial_iterate, buffer.data(), trial_evaluations);
+      this->constraints_SOC += buffer;
    }
 
    const SolverWorkspace& EQPSolver::get_workspace() const {

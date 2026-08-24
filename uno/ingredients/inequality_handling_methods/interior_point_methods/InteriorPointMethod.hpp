@@ -38,8 +38,11 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient() const override;
 
       [[nodiscard]] bool has_second_order_corrections() const override;
-      [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate,
-         const Vector<double>& constraints_SOC) override;
+      void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
+      [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate) override;
+      void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
+
       void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) override;
 
       void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
@@ -206,9 +209,21 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   const Direction& InteriorPointMethod<BarrierProblem>::compute_second_order_correction(const Iterate& current_iterate,
-         const Vector<double>& constraints_SOC) {
-      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate, constraints_SOC);
+   void InteriorPointMethod<BarrierProblem>::initialize_second_order_corrections(const Iterate& current_iterate,
+         const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      this->subproblem_solver->initialize_second_order_corrections(*this->subproblem, current_iterate, trial_iterate,
+         current_evaluations, trial_evaluations);
+   }
+
+   template <typename BarrierProblem>
+   const Direction& InteriorPointMethod<BarrierProblem>::compute_second_order_correction(const Iterate& current_iterate) {
+      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::update_second_order_corrections(const Iterate& trial_iterate,
+         Evaluations& trial_evaluations) {
+      this->subproblem_solver->update_second_order_corrections(*this->subproblem, trial_iterate, trial_evaluations);
    }
 
    template <typename BarrierProblem>

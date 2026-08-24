@@ -52,8 +52,17 @@ namespace uno {
       return false;
    }
 
-   const Direction& IQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,
-         const Vector<double>& /*constraints_SOC*/) {
+   void IQPSolver::initialize_second_order_corrections(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,
+         const Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/) {
+      throw std::runtime_error("No SOC implemented in IQPSolver");
+   }
+
+   const Direction& IQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/) {
+      throw std::runtime_error("No SOC implemented in IQPSolver");
+   }
+
+   void IQPSolver::update_second_order_corrections(const Subproblem& /*subproblem*/, const Iterate& /*trial_iterate*/,
+         Evaluations& /*trial_evaluations*/) {
       throw std::runtime_error("No SOC implemented in IQPSolver");
    }
 

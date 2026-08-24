@@ -158,8 +158,18 @@ namespace uno {
       return false;
    }
 
+   void WoodburyEQPSolver::initialize_second_order_corrections(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,
+         const Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/) {
+      throw std::runtime_error("No SOC implemented in WoodburyEQPSolver");
+   }
+
    const Direction& WoodburyEQPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
-         const Iterate& /*current_iterate*/, const Vector<double>& /*constraints_SOC*/) {
+         const Iterate& /*current_iterate*/) {
+      throw std::runtime_error("No SOC implemented in WoodburyEQPSolver");
+   }
+
+   void WoodburyEQPSolver::update_second_order_corrections(const Subproblem& /*subproblem*/, const Iterate& /*trial_iterate*/,
+         Evaluations& /*trial_evaluations*/) {
       throw std::runtime_error("No SOC implemented in WoodburyEQPSolver");
    }
 

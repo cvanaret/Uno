@@ -65,9 +65,18 @@ namespace uno {
       return this->subproblem_solver->has_second_order_corrections();
    }
 
-   const Direction& NoInequalityReformulation::compute_second_order_correction(const Iterate& current_iterate,
-         const Vector<double>& constraints_SOC) {
-      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate, constraints_SOC);
+   void NoInequalityReformulation::initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      this->subproblem_solver->initialize_second_order_corrections(*this->subproblem, current_iterate, trial_iterate,
+         current_evaluations, trial_evaluations);
+   }
+
+   const Direction& NoInequalityReformulation::compute_second_order_correction(const Iterate& current_iterate) {
+      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate);
+   }
+
+   void NoInequalityReformulation::update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) {
+      this->subproblem_solver->update_second_order_corrections(*this->subproblem, trial_iterate, trial_evaluations);
    }
 
    void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
