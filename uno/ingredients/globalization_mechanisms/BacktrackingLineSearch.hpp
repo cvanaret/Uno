@@ -42,7 +42,7 @@ namespace uno {
       [[nodiscard]] static bool is_tiny_direction(const Iterate& current_iterate, const Direction& direction);
       [[nodiscard]] bool compute_second_order_directions(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const;
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);
    };

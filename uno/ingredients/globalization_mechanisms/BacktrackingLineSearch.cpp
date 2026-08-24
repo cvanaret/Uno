@@ -192,20 +192,21 @@ namespace uno {
 
    bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
       // enter second-order corrections
       DEBUG << "\nEntering second-order corrections\n";
-      this->constraint_relaxation_strategy->initialize_second_order_corrections(current_iterate, trial_iterate,
-         evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
-      double old_infeasibility_SOC = current_iterate.progress.infeasibility;
 
-      size_t SOC_iteration = 1;
       bool SOC_termination = false;
       bool is_acceptable = false;
-      while (!SOC_termination) {
-         DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
+      try {
+         this->constraint_relaxation_strategy->initialize_second_order_corrections(current_iterate, trial_iterate,
+            evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
+         double old_infeasibility_SOC = current_iterate.progress.infeasibility;
+         size_t SOC_iteration = 1;
 
-         try {
+         while (!SOC_termination) {
+            DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
+
             const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate);
             assemble_trial_iterate(model, current_iterate, trial_iterate, direction_SOC, 1.);
             evaluation_cache.trial_evaluations.reset();
@@ -224,7 +225,7 @@ namespace uno {
                // terminate the SOCs and keep backtracking
                SOC_termination = true;
                DEBUG << "SOC done, resume backtracking " << '\n';
-            }
+                  }
             else {
                // continue the SOCs
                this->constraint_relaxation_strategy->update_second_order_corrections(trial_iterate, evaluation_cache.trial_evaluations);
@@ -233,10 +234,10 @@ namespace uno {
                DEBUG << "SOC direction rejected, continue SOCs" << '\n';
             }
          }
-         catch (const EvaluationError&) {
-            // terminate the SOCs and keep backtracking
-            SOC_termination = true;
-         }
+      }
+      catch (const EvaluationError&) {
+         // terminate the SOCs and keep backtracking
+         SOC_termination = true;
       }
       return is_acceptable;
    }
