@@ -186,11 +186,6 @@ namespace uno {
       const auto& variables_lower_bounds = this->get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
-         if (variable_index >= primals.size() || variable_index >= multipliers.lower_bounds.size() ||
-               variable_index >= multipliers.upper_bounds.size()) {
-            throw std::runtime_error("Dimension mismatch in OptimizationProblem::complementarity_error's variable_complementarity");
-         }
-
          if (0. < multipliers.lower_bounds[variable_index]) {
             return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]) - shift_value;
          }
@@ -204,10 +199,15 @@ namespace uno {
       const auto& constraints_lower_bounds = this->model.get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = this->model.get_constraints_upper_bounds();
       const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
-         if (constraint_index >= constraints.size() || constraint_index >= multipliers.constraints.size()) {
-            throw std::runtime_error("Dimension mismatch in OptimizationProblem::complementarity_error's constraint_complementarity");
+         // if constraint is one-sided, pick that bound
+         if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
-
+         if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+         // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
+         // complementarity pair
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
             return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]) -
                shift_value;
