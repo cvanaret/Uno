@@ -17,7 +17,6 @@ namespace uno {
       this->primals.resize(new_number_variables);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
-      this->residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {

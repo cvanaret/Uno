@@ -217,6 +217,17 @@ namespace uno {
          Vector<double>& lagrangian_gradient) const {
       this->inner.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
+      // bound multipliers for slacks
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         lagrangian_gradient[slack_index] -= (iterate.multipliers.lower_bounds[slack_index] + iterate.multipliers.upper_bounds[slack_index]);
+      }
+
+      // Jacobian block for slacks
+      std::cout << "PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient\n";
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         lagrangian_gradient[slack_index] += iterate.multipliers.constraints[constraint_index];
+      }
+
       // barrier terms
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       for (size_t variable_index: Range(this->number_variables)) {
@@ -606,5 +617,23 @@ namespace uno {
       predicted_auxiliary_reduction += step_length * (-directional_derivative);
       // }, "α*(μ*X^{-1} e^T d)"};
       return predicted_auxiliary_reduction;
+   }
+
+   double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double shift) const {
+      const Range variables_range = Range(this->number_variables);
+      const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
+         double result = 0.;
+         if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - this->variables_lower_bounds[variable_index]) - shift));
+         }
+         if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - this->variables_upper_bounds[variable_index]) - shift));
+         }
+         return result;
+      }};
+      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
    }
 } // namespace

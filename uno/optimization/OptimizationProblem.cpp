@@ -177,17 +177,17 @@ namespace uno {
    }
    
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
+         const Multipliers& multipliers, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(this->number_variables);
       const auto& variables_lower_bounds = this->get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
          if (0. < multipliers.lower_bounds[variable_index]) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]) - shift_value;
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]);
          }
          if (multipliers.upper_bounds[variable_index] < 0.) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]) - shift_value;
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]);
          }
          return 0.;
       }};
@@ -206,36 +206,14 @@ namespace uno {
          // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
          // complementarity pair
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]) -
-               shift_value;
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]) -
-               shift_value;
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
          return 0.;
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
-   }
-
-   double OptimizationProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const {
-      const Range variables_range = Range(this->number_variables);
-      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
-      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
-      const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
-         double result = 0.;
-         if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
-            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
-               (primals[variable_index] - variables_lower_bounds[variable_index]) - shift));
-         }
-         if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
-            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
-               (primals[variable_index] - variables_upper_bounds[variable_index]) - shift));
-         }
-         return result;
-      }};
-      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
    }
 
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,

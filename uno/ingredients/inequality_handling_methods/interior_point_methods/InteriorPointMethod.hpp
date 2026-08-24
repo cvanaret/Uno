@@ -123,7 +123,7 @@ namespace uno {
       bool update = false;
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->problem, current_iterate, current_iterate.residuals);
+         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
