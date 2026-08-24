@@ -135,6 +135,14 @@ namespace uno {
             ++number_nonzeros;
          }
       }
+      // barrier contribution: slack variables
+      const auto& slacks_lower_bounds = this->inner.get_constraints_lower_bounds();
+      const auto& slacks_upper_bounds = this->inner.get_constraints_upper_bounds();
+      for (const auto [constraint_index, _]: this->slacks) {
+         if (is_finite(slacks_lower_bounds[constraint_index]) || is_finite(slacks_upper_bounds[constraint_index])) {
+            ++number_nonzeros;
+         }
+      }
       return number_nonzeros;
    }
 
@@ -151,7 +159,7 @@ namespace uno {
       // original Lagrangian Hessian
       this->inner.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
 
-      // diagonal barrier terms
+      // diagonal barrier terms for the original variables
       size_t current_index = this->inner.number_hessian_nonzeros(hessian_model);
       const auto& variables_lower_bounds = this->inner.get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->inner.get_variables_upper_bounds();
@@ -159,6 +167,17 @@ namespace uno {
          if (is_finite(variables_lower_bounds[variable_index]) || is_finite(variables_upper_bounds[variable_index])) {
             row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
             column_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+            ++current_index;
+         }
+      }
+
+      // diagonal barrier terms for the slacks
+      const auto& slacks_lower_bounds = this->inner.get_constraints_lower_bounds();
+      const auto& slacks_upper_bounds = this->inner.get_constraints_upper_bounds();
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         if (is_finite(slacks_lower_bounds[constraint_index]) || is_finite(slacks_upper_bounds[constraint_index])) {
+            row_indices[current_index] = static_cast<uno_int>(slack_index) + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(slack_index) + solver_indexing;
             ++current_index;
          }
       }
@@ -253,7 +272,7 @@ namespace uno {
       // original Lagrangian Hessian
       this->inner.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
 
-      // barrier terms
+      // barrier terms (original variables)
       size_t nonzero_index = this->inner.number_hessian_nonzeros(hessian_model);
       const auto& variables_lower_bounds = this->inner.get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->inner.get_variables_upper_bounds();

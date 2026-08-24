@@ -76,7 +76,6 @@ namespace uno {
 
       // assemble the RHS
       linear_system.rhs.fill(0.);
-      evaluations.evaluate_objective_gradient(subproblem.problem.model, iterate.primals);
       auto obj_grad = view(linear_system.rhs.data(), subproblem.number_variables);
       subproblem.problem.evaluate_objective_gradient(iterate, obj_grad.data(), evaluations);
       // view(linear_system.rhs.data(), subproblem.number_variables) = evaluations.objective_gradient;
