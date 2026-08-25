@@ -1,0 +1,74 @@
+name: Unit tests HSL
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+  HOME: /home/optimi/cvanaret
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure (with ASan + UBSan)
+        run: |
+          SANITIZER_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all -O1 -g"
+
+          echo "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:detect_odr_violation=0" >> $GITHUB_ENV
+          echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1" >> $GITHUB_ENV
+          
+          LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
+          LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
+          LIBHSL_PATH="$HOME/libhsl/builddir/libhsl.so"
+          LIBAMPL_PATH="$HOME/ampl/amplsolver.a"
+
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DENABLE_TESTS=ON \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DCMAKE_C_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_CXX_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+            -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
+            -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
+            -DHSL=${LIBHSL_PATH} \
+            -DAMPLSOLVER=${LIBAMPL_PATH} \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Run tests
+        working-directory: build
+        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
