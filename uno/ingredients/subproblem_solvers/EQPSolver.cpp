@@ -12,6 +12,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    EQPSolver::EQPSolver(const Options& options):
@@ -31,12 +32,13 @@ namespace uno {
       this->linear_solver->initialize_memory();
    }
 
-   void EQPSolver::generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) {
-      compute_least_squares_multipliers(subproblem, initial_iterate, evaluations, 1000. /* TODO add option */);
+   void EQPSolver::generate_initial_iterate(Statistics& statistics, const Subproblem& subproblem, Iterate& initial_iterate,
+         Evaluations& evaluations) {
+      compute_least_squares_multipliers(statistics, subproblem, initial_iterate, evaluations, 1000. /* TODO add option */);
    }
 
-   void EQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
-         double multipliers_threshold) {
+   void EQPSolver::compute_least_squares_multipliers(Statistics& statistics, const Subproblem& subproblem, Iterate& iterate,
+         Evaluations& evaluations, double multipliers_threshold) {
       DEBUG << "Computing least-squares multipliers\n";
 
       // compute least-square multipliers
@@ -60,12 +62,16 @@ namespace uno {
       // perform the symbolic analysis once and for all
       if (!this->analysis_performed) {
          DEBUG << "Performing symbolic analysis of the indefinite system\n";
+         statistics.timers.subproblem_solves.start();
          this->linear_solver->do_symbolic_analysis();
+         statistics.timers.subproblem_solves.stop();
          this->analysis_performed = true;
       }
 
       // factorize the matrix
+      statistics.timers.subproblem_solves.start();
       this->linear_solver->do_numerical_factorization(false);
+      statistics.timers.subproblem_solves.stop();
 
       // assemble the RHS
       linear_system.rhs.fill(0.);
@@ -78,7 +84,9 @@ namespace uno {
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";
+      statistics.timers.subproblem_solves.start();
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+      statistics.timers.subproblem_solves.stop();
 
       // set the constraint multipliers if their norm is reasonable
       const auto least_squares_multipliers = view(linear_system.solution.data(), subproblem.number_variables,
@@ -121,13 +129,17 @@ namespace uno {
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
+            statistics.timers.subproblem_solves.start();
             this->linear_solver->do_symbolic_analysis();
+            statistics.timers.subproblem_solves.stop();
             this->analysis_performed = true;
          }
 
          // regularize the augmented matrix (this calls the analysis and the factorization)
+         statistics.timers.subproblem_solves.start();
          subproblem.regularize_augmented_matrix(statistics, primal_inertia_correction, dual_inertia_correction,
             subproblem.dual_regularization_factor(), *this->linear_solver);
+         statistics.timers.subproblem_solves.stop();
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
@@ -135,7 +147,9 @@ namespace uno {
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";
+      statistics.timers.subproblem_solves.start();
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+      statistics.timers.subproblem_solves.stop();
       if (this->linear_solver->matrix_is_singular()) {
          this->direction.status = SubproblemStatus::INFEASIBLE;
       }

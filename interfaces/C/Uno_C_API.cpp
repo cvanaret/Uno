@@ -1204,7 +1204,7 @@ uno_int uno_get_number_iterations(void* solver) {
 
 double uno_get_cpu_time(void* solver) {
    const Result* result = uno_get_result(solver);
-   return result->cpu_time;
+   return result->timers.wallclock.get_duration();
 }
 
 uno_int uno_get_number_objective_evaluations(void* solver) {

@@ -29,7 +29,7 @@ namespace uno {
       InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
-      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const = 0;
+      virtual void generate_initial_iterate(Statistics& statistics, Iterate& initial_iterate, Evaluations& evaluations) const = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) = 0;
       [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Iterate& current_iterate,
@@ -46,7 +46,7 @@ namespace uno {
       [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
-      virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
+      virtual void compute_least_squares_multipliers(Statistics& statistics, Iterate& iterate, Evaluations& evaluations) = 0;
 
       virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

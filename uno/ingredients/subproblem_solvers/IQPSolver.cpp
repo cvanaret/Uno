@@ -8,6 +8,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    IQPSolver::IQPSolver(std::unique_ptr<LPSolver> qp_solver):
@@ -21,13 +22,13 @@ namespace uno {
       this->qp_solver->initialize_memory(subproblem);
    }
 
-   void IQPSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
-         Evaluations& /*evaluations*/) {
+   void IQPSolver::generate_initial_iterate(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+         Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) {
       // do nothing
    }
 
-   void IQPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
-         Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
+   void IQPSolver::compute_least_squares_multipliers(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+         Iterate& /*iterate*/, Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
       DEBUG << "The EQP solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
@@ -40,11 +41,14 @@ namespace uno {
       quadratic_program.fill(statistics, subproblem, current_iterate, trust_region_radius, current_evaluations, warmstart_information);
 
       // solve the QP
+      statistics.timers.subproblem_solves.start();
       this->qp_solver->solve(statistics, initial_point, this->direction, warmstart_information);
+      statistics.timers.subproblem_solves.stop();
 
       // compute the dual direction
       compute_dual_direction(subproblem, current_iterate, this->direction.multipliers);
       direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
+
       return this->direction;
    }
 

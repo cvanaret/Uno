@@ -21,9 +21,10 @@ namespace uno {
       this->subproblem_solver->initialize_memory(*this->subproblem);
    }
 
-   void NoInequalityReformulation::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
+   void NoInequalityReformulation::generate_initial_iterate(Statistics& statistics, Iterate& initial_iterate,
+         Evaluations& evaluations) const {
       this->problem.generate_initial_iterate(initial_iterate, evaluations);
-      this->subproblem_solver->generate_initial_iterate(*this->subproblem, initial_iterate, evaluations);
+      this->subproblem_solver->generate_initial_iterate(statistics, *this->subproblem, initial_iterate, evaluations);
    }
 
    void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
@@ -79,9 +80,9 @@ namespace uno {
       this->subproblem_solver->update_second_order_corrections(*this->subproblem, trial_iterate, trial_evaluations);
    }
 
-   void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
+   void NoInequalityReformulation::compute_least_squares_multipliers(Statistics& statistics, Iterate& iterate, Evaluations& evaluations) {
       // no threshold on the multipliers
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
+      this->subproblem_solver->compute_least_squares_multipliers(statistics, *this->subproblem, iterate, evaluations, INF<double>);
    }
 
    void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {

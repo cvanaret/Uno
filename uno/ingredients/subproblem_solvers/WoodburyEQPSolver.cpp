@@ -15,6 +15,7 @@
 #include "options/Options.hpp"
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Transpose.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    WoodburyEQPSolver::WoodburyEQPSolver(const DirectQuasiNewtonHessian& hessian_model, const Options& options):
@@ -33,12 +34,12 @@ namespace uno {
       this->linear_solver->initialize_memory();
    }
 
-   void WoodburyEQPSolver::generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate,
+   void WoodburyEQPSolver::generate_initial_iterate(Statistics& statistics, const Subproblem& subproblem, Iterate& initial_iterate,
          Evaluations& evaluations) {
-      compute_least_squares_multipliers(subproblem, initial_iterate, evaluations, 1000. /* TODO add option */);
+      compute_least_squares_multipliers(statistics, subproblem, initial_iterate, evaluations, 1000. /* TODO add option */);
    }
 
-   void WoodburyEQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate,
+   void WoodburyEQPSolver::compute_least_squares_multipliers(Statistics& statistics, const Subproblem& subproblem, Iterate& iterate,
          Evaluations& evaluations, double multipliers_threshold) {
       DEBUG << "Computing least-squares multipliers\n";
 
@@ -63,12 +64,16 @@ namespace uno {
       // perform the symbolic analysis once and for all
       if (!this->analysis_performed) {
          DEBUG << "Performing symbolic analysis of the indefinite system\n";
+         statistics.timers.subproblem_solves.start();
          this->linear_solver->do_symbolic_analysis();
+         statistics.timers.subproblem_solves.stop();
          this->analysis_performed = true;
       }
 
       // factorize the matrix
+      statistics.timers.subproblem_solves.start();
       this->linear_solver->do_numerical_factorization(false);
+      statistics.timers.subproblem_solves.stop();
 
       // assemble the RHS
       linear_system.rhs.fill(0.);
@@ -81,7 +86,9 @@ namespace uno {
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";
+      statistics.timers.subproblem_solves.start();
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+      statistics.timers.subproblem_solves.stop();
 
       // set the constraint multipliers if their norm is reasonable
       const auto least_squares_multipliers = view(linear_system.solution.data(), subproblem.number_variables,

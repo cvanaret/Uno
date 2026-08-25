@@ -7,6 +7,7 @@
 #include "Iterate.hpp"
 #include "OptimizationStatus.hpp"
 #include "../interfaces/C/uno_int.h"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    class Result {
@@ -28,7 +29,7 @@ namespace uno {
       Vector<double> upper_bound_dual_solution;
       Vector<double> constraint_values;
       const size_t number_iterations;
-      const double cpu_time;
+      const Timers timers;
       const size_t number_objective_evaluations;
       const size_t number_constraint_evaluations;
       const size_t number_objective_gradient_evaluations;

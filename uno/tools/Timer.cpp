@@ -7,13 +7,22 @@
 #include <sstream>
 
 namespace uno {
-   // timer starts upon creation
-   Timer::Timer(): start(std::chrono::steady_clock::now()) {
+   void Timer::start() {
+      this->start_point = std::chrono::steady_clock::now();
+   }
+
+   void Timer::stop() {
+      const auto now = std::chrono::steady_clock::now();
+      this->duration += std::chrono::duration<double>(now - this->start_point).count();
+   }
+
+   double Timer::get_elapsed_time() const {
+      const auto now = std::chrono::steady_clock::now();
+      return std::chrono::duration<double>(now - this->start_point).count();
    }
 
    double Timer::get_duration() const {
-      const auto now = std::chrono::steady_clock::now();
-      return std::chrono::duration<double>(now - this->start).count();
+      return this->duration;
    }
 
    std::string Timer::get_current_date() {
