@@ -143,6 +143,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize_feasibility_problem(Iterate& current_iterate) {
+      current_iterate.set_number_variables(this->barrier_problem.number_variables);
       this->first_feasibility_iteration = true;
 
       // temporarily update the objective multiplier

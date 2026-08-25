@@ -112,11 +112,10 @@ namespace uno {
 
       // save the current point (progress and primals) upon switching
       this->reference_optimality_progress = current_iterate.progress;
-      this->reference_optimality_primals = current_iterate.primals;
+      this->reference_optimality_primals = view(current_iterate.primals, 0, this->original_problem.number_variables);
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
-      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       this->initial_point.resize(this->feasibility_problem.number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       if (this->first_switch_to_feasibility) {
