@@ -29,6 +29,8 @@ namespace uno {
       InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
+      [[nodiscard]] virtual std::pair<size_t, size_t> get_problem_dimensions() const = 0;
+
       virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) = 0;

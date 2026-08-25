@@ -27,6 +27,8 @@ namespace uno {
    public:
       InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier, Options& options);
 
+      [[nodiscard]] std::pair<size_t, size_t> get_problem_dimensions() const override;
+
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
@@ -103,6 +105,11 @@ namespace uno {
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier, options);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
       this->subproblem_solver->initialize_memory(*this->subproblem);
+   }
+
+   template <typename BarrierProblem>
+   std::pair<size_t, size_t> InteriorPointMethod<BarrierProblem>::get_problem_dimensions() const {
+      return {this->barrier_problem.number_variables, this->barrier_problem.number_constraints};
    }
 
    template <typename BarrierProblem>

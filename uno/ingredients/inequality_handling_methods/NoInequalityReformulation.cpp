@@ -21,6 +21,10 @@ namespace uno {
       this->subproblem_solver->initialize_memory(*this->subproblem);
    }
 
+   std::pair<size_t, size_t> NoInequalityReformulation::get_problem_dimensions() const {
+      return {this->problem.number_variables, this->problem.number_constraints};
+   }
+
    void NoInequalityReformulation::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
       this->problem.generate_initial_iterate(initial_iterate, evaluations);
       this->subproblem_solver->generate_initial_iterate(*this->subproblem, initial_iterate, evaluations);

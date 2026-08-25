@@ -23,6 +23,8 @@ namespace uno {
          double objective_multiplier, Options& options);
       ~NoInequalityReformulation() override = default;
 
+      [[nodiscard]] std::pair<size_t, size_t> get_problem_dimensions() const override;
+
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
