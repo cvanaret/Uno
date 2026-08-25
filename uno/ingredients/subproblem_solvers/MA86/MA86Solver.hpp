@@ -85,7 +85,7 @@ namespace uno {
    public:
       // solver_indexing selects the base of the COO matrix Uno assembles (C/0-based by default,
       // or Fortran/1-based); the CSC is built in that base and passed to MA86/MC68 via f_arrays
-      explicit MA86Solver(int solver_indexing = Indexing::C_indexing);
+      explicit MA86Solver(int solver_indexing = Indexing::Fortran_indexing);
       ~MA86Solver() override;
 
       void initialize_memory() override;

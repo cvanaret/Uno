@@ -74,7 +74,7 @@ namespace uno {
          && LIBHSL_isfunctional()
    #endif
       ) {
-         return std::make_unique<MA86Solver>();
+         return std::make_unique<MA86Solver>(Indexing::C_indexing);
       }
 #endif
 
