@@ -14,8 +14,8 @@ namespace uno {
          sufficient_infeasibility_decrease_ratio(options.get_double("sufficient_infeasibility_decrease_ratio")) {
    }
 
-   void MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/) {
-      statistics.add_column("Penalty", Statistics::double_width, 2);
+   void MeritFunction::initialize(Statistics& /*statistics*/, const Iterate& /*initial_iterate*/) {
+      // do nothing
    }
 
    bool MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
@@ -33,7 +33,6 @@ namespace uno {
       DEBUG << "Current merit: " << current_merit_value << '\n';
       DEBUG << "Trial merit:   " << trial_merit_value << '\n';
       DEBUG << "Actual reduction: " << current_merit_value << " - " << trial_merit_value << " = " << actual_reduction << '\n';
-      statistics.set("Penalty", objective_multiplier);
 
       // Armijo sufficient decrease condition
       const bool accept = this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction);
