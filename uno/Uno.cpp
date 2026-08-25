@@ -56,10 +56,7 @@ namespace uno {
          const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
          // slightly relax the bound constraints
          const BoundRelaxedModel bound_relaxed_model(homogeneous_model, options);
-
-         DISCRETE << "Reformulated model has " << bound_relaxed_model.number_variables << " variables, " <<
-            bound_relaxed_model.number_constraints << " constraints (" << bound_relaxed_model.get_equality_constraints().size() <<
-            " equality, " << bound_relaxed_model.get_inequality_constraints().size() << " inequality)\n";
+         
          Result result = uno_solve(bound_relaxed_model, options, user_callbacks);
          // fix the dimensions
          result.number_variables = model.number_variables;
