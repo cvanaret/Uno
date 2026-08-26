@@ -45,13 +45,12 @@ namespace uno {
       // compute the candidate pair (s, y) WITHOUT modifying the memory yet, so that a skipped update is a true no-op
       this->compute_candidate_pair(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
 
-      // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
+      // safeguard: if dot(sk, yk) is too small relative to sk, skip the update
       // TODO compare against Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
       const double norm_sk = norm_2(this->latest_s);
-      const double norm_yk = norm_2(this->latest_y);
       const double sTy = dot(this->latest_s, this->latest_y);
       // tolerance is √(machine epsilon)
-      if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
+      if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk) {
          DEBUG << "dot(sk, yk) is too small, skipping the update\n";
          ++this->consecutive_skips;
          if (this->consecutive_skips >= this->max_skips_before_reset) {
