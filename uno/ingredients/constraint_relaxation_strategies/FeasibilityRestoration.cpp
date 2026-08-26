@@ -223,7 +223,7 @@ namespace uno {
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
                this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
-               trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+               trial_iterate.model_residuals.stationarity, trial_iterate.model_residuals.complementarity);
          }
       }
       else {
@@ -232,7 +232,7 @@ namespace uno {
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
                this->feasibility_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
-               trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+               trial_iterate.model_residuals.stationarity, trial_iterate.model_residuals.complementarity);
          }
       }
       return accept_iterate;
@@ -248,7 +248,7 @@ namespace uno {
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
-      if (inequality_handling_method.update_parameterization(statistics, current_iterate)) {
+      if (inequality_handling_method.update_parameterization(statistics, current_iterate, current_evaluations)) {
          globalization_strategy.reset();
          inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
       }
@@ -308,7 +308,7 @@ namespace uno {
       const auto auxiliary_variables = view(iterate.primals, this->original_problem.number_variables,
          number_variables_optimality);
       iterate.primals.resize(number_variables_feasibility);
-      iterate.residuals.lagrangian_gradient.resize(number_variables_feasibility);
+      iterate.model_residuals.lagrangian_gradient.resize(number_variables_feasibility);
       // copy the additional variables into the last block
       view(iterate.primals, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables;
    }

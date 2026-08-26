@@ -31,7 +31,8 @@ namespace uno {
 
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
       void initialize_statistics(Statistics& statistics) override;
-      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
+      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& current_evaluations) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
@@ -126,11 +127,13 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate) {
+   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& current_evaluations) {
       bool update = false;
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate, current_iterate.residuals);
+         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate,
+            current_evaluations);
       }
       else {
          this->first_feasibility_iteration = false;

@@ -50,7 +50,7 @@ namespace uno {
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem\n";
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics,
-         current_iterate);
+         current_iterate, current_evaluations);
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (parameterization_updated) {
          this->globalization_strategy.reset();
@@ -103,7 +103,7 @@ namespace uno {
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
-            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+            trial_iterate.model_residuals.stationarity, trial_iterate.model_residuals.complementarity);
       }
       if (uses_trust_region || accept_iterate) {
          this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,

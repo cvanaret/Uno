@@ -35,7 +35,8 @@ namespace uno {
       this->inertia_correction_strategy->initialize_statistics(statistics);
    }
 
-   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/) {
+   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         Evaluations& /*current_evaluations*/) {
       // the parameterization is not updated
       return false;
    }

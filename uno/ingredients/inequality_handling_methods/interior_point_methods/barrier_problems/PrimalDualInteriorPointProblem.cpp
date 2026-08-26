@@ -219,31 +219,14 @@ namespace uno {
       lagrangian_gradient.fill(0.);
       this->inner.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
+      // bound multipliers for slacks
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         lagrangian_gradient[slack_index] -= (iterate.multipliers.lower_bounds[slack_index] + iterate.multipliers.upper_bounds[slack_index]);
+      }
+
       // Jacobian block for slacks
       for (const auto [constraint_index, slack_index]: this->slacks) {
          lagrangian_gradient[slack_index] += iterate.multipliers.constraints[constraint_index];
-      }
-
-      // barrier terms
-      const double barrier_parameter = this->parameterization.get("barrier_parameter");
-      for (size_t variable_index: Range(this->number_variables)) {
-         double barrier_term = 0.;
-         if (is_finite(this->variables_lower_bounds[variable_index])) { // lower bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
-            // damping
-            if (is_infinite(this->variables_upper_bounds[variable_index])) {
-               barrier_term += this->parameters.damping_factor * barrier_parameter;
-            }
-         }
-         if (is_finite(this->variables_upper_bounds[variable_index])) { // upper bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]);
-            // damping
-            if (is_infinite(this->variables_lower_bounds[variable_index])) {
-               barrier_term -= this->parameters.damping_factor * barrier_parameter;
-            }
-         }
-         // the objective contribution of the Lagrangian gradient may be scaled. Barrier terms go into the constraint contribution
-         lagrangian_gradient[variable_index] += barrier_term;
       }
    }
 

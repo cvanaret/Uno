@@ -179,9 +179,9 @@ namespace uno {
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= dual_tolerance);
+      const bool stationarity = (current_iterate.model_residuals.stationarity / current_iterate.model_residuals.stationarity_scaling <= dual_tolerance);
       const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
-      const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= dual_tolerance);
+      const bool complementarity = (current_iterate.model_residuals.complementarity / current_iterate.model_residuals.complementarity_scaling <= dual_tolerance);
 
       DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
