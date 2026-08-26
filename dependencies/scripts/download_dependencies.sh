@@ -39,7 +39,7 @@ tar -xzf BQPD.tar.gz
 pwd
 
 # download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
-VERSION="2026.8.24"
+VERSION="2026.8.26"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5-cxx11.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
@@ -105,10 +105,11 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DZLIB=OFF \
-		-DHIPO=OFF \
+		-DHIPO=ON \
 		-DBUILD_EXAMPLES=OFF \
 		-DBUILD_TESTING=OFF \
 		-DBUILD_CXX_EXE=OFF \
+		-DBLA_VENDOR=Generic \
 		-DBLAS_LIBRARIES="$BLAS_W" \
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
 		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
