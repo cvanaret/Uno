@@ -218,13 +218,7 @@ namespace uno {
          Vector<double>& lagrangian_gradient) const {
       this->inner.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
-      // bound multipliers for slacks
-      for (const auto [constraint_index, slack_index]: this->slacks) {
-         lagrangian_gradient[slack_index] -= (iterate.multipliers.lower_bounds[slack_index] + iterate.multipliers.upper_bounds[slack_index]);
-      }
-
       // Jacobian block for slacks
-      // std::cout << "PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient\n";
       for (const auto [constraint_index, slack_index]: this->slacks) {
          lagrangian_gradient[slack_index] += iterate.multipliers.constraints[constraint_index];
       }
@@ -422,17 +416,12 @@ namespace uno {
    // TODO use a single function for primal and dual fraction-to-boundary rules
    double PrimalDualInteriorPointProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
          const Vector<double>& primal_direction, double tau) const {
-      // std::cout << "tau = " << tau << '\n';
       double step_length = 1.;
       // original variables
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index]) && primal_direction[variable_index] < 0.) {
-            // std::cout << "x_" << variable_index << " has a lower bound " << this->variables_lower_bounds[variable_index] << '\n';
-            // std::cout << "d_" << variable_index << " = " << primal_direction[variable_index] << '\n';
             const double distance = -tau * (current_primals[variable_index] - this->variables_lower_bounds[variable_index]) /
                primal_direction[variable_index];
-            // std::cout << "For this variable, fraction-to-boundary step length: " << distance << '\n';
-            const double new_component = current_primals[variable_index] + distance * primal_direction[variable_index];
             if (0. < distance) {
                step_length = std::min(step_length, distance);
             }
@@ -448,8 +437,6 @@ namespace uno {
       if (step_length <= 0. || step_length > 1.) {
          throw std::runtime_error("The primal fraction-to-boundary step length is not in (0, 1]");
       }
-      // std::cout << "Final fraction-to-boundary step length " << step_length << '\n';
-      // std::cout << "New x_0 = " << current_primals[0] + step_length * primal_direction[0] << '\n';
       return step_length;
    }
 
