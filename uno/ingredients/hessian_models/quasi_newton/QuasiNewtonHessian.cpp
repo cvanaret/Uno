@@ -43,8 +43,8 @@ namespace uno {
       this->compute_latest_s(current_iterate, trial_iterate);
       this->compute_latest_y(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
       DEBUG << "Computed candidate (s, y) pair\n";
-      DEBUG << "> s: " << this->latest_s;
-      DEBUG << "> y: " << this->latest_y;
+      DEBUG << "> s: " << this->latest_s << '\n';
+      DEBUG << "> y: " << this->latest_y << '\n';
    }
 
    void QuasiNewtonHessian::compute_latest_s(const Iterate& current_iterate, const Iterate& trial_iterate) {
@@ -80,8 +80,8 @@ namespace uno {
       this->S.column(newest_slot) = this->latest_s;
       this->Y.column(newest_slot) = this->latest_y;
       DEBUG << "Committed (s, y) at slot " << newest_slot << " (" << this->number_entries_in_memory << " entries in memory)\n";
-      DEBUG << "> S: " << this->S << '\n';
-      DEBUG << "> Y: " << this->Y << '\n';
+      DEBUG << "> S: " << this->S;
+      DEBUG << "> Y: " << this->Y;
       return newest_slot;
    }
 

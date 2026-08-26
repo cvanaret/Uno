@@ -1,6 +1,7 @@
 // Copyright (c) 2024-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <iomanip>
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
@@ -223,7 +224,7 @@ namespace uno {
       }
 
       // Jacobian block for slacks
-      std::cout << "PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient\n";
+      // std::cout << "PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient\n";
       for (const auto [constraint_index, slack_index]: this->slacks) {
          lagrangian_gradient[slack_index] += iterate.multipliers.constraints[constraint_index];
       }
@@ -421,12 +422,17 @@ namespace uno {
    // TODO use a single function for primal and dual fraction-to-boundary rules
    double PrimalDualInteriorPointProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
          const Vector<double>& primal_direction, double tau) const {
+      // std::cout << "tau = " << tau << '\n';
       double step_length = 1.;
       // original variables
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index]) && primal_direction[variable_index] < 0.) {
+            // std::cout << "x_" << variable_index << " has a lower bound " << this->variables_lower_bounds[variable_index] << '\n';
+            // std::cout << "d_" << variable_index << " = " << primal_direction[variable_index] << '\n';
             const double distance = -tau * (current_primals[variable_index] - this->variables_lower_bounds[variable_index]) /
                primal_direction[variable_index];
+            // std::cout << "For this variable, fraction-to-boundary step length: " << distance << '\n';
+            const double new_component = current_primals[variable_index] + distance * primal_direction[variable_index];
             if (0. < distance) {
                step_length = std::min(step_length, distance);
             }
@@ -442,6 +448,8 @@ namespace uno {
       if (step_length <= 0. || step_length > 1.) {
          throw std::runtime_error("The primal fraction-to-boundary step length is not in (0, 1]");
       }
+      // std::cout << "Final fraction-to-boundary step length " << step_length << '\n';
+      // std::cout << "New x_0 = " << current_primals[0] + step_length * primal_direction[0] << '\n';
       return step_length;
    }
 
@@ -494,24 +502,47 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
-      // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
+
+      // if the primals are too close to their bounds, push the bounds away by a small fraction (Section 3.5)
+      constexpr double macheps = std::numeric_limits<double>::epsilon();
+      const double safe = std::pow(macheps, 0.75);
+      size_t adjusted = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            const double floor = safe * std::max(1.0, std::abs(this->variables_lower_bounds[variable_index]));
+            if (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index] < macheps * barrier_parameter) {
+               this->variables_lower_bounds[variable_index] = iterate.primals[variable_index] - floor;
+               ++adjusted;
+            }
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            const double floor = safe * std::max(1.0, std::abs(this->variables_upper_bounds[variable_index]));
+            if (this->variables_upper_bounds[variable_index] - iterate.primals[variable_index] < macheps * barrier_parameter) {
+               this->variables_upper_bounds[variable_index] = iterate.primals[variable_index] + floor;
+               ++adjusted;
+            }
+         }
+      }
+      if (adjusted > 0) {
+         DEBUG << adjusted << " slack(s) too small, adjusting variable bound\n";
+      }
+
+      // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             const double coefficient = barrier_parameter / (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
             if (is_finite(coefficient)) {
                const double lb = coefficient / this->parameters.k_sigma;
                const double ub = coefficient * this->parameters.k_sigma;
-               if (lb <= ub) {
-                  const double current_value = iterate.multipliers.lower_bounds[variable_index];
-                  iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
-                  if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
-                     DEBUG3 << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
-                        iterate.multipliers.lower_bounds[variable_index] << '\n';
-                  }
-               }
-               else {
+               if (lb > ub) {
                   throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
+               }
+               const double current_value = iterate.multipliers.lower_bounds[variable_index];
+               iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
+               if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
+                  DEBUG3 << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     iterate.multipliers.lower_bounds[variable_index] << '\n';
                }
             }
          }
@@ -520,16 +551,14 @@ namespace uno {
             if (is_finite(coefficient)) {
                const double lb = coefficient * this->parameters.k_sigma;
                const double ub = coefficient / this->parameters.k_sigma;
-               if (lb <= ub) {
-                  const double current_value = iterate.multipliers.upper_bounds[variable_index];
-                  iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
-                  if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
-                     DEBUG3 << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
-                        iterate.multipliers.upper_bounds[variable_index] << '\n';
-                  }
-               }
-               else {
+               if (lb > ub) {
                   throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
+               }
+               const double current_value = iterate.multipliers.upper_bounds[variable_index];
+               iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
+               if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
+                  DEBUG3 << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     iterate.multipliers.upper_bounds[variable_index] << '\n';
                }
             }
          }
