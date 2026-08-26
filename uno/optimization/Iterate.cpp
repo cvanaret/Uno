@@ -9,7 +9,7 @@ namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
-         model_residuals(number_variables) {
+         residuals(number_variables) {
    }
 
    void Iterate::set_number_variables(size_t new_number_variables) {
@@ -17,7 +17,7 @@ namespace uno {
       this->primals.resize(new_number_variables);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
-      this->model_residuals.lagrangian_gradient.resize(new_number_variables);
+      this->residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
@@ -27,9 +27,9 @@ namespace uno {
       stream << "            " << symbols::bottom_pipe << " Upper bound: " << iterate.multipliers.upper_bounds << '\n';
       stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
 
-      stream << "          " << symbols::top_pipe << " Stationarity: " << iterate.model_residuals.stationarity << '\n';
-      stream << "Residuals " << symbols::pipe << " Complementarity: " << iterate.model_residuals.complementarity << '\n';
-      stream << "          " << symbols::bottom_pipe << " Lagrangian gradient: " << iterate.model_residuals.lagrangian_gradient << '\n';
+      stream << "          " << symbols::top_pipe << " Stationarity: " << iterate.residuals.stationarity << '\n';
+      stream << "Residuals " << symbols::pipe << " Complementarity: " << iterate.residuals.complementarity << '\n';
+      stream << "          " << symbols::bottom_pipe << " Lagrangian gradient: " << iterate.residuals.lagrangian_gradient << '\n';
 
       stream << "                  " << symbols::top_pipe << " Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures " << symbols::pipe << " Optimality: " << iterate.progress.objective(1.) << '\n';

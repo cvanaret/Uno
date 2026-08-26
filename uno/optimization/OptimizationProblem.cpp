@@ -102,6 +102,46 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
+   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const {
+      // bound constraints
+      const Range variables_range = Range(this->number_variables);
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
+      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
+         if (0. < multipliers.lower_bounds[variable_index]) {
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]);
+         }
+         if (multipliers.upper_bounds[variable_index] < 0.) {
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]);
+         }
+         return 0.;
+      }};
+
+      // inequality constraints
+      const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
+      const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
+         // if constraint is one-sided, pick that bound
+         if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+         if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+         // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
+         // complementarity pair
+         if (0. < multipliers.constraints[constraint_index]) { // lower bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+         if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+         return 0.;
+      }};
+      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
    void OptimizationProblem::compute_jacobian_vector_product(const double* vector, double* result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_vector_product(this->model, vector, result);
@@ -179,9 +219,9 @@ namespace uno {
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool stationarity = (current_iterate.model_residuals.stationarity / current_iterate.model_residuals.stationarity_scaling <= dual_tolerance);
+      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= dual_tolerance);
       const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
-      const bool complementarity = (current_iterate.model_residuals.complementarity / current_iterate.model_residuals.complementarity_scaling <= dual_tolerance);
+      const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= dual_tolerance);
 
       DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';

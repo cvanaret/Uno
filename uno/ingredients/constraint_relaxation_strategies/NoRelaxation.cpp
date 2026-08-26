@@ -39,7 +39,7 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
-      this->compute_residuals(this->original_problem.model, initial_iterate, evaluation_cache.current_evaluations, 1.);
+      this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
 
       // statistics
@@ -98,12 +98,12 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, step_length, current_evaluations, trial_evaluations);
-      this->compute_residuals(this->original_problem.model, trial_iterate, trial_evaluations, 1.);
+      this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
-            trial_iterate.model_residuals.stationarity, trial_iterate.model_residuals.complementarity);
+            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
       }
       if (uses_trust_region || accept_iterate) {
          this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,

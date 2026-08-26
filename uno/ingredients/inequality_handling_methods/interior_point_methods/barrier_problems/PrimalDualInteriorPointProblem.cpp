@@ -256,6 +256,11 @@ namespace uno {
       }
    }
 
+   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
+         const Multipliers& multipliers, Norm /*residual_norm*/) const {
+      return this->compute_centrality_error(primals, multipliers, 0.);
+   }
+
    void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(const double* vector, double* result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_vector_product(vector, result, evaluations);

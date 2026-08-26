@@ -69,10 +69,10 @@ namespace uno {
       Vector<double> lagrangian_gradient(barrier_problem.number_variables); // TODO preallocate
       barrier_problem.evaluate_lagrangian_gradient(current_iterate, current_evaluations, lagrangian_gradient);
       const double stationarity = norm_inf(lagrangian_gradient);
-      const double scaled_stationarity = stationarity / current_iterate.model_residuals.stationarity_scaling;
+      const double scaled_stationarity = stationarity / current_iterate.residuals.stationarity_scaling;
       const double primal_feasibility = (barrier_problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_feasibility;
       double scaled_complementarity = barrier_problem.compute_centrality_error(current_iterate.primals,
-         current_iterate.multipliers, this->barrier_parameter) / current_iterate.model_residuals.complementarity_scaling;
+         current_iterate.multipliers, this->barrier_parameter) / current_iterate.residuals.complementarity_scaling;
       double primal_dual_error = std::max({scaled_stationarity, primal_feasibility, scaled_complementarity});
       DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
 
@@ -85,7 +85,7 @@ namespace uno {
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
          scaled_complementarity = barrier_problem.compute_centrality_error(current_iterate.primals,
-            current_iterate.multipliers, this->barrier_parameter) / current_iterate.model_residuals.complementarity_scaling;
+            current_iterate.multipliers, this->barrier_parameter) / current_iterate.residuals.complementarity_scaling;
          primal_dual_error = std::max({scaled_stationarity, primal_feasibility, scaled_complementarity});
          DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
          parameter_updated = true;

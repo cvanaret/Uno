@@ -20,7 +20,7 @@ namespace uno {
 
       // primal-dual residuals
       double primal_feasibility{INF<double>};
-      DualResiduals model_residuals;
+      DualResiduals residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)
       ProgressMeasures progress{INF<double>, {}, INF<double>};

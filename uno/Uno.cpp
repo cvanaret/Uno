@@ -216,7 +216,7 @@ namespace uno {
          return true;
       }
       else if (user_callbacks.termination(trial_iterate.primals, trial_iterate.multipliers, trial_iterate.objective_multiplier,
-            trial_iterate.progress.infeasibility, trial_iterate.model_residuals.stationarity, trial_iterate.model_residuals.complementarity)) {
+            trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity)) {
          optimization_status = OptimizationStatus::USER_TERMINATION;
          return true;
       }
@@ -241,8 +241,8 @@ namespace uno {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
-         evaluations.objective, solution.progress.infeasibility, solution.model_residuals.stationarity,
-         solution.model_residuals.complementarity, solution.primals, solution.multipliers.constraints,
+         evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
+         solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, evaluations.constraints, major_iterations,
          timer.get_duration(), model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
          model.number_model_objective_gradient_evaluations(), model.number_model_jacobian_evaluations(),

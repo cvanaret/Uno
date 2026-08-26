@@ -106,6 +106,10 @@ namespace uno {
       this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);
    }
 
+   void NoInequalityReformulation::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
+      InequalityHandlingMethod::compute_residuals(this->problem, iterate, evaluations);
+   }
+
    std::string NoInequalityReformulation::get_name() const {
       return this->name + " with " + this->hessian_model->name + " Hessian and " + this->inertia_correction_strategy->get_name()
          + " inertia correction";
