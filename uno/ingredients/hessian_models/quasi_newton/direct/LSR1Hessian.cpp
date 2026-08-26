@@ -36,18 +36,8 @@ namespace uno {
       // compute the candidate pair (s, y) WITHOUT modifying the memory yet
       this->compute_candidate_pair(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
 
-      // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
-      const double norm_sk = norm_2(this->latest_s);
-      const double norm_yk = norm_2(this->latest_y);
-      // tolerance is √(machine epsilon)
-      if (dot(this->latest_s, this->latest_y) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
-         DEBUG << "dot(sk, yk) is too small, skipping the update\n";
-      }
-      else {
-         // the curvature test passed; the candidate is validated (N factorization) and committed lazily in
-         // recompute_hessian_representation, before its next use. It may still be rejected there if N is singular.
-         this->hessian_recomputation_required = true;
-      }
+      // the candidate may still be rejected if N is singular
+      this->hessian_recomputation_required = true;
       statistics.set("|SR1|", this->number_entries_in_memory);
    }
 

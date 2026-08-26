@@ -80,8 +80,8 @@ namespace uno {
       this->S.column(newest_slot) = this->latest_s;
       this->Y.column(newest_slot) = this->latest_y;
       DEBUG << "Committed (s, y) at slot " << newest_slot << " (" << this->number_entries_in_memory << " entries in memory)\n";
-      DEBUG << "> S: " << this->S;
-      DEBUG << "> Y: " << this->Y;
+      DEBUG << "> S: " << this->S << '\n';
+      DEBUG << "> Y: " << this->Y << '\n';
       return newest_slot;
    }
 
