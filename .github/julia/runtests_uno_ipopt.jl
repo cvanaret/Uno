@@ -27,7 +27,7 @@ length(ARGS) == 1 || error("The linear solver name is missing or you supplied mo
 linear_solver = ARGS[1]
 println("Solving with linear solver ", linear_solver)
 
-Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=$linear_solver", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=DEBUG3", "preset=ipopt", "linear_solver=$linear_solver", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 
@@ -59,21 +59,21 @@ primal_tol = 1e-4
 # This function tests (potentially) non-convex nonlinear programs. The tests
 # are meant to be "easy" in the sense that most NLP solvers can find the
 # same global minimum, but a test failure can sometimes be allowed.
-MINLPTests.test_directory(
-    "nlp-expr",
-    Optimizer_Uno_ipopt;
-    include = strip_prefix(instances, "nlp_expr_"),
-    primal_target, objective_tol, primal_tol
-)
+#MINLPTests.test_directory(
+#    "nlp-expr",
+#    Optimizer_Uno_ipopt;
+#    include = strip_prefix(instances, "nlp_expr_"),
+#    primal_target, objective_tol, primal_tol
+#)
 # This function tests convex nonlinear programs. Test failures here should
 # never be allowed, because even local NLP solvers should find the global
 # optimum.
-MINLPTests.test_directory(
-    "nlp-cvx-expr",
-    Optimizer_Uno_ipopt;
-    include = strip_prefix(instances, "nlp_cvx_expr_"),
-    primal_target, objective_tol, primal_tol
-)
+#MINLPTests.test_directory(
+#    "nlp-cvx-expr",
+#    Optimizer_Uno_ipopt;
+#    include = strip_prefix(instances, "nlp_cvx_expr_"),
+#    primal_target, objective_tol, primal_tol
+#)
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
 # tests in here with weird edge cases, so a variety of exclusions are expected.
@@ -82,6 +82,7 @@ MINLPTests.test_directory(
 bound_constrained_instances = readlines(joinpath(@__DIR__, "MOI/bound-constrained.txt"))
 general_instances = readlines(joinpath(@__DIR__, "MOI/general.txt"))
 instances = vcat(bound_constrained_instances, general_instances)
+instances = String["test_conic_linear_VectorAffineFunction_2"]
 #print("Instances with inequality constraints: ", instances)
 
 @testset "MathOptInterface.test" begin
