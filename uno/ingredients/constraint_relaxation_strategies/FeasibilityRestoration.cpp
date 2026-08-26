@@ -131,9 +131,15 @@ namespace uno {
 
       const auto auxiliary_variables = view(current_iterate.primals, this->original_problem.number_variables,
          number_variables_optimality);
+      const auto auxiliary_variables_lb_duals = view(current_iterate.multipliers.lower_bounds, this->original_problem.number_variables,
+         number_variables_optimality);
+      const auto auxiliary_variables_ub_duals = view(current_iterate.multipliers.lower_bounds, this->original_problem.number_variables,
+         number_variables_optimality);
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       // copy the additional variables into the last block
       view(current_iterate.primals, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables;
+      view(current_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables_lb_duals;
+      view(current_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables_ub_duals;
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
@@ -237,12 +243,24 @@ namespace uno {
 
       const auto current_auxiliary_variables = view(current_iterate.primals, this->feasibility_problem.number_variables,
          number_variables_feasibility);
+      const auto current_auxiliary_variables_lb_duals = view(current_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables,
+         number_variables_feasibility);
+      const auto current_auxiliary_variables_ub_duals = view(current_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables,
+         number_variables_feasibility);
       view(current_iterate.primals, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables;
+      view(current_iterate.multipliers.lower_bounds, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables_lb_duals;
+      view(current_iterate.multipliers.upper_bounds, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables_ub_duals;
       current_iterate.set_number_variables(number_variables_optimality);
 
       const auto trial_auxiliary_variables = view(trial_iterate.primals, this->feasibility_problem.number_variables,
          number_variables_feasibility);
+      const auto trial_auxiliary_variables_lb_duals = view(trial_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables,
+         number_variables_feasibility);
+      const auto trial_auxiliary_variables_ub_duals = view(trial_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables,
+         number_variables_feasibility);
       view(trial_iterate.primals, this->original_problem.number_variables, number_variables_optimality) = trial_auxiliary_variables;
+      view(trial_iterate.multipliers.lower_bounds, this->original_problem.number_variables, number_variables_optimality) = trial_auxiliary_variables_lb_duals;
+      view(trial_iterate.multipliers.upper_bounds, this->original_problem.number_variables, number_variables_optimality) = trial_auxiliary_variables_ub_duals;
       trial_iterate.set_number_variables(number_variables_optimality);
 
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;

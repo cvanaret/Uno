@@ -571,6 +571,7 @@ namespace uno {
       // barrier terms
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
+            assert(this->variables_lower_bounds[variable_index] < iterate.primals[variable_index]);
             barrier_terms -= std::log(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
             if (is_infinite(this->variables_upper_bounds[variable_index])) {
                // damping
@@ -578,8 +579,10 @@ namespace uno {
             }
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
+            assert(iterate.primals[variable_index] < this->variables_upper_bounds[variable_index]);
             barrier_terms -= std::log(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
             if (is_infinite(this->variables_lower_bounds[variable_index])) {
+               // damping
                barrier_terms += this->parameters.damping_factor*(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
             }
          }
