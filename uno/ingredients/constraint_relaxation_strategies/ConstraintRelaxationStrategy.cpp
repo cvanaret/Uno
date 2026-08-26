@@ -39,26 +39,24 @@ namespace uno {
    // - for KKT conditions: with standard multipliers and current objective multiplier
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-   void ConstraintRelaxationStrategy::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
-         Evaluations& evaluations) const {
+   void ConstraintRelaxationStrategy::compute_residuals(const Model& model, Iterate& iterate,
+         Evaluations& evaluations, double objective_multiplier) const {
       // stationarity error (norm of the Lagrangian gradient)
-      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.residuals.lagrangian_gradient);
+      model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, objective_multiplier, evaluations,
+         iterate.residuals.lagrangian_gradient);
       iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
 
       // primal feasibility/constraint violation of the model
-      evaluations.evaluate_constraints(problem.model, iterate.primals);
-      iterate.primal_feasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
+      evaluations.evaluate_constraints(model, iterate.primals);
+      iterate.primal_feasibility = model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
-      // TODO preallocate constraints
-      Vector<double> constraints(problem.number_constraints);
-      problem.evaluate_constraints(iterate, constraints.data(), evaluations);
-      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints, iterate.multipliers,
-         this->residual_norm);
+      iterate.residuals.complementarity = model.complementarity_error(iterate.primals, evaluations.constraints,
+         iterate.multipliers, this->residual_norm);
 
       // scaling factors
-      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, iterate.multipliers);
-      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem.model, iterate.multipliers);
+      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(model, iterate.multipliers);
+      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(model, iterate.multipliers);
    }
 
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {

@@ -55,7 +55,7 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
-      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->compute_residuals(this->original_problem.model, initial_iterate, evaluation_cache.current_evaluations, 1.);
       this->globalization_strategy->initialize(statistics, initial_iterate);
       this->feasibility_globalization_strategy.initialize(statistics, initial_iterate);
 
@@ -134,7 +134,7 @@ namespace uno {
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
-      compute_residuals(this->feasibility_problem, current_iterate, current_evaluations);
+      compute_residuals(this->original_problem.model, current_iterate, current_evaluations, 0.);
 
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
@@ -218,7 +218,7 @@ namespace uno {
 
       // check termination
       if (this->current_phase == Phase::OPTIMALITY) {
-         this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         this->compute_residuals(this->original_problem.model, trial_iterate, trial_evaluations, 1.);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
@@ -227,7 +227,7 @@ namespace uno {
          }
       }
       else {
-         this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
+         this->compute_residuals(this->original_problem.model, trial_iterate, trial_evaluations, 0.);
          trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
@@ -290,7 +290,7 @@ namespace uno {
       // least-squares multipliers for the original problem
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
       this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
-      compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+      compute_residuals(this->original_problem.model, trial_iterate, trial_evaluations, 1.);
 
       this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);

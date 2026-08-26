@@ -70,7 +70,7 @@ namespace uno {
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
 
-      void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
+      void compute_residuals(const Model& model, Iterate& iterate, Evaluations& evaluations, double objective_multiplier) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 

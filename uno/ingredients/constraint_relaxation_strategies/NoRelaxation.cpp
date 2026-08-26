@@ -39,7 +39,7 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
-      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->compute_residuals(this->original_problem.model, initial_iterate, evaluation_cache.current_evaluations, 1.);
       this->globalization_strategy.initialize(statistics, initial_iterate);
 
       // statistics
@@ -98,7 +98,7 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, step_length, current_evaluations, trial_evaluations);
-      this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+      this->compute_residuals(this->original_problem.model, trial_iterate, trial_evaluations, 1.);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,

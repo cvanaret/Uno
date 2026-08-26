@@ -216,6 +216,7 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
          Vector<double>& lagrangian_gradient) const {
+      lagrangian_gradient.fill(0.);
       this->inner.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
       // Jacobian block for slacks

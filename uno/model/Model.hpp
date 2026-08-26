@@ -62,11 +62,15 @@ namespace uno {
       // numerical evaluations of Jacobian
       virtual void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
 
-      // numerical evaluations of Lagrangian gradient and Hessian
-      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
-         Evaluations& evaluations, Vector<double>& lagrangian_gradient) const;
+      // numerical evaluation of Lagrangian Hessian
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          View<double> hessian_values) const = 0;
+
+      // residuals
+      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         Evaluations& evaluations, Vector<double>& lagrangian_gradient) const;
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const;
 
       // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
