@@ -46,8 +46,8 @@ namespace uno {
          initial_point, current_evaluations, warmstart_information);
    }
 
-   void NoInequalityReformulation::initialize_feasibility_problem(Iterate& current_iterate) {
-      current_iterate.set_number_variables(this->problem.number_variables);
+   void NoInequalityReformulation::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
+      // do nothing
    }
 
    void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate,

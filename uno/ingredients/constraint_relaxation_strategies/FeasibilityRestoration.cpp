@@ -119,31 +119,22 @@ namespace uno {
       this->initial_point.resize(this->feasibility_problem.number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
-         this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
-         this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+         const auto [number_variables_feasibility, number_constraints_feasibility] =
+            this->feasibility_inequality_handling_method->get_problem_dimensions();
+         this->other_phase_multipliers.constraints.resize(number_constraints_feasibility);
+         this->other_phase_multipliers.lower_bounds.resize(number_variables_feasibility);
+         this->other_phase_multipliers.upper_bounds.resize(number_variables_feasibility);
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
-      const auto [number_variables_optimality, _] = this->inequality_handling_method->get_problem_dimensions();
-      const auto [number_variables_feasibility, __] = this->feasibility_inequality_handling_method->get_problem_dimensions();
-
-      const auto auxiliary_variables = view(current_iterate.primals, this->original_problem.number_variables,
-         number_variables_optimality);
-      const auto auxiliary_variables_lb_duals = view(current_iterate.multipliers.lower_bounds, this->original_problem.number_variables,
-         number_variables_optimality);
-      const auto auxiliary_variables_ub_duals = view(current_iterate.multipliers.lower_bounds, this->original_problem.number_variables,
-         number_variables_optimality);
+      augment_iterate(current_iterate);
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
-      // copy the additional variables into the last block
-      view(current_iterate.primals, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables;
-      view(current_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables_lb_duals;
-      view(current_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables_ub_duals;
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      compute_residuals(this->feasibility_problem, current_iterate, current_evaluations);
 
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
@@ -188,83 +179,6 @@ namespace uno {
       else {
          return this->feasibility_inequality_handling_method->update_second_order_corrections(trial_iterate, trial_evaluations);
       }
-   }
-
-   const Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
-      if (inequality_handling_method.update_parameterization(statistics, current_iterate)) {
-         globalization_strategy.reset();
-         inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
-      }
-
-      const Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius,
-         this->initial_point, current_evaluations, warmstart_information);
-      ++this->number_subproblems_solved;
-      this->initial_point.fill(0.);
-      DEBUG3 << direction << '\n';
-      return direction;
-   }
-
-   bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations) const {
-      if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->reference_optimality_progress,
-            trial_iterate.progress)) {
-         if (!this->switch_to_optimality_requires_linearized_feasibility) {
-            return true;
-         }
-         // compute the linearized constraint violation
-         // TODO preallocate
-         Vector<double> result(model.number_constraints);
-         current_evaluations.compute_jacobian_vector_product(model, direction.primals.data(), result.data());
-         const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
-            step_length * result, this->residual_norm);
-         return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
-      }
-      return false;
-   }
-
-   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
-      DEBUG << "Switching from restoration back to optimality phase\n";
-      this->current_phase = Phase::OPTIMALITY;
-      this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
-      this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
-      this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
-
-      // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
-      // least-squares multipliers for the original problem
-      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
-
-      const auto [number_variables_optimality, _] = this->inequality_handling_method->get_problem_dimensions();
-      const auto [number_variables_feasibility, __] = this->feasibility_inequality_handling_method->get_problem_dimensions();
-
-      const auto current_auxiliary_variables = view(current_iterate.primals, this->feasibility_problem.number_variables,
-         number_variables_feasibility);
-      const auto current_auxiliary_variables_lb_duals = view(current_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables,
-         number_variables_feasibility);
-      const auto current_auxiliary_variables_ub_duals = view(current_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables,
-         number_variables_feasibility);
-      view(current_iterate.primals, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables;
-      view(current_iterate.multipliers.lower_bounds, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables_lb_duals;
-      view(current_iterate.multipliers.upper_bounds, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables_ub_duals;
-      current_iterate.set_number_variables(number_variables_optimality);
-
-      const auto trial_auxiliary_variables = view(trial_iterate.primals, this->feasibility_problem.number_variables,
-         number_variables_feasibility);
-      const auto trial_auxiliary_variables_lb_duals = view(trial_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables,
-         number_variables_feasibility);
-      const auto trial_auxiliary_variables_ub_duals = view(trial_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables,
-         number_variables_feasibility);
-      view(trial_iterate.primals, this->original_problem.number_variables, number_variables_optimality) = trial_auxiliary_variables;
-      view(trial_iterate.multipliers.lower_bounds, this->original_problem.number_variables, number_variables_optimality) = trial_auxiliary_variables_lb_duals;
-      view(trial_iterate.multipliers.upper_bounds, this->original_problem.number_variables, number_variables_optimality) = trial_auxiliary_variables_ub_duals;
-      trial_iterate.set_number_variables(number_variables_optimality);
-
-      current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
-      this->initial_point.resize(this->original_problem.number_variables);
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model,
@@ -326,5 +240,87 @@ namespace uno {
 
    std::string FeasibilityRestoration::get_name() const {
       return this->globalization_strategy->get_name() + " restoration " + this->inequality_handling_method->get_name();
+   }
+
+   // protected member functions
+
+   const Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+      // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
+      if (inequality_handling_method.update_parameterization(statistics, current_iterate)) {
+         globalization_strategy.reset();
+         inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
+      }
+
+      const Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius,
+         this->initial_point, current_evaluations, warmstart_information);
+      ++this->number_subproblems_solved;
+      this->initial_point.fill(0.);
+      DEBUG3 << direction << '\n';
+      return direction;
+   }
+
+   bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
+         const Direction& direction, double step_length, Evaluations& current_evaluations) const {
+      if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->reference_optimality_progress,
+            trial_iterate.progress)) {
+         if (!this->switch_to_optimality_requires_linearized_feasibility) {
+            return true;
+         }
+         // compute the linearized constraint violation
+         // TODO preallocate
+         Vector<double> result(model.number_constraints);
+         current_evaluations.compute_jacobian_vector_product(model, direction.primals.data(), result.data());
+         const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
+            step_length * result, this->residual_norm);
+         return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
+            }
+      return false;
+   }
+
+   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      DEBUG << "Switching from restoration back to optimality phase\n";
+      this->current_phase = Phase::OPTIMALITY;
+
+      condense_primal_iterate(current_iterate);
+      condense_primal_iterate(trial_iterate);
+      // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
+      // least-squares multipliers for the original problem
+      std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
+      this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
+      compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+
+      this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+      this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
+
+      current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
+      this->initial_point.resize(this->original_problem.number_variables);
+   }
+
+   void FeasibilityRestoration::augment_iterate(Iterate& iterate) const {
+      const auto [number_variables_optimality, _] = this->inequality_handling_method->get_problem_dimensions();
+      const auto [number_variables_feasibility, __] = this->feasibility_inequality_handling_method->get_problem_dimensions();
+      // TODO constraints
+
+      const auto auxiliary_variables = view(iterate.primals, this->original_problem.number_variables,
+         number_variables_optimality);
+      iterate.primals.resize(number_variables_feasibility);
+      iterate.residuals.lagrangian_gradient.resize(number_variables_feasibility);
+      // copy the additional variables into the last block
+      view(iterate.primals, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables;
+   }
+
+   void FeasibilityRestoration::condense_primal_iterate(Iterate& iterate) const {
+      const auto [number_variables_optimality, _] = this->inequality_handling_method->get_problem_dimensions();
+      const auto [number_variables_feasibility, __] = this->feasibility_inequality_handling_method->get_problem_dimensions();
+      // TODO constraints
+
+      const auto current_auxiliary_variables = view(iterate.primals, this->feasibility_problem.number_variables,
+         number_variables_feasibility);
+      view(iterate.primals, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables;
+      iterate.primals.resize(number_variables_optimality);
    }
 } // namespace
