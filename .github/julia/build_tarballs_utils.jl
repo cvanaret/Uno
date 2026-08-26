@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.8.24"
+version = v"2026.8.26"
 
 # Collection of sources
 sources = [
@@ -214,10 +214,11 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DZLIB=OFF \
-    -DHIPO=OFF \
+    -DHIPO=ON \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
+    -DBLA_VENDOR=Generic \
     -DBLAS_LIBRARIES=${prefix}/lib/libblas.a \
     -DBUILD_SHARED_EXTRAS_LIB=OFF \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
