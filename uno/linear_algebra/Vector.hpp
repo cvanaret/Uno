@@ -163,15 +163,6 @@ namespace uno {
       std::vector<T> vector;
    };
 
-   // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
-   template <typename Array, typename Stream>
-   void print_vector(Stream&& stream, const Array& x) {
-      for (size_t index: Range(x.size())) {
-         stream << x[index] << " ";
-      }
-      stream << '\n';
-   }
-
    template <typename T>
    std::ostream& operator<<(std::ostream& stream, const Vector<T>& vector) {
       vector.print(stream);

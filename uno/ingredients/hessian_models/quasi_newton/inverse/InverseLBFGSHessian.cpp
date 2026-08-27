@@ -105,8 +105,8 @@ namespace uno {
          // compute Sᵀv and Yᵀv
          SkTv = transpose(Sk) * v;
          YkTv = transpose(Yk) * v;
-         DEBUG2 << "Sᵀv = "; print_vector(DEBUG2, SkTv);
-         DEBUG2 << "Yᵀv = "; print_vector(DEBUG2, YkTv);
+         DEBUG2 << "Sᵀv = " << SkTv << '\n';
+         DEBUG2 << "Yᵀv = " << YkTv << '\n';
 
          // compute R⁻ᵀ(Yᵀv)
          Vector<double> a(this->number_entries_in_memory);
