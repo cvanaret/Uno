@@ -38,7 +38,8 @@ namespace uno {
       // regularized Hessian
       void evaluate_lagrangian_hessian(Statistics& statistics, const Iterate& current_iterate, View<double> hessian_values) const;
       void regularize_lagrangian_hessian(Statistics& statistics, View<double> hessian_values) const;
-      void compute_hessian_vector_product(const Iterate& current_iterate, const double* x, const double* vector, double* result) const;
+      void compute_hessian_vector_product(const Iterate& current_iterate, View<const double> x, View<const double> vector,
+         View<double> result) const;
 
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, View<double> primal_inertia_correction_block,

@@ -71,8 +71,8 @@ namespace uno {
       virtual void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const;
       virtual void compute_jacobian_transposed_vector_product(const double* vector, double* result,
          const Evaluations& evaluations) const;
-      virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const;
+      virtual void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const;
 
       [[nodiscard]] size_t get_number_original_variables() const;
       [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const;

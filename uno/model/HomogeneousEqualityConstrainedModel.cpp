@@ -141,8 +141,8 @@ namespace uno {
       }
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& multipliers, double* result) const {
+   void HomogeneousEqualityConstrainedModel::compute_hessian_vector_product(View<const double> x, View<const double> vector,
+         double objective_multiplier, const Vector<double>& multipliers, View<double> result) const {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
    }
 

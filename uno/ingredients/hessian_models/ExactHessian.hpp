@@ -41,8 +41,8 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
       void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, View<double> hessian_values) override;
-      void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, double* result) override;
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> result) override;
 
    protected:
       const Model& model;

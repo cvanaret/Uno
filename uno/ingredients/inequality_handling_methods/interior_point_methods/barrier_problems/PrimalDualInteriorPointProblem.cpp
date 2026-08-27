@@ -244,8 +244,8 @@ namespace uno {
       this->inner.compute_jacobian_transposed_vector_product(vector, result, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
-         const double* vector, const Multipliers& multipliers, double* result) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const {
       // original Lagrangian Hessian
       this->inner.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result);
 

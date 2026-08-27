@@ -208,18 +208,18 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& multipliers, double* result) const {
+   void PythonModel::compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const {
       if (this->user_model.lagrangian_hessian_operator.has_value()) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const auto x_py = to_const_array(x, this->number_variables);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
          const auto multipliers_py = to_const_array(multipliers.data(), this->number_constraints);
-         const auto vector_py = to_const_array(vector, this->number_variables);
-         auto result_py = to_array(result, this->number_variables);
+         const auto vector_py = to_const_array(vector.data(), this->number_variables);
+         auto result_py = to_array(result.data(), this->number_variables);
 
          // evaluate Hessian-vector product
          try {
