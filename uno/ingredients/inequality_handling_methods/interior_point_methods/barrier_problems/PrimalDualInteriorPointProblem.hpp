@@ -94,6 +94,9 @@ namespace uno {
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
+      // internal bounds (may be slightly relaxed if necessary)
+      mutable std::vector<double> variables_lower_bounds;
+      mutable std::vector<double> variables_upper_bounds;
 
       void compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const;
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
