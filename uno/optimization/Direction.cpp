@@ -28,10 +28,10 @@ namespace uno {
    std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       stream << "Direction:\n";
       stream << symbols::top_pipe << " status: " << Direction::status_to_string(direction.status) << '\n';
-      stream << symbols::pipe << " primals = "; print_vector(stream, direction.primals);
-      stream << symbols::pipe << " constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
-      stream << symbols::pipe << " lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
-      stream << symbols::pipe << " upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
+      stream << symbols::pipe << " primals = " << direction.primals << '\n';
+      stream << symbols::pipe << " constraint multipliers = " << direction.multipliers.constraints << '\n';
+      stream << symbols::pipe << " lower bound multipliers = " << direction.multipliers.lower_bounds << '\n';
+      stream << symbols::pipe << " upper bound multipliers = " << direction.multipliers.upper_bounds << '\n';
       stream << symbols::pipe << " objective = " << direction.subproblem_objective << '\n';
       stream << symbols::bottom_pipe << " norm = " << direction.norm << '\n';
       return stream;

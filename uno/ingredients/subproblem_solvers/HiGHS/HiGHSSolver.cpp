@@ -33,9 +33,9 @@ namespace uno {
          const WarmstartInformation& /*warmstart_information*/) {
       if (this->print_subproblem) {
          DEBUG << "Subproblem:\n";
-         DEBUG << "Hessian: "; print_vector(DEBUG, this->quadratic_program->model.hessian_.value_);
-         DEBUG << "Linear objective part: "; print_vector(DEBUG, this->quadratic_program->model.lp_.col_cost_);
-         DEBUG << "Jacobian: "; print_vector(DEBUG, this->quadratic_program->model.lp_.a_matrix_.value_);
+         DEBUG << "Hessian: " << view(this->quadratic_program->model.hessian_.value_) << '\n';
+         DEBUG << "Linear objective part: " << view(this->quadratic_program->model.lp_.col_cost_) << '\n';
+         DEBUG << "Jacobian: " << view(this->quadratic_program->model.lp_.a_matrix_.value_) << '\n';
          for (size_t variable_index = 0; variable_index < this->quadratic_program->number_variables; variable_index++) {
             DEBUG << "d" << variable_index << " in [" << this->quadratic_program->model.lp_.col_lower_[variable_index] << ", " <<
                this->quadratic_program->model.lp_.col_upper_[variable_index] << "]\n";

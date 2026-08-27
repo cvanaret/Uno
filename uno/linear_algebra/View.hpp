@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <vector>
 #include "BLAS.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
@@ -292,6 +293,11 @@ namespace uno {
          throw std::out_of_range("invalid vector view");
       }
       return View{pointer + start, end - start};
+   }
+
+   template <typename T>
+   auto view(const std::vector<T>& vector) {
+      return View{vector.data(), vector.size()};
    }
 
    template <typename Expression>
