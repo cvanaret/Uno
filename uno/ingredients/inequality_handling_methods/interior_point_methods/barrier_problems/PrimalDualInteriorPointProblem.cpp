@@ -436,14 +436,14 @@ namespace uno {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             const double floor = safe * std::max(1.0, std::abs(this->variables_lower_bounds[variable_index]));
             if (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index] < macheps * barrier_parameter) {
-               this->variables_lower_bounds[variable_index] = iterate.primals[variable_index] - floor;
+               this->variables_lower_bounds[variable_index] -= floor;
                ++adjusted;
             }
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
             const double floor = safe * std::max(1.0, std::abs(this->variables_upper_bounds[variable_index]));
             if (this->variables_upper_bounds[variable_index] - iterate.primals[variable_index] < macheps * barrier_parameter) {
-               this->variables_upper_bounds[variable_index] = iterate.primals[variable_index] + floor;
+               this->variables_upper_bounds[variable_index] += floor;
                ++adjusted;
             }
          }
