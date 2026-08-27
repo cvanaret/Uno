@@ -121,22 +121,25 @@ namespace uno {
                trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
                warmstart_information, user_callbacks);
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+
+            // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
+            // accept the step unconditionally
+            if (!is_acceptable && number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
+               // try to evaluate the functions at the trial iterate, so that the next subproblem is well defined
+               evaluation_cache.trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
+               evaluation_cache.trial_evaluations.evaluate_jacobian(model, trial_iterate.primals);
+               ++this->number_consecutive_tiny_directions;
+               if (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold) {
+                  is_acceptable = true;
+                  statistics.set("Status", std::string(symbols::check) + " (tiny)");
+                  this->number_consecutive_tiny_directions = 0;
+               }
+            }
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
          }
          statistics.set("Minor", number_iterations);
-
-         // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
-         // accept the step unconditionally
-         if (!is_acceptable && number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
-            ++this->number_consecutive_tiny_directions;
-            if (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold) {
-               is_acceptable = true;
-               statistics.set("Status", std::string(symbols::check) + " (tiny)");
-               this->number_consecutive_tiny_directions = 0;
-            }
-         }
 
          // try second-order corrections if the full step was rejected
          if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
