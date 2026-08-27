@@ -106,14 +106,14 @@ namespace uno {
       // work on each column of U (Uᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
+         const double U_coefficient = -dot(current_U_column, view(vector.data(), this->model.number_variables)); // minus sign for U
          // result += coefficient * current_column
          blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result.data());
       }
       // work on each column of V (Vᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
-         const double V_coefficient = dot(current_V_column, vector); // plus sign for V
+         const double V_coefficient = dot(current_V_column, view(vector.data(), this->model.number_variables)); // plus sign for V
          // result += coefficient * current_column
          blas1::add(this->model.number_variables, V_coefficient, current_V_column.data(), result.data());
       }

@@ -65,7 +65,8 @@ namespace uno {
       DEBUG << "U = " << this->U << '\n';
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         double U_coefficient = dot(current_U_column, vector) / this->get_correction_column_scaling(column_index);
+         double U_coefficient = dot(current_U_column, view(vector.data(), this->model.number_variables)) /
+            this->get_correction_column_scaling(column_index);
          assert(!std::isnan(U_coefficient));
          // result += coefficient * column(P⁻¹) * current_column
          blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result.data());
