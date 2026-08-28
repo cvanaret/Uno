@@ -170,6 +170,9 @@ namespace uno {
          }
       }
 
+      // push the slacks back into the interior of their bounds
+      this->barrier_problem.push_slacks_to_interior(iterate, evaluations);
+
       // c(x) - p + n = 0
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.

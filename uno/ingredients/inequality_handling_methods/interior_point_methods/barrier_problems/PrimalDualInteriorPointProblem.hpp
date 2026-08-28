@@ -24,6 +24,7 @@ namespace uno {
       [[nodiscard]] bool has_bound_constraints() const override;
 
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
+      void push_slacks_to_interior(Iterate& iterate, Evaluations& evaluations) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -66,8 +67,6 @@ namespace uno {
 
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       [[nodiscard]] double dual_regularization_factor() const override;
-      [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
-         const Vector<double>& primal_direction) const;
       void postprocess_iterate(Iterate& iterate) const override;
 
       // progress measures
@@ -103,6 +102,9 @@ namespace uno {
          double tau) const;
       [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers, const Multipliers& direction_multipliers,
          double tau) const;
+      void possibly_relax_variables_bounds(const Iterate& iterate) const;
+      [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const;
    };
 } // namespace
 
