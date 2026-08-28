@@ -120,7 +120,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
       for (size_t index: Range(this->number_constraints)) {
          constraints[index] = evaluations.constraints[index];

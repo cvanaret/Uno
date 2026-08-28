@@ -155,7 +155,8 @@ namespace uno {
       this->problem.evaluate_objective_gradient(current_iterate, rhs.view(), evaluations);
 
       // constraints
-      this->problem.evaluate_constraints(current_iterate, rhs.data() + this->number_variables, evaluations);
+      auto rhs_constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
+      this->problem.evaluate_constraints(current_iterate, rhs_constraints, evaluations);
       // shift the bound (lb == ub)
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          rhs[this->number_variables + constraint_index] -= this->problem.get_constraints_lower_bounds()[constraint_index];

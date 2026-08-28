@@ -72,7 +72,7 @@ namespace uno {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void OptimizationProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
       for (size_t index: Range(this->number_constraints)) {
          constraints[index] = evaluations.constraints[index];

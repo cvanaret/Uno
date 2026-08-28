@@ -177,7 +177,7 @@ namespace uno {
             this->model.lp_.col_cost_[index] = 0.;
          }
          subproblem.problem.evaluate_objective_gradient(current_iterate, view(this->model.lp_.col_cost_), current_evaluations);
-         subproblem.problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
+         subproblem.problem.evaluate_constraints(current_iterate, this->constraints.view(), current_evaluations);
          this->evaluate_jacobian(subproblem.problem, current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
          subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
