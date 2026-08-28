@@ -84,8 +84,8 @@ namespace uno {
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = δ I
    // Bk v = (B0 - U Uᵀ + V Vᵀ) v = δ v - U (Uᵀ v) + V (Vᵀ v)
-   void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
-         double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
+   void LBFGSHessian::compute_hessian_vector_product(View<const double> /*x*/, View<const double> vector,
+         double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, View<double> result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
          throw std::runtime_error("The quasi-Newton Hessian model was initialized with a different objective multiplier");
       }
@@ -106,16 +106,16 @@ namespace uno {
       // work on each column of U (Uᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
+         const double U_coefficient = -dot(current_U_column, view(vector.data(), this->model.number_variables)); // minus sign for U
          // result += coefficient * current_column
-         blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result);
+         blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result.data());
       }
       // work on each column of V (Vᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
-         const double V_coefficient = dot(current_V_column, vector); // plus sign for V
+         const double V_coefficient = dot(current_V_column, view(vector.data(), this->model.number_variables)); // plus sign for V
          // result += coefficient * current_column
-         blas1::add(this->model.number_variables, V_coefficient, current_V_column.data(), result);
+         blas1::add(this->model.number_variables, V_coefficient, current_V_column.data(), result.data());
       }
    }
 

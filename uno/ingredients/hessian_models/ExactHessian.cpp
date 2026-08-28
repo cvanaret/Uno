@@ -57,7 +57,7 @@ namespace uno {
       return this->model.number_hessian_nonzeros();
    }
 
-   void ExactHessian::compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
+   void ExactHessian::compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       // Hessian sparsity of the model
       this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }
@@ -81,8 +81,8 @@ namespace uno {
       ++this->evaluation_count;
    }
 
-   void ExactHessian::compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) {
+   void ExactHessian::compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> result) {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
       ++this->evaluation_count;
    }

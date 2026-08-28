@@ -43,8 +43,8 @@ namespace uno {
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 + U P⁻¹ Uᵀ and B0 = δ I
    // Bk v = (B0 + U P⁻¹ Uᵀ) v = δ v + U (P⁻¹ (Uᵀ v))
-   void LSR1Hessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
-         double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
+   void LSR1Hessian::compute_hessian_vector_product(View<const double> /*x*/, View<const double> vector,
+         double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, View<double> result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
          throw std::runtime_error("The L-SR1 Hessian model was initialized with a different objective multiplier");
       }
@@ -65,10 +65,11 @@ namespace uno {
       DEBUG << "U = " << this->U << '\n';
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         double U_coefficient = dot(current_U_column, vector) / this->get_correction_column_scaling(column_index);
+         double U_coefficient = dot(current_U_column, view(vector.data(), this->model.number_variables)) /
+            this->get_correction_column_scaling(column_index);
          assert(!std::isnan(U_coefficient));
          // result += coefficient * column(P⁻¹) * current_column
-         blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result);
+         blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result.data());
       }
    }
 

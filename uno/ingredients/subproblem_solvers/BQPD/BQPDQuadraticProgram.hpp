@@ -9,6 +9,7 @@
 #include "ingredients/subproblem_solvers/QuadraticProgram.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/View.hpp"
 
 namespace uno {
    // forward declarations
@@ -44,7 +45,7 @@ namespace uno {
       [[nodiscard]] bool has_curvature() const { return this->use_explicit_hessian || bool(this->hessian_operator); }
 
       // result <- H * vector, called from the Fortran gdotx callback. Subproblem-free.
-      void compute_hessian_vector_product(int dimension, const double* vector, double* result) const;
+      void compute_hessian_vector_product(View<const double> vector, View<double> result) const;
       
       // data-driven setup: dense objective gradient + COO constraint Jacobian (row = constraint,
       // column = variable) + COO Lagrangian Hessian (one triangle; empty for an LP). Allocates native
@@ -81,7 +82,7 @@ namespace uno {
    private:
       // Hessian representation selected at build() time
       bool use_explicit_hessian{false};
-      std::function<void(const double* vector, double* result)> hessian_operator{};
+      std::function<void(View<const double> vector, View<double> result)> hessian_operator{};
       
       // allocate native storage for the given problem shape
       void allocate_memory(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,

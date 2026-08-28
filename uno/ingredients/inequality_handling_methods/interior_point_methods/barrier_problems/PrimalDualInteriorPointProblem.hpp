@@ -32,12 +32,12 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
       [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override;
       [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override;
-      void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices, uno_int* column_indices,
+      void compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices, View<uno_int> column_indices,
          uno_int solver_indexing) const override;
 
       // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
-      void evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const override;
-      void evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const override;
+      void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const override;
+      void evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const override;
       void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const override;
       void evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
          Vector<double>& lagrangian_gradient) const override;
@@ -45,10 +45,10 @@ namespace uno {
          const Multipliers& multipliers, View<double> hessian_values) const override;
 
       // linear operators
-      void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const override;
-      void compute_jacobian_transposed_vector_product(const double* vector, double* result, const Evaluations& evaluations) const override;
-      void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const override;
+      void compute_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const override;
+      void compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const override;
+      void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x, View<const double> vector,
+         const Multipliers& multipliers, View<double> result) const override;
 
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;

@@ -130,8 +130,8 @@ namespace uno {
       return this->inner.get_jacobian_column_indices();
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
-         uno_int* column_indices, uno_int solver_indexing) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const {
       // original Lagrangian Hessian
       this->inner.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
 
@@ -146,11 +146,11 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
+   void PrimalDualInteriorPointProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       this->inner.evaluate_constraints(iterate, constraints, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient,
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient,
          Evaluations& evaluations) const {
       this->inner.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
@@ -234,18 +234,18 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(const double* vector, double* result,
+   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_vector_product(vector, result, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       this->inner.compute_jacobian_transposed_vector_product(vector, result, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
-         const double* vector, const Multipliers& multipliers, double* result) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const {
       // original Lagrangian Hessian
       this->inner.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result);
 

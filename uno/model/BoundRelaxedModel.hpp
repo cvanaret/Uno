@@ -59,7 +59,7 @@ namespace uno {
          return this->model.get_jacobian_column_indices();
       }
 
-      void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
+      void compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override {
          this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
       }
 
@@ -80,8 +80,8 @@ namespace uno {
          this->model.compute_jacobian_transposed_vector_product(x, vector, result);
       }
 
-      void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-            const Vector<double>& multipliers, double* result) const override {
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const override {
          this->model.compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
       }
 

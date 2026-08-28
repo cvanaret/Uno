@@ -59,7 +59,7 @@ namespace uno {
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual View<const uno_int> get_jacobian_row_indices() const = 0;
       [[nodiscard]] virtual View<const uno_int> get_jacobian_column_indices() const = 0;
-      virtual void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
+      virtual void compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian
       virtual void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
@@ -74,8 +74,8 @@ namespace uno {
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
       virtual void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const = 0;
       virtual void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const = 0;
-      virtual void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& multipliers, double* result) const = 0;
+      virtual void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const = 0;
 
       // purely virtual functions
       [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const = 0;

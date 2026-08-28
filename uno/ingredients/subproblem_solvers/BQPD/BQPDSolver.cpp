@@ -323,10 +323,13 @@ namespace uno {
 } // namespace
 
 void hessian_vector_product(int* dimension, const double vector[], const double /*ws*/[], const int lws[], double result[]) {
+   using namespace uno;
+
    assert(dimension != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
 
    // retrieve the quadratic program and delegate the (Subproblem-free) Hessian-vector product
-   uno::BQPDQuadraticProgram* quadratic_program = uno::retrieve_pointer<uno::BQPDQuadraticProgram>(0, lws);
+   BQPDQuadraticProgram* quadratic_program = uno::retrieve_pointer<uno::BQPDQuadraticProgram>(0, lws);
    assert(quadratic_program != nullptr);
-   quadratic_program->compute_hessian_vector_product(*dimension, vector, result);
+   const size_t number_variables = static_cast<size_t>(*dimension);
+   quadratic_program->compute_hessian_vector_product(view(vector, number_variables), view(result, number_variables));
 }

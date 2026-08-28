@@ -41,8 +41,8 @@ namespace uno {
          subproblem.get_jacobian_row_indices(), subproblem.get_jacobian_column_indices());
 
       if (allocate_explicit_hessian) {
-         subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
-            this->hessian_column_indices.data(), Indexing::C_indexing);
+         subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.view(),
+            this->hessian_column_indices.view(), Indexing::C_indexing);
       }
       if (subproblem.has_hessian_operator()) {
          this->hessian_vector_product.resize(subproblem.number_variables);
@@ -108,8 +108,8 @@ namespace uno {
       }
       else {
          // matrix-free Hessian-vector product evaluated at the current iterate
-         this->hessian_operator = [&current_iterate, &subproblem](const double* vector, double* result) {
-            subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.data(), vector, result);
+         this->hessian_operator = [&current_iterate, &subproblem](View<const double> vector, View<double> result) {
+            subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.view(), vector, result);
          };
       }
    }
@@ -148,10 +148,8 @@ namespace uno {
       this->hessian_operator = nullptr;
    }
 
-   void BQPDQuadraticProgram::compute_hessian_vector_product(int dimension, const double* vector, double* result) const {
-      for (size_t index = 0; index < static_cast<size_t>(dimension); ++index) {
-         result[index] = 0.;
-      }
+   void BQPDQuadraticProgram::compute_hessian_vector_product(View<const double> vector, View<double> result) const {
+      result.fill(0.);
       if (this->use_explicit_hessian) {
          // explicit symmetric COO matvec (only the lower/upper triangle is stored)
          const size_t number_hessian_nonzeros = this->hessian_values.size();
@@ -212,8 +210,8 @@ namespace uno {
       if (subproblem.has_hessian_operator()) { // linear operator
          // TODO compute the quadratic form directly without temporary result
          // compute Hv
-         subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.data(), vector.data(),
-            this->hessian_vector_product.data());
+         subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.view(), vector.view(),
+            this->hessian_vector_product.view());
          // compute the dot product <v, Hv>
          return dot(view(vector, 0, subproblem.number_variables), this->hessian_vector_product);
       }
@@ -244,8 +242,8 @@ namespace uno {
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.new_iterate) {
          this->gradients.fill(0.);
-         problem.evaluate_objective_gradient(current_iterate, this->gradients.data(), current_evaluations);
-         problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
+         problem.evaluate_objective_gradient(current_iterate, this->gradients.view(), current_evaluations);
+         problem.evaluate_constraints(current_iterate, this->constraints.view(), current_evaluations);
          this->evaluate_jacobian(problem, current_iterate.primals, current_evaluations);
          this->hessian_evaluation_required = true;
       }

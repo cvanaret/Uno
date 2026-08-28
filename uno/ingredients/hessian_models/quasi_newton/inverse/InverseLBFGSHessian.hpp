@@ -19,7 +19,7 @@ namespace uno {
 
       [[nodiscard]] bool has_hessian_matrix() const override;
       [[nodiscard]] size_t number_nonzeros() const override;
-      void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
+      void compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override;
       [[nodiscard]] bool is_positive_definite() const override;
 
       void initialize_statistics(Statistics& statistics) const override;
@@ -28,8 +28,8 @@ namespace uno {
 
       void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, View<double> hessian_values) override;
-      void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, double* result) override;
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> result) override;
 
       // function that can be called by NewtonSolver
       void compute_inverse_hessian_vector_product(const double* x, const double* vector, double* result);

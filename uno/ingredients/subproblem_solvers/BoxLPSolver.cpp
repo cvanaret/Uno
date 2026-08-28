@@ -34,7 +34,7 @@ namespace uno {
       this->direction.reset();
       // compute the objective gradient
       this->workspace.objective_gradient.fill(0.);
-      subproblem.problem.evaluate_objective_gradient(current_iterate, this->workspace.objective_gradient.data(),
+      subproblem.problem.evaluate_objective_gradient(current_iterate, this->workspace.objective_gradient.view(),
         current_evaluations);
 
       // compute the variables bounds

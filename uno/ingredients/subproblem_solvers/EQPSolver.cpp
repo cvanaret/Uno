@@ -158,9 +158,9 @@ namespace uno {
          this->direction_SOC = Direction(subproblem.number_variables, subproblem.number_constraints);
          this->SOC_initialized = true;
       }
-      subproblem.problem.evaluate_constraints(trial_iterate, this->constraints_SOC.data(), trial_evaluations);
+      subproblem.problem.evaluate_constraints(trial_iterate, this->constraints_SOC.view(), trial_evaluations);
       Vector<double> buffer(subproblem.number_constraints); // TODO preallocate
-      subproblem.problem.evaluate_constraints(current_iterate, buffer.data(), current_evaluations);
+      subproblem.problem.evaluate_constraints(current_iterate, buffer.view(), current_evaluations);
       this->constraints_SOC += this->direction.primal_dual_step_length * buffer;
    }
 
@@ -195,7 +195,7 @@ namespace uno {
          Evaluations& trial_evaluations) {
       this->constraints_SOC.scale(this->direction_SOC.primal_dual_step_length);
       Vector<double> buffer(subproblem.number_constraints); // TODO preallocate
-      subproblem.problem.evaluate_constraints(trial_iterate, buffer.data(), trial_evaluations);
+      subproblem.problem.evaluate_constraints(trial_iterate, buffer.view(), trial_evaluations);
       this->constraints_SOC += buffer;
    }
 

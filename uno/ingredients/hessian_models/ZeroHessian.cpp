@@ -24,7 +24,7 @@ namespace uno {
       return 0;
    }
 
-   void ZeroHessian::compute_sparsity(uno_int* /*row_indices*/, uno_int* /*column_indices*/, uno_int /*solver_indexing*/) const {
+   void ZeroHessian::compute_sparsity(View<uno_int> /*row_indices*/, View<uno_int> /*column_indices*/, uno_int /*solver_indexing*/) const {
       // empty structure
    }
 
@@ -44,8 +44,8 @@ namespace uno {
       // do nothing
    }
 
-   void ZeroHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* result) {
+   void ZeroHessian::compute_hessian_vector_product(View<const double> /*x*/, View<const double> /*vector*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> result) {
       for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = 0.;
       }

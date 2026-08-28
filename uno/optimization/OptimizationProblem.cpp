@@ -67,12 +67,12 @@ namespace uno {
       return this->model.get_jacobian_column_indices();
    }
 
-   void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
-         uno_int *column_indices, uno_int solver_indexing) const {
+   void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void OptimizationProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
       for (size_t index: Range(this->number_constraints)) {
          constraints[index] = evaluations.constraints[index];
@@ -80,7 +80,7 @@ namespace uno {
    }
 
    // warning: adds to objective_gradient (objective_gradient must be reset prior, if necessary)
-   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       for (size_t index: Range(this->number_variables)) {
          objective_gradient[index] += evaluations.objective_gradient[index];
@@ -106,18 +106,18 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
-   void OptimizationProblem::compute_jacobian_vector_product(const double* vector, double* result,
+   void OptimizationProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_vector_product(this->model, vector, result);
    }
 
-   void OptimizationProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void OptimizationProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
    }
 
-   void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const {
+   void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const {
       hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
    }
 
@@ -292,7 +292,7 @@ namespace uno {
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
       // TODO preallocate
       Vector<double> result(this->model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.data(), result.data());
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), result.view());
       const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;

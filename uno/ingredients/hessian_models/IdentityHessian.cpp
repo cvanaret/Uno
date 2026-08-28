@@ -25,7 +25,7 @@ namespace uno {
       return this->number_variables;
    }
 
-   void IdentityHessian::compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
+   void IdentityHessian::compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       // diagonal structure
       for (size_t variable_index: Range(this->number_variables)) {
          row_indices[variable_index] = static_cast<uno_int>(variable_index) + solver_indexing;
@@ -52,8 +52,8 @@ namespace uno {
       }
    }
 
-   void IdentityHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* result) {
+   void IdentityHessian::compute_hessian_vector_product(View<const double> /*x*/, View<const double> vector,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> result) {
       for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = vector[variable_index];
       }

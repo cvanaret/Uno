@@ -104,11 +104,11 @@ namespace uno {
       return view(this->user_model.jacobian_column_indices.data(), 0, this->number_jacobian_nonzeros());
    }
 
-   void PythonModel::compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
+   void PythonModel::compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
-      std::copy_n(this->user_model.hessian_row_indices.data(), number_hessian_nonzeros, row_indices);
-      std::copy_n(this->user_model.hessian_column_indices.data(), number_hessian_nonzeros, column_indices);
+      std::copy_n(this->user_model.hessian_row_indices.data(), number_hessian_nonzeros, row_indices.data());
+      std::copy_n(this->user_model.hessian_column_indices.data(), number_hessian_nonzeros, column_indices.data());
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
@@ -208,18 +208,18 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& multipliers, double* result) const {
+   void PythonModel::compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const {
       if (this->user_model.lagrangian_hessian_operator.has_value()) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const auto x_py = to_const_array(x, this->number_variables);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
          const auto multipliers_py = to_const_array(multipliers.data(), this->number_constraints);
-         const auto vector_py = to_const_array(vector, this->number_variables);
-         auto result_py = to_array(result, this->number_variables);
+         const auto vector_py = to_const_array(vector.data(), this->number_variables);
+         auto result_py = to_array(result.data(), this->number_variables);
 
          // evaluate Hessian-vector product
          try {

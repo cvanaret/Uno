@@ -33,7 +33,7 @@ namespace uno {
       throw std::runtime_error("InverseLBFGSHessian::number_nonzeros should not be called.");
    }
 
-   void InverseLBFGSHessian::compute_sparsity(uno_int* /*row_indices*/, uno_int* /*column_indices*/, uno_int /*solver_indexing*/) const {
+   void InverseLBFGSHessian::compute_sparsity(View<uno_int> /*row_indices*/, View<uno_int> /*column_indices*/, uno_int /*solver_indexing*/) const {
       throw std::runtime_error("InverseLBFGSHessian::compute_sparsity should not be called.");
    }
 
@@ -79,8 +79,8 @@ namespace uno {
       throw std::runtime_error("InverseLBFGSHessian::evaluate_hessian should not be called.");
    }
 
-   void InverseLBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*result*/) {
+   void InverseLBFGSHessian::compute_hessian_vector_product(View<const double> /*x*/, View<const double> /*vector*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> /*result*/) {
       throw std::runtime_error("InverseLBFGSHessian::compute_hessian_vector_product should not be called.");
    }
 

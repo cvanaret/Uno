@@ -105,8 +105,8 @@ namespace uno {
       return this->jacobian_column_indices.view();
    }
 
-   void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
-         uno_int* column_indices, uno_int solver_indexing) const {
+   void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
@@ -120,7 +120,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
       for (size_t index: Range(this->number_constraints)) {
          constraints[index] = evaluations.constraints[index];
@@ -135,7 +135,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
          evaluations.evaluate_objective_gradient(this->model, iterate.primals);
@@ -189,8 +189,8 @@ namespace uno {
 
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
-      evaluations.compute_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.data(),
-         lagrangian_gradient.data());
+      evaluations.compute_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.view(),
+         lagrangian_gradient.view());
       lagrangian_gradient.scale(-1.);
 
       // z_k
@@ -249,7 +249,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const {
+   void l1RelaxedProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const {
       evaluations.compute_jacobian_vector_product(this->model, vector, result);
 
       // add the contribution of the elastic variables
@@ -261,7 +261,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void l1RelaxedProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
 
@@ -274,8 +274,8 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const {
+   void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const {
       hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
 
       // proximal contribution
@@ -404,7 +404,7 @@ namespace uno {
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, Norm::L1);
       // TODO preallocate
       Vector<double> result(this->model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.data(), result.data());
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), result.view());
       const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
          step_length * result, Norm::L1);
       const double predicted_reduction = this->constraint_violation_coefficient * (current_constraint_violation -
