@@ -53,7 +53,7 @@ namespace uno {
    }
 
    void GlobalizationMechanism::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) {
-      statistics.set("Statio", iterate.residuals.stationarity);
-      statistics.set("Compl", iterate.residuals.complementarity);
+      statistics.set("Statio", iterate.residuals.stationarity / iterate.residuals.stationarity_scaling);
+      statistics.set("Compl", iterate.residuals.complementarity / iterate.residuals.complementarity_scaling);
    }
 } // namespace
