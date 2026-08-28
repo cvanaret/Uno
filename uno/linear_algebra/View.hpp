@@ -30,6 +30,12 @@ namespace uno {
       View(T* pointer, size_t size): pointer(pointer), view_size(size) { }
       View(): pointer(nullptr), view_size(0) { }
       ~View() = default;
+
+      // View<U> -> View<const U> conversion
+      template <typename U,
+                typename = std::enable_if_t<std::is_convertible_v<U(*)[], T(*)[]>>>
+      View(const View<U>& other) noexcept: pointer(other.data()), view_size(other.size()) { }
+
       View(const View& other) = default;
       View(View&& other) = default;
       View<T>& operator=(const View<T>& other) {
