@@ -118,8 +118,8 @@ namespace uno {
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-               trial_iterate, direction, step_length, false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
-               warmstart_information, user_callbacks);
+               trial_iterate, direction, step_length * direction.primal_dual_step_length, false, evaluation_cache.current_evaluations,
+               evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
 
             // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
