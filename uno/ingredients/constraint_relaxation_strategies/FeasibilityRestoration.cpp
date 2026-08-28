@@ -53,7 +53,7 @@ namespace uno {
          uses_trust_region, 0., options);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->generate_initial_iterate(statistics, initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
@@ -213,8 +213,8 @@ namespace uno {
       return false;
    }
 
-   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+   void FeasibilityRestoration::switch_back_to_optimality_phase(Statistics& statistics, Iterate& current_iterate,
+         Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       DEBUG << "Switching from restoration back to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
@@ -224,7 +224,7 @@ namespace uno {
       // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
       // least-squares multipliers for the original problem
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
+      this->inequality_handling_method->compute_least_squares_multipliers(statistics, trial_iterate, trial_evaluations);
 
       current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
@@ -259,7 +259,7 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
             trial_iterate, direction, step_length, current_evaluations)) {
-         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
+         this->switch_back_to_optimality_phase(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
       }

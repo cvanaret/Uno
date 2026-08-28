@@ -6,6 +6,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    void BoxLPSolver::initialize_memory(const Subproblem& subproblem) {
@@ -15,17 +16,17 @@ namespace uno {
       this->workspace.objective_gradient.resize(subproblem.number_variables);
    }
 
-   void BoxLPSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
-         Evaluations& /*evaluations*/) {
+   void BoxLPSolver::generate_initial_iterate(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+         Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) {
       // do nothing
    }
 
-   void BoxLPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
-         Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
+   void BoxLPSolver::compute_least_squares_multipliers(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+         Iterate& /*iterate*/, Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
       DEBUG << "The box LP solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
-   const Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
+   const Direction& BoxLPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {
@@ -42,6 +43,7 @@ namespace uno {
 
       // move the variables to one of their bounds
       this->direction.subproblem_objective = 0.;
+      statistics.timers.subproblem_solves.start();
       for (size_t variable_index: Range(subproblem.number_variables)) {
          if (0. < this->workspace.objective_gradient[variable_index]) {
             this->direction.primals[variable_index] = this->variable_lower_bounds[variable_index];
@@ -63,6 +65,7 @@ namespace uno {
          }
          this->direction.subproblem_objective += this->workspace.objective_gradient[variable_index] * this->direction.primals[variable_index];
       }
+      statistics.timers.subproblem_solves.stop();
       direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       return this->direction;
    }

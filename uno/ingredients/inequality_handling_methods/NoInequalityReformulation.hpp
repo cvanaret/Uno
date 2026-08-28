@@ -23,7 +23,7 @@ namespace uno {
          double objective_multiplier, Options& options);
       ~NoInequalityReformulation() override = default;
 
-      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
+      void generate_initial_iterate(Statistics& statistics, Iterate& initial_iterate, Evaluations& evaluations) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
@@ -39,7 +39,7 @@ namespace uno {
       [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate) override;
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
-      void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) override;
+      void compute_least_squares_multipliers(Statistics& statistics, Iterate& iterate, Evaluations& evaluations) override;
 
       void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

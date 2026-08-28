@@ -8,14 +8,21 @@
 #include <string>
 
 namespace uno {
+   // timer that accumulates a total duration (gaps between start() and stop())
    class Timer {
    public:
-      Timer();
+      Timer() = default;
+
+      void start();
+      void stop();
+      [[nodiscard]] double get_elapsed_time() const;
       [[nodiscard]] double get_duration() const;
+
       [[nodiscard]] static std::string get_current_date();
 
    private:
-      std::chrono::time_point<std::chrono::steady_clock> start;
+      std::chrono::steady_clock::time_point start_point;
+      double duration{0.};
    };
 } // namespace
 

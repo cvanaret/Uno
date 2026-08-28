@@ -9,8 +9,15 @@
 #include <string_view>
 #include <vector>
 #include <unordered_map>
+#include "Timer.hpp"
 
 namespace uno {
+   class Timers {
+   public:
+      Timer wallclock{};
+      Timer subproblem_solves{};
+   };
+
    class Statistics {
    public:
       Statistics() = default;
@@ -28,6 +35,8 @@ namespace uno {
       void print_header();
       void print_current_line();
       void print_footer();
+
+      Timers timers;
 
    protected:
       // name -> index mapping

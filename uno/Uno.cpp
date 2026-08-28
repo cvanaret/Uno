@@ -70,7 +70,8 @@ namespace uno {
 
    // protected solve function
    Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
-      const Timer timer{};
+      Statistics statistics = create_statistics(model);
+      statistics.timers.wallclock.start();
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
@@ -78,7 +79,6 @@ namespace uno {
       model.initial_dual_point(current_iterate.multipliers.constraints);
       model.reset_number_evaluations();
       EvaluationCache evaluation_cache{model};
-      Statistics statistics = Uno::create_statistics(model);
 
       bool termination = false;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
@@ -113,7 +113,7 @@ namespace uno {
             this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                evaluation_cache, warmstart_information, user_callbacks);
             termination = Uno::check_termination(trial_iterate, major_iterations, max_iterations,
-               timer.get_duration(), time_limit, optimization_status, user_callbacks);
+               statistics.timers.wallclock.get_elapsed_time(), time_limit, optimization_status, user_callbacks);
 
             // the trial iterate becomes the current iterate for the next iteration
             std::swap(current_iterate, trial_iterate);
@@ -132,8 +132,9 @@ namespace uno {
       if (Logger::level == INFO) statistics.print_footer();
 
       Uno::postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
+      statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, current_iterate, evaluation_cache.current_evaluations,
-         major_iterations, timer);
+         major_iterations, statistics.timers);
       Uno::postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
@@ -240,14 +241,14 @@ namespace uno {
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
-         const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const {
+         const Evaluations& evaluations, size_t major_iterations, const Timers& timers) const {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
          evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, evaluations.constraints, major_iterations,
-         timer.get_duration(), model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
+         timers, model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
          model.number_model_objective_gradient_evaluations(), model.number_model_jacobian_evaluations(),
          model.number_model_hessian_evaluations(), number_subproblems_solved};
    }
