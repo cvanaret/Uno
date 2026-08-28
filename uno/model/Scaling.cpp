@@ -5,6 +5,7 @@
 #include "Model.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/View.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
