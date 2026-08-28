@@ -153,7 +153,9 @@ namespace uno {
       rhs.scale(-1.);
 
       // objective gradient
-      this->problem.evaluate_objective_gradient(current_iterate, rhs.view(), evaluations);
+      Vector<double> buffer(this->problem.number_variables); // TODO preallocate!!
+      this->problem.evaluate_objective_gradient(current_iterate, buffer.view(), evaluations);
+      view(rhs.data(), this->problem.number_variables) += buffer;
 
       // constraints
       auto rhs_constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
