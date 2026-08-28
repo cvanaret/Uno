@@ -135,7 +135,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
          evaluations.evaluate_objective_gradient(this->model, iterate.primals);

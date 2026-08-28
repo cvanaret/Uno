@@ -80,7 +80,7 @@ namespace uno {
    }
 
    // warning: adds to objective_gradient (objective_gradient must be reset prior, if necessary)
-   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       for (size_t index: Range(this->number_variables)) {
          objective_gradient[index] += evaluations.objective_gradient[index];

@@ -152,7 +152,7 @@ namespace uno {
       rhs.scale(-1.);
 
       // objective gradient
-      this->problem.evaluate_objective_gradient(current_iterate, rhs.data(), evaluations);
+      this->problem.evaluate_objective_gradient(current_iterate, rhs.view(), evaluations);
 
       // constraints
       this->problem.evaluate_constraints(current_iterate, rhs.data() + this->number_variables, evaluations);

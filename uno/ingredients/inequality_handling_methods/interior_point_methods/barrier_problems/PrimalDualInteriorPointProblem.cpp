@@ -150,7 +150,7 @@ namespace uno {
       this->inner.evaluate_constraints(iterate, constraints, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient,
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient,
          Evaluations& evaluations) const {
       this->inner.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 

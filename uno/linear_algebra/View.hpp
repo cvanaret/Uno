@@ -296,7 +296,7 @@ namespace uno {
    }
 
    template <typename T>
-   auto view(const std::vector<T>& vector) {
+   auto view(std::vector<T>& vector) {
       return View{vector.data(), vector.size()};
    }
 
