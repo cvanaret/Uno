@@ -77,6 +77,21 @@ namespace uno {
       }
    }
 
+   void PrimalDualInteriorPointProblem::push_slacks_to_interior(Iterate& iterate, Evaluations& evaluations) const {
+      // set the slack variables (if any)
+      if (!this->model.get_slacks().is_empty()) {
+         // set the slacks to the constraint values
+         for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
+            iterate.primals[slack_index] = this->push_variable_to_interior(iterate.primals[slack_index],
+               this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
+         }
+         // since the slacks have been set, the function evaluations should also be updated
+         evaluations.are_constraints_computed = false;
+         evaluations.is_objective_gradient_computed = false;
+         evaluations.is_jacobian_computed = false;
+      }
+   }
+
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
       return this->inner.number_jacobian_nonzeros();
    }
@@ -326,6 +341,123 @@ namespace uno {
       return variable_value;
    }
 
+   void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
+      const double barrier_parameter = this->parameterization.get("barrier_parameter");
+
+      // if the primals are too close to their bounds, push the bounds away by a small fraction (Section 3.5)
+      possibly_relax_variables_bounds(iterate);
+
+      // rescale the bound multipliers (Eq. 16 in Ipopt paper)
+      for (size_t variable_index: Range(this->inner.number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
+            if (is_finite(coefficient)) {
+               const double lb = coefficient / this->parameters.k_sigma;
+               const double ub = coefficient * this->parameters.k_sigma;
+               if (lb > ub) {
+                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
+               }
+               const double current_value = iterate.multipliers.lower_bounds[variable_index];
+               iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
+               if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
+                  DEBUG3 << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     iterate.multipliers.lower_bounds[variable_index] << '\n';
+               }
+            }
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]);
+            if (is_finite(coefficient)) {
+               const double lb = coefficient * this->parameters.k_sigma;
+               const double ub = coefficient / this->parameters.k_sigma;
+               if (lb > ub) {
+                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
+               }
+               const double current_value = iterate.multipliers.upper_bounds[variable_index];
+               iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
+               if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
+                  DEBUG3 << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     iterate.multipliers.upper_bounds[variable_index] << '\n';
+               }
+            }
+         }
+      }
+   }
+
+   void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
+      this->inner.set_infeasibility_measure(iterate, evaluations, norm);
+   }
+
+   void PrimalDualInteriorPointProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
+      this->inner.set_objective_measure(iterate, evaluations);
+   }
+
+   void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
+      // start with the auxiliary measure of the initial problem
+      this->inner.set_auxiliary_measure(iterate);
+
+      const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      if (is_infinite(barrier_parameter)) {
+         throw std::runtime_error("Barrier parameter is infinite");
+      }
+
+      // if the primals are too close to their bounds, push the bounds away by a small fraction (Section 3.5)
+
+
+      // add the contribution of the barrier terms
+      double barrier_terms = 0.;
+      for (size_t variable_index: Range(this->inner.number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            barrier_terms -= std::log(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
+            if (is_infinite(this->variables_upper_bounds[variable_index])) {
+               // damping
+               barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
+            }
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            barrier_terms -= std::log(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
+            if (is_infinite(this->variables_lower_bounds[variable_index])) {
+               barrier_terms += this->parameters.damping_factor*(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
+            }
+         }
+      }
+      barrier_terms *= barrier_parameter;
+      if (std::isnan(barrier_terms)) {
+         throw std::runtime_error("The auxiliary measure is not an number.");
+      }
+      iterate.progress.auxiliary += barrier_terms;
+   }
+
+   // predicted reductions
+
+   double PrimalDualInteriorPointProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
+      return this->inner.compute_predicted_infeasibility_reduction(current_iterate, primal_direction, step_length, norm,
+         current_evaluations);
+   }
+
+   std::function<double(double)> PrimalDualInteriorPointProblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
+         double hessian_quadratic_form) const {
+      return this->inner.compute_predicted_objective_reduction(current_iterate, primal_direction, step_length,
+         current_evaluations, hessian_quadratic_form);
+   }
+
+   double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const {
+      // start with the auxiliary measure of the initial problem
+      double predicted_auxiliary_reduction = this->inner.compute_predicted_auxiliary_reduction(current_iterate,
+         primal_direction, step_length);
+
+      // add the contribution of the barrier terms
+      const double directional_derivative = this->compute_barrier_term_directional_derivative(current_iterate, primal_direction);
+      predicted_auxiliary_reduction += step_length * (-directional_derivative);
+      // }, "α*(μ*X^{-1} e^T d)"};
+      return predicted_auxiliary_reduction;
+   }
+
+   // protected member functions
+
    void PrimalDualInteriorPointProblem::compute_bound_dual_direction(const Iterate& current_iterate,
          Direction& direction) const {
       direction.multipliers.lower_bounds.fill(0.);
@@ -400,6 +532,32 @@ namespace uno {
       return step_length;
    }
 
+   void PrimalDualInteriorPointProblem::possibly_relax_variables_bounds(const Iterate& iterate) const {
+      const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      constexpr double macheps = std::numeric_limits<double>::epsilon();
+      const double safe = std::pow(macheps, 0.75);
+      size_t adjusted = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            const double floor = safe * std::max(1.0, std::abs(this->variables_lower_bounds[variable_index]));
+            if (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index] < macheps * barrier_parameter) {
+               this->variables_lower_bounds[variable_index] -= floor;
+               ++adjusted;
+            }
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            const double floor = safe * std::max(1.0, std::abs(this->variables_upper_bounds[variable_index]));
+            if (this->variables_upper_bounds[variable_index] - iterate.primals[variable_index] < macheps * barrier_parameter) {
+               this->variables_upper_bounds[variable_index] += floor;
+               ++adjusted;
+            }
+         }
+      }
+      if (adjusted > 0) {
+         DEBUG << adjusted << " slack(s) too small, adjusting variable bound\n";
+      }
+   }
+
    double PrimalDualInteriorPointProblem::compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const {
       double directional_derivative = 0.;
@@ -423,138 +581,5 @@ namespace uno {
          }
       }
       return directional_derivative;
-   }
-
-   void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
-      const double barrier_parameter = this->parameterization.get("barrier_parameter");
-
-      // if the primals are too close to their bounds, push the bounds away by a small fraction (Section 3.5)
-      constexpr double macheps = std::numeric_limits<double>::epsilon();
-      const double safe = std::pow(macheps, 0.75);
-      size_t adjusted = 0;
-      for (size_t variable_index: Range(this->number_variables)) {
-         if (is_finite(this->variables_lower_bounds[variable_index])) {
-            const double floor = safe * std::max(1.0, std::abs(this->variables_lower_bounds[variable_index]));
-            if (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index] < macheps * barrier_parameter) {
-               this->variables_lower_bounds[variable_index] -= floor;
-               ++adjusted;
-            }
-         }
-         if (is_finite(this->variables_upper_bounds[variable_index])) {
-            const double floor = safe * std::max(1.0, std::abs(this->variables_upper_bounds[variable_index]));
-            if (this->variables_upper_bounds[variable_index] - iterate.primals[variable_index] < macheps * barrier_parameter) {
-               this->variables_upper_bounds[variable_index] += floor;
-               ++adjusted;
-            }
-         }
-      }
-      if (adjusted > 0) {
-         DEBUG << adjusted << " slack(s) too small, adjusting variable bound\n";
-      }
-
-      // rescale the bound multipliers (Eq. 16 in Ipopt paper)
-      for (size_t variable_index: Range(this->inner.number_variables)) {
-         if (is_finite(this->variables_lower_bounds[variable_index])) {
-            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
-            if (is_finite(coefficient)) {
-               const double lb = coefficient / this->parameters.k_sigma;
-               const double ub = coefficient * this->parameters.k_sigma;
-               if (lb > ub) {
-                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
-               }
-               const double current_value = iterate.multipliers.lower_bounds[variable_index];
-               iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
-               if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
-                  DEBUG3 << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
-                     iterate.multipliers.lower_bounds[variable_index] << '\n';
-               }
-            }
-         }
-         if (is_finite(this->variables_upper_bounds[variable_index])) {
-            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]);
-            if (is_finite(coefficient)) {
-               const double lb = coefficient * this->parameters.k_sigma;
-               const double ub = coefficient / this->parameters.k_sigma;
-               if (lb > ub) {
-                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
-               }
-               const double current_value = iterate.multipliers.upper_bounds[variable_index];
-               iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
-               if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
-                  DEBUG3 << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
-                     iterate.multipliers.upper_bounds[variable_index] << '\n';
-               }
-            }
-         }
-      }
-   }
-
-   void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
-      this->inner.set_infeasibility_measure(iterate, evaluations, norm);
-   }
-
-   void PrimalDualInteriorPointProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
-      this->inner.set_objective_measure(iterate, evaluations);
-   }
-
-   void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
-      // start with the auxiliary measure of the initial problem
-      this->inner.set_auxiliary_measure(iterate);
-
-      const double barrier_parameter = this->parameterization.get("barrier_parameter");
-      if (is_infinite(barrier_parameter)) {
-         throw std::runtime_error("Barrier parameter is infinite");
-      }
-
-      // add the contribution of the barrier terms
-      double barrier_terms = 0.;
-      for (size_t variable_index: Range(this->inner.number_variables)) {
-         if (is_finite(this->variables_lower_bounds[variable_index])) {
-            barrier_terms -= std::log(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
-            if (is_infinite(this->variables_upper_bounds[variable_index])) {
-               // damping
-               barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
-            }
-         }
-         if (is_finite(this->variables_upper_bounds[variable_index])) {
-            barrier_terms -= std::log(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
-            if (is_infinite(this->variables_lower_bounds[variable_index])) {
-               barrier_terms += this->parameters.damping_factor*(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
-            }
-         }
-      }
-      barrier_terms *= barrier_parameter;
-      if (std::isnan(barrier_terms)) {
-         throw std::runtime_error("The auxiliary measure is not an number.");
-      }
-      iterate.progress.auxiliary += barrier_terms;
-   }
-
-   // predicted reductions
-
-   double PrimalDualInteriorPointProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
-      return this->inner.compute_predicted_infeasibility_reduction(current_iterate, primal_direction, step_length, norm,
-         current_evaluations);
-   }
-
-   std::function<double(double)> PrimalDualInteriorPointProblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
-         double hessian_quadratic_form) const {
-      return this->inner.compute_predicted_objective_reduction(current_iterate, primal_direction, step_length,
-         current_evaluations, hessian_quadratic_form);
-   }
-
-   double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
-      // start with the auxiliary measure of the initial problem
-      double predicted_auxiliary_reduction = this->inner.compute_predicted_auxiliary_reduction(current_iterate,
-         primal_direction, step_length);
-
-      // add the contribution of the barrier terms
-      const double directional_derivative = this->compute_barrier_term_directional_derivative(current_iterate, primal_direction);
-      predicted_auxiliary_reduction += step_length * (-directional_derivative);
-      // }, "α*(μ*X^{-1} e^T d)"};
-      return predicted_auxiliary_reduction;
    }
 } // namespace
