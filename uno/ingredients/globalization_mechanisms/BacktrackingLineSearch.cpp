@@ -34,8 +34,8 @@ namespace uno {
       this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3);
       statistics.add_column("Steplength", Statistics::double_width + 1, 2);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
-      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
+      set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
+      set_dual_residuals_statistics(statistics, current_iterate);
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -47,7 +47,7 @@ namespace uno {
       try {
          const Direction& direction = this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate,
             INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-         BacktrackingLineSearch::check_unboundedness(direction);
+         check_unboundedness(direction);
          const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
             direction, evaluation_cache, warmstart_information, user_callbacks);
          if (backtracking_success) {
@@ -173,7 +173,7 @@ namespace uno {
          }
 
          if (is_acceptable) {
-            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
+            set_dual_residuals_statistics(statistics, trial_iterate);
          }
          if (Logger::level == INFO) statistics.print_current_line();
       } // end while loop
@@ -215,7 +215,7 @@ namespace uno {
             evaluation_cache.trial_evaluations.reset();
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-               trial_iterate, direction /* this is correct, see IPOPT paper */, 1., false,
+               trial_iterate, direction /* this is correct, see IPOPT paper */, direction.primal_dual_step_length, false,
                evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
 
             if (is_acceptable) {
