@@ -38,7 +38,7 @@ namespace uno {
       virtual const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
-      [[nodiscard]] virtual bool test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const = 0;
+      [[nodiscard]] virtual bool test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
          WarmstartInformation& warmstart_information) = 0;
 

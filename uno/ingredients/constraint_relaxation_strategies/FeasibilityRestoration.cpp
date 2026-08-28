@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <functional>
@@ -90,31 +90,41 @@ namespace uno {
       return (this->current_phase == Phase::FEASIBILITY_RESTORATION);
    }
 
-   bool FeasibilityRestoration::test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const {
+   bool FeasibilityRestoration::test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) {
       DEBUG << "\nTesting the termination criteria of the feasibility problem at the current iterate\n";
       // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
       DEBUG2 << "x = " << current_iterate.primals << '\n';
-      DEBUG2 << "c(x) = " << current_evaluations.constraints << '\n';
-      Multipliers tentative_multipliers(current_iterate.multipliers);
-      this->feasibility_problem.compute_multipliers(tentative_multipliers, current_evaluations);
-      DEBUG2 << "Feasibility constraint multipliers: " << tentative_multipliers.constraints << '\n';
-      DEBUG2 << "Feasibility LB multipliers: " << tentative_multipliers.lower_bounds << '\n';
-      DEBUG2 << "Feasibility UB multipliers: " << tentative_multipliers.upper_bounds << '\n';
+      assert(current_evaluations.are_constraints_computed);
+
+      // initialize the feasibility multipliers
+      if (this->first_use_feasibility_multipliers) {
+         this->other_phase_multipliers.resize(this->feasibility_problem.number_variables,
+            this->feasibility_problem.number_constraints);
+         this->first_use_feasibility_multipliers = false;
+      }
+
+      this->feasibility_problem.compute_multipliers(this->other_phase_multipliers, current_evaluations);
+      DEBUG2 << "Feasibility constraint multipliers: " << this->other_phase_multipliers.constraints << '\n';
+      DEBUG2 << "Feasibility LB multipliers: " << this->other_phase_multipliers.lower_bounds << '\n';
+      DEBUG2 << "Feasibility UB multipliers: " << this->other_phase_multipliers.upper_bounds << '\n';
 
       // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
-      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, tentative_multipliers,
+      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, this->other_phase_multipliers,
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
       // TODO check that all duals are not 0
       DEBUG2 << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
       const double complementarity = this->original_problem.complementarity_error(current_iterate.primals,
-         current_evaluations.constraints, current_iterate.multipliers, 0., this->residual_norm);
+         current_evaluations.constraints, this->other_phase_multipliers, 0., this->residual_norm);
       DEBUG2 << "Complementarity: " << complementarity << '\n';
-      if (false && complementarity <= 1e-8) {
+      if (complementarity <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
-         std::swap(tentative_multipliers, current_iterate.multipliers);
+         std::swap(this->other_phase_multipliers, current_iterate.multipliers);
          DEBUG << current_iterate << '\n';
          DEBUG << "The current iterate is an infeasible stationary point\n";
          return true;
+      }
+      else {
+         DEBUG << "The current iterate does not satisfy the infeasible stationary termination criteria\n";
       }
       return false;
    }

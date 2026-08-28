@@ -33,7 +33,7 @@ namespace uno {
       const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
-      [[nodiscard]] bool test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) const override;
+      [[nodiscard]] bool test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
          WarmstartInformation& warmstart_information) override;
 
@@ -70,7 +70,7 @@ namespace uno {
       const bool switch_to_optimality_requires_linearized_feasibility;
       double reference_infeasibility{};
       Vector<double> reference_optimality_primals{};
-      bool first_switch_to_feasibility{true};
+      bool first_use_feasibility_multipliers{true};
 
       const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,

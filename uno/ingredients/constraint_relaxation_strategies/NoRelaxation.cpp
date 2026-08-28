@@ -69,7 +69,7 @@ namespace uno {
       return false;
    }
 
-   bool NoRelaxation::test_infeasible_stationarity(Iterate& /*current_iterate*/, Evaluations& /*current_evaluations*/) const {
+   bool NoRelaxation::test_infeasible_stationarity(Iterate& /*current_iterate*/, Evaluations& /*current_evaluations*/) {
       throw std::runtime_error("NoRelaxation::test_infeasible_stationarity should not be called");
    }
 
