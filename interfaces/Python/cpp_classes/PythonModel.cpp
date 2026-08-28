@@ -104,11 +104,11 @@ namespace uno {
       return view(this->user_model.jacobian_column_indices.data(), 0, this->number_jacobian_nonzeros());
    }
 
-   void PythonModel::compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
+   void PythonModel::compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
-      std::copy_n(this->user_model.hessian_row_indices.data(), number_hessian_nonzeros, row_indices);
-      std::copy_n(this->user_model.hessian_column_indices.data(), number_hessian_nonzeros, column_indices);
+      std::copy_n(this->user_model.hessian_row_indices.data(), number_hessian_nonzeros, row_indices.data());
+      std::copy_n(this->user_model.hessian_column_indices.data(), number_hessian_nonzeros, column_indices.data());
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
