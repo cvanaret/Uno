@@ -17,7 +17,7 @@ namespace uno {
       [[nodiscard]] bool has_hessian_matrix() const override;
       [[nodiscard]] bool has_curvature() const override;
       [[nodiscard]] size_t number_nonzeros() const override;
-      void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
+      void compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override;
 
       void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, View<double> hessian_values) override;

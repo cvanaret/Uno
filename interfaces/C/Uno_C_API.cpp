@@ -117,7 +117,7 @@ public:
       return view(this->user_model.jacobian_column_indices.data(), this->number_jacobian_nonzeros());
    }
 
-   void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
+   void compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {

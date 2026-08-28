@@ -32,7 +32,7 @@ namespace uno {
    }
 
    // this can only be called by WoodburyEQPSolver
-   void DirectQuasiNewtonHessian::compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
+   void DirectQuasiNewtonHessian::compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       // diagonal contribution
       for (size_t variable_index: Range(this->model.number_variables)) {
          row_indices[variable_index] = static_cast<uno_int>(variable_index) + solver_indexing;

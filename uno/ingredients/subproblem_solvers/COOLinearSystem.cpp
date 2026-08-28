@@ -17,7 +17,7 @@ namespace uno {
       this->matrix_row_indices.resize(this->number_nonzeros);
       this->matrix_column_indices.resize(this->number_nonzeros);
       // compute the COO sparse representation
-      subproblem.compute_regularized_hessian_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
+      subproblem.compute_regularized_hessian_sparsity(view(this->matrix_row_indices), view(this->matrix_column_indices),
          this->solver_indexing);
       this->matrix_values.resize(this->number_nonzeros);
       this->rhs.resize(this->dimension);
@@ -36,7 +36,7 @@ namespace uno {
       this->matrix_row_indices.resize(this->number_nonzeros);
       this->matrix_column_indices.resize(this->number_nonzeros);
       // compute the COO sparse representation
-      subproblem.compute_regularized_augmented_matrix_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
+      subproblem.compute_regularized_augmented_matrix_sparsity(view(this->matrix_row_indices), view(this->matrix_column_indices),
          this->solver_indexing);
       this->matrix_values.resize(this->number_nonzeros);
       this->rhs.resize(this->dimension);

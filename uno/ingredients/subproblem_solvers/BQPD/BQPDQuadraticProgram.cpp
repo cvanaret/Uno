@@ -41,8 +41,8 @@ namespace uno {
          subproblem.get_jacobian_row_indices(), subproblem.get_jacobian_column_indices());
 
       if (allocate_explicit_hessian) {
-         subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
-            this->hessian_column_indices.data(), Indexing::C_indexing);
+         subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.view(),
+            this->hessian_column_indices.view(), Indexing::C_indexing);
       }
       if (subproblem.has_hessian_operator()) {
          this->hessian_vector_product.resize(subproblem.number_variables);

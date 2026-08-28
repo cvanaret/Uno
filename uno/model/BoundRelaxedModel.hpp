@@ -59,7 +59,7 @@ namespace uno {
          return this->model.get_jacobian_column_indices();
       }
 
-      void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
+      void compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override {
          this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
       }
 

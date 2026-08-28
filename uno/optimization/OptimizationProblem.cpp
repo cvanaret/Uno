@@ -67,8 +67,8 @@ namespace uno {
       return this->model.get_jacobian_column_indices();
    }
 
-   void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
-         uno_int *column_indices, uno_int solver_indexing) const {
+   void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 

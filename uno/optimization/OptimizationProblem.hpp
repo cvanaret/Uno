@@ -55,8 +55,8 @@ namespace uno {
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
       [[nodiscard]] virtual View<const uno_int> get_jacobian_row_indices() const;
       [[nodiscard]] virtual View<const uno_int> get_jacobian_column_indices() const;
-      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
-         uno_int* column_indices, uno_int solver_indexing) const;
+      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const;
 
       // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
       virtual void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const;

@@ -33,7 +33,7 @@ namespace uno {
       [[nodiscard]] bool has_hessian_matrix() const override;
       [[nodiscard]] bool has_curvature() const override;
       [[nodiscard]] size_t number_nonzeros() const override;
-      void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
+      void compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override;
       [[nodiscard]] bool is_positive_definite() const override;
 
       void initialize_statistics(Statistics& statistics) const override;

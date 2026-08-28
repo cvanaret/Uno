@@ -30,7 +30,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_hessian_matrix() const = 0;
       [[nodiscard]] virtual bool has_curvature() const = 0;
       [[nodiscard]] virtual size_t number_nonzeros() const = 0;
-      virtual void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
+      virtual void compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
       virtual void initialize_statistics(Statistics& statistics) const = 0;

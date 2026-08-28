@@ -130,8 +130,8 @@ namespace uno {
       return this->inner.get_jacobian_column_indices();
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
-         uno_int* column_indices, uno_int solver_indexing) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const {
       // original Lagrangian Hessian
       this->inner.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
 

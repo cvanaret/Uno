@@ -100,7 +100,7 @@ namespace uno {
       return this->jacobian_column_indices.view();
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices,
+   void HomogeneousEqualityConstrainedModel::compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices,
          uno_int solver_indexing) const {
       this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }

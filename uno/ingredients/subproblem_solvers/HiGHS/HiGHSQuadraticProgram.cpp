@@ -125,8 +125,8 @@ namespace uno {
       this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_values.resize(number_regularized_hessian_nonzeros);
-      subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
-         this->hessian_column_indices.data(), Indexing::C_indexing);
+      subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.view(),
+         this->hessian_column_indices.view(), Indexing::C_indexing);
       // convert COO -> HiGHS' lower-triangular CSC layout
       this->build_csc_hessian_from_coo(subproblem.number_variables);
    }

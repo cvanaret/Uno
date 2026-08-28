@@ -31,7 +31,8 @@ namespace uno {
       return this->problem.get_jacobian_column_indices();
    }
 
-   void Subproblem::compute_regularized_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
+   void Subproblem::compute_regularized_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices,
+         uno_int solver_indexing) const {
       // sparsity of original Lagrangian Hessian
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
@@ -47,7 +48,7 @@ namespace uno {
    }
 
    // lower triangular part of the symmetric augmented matrix
-   void Subproblem::compute_regularized_augmented_matrix_sparsity(uno_int *row_indices, uno_int *column_indices,
+   void Subproblem::compute_regularized_augmented_matrix_sparsity(View<uno_int> row_indices, View<uno_int> column_indices,
          uno_int solver_indexing) const {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
@@ -63,8 +64,8 @@ namespace uno {
 
       // copy Jacobian of general constraints into the (2, 1) block
       const size_t number_jacobian_nonzeros = this->problem.number_jacobian_nonzeros();
-      view(row_indices + nonzero_index, 0, number_jacobian_nonzeros) = this->problem.get_jacobian_row_indices();
-      view(column_indices + nonzero_index, 0, number_jacobian_nonzeros) = this->problem.get_jacobian_column_indices();
+      view(row_indices.data() + nonzero_index, 0, number_jacobian_nonzeros) = this->problem.get_jacobian_row_indices();
+      view(column_indices.data() + nonzero_index, 0, number_jacobian_nonzeros) = this->problem.get_jacobian_column_indices();
       // add row offset
       const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
       for (size_t k: Range(number_jacobian_nonzeros)) {

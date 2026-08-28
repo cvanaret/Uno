@@ -166,7 +166,7 @@ namespace uno {
       return this->jacobian_column_indices.view();
    }
 
-   void AMPLModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
+   void AMPLModel::compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
       size_t current_index = 0;
