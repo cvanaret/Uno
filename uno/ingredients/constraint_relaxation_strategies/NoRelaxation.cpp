@@ -46,7 +46,7 @@ namespace uno {
       this->inequality_handling_method->initialize_statistics(statistics);
    }
 
-   const Direction& NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   const Direction& NoRelaxation::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem\n";
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics,
