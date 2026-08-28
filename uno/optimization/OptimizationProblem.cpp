@@ -106,12 +106,12 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
-   void OptimizationProblem::compute_jacobian_vector_product(const double* vector, double* result,
+   void OptimizationProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_vector_product(this->model, vector, result);
    }
 
-   void OptimizationProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void OptimizationProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
    }
@@ -292,7 +292,7 @@ namespace uno {
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
       // TODO preallocate
       Vector<double> result(this->model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.data(), result.data());
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), result.view());
       const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;

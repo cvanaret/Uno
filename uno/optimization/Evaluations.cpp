@@ -66,7 +66,7 @@ namespace uno {
    }
 
    // y = J v, where J has dimensions (m, n), v has dimensions (n, 1), and y has dimensions (m, 1)
-   void Evaluations::compute_jacobian_vector_product([[maybe_unused]] const Model& model, const double* vector, double* result) const {
+   void Evaluations::compute_jacobian_vector_product(const Model& model, View<const double> vector, View<double> result) const {
       const auto& jacobian_row_indices = model.get_jacobian_row_indices();
       const auto& jacobian_column_indices = model.get_jacobian_column_indices();
       const size_t number_jacobian_nonzeros = jacobian_row_indices.size();
@@ -74,16 +74,12 @@ namespace uno {
          const size_t constraint_index = static_cast<size_t>(jacobian_row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
-         if (variable_index >= model.number_variables || constraint_index >= model.number_constraints) {
-            throw std::runtime_error("Dimension mismatch in Evaluations::compute_jacobian_vector_product");
-         }
-
          result[constraint_index] += derivative * vector[variable_index];
       }
    }
 
    // x = Jᵀv, where J has dimensions (m, n), v has dimensions (m, 1), and x has dimensions (n, 1)
-   void Evaluations::compute_jacobian_transposed_vector_product([[maybe_unused]] const Model& model, const double* vector, double* result) const {
+   void Evaluations::compute_jacobian_transposed_vector_product(const Model& model, View<const double> vector, View<double> result) const {
       const auto& jacobian_row_indices = model.get_jacobian_row_indices();
       const auto& jacobian_column_indices = model.get_jacobian_column_indices();
       const size_t number_jacobian_nonzeros = jacobian_row_indices.size();
@@ -91,10 +87,6 @@ namespace uno {
          const size_t constraint_index = static_cast<size_t>(jacobian_row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
-         if (variable_index >= model.number_variables || constraint_index >= model.number_constraints) {
-            throw std::runtime_error("Dimension mismatch in Evaluations::compute_jacobian_transposed_vector_product");
-         }
-
          result[variable_index] += derivative * vector[constraint_index];
       }
    }

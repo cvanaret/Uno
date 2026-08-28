@@ -189,8 +189,8 @@ namespace uno {
 
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
-      evaluations.compute_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.data(),
-         lagrangian_gradient.data());
+      evaluations.compute_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.view(),
+         lagrangian_gradient.view());
       lagrangian_gradient.scale(-1.);
 
       // z_k
@@ -249,7 +249,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const {
+   void l1RelaxedProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const {
       evaluations.compute_jacobian_vector_product(this->model, vector, result);
 
       // add the contribution of the elastic variables
@@ -261,7 +261,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+   void l1RelaxedProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
       evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
 
@@ -404,7 +404,7 @@ namespace uno {
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, Norm::L1);
       // TODO preallocate
       Vector<double> result(this->model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.data(), result.data());
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), result.view());
       const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
          step_length * result, Norm::L1);
       const double predicted_reduction = this->constraint_violation_coefficient * (current_constraint_violation -

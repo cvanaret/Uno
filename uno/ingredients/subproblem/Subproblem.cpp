@@ -148,8 +148,8 @@ namespace uno {
       rhs.fill(0.);
 
       // -Jacobian^T-multipliers product
-      this->problem.compute_jacobian_transposed_vector_product(current_iterate.multipliers.constraints.data(),
-         rhs.data(), evaluations);
+      this->problem.compute_jacobian_transposed_vector_product(current_iterate.multipliers.constraints.view(),
+         rhs.view(), evaluations);
       rhs.scale(-1.);
 
       // objective gradient
