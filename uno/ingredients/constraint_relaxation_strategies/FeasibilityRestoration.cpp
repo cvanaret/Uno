@@ -108,15 +108,18 @@ namespace uno {
       DEBUG2 << "Feasibility LB multipliers: " << this->other_phase_multipliers.lower_bounds << '\n';
       DEBUG2 << "Feasibility UB multipliers: " << this->other_phase_multipliers.upper_bounds << '\n';
 
-      // this->feasibility_problem.compute_residuals(current_iterate, current_evaluations);
+      // compute residuals
       this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, this->other_phase_multipliers,
          0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
-      // TODO check that all duals are not 0
-      DEBUG2 << "Lagrangian gradient: " << view(current_iterate.residuals.lagrangian_gradient, 0, this->original_problem.model.number_variables) << '\n';
-      const double complementarity = this->original_problem.complementarity_error(current_iterate.primals,
+      const double stationarity_error = norm(this->residual_norm, view(current_iterate.residuals.lagrangian_gradient, 0,
+         this->original_problem.model.number_variables));
+      const double complementarity_error = this->original_problem.complementarity_error(current_iterate.primals,
          current_evaluations.constraints, this->other_phase_multipliers, 0., this->residual_norm);
-      DEBUG2 << "Complementarity: " << complementarity << '\n';
-      if (complementarity <= 1e-8) {
+      // TODO check that all duals are not 0
+
+      DEBUG2 << "Stationarity error: " << stationarity_error << '\n';
+      DEBUG2 << "Complementarity error: " << complementarity_error << '\n';
+      if (stationarity_error <= 1e-8 && complementarity_error <= 1e-8) {
          current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
          std::swap(this->other_phase_multipliers, current_iterate.multipliers);
          DEBUG << current_iterate << '\n';
