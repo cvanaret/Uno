@@ -30,7 +30,7 @@ namespace uno {
          EvaluationCache& evaluation_cache, Options& options) override;
 
       // direction computation
-      const Direction& compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+      const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
