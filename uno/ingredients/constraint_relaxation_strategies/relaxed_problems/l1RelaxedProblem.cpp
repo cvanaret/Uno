@@ -303,7 +303,8 @@ namespace uno {
       }
       // then the bound multipliers from the stationary equation -J^T y - z = 0 => z = -J^T y
       Vector<double> bound_multipliers(this->model.number_variables); // TODO preallocate
-      current_evaluations.compute_jacobian_transposed_vector_product(this->model, multipliers.constraints.data(), bound_multipliers.data());
+      current_evaluations.compute_jacobian_transposed_vector_product(this->model, multipliers.constraints.view(),
+         bound_multipliers.view());
       bound_multipliers.scale(-1.);
       for (size_t variable_index: Range(this->model.number_variables)) {
          if (bound_multipliers[variable_index] >= 0.) {
