@@ -147,7 +147,7 @@ namespace uno {
    void Subproblem::assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const {
       rhs.fill(0.);
 
-      // -Jacobian^T-multipliers product
+      // -Jacobian^T multipliers product
       this->problem.compute_jacobian_transposed_vector_product(current_iterate.multipliers.constraints.view(),
          rhs.view(), evaluations);
       rhs.scale(-1.);

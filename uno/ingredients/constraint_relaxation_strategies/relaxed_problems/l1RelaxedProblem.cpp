@@ -292,7 +292,8 @@ namespace uno {
       multipliers.constraints.fill(0.);
       multipliers.lower_bounds.fill(0.);
       multipliers.upper_bounds.fill(0.);
-      // first compute the constraint multipliers
+
+      // first compute the constraint multipliers of violated constraints
       for (size_t constraint_index: Range(this->model.number_constraints)) {
          if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
             multipliers.constraints[constraint_index] = this->constraint_violation_coefficient;
@@ -301,13 +302,27 @@ namespace uno {
             multipliers.constraints[constraint_index] = -this->constraint_violation_coefficient;
          }
       }
+
       // then the bound multipliers from the stationary equation -J^T y - z = 0 => z = -J^T y
       Vector<double> bound_multipliers(this->model.number_variables); // TODO preallocate
       current_evaluations.compute_jacobian_transposed_vector_product(this->model, multipliers.constraints.view(),
          bound_multipliers.view());
       bound_multipliers.scale(-1.);
+      // save the bound multipliers into "multipliers"
       for (size_t variable_index: Range(this->model.number_variables)) {
-         if (bound_multipliers[variable_index] >= 0.) {
+         // skip for unconstrained variables (the error should be counted in the stationarity residual)
+         if (is_infinite(this->variables_lower_bounds[variable_index]) && is_infinite(this->variables_upper_bounds[variable_index])) {
+            continue;
+         }
+         // check single-bounded variables
+         if (is_finite(this->variables_lower_bounds[variable_index]) && is_infinite(this->variables_upper_bounds[variable_index])) {
+            multipliers.lower_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+         else if (is_finite(this->variables_upper_bounds[variable_index]) && is_infinite(this->variables_lower_bounds[variable_index])) {
+            multipliers.upper_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+         // unbounded or doubly-bounded variables: trust the sign of the bound dual
+         else if (bound_multipliers[variable_index] >= 0.) {
             multipliers.lower_bounds[variable_index] = bound_multipliers[variable_index];
          }
          else {
