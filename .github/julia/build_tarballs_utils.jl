@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.8.26"
+version = v"2026.8.29"
 
 # Collection of sources
 sources = [
@@ -206,12 +206,19 @@ sed -i 's/(*opt)/opt->count() > 0/' extern/cli11/CLI11.hpp
 # fix-destroy.patch
 sed -i 's/Highs::resetGlobalScheduler(true);//' highs/interfaces/highs_c_api.cpp
 
+TLS_FLAG=""
+if [[ "${target}" == *-mingw* ]]; then
+    TLS_FLAG="-fno-emulated-tls"
+fi
+
 mkdir build
 cd build
 cmake .. \
     -DCMAKE_INSTALL_PREFIX=${prefix} \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_FLAGS="${TLS_FLAG}" \
+    -DCMAKE_CXX_FLAGS="${TLS_FLAG}" \
     -DBUILD_SHARED_LIBS=OFF \
     -DZLIB=OFF \
     -DHIPO=ON \
@@ -303,6 +310,6 @@ build_tarballs(
     products,
     dependencies;
     julia_compat = "1.6",
-    preferred_gcc_version = v"13.2.0", # with BinaryBuilder{Base} developed
+    preferred_gcc_version = v"13.2.0",
     clang_use_lld=false,
 )
