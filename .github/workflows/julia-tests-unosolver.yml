@@ -46,9 +46,10 @@ jobs:
       - uses: julia-actions/cache@v2
 
       - name: Set the environment variables for OpenMP
+        shell: bash
         run: |
-          echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
-          echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
       - name: Set the environment variables for BinaryBuilder
         run: |

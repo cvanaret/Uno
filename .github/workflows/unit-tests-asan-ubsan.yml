@@ -1,0 +1,77 @@
+name: ASAN and UBSAN on the unit tests
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+
+    env:
+      BUILD_TYPE: Debug
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure with ASan + UBSan
+        run: |
+          SANITIZER_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all -O1 -g"
+
+          echo "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:detect_odr_violation=0" >> $GITHUB_ENV
+          echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1" >> $GITHUB_ENV
+
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DENABLE_TESTS=ON \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DCMAKE_C_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_CXX_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+            -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+            -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Run tests
+        working-directory: build
+        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}

@@ -196,12 +196,6 @@ if(_compile_ma86)
    endif()
 endif()
 
-# METIS
-find_library(METIS metis)
-if(METIS)
-   link_to_uno(metis ${METIS})
-endif()
-
 # BQPD
 find_library(BQPD bqpd)
 if(BQPD)
@@ -292,6 +286,12 @@ if(SPRAL)
    endif()
 
    message(STATUS "Found SPRAL")
+endif()
+
+# METIS
+find_library(METIS metis)
+if(METIS)
+   link_to_uno(metis ${METIS})
 endif()
 
 # helper function: resolve a mixed list of -lflags and relative paths to absolute paths

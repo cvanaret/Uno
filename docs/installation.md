@@ -84,7 +84,11 @@ LIBS = $(LIBSEQ)
 LIBSEQNEEDED = libseqneeded
 ```
 
-* compile SSIDS without OpenMP with the Meson flag `-Dopenmp=false`
+* to compile SSIDS with OpenMP, set the Meson flag `-Dopenmp=true`. It requires the following environment variables to be set:
+```
+OMP_CANCELLATION=TRUE
+OMP_PROC_BIND=TRUE
+```
 
 * you may experience a short lag at startup (about 1/4s) when running Uno with SSIDS. This is due to `hwloc` (hardware locality), a tool that aims at discovering hardware resources in parallel architectures. To precompute the required topology, run the following commands before running Uno:
 ```
