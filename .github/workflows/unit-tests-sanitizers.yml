@@ -1,4 +1,4 @@
-name: ASAN and UBSAN on the unit tests
+name: Sanitizers on the unit tests
 
 on:
   push:
