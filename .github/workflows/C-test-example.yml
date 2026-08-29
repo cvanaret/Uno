@@ -51,7 +51,7 @@ jobs:
                                                -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
                                                -DSPRAL_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
                                                -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
-                                               -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+                                               -DMETIS=${{github.workspace}}/dependencies/lib/libmetis.a \
                                                -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
                                                -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
