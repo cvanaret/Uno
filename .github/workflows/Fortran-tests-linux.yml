@@ -54,7 +54,7 @@ jobs:
                                                -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
                                                -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
                                                -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
-                                               -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
                                                -DBUILD_STATIC_LIBS=ON \
                                                -DBUILD_SHARED_LIBS=OFF .
