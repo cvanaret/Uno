@@ -100,7 +100,7 @@ jobs:
             start=$(date +%s.%N)
             # Uno enforces time_limit=$TIMELIMIT itself; the outer `timeout` is only a
             # safety net in case a run gets stuck past its own limit.
-            timeout $((TL + 30)) "$UNO" "$nl" preset=ipopt time_limit="$TIMELIMIT" > "$log" 2>&1 || true
+            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" preset=ipopt time_limit="$TIMELIMIT" > "$log" 2>&1 || true
             end=$(date +%s.%N)
             secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
 
@@ -124,7 +124,7 @@ jobs:
 
           # ---- pretty summary on the workflow run page ----
           {
-            echo "## Mittelmann benchmark — uno_ampl (time_limit=${TL}s)"
+            echo "## Mittelmann benchmark — uno_ampl (time_limit=${TIMELIMIT}s)"
             echo ""
             echo "| | instance | result |"
             echo "|:-:|:--|:--|"
