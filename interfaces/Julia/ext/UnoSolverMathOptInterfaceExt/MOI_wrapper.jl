@@ -1482,6 +1482,9 @@ function _setup_inner(model::Optimizer)::UnoSolver.Model
         model,
         'L',
         1,
+        nothing,
+        nothing,
+        model.name,
     )
     model.needs_new_inner = false
     return model.inner

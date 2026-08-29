@@ -28,6 +28,10 @@ model = unopy.Model(problem_type, number_variables, base_indexing)
 ```
 
 The following optional elements can be added or set to the model separately:
+- a name for the model (used in Uno's logs and outputs):
+```python
+model.set_name(name)
+```
 - lower bounds for the variables:
 ```python
 model.set_variables_lower_bounds(variables_lower_bounds)

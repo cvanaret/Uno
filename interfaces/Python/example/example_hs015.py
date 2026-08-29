@@ -73,6 +73,7 @@ if __name__ == '__main__':
 	x0 = [-2., 1.]
 
 	model = unopy.Model(problem_type, number_variables, base_indexing)
+	model.set_name("hs015")
 	model.set_variables_lower_bounds(variables_lower_bounds)
 	model.set_variables_upper_bounds(variables_upper_bounds)
 	model.set_objective(optimization_sense, objective, objective_gradient)
