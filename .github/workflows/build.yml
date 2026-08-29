@@ -320,7 +320,7 @@ jobs:
           -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.lib" ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
           -DSPRAL=${{github.workspace}}\dependencies\lib\libspral.a ^
           -DBUILD_STATIC_LIBS=ON ^
