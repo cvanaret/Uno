@@ -93,13 +93,6 @@ jobs:
             mingw-w64-x86_64-make
             mingw-w64-x86_64-metis
 
-      # ------------------- OpenMP -------------------
-      - name: Set the environment variables for OpenMP
-        shell: bash
-        run: |
-          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
-          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
-
       # =========================================================
       # DEPENDENCIES
       # =========================================================
@@ -143,7 +136,6 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
-            -DAUXILIARY_LIBRARIES="${{github.workspace}}\dependencies\lib\libhwloc.a" \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
 
@@ -177,7 +169,6 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
-            -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.dylib" \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 

@@ -38,12 +38,6 @@ jobs:
         shell: bash
         run: bash dependencies/scripts/download_dependencies.sh
 
-      - name: Set the environment variables for OpenMP
-        shell: bash
-        run: |
-          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
-          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
-
       - name: Configure Uno CMake
         shell: bash
         run: |
@@ -59,7 +53,6 @@ jobs:
                                                -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
                                                -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
                                                -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
-                                               -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.a" \
                                                -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
                                                -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
@@ -77,7 +70,7 @@ jobs:
                                    -L${{github.workspace}}/dependencies/lib \
                                    -Wl,-rpath,${{github.workspace}}/dependencies/lib \
                                    -lhighs -lhighs_extras -ldmumps -lmumps_common -lmpiseq -lpord -lmetis \
-                                   -lbqpd -lspral -lhwloc -llapack -lcblas -lblas -lgomp -lstdc++
+                                   -lbqpd -lspral -llapack -lcblas -lblas -lstdc++
 
       - name: Run Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran

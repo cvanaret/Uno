@@ -54,6 +54,5 @@ MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
 HIGHS = "dependencies/lib/libhighs.a;dependencies/lib/libhighs_extras.a"
 HIGHS_INCLUDE_DIR = "dependencies/include/highs"
 # SPRAL
-SPRAL_INCLUDE_DIR = "dependencies/include"
 SPRAL = "dependencies/lib/libspral.a"
-AUXILIARY_LIBRARIES = "dependencies/lib/libhwloc.a"
+SPRAL_INCLUDE_DIR = "dependencies/include"
