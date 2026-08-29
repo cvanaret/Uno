@@ -10,6 +10,9 @@
 #ifdef HAS_BQPD
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #endif
+#ifdef HAS_BQPD_CPP
+#include "ingredients/subproblem_solvers/BQPD_CPP/BQPDCPPSolver.hpp"
+#endif
 #ifdef HAS_HIGHS
 #include "ingredients/subproblem_solvers/HiGHS/HiGHSSolver.hpp"
 #endif
@@ -21,6 +24,11 @@ namespace uno {
 #ifdef HAS_BQPD
          if (QP_solver_name == "BQPD") {
             return std::make_unique<BQPDSolver>(options);
+         }
+#endif
+#ifdef HAS_BQPD_CPP
+         if (QP_solver_name == "BQPD-CPP") {
+            return std::make_unique<BQPDCPPSolver>(options);
          }
 #endif
 #ifdef HAS_HIGHS

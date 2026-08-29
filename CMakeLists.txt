@@ -202,16 +202,39 @@ if(METIS)
    link_to_uno(metis ${METIS})
 endif()
 
-# BQPD
+# BQPD (Fortran reference solver)
 find_library(BQPD bqpd)
 if(BQPD)
    link_to_uno(bqpd ${BQPD})
    target_sources(compiled_uno_files PRIVATE
-           uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
-           uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
+           uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp)
    endif()
+endif()
+
+# BQPD-CPP (the thread-safe C++ port) as a separate, coexisting QP solver ("BQPD-CPP").
+# It exposes no Fortran symbols, so it links alongside the Fortran libbqpd.a with no collision.
+option(WITH_BQPD_CPP "Build the BQPD-CPP (C++ port) QP solver" OFF)
+set(BQPD_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../BQPD-CPP" CACHE PATH "Path to the BQPD-CPP source tree")
+if(WITH_BQPD_CPP)
+   if(NOT EXISTS "${BQPD_CPP_DIR}/CMakeLists.txt")
+      message(FATAL_ERROR "WITH_BQPD_CPP=ON but no CMakeLists.txt found at BQPD_CPP_DIR=${BQPD_CPP_DIR}")
+   endif()
+   # build only the port's library target (EXCLUDE_FROM_ALL keeps its own drivers/tests out)
+   add_subdirectory(${BQPD_CPP_DIR} ${CMAKE_BINARY_DIR}/bqpd-cpp EXCLUDE_FROM_ALL)
+   target_link_libraries(uno_dependencies INTERFACE bqpd_cpp)
+   target_compile_definitions(uno_dependencies INTERFACE HAS_BQPD_CPP)
+   target_sources(compiled_uno_files PRIVATE
+           uno/ingredients/subproblem_solvers/BQPD_CPP/BQPDCPPSolver.cpp)
+   message(STATUS "Found BQPD-CPP (${BQPD_CPP_DIR})")
+endif()
+
+# BQPDQuadraticProgram packs the QP into BQPD's native layout and is reused by BOTH the Fortran
+# and C++ BQPD solvers, so compile it whenever either is enabled.
+if(BQPD OR WITH_BQPD_CPP)
+   target_sources(compiled_uno_files PRIVATE
+           uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
 endif()
 
 # HiGHS
