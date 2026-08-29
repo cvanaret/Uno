@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.8.26"
+version = v"2026.8.29"
 
 # Collection of sources
 sources = [
@@ -38,8 +38,8 @@ sources = [
     GitSource("https://github.com/ralna/spral.git",
               "80bc843ac3847d4a783a0e11213715a70175aee6"),
     # Hwloc v2.13.0
-    ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
-                  "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
+    # ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
+    #               "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
     # Package compiler for Windows
     ArchiveSource("https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz",
                   "fe3f401bc936fbe6af940b26c5e0f266f762a3416f979c706e599b24082dc5c7"),
@@ -172,14 +172,14 @@ cp include/*.h ${includedir}
 cp lib/*.a ${prefix}/lib
 
 ## ----- Compile Hwloc -----
-cd $WORKSPACE/srcdir/hwloc-*
-if [[ "${target}" == *-apple-darwin* ]]; then
-    ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --disable-static --enable-shared
-else
-    CFLAGS="${CFLAGS} -fPIC" ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
-fi
-make -j${nproc}
-make install
+# cd $WORKSPACE/srcdir/hwloc-*
+# if [[ "${target}" == *-apple-darwin* ]]; then
+#     ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --disable-static --enable-shared
+# else
+#     CFLAGS="${CFLAGS} -fPIC" ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
+# fi
+# make -j${nproc}
+# make install
 
 ## ----- Compile SPRAL -----
 cd $WORKSPACE/srcdir/spral
@@ -187,7 +187,9 @@ cd $WORKSPACE/srcdir/spral
 meson setup builddir --cross-file="${MESON_TARGET_TOOLCHAIN}" \
                      --prefix=$prefix \
                      -Ddefault_library=static \
-                     -Dlibhwloc=hwloc \
+                     -Dlibhwloc= \
+                     -Dmodules=false \
+                     -Dopenmp=false \
                      -Dlibblas=blas \
                      -Dliblapack=lapack \
                      -Dbinaries=false \
@@ -303,6 +305,6 @@ build_tarballs(
     products,
     dependencies;
     julia_compat = "1.6",
-    preferred_gcc_version = v"13.2.0", # with BinaryBuilder{Base} developed
+    preferred_gcc_version = v"13.2.0",
     clang_use_lld=false,
 )
