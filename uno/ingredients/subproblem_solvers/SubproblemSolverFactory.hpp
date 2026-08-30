@@ -29,6 +29,13 @@ namespace uno {
          bool uses_trust_region, const Options& options);
    };
 
+   inline void warn_if_kkt_dump_unsupported(const Options& options) {
+      if (!options.get_string("dump_kkt_path").empty()) {
+         WARNING << "Uno: 'dump_kkt_path' is set, but KKT system dumping is only supported with an exact Hessian; "
+            "no systems will be dumped with the quasi-Newton Hessian\n";
+      }
+   }
+
    template <typename HessianType>
    std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(HessianType& hessian_model, const Subproblem& subproblem,
          bool uses_trust_region, const Options& options) {
@@ -47,11 +54,13 @@ namespace uno {
       else if (!subproblem.has_inequality_constraints() && !subproblem.has_bound_constraints() && !uses_trust_region) {
          if constexpr (std::is_same_v<HessianType, InverseLBFGSHessian>) { // unconstrained
             DEBUG << "No constraints in the subproblem, allocating a Newton solver with inverse quasi-Newton Hessian\n";
+            warn_if_kkt_dump_unsupported(options);
             // the hessian_model we pass has type QuasiNewtonHessian
             return std::make_unique<InverseNewtonSolver>(hessian_model);
          }
          else if constexpr (std::is_base_of_v<DirectQuasiNewtonHessian, HessianType>) { // equality-constrained
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with quasi-Newton Hessian\n";
+            warn_if_kkt_dump_unsupported(options);
             // the hessian_model we pass has type QuasiNewtonHessian
             return std::make_unique<EQPSolver<WoodburyCorrection>>(options, WoodburyCorrection{hessian_model});
          }

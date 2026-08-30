@@ -102,6 +102,7 @@ namespace uno {
       try {
          while (!termination) {
             ++major_iterations;
+            warmstart_information.iteration = major_iterations;
             statistics.start_new_line();
             statistics.set("Iter", major_iterations);
             DEBUG << "\n### Outer iteration " << major_iterations << '\n';
