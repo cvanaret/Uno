@@ -113,6 +113,12 @@ print_minor_iterations false
 # Whether the statistics table is printed in extended form (bool)
 print_extended_statistics false
 
+# Directory where the KKT systems are dumped in MatrixMarket format (empty = disabled)
+#dump_kkt_path ./dump_uno
+
+# Dump the first optimality iteration and every X-th one after it (integer)
+dump_kkt_frequency 1
+
 # Whether the solution is printed to a file (used by AMPL and CUTEst) (bool)
 write_solution_to_file false
 
