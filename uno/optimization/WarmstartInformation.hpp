@@ -4,9 +4,13 @@
 #ifndef UNO_WARMSTARTINFORMATION_H
 #define UNO_WARMSTARTINFORMATION_H
 
+#include <cstddef>
+
 namespace uno {
    class WarmstartInformation {
    public:
+      // current major iteration (used by the KKT system dumper for filenames and dump frequency)
+      size_t iteration{0};
       bool new_iterate{true};
       bool constraint_bounds_changed{true};
       bool trust_region_changed{true};

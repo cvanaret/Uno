@@ -62,6 +62,10 @@ protect_actual_reduction_against_roundoff false
 protected_actual_reduction_macheps_coefficient 10
 # Whether the subproblem is printed in DEBUG mode (bool)
 print_subproblem false
+# Directory where the KKT systems are dumped in MatrixMarket format (empty = disabled)
+#dump_kkt_path ./dump_uno
+# Dump the first optimality iteration and every X-th one after it (integer)
+dump_kkt_frequency 1
 # Whether the solution is printed to a file (used by AMPL and CUTEst) (bool)
 write_solution_to_file false
 

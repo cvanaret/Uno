@@ -106,6 +106,8 @@ namespace uno {
       {"SOC_max_iterations", OptionType::INTEGER},
       {"SOC_infeasibility_fraction", OptionType::DOUBLE},
       {"libhsl_path", OptionType::STRING},
+      {"dump_kkt_path", OptionType::STRING},
+      {"dump_kkt_frequency", OptionType::INTEGER},
    };
 
    // setters
