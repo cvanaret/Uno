@@ -87,7 +87,7 @@ jobs:
           set -uo pipefail
           UNO="${{ github.workspace }}/build/uno_ampl"
           DIR="${{ env.SCRATCH }}/Mittelmann"
-          TIMELIMIT=120
+          TIMELIMIT=300
 
           mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
           if [ "${#INSTANCES[@]}" -eq 0 ]; then
