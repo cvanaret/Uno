@@ -49,10 +49,11 @@ namespace uno {
    } // namespace
 
    template <typename LowRankCorrection>
-   EQPSolver<LowRankCorrection>::EQPSolver(const Options& options, LowRankCorrection correction):
+   EQPSolver<LowRankCorrection>::EQPSolver(const Options& options, LowRankCorrection low_rank_correction):
          SubproblemSolver(),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
-         low_rank_correction(std::move(correction)),
+         low_rank_correction(std::move(low_rank_correction)),
+         kkt_dumper(options),
          iterative_refinement(read_iterative_refinement_parameters(options)) {
    }
 
@@ -197,6 +198,10 @@ namespace uno {
          // assemble the RHS
          this->newton_system->assemble_rhs({statistics, current_iterate, current_evaluations}, linear_system.rhs.view());
          DEBUG3 << "RHS: " << linear_system.rhs << '\n';
+
+         // optionally dump the regularized KKT system to disk
+         this->kkt_dumper.dump(linear_system, subproblem.problem.model.name,
+            subproblem.problem.get_objective_multiplier() == 0., warmstart_information.iteration);
       }
 
       // solve the linear system
