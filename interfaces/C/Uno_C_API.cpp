@@ -35,7 +35,8 @@ using CUserModel = UserModel<uno_objective_callback, uno_objective_gradient_call
 class UnoModel: public Model {
 public:
    explicit UnoModel(const CUserModel& user_model):
-         Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
+         Model(user_model.name.empty() ? "C model" : user_model.name,
+            static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
             static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention),
             user_model.base_indexing),
          user_model(user_model),
@@ -487,6 +488,16 @@ void* uno_create_unconstrained_model(const char* problem_type, uno_int number_va
       user_model->initial_primal_iterate[variable_index] = 0.;
    }
    return user_model;
+}
+
+bool uno_set_model_name(void* model, const char* name) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   user_model->name = (name != nullptr) ? name : "";
+   return true;
 }
 
 bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_bounds) {

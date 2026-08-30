@@ -24,6 +24,10 @@ void* model = uno_create_unconstrained_model(problem_type, number_variables, bas
 ```
 
 The following optional elements can be added or set to the model separately:
+- a name for the model (used in Uno's logs and outputs):
+```c
+uno_set_model_name(model, name)
+```
 - lower bounds for the variables:
 ```c
 uno_set_variables_lower_bounds(model, variables_lower_bounds)

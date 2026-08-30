@@ -136,6 +136,7 @@ int main() {
 
    void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
       variables_upper_bounds, base_indexing);
+   uno_set_model_name(model, "hs015");
    uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
    uno_set_constraints(model, number_constraints, constraint_functions,
       constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
