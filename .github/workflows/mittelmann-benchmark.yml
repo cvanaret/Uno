@@ -11,24 +11,6 @@ on:
   # Manual trigger: re-run the benchmark at any time from the Actions tab
   # ("Run workflow") or with `gh workflow run "Mittelmann benchmark"`.
   workflow_dispatch:
-  push:
-    branches: [ "main" ]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.yml'
-      - '*.yaml'
-      - 'docs/**'
-  pull_request:
-    branches: [ "main" ]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.yml'
-      - '*.yaml'
-      - 'docs/**'
 
 permissions:
   contents: read
