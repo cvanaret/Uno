@@ -9,8 +9,15 @@ name: Mittelmann benchmark
 
 on:
   # Manual trigger: re-run the benchmark at any time from the Actions tab
-  # ("Run workflow") or with `gh workflow run "Mittelmann benchmark"`.
+  # ("Run workflow") or with `gh workflow run "Mittelmann benchmark"`
+  # Post a "sticky" comment in the concerned PR (PR number is passed to
+  # marocchino/sticky-pull-request-comment)
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to comment on'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -134,10 +141,11 @@ jobs:
       # "sticky" comment: subsequent runs on the same PR (i.e. new commits) update
       # this same comment in place instead of adding a new one.
       - name: Post benchmark results as a PR comment
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: mittelmann-benchmark
+          number: ${{ inputs.pr_number }}
           path: benchmark-comment.md
 
       - name: Upload run logs
