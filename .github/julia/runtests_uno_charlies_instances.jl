@@ -9,7 +9,12 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_solver=BQPD", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
+# this script is parameterized by the preset passed as command line argument (e.g., runtests_charlies_instances.jl filtersqp)
+length(ARGS) == 1 || error("The preset is missing or you supplied more than one command line arguments")
+preset = ARGS[1]
+println("Solving with preset ", preset)
+
+Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=$preset", "QP_solver=BQPD", "linear_solver=MUMPS", "max_iterations=10000"])
 
 function test_hs015()
     model = Model(() -> Optimizer_Uno_filtersqp())
