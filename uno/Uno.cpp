@@ -48,8 +48,7 @@ namespace uno {
       // reformulate the model if:
       // - the user wants an interior-point method with log barrier function
       // - the model has bound constraints or inequality constraints
-      if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
-            (model.has_bound_constraints() || model.has_inequality_constraints())) {
+      if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log") {
          // move the fixed variables to the set of general constraints
          const FixedBoundsConstraintsModel fixed_bound_model(model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
