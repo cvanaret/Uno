@@ -5,6 +5,7 @@
 #define UNO_EQPSOLVER_H
 
 #include <memory>
+#include "KKTSystemDumper.hpp"
 #include "SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
 
@@ -40,6 +41,7 @@ namespace uno {
    protected:
       Direction direction;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
+      const KKTSystemDumper kkt_dumper;
       bool analysis_performed{false};
 
       bool SOC_initialized{false};

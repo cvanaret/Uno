@@ -69,6 +69,21 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `print_subproblem`                               | bool   | `false`  | Whether the subproblem is printed in `DEBUG` mode                         |
 | `write_solution_to_file`                         | bool   | `false`  | Whether the solution is printed to a file (used by AMPL and CUTEst)       |
 
+## KKT system dump
+
+Uno can dump the KKT systems to disk in [MatrixMarket](https://math.nist.gov/MatrixMarket/formats.html) format.
+The dump is only supported with an **exact Hessian**, where the whole KKT matrix is factorized directly.
+
+| Option               | Type    | Default | Description                                                                                       |
+|:---------------------|:--------|:--------|:--------------------------------------------------------------------------------------------------|
+| `dump_kkt_path`      | string  | `""`    | Output directory for the dumped KKT systems (created if needed). An empty path disables the dump. |
+| `dump_kkt_frequency` | integer | 1       | Dump the first optimality iteration and every `frequency` one after it (`1` = every iteration).   |
+
+For each dumped iteration, two files are written to `dump_kkt_path`:
+
+- `kkt_<instance>_it<iter>.mtx` — the regularized augmented matrix (lower triangle, `coordinate real symmetric`, 1-based indexing);
+- `kkt_<instance>_it<iter>_rhs.mtx` — the right-hand side (`array real general`).
+
 ## Globalization strategy options
 
 | Option                     | Type   | Default | Description                                                                                                 |

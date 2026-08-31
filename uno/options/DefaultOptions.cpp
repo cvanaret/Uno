@@ -51,6 +51,9 @@ namespace uno {
       options.set_bool("protect_actual_reduction_against_roundoff", false);
       options.set_double("protected_actual_reduction_macheps_coefficient", 10.);
       options.set_bool("print_subproblem", false);
+      // dump KKT systems
+      options.set_string("dump_kkt_path", "");
+      options.set_integer("dump_kkt_frequency", 1);
 
       /** globalization strategy options **/
       options.set_double("armijo_decrease_fraction", 1e-4);
