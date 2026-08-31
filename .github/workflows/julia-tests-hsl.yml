@@ -32,7 +32,7 @@ concurrency:
 
 jobs:
   compilation-uno-hsl:
-    runs-on: gh-ar-cvanaret-uno-benchmark
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v4
 
