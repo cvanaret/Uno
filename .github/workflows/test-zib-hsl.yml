@@ -44,7 +44,7 @@ jobs:
           LIBHSL_PATH="${{env.LIBS}}/libhsl/builddir/libhsl.so"
           LIBAMPL_PATH="${{env.LIBS}}/ampl/amplsolver.a"
 
-          ${{env.LIBS}}/cmake -B build \
+          cmake -B build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
@@ -57,7 +57,7 @@ jobs:
             -DBUILD_SHARED_LIBS=ON
 
       - name: Build
-        run: ${{env.LIBS}}/cmake --build build --target uno_ampl --config ${{env.BUILD_TYPE}} --parallel
+        run: cmake --build build --target uno_ampl --config ${{env.BUILD_TYPE}} --parallel
 
       - name: Run instance
         working-directory: build
