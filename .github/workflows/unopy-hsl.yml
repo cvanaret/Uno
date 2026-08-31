@@ -22,9 +22,9 @@ on:
 
 env:
   BUILD_TYPE: Debug
-  VENV: /home/optimi/cvanaret/myenv
-  HOME: /home/optimi/cvanaret
-  STAGING_ROOT: /scratch/local/opt-008547/cvanaret/ci-staging
+  VENV: /srv/lib/myenv
+  HOME: /srv/lib
+  STAGING_ROOT: /srv/lib/ci-staging
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
