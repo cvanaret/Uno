@@ -217,7 +217,8 @@ namespace uno {
       // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
       // least-squares multipliers for the original problem
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
+      // this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
+      current_iterate.multipliers.constraints.fill(0.);
 
       current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
