@@ -246,7 +246,7 @@ namespace uno {
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
       const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= dual_tolerance);
-      const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
+      const bool primal_feasibility = (current_iterate.primal_infeasibility <= primal_tolerance);
       const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= dual_tolerance);
 
       DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";

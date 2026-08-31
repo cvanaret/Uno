@@ -19,7 +19,7 @@ namespace uno {
       double objective_multiplier{1.};
 
       // primal-dual residuals
-      double primal_feasibility{INF<double>};
+      double primal_infeasibility{INF<double>};
       DualResiduals residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)

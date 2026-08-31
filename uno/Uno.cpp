@@ -244,7 +244,7 @@ namespace uno {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
-         evaluations.objective, solution.primal_feasibility, solution.residuals.stationarity,
+         evaluations.objective, solution.primal_infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, evaluations.constraints, major_iterations,
          timer.get_duration(), model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),

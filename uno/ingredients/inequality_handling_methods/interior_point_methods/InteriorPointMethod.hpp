@@ -147,7 +147,7 @@ namespace uno {
 
       // temporarily update the objective multiplier
       this->previous_barrier_parameter = this->barrier_parameter();
-      const double new_barrier_parameter = std::max(this->barrier_parameter(), current_iterate.primal_feasibility);
+      const double new_barrier_parameter = std::max(this->barrier_parameter(), current_iterate.primal_infeasibility);
       this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
       DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';

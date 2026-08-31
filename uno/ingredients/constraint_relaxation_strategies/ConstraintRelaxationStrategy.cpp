@@ -47,7 +47,7 @@ namespace uno {
 
       // primal feasibility/constraint violation of the model
       evaluations.evaluate_constraints(problem.model, iterate.primals);
-      iterate.primal_feasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
+      iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
       constexpr double shift_value = 0.;

@@ -25,7 +25,7 @@ namespace uno {
       stream << "            " << symbols::top_pipe << " Constraint: " << iterate.multipliers.constraints << '\n';
       stream << "Multipliers " << symbols::pipe << " Lower bound: " << iterate.multipliers.lower_bounds << '\n';
       stream << "            " << symbols::bottom_pipe << " Upper bound: " << iterate.multipliers.upper_bounds << '\n';
-      stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
+      stream << "Primal feasibility: " << iterate.primal_infeasibility << '\n';
 
       stream << "          " << symbols::top_pipe << " Stationarity: " << iterate.residuals.stationarity << '\n';
       stream << "Residuals " << symbols::pipe << " Complementarity: " << iterate.residuals.complementarity << '\n';

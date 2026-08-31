@@ -292,7 +292,7 @@ namespace uno {
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
       const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= dual_tolerance);
-      const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
+      const bool primal_feasibility = (current_iterate.primal_infeasibility <= primal_tolerance);
       const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= dual_tolerance);
       const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, dual_tolerance);
 
