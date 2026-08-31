@@ -291,19 +291,19 @@ namespace uno {
    SolutionStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= dual_tolerance);
       const bool primal_feasibility = (current_iterate.primal_infeasibility <= primal_tolerance);
+      const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= dual_tolerance);
       const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= dual_tolerance);
       const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, dual_tolerance);
 
       DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
-      DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+      DEBUG << "Primal infeasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
       DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
       DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
 
-      if (this->model.is_constrained() && feasibility_stationarity && !primal_feasibility && feasibility_complementarity &&
-            no_trivial_duals) {
+      if (this->model.is_constrained() && !primal_feasibility && feasibility_stationarity && feasibility_complementarity
+            && no_trivial_duals) {
          // no primal feasibility, stationary point of constraint violation
          return SolutionStatus::INFEASIBLE_STATIONARY_POINT;
       }
