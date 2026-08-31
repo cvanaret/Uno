@@ -3,6 +3,7 @@
 
 #include "MeritFunction.hpp"
 #include "ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
@@ -48,9 +49,9 @@ namespace uno {
       return accept;
    }
 
-   bool MeritFunction::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+   bool MeritFunction::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double /*reference_infeasibility*/) const {
       // if the trial infeasibility sufficiently decreases the best known infeasibility
-      return (trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_ratio * this->smallest_known_infeasibility);
+      return (trial_iterate.progress.infeasibility <= this->sufficient_infeasibility_decrease_ratio * this->smallest_known_infeasibility);
    }
 
    void MeritFunction::reset() {

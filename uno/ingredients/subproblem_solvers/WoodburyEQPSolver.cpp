@@ -88,7 +88,7 @@ namespace uno {
          subproblem.number_variables + subproblem.number_constraints);
       if (norm_inf(least_squares_multipliers) <= multipliers_threshold) {
          iterate.multipliers.constraints = least_squares_multipliers;
-         DEBUG << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
+         DEBUG2 << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
       }
       else {
          DEBUG << "Least-squares multipliers too large\n";
@@ -180,7 +180,7 @@ namespace uno {
    // protected members
 
    void WoodburyEQPSolver::compute_low_rank_correction(const Subproblem& subproblem, Vector<double>& b) const {
-      DEBUG << "b = " << b << '\n';
+      DEBUG2 << "b = " << b << '\n';
       const size_t correction_rank = this->hessian_model.get_correction_rank();
       DEBUG << "Correction rank: " << correction_rank << '\n';
       if (0 < correction_rank) {

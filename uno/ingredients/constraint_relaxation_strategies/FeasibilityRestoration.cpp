@@ -98,8 +98,8 @@ namespace uno {
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
 
-      // save the current point (progress and primals) upon switching
-      this->reference_optimality_progress = current_iterate.progress;
+      // save the current point (infeasibility and primals) upon switching
+      this->reference_infeasibility = current_iterate.primal_feasibility;
       this->reference_optimality_primals = current_iterate.primals;
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
@@ -183,10 +183,10 @@ namespace uno {
       return direction;
    }
 
-   bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations) const {
-      if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->reference_optimality_progress,
-            trial_iterate.progress)) {
+   bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
+         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
+      this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+      if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(trial_iterate, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
             return true;
          }
@@ -196,8 +196,13 @@ namespace uno {
          current_evaluations.compute_jacobian_vector_product(model, direction.primals.view(), result.view());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
             step_length * result, this->residual_norm);
-         return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
+         const bool switch_back = (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
+         if (!switch_back) {
+            this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+         }
+         return switch_back;
       }
+      this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
       return false;
    }
 
@@ -246,7 +251,7 @@ namespace uno {
 
       // possibly go from restoration phase to optimality phase
       if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
-            trial_iterate, direction, step_length, current_evaluations)) {
+            trial_iterate, direction, step_length, current_evaluations, trial_evaluations)) {
          this->switch_back_to_optimality_phase(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();

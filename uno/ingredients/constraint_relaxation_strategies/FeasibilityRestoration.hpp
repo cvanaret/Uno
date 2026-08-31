@@ -67,7 +67,7 @@ namespace uno {
       Multipliers other_phase_multipliers;
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
-      ProgressMeasures reference_optimality_progress{};
+      double reference_infeasibility{};
       Vector<double> reference_optimality_primals{};
       bool first_switch_to_feasibility{true};
 
@@ -77,8 +77,8 @@ namespace uno {
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, Evaluations& current_evaluations,
          Evaluations& trial_evaluations);
 
-      [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations) const;
+      [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
+         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
    };
 } // namespace
 

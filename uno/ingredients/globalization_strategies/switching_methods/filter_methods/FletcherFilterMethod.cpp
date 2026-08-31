@@ -4,6 +4,7 @@
 #include "FletcherFilterMethod.hpp"
 #include "filters/Filter.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Symbols.hpp"
@@ -67,10 +68,11 @@ namespace uno {
       return accept;
    }
 
-   bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*reference_progress*/,
-         const ProgressMeasures& trial_progress) const {
+   bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
+      double /*reference_infeasibility*/) const {
       // if the trial infeasibility improves upon the best known infeasibility
-      return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_progress.infeasibility);
+      return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(),
+         trial_iterate.progress.infeasibility);
    }
 
    std::string FletcherFilterMethod::get_name() const {
