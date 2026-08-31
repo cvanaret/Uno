@@ -22,7 +22,9 @@ on:
 
 env:
   BUILD_TYPE: Debug
-  LIBS: /srv/lib
+  VENV: /home/optimi/cvanaret/myenv
+  HOME: /home/optimi/cvanaret
+  STAGING_ROOT: /scratch/local/opt-008547/cvanaret/ci-staging
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -30,15 +32,24 @@ concurrency:
 
 jobs:
   build:
-    runs-on: gh-ar-cvanaret-uno-benchmark
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
 
-      - name: Compile and install unopy
-        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v -C cmake.define.UNO_PYBIND11_DETAILED_ERRORS=ON
+      - name: Build unopy into a run-scoped venv on shared NFS
+        run: |
+          RUN_DIR="${{env.STAGING_ROOT}}/${{github.run_id}}"
+          RUN_VENV="$RUN_DIR/venv"
+          mkdir -p "${{env.STAGING_ROOT}}"
+          # prune staging from old runs so the NFS home doesn't fill up
+          find "${{env.STAGING_ROOT}}" -mindepth 1 -maxdepth 1 -type d -mtime +2 -exec rm -rf {} + 2>/dev/null || true
+          rm -rf "$RUN_DIR"
+          mkdir -p "$RUN_DIR"
+          ${{env.VENV}}/bin/python -m venv "$RUN_VENV"
+          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) "$RUN_VENV/bin/pip" install . -v
 
   run-example:
     name: Example with ${{matrix.LIBHSL_NAME}}'s ${{matrix.HSL_SOLVER}}
@@ -62,7 +73,7 @@ jobs:
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: |
           # load the HSL library dynamically
-          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.LIBS}}/${{matrix.LIBHSL}}")' example_hs015.py
+          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/${{matrix.LIBHSL}}")' example_hs015.py
           # substitution of the linear solver
           sed -i 's/MUMPS/${{matrix.HSL_SOLVER}}/' example_hs015.py
 
@@ -71,4 +82,4 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
-          python example_hs015.py
+          "${{env.STAGING_ROOT}}/${{github.run_id}}/venv/bin/python" example_hs015.py
