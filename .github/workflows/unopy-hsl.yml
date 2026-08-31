@@ -22,7 +22,6 @@ on:
 
 env:
   BUILD_TYPE: Debug
-  VENV: /srv/lib/myenv
   LIBS: /srv/lib
 
 concurrency:
@@ -39,7 +38,7 @@ jobs:
         run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Compile and install unopy
-        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) ${{env.VENV}}/bin/pip install . -v -C cmake.define.UNO_PYBIND11_DETAILED_ERRORS=ON
+        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v -C cmake.define.UNO_PYBIND11_DETAILED_ERRORS=ON
 
   run-example:
     name: Example with ${{matrix.LIBHSL_NAME}}'s ${{matrix.HSL_SOLVER}}
@@ -72,4 +71,4 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
-          "${{env.VENV}}/bin/python" example_hs015.py
+          python example_hs015.py
