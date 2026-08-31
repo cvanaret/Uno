@@ -23,7 +23,7 @@ on:
 env:
   BUILD_TYPE: Debug
   VENV: /srv/lib/myenv
-  HOME: /srv/lib
+  LIBS: /srv/lib
   STAGING_ROOT: /srv/lib/ci-staging
 
 concurrency:
@@ -73,7 +73,7 @@ jobs:
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: |
           # load the HSL library dynamically
-          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/${{matrix.LIBHSL}}")' example_hs015.py
+          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.LIBS}}/${{matrix.LIBHSL}}")' example_hs015.py
           # substitution of the linear solver
           sed -i 's/MUMPS/${{matrix.HSL_SOLVER}}/' example_hs015.py
 
