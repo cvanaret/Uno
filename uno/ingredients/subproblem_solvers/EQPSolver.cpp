@@ -85,7 +85,7 @@ namespace uno {
          subproblem.number_variables + subproblem.number_constraints);
       if (norm_inf(least_squares_multipliers) <= multipliers_threshold) {
          iterate.multipliers.constraints = least_squares_multipliers;
-         DEBUG << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
+         DEBUG2 << "Least-squares multipliers set to " << least_squares_multipliers << '\n';
       }
       else {
          DEBUG << "Least-squares multipliers too large\n";
@@ -179,7 +179,7 @@ namespace uno {
       }
       // flip sign
       rhs_constraints.scale(-1.);
-      DEBUG << "SOC RHS: " << linear_system.rhs << '\n';
+      DEBUG2 << "SOC RHS: " << linear_system.rhs << '\n';
 
       // solve the linear system
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());

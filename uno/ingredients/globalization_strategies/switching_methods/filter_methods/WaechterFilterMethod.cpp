@@ -117,10 +117,12 @@ namespace uno {
       return true;
    }
 
-   bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,
-         const ProgressMeasures& trial_progress) const {
-      return trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_progress.infeasibility &&
-         this->filter->filter_acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
+   bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const {
+      std::cout << "WaechterFilterMethod::is_infeasibility_sufficiently_reduced: " << trial_iterate.primal_feasibility <<
+         " < 0.9*" << reference_infeasibility << '\n';
+      // use the infeasibility in the residual norm here (inf norm for IPOPT implementation)
+      return trial_iterate.primal_feasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
+         this->filter->filter_acceptable(trial_iterate.progress.infeasibility, unconstrained_merit_function(trial_iterate.progress));
    }
 
    std::string WaechterFilterMethod::get_name() const {
