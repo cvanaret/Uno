@@ -14,7 +14,7 @@ length(ARGS) == 1 || error("The preset is missing or you supplied more than one 
 preset = ARGS[1]
 println("Solving with preset ", preset)
 
-Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=$preset", "QP_solver=BQPD", "linear_solver=MUMPS", "max_iterations=10000"])
+Optimizer_Uno_filtersqp() = Optimizer(["logger=INFO", "preset=$preset", "QP_solver=BQPD", "linear_solver=MUMPS", "max_iterations=10000"])
 
 function test_hs015()
     model = Model(() -> Optimizer_Uno_filtersqp())
