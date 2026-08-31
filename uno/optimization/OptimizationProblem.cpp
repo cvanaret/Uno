@@ -245,16 +245,16 @@ namespace uno {
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
+      const bool primal_feasibility = (current_iterate.primal_infeasibility <= primal_tolerance);
       const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= dual_tolerance);
-      const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
       const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= dual_tolerance);
 
       DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
+      DEBUG << "Primal infeasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
-      DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
 
-      if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+      if (primal_feasibility && stationarity && 0. < current_iterate.objective_multiplier && complementarity) {
          // feasible regular stationary point
          return SolutionStatus::FEASIBLE_KKT_POINT;
       }

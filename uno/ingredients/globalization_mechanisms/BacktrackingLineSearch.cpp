@@ -198,7 +198,7 @@ namespace uno {
             return false;
          }
       }
-      if (current_iterate.primal_feasibility > 1e-4) { // TODO add option
+      if (current_iterate.primal_infeasibility > 1e-4) { // TODO add option
          return false;
       }
       return true;

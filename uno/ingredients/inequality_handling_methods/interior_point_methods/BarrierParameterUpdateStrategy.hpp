@@ -66,7 +66,7 @@ namespace uno {
          const Iterate& current_iterate, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
-      const double primal_feasibility = (problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_feasibility;
+      const double primal_feasibility = (problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_infeasibility;
       double primal_dual_error = std::max({
          scaled_stationarity,
          primal_feasibility,

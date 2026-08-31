@@ -85,7 +85,7 @@ namespace uno {
       if (norm_inf(view(iterate.primals, 0, problem.get_number_original_variables())) > this->diverging_iterate_threshold) {
          return SolutionStatus::DIVERGING_ITERATE;
       }
-      if (iterate.primal_feasibility <= this->primal_tolerance && evaluations.is_objective_computed &&
+      if (iterate.primal_infeasibility <= this->primal_tolerance && evaluations.is_objective_computed &&
             evaluations.objective < this->unbounded_objective_threshold) {
          return SolutionStatus::UNBOUNDED_OBJECTIVE;
       }

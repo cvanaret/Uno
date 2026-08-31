@@ -99,7 +99,7 @@ namespace uno {
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
 
       // save the current point (infeasibility and primals) upon switching
-      this->reference_infeasibility = current_iterate.primal_feasibility;
+      this->reference_infeasibility = current_iterate.primal_infeasibility;
       this->reference_optimality_primals = current_iterate.primals;
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());

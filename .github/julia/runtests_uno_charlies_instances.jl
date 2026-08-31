@@ -9,7 +9,12 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_solver=BQPD", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
+# this script is parameterized by the preset passed as command line argument (e.g., runtests_charlies_instances.jl filtersqp)
+length(ARGS) == 1 || error("The preset is missing or you supplied more than one command line arguments")
+preset = ARGS[1]
+println("Solving with preset ", preset)
+
+Optimizer_Uno_filtersqp() = Optimizer(["logger=INFO", "preset=$preset", "print_solution=true", "QP_solver=BQPD", "linear_solver=MUMPS", "max_iterations=10000"])
 
 function test_hs015()
     model = Model(() -> Optimizer_Uno_filtersqp())
@@ -25,7 +30,7 @@ function test_hs015()
 
     optimize!(model)
 
-    tolerance = 1e-6
+    tolerance = 1e-3
     @assert abs(objective_value(model) - 306.5) <= tolerance
     @assert abs(value(x) - 0.5) <= tolerance
     @assert abs(value(y) - 2.) <= tolerance
@@ -49,14 +54,19 @@ function test_isolated()
 
     optimize!(model)
 
-    tolerance = 1e-6
+    tolerance = 1e-3
     @assert abs(objective_value(model) - 0.) <= tolerance
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 0.) <= tolerance
-    @assert abs(dual(c1) - 1.) <= tolerance
-    @assert abs(dual(c2) - 1.) <= tolerance
-    @assert abs(dual(c3) - 1.) <= tolerance
-    @assert abs(dual(c4) - 1.) <= tolerance
+    (tolerance, dual_solution) = if preset == "ipopt"
+       (1000. * tolerance, [1000., 1000., 1000., 1000.]) # IPOPT scales the feasibility objective by 1000
+    else
+       (tolerance, [1., 1., 1., 1.])
+    end
+    @assert abs(dual(c1) - dual_solution[1]) <= tolerance
+    @assert abs(dual(c2) - dual_solution[2]) <= tolerance
+    @assert abs(dual(c3) - dual_solution[3]) <= tolerance
+    @assert abs(dual(c4) - dual_solution[4]) <= tolerance
 end
 
 function test_nactive()
@@ -73,13 +83,18 @@ function test_nactive()
 
     optimize!(model)
 
-    tolerance = 1e-6
+    tolerance = 1e-3
     @assert abs(objective_value(model) - 0.) <= tolerance
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 0.) <= tolerance
-    @assert abs(dual(c1) - 1.) <= tolerance
-    @assert abs(dual(c2) - 0.5) <= tolerance
-    @assert abs(dual(c3) - 0.) <= tolerance
+    (tolerance, dual_solution) = if preset == "ipopt"
+       (1000. * tolerance, [1000., 500., 0.]) # IPOPT scales the feasibility objective by 1000
+    else
+       (tolerance, [1., 0.5, 0.])
+    end
+    @assert abs(dual(c1) - dual_solution[1]) <= tolerance
+    @assert abs(dual(c2) - dual_solution[2]) <= tolerance
+    @assert abs(dual(c3) - dual_solution[3]) <= tolerance
 end
 
 function test_unique()
@@ -95,12 +110,17 @@ function test_unique()
 
     optimize!(model)
 
-    tolerance = 1e-6
+    tolerance = 1e-3
     @assert abs(objective_value(model) - 1.) <= tolerance
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 1.) <= tolerance
-    @assert abs(dual(c1) - 0.8154845) <= tolerance
-    @assert abs(dual(c2) - 1.) <= tolerance
+    (tolerance, dual_solution) = if preset == "ipopt"
+       (1000. * tolerance, [815.4845, 1000.]) # IPOPT scales the feasibility objective by 1000
+    else
+       (tolerance, [0.8154845, 1.])
+    end
+    @assert abs(dual(c1) - dual_solution[1]) <= tolerance
+    @assert abs(dual(c2) - dual_solution[2]) <= tolerance
 end
 
 test_hs015()

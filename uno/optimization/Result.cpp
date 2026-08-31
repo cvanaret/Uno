@@ -14,10 +14,9 @@ namespace uno {
       DISCRETE << "Solution status:\t\t\t" << solution_status_to_message(this->solution_status) << '\n';
 
       DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution_objective << '\n';
-      DISCRETE << "Primal feasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
 
-      DISCRETE << symbols::top_pipe << " Stationarity residual:\t\t" << this->solution_stationarity << '\n';
-      DISCRETE << symbols::pipe << " Primal feasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
+      DISCRETE << symbols::top_pipe << " Primal infeasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
+      DISCRETE << symbols::pipe << " Stationarity residual:\t\t" << this->solution_stationarity << '\n';
       DISCRETE << symbols::bottom_pipe << " Complementarity residual:\t\t" << this->solution_complementarity << '\n';
 
       if (print_primal_dual_solution) {
