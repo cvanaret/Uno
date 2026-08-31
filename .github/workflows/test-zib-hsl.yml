@@ -1,0 +1,64 @@
+name: Tests at ZIB using HSL
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+  LIBS: /srv/lib
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: gh-ar-cvanaret-uno-benchmark
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure
+        run: |
+          LIBBLAS_PATH="${{env.LIBS}}/libblas.so"
+          LIBLAPACK_PATH="${{env.LIBS}}/liblapack.so"
+          LIBHSL_PATH="${{env.LIBS}}/libhsl/builddir/libhsl.so"
+          LIBAMPL_PATH="${{env.LIBS}}/ampl/amplsolver.a"
+
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
+            -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
+            -DHSL=${LIBHSL_PATH} \
+            -DAMPLSOLVER=${LIBAMPL_PATH} \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --target uno_ampl --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Run instance
+        working-directory: build
+        run: ./uno_ampl "${{env.LIBS}}/Mittelmann/qssp180.nl" preset=ipopt
