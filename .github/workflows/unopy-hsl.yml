@@ -24,7 +24,6 @@ env:
   BUILD_TYPE: Debug
   VENV: /srv/lib/myenv
   LIBS: /srv/lib
-  STAGING_ROOT: /srv/lib/ci-staging
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -39,17 +38,8 @@ jobs:
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
 
-      - name: Build unopy into a run-scoped venv on shared NFS
-        run: |
-          RUN_DIR="${{env.STAGING_ROOT}}/${{github.run_id}}"
-          RUN_VENV="$RUN_DIR/venv"
-          mkdir -p "${{env.STAGING_ROOT}}"
-          # prune staging from old runs so the NFS home doesn't fill up
-          find "${{env.STAGING_ROOT}}" -mindepth 1 -maxdepth 1 -type d -mtime +2 -exec rm -rf {} + 2>/dev/null || true
-          rm -rf "$RUN_DIR"
-          mkdir -p "$RUN_DIR"
-          ${{env.VENV}}/bin/python -m venv "$RUN_VENV"
-          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) "$RUN_VENV/bin/pip" install . -v
+      - name: Compile and install unopy
+        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) ${{env.VENV}}/bin/pip install . -v -C cmake.define.UNO_PYBIND11_DETAILED_ERRORS=ON
 
   run-example:
     name: Example with ${{matrix.LIBHSL_NAME}}'s ${{matrix.HSL_SOLVER}}
@@ -82,4 +72,4 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
-          "${{env.STAGING_ROOT}}/${{github.run_id}}/venv/bin/python" example_hs015.py
+          "${{env.VENV}}/bin/python" example_hs015.py
