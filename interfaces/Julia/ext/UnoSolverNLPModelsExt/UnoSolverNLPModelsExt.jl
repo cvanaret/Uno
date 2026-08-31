@@ -95,6 +95,7 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
     1,
     nlp.meta.x0,
     nlp.meta.y0,
+    nlp.meta.name,
   )
   return model
 end

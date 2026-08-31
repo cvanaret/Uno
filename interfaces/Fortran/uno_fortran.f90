@@ -84,6 +84,37 @@ function uno_create_unconstrained_model(problem_type, number_variables, base_ind
 end function uno_create_unconstrained_model
 
 !---------------------------------------------
+! uno_set_model_name
+!---------------------------------------------
+function uno_set_model_name(model, name) result(success)
+   type(c_ptr), value :: model
+   character(len=*) :: name
+   logical(c_bool) :: success
+   character(c_char), allocatable :: name_c(:)
+   integer :: i, n
+
+   interface
+      function uno_set_model_name_c(model, name) &
+         result(success) &
+         bind(C, name="uno_set_model_name")
+         import :: c_ptr, c_char, c_bool
+         type(c_ptr), value :: model
+         character(c_char) :: name(*)
+         logical(c_bool) :: success
+      end function uno_set_model_name_c
+   end interface
+
+   n = len_trim(name)
+   allocate(name_c(n+1))
+   do i = 1, n
+      name_c(i) = name(i:i)
+   end do
+   name_c(n+1) = c_null_char
+   success = uno_set_model_name_c(model, name_c)
+   deallocate(name_c)
+end function uno_set_model_name
+
+!---------------------------------------------
 ! uno_set_solver_integer_option
 !---------------------------------------------
 function uno_set_solver_integer_option(solver, option_name, option_value) result(success)

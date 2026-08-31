@@ -7,6 +7,13 @@ pip install unopy
 ```
 An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
+unopy ships with:
+
+- [BQPD](https://github.com/leyffer/BQPD_jll.jl/releases), an indefinite quadratic programming solver
+- [MUMPS](https://mumps-solver.org/index.php?page=dwnld), a sparse indefinite symmetric linear solver
+- [SSIDS](https://github.com/ralna/spral), SPRAL's sparse indefinite symmetric linear solver (compiled without OpenMP)
+- [HiGHS](https://highs.dev), a linear programming and convex quadratic programming solver
+
 ## Querying the current Uno version
 
 Query the current Uno version with:
@@ -28,6 +35,10 @@ model = unopy.Model(problem_type, number_variables, base_indexing)
 ```
 
 The following optional elements can be added or set to the model separately:
+- a name for the model (used in Uno's logs and outputs):
+```python
+model.set_name(name)
+```
 - lower bounds for the variables:
 ```python
 model.set_variables_lower_bounds(variables_lower_bounds)

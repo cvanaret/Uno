@@ -1,0 +1,156 @@
+name: Mittelmann benchmark
+
+# Compiles uno_ampl on the fly (ASL + libhsl) and runs it on the Mittelmann
+# .nl instances, giving each one `time_limit=60`. Prints a per-instance summary
+# (tickmark = solved, cross = failed) and the number of solved instances.
+#
+# Success/failure is read from each run's log: the optimization summary starts
+# with the line   Optimization status:            Success
+
+on:
+  # Manual trigger: re-run the benchmark at any time from the Actions tab
+  # ("Run workflow") or with `gh workflow run "Mittelmann benchmark"`
+  # Post a "sticky" comment in the concerned PR (PR number is passed to
+  # marocchino/sticky-pull-request-comment)
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to comment on'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  BUILD_TYPE: Release
+  VENV: /home/optimi/cvanaret/myenv
+  HOME: /home/optimi/cvanaret
+  SCRATCH: /scratch/local/opt-008547/cvanaret
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Uno solver dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Install Meson, Ninja, and patchelf
+        run: |
+          ${{env.VENV}}/bin/pip install meson==1.7.1
+          ${{env.VENV}}/bin/pip install ninja
+          ${{env.VENV}}/bin/pip install patchelf
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Configure Uno (ASL + libhsl)
+        run: |
+          set -euo pipefail
+          LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
+          LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
+          LIBHSL_PATH="$HOME/libhsl/builddir/libhsl.so"
+          LIBAMPL_PATH="$HOME/ampl/amplsolver.a"
+          DEPS="${{ github.workspace }}/dependencies"
+
+          cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                                             -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
+                                             -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
+                                             -DHSL=${LIBHSL_PATH} \
+                                             -DAMPLSOLVER=${LIBAMPL_PATH} \
+                                             -DBQPD=${DEPS}/lib/libbqpd.a \
+                                             -DBUILD_SHARED_LIBS=ON \
+                                             -DBUILD_STATIC_LIBS=OFF
+
+      # uno_ampl is EXCLUDE_FROM_ALL, so it must be requested explicitly.
+      - name: Build uno_ampl
+        run: cmake --build ${{ github.workspace }}/build --target uno_ampl --config ${{ env.BUILD_TYPE }} --parallel
+
+      - name: Run Mittelmann instances and summarize
+        run: |
+          set -uo pipefail
+          UNO="${{ github.workspace }}/build/uno_ampl"
+          DIR="${{ env.SCRATCH }}/Mittelmann"
+          TIMELIMIT=300
+
+          mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
+          if [ "${#INSTANCES[@]}" -eq 0 ]; then
+            echo "::error::No .nl files found under '$DIR'"; exit 1
+          fi
+
+          mkdir -p logs
+          solved=0
+          total=${#INSTANCES[@]}
+          declare -a CONSOLE
+          rows=""
+
+          for nl in "${INSTANCES[@]}"; do
+            name="$(basename "$nl" .nl)"
+            log="logs/${name}.log"
+
+            start=$(date +%s.%N)
+            # Uno enforces time_limit=$TIMELIMIT itself; the outer `timeout` is only a
+            # safety net in case a run gets stuck past its own limit.
+            echo "Solving ${name}"
+            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" preset=ipopt time_limit="$TIMELIMIT" > "$log" 2>&1 || true
+            end=$(date +%s.%N)
+            secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
+
+            if grep -Eq '^Optimization status:[[:space:]]+Success' "$log"; then
+              solved=$((solved + 1))
+              CONSOLE+=("✓ instance ${name} was solved in ${secs} seconds")
+              rows+="| ✅ | \`${name}\` | solved in ${secs}s |"$'\n'
+            else
+              CONSOLE+=("✗ instance ${name} failed in ${secs} seconds")
+              rows+="| ❌ | \`${name}\` | failed |"$'\n'
+            fi
+          done
+
+          # ---- console summary (what you asked for) ----
+          echo ""
+          echo "================= SUMMARY ================="
+          for line in "${CONSOLE[@]}"; do echo "$line"; done
+          echo "------------------------------------------"
+          echo "Solved ${solved} / ${total} instances"
+          echo "=========================================="
+
+          # ---- build the markdown report (shared by the run page and the PR comment) ----
+          {
+            echo "## Mittelmann benchmark — uno_ampl (time_limit=${TIMELIMIT}s)"
+            echo ""
+            echo "Commit \`${GITHUB_SHA:0:7}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo ""
+            echo "| | instance | result |"
+            echo "|:-:|:--|:--|"
+            printf '%s' "$rows"
+            echo ""
+            echo "**Solved ${solved} / ${total} instances**"
+          } > benchmark-comment.md
+
+          # ---- pretty summary on the workflow run page ----
+          cat benchmark-comment.md >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::notice title=Mittelmann benchmark::Solved ${solved}/${total} instances"
+
+      # Posts the benchmark report as a comment on the PR. The `header` makes it a
+      # "sticky" comment: subsequent runs on the same PR (i.e. new commits) update
+      # this same comment in place instead of adding a new one.
+      - name: Post benchmark results as a PR comment
+        if: github.event_name == 'workflow_dispatch'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: mittelmann-benchmark
+          number: ${{ inputs.pr_number }}
+          path: benchmark-comment.md
+
+      - name: Upload run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mittelmann-logs
+          path: logs/

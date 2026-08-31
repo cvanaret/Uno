@@ -94,6 +94,7 @@ program example_uno
     !---------------------------------------------------
     model = uno_create_model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 
+    success = uno_set_model_name(model, "hs015")
     success = uno_set_objective(model, optimization_sense, objective, gradient)
     success = uno_set_constraints(model, number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds, &
                                   number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)

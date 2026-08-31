@@ -1,4 +1,4 @@
-name: ASAN and UBSAN on the C and Fortran examples
+name: Sanitizers on the C and Fortran examples
 
 on:
   push:

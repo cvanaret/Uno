@@ -164,6 +164,12 @@ extern "C" {
    void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing);
 
    // [optional]
+   // sets the name of a given model (used e.g. in logs and KKT system dumps).
+   // an empty name falls back to the interface default.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_model_name(void* model, const char* name);
+
+   // [optional]
    // sets the variables lower bounds of a given model.
    // takes as inputs an array of lower bounds of size "number_variables".
    // returns true if it succeeded, false otherwise.

@@ -245,6 +245,7 @@ function uno_model(
   lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing,
   y0::Union{Vector{Float64},Nothing}=nothing,
+  name::AbstractString="",
 )
   @assert nvar == length(lvar) == length(uvar)
   @assert ncon == length(lcon) == length(ucon)
@@ -260,6 +261,7 @@ function uno_model(
   base_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
+  isempty(name) || uno_set_model_name(c_model, name)
   model = Model(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
                 eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 

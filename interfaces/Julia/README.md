@@ -121,6 +121,21 @@ model = Model(() -> UnoSolver.Optimizer(preset="ipopt"))
 set_attribute(model, "linear_solver", "MUMPS")
 ```
 
+### SSIDS
+
+SPRAL's SSIDS solver can be used by setting the `linear_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="ipopt"))
+set_attribute(model, "linear_solver", "SSIDS")
+```
+
+`SPRAL_jll` was compiled with OpenMP and requires the following environment variables to be set:
+```
+OMP_CANCELLATION=TRUE
+OMP_PROC_BIND=TRUE
+```
+
 ## QP solvers
 
 If not specified by the user, the default QP solver is BQPD.

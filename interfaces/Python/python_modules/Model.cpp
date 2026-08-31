@@ -35,6 +35,10 @@ namespace uno {
       }), "Constructor")
 
       // methods
+      .def("set_name", [](PythonUserModel& user_model, const std::string& name) {
+         user_model.name = name;
+      })
+
       .def("set_variables_lower_bounds", [](PythonUserModel& user_model, std::vector<double> variables_lower_bounds) {
          if (static_cast<uno_int>(variables_lower_bounds.size()) != user_model.number_variables) {
             throw std::invalid_argument("Dimension mismatch in variables_lower_bounds.");
