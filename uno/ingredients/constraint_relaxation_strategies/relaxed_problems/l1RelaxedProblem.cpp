@@ -374,6 +374,7 @@ namespace uno {
 
    void l1RelaxedProblem::set_auxiliary_measure(Iterate& iterate) const {
       iterate.progress.auxiliary = 0.;
+      /*
       // form the proximal term: zeta/2 ||D_R (x - x_R)||^2
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          double proximal_term = 0.;
@@ -385,6 +386,7 @@ namespace uno {
          proximal_term *= (this->proximal_coefficient / 2.);
          iterate.progress.auxiliary = proximal_term;
       }
+      */
    }
 
    // predicted reductions
@@ -417,6 +419,7 @@ namespace uno {
    double l1RelaxedProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const {
       double predicted_auxiliary_reduction = 0.;
+      /*
       // form the directional derivative -zeta D_R^2 (x - x_R) and scale it by the step length
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
@@ -426,6 +429,7 @@ namespace uno {
          }
          predicted_auxiliary_reduction *= step_length * (-this->proximal_coefficient);
       }
+      */
       return predicted_auxiliary_reduction;
    }
 } // namespace
