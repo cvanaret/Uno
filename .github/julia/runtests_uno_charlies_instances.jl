@@ -59,7 +59,7 @@ function test_isolated()
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 0.) <= tolerance
     (tolerance, dual_solution) = if preset == "ipopt"
-       (1000.*tolerance, [1000., 1000., 1000., 1000.]) # IPOPT scales the feasibility objective by 1000
+       (1000. * tolerance, [1000., 1000., 1000., 1000.]) # IPOPT scales the feasibility objective by 1000
     else
        (tolerance, [1., 1., 1., 1.])
     end
@@ -88,7 +88,7 @@ function test_nactive()
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 0.) <= tolerance
     (tolerance, dual_solution) = if preset == "ipopt"
-       (1000.*tolerance, [1000., 500., 0.]) # IPOPT scales the feasibility objective by 1000
+       (1000. * tolerance, [1000., 500., 0.]) # IPOPT scales the feasibility objective by 1000
     else
        (tolerance, [1., 0.5, 0.])
     end
@@ -115,7 +115,7 @@ function test_unique()
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 1.) <= tolerance
     (tolerance, dual_solution) = if preset == "ipopt"
-       (1000.*tolerance, [815.4845, 1000.]) # IPOPT scales the feasibility objective by 1000
+       (1000. * tolerance, [815.4845, 1000.]) # IPOPT scales the feasibility objective by 1000
     else
        (tolerance, [0.8154845, 1.])
     end
