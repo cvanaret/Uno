@@ -49,27 +49,28 @@ namespace uno {
 
    void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem,
          Iterate& current_iterate, Evaluations& evaluations) {
+      current_iterate.set_number_variables(feasibility_problem.number_variables);
       // l <= c(x) - p + n <= u
       evaluations.evaluate_constraints(feasibility_problem.model, current_iterate.primals);
-      feasibility_problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t constraint_index,
-            size_t elastic_index, double jacobian_coefficient) {
+      feasibility_problem.set_elastic_variable_values([&](size_t constraint_index,
+            size_t elastic_index, ElasticType elastic_type) {
          // by default
-         iterate.primals[elastic_index] = 0.;
-         iterate.multipliers.lower_bounds[elastic_index] = 1.;
-         iterate.multipliers.upper_bounds[elastic_index] = 0.;
+         current_iterate.primals[elastic_index] = 0.;
+         current_iterate.multipliers.lower_bounds[elastic_index] = 1.;
+         current_iterate.multipliers.upper_bounds[elastic_index] = 0.;
 
          // violated lower bound: set n
          if (evaluations.constraints[constraint_index] < feasibility_problem.get_constraints_lower_bounds()[constraint_index]) {
-            if (jacobian_coefficient == 1.) { // n
-               iterate.primals[elastic_index] = feasibility_problem.get_constraints_lower_bounds()[constraint_index] - evaluations.constraints[constraint_index];
-               iterate.multipliers.lower_bounds[elastic_index] = 0.;
+            if (elastic_type == ElasticType::NEGATIVE) {
+               current_iterate.primals[elastic_index] = feasibility_problem.get_constraints_lower_bounds()[constraint_index] - evaluations.constraints[constraint_index];
+               current_iterate.multipliers.lower_bounds[elastic_index] = 0.;
             }
          }
          // violated upper bound: set p
          else if (feasibility_problem.get_constraints_upper_bounds()[constraint_index] < evaluations.constraints[constraint_index]) {
-            if (jacobian_coefficient == -1.) { // p
-               iterate.primals[elastic_index] = evaluations.constraints[constraint_index] - feasibility_problem.get_constraints_upper_bounds()[constraint_index];
-               iterate.multipliers.lower_bounds[elastic_index] = 0.;
+            if (elastic_type == ElasticType::POSITIVE) {
+               current_iterate.primals[elastic_index] = evaluations.constraints[constraint_index] - feasibility_problem.get_constraints_upper_bounds()[constraint_index];
+               current_iterate.multipliers.lower_bounds[elastic_index] = 0.;
             }
          }
       });

@@ -346,14 +346,13 @@ namespace uno {
       return {this->model.number_variables, this->number_constraints, this->elastic_variables.size()};
    }
 
-   void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,
-         double)>& elastic_setting_function) const {
-      iterate.set_number_variables(this->number_variables);
+   void l1RelaxedProblem::set_elastic_variable_values(const std::function<void(size_t, size_t, ElasticType)>&
+         elastic_setting_function) const {
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         elastic_setting_function(iterate, constraint_index, elastic_index, -1.);
+         elastic_setting_function(constraint_index, elastic_index, ElasticType::POSITIVE); // Jacobian coefficient -1
       }
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         elastic_setting_function(iterate, constraint_index, elastic_index, 1.);
+         elastic_setting_function(constraint_index, elastic_index, ElasticType::NEGATIVE); // Jacobian coefficient 1
       }
    }
 

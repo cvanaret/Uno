@@ -180,13 +180,14 @@ namespace uno {
       // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
       evaluations.evaluate_constraints(feasibility_problem.model, iterate.primals);
       const double mu = this->barrier_parameter();
-      const auto elastic_setting_function = [&](Iterate& iterate, size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
+      const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
          // precomputations
          const double constraint_j = evaluations.constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
          const double sqrt_radical = std::sqrt(radical);
+         const double jacobian_coefficient = (elastic_type == ElasticType::POSITIVE) ? -1. : 1.;
 
          iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
          iterate.multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
@@ -198,8 +199,7 @@ namespace uno {
             throw std::runtime_error("The elastic dual is not strictly positive.");
          }
       };
-      feasibility_problem.set_elastic_variable_values(iterate, elastic_setting_function);
-      //throw std::runtime_error("STOP HERE");
+      feasibility_problem.set_elastic_variable_values(elastic_setting_function);
    }
 
    template <typename BarrierProblem>
