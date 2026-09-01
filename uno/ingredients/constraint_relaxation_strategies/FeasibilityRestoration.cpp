@@ -103,6 +103,7 @@ namespace uno {
          this->first_use_feasibility_multipliers = false;
       }
 
+      /*
       this->feasibility_problem.compute_multipliers(this->other_phase_multipliers, current_evaluations);
       DEBUG2 << "Feasibility constraint multipliers: " << this->other_phase_multipliers.constraints << '\n';
       DEBUG2 << "Feasibility LB multipliers: " << this->other_phase_multipliers.lower_bounds << '\n';
@@ -129,6 +130,7 @@ namespace uno {
       else {
          DEBUG << "The current iterate does not satisfy the infeasible stationary termination criteria\n";
       }
+      */
       return false;
    }
 
