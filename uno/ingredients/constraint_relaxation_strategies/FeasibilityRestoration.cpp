@@ -138,25 +138,25 @@ namespace uno {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
-      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      // save the current point (progress and primals) upon switching
+
+      // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
       this->reference_optimality_primals = current_iterate.primals;
-      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-
-      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
+
+      current_iterate.set_number_variables(this->feasibility_problem.number_variables);
+      this->initial_point.resize(this->feasibility_problem.number_variables);
+      // swap the iterate's multipliers and the feasibility multipliers maintained by the class
+      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
       this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
-      this->feasibility_problem.compute_elastics(current_iterate, current_evaluations);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
-      this->initial_point.resize(this->feasibility_problem.number_variables);
 
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
