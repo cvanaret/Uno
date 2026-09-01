@@ -178,7 +178,10 @@ namespace uno {
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
       // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
+      std::cout << "Current x = " << view(iterate.primals.data(), 2) << '\n';
+      evaluations.are_constraints_computed = false;
       evaluations.evaluate_constraints(feasibility_problem.model, iterate.primals);
+      std::cout << "CONSTRAINT VALUES: " << evaluations.constraints << '\n';
       const double mu = this->barrier_parameter();
       const auto elastic_setting_function = [&](Iterate& iterate, size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
          // precomputations
@@ -199,6 +202,7 @@ namespace uno {
          }
       };
       feasibility_problem.set_elastic_variable_values(iterate, elastic_setting_function);
+      //throw std::runtime_error("STOP HERE");
    }
 
    template <typename BarrierProblem>
