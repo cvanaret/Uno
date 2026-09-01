@@ -97,6 +97,7 @@ namespace uno {
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
+      this->feasibility_globalization_strategy->reset();
 
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
