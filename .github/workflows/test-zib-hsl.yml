@@ -43,8 +43,6 @@ jobs:
 
       - name: Configure
         run: |
-          LIBBLAS_PATH="${{env.LIBS}}/libblas.so"
-          LIBLAPACK_PATH="${{env.LIBS}}/liblapack.so"
           LIBHSL_PATH="${{env.LIBS}}/libhsl/builddir/libhsl.so"
           LIBAMPL_PATH="${{env.LIBS}}/ampl/amplsolver.a"
 
@@ -53,8 +51,6 @@ jobs:
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
             -DCMAKE_Fortran_COMPILER=gfortran \
-            -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
-            -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
             -DHSL=${LIBHSL_PATH} \
             -DAMPLSOLVER=${LIBAMPL_PATH} \
             -DBUILD_STATIC_LIBS=OFF \
