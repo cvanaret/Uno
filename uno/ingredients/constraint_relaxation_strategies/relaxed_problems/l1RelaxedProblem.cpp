@@ -361,7 +361,7 @@ namespace uno {
    void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm /*norm*/) const {
       Vector<double> constraints(this->number_constraints); // TODO preallocate
       this->evaluate_constraints(iterate, constraints.view(), evaluations);
-      iterate.progress.infeasibility = norm_1(constraints);
+      iterate.progress.infeasibility = this->model.constraint_violation(constraints, Norm::L1);
    }
 
    // rho * sum(p + n)
@@ -404,7 +404,7 @@ namespace uno {
       // r + α(JΔx − Δp + Δn) = r - α r = (1-α) r
       // so pred(α) = ‖r‖ − ‖(1−α) r‖ = α ‖c(x) − p + n‖
       // note: this assumes that JΔx − Δp + Δn = -r, which is the case for KKT systems
-      return step_length * norm_1(constraints);
+      return step_length * this->model.constraint_violation(constraints, Norm::L1);
    }
 
    std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction(const Iterate& /*current_iterate*/,
