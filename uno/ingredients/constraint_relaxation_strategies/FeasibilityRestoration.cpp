@@ -101,7 +101,6 @@ namespace uno {
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
       this->reference_optimality_primals = current_iterate.primals;
-      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
@@ -116,12 +115,15 @@ namespace uno {
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
+      const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
+      this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
+      DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
 
-      DEBUG2 << "Current iterate to start feasibility restoration:\n" << current_iterate << '\n';
+      DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();
@@ -193,7 +195,7 @@ namespace uno {
          // compute the linearized constraint violation
          // TODO preallocate
          Vector<double> result(model.number_constraints);
-         current_evaluations.compute_jacobian_vector_product(model, direction.primals.view(), result.view());
+         current_evaluations.compute_jacobian_vector_product(model, view(direction.primals, 0, model.number_variables), result.view());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
             step_length * result, this->residual_norm);
          const bool switch_back = (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
@@ -216,9 +218,11 @@ namespace uno {
 
       // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
       // least-squares multipliers for the original problem
-      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
       // this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
-      current_iterate.multipliers.constraints.fill(0.);
+      trial_iterate.multipliers.constraints.fill(0.);
+      //trial_iterate.multipliers.lower_bounds.fill(1.); // TODO compute based on the linearized complementarity equation
+      //trial_iterate.multipliers.upper_bounds.fill(-1.);
 
       current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);

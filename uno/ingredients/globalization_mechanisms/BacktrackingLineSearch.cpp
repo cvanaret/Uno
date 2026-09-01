@@ -164,22 +164,26 @@ namespace uno {
             termination = true;
          }
          // from here on, the trial iterate is rejected
-         else if (step_length >= this->minimum_step_length) {
+         else {
             step_length = this->decrease_step_length(step_length);
-            evaluation_cache.trial_evaluations.reset();
-         }
-         else { // minimum_step_length reached
-            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
-            // check if we can terminate at a first-order point
-            if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
-               statistics.set("Status", "accepted (small step length)");
-               termination = true;
+            if (step_length * direction.primal_dual_step_length >= this->minimum_step_length) {
+               // keep going
+               evaluation_cache.trial_evaluations.reset();
             }
             else {
-               // switch to solving the feasibility problem
-               statistics.set("Status", "small step length");
-               evaluation_cache.trial_evaluations.reset();
-               return false;
+               // minimum_step_length reached
+               DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
+               // check if we can terminate at a first-order point
+               if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
+                  statistics.set("Status", "accepted (small step length)");
+                  termination = true;
+               }
+               else {
+                  // switch to solving the feasibility problem
+                  statistics.set("Status", "small step length");
+                  evaluation_cache.trial_evaluations.reset();
+                  return false;
+               }
             }
          }
 

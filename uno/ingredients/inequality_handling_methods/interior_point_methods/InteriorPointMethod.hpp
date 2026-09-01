@@ -199,6 +199,7 @@ namespace uno {
          }
       };
       feasibility_problem.set_elastic_variable_values(iterate, elastic_setting_function);
+      //throw std::runtime_error("STOP HERE");
    }
 
    template <typename BarrierProblem>
