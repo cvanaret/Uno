@@ -21,7 +21,7 @@ on:
       - 'docs/**'
 
 env:
-  BUILD_TYPE: Debug
+  BUILD_TYPE: Release
   LIBS: /srv/lib
 
 concurrency:
