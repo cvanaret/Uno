@@ -195,7 +195,7 @@ namespace uno {
          // compute the linearized constraint violation
          // TODO preallocate
          Vector<double> result(model.number_constraints);
-         current_evaluations.compute_jacobian_vector_product(model, direction.primals.view(), result.view());
+         current_evaluations.compute_jacobian_vector_product(model, view(direction.primals, 0, model.number_variables), result.view());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
             step_length * result, this->residual_norm);
          const bool switch_back = (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
