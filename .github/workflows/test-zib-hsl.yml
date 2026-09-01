@@ -37,9 +37,9 @@ jobs:
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
 
-#      - name: Test NFS
-#        run: |
-#          cat ${{env.LIBS}}/test.txt
+      - name: Test NFS
+        run: |
+          cat ${{env.LIBS}}/test.txt
 
       - name: Configure
         run: |
