@@ -219,7 +219,7 @@ namespace uno {
       try {
          this->constraint_relaxation_strategy->initialize_second_order_corrections(current_iterate, trial_iterate,
             evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
-         double old_infeasibility_SOC = current_iterate.progress.infeasibility;
+         double old_infeasibility_SOC = trial_iterate.progress.infeasibility;
          size_t SOC_iteration = 1;
 
          while (!SOC_termination) {
@@ -243,7 +243,7 @@ namespace uno {
                // terminate the SOCs and keep backtracking
                SOC_termination = true;
                DEBUG << "SOC done, resume backtracking " << '\n';
-                  }
+            }
             else {
                // continue the SOCs
                this->constraint_relaxation_strategy->update_second_order_corrections(trial_iterate, evaluation_cache.trial_evaluations);
