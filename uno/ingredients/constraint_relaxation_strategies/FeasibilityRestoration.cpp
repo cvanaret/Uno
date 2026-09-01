@@ -115,13 +115,15 @@ namespace uno {
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
-      this->feasibility_problem.set_proximal_coefficient(this->feasibility_inequality_handling_method->proximal_coefficient());
+      const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
+      this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
+      DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
 
-      DEBUG2 << "Current iterate to start feasibility restoration:\n" << current_iterate << '\n';
+      DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();
