@@ -45,6 +45,7 @@ jobs:
         run: |
           LIBHSL_PATH="${{env.LIBS}}/libhsl/builddir/libhsl.so"
           LIBMETIS_PATH="${{env.LIBS}}/libmetis.so"
+          METIS_INCLUDE_PATH="${{env.LIBS}}/metis.h"
           LIBAMPL_PATH="${{env.LIBS}}/ampl/amplsolver.a"
 
           cmake -B build \
@@ -52,6 +53,7 @@ jobs:
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
             -DCMAKE_Fortran_COMPILER=gfortran \
+            -DMETIS_INCLUDE_DIR=${METIS_INCLUDE_PATH} \
             -DHSL=${LIBHSL_PATH} \
             -DMETIS=${LIBMETIS_PATH} \
             -DAMPLSOLVER=${LIBAMPL_PATH} \
