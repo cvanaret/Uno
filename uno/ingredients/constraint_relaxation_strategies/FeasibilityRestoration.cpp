@@ -218,11 +218,11 @@ namespace uno {
 
       // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
       // least-squares multipliers for the original problem
-      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
       // this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
-      current_iterate.multipliers.constraints.fill(0.);
-      current_iterate.multipliers.lower_bounds.fill(1.); // TODO compute based on the linearized complementarity equation
-      current_iterate.multipliers.upper_bounds.fill(-1.);
+      trial_iterate.multipliers.constraints.fill(0.);
+      //trial_iterate.multipliers.lower_bounds.fill(1.); // TODO compute based on the linearized complementarity equation
+      //trial_iterate.multipliers.upper_bounds.fill(-1.);
 
       current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
