@@ -59,7 +59,7 @@ namespace uno {
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<GlobalizationStrategy> globalization_strategy;
-      MeritFunction feasibility_globalization_strategy;
+      std::unique_ptr<GlobalizationStrategy> feasibility_globalization_strategy;
       Vector<double> initial_point;
 
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
