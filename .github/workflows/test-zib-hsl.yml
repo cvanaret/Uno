@@ -44,6 +44,7 @@ jobs:
       - name: Configure
         run: |
           LIBHSL_PATH="${{env.LIBS}}/libhsl/builddir/libhsl.so"
+          LIBMETIS_PATH="${{env.LIBS}}/libmetis.so"
           LIBAMPL_PATH="${{env.LIBS}}/ampl/amplsolver.a"
 
           cmake -B build \
@@ -52,6 +53,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=g++ \
             -DCMAKE_Fortran_COMPILER=gfortran \
             -DHSL=${LIBHSL_PATH} \
+            -DMETIS=${LIBMETIS_PATH} \
             -DAMPLSOLVER=${LIBAMPL_PATH} \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
