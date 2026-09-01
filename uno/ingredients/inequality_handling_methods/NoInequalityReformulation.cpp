@@ -8,6 +8,7 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -46,14 +47,31 @@ namespace uno {
       // do nothing
    }
 
-   void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate,
-         Evaluations& /*evaluations*/) {
-      // c(x) - p + n = 0
-      // TODO set (one of) the elastic variables to +/- the value of the constraint if violated
-      problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
+   void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem,
+         Iterate& current_iterate, Evaluations& evaluations) {
+      // l <= c(x) - p + n <= u
+      evaluations.evaluate_constraints(feasibility_problem.model, current_iterate.primals);
+      feasibility_problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t constraint_index,
+            size_t elastic_index, double jacobian_coefficient) {
+         // by default
          iterate.primals[elastic_index] = 0.;
          iterate.multipliers.lower_bounds[elastic_index] = 1.;
          iterate.multipliers.upper_bounds[elastic_index] = 0.;
+
+         // violated lower bound: set n
+         if (evaluations.constraints[constraint_index] < feasibility_problem.get_constraints_lower_bounds()[constraint_index]) {
+            if (jacobian_coefficient == 1.) { // n
+               iterate.primals[elastic_index] = feasibility_problem.get_constraints_lower_bounds()[constraint_index] - evaluations.constraints[constraint_index];
+               iterate.multipliers.lower_bounds[elastic_index] = 0.;
+            }
+         }
+         // violated upper bound: set p
+         else if (feasibility_problem.get_constraints_upper_bounds()[constraint_index] < evaluations.constraints[constraint_index]) {
+            if (jacobian_coefficient == -1.) { // p
+               iterate.primals[elastic_index] = evaluations.constraints[constraint_index] - feasibility_problem.get_constraints_upper_bounds()[constraint_index];
+               iterate.multipliers.lower_bounds[elastic_index] = 0.;
+            }
+         }
       });
    }
 
