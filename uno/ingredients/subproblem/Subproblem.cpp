@@ -17,11 +17,10 @@
 
 namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model,
-      InertiaCorrectionStrategy& inertia_correction_strategy, const Scaling& scaling):
+      InertiaCorrectionStrategy& inertia_correction_strategy):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
          problem(problem), hessian_model(hessian_model),
-         inertia_correction_strategy(inertia_correction_strategy),
-         scaling(scaling) {
+         inertia_correction_strategy(inertia_correction_strategy) {
    }
 
    View<const uno_int> Subproblem::get_jacobian_row_indices() const {

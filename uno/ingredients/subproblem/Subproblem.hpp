@@ -8,7 +8,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "optimization/Scaling.hpp"
 #include "symbolic/IntegerRange.hpp"
 
 namespace uno {
@@ -26,8 +25,7 @@ namespace uno {
    public:
       const size_t number_variables, number_constraints;
 
-      Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy,
-         const Scaling& scaling);
+      Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
       [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const;
@@ -90,7 +88,6 @@ namespace uno {
    protected:
       HessianModel& hessian_model;
       InertiaCorrectionStrategy& inertia_correction_strategy;
-      const Scaling& scaling;
       const IntegerRange empty_set{0};
    };
 

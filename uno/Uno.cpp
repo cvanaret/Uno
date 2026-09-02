@@ -17,12 +17,12 @@
 #include "model/FixedBoundsConstraintsModel.hpp"
 #include "model/HomogeneousEqualityConstrainedModel.hpp"
 #include "model/Model.hpp"
+#include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
-#include "optimization/Scaling.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Statistics.hpp"
@@ -52,8 +52,12 @@ namespace uno {
       // - the model has bound constraints or inequality constraints
       if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
             (model.has_bound_constraints() || model.has_inequality_constraints())) {
+         // scale the functions
+         Vector<double> initial_primals(model.number_variables);
+         model.initial_primal_point(initial_primals);
+         const ScaledModel scaled_model(model, initial_primals, options);
          // move the fixed variables to the set of general constraints
-         const FixedBoundsConstraintsModel fixed_bound_model(model);
+         const FixedBoundsConstraintsModel fixed_bound_model(scaled_model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
          const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
          // slightly relax the bound constraints
