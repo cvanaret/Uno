@@ -106,9 +106,11 @@ jobs:
               solved=$((solved + 1))
               CONSOLE+=("✓ instance ${name} was solved in ${secs} seconds")
               rows+="| ✅ | \`${name}\` | solved in ${secs}s |"$'\n'
+              echo "solved in ${secs}s"
             else
               CONSOLE+=("✗ instance ${name} failed in ${secs} seconds")
-              rows+="| ❌ | \`${name}\` | failed |"$'\n'
+              rows+="| ❌ | \`${name}\` | failed in ${secs}s |"$'\n'
+              echo "failed in ${secs}s"
             fi
           done
 
