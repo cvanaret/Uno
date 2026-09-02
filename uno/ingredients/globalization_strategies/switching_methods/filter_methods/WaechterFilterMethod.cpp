@@ -58,6 +58,7 @@ namespace uno {
          // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
          if (sufficient_decrease) {
             DEBUG << "Trial iterate (f-type) was accepted by satisfying Armijo condition\n";
+            statistics.set("Status", std::string(symbols::check) + " (f-type)");
          }
          else {
             DEBUG << "Armijo condition not satisfied\n";
@@ -71,6 +72,7 @@ namespace uno {
          if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
                trial_progress.infeasibility, trial_merit)) {
             DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";
+            statistics.set("Status", std::string(symbols::check) + " (h-type)");
          }
          else {
             DEBUG << "Trial iterate (h-type) not acceptable with respect to current point\n";
@@ -113,7 +115,6 @@ namespace uno {
          DEBUG << "Adding current iterate to the filter\n";
          this->filter->add(current_progress.infeasibility, current_merit);
       }
-      statistics.set("Status", std::string(symbols::check) + " (filter)");
       return true;
    }
 
