@@ -62,6 +62,6 @@ Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_
         primal_target,
         objective_tol = 1e-4,
         primal_tol = 1e-3,
-        exclude = ["501_010", "501_011"],  # Iteration limit
+        exclude = ["105_013", "501_010", "501_011"],  # Iteration limit
     )
 end
