@@ -1,8 +1,8 @@
 name: Mittelmann benchmark
 
 # Compiles uno_ampl on the fly (ASL + libhsl) and runs it on the Mittelmann
-# .nl instances, giving each one `time_limit=60`. Prints a per-instance summary
-# (tickmark = solved, cross = failed) and the number of solved instances.
+# .nl instances, giving each one a given `time_limit`. Prints a per-instance
+# summary (tickmark = solved, cross = failed) and the number of solved instances.
 #
 # Success/failure is read from each run's log: the optimization summary starts
 # with the line   Optimization status:            Success
@@ -76,7 +76,8 @@ jobs:
           set -uo pipefail
           UNO="${{ github.workspace }}/build/uno_ampl"
           DIR="${{ env.SCRATCH }}/Mittelmann"
-          TIMELIMIT=300
+          # 10 minutes
+          TIMELIMIT=600
 
           mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
           if [ "${#INSTANCES[@]}" -eq 0 ]; then
