@@ -11,6 +11,8 @@
 #include <unordered_map>
 
 namespace uno {
+   static constexpr size_t header_print_frequency = 10;
+
    class Statistics {
    public:
       Statistics() = default;

@@ -127,8 +127,8 @@ namespace uno {
       if (!this->finalized) {
          this->finalize();
       }
-      // print column names every 10 iterations
-      if (this->line_index % 10 == 0) {
+      // print column names every few iterations
+      if (this->line_index > 0 && this->line_index % header_print_frequency == 0) {
          print_column_names();
       }
 
