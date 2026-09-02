@@ -74,11 +74,9 @@ namespace uno {
 
    bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const {
-      // use the infeasibility in the residual norm here (inf norm for IPOPT implementation)
-      DEBUG << "Testing whether " << trial_iterate.primal_infeasibility << " <= " << this->sufficient_infeasibility_decrease_factor
-         << "*" << reference_infeasibility << " = " << this->sufficient_infeasibility_decrease_factor * reference_infeasibility << '\n';
+      // if the trial infeasibility improves upon the best known infeasibility
       return trial_iterate.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
-         this->filter->filter_acceptable(trial_iterate.progress.infeasibility, unconstrained_merit_function(trial_iterate.progress));
+         this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_iterate.progress.infeasibility);
    }
 
    std::string FletcherFilterMethod::get_name() const {
