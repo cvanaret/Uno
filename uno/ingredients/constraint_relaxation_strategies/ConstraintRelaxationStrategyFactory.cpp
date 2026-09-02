@@ -14,7 +14,7 @@ namespace uno {
          bool use_trust_region, Options& options) {
       // figure out whether there are constraints altogether
       if (model.number_constraints == 0) {
-         INFO << "The model is unconstrained, picking no relaxation\n";
+         DEBUG << "The model is unconstrained, picking no relaxation\n";
          // override user defined option
          options.set_string("constraint_relaxation_strategy", "no_relaxation", true);
          return std::make_unique<NoRelaxation>(model, options);
@@ -22,6 +22,7 @@ namespace uno {
       // from now on, there are constraints
       const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       if (constraint_relaxation_type == "feasibility_restoration") {
+         DEBUG << "Picking feasibility restoration\n";
          return std::make_unique<FeasibilityRestoration>(model, use_trust_region, options);
       }
       throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");

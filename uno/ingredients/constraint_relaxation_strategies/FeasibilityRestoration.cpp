@@ -45,10 +45,10 @@ namespace uno {
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       // reformulation of the original problem and the feasibility problem
-      INFO << "- Allocating optimality (original) problem:\n";
+      INFO << "- Allocating optimality (original) method: ";
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
          1., options);
-      INFO << "- Allocating feasibility problem:\n";
+      INFO << "- Allocating feasibility method: ";
       this->feasibility_inequality_handling_method = InequalityHandlingMethodFactory::create(this->feasibility_problem,
          uses_trust_region, 0., options);
 

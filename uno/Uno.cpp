@@ -41,9 +41,10 @@ namespace uno {
 
    // solve with user callbacks
    Result Uno::solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
-      DISCRETE << to_string(model.get_problem_type()) << " model " << model.name << " has " << model.number_variables <<
+      DISCRETE << "Model " << model.name << " has " << model.number_variables <<
          " variables, " << model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
+      DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
       // reformulate the model if:
       // - the user wants an interior-point method with log barrier function
