@@ -14,7 +14,7 @@ namespace uno {
    size_t Statistics::string_width = 15;
  
    const std::map<std::string_view, size_t> Statistics::column_order = {
-      {"Major", 1}, {"Minor", 2}, {"Penalty", 5}, {"Barrier", 8},
+      {"Iter", 1}, {"LS", 2}, {"TR", 2}, {"Penalty", 5}, {"Barrier", 8},
       {"Steplength", 10}, {"Radius", 11}, {"Phase", 20}, {"Regulariz", 21},
       {"Funnel", 25}, {"|BFGS|", 26}, {"|SR1|", 26}, {"||Step||", 31},
       {"Objective", 100}, {"Infeas", 101}, {"Statio", 104}, {"Compl", 105},
@@ -52,14 +52,7 @@ namespace uno {
       const size_t count = (0 <= length) ? std::min(static_cast<size_t>(length), buffer_size - 1) : 0;
       return std::string_view(buffer, count);
    }
- 
-   size_t Statistics::index_of(std::string_view name) {
-      if (!this->finalized) {
-         this->finalize();
-      }
-      return this->name_to_index.at(name);
-   }
- 
+
    void Statistics::add_column(std::string_view name, size_t width, size_t precision) {
       // validate and append the column
       if (column_order.find(name) == column_order.end()) {
@@ -70,34 +63,13 @@ namespace uno {
       this->finalized = false;
    }
  
-   void Statistics::finalize() {
-      // order columns by their index
-      std::sort(this->columns.begin(), this->columns.end(),
-         [](const Column& a, const Column& b) {
-            return column_order.at(a.name) < column_order.at(b.name);
-         });
-      // build name->index mapping
-      this->name_to_index.clear();
-      this->name_to_index.reserve(this->columns.size());
-      for (size_t column_index: Range(this->columns.size())) {
-         this->name_to_index.emplace(this->columns[column_index].name, column_index);
-      }
-      this->finalized = true;
-   }
- 
    void Statistics::start_new_line() {
       for (auto& column : this->columns) {
          column.is_set = false;
          column.value.clear(); // keeps capacity
       }
    }
- 
-   void Statistics::set_value(size_t index, std::string_view value) {
-      Column& column = this->columns[index];
-      column.value.assign(value);
-      column.is_set = true;
-   }
- 
+
    void Statistics::set(std::string_view name, std::string value) {
       Column& column = this->columns[this->index_of(name)];
       column.value = std::move(value);
@@ -144,23 +116,10 @@ namespace uno {
       INFO << line; // single insertion
       Logger::flush();
    }
- 
+
    void Statistics::print_header() {
-      if (!this->finalized) {
-         this->finalize();
-      }
       this->print_horizontal_line();
-      INFO << "  Iterations\n";
- 
-      std::string line;
-      line.reserve(128);
-      for (const auto& column : this->columns) {
-         append_cell(line, column.name, column.width);
-      }
-      line.push_back('\n');
-      INFO << line; // single insertion
-      Logger::flush();
- 
+      this->print_column_names();
       this->print_horizontal_line();
    }
  
@@ -168,6 +127,12 @@ namespace uno {
       if (!this->finalized) {
          this->finalize();
       }
+      // print column names every 10 iterations
+      if (this->line_index % 10 == 0) {
+         print_column_names();
+      }
+
+      // print line
       std::string line;
       line.reserve(128);
       for (const auto& column : this->columns) {
@@ -177,9 +142,55 @@ namespace uno {
       line.push_back('\n');
       INFO << line; // single insertion
       Logger::flush();
+      ++this->line_index;
    }
  
    void Statistics::print_footer() {
       this->print_header();
+   }
+
+   // protected member functions
+
+   void Statistics::finalize() {
+      // order columns by their index
+      std::sort(this->columns.begin(), this->columns.end(),
+         [](const Column& a, const Column& b) {
+            return column_order.at(a.name) < column_order.at(b.name);
+         });
+      // build name->index mapping
+      this->name_to_index.clear();
+      this->name_to_index.reserve(this->columns.size());
+      for (size_t column_index: Range(this->columns.size())) {
+         this->name_to_index.emplace(this->columns[column_index].name, column_index);
+      }
+      this->finalized = true;
+   }
+
+   size_t Statistics::index_of(std::string_view name) {
+      if (!this->finalized) {
+         this->finalize();
+      }
+      return this->name_to_index.at(name);
+   }
+
+   void Statistics::set_value(size_t index, std::string_view value) {
+      Column& column = this->columns[index];
+      column.value.assign(value);
+      column.is_set = true;
+   }
+
+   void Statistics::print_column_names() {
+      if (!this->finalized) {
+         this->finalize();
+      }
+
+      std::string line;
+      line.reserve(128);
+      for (const auto& column : this->columns) {
+         append_cell(line, column.name, column.width);
+      }
+      line.push_back('\n');
+      INFO << line; // single insertion
+      Logger::flush();
    }
 }

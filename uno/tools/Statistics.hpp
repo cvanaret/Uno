@@ -45,11 +45,13 @@ namespace uno {
       std::vector<Column> columns; // index = print order
       std::unordered_map<std::string_view, size_t> name_to_index; // name to position in `columns`
       bool finalized = false; // columns sorted and name_to_index built?
+      size_t line_index{0};
 
       // sort `columns` by index and build name_to_index, called after the last add_column()
       void finalize();
       [[nodiscard]] size_t index_of(std::string_view name);
       void set_value(size_t index, std::string_view value);
+      void print_column_names();
    };
 }
 
