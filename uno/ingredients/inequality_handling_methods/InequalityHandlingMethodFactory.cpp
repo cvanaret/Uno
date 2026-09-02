@@ -19,12 +19,12 @@ namespace uno {
       if (!problem.has_inequality_constraints() && !problem.has_bound_constraints() && !uses_trust_region) {
          // no reformulation
          if (0 < problem.number_constraints) {
-            INFO << "The problem has no inequalities, picking a pure SQP method\n";
+            INFO << "picking a pure SQP method\n";
             return std::make_unique<NoInequalityReformulation>("pure SQP method", problem, uses_trust_region,
                objective_multiplier, options);
          }
          else {
-            INFO << "The problem has no constraints, picking a pure Newton method\n";
+            INFO << "picking a pure Newton method\n";
             return std::make_unique<NoInequalityReformulation>("pure Newton method", problem, uses_trust_region,
                objective_multiplier, options);
          }
@@ -34,7 +34,7 @@ namespace uno {
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
          // no inequality reformulation: let the subproblem solver handle them
-         INFO << "Picking an inequality-constrained (LP or QP) method\n";
+         INFO << "picking an inequality-constrained (LP or QP) method\n";
          return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method", problem, uses_trust_region,
             objective_multiplier, options);
       }
@@ -42,7 +42,7 @@ namespace uno {
       else if (inequality_handling_method == "interior_point") {
          const std::string barrier_function = options.get_string("barrier_function");
          if (barrier_function == "log") {
-            INFO << "Picking a barrier method\n";
+            INFO << "picking a barrier method\n";
             return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(problem, uses_trust_region,
                objective_multiplier, options);
          }

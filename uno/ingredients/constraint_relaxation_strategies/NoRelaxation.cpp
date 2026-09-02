@@ -7,7 +7,6 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/View.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
@@ -32,6 +31,7 @@ namespace uno {
       this->initial_point.resize(this->original_problem.number_variables);
 
       // reformulation of the original problem
+      INFO << "- Allocating method: ";
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
          1., options);
       //initial_iterate.set_number_variables(this->reformulated_problem->number_variables);

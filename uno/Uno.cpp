@@ -41,9 +41,10 @@ namespace uno {
 
    // solve with user callbacks
    Result Uno::solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
-      DISCRETE << to_string(model.get_problem_type()) << " model " << model.name << " has " << model.number_variables <<
+      DISCRETE << "Model " << model.name << " has " << model.number_variables <<
          " variables, " << model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
+      DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
       // reformulate the model if:
       // - the user wants an interior-point method with log barrier function
@@ -104,7 +105,7 @@ namespace uno {
          while (!termination) {
             ++major_iterations;
             statistics.start_new_line();
-            statistics.set("Major", major_iterations);
+            statistics.set("Iter", major_iterations);
             DEBUG << "\n### Outer iteration " << major_iterations << '\n';
 
             // compute an acceptable iterate by solving a subproblem at the current point
@@ -164,7 +165,7 @@ namespace uno {
          EvaluationCache& evaluation_cache) {
       try {
          statistics.start_new_line();
-         statistics.set("Major", 0);
+         statistics.set("Iter", 0);
          statistics.set("Status", "initial point");
 
          model.project_onto_variable_bounds(current_iterate.primals);
@@ -192,7 +193,7 @@ namespace uno {
 
    Statistics Uno::create_statistics(const Model& model) {
       Statistics statistics{};
-      statistics.add_column("Major", Statistics::int_width, 3);
+      statistics.add_column("Iter", Statistics::int_width, 3);
       statistics.add_column("||Step||", Statistics::double_width, 2);
       statistics.add_column("Objective", Statistics::double_width + 1, 3);
       if (model.is_constrained()) {

@@ -32,7 +32,7 @@ namespace uno {
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
       this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
-      statistics.add_column("Minor", Statistics::int_width, 3);
+      statistics.add_column("LS", Statistics::int_width, 3);
       statistics.add_column("Steplength", Statistics::double_width + 1, 2);
       set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       set_dual_residuals_statistics(statistics, current_iterate);
@@ -150,7 +150,7 @@ namespace uno {
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
          }
-         statistics.set("Minor", number_iterations);
+         statistics.set("LS", number_iterations);
 
          // try second-order corrections if the full step was rejected
          if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
