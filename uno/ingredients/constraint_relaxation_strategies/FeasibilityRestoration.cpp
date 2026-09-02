@@ -189,6 +189,7 @@ namespace uno {
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+      compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(trial_iterate, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
             return true;
@@ -202,10 +203,12 @@ namespace uno {
          const bool switch_back = (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
          if (!switch_back) {
             this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+            compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
          }
          return switch_back;
       }
       this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+      compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
       return false;
    }
 
