@@ -30,7 +30,8 @@ namespace uno {
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) override;
+      void set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem, Iterate& current_iterate,
+         Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
       [[nodiscard]] bool has_second_order_corrections() const override;

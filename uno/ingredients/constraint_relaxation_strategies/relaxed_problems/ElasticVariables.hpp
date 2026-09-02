@@ -15,6 +15,8 @@ namespace uno {
       size_t negative{0};
    };
 
+   enum class ElasticType {POSITIVE, NEGATIVE};
+
    class ElasticVariables {
    public:
       SparseVector<size_t> positive{};

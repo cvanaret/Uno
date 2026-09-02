@@ -18,6 +18,9 @@ namespace uno {
          double reference_infeasibility) const override;
 
       [[nodiscard]] std::string get_name() const override;
+
+   protected:
+      const double sufficient_infeasibility_decrease_factor;
    };
 } // namespace
 

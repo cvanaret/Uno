@@ -31,7 +31,7 @@ namespace uno {
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
          feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
-         feasibility_globalization_strategy(options),
+         feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
@@ -57,11 +57,10 @@ namespace uno {
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
-      this->feasibility_globalization_strategy.initialize(statistics, initial_iterate);
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics);
-      // this->feasibility_inequality_handling_method->initialize_statistics(statistics);
+      this->feasibility_inequality_handling_method->initialize_statistics(statistics);
       statistics.add_column("Phase", Statistics::int_width - 1, 3);
       statistics.set("Phase", "OPT");
    }
@@ -82,7 +81,7 @@ namespace uno {
          DEBUG << "Solving the feasibility subproblem\n";
          statistics.set("Phase", "FEAS");
          return this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
-            this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
+            *this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
             warmstart_information);
       }
    }
@@ -97,6 +96,8 @@ namespace uno {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
+      this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
+      this->feasibility_globalization_strategy->reset();
 
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
@@ -188,6 +189,7 @@ namespace uno {
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+      compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(trial_iterate, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
             return true;
@@ -201,10 +203,12 @@ namespace uno {
          const bool switch_back = (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
          if (!switch_back) {
             this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+            compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
          }
          return switch_back;
       }
       this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+      compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
       return false;
    }
 
@@ -246,7 +250,7 @@ namespace uno {
       }
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
-            this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length, current_evaluations,
+            *this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length, current_evaluations,
             trial_evaluations);
          if (uses_trust_region || accept_iterate) {
             this->feasibility_inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate,

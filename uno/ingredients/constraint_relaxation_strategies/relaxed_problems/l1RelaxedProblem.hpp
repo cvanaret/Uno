@@ -66,7 +66,7 @@ namespace uno {
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const override;
 
-      void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
+      void set_elastic_variable_values(const std::function<void(size_t, size_t, ElasticType)>& elastic_setting_function) const;
 
       // progress measures
       void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const override;

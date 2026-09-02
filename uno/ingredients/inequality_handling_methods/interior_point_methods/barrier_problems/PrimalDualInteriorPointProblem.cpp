@@ -401,9 +401,6 @@ namespace uno {
          throw std::runtime_error("Barrier parameter is infinite");
       }
 
-      // if the primals are too close to their bounds, push the bounds away by a small fraction (Section 3.5)
-
-
       // add the contribution of the barrier terms
       double barrier_terms = 0.;
       for (size_t variable_index: Range(this->inner.number_variables)) {

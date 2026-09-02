@@ -346,29 +346,36 @@ namespace uno {
       return {this->model.number_variables, this->number_constraints, this->elastic_variables.size()};
    }
 
-   void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,
-         double)>& elastic_setting_function) const {
-      iterate.set_number_variables(this->number_variables);
+   void l1RelaxedProblem::set_elastic_variable_values(const std::function<void(size_t, size_t, ElasticType)>&
+         elastic_setting_function) const {
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         elastic_setting_function(iterate, constraint_index, elastic_index, -1.);
+         elastic_setting_function(constraint_index, elastic_index, ElasticType::POSITIVE); // Jacobian coefficient -1
       }
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         elastic_setting_function(iterate, constraint_index, elastic_index, 1.);
+         elastic_setting_function(constraint_index, elastic_index, ElasticType::NEGATIVE); // Jacobian coefficient 1
       }
    }
 
    // progress measures
 
-   void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& /*evaluations*/, Norm /*norm*/) const {
-      iterate.progress.infeasibility = 0.;
+   void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm /*norm*/) const {
+      Vector<double> constraints(this->number_constraints); // TODO preallocate
+      this->evaluate_constraints(iterate, constraints.view(), evaluations);
+      iterate.progress.infeasibility = this->model.constraint_violation(constraints, Norm::L1);
    }
 
-   void l1RelaxedProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
-      evaluations.evaluate_constraints(this->model, iterate.primals);
-      const double scaled_constraint_violation = this->constraint_violation_coefficient *
-         this->model.constraint_violation(evaluations.constraints, Norm::L1);
+   // rho * sum(p + n)
+   void l1RelaxedProblem::set_objective_measure(Iterate& iterate, Evaluations& /*evaluations*/) const {
+      double objective_measure = 0.;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         objective_measure += iterate.primals[elastic_index];
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         objective_measure += iterate.primals[elastic_index];
+      }
+      objective_measure *= this->constraint_violation_coefficient;
       iterate.progress.objective = [=](double /*objective_multiplier*/) {
-         return scaled_constraint_violation;
+         return objective_measure;
       };
    }
 
@@ -389,26 +396,29 @@ namespace uno {
 
    // predicted reductions
 
-   double l1RelaxedProblem::compute_predicted_infeasibility_reduction(const Iterate& /*current_iterate*/,
-         const Vector<double>& /*primal_direction*/, double /*step_length*/, Norm /*norm*/, Evaluations& /*current_evaluations*/) const {
-      return 0.;
+   double l1RelaxedProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& /*primal_direction*/, double step_length, Norm /*norm*/, Evaluations& current_evaluations) const {
+      Vector<double> constraints(this->number_constraints); // TODO preallocate
+      this->evaluate_constraints(current_iterate, constraints.view(), current_evaluations);
+      // Let r = c(x) − p + n
+      // r + α(JΔx − Δp + Δn) = r - α r = (1-α) r
+      // so pred(α) = ‖r‖ − ‖(1−α) r‖ = α ‖c(x) − p + n‖
+      // note: this assumes that JΔx − Δp + Δn = -r, which is the case for KKT systems
+      return step_length * this->model.constraint_violation(constraints, Norm::L1);
    }
 
-   std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
+   std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction(const Iterate& /*current_iterate*/,
+         const Vector<double>& primal_direction, double step_length, Evaluations& /*current_evaluations*/,
          double /*hessian_quadratic_form*/) const {
-      // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      current_evaluations.evaluate_constraints(this->model, current_iterate.primals);
-      current_evaluations.evaluate_jacobian(this->model, current_iterate.primals);
-
-      const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, Norm::L1);
-      // TODO preallocate
-      Vector<double> result(this->model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), result.view());
-      const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
-         step_length * result, Norm::L1);
-      const double predicted_reduction = this->constraint_violation_coefficient * (current_constraint_violation -
-         trial_linearized_constraint_violation);
+      // −α ρ sum(Δp + Δn)
+      double predicted_reduction = 0.;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         predicted_reduction += primal_direction[elastic_index];
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         predicted_reduction += primal_direction[elastic_index];
+      }
+      predicted_reduction *= -step_length * this->constraint_violation_coefficient;
       return [=](double /*objective_multiplier*/) {
          return predicted_reduction;
       };
@@ -417,7 +427,7 @@ namespace uno {
    double l1RelaxedProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const {
       double predicted_auxiliary_reduction = 0.;
-      // form the directional derivative -zeta D_R^2 (x - x_R) and scale it by the step length
+      // form the directional derivative zeta D_R^2 (x - x_R) d and scale it by the step length
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
