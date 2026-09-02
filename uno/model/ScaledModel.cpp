@@ -15,7 +15,6 @@ namespace uno {
                original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
          model(original_model),
          scaling(this->model.number_constraints, options.get_double("function_scaling_threshold")),
-         scaled_multipliers(this->number_constraints),
          constraints_lower_bounds(this->model.get_constraints_lower_bounds()),
          constraints_upper_bounds(this->model.get_constraints_upper_bounds()) {
       if (true /*options.get_bool("scale_functions")*/) {
@@ -31,16 +30,17 @@ namespace uno {
             DEBUG << "The gradients could not be evaluated at the initial point, functions will not be scaled\n";
          }
       }
-      // check the scaling factors
-      assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
-      for ([[maybe_unused]] size_t constraint_index: Range(this->number_constraints)) {
-         assert(0 < this->scaling.get_constraint_scaling(constraint_index) && "Constraint scaling failed.");
-      }
 
       // compute the lower and upper bounds of the constraints
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         this->constraints_lower_bounds[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
-         this->constraints_upper_bounds[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
+      if (this->scaling.are_constraints_scaled()) {
+         const auto& constraints_scaling = this->scaling.get_constraint_scaling();
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            this->constraints_lower_bounds[constraint_index] *= constraints_scaling[constraint_index];
+            this->constraints_upper_bounds[constraint_index] *= constraints_scaling[constraint_index];
+         }
+
+         // preallocate the temporary multipliers
+         this->scaled_multipliers.resize(this->number_constraints);
       }
    }
 
@@ -66,12 +66,14 @@ namespace uno {
 
    double ScaledModel::evaluate_objective(const Vector<double>& x) const {
       const double objective = this->model.evaluate_objective(x);
-      return this->scaling.get_objective_scaling()*objective;
+      return this->scaling.get_objective_scaling() * objective;
    }
 
    void ScaledModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       this->model.evaluate_objective_gradient(x, gradient);
-      gradient.scale(this->scaling.get_objective_scaling());
+      if (this->scaling.is_objective_scaled()) {
+         gradient.scale(this->scaling.get_objective_scaling());
+      }
    }
 
    View<const uno_int> ScaledModel::get_jacobian_row_indices() const {
@@ -88,47 +90,65 @@ namespace uno {
 
    void ScaledModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model.evaluate_constraints(x, constraints);
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
+      if (this->scaling.are_constraints_scaled()) {
+         const auto& constraints_scaling = this->scaling.get_constraint_scaling();
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            constraints[constraint_index] *= constraints_scaling[constraint_index];
+         }
       }
    }
 
    void ScaledModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
       this->model.evaluate_jacobian(x, jacobian_values);
       // scale each term of the Jacobian, depending on which row/constraint it belongs to
-      const auto& jacobian_row_indices = this->model.get_jacobian_row_indices();
-      for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
-         const size_t constraint_index = static_cast<size_t>(jacobian_row_indices[nonzero_index]);
-         jacobian_values[nonzero_index] *= this->scaling.get_constraint_scaling(constraint_index);
+      if (this->scaling.are_constraints_scaled()) {
+         const auto& jacobian_row_indices = this->model.get_jacobian_row_indices();
+         const auto& constraints_scaling = this->scaling.get_constraint_scaling();
+         for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
+            const size_t constraint_index = static_cast<size_t>(jacobian_row_indices[nonzero_index]);
+            jacobian_values[nonzero_index] *= constraints_scaling[constraint_index];
+         }
       }
    }
 
    void ScaledModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          View<double> hessian_values) const {
-      // scale the objective and constraint multipliers
-      const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         this->scaled_multipliers[constraint_index] = this->scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
+      // scale the objective and constraint multipliers (in a lazy way for the multipliers)
+      const double scaled_objective_multiplier = objective_multiplier * this->scaling.get_objective_scaling();
+      if (this->scaling.are_constraints_scaled()) {
+         const auto& constraints_scaling = this->scaling.get_constraint_scaling();
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            this->scaled_multipliers[constraint_index] = constraints_scaling[constraint_index] * multipliers[constraint_index];
+         }
+         this->model.evaluate_lagrangian_hessian(x, scaled_objective_multiplier, this->scaled_multipliers, hessian_values);
       }
-      this->model.evaluate_lagrangian_hessian(x, scaled_objective_multiplier, this->scaled_multipliers, hessian_values);
+      else {
+         this->model.evaluate_lagrangian_hessian(x, scaled_objective_multiplier, multipliers, hessian_values);
+      }
    }
 
-   void ScaledModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+   void ScaledModel::compute_jacobian_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
       throw std::runtime_error("ScaledModel::compute_jacobian_vector_product not implemented yet");
    }
 
-   void ScaledModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
+   void ScaledModel::compute_jacobian_transposed_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
       throw std::runtime_error("ScaledModel::compute_jacobian_transposed_vector_product not implemented yet");
    }
 
    void ScaledModel::compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
          const Vector<double>& multipliers, View<double> result) const {
-      // scale the objective and constraint multipliers
-      const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         this->scaled_multipliers[constraint_index] = this->scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
+      // scale the objective and constraint multipliers (in a lazy way for the multipliers)
+      const double scaled_objective_multiplier = objective_multiplier * this->scaling.get_objective_scaling();
+      if (this->scaling.are_constraints_scaled()) {
+         const auto& constraints_scaling = this->scaling.get_constraint_scaling();
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            this->scaled_multipliers[constraint_index] = constraints_scaling[constraint_index] * multipliers[constraint_index];
+         }
+         this->model.compute_hessian_vector_product(x, vector, scaled_objective_multiplier, this->scaled_multipliers, result);
       }
-      this->model.compute_hessian_vector_product(x, vector, scaled_objective_multiplier, this->scaled_multipliers, result);
+      else {
+         this->model.compute_hessian_vector_product(x, vector, scaled_objective_multiplier, multipliers, result);
+      }
    }
 
    const std::vector<double>& ScaledModel::get_variables_lower_bounds() const {
@@ -180,23 +200,30 @@ namespace uno {
    }
 
    void ScaledModel::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      // unscale the objective value
-      if (evaluations.is_objective_computed) {
-         evaluations.objective /= this->scaling.get_objective_scaling();
-      }
-
       // unscale the constraints and the constraint multipliers
-      for (size_t constraint_index: Range(this->model.number_constraints)) {
-         evaluations.constraints[constraint_index] /= this->scaling.get_constraint_scaling(constraint_index);
-         iterate.multipliers.constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index) /
-            this->scaling.get_objective_scaling();
+      if (scaling.is_objective_scaled() || scaling.are_constraints_scaled()) {
+         const double objective_scaling = this->scaling.get_objective_scaling();
+         const auto& constraints_scaling = this->scaling.get_constraint_scaling();
+         for (size_t constraint_index: Range(this->model.number_constraints)) {
+            evaluations.constraints[constraint_index] /= constraints_scaling[constraint_index];
+            iterate.multipliers.constraints[constraint_index] *= constraints_scaling[constraint_index] / objective_scaling;
+         }
       }
 
-      // unscale the bound multipliers
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         iterate.multipliers.lower_bounds[variable_index] /= this->scaling.get_objective_scaling();
-         iterate.multipliers.upper_bounds[variable_index] /= this->scaling.get_objective_scaling();
+
+      // unscale the objective value and the bound multipliers
+      if (scaling.is_objective_scaled()) {
+         const double objective_scaling = this->scaling.get_objective_scaling();
+         if (evaluations.is_objective_computed) {
+            evaluations.objective /= objective_scaling;
+         }
+
+         for (size_t variable_index: Range(this->model.number_variables)) {
+            iterate.multipliers.lower_bounds[variable_index] /= objective_scaling;
+            iterate.multipliers.upper_bounds[variable_index] /= objective_scaling;
+         }
       }
+
       this->model.postprocess_solution(iterate, evaluations);
    }
 

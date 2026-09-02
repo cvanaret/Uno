@@ -17,14 +17,22 @@ namespace uno {
    class Scaling {
    public:
       Scaling(size_t number_constraints, double gradient_threshold);
+
       void compute(const Model& model, const Vector<double>& objective_gradient, const Vector<double>& jacobian_values);
+
+      [[nodiscard]] bool is_objective_scaled() const;
+      [[nodiscard]] bool are_constraints_scaled() const;
+
       [[nodiscard]] double get_objective_scaling() const;
-      [[nodiscard]] double get_constraint_scaling(size_t constraint_index) const;
+      [[nodiscard]] const std::vector<double>& get_constraint_scaling() const;
 
    protected:
       const double gradient_threshold;
       double objective_scaling;
       std::vector<double> constraint_scaling;
+      // lazy flags
+      bool is_objective_scaled_flag{false};
+      bool are_constraints_scaled_flag{false};
    };
 } // namespace
 
