@@ -60,7 +60,7 @@ namespace uno {
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics);
-      // this->feasibility_inequality_handling_method->initialize_statistics(statistics);
+      this->feasibility_inequality_handling_method->initialize_statistics(statistics);
       statistics.add_column("Phase", Statistics::int_width - 1, 3);
       statistics.set("Phase", "OPT");
    }
