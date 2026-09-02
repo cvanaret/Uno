@@ -17,7 +17,7 @@ namespace uno {
          scaling(this->model.number_constraints, options.get_double("function_scaling_threshold")),
          constraints_lower_bounds(this->model.get_constraints_lower_bounds()),
          constraints_upper_bounds(this->model.get_constraints_upper_bounds()) {
-      if (true /*options.get_bool("scale_functions")*/) {
+      if (options.get_bool("use_function_scaling")) {
          // evaluate the gradients at the current point
          Vector<double> objective_gradient(this->model.number_variables);
          Vector<double> jacobian_values(this->model.number_jacobian_nonzeros());
