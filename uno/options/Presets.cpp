@@ -85,6 +85,7 @@ namespace uno {
          options.set_string("inertia_correction_strategy", "primal_dual");
          options.set_string("globalization_mechanism", "LS");
          options.set_string("globalization_strategy", "waechter_filter_method");
+         options.set_bool("use_function_scaling", true);
          options.set_string("filter_type", "standard");
          options.set_double("filter_beta", 0.99999);
          options.set_double("filter_gamma", 1e-8);

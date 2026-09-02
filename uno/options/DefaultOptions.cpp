@@ -29,7 +29,7 @@ namespace uno {
       options.set_integer("max_iterations", 2000);
       // CPU time limit (in seconds)
       options.set_double("time_limit", INF<double>);
-      // print optimal solution (yes|no)
+      // print optimal solution (true|false)
       options.set_bool("print_solution", false);
       // threshold on norm of primal variables to declare diverging iterate
       options.set_double("diverging_iterate_threshold", 1e20);
@@ -51,6 +51,10 @@ namespace uno {
       options.set_bool("protect_actual_reduction_against_roundoff", false);
       options.set_double("protected_actual_reduction_macheps_coefficient", 10.);
       options.set_bool("print_subproblem", false);
+      // use function scaling based on the initial gradients (true|false)
+      options.set_bool("use_function_scaling", false);
+      // threshold on the function scaling coefficients
+      options.set_double("function_scaling_threshold", 100.);
 
       /** globalization strategy options **/
       options.set_double("armijo_decrease_fraction", 1e-4);

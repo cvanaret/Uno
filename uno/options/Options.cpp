@@ -33,6 +33,8 @@ namespace uno {
       {"protect_actual_reduction_against_roundoff", OptionType::BOOL},
       {"protected_actual_reduction_macheps_coefficient", OptionType::DOUBLE},
       {"print_subproblem", OptionType::BOOL},
+      {"use_function_scaling", OptionType::BOOL},
+      {"function_scaling_threshold", OptionType::DOUBLE},
       {"armijo_decrease_fraction", OptionType::DOUBLE},
       {"armijo_tolerance", OptionType::DOUBLE},
       {"switching_delta", OptionType::DOUBLE},

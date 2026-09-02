@@ -61,13 +61,15 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `residual_norm` | `L1`, `L2`, `INF`                                                    | `INF`   | Norm used for the residuals         |
 
 ### Numerical options
-| Option                                           | Type   | Default  | Description                                                               |
-|:-------------------------------------------------|:-------|:---------|:--------------------------------------------------------------------------|
-| `residual_scaling_threshold`                     | double | 100.0    | Scaling factor in stationarity and complementarity residuals              |
-| `protect_actual_reduction_against_roundoff`      | bool   | `false`  | Whether the actual reduction is slightly modified to account for roundoff |
-| `protected_actual_reduction_macheps_coefficient` | double | 10       | Coefficient of the machine epsilon in the protected actual reduction      |
-| `print_subproblem`                               | bool   | `false`  | Whether the subproblem is printed in `DEBUG` mode                         |
-| `write_solution_to_file`                         | bool   | `false`  | Whether the solution is printed to a file (used by AMPL and CUTEst)       |
+| Option                                           | Type   | Default | Description                                                               |
+|:-------------------------------------------------|:-------|:--------|:--------------------------------------------------------------------------|
+| `residual_scaling_threshold`                     | double | 100.    | Scaling factor in stationarity and complementarity residuals              |
+| `protect_actual_reduction_against_roundoff`      | bool   | `false` | Whether the actual reduction is slightly modified to account for roundoff |
+| `protected_actual_reduction_macheps_coefficient` | double | 10      | Coefficient of the machine epsilon in the protected actual reduction      |
+| `print_subproblem`                               | bool   | `false` | Whether the subproblem is printed in `DEBUG` mode                         |
+| `use_function_scaling`                           | bool   | false   | Use function scaling based on the initial gradients                       |    
+| `function_scaling_threshold`                     | double | 100.    | Threshold on the function scaling coefficients                            |    
+| `write_solution_to_file`                         | bool   | `false` | Whether the solution is printed to a file (used by AMPL and CUTEst)       |
 
 ## Globalization strategy options
 

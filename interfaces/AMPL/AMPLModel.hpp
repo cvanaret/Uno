@@ -74,7 +74,7 @@ namespace uno {
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
-      void postprocess_solution(Iterate& iterate) const override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       void write_solution_to_file(Result& result) const;
 

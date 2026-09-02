@@ -112,8 +112,8 @@ namespace uno {
 
       void initial_primal_point(Vector<double>& x) const override { this->model.initial_primal_point(x); }
       void initial_dual_point(Vector<double>& multipliers) const override { this->model.initial_dual_point(multipliers); }
-      void postprocess_solution(Iterate& iterate) const override {
-         this->model.postprocess_solution(iterate);
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override {
+         this->model.postprocess_solution(iterate, evaluations);
       }
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model.number_jacobian_nonzeros(); }

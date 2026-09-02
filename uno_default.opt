@@ -62,6 +62,10 @@ protect_actual_reduction_against_roundoff false
 protected_actual_reduction_macheps_coefficient 10
 # Whether the subproblem is printed in DEBUG mode (bool)
 print_subproblem false
+# use function scaling based on the initial gradients
+use_function_scaling false
+# Threshold on the function scaling coefficients
+function_scaling_threshold 100.
 # Whether the solution is printed to a file (used by AMPL and CUTEst) (bool)
 write_solution_to_file false
 
