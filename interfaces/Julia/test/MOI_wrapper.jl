@@ -30,7 +30,7 @@ function test_MOI_Test(; preset="filtersqp")
     )
     MOI.set(model, MOI.Silent(), true)
     
-    exclude = [
+    exclude = Union{Regex,String}[
         # TODO(odow): this seems like a MOI.supports bug
         r"^test_model_ModelFilter_AbstractConstraintAttribute$",
         # These tests hit IterationLimit instead of solving.
