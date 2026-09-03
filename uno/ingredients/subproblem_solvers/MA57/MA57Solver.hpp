@@ -13,7 +13,6 @@
 namespace uno {
    // settings taken from IPOPT
    struct MA57Settings {
-      static constexpr int mc64_scaling = 0;
       static constexpr double pivoting_threshold = 1e-8;
       static constexpr double allocation_safety_factor = 1.05;
    };
@@ -49,7 +48,7 @@ namespace uno {
 
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
-      MA57Solver();
+      MA57Solver(bool use_scaling);
       ~MA57Solver() override = default;
 
       void initialize_memory() override;
@@ -70,6 +69,7 @@ namespace uno {
    private:
       MA57Workspace workspace{};
       COOLinearSystem linear_system{Indexing::Fortran_indexing};
+      const bool use_scaling;
 
       bool analysis_performed{false};
       bool factorization_performed{false};

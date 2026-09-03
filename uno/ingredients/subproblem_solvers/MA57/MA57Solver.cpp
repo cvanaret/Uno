@@ -98,7 +98,7 @@ namespace uno {
       INFO << "Running MA57\n";
    }
 
-   MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
+   MA57Solver::MA57Solver(bool use_scaling): DirectSymmetricIndefiniteLinearSolver(), use_scaling(use_scaling) {
 #ifdef HSL_RUNTIME_LOADING
       if (!ma57_symbols_available()) {
          throw std::runtime_error("Uno: the MA57 solver was requested but the HSL library could not be loaded at "
@@ -113,7 +113,7 @@ namespace uno {
       MA57_ICNTL(7) = 1; // numerical pivoting (uses threshold in CNTL(1))
       MA57_ICNTL(11) = 16; // block size used by the Level 3 BLAS
       MA57_ICNTL(12) = 16; // assembly tree
-      //MA57_ICNTL(15) = MA57Settings::mc64_scaling; // MC64 scaling (disabled)
+      MA57_ICNTL(15) = use_scaling ? 1 : 0; // MC64 scaling
       MA57_ICNTL(16) = 0; // small entries removed (disabled)
       MA57_CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
    }
