@@ -24,16 +24,17 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options) :
+   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool /*use_trust_region*/, Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
-         feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region),
+         feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
-         switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
+         switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
+         constraints_buffer(model.number_constraints) {
    }
 
    FeasibilityRestoration::~FeasibilityRestoration() = default;
@@ -195,11 +196,11 @@ namespace uno {
             return true;
          }
          // compute the linearized constraint violation
-         // TODO preallocate
-         Vector<double> result(model.number_constraints);
-         current_evaluations.compute_jacobian_vector_product(model, view(direction.primals, 0, model.number_variables), result.view());
+         this->constraints_buffer.fill(0.);
+         current_evaluations.compute_jacobian_vector_product(model, view(direction.primals, 0, model.number_variables),
+            this->constraints_buffer.view());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
-            step_length * result, this->residual_norm);
+            step_length * this->constraints_buffer, this->residual_norm);
          const bool switch_back = (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
          if (!switch_back) {
             this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);

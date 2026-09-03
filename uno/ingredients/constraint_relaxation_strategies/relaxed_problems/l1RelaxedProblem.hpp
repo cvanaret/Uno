@@ -97,6 +97,8 @@ namespace uno {
       Vector<uno_int> jacobian_row_indices;
       Vector<uno_int> jacobian_column_indices;
 
+      mutable Vector<double> constraints_buffer;
+
       // delegating constructor
       l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
          double constraint_violation_coefficient);

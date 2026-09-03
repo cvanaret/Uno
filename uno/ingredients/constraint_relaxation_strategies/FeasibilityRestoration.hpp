@@ -71,6 +71,8 @@ namespace uno {
       Vector<double> reference_optimality_primals{};
       bool first_switch_to_feasibility{true};
 
+      mutable Vector<double> constraints_buffer;
+
       const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
