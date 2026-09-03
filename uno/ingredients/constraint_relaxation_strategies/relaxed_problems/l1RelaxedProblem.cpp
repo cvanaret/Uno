@@ -32,7 +32,8 @@ namespace uno {
          variables_lower_bounds(this->number_variables, 0.),
          variables_upper_bounds(this->number_variables, INF<double>),
          jacobian_row_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),
-         jacobian_column_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()) {
+         jacobian_column_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),
+         constraints_buffer(this->number_constraints) {
       // copy the original variables. The elastic variables have bounds [0, inf)
       view(this->variables_lower_bounds, 0, model.number_variables) = model.get_variables_lower_bounds();
       view(this->variables_upper_bounds, 0, model.number_variables) = model.get_variables_upper_bounds();
@@ -359,9 +360,8 @@ namespace uno {
    // progress measures
 
    void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm /*norm*/) const {
-      Vector<double> constraints(this->number_constraints); // TODO preallocate
-      this->evaluate_constraints(iterate, constraints.view(), evaluations);
-      iterate.progress.infeasibility = this->model.constraint_violation(constraints, Norm::L1);
+      this->evaluate_constraints(iterate, this->constraints_buffer.view(), evaluations);
+      iterate.progress.infeasibility = this->model.constraint_violation(this->constraints_buffer, Norm::L1);
    }
 
    // rho * sum(p + n)
@@ -398,13 +398,12 @@ namespace uno {
 
    double l1RelaxedProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
          const Vector<double>& /*primal_direction*/, double step_length, Norm /*norm*/, Evaluations& current_evaluations) const {
-      Vector<double> constraints(this->number_constraints); // TODO preallocate
-      this->evaluate_constraints(current_iterate, constraints.view(), current_evaluations);
+      this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
       // Let r = c(x) − p + n
       // r + α(JΔx − Δp + Δn) = r - α r = (1-α) r
       // so pred(α) = ‖r‖ − ‖(1−α) r‖ = α ‖c(x) − p + n‖
       // note: this assumes that JΔx − Δp + Δn = -r, which is the case for KKT systems
-      return step_length * this->model.constraint_violation(constraints, Norm::L1);
+      return step_length * this->model.constraint_violation(this->constraints_buffer, Norm::L1);
    }
 
    std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction(const Iterate& /*current_iterate*/,
