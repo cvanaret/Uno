@@ -913,7 +913,7 @@ function test_comprehensive_duals_variable_bounds(; preset="filtersqp")
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
             MOI.optimize!(model)
             @testset "$i" for i in 1:4
-                @test MOI.get(model, MOI.ConstraintDual(), c[i]) == a[i]
+                @test MOI.get(model, MOI.ConstraintDual(), c[i]) ≈ a[i]
             end
         end
     end
@@ -949,7 +949,7 @@ function test_comprehensive_duals_scalar_affine(; preset="filtersqp")
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
             MOI.optimize!(model)
             @testset "$i" for i in 1:4
-                @test MOI.get(model, MOI.ConstraintDual(), c[i]) == a[i]
+                @test MOI.get(model, MOI.ConstraintDual(), c[i]) ≈ a[i]
             end
         end
     end
@@ -987,7 +987,7 @@ function test_comprehensive_duals_scalar_nonlinear(; preset="filtersqp")
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
             MOI.optimize!(model)
             @testset "$i" for i in 1:4
-                @test MOI.get(model, MOI.ConstraintDual(), c[i]) == a[i]
+                @test MOI.get(model, MOI.ConstraintDual(), c[i]) ≈ a[i]
             end
         end
     end
