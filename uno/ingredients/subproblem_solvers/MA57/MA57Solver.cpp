@@ -115,7 +115,7 @@ namespace uno {
       MA57_ICNTL(12) = 16; // assembly tree
       //MA57_ICNTL(15) = MA57Settings::mc64_scaling; // MC64 scaling (disabled)
       MA57_ICNTL(16) = 0; // small entries removed (disabled)
-      //MA57_CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
+      MA57_CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
    }
 
    void MA57Solver::initialize_memory() {
