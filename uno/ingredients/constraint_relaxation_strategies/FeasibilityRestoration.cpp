@@ -196,6 +196,7 @@ namespace uno {
             return true;
          }
          // compute the linearized constraint violation
+         this->constraints_buffer.fill(0.);
          current_evaluations.compute_jacobian_vector_product(model, view(direction.primals, 0, model.number_variables),
             this->constraints_buffer.view());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
