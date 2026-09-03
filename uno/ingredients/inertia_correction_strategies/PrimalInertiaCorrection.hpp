@@ -37,8 +37,7 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      const std::string& optional_linear_solver_name;
-      const std::string libhsl_path;
+      const Options& options;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double regularization_factor{0.};
       const double regularization_initial_factor{};

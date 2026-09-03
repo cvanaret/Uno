@@ -14,8 +14,7 @@
 namespace uno {
    PrimalInertiaCorrection::PrimalInertiaCorrection(const Options& options):
          InertiaCorrectionStrategy(),
-         optional_linear_solver_name(options.get_string("linear_solver")),
-         libhsl_path(options.get_string_optional("libhsl_path").value_or("")),
+         options(options),
          regularization_initial_factor(options.get_double("primal_regularization_initial_factor")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
@@ -30,7 +29,7 @@ namespace uno {
          const Inertia& expected_inertia, View<double> hessian_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
-         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
+         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
          this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
@@ -89,7 +88,7 @@ namespace uno {
          View<double> dual_inertia_correction_block) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
-         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name, this->libhsl_path);
+         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
          this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();

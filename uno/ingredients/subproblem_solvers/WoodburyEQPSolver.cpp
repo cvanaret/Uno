@@ -20,8 +20,7 @@ namespace uno {
    WoodburyEQPSolver::WoodburyEQPSolver(const DirectQuasiNewtonHessian& hessian_model, const Options& options):
          SubproblemSolver(),
          hessian_model(hessian_model),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"),
-            options.get_string_optional("libhsl_path").value_or(""))) {
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)) {
       assert(!this->hessian_model.has_hessian_matrix());
    }
 

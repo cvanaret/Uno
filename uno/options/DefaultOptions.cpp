@@ -166,6 +166,9 @@ namespace uno {
 
       /** BQPD options **/
       options.set_string("BQPD_kmax_heuristic", "filtersqp");
+
+      /** MA57 options **/
+      options.set_bool("MA57_use_scaling", false);
    }
 
    // determine default subproblem solvers, based on the available external dependencies

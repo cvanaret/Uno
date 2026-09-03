@@ -226,3 +226,7 @@ least_square_multiplier_max_norm 1e3
 ## BQPD options
 # Heuristic used to pick upper bound on nullspace size (kmax) (filtersqp|minotaur)
 BQPD_kmax_heuristic filtersqp
+
+## MA57 options
+# Whether the MA57 scaling (MC64) is enabled (true|false)
+MA57_use_scaling false

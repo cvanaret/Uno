@@ -6,6 +6,7 @@
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "options/Options.hpp"
 
 #if defined(HAS_HSL) || defined(HAS_MA57)
 #include "ingredients/subproblem_solvers/MA57/MA57Solver.hpp"
@@ -41,10 +42,11 @@ namespace uno {
 
 namespace uno {
    std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(
-         const std::string& linear_solver, [[maybe_unused]] const std::string& libhsl_path) {
+         const Options& options) {
+      const auto& linear_solver = options.get_string("linear_solver");
 #ifdef HSL_RUNTIME_LOADING
       // honor the requested HSL library name before LIBHSL_isfunctional() triggers the (cached) load
-      load_hsl_library(libhsl_path);
+      load_hsl_library(options.get_string_optional("libhsl_path").value_or(""));
 #endif
 #if defined(HAS_HSL) || defined(HAS_MA57)
       if (linear_solver == "MA57"
@@ -52,7 +54,7 @@ namespace uno {
          && LIBHSL_isfunctional()
    #endif
             ) {
-         return std::make_unique<MA57Solver>();
+         return std::make_unique<MA57Solver>(options.get_bool("MA57_use_scaling"));
       }
 #endif
 

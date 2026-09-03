@@ -215,3 +215,9 @@ If not provided, the solver is chosen automatically from the available solvers (
 | Option                | Possible values         | Default     | Description                                                   |
 | :---                  | :---                    | :---        |:--------------------------------------------------------------|
 | `BQPD_kmax_heuristic` | `filtersqp`, `minotaur` | `filtersqp` | Heuristic used to pick upper bound on nullspace size (`kmax`) |
+
+## MA57 options
+
+| Option             | Type   | Default  | Description                                |
+| :---               | :---   | :---     |:-------------------------------------------|
+| `MA57_use_scaling` | `bool` | `false`  | Whether the MA57 scaling (MC64) is enabled |

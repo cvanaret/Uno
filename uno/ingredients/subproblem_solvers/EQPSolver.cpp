@@ -16,8 +16,7 @@
 namespace uno {
    EQPSolver::EQPSolver(const Options& options):
          SubproblemSolver(),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"),
-            options.get_string_optional("libhsl_path").value_or(""))) {
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)) {
    }
 
    void EQPSolver::initialize_memory(const Subproblem& subproblem) {
