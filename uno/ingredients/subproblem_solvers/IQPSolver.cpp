@@ -28,7 +28,7 @@ namespace uno {
 
    void IQPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
          Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
-      DEBUG << "The EQP solver does not compute least-squares multipliers, keeping existing multipliers";
+      DEBUG << "The IQP solver does not compute least-squares multipliers, keeping existing multipliers";
    }
 
    const Direction& IQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,

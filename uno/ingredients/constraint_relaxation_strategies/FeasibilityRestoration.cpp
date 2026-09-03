@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <functional>
@@ -68,7 +68,6 @@ namespace uno {
 
    const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-
       // solve the current problem (OPTIMALITY or FEASIBILITY_RESTORATION)
       if (this->current_phase == Phase::OPTIMALITY) {
          DEBUG << "Solving the optimality subproblem\n";
@@ -91,6 +90,50 @@ namespace uno {
       return (this->current_phase == Phase::FEASIBILITY_RESTORATION);
    }
 
+   bool FeasibilityRestoration::test_infeasible_stationarity(Iterate& current_iterate, Evaluations& current_evaluations) {
+      DEBUG << "\nTesting the termination criteria of the feasibility problem at the current iterate\n";
+      // compute the feasibility multipliers and the residuals, and test termination wrt the feasibility problem
+      DEBUG2 << "x = " << current_iterate.primals << '\n';
+      assert(current_evaluations.are_constraints_computed);
+
+      // initialize the feasibility multipliers
+      if (this->first_use_feasibility_multipliers) {
+         this->other_phase_multipliers.resize(this->feasibility_problem.number_variables,
+            this->feasibility_problem.number_constraints);
+         this->first_use_feasibility_multipliers = false;
+      }
+
+      /*
+      this->feasibility_problem.compute_multipliers(this->other_phase_multipliers, current_evaluations);
+      DEBUG2 << "Feasibility constraint multipliers: " << this->other_phase_multipliers.constraints << '\n';
+      DEBUG2 << "Feasibility LB multipliers: " << this->other_phase_multipliers.lower_bounds << '\n';
+      DEBUG2 << "Feasibility UB multipliers: " << this->other_phase_multipliers.upper_bounds << '\n';
+
+      // compute residuals
+      this->original_problem.model.evaluate_lagrangian_gradient(current_iterate.primals, this->other_phase_multipliers,
+         0., current_evaluations, current_iterate.residuals.lagrangian_gradient);
+      const double stationarity_error = norm(this->residual_norm, view(current_iterate.residuals.lagrangian_gradient, 0,
+         this->original_problem.model.number_variables));
+      const double complementarity_error = this->original_problem.complementarity_error(current_iterate.primals,
+         current_evaluations.constraints, this->other_phase_multipliers, 0., this->residual_norm);
+      // TODO check that all duals are not 0
+
+      DEBUG2 << "Stationarity error: " << stationarity_error << '\n';
+      DEBUG2 << "Complementarity error: " << complementarity_error << '\n';
+      if (stationarity_error <= 1e-8 && complementarity_error <= 1e-8) {
+         current_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
+         std::swap(this->other_phase_multipliers, current_iterate.multipliers);
+         DEBUG << current_iterate << '\n';
+         DEBUG << "The current iterate is an infeasible stationary point\n";
+         return true;
+      }
+      else {
+         DEBUG << "The current iterate does not satisfy the infeasible stationary termination criteria\n";
+      }
+      */
+      return false;
+   }
+
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
@@ -108,12 +151,6 @@ namespace uno {
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       this->initial_point.resize(this->feasibility_problem.number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
-      if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
-         this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
-         this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
-         this->first_switch_to_feasibility = false;
-      }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);

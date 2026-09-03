@@ -289,6 +289,82 @@ namespace uno {
       }
    }
 
+   void l1RelaxedProblem::compute_multipliers(Multipliers& multipliers, const Evaluations& current_evaluations) const {
+      multipliers.constraints.fill(0.);
+      multipliers.lower_bounds.fill(0.);
+      multipliers.upper_bounds.fill(0.);
+
+      // first compute the constraint multipliers of violated constraints
+      for (size_t constraint_index: Range(this->model.number_constraints)) {
+         if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
+            multipliers.constraints[constraint_index] = this->constraint_violation_coefficient;
+         }
+         else if (this->get_constraints_upper_bounds()[constraint_index] < current_evaluations.constraints[constraint_index]) {
+            multipliers.constraints[constraint_index] = -this->constraint_violation_coefficient;
+         }
+      }
+
+      // then the bound multipliers from the stationary equation -J^T y - z = 0 => z = -J^T y
+      Vector<double> bound_multipliers(this->model.number_variables); // TODO preallocate
+      current_evaluations.compute_jacobian_transposed_vector_product(this->model, multipliers.constraints.view(),
+         bound_multipliers.view());
+      bound_multipliers.scale(-1.);
+      // save the bound multipliers into "multipliers"
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         // skip for unconstrained variables (the error should be counted in the stationarity residual)
+         if (is_infinite(this->variables_lower_bounds[variable_index]) && is_infinite(this->variables_upper_bounds[variable_index])) {
+            continue;
+         }
+         // check single-bounded variables
+         if (is_finite(this->variables_lower_bounds[variable_index]) && is_infinite(this->variables_upper_bounds[variable_index])) {
+            multipliers.lower_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+         else if (is_finite(this->variables_upper_bounds[variable_index]) && is_infinite(this->variables_lower_bounds[variable_index])) {
+            multipliers.upper_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+         // unbounded or doubly-bounded variables: trust the sign of the bound dual
+         else if (bound_multipliers[variable_index] >= 0.) {
+            multipliers.lower_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+         else {
+            multipliers.upper_bounds[variable_index] = bound_multipliers[variable_index];
+         }
+      }
+      // at this point, the stationary equation is satisfied. Complementarity may not.
+   }
+
+   void l1RelaxedProblem::compute_elastics(Iterate& current_iterate, const Evaluations& current_evaluations) const {
+      // elastic variables: primals and bound multipliers
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
+            current_iterate.primals[elastic_index] = 0.;
+            current_iterate.multipliers.lower_bounds[elastic_index] = 2.*this->constraint_violation_coefficient;
+         }
+         else if (this->get_constraints_upper_bounds()[constraint_index] < current_evaluations.constraints[constraint_index]) {
+            current_iterate.primals[elastic_index] = current_evaluations.constraints[constraint_index] - this->get_constraints_upper_bounds()[constraint_index];
+            current_iterate.multipliers.lower_bounds[elastic_index] = 0.;
+         }
+         else {
+            current_iterate.primals[elastic_index] = 0.;
+            current_iterate.multipliers.lower_bounds[elastic_index] = 2.*this->constraint_violation_coefficient;
+         }
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         if (this->get_constraints_upper_bounds()[constraint_index] < current_evaluations.constraints[constraint_index]) {
+            current_iterate.primals[elastic_index] = 0.;
+            current_iterate.multipliers.lower_bounds[elastic_index] = 2.*this->constraint_violation_coefficient;
+         }
+         else if (current_evaluations.constraints[constraint_index] < this->get_constraints_lower_bounds()[constraint_index]) {
+            current_iterate.primals[elastic_index] = this->get_constraints_lower_bounds()[constraint_index] - current_evaluations.constraints[constraint_index];
+            current_iterate.multipliers.lower_bounds[elastic_index] = 0.;
+         }
+         else {
+            current_iterate.primals[elastic_index] = 0.;
+            current_iterate.multipliers.lower_bounds[elastic_index] = 2.*this->constraint_violation_coefficient;
+         }
+      }
+   }
+
    SolutionStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions

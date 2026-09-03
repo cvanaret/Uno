@@ -63,6 +63,8 @@ namespace uno {
 
       [[nodiscard]] Inertia get_inertia() const override;
 
+      void compute_multipliers(Multipliers& multipliers, const Evaluations& current_evaluations) const;
+      void compute_elastics(Iterate& current_iterate, const Evaluations& current_evaluations) const;
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const override;
 
