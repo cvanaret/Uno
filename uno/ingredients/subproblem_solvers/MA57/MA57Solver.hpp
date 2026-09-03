@@ -48,7 +48,7 @@ namespace uno {
 
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
-      MA57Solver(bool use_scaling);
+      MA57Solver(bool use_scaling = false); // no scaling by default
       ~MA57Solver() override = default;
 
       void initialize_memory() override;
