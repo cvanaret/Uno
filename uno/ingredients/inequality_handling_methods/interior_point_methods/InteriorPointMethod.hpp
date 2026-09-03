@@ -177,7 +177,6 @@ namespace uno {
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
-      // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
       evaluations.evaluate_constraints(feasibility_problem.model, iterate.primals);
       const double mu = this->barrier_parameter();
       const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {

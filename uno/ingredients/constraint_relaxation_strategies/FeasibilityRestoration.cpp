@@ -24,12 +24,12 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options) :
+   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool /*use_trust_region*/, Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
-         feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region),
+         feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),

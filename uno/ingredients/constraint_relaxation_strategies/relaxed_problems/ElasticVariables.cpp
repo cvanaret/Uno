@@ -11,7 +11,7 @@ namespace uno {
          positive(number_positive_variables), negative(number_negative_variables) { }
 
    ElasticVariables ElasticVariables::generate(const Model& model, bool relax_linear_constraints) {
-      const ElasticVariablesSizes sizes = ElasticVariables::count(model, relax_linear_constraints);
+      const ElasticVariablesSizes sizes = count(model, relax_linear_constraints);
       ElasticVariables elastic_variables(sizes.positive, sizes.negative);
 
       // generate elastic variables to relax the constraints
