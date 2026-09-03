@@ -29,6 +29,24 @@ function test_MOI_Test(; preset="filtersqp")
         with_bridge_type = Float64,
     )
     MOI.set(model, MOI.Silent(), true)
+    
+    exclude = [
+        # TODO(odow): this seems like a MOI.supports bug
+        r"^test_model_ModelFilter_AbstractConstraintAttribute$",
+        # These tests hit IterationLimit instead of solving.
+        r"^test_constraint_qcp_duplicate_off_diagonal$",
+        r"^test_quadratic_constraint_GreaterThan$",
+        r"^test_quadratic_constraint_LessThan$",
+        r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper$",
+        # These tests hit LocallyInfeasible instead of solving
+        r"^test_quadratic_SecondOrderCone_basic$",
+        r"^test_quadratic_nonconvex_constraint_basic$",
+    ]
+    # exclude instances where no explicit Hessian is available
+    if preset == "ipopt"
+        push!(exclude, "hessian_vector_product")
+    end
+    
     MOI.Test.runtests(
         model,
         MOI.Test.Config(
@@ -42,18 +60,7 @@ function test_MOI_Test(; preset="filtersqp")
                 MOI.ObjectiveBound,
             ],
         );
-        exclude = [
-            # TODO(odow): this seems like a MOI.supports bug
-            r"^test_model_ModelFilter_AbstractConstraintAttribute$",
-            # These tests hit IterationLimit instead of solving.
-            r"^test_constraint_qcp_duplicate_off_diagonal$",
-            r"^test_quadratic_constraint_GreaterThan$",
-            r"^test_quadratic_constraint_LessThan$",
-            r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper$",
-            # These tests hit LocallyInfeasible instead of solving
-            r"^test_quadratic_SecondOrderCone_basic$",
-            r"^test_quadratic_nonconvex_constraint_basic$",
-        ],
+        exclude = exclude,
     )
     return
 end
