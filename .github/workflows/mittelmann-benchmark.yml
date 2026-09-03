@@ -78,6 +78,7 @@ jobs:
           DIR="${{ env.SCRATCH }}/Mittelmann"
           # 10 minutes
           TIMELIMIT=600
+          OPTION_FILE="uno_mittelmann.opt"
 
           mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
           if [ "${#INSTANCES[@]}" -eq 0 ]; then
@@ -98,7 +99,7 @@ jobs:
             # Uno enforces time_limit=$TIMELIMIT itself; the outer `timeout` is only a
             # safety net in case a run gets stuck past its own limit.
             echo "Solving ${name}"
-            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" preset=ipopt time_limit="$TIMELIMIT" > "$log" 2>&1 || true
+            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" option_file="$OPTION_FILE" time_limit="$TIMELIMIT" > "$log" 2>&1 || true
             end=$(date +%s.%N)
             secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
 
