@@ -74,7 +74,10 @@ namespace uno {
 
       // feasibility problem: test corner cases
       if (model.number_constraints == 0) {
-         throw std::runtime_error("The model is unconstrained but the iterate is infeasible, should not happen");
+         throw std::runtime_error("The model is unconstrained, should not happen");
+      }
+      if (current_iterate.primal_infeasibility == 0.) {
+         throw std::runtime_error("The current iterate is exactly feasible, should not happen");
       }
       // if the line search failed, switch to solving the feasibility problem (test first if we can)
       if (this->constraint_relaxation_strategy->solving_feasibility_problem()) {
@@ -177,9 +180,11 @@ namespace uno {
                // try to evaluate the functions at the trial iterate, so that the next subproblem is well defined
                evaluation_cache.trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
                evaluation_cache.trial_evaluations.evaluate_jacobian(model, trial_iterate.primals);
+               // TODO compute progress measures
                ++this->number_consecutive_tiny_directions;
                if (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold) {
                   is_acceptable = true;
+                  DEBUG << "Accepting tiny step\n";
                   statistics.set("Status", std::string(symbols::check) + " (tiny)");
                   this->number_consecutive_tiny_directions = 0;
                }
@@ -187,6 +192,7 @@ namespace uno {
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
+            DEBUG << "An evaluation error occurred, reducing the step length further\n";
          }
          statistics.set("LS", number_iterations);
 
@@ -204,13 +210,15 @@ namespace uno {
          // from here on, the trial iterate is rejected
          else {
             step_length = this->decrease_step_length(step_length);
-            if (step_length * direction.primal_dual_step_length >= minimum_step_length) {
+            // note: if minimum_step_length = 0 and step_length reaches 0 by successive divisions, the strict inequality
+            // protects from an endless loop
+            if (step_length * direction.primal_dual_step_length > minimum_step_length) {
                // keep going
                evaluation_cache.trial_evaluations.reset();
             }
             else {
                // minimum step length reached
-               DEBUG << "The line search step length is smaller than " << minimum_step_length << '\n';
+               DEBUG << "The line search failed with a step length <= " << minimum_step_length << '\n';
                // check if we can terminate at a first-order point
                if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
                   statistics.set("Status", "accepted (small step length)");
