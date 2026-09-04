@@ -75,13 +75,12 @@ namespace uno {
       void set_auxiliary_measure(Iterate& iterate) const override;
 
       // predicted reductions
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const override;
-      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
-         double hessian_quadratic_form) const override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const override;
+      [[nodiscard]] PredictedInfeasibilityReduction build_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Norm norm, Evaluations& current_evaluations) const override;
+      [[nodiscard]] PredictedObjectiveReduction build_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Evaluations& current_evaluations, double hessian_quadratic_form) const override;
+      [[nodiscard]] PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const override;
 
    protected:
       const OptimizationProblem& inner;

@@ -160,9 +160,13 @@ namespace uno {
    bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      const PredictedReductionModels predicted_reduction_models =
+         this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
+         evaluation_cache.current_evaluations);
+      const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.);
       bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
-         warmstart_information, user_callbacks);
+         predicted_reductions, warmstart_information, user_callbacks);
       GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
       if (accept_iterate) {
          // possibly increase the radius if trust region is active
@@ -172,6 +176,7 @@ namespace uno {
          accept_iterate = this->check_termination_with_small_step(trial_iterate);
       }
       return accept_iterate;
+      return true;
    }
 
    // check whether a rejected step with very small norm can be tolerated

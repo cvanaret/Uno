@@ -5,6 +5,7 @@
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
 #include <cstddef>
+#include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
@@ -49,9 +50,11 @@ namespace uno {
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       // trial iterate acceptance
+      [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
+         const Direction& direction, Evaluations& current_evaluations) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;

@@ -287,33 +287,42 @@ namespace uno {
 
    // predicted reductions
 
-   double OptimizationProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
-      // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+   PredictedInfeasibilityReduction OptimizationProblem::build_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Norm norm, Evaluations& current_evaluations) const {
+      // α ↦ ‖c(x)‖ − ‖c(x) + ∇c(x)ᵀ(αd)‖
       current_evaluations.evaluate_constraints(this->model, current_iterate.primals);
       current_evaluations.evaluate_jacobian(this->model, current_iterate.primals);
-
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
-      this->Jv_buffer.fill(0.);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), this->Jv_buffer.view());
-      const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
-         step_length * this->Jv_buffer, norm);
-      return current_constraint_violation - trial_linearized_constraint_violation;
-   }
 
-   std::function<double(double)> OptimizationProblem::compute_predicted_objective_reduction(const Iterate& /*current_iterate*/,
-         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
-         double hessian_quadratic_form) const {
-      // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-      const double directional_derivative = dot(view(primal_direction, 0, this->model.number_variables),
-         current_evaluations.objective_gradient);
-      return [=](double objective_multiplier) {
-         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * hessian_quadratic_form;
+      // cache the (expensive) Jacobian–direction product Jd and snapshot the current constraints
+      Vector<double> Jv(this->number_constraints);
+      Jv.fill(0.);
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), Jv.view());
+      Vector<double> constraints = current_evaluations.constraints;
+
+      return [this, norm, current_constraint_violation, Jv = std::move(Jv), constraints = std::move(constraints)]
+            (double step_length) {
+         return current_constraint_violation - this->model.constraint_violation(constraints + step_length * Jv, norm);
       };
    }
 
-   double OptimizationProblem::compute_predicted_auxiliary_reduction(const Iterate& /*current_iterate*/,
-         const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
-      return 0.;
+   PredictedObjectiveReduction OptimizationProblem::build_predicted_objective_reduction(
+         const Iterate& /*current_iterate*/, const Vector<double>& primal_direction,
+         Evaluations& current_evaluations, double hessian_quadratic_form) const {
+      // (α, ρ) ↦ −ρ ∇f(x)ᵀ(αd) − α²/2 dᵀHd   (ρ scales only the gradient term; H already carries ρ)
+      const double directional_derivative = dot(view(primal_direction, 0, this->model.number_variables),
+         current_evaluations.objective_gradient);
+      return [directional_derivative, hessian_quadratic_form](double step_length, double objective_multiplier, bool use_curvature_information) {
+         double reduction = -objective_multiplier * step_length * directional_derivative;
+         if (use_curvature_information) {
+            reduction -= step_length * step_length / 2. * hessian_quadratic_form;
+         }
+         return reduction;
+      };
+   }
+
+   PredictedAuxiliaryReduction OptimizationProblem::build_predicted_auxiliary_reduction(
+         const Iterate& /*current_iterate*/, const Vector<double>& /*primal_direction*/) const {
+      return [](double /*step_length*/) { return 0.; };
    }
 } // namespace

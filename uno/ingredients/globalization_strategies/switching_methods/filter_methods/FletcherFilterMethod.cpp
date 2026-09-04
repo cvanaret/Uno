@@ -17,11 +17,11 @@ namespace uno {
    }
 
    bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double /*objective_multiplier*/) {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
       const double current_merit = FilterMethod::unconstrained_merit_function(current_progress);
       const double trial_merit = FilterMethod::unconstrained_merit_function(trial_progress);
-      const double merit_predicted_reduction = FilterMethod::unconstrained_merit_function(predicted_reduction);
+      const double merit_predicted_reduction = FilterMethod::unconstrained_merit_function(predicted_reductions);
       DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Current filter:\n" << *this->filter << '\n';

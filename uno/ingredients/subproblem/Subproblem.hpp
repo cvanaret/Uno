@@ -4,7 +4,7 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
-#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -80,8 +80,8 @@ namespace uno {
       [[nodiscard]] double dual_regularization_factor() const;
 
       // local models of progress measures
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Iterate& current_iterate, const Direction& direction,
-         double step_length, Norm norm, Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
+      [[nodiscard]] PredictedReductionModels build_predicted_reduction_model(const Iterate& current_iterate,
+         const Direction& direction, Norm norm, Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
 
       const OptimizationProblem& problem;
 
