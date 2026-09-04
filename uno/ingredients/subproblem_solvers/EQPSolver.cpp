@@ -154,13 +154,13 @@ namespace uno {
          const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       if (!this->SOC_initialized) {
          this->constraints_SOC.resize(subproblem.number_constraints);
+         this->constraints_buffer_SOC.resize(subproblem.number_constraints);
          this->direction_SOC = Direction(subproblem.number_variables, subproblem.number_constraints);
          this->SOC_initialized = true;
       }
       subproblem.problem.evaluate_constraints(trial_iterate, this->constraints_SOC.view(), trial_evaluations);
-      Vector<double> buffer(subproblem.number_constraints); // TODO preallocate
-      subproblem.problem.evaluate_constraints(current_iterate, buffer.view(), current_evaluations);
-      this->constraints_SOC += this->direction.primal_dual_step_length * buffer;
+      subproblem.problem.evaluate_constraints(current_iterate, this->constraints_buffer_SOC.view(), current_evaluations);
+      this->constraints_SOC += this->direction.primal_dual_step_length * this->constraints_buffer_SOC;
    }
 
    // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
@@ -193,9 +193,8 @@ namespace uno {
    void EQPSolver::update_second_order_corrections(const Subproblem& subproblem, const Iterate& trial_iterate,
          Evaluations& trial_evaluations) {
       this->constraints_SOC.scale(this->direction_SOC.primal_dual_step_length);
-      Vector<double> buffer(subproblem.number_constraints); // TODO preallocate
-      subproblem.problem.evaluate_constraints(trial_iterate, buffer.view(), trial_evaluations);
-      this->constraints_SOC += buffer;
+      subproblem.problem.evaluate_constraints(trial_iterate, this->constraints_buffer_SOC.view(), trial_evaluations);
+      this->constraints_SOC += this->constraints_buffer_SOC;
    }
 
    const SolverWorkspace& EQPSolver::get_workspace() const {

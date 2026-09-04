@@ -9,6 +9,7 @@
 #include <vector>
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/SolutionStatus.hpp"
 #include "../interfaces/C/uno_int.h"
@@ -28,8 +29,6 @@ namespace uno {
    class Multipliers;
    class Parameterization;
    class Statistics;
-   template <typename ElementType>
-   class Vector;
 
    class OptimizationProblem {
    public:
@@ -116,6 +115,7 @@ namespace uno {
    protected:
       const IntegerRange primal_regularization_variables;
       const IntegerRange dual_regularization_constraints;
+      mutable Vector<double> Jv_buffer;
    };
 } // namespace
 

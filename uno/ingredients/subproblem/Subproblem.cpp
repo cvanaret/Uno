@@ -20,7 +20,8 @@ namespace uno {
       InertiaCorrectionStrategy& inertia_correction_strategy):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
          problem(problem), hessian_model(hessian_model),
-         inertia_correction_strategy(inertia_correction_strategy) {
+         inertia_correction_strategy(inertia_correction_strategy),
+         objective_gradient_buffer(this->number_variables) {
    }
 
    View<const uno_int> Subproblem::get_jacobian_row_indices() const {
@@ -153,9 +154,8 @@ namespace uno {
       rhs.scale(-1.);
 
       // objective gradient
-      Vector<double> buffer(this->problem.number_variables); // TODO preallocate!!
-      this->problem.evaluate_objective_gradient(current_iterate, buffer.view(), evaluations);
-      view(rhs.data(), this->problem.number_variables) += buffer;
+      this->problem.evaluate_objective_gradient(current_iterate, this->objective_gradient_buffer.view(), evaluations);
+      view(rhs.data(), this->problem.number_variables) += this->objective_gradient_buffer;
 
       // constraints
       auto rhs_constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
