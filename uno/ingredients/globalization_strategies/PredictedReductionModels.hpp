@@ -9,16 +9,17 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 
 namespace uno {
-   // Lazy local models of the predicted reductions. For a fixed (current iterate, direction), the
+   // lazy local models of the predicted reductions. For a fixed (current iterate, direction), the
    // step-independent quantities (Jacobian-direction product, directional derivatives, dᵀHd, ...) are
    // evaluated once when the model is built; each closure below only assembles the reduction for a given
-   // step length α (and, for the objective, penalty parameter ρ).
+   // step length (and, for the objective, objective parameter)
    using PredictedInfeasibilityReduction = std::function<double(double step_length)>;
    using PredictedObjectiveReduction = std::function<double(double step_length, double objective_multiplier,
       bool use_curvature_information)>;
    using PredictedAuxiliaryReduction = std::function<double(double step_length)>;
 
-   // Built once per (Subproblem, current iterate, direction); queried repeatedly along the line search.
+   // built once per (subproblem, current iterate, direction); queried once by the trust-region method, and repeatedly
+   // by the backtracking line search
    class PredictedReductionModels {
    public:
       PredictedReductionModels(PredictedInfeasibilityReduction infeasibility,
