@@ -150,7 +150,7 @@ namespace uno {
                std::pow(predicted_optimality_reduction, this->s_phi));
          }
       }
-      return alpha_min;
+      return this->gamma_alpha * alpha_min;
    }
 
    // go a fraction along the direction by finding an acceptable step length
@@ -162,6 +162,7 @@ namespace uno {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
+      DEBUG << "\nLine search: minimum step length set to " << minimum_step_length << '\n';
       while (!termination) {
          ++number_iterations;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
