@@ -84,19 +84,20 @@ namespace uno {
          const double old_barrier_parameter = this->barrier_parameter;
          this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
-         if (this->barrier_parameter < old_barrier_parameter) {
-            DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
-            // update complementarity error
-            scaled_complementarity_error = problem.compute_centrality_error(current_iterate.primals,
-               current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
-            primal_dual_error = std::max({
-               scaled_stationarity,
-               primal_feasibility,
-               scaled_complementarity_error
-            });
-            DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
-            parameter_updated = true;
+         if (old_barrier_parameter <= this->barrier_parameter) {
+            break;
          }
+         DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
+         // update complementarity error
+         scaled_complementarity_error = problem.compute_centrality_error(current_iterate.primals,
+            current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
+         primal_dual_error = std::max({
+            scaled_stationarity,
+            primal_feasibility,
+            scaled_complementarity_error
+         });
+         DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
+         parameter_updated = true;
       }
       return parameter_updated;
    }
