@@ -50,12 +50,11 @@ namespace uno {
       iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
-      constexpr double shift_value = 0.;
       // TODO preallocate constraints
       Vector<double> constraints(problem.number_constraints);
       problem.evaluate_constraints(iterate, constraints.view(), evaluations);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
-         iterate.multipliers, shift_value, this->residual_norm);
+         iterate.multipliers, 0., this->residual_norm);
 
       // scaling factors
       iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, iterate.multipliers);

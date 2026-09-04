@@ -15,7 +15,8 @@
 namespace uno {
    OptimizationProblem::OptimizationProblem(const Model& model):
          model(model), number_variables(model.number_variables), number_constraints(model.number_constraints),
-         primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
+         primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints),
+         Jv_buffer(this->model.number_constraints) {
    }
 
    OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
@@ -74,6 +75,7 @@ namespace uno {
 
    void OptimizationProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
+      constraints.fill(0.);
       for (size_t index: Range(this->number_constraints)) {
          constraints[index] = evaluations.constraints[index];
       }
@@ -82,6 +84,7 @@ namespace uno {
    // warning: adds to objective_gradient (objective_gradient must be reset prior, if necessary)
    void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
+      objective_gradient.fill(0.);
       for (size_t index: Range(this->number_variables)) {
          objective_gradient[index] += evaluations.objective_gradient[index];
       }
@@ -89,6 +92,7 @@ namespace uno {
 
    void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const {
       evaluations.evaluate_jacobian(this->model, primals);
+      jacobian_values.fill(0.);
       for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
          jacobian_values[nonzero_index] = evaluations.jacobian_values[nonzero_index];
       }
@@ -290,11 +294,10 @@ namespace uno {
       current_evaluations.evaluate_jacobian(this->model, current_iterate.primals);
 
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
-      // TODO preallocate
-      Vector<double> result(this->model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), result.view());
+      this->Jv_buffer.fill(0.);
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), this->Jv_buffer.view());
       const double trial_linearized_constraint_violation = this->model.constraint_violation(current_evaluations.constraints +
-         step_length * result, norm);
+         step_length * this->Jv_buffer, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 

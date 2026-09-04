@@ -44,6 +44,7 @@ namespace uno {
 
       bool SOC_initialized{false};
       Vector<double> constraints_SOC;
+      Vector<double> constraints_buffer_SOC;
       Direction direction_SOC;
    };
 } // namespace
