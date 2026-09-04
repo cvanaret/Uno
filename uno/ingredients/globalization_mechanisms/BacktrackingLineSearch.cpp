@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
@@ -22,6 +22,13 @@ namespace uno {
          GlobalizationMechanism(model, false, options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")),
+         delta(options.get_double("switching_delta")),
+         gamma_alpha(options.get_double("gamma_alpha")),
+         gamma_theta(1. - options.get_double("filter_beta")),
+         gamma_phi(options.get_double("filter_gamma")),
+         s_theta(options.get_double("switching_infeasibility_exponent")),
+         s_phi(options.get_double("switching_objective_exponent")),
+         theta_min(options.get_double("barrier_small_infeasibility_factor")),
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")) {
       // check the initial and minimal step lengths
@@ -135,11 +142,12 @@ namespace uno {
       */
       const double predicted_optimality_reduction = predicted_reduction_models.optimality_first_order_reduction(objective_multiplier);
       const double theta = current_iterate.progress.infeasibility;
-      double alpha_min = 1e-5;
+      double alpha_min = this->gamma_theta;
       if (predicted_optimality_reduction > 0.) {
-         alpha_min = std::min(alpha_min, 1e-8 * theta / predicted_optimality_reduction);
-         if (theta <= 1e-4) {
-            alpha_min = std::min(alpha_min, 1. * std::pow(theta, 1.1) / std::pow(predicted_optimality_reduction, 2.3));
+         alpha_min = std::min(alpha_min, this->gamma_phi * theta / predicted_optimality_reduction);
+         if (theta <= this->theta_min) {
+            alpha_min = std::min(alpha_min, this->delta * std::pow(theta, this->s_theta) /
+               std::pow(predicted_optimality_reduction, this->s_phi));
          }
       }
       return alpha_min;
@@ -241,14 +249,14 @@ namespace uno {
       return true;
    }
 
-   bool BacktrackingLineSearch::is_tiny_direction(const Iterate& current_iterate, const Direction& direction) {
+   bool BacktrackingLineSearch::is_tiny_direction(const Iterate& current_iterate, const Direction& direction) const {
       constexpr double macheps = std::numeric_limits<double>::epsilon();
       for (size_t variable_index: Range(current_iterate.number_variables)) {
          if (std::abs(direction.primals[variable_index]) / (1. + std::abs(current_iterate.primals[variable_index])) >= 10.*macheps) {
             return false;
          }
       }
-      if (current_iterate.primal_infeasibility > 1e-4) { // TODO add option
+      if (current_iterate.primal_infeasibility > this->theta_min) {
          return false;
       }
       return true;

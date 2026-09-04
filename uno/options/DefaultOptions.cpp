@@ -62,7 +62,8 @@ namespace uno {
 
       /** switching method options **/
       options.set_double("switching_delta", 0.999);
-      options.set_double("switching_infeasibility_exponent", 2);
+      options.set_double("switching_objective_exponent", 1.);
+      options.set_double("switching_infeasibility_exponent", 2.);
 
       /** merit function options **/
       options.set_double("sufficient_infeasibility_decrease_ratio", 0.9);
@@ -94,6 +95,8 @@ namespace uno {
       options.set_double("LS_backtracking_ratio", 0.5);
       // use the primal-dual and dual step lengths to scale the dual directions when assembling the trial iterate
       options.set_bool("LS_scale_duals_with_step_length", true);
+      // safety factor for the minimum step length
+      options.set_double("gamma_alpha", 0.05);
 
       /** Second-Order Corrections (SOC) options */
       // maximum number of SOC iterations

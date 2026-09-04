@@ -78,6 +78,8 @@ armijo_tolerance 1e-9
 ## Switching method options
 # Fraction of the constraint violation that should be achieved by the predicted reduction in the switching condition (double)
 switching_delta 0.999
+# Exponent of the directional derivative of the objective in the switching condition (double)
+switching_objective_exponent 1
 # Exponent of the constraint violation in the switching condition (double)
 switching_infeasibility_exponent 2
 
