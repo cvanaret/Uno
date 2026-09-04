@@ -95,7 +95,6 @@ namespace uno {
          options.set_double("filter_switching_infeasibility_exponent", 1.1);
          options.set_double("armijo_decrease_fraction", 1e-8);
          options.set_double("LS_backtracking_ratio", 0.5);
-         options.set_double("LS_min_step_length", 5e-7);
          options.set_double("barrier_tau_min", 0.99);
          options.set_double("barrier_damping_factor", 1e-5);
          options.set_double("l1_constraint_violation_coefficient", 1000.);

@@ -57,7 +57,6 @@ namespace uno {
       {"funnel_update_strategy", OptionType::INTEGER},
       {"funnel_require_acceptance_wrt_current_iterate", OptionType::BOOL},
       {"LS_backtracking_ratio", OptionType::DOUBLE},
-      {"LS_min_step_length", OptionType::DOUBLE},
       {"LS_scale_duals_with_step_length", OptionType::BOOL},
       {"quasi_newton_memory_size", OptionType::INTEGER},
       {"quasi_newton_delta_lower_bound", OptionType::DOUBLE},

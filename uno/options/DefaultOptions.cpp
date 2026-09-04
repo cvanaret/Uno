@@ -92,8 +92,6 @@ namespace uno {
       /** line search options */
       // backtracking ratio
       options.set_double("LS_backtracking_ratio", 0.5);
-      // minimum step length
-      options.set_double("LS_min_step_length", 1e-12);
       // use the primal-dual and dual step lengths to scale the dual directions when assembling the trial iterate
       options.set_bool("LS_scale_duals_with_step_length", true);
 
