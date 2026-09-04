@@ -128,6 +128,8 @@ funnel_require_acceptance_wrt_current_iterate false
 LS_backtracking_ratio 0.5
 # Whether the Lagrange multipliers are scaled with the step length (bool)
 LS_scale_duals_with_step_length true
+# Safety factor for the minimum step length (double)
+gamma_alpha 0.05
 
 ## Second-order correction (SOC) options
 # Maximum number of SOC iterations (integer)
