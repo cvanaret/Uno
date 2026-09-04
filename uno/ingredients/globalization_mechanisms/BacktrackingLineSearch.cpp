@@ -21,13 +21,11 @@ namespace uno {
    BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, Options& options):
          GlobalizationMechanism(model, false, options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
-         minimum_step_length(options.get_double("LS_min_step_length")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")),
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")) {
       // check the initial and minimal step lengths
       assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
-      assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
    }
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -53,8 +51,10 @@ namespace uno {
             const PredictedReductionModels predicted_reduction_models =
                this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
                evaluation_cache.current_evaluations);
+            const double minimum_step_length = compute_minimum_step_length(predicted_reduction_models, current_iterate, 1.);
             const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
-               direction, evaluation_cache, predicted_reduction_models, warmstart_information, user_callbacks);
+               direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
+               user_callbacks);
             if (backtracking_success) {
                return;
             }
@@ -91,8 +91,10 @@ namespace uno {
       const PredictedReductionModels predicted_reduction_models =
          this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
          evaluation_cache.current_evaluations);
+      const double minimum_step_length = compute_minimum_step_length(predicted_reduction_models, current_iterate, 0.);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
-         trial_iterate, direction, evaluation_cache, predicted_reduction_models, warmstart_information, user_callbacks);
+         trial_iterate, direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
+         user_callbacks);
       if (!backtracking_success) {
          throw std::runtime_error("The line search failed");
       }
@@ -115,11 +117,37 @@ namespace uno {
          direction.bound_dual_step_length);
    }
 
+   double BacktrackingLineSearch::compute_minimum_step_length(const PredictedReductionModels& predicted_reduction_models,
+         const Iterate& current_iterate, double objective_multiplier) const {
+      /*
+      pred        = -∇φᵀd
+      curr_theta = θ(x)            (constraint violation)
+
+      alpha_min = γ_θ
+      if pred > 0:
+          alpha_min = min( γ_θ , γ_φ · θ / pred)
+          if θ ≤ θ_min:
+              alpha_min = min( alpha_min , δ · θ^{s_θ} / pred^{s_φ} )
+      return γ_α · alpha_min
+      */
+      const double predicted_optimality_reduction = predicted_reduction_models.optimality_first_order_reduction(objective_multiplier);
+      const double theta = current_iterate.progress.infeasibility;
+      double alpha_min = 1e-5;
+      if (predicted_optimality_reduction > 0.) {
+         alpha_min = std::min(alpha_min, 1e-8 * theta / predicted_optimality_reduction);
+         if (theta <= 1e-4) {
+            alpha_min = std::min(alpha_min, 1. * std::pow(theta, 1.1) / std::pow(predicted_optimality_reduction, 2.3));
+         }
+      }
+      return alpha_min;
+   }
+
    // go a fraction along the direction by finding an acceptable step length
    // returns true upon success, false upon failure
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
-         const PredictedReductionModels& predicted_reduction_models, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         const PredictedReductionModels& predicted_reduction_models, double minimum_step_length,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -176,13 +204,13 @@ namespace uno {
          // from here on, the trial iterate is rejected
          else {
             step_length = this->decrease_step_length(step_length);
-            if (step_length * direction.primal_dual_step_length >= this->minimum_step_length) {
+            if (step_length * direction.primal_dual_step_length >= minimum_step_length) {
                // keep going
                evaluation_cache.trial_evaluations.reset();
             }
             else {
-               // minimum_step_length reached
-               DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
+               // minimum step length reached
+               DEBUG << "The line search step length is smaller than " << minimum_step_length << '\n';
                // check if we can terminate at a first-order point
                if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
                   statistics.set("Status", "accepted (small step length)");
