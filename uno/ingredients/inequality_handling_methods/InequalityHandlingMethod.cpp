@@ -26,8 +26,8 @@ namespace uno {
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, const Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
+         const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const {
       subproblem.problem.postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
@@ -44,12 +44,10 @@ namespace uno {
       }
       else {
          // determine acceptance wrt the globalization strategy
-         const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(current_iterate, direction,
-            step_length, this->progress_norm, current_evaluations, solver_workspace);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reductions, objective_multiplier);
-         // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
          if (accept_iterate) {
+            // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
             trial_evaluations.evaluate_objective_gradient(this->problem.model, trial_iterate.primals);
             trial_evaluations.evaluate_jacobian(this->problem.model, trial_iterate.primals);
          }

@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -104,6 +105,7 @@ namespace uno {
       virtual void set_auxiliary_measure(Iterate& iterate) const;
 
       // predicted reductions
+      /*
       [[nodiscard]] virtual double compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const;
       [[nodiscard]] virtual std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
@@ -111,6 +113,15 @@ namespace uno {
          double hessian_quadratic_form) const;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;
+      */
+      [[nodiscard]] virtual PredictedInfeasibilityReduction build_predicted_infeasibility_reduction(
+         const Iterate& current_iterate, const Vector<double>& primal_direction, Norm norm,
+         Evaluations& current_evaluations) const;
+      [[nodiscard]] virtual PredictedObjectiveReduction build_predicted_objective_reduction(
+         const Iterate& current_iterate, const Vector<double>& primal_direction,
+         Evaluations& current_evaluations, double hessian_quadratic_form) const;
+      [[nodiscard]] virtual PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(
+         const Iterate& current_iterate, const Vector<double>& primal_direction) const;
 
    protected:
       const IntegerRange primal_regularization_variables;

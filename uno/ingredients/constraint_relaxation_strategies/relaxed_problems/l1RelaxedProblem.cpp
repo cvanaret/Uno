@@ -396,45 +396,44 @@ namespace uno {
 
    // predicted reductions
 
-   double l1RelaxedProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
-         const Vector<double>& /*primal_direction*/, double step_length, Norm /*norm*/, Evaluations& current_evaluations) const {
+   PredictedInfeasibilityReduction l1RelaxedProblem::build_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& /*primal_direction*/, Norm /*norm*/, Evaluations& current_evaluations) const {
+      // r = c(x) − p + n ; since JΔx − Δp + Δn = −r (KKT), pred(α) = α‖r‖₁
       this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
-      // Let r = c(x) − p + n
-      // r + α(JΔx − Δp + Δn) = r - α r = (1-α) r
-      // so pred(α) = ‖r‖ − ‖(1−α) r‖ = α ‖c(x) − p + n‖
-      // note: this assumes that JΔx − Δp + Δn = -r, which is the case for KKT systems
-      return step_length * this->model.constraint_violation(this->constraints_buffer, Norm::L1);
+      const double residual_violation = this->model.constraint_violation(this->constraints_buffer, Norm::L1);
+      return [residual_violation](double step_length) { return step_length * residual_violation; };
    }
 
-   std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction(const Iterate& /*current_iterate*/,
-         const Vector<double>& primal_direction, double step_length, Evaluations& /*current_evaluations*/,
-         double /*hessian_quadratic_form*/) const {
-      // −α ρ sum(Δp + Δn)
-      double predicted_reduction = 0.;
+   PredictedObjectiveReduction l1RelaxedProblem::build_predicted_objective_reduction(const Iterate& /*current_iterate*/,
+         const Vector<double>& primal_direction, Evaluations& /*current_evaluations*/, double /*hessian_quadratic_form*/) const {
+      // −α ρ̄ Σ(Δp + Δn). Currently independent of the objective multiplier; steer ρ here later.
+      double elastic_step_sum = 0.;
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         predicted_reduction += primal_direction[elastic_index];
+         elastic_step_sum += primal_direction[elastic_index];
       }
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         predicted_reduction += primal_direction[elastic_index];
+         elastic_step_sum += primal_direction[elastic_index];
       }
-      predicted_reduction *= -step_length * this->constraint_violation_coefficient;
-      return [=](double /*objective_multiplier*/) {
-         return predicted_reduction;
+      const double coefficient = this->constraint_violation_coefficient;
+      return [elastic_step_sum, coefficient](double step_length, double /*objective_multiplier*/, bool /*use_curvature_information*/) {
+         return -step_length * coefficient * elastic_step_sum;
       };
    }
 
-   double l1RelaxedProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
-      double predicted_auxiliary_reduction = 0.;
-      // form the directional derivative zeta D_R^2 (x - x_R) d and scale it by the step length
+   PredictedAuxiliaryReduction l1RelaxedProblem::build_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const {
+      // proximal directional derivative ζ D_R² (x − x_R)ᵀd, cached once (0 when the proximal term is off)
+      double proximal_directional_derivative = 0.;
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double distance_to_center = current_iterate.primals[variable_index] - this->proximal_center[variable_index];
-            predicted_auxiliary_reduction += scaling * scaling * distance_to_center * primal_direction[variable_index];
+            proximal_directional_derivative += scaling * scaling * distance_to_center * primal_direction[variable_index];
          }
-         predicted_auxiliary_reduction *= step_length * (-this->proximal_coefficient);
       }
-      return predicted_auxiliary_reduction;
+      const double coefficient = this->proximal_coefficient;
+      return [proximal_directional_derivative, coefficient](double step_length) {
+         return step_length * (-coefficient) * proximal_directional_derivative;
+      };
    }
 } // namespace

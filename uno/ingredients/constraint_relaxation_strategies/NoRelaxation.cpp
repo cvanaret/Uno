@@ -92,12 +92,17 @@ namespace uno {
       this->inequality_handling_method->update_second_order_corrections(trial_iterate, trial_evaluations);
    }
 
+   PredictedReductionModels NoRelaxation::build_predicted_reduction_models(const Iterate& current_iterate,
+         const Direction& direction, Evaluations& current_evaluations) const {
+      return this->inequality_handling_method->build_predicted_reduction_models(current_iterate, direction, current_evaluations);
+   }
+
    bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         Iterate& trial_iterate, const Direction& direction, double /*step_length*/, bool uses_trust_region, Evaluations& current_evaluations,
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
-         current_iterate, trial_iterate, direction, step_length, current_evaluations, trial_evaluations);
+         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       if (accept_iterate) {

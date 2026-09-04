@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
 
 namespace uno {
@@ -17,6 +18,7 @@ namespace uno {
    class l1RelaxedProblem;
    class OptimizationProblem;
    class Options;
+   class ProgressMeasures;
    class Statistics;
    class SolverWorkspace;
    class Subproblem;
@@ -49,9 +51,11 @@ namespace uno {
       virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
 
       virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
+      [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
+         const Direction& direction, Evaluations& current_evaluations) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations) const = 0;
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
+         const ProgressMeasures& predicted_reductions) const = 0;
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
@@ -63,8 +67,8 @@ namespace uno {
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, const Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
+         const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
    };
 } // namespace
 

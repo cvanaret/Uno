@@ -107,12 +107,17 @@ namespace uno {
       InequalityHandlingMethod::evaluate_progress_measures(this->problem, iterate, evaluations);
    }
 
+   PredictedReductionModels NoInequalityReformulation::build_predicted_reduction_models(const Iterate& current_iterate,
+         const Direction& direction, Evaluations& current_evaluations) const {
+      return this->subproblem->build_predicted_reduction_model(current_iterate, direction, this->progress_norm,
+         current_evaluations, this->subproblem_solver->get_workspace());
+   }
+
    bool NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
+         const ProgressMeasures& predicted_reductions) const {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, current_evaluations,
-         trial_evaluations);
+         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
    }
 
    void NoInequalityReformulation::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,

@@ -4,6 +4,7 @@
 #include <cassert>
 #include "BacktrackingLineSearch.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "ingredients/inertia_correction_strategies/UnstableInertiaCorrection.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
@@ -49,8 +50,11 @@ namespace uno {
             INF<double>, evaluation_cache.current_evaluations, warmstart_information);
          if (direction.status != SubproblemStatus::INFEASIBLE) {
             check_unboundedness(direction);
+            const PredictedReductionModels predicted_reduction_models =
+               this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
+               evaluation_cache.current_evaluations);
             const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
-               direction, evaluation_cache, warmstart_information, user_callbacks);
+               direction, evaluation_cache, predicted_reduction_models, warmstart_information, user_callbacks);
             if (backtracking_success) {
                return;
             }
@@ -84,8 +88,11 @@ namespace uno {
       const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
+      const PredictedReductionModels predicted_reduction_models =
+         this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
+         evaluation_cache.current_evaluations);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
-         trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
+         trial_iterate, direction, evaluation_cache, predicted_reduction_models, warmstart_information, user_callbacks);
       if (!backtracking_success) {
          throw std::runtime_error("The line search failed");
       }
@@ -112,7 +119,7 @@ namespace uno {
    // returns true upon success, false upon failure
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         const PredictedReductionModels& predicted_reduction_models, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -121,6 +128,9 @@ namespace uno {
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
          if (1 < number_iterations) { statistics.start_new_line(); }
          statistics.set("Steplength", step_length);
+         // the total step length is the step length scaled by the direction's step length
+         const double total_step_length = step_length * direction.primal_dual_step_length;
+         const ProgressMeasures predicted_reductions = predicted_reduction_models(total_step_length);
 
          bool is_acceptable = false;
          try {
@@ -129,8 +139,8 @@ namespace uno {
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-               trial_iterate, direction, step_length * direction.primal_dual_step_length, false, evaluation_cache.current_evaluations,
-               evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
+               trial_iterate, direction, total_step_length, false, evaluation_cache.current_evaluations,
+               evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
 
             // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
@@ -157,7 +167,7 @@ namespace uno {
                this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
             assert(step_length == 1.);
             is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
-               evaluation_cache, warmstart_information, user_callbacks);
+               evaluation_cache, predicted_reductions, warmstart_information, user_callbacks);
          }
 
          if (is_acceptable) {
@@ -210,7 +220,7 @@ namespace uno {
 
    bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
+         const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
       // enter second-order corrections
       DEBUG << "\nEntering second-order corrections\n";
 
@@ -231,7 +241,8 @@ namespace uno {
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction /* this is correct, see IPOPT paper */, direction.primal_dual_step_length, false,
-               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
+               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, predicted_reductions,
+               warmstart_information, user_callbacks);
 
             if (is_acceptable) {
                // terminate the SOCs and the backtracking

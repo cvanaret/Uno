@@ -427,30 +427,25 @@ namespace uno {
 
    // predicted reductions
 
-   double PrimalDualInteriorPointProblem::compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const {
-      return this->inner.compute_predicted_infeasibility_reduction(current_iterate, primal_direction, step_length, norm,
-         current_evaluations);
+   PredictedInfeasibilityReduction PrimalDualInteriorPointProblem::build_predicted_infeasibility_reduction(
+         const Iterate& current_iterate, const Vector<double>& primal_direction, Norm norm, Evaluations& current_evaluations) const {
+      return this->inner.build_predicted_infeasibility_reduction(current_iterate, primal_direction, norm, current_evaluations);
    }
 
-   std::function<double(double)> PrimalDualInteriorPointProblem::compute_predicted_objective_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
-         double hessian_quadratic_form) const {
-      return this->inner.compute_predicted_objective_reduction(current_iterate, primal_direction, step_length,
+   PredictedObjectiveReduction PrimalDualInteriorPointProblem::build_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Evaluations& current_evaluations, double hessian_quadratic_form) const {
+      return this->inner.build_predicted_objective_reduction(current_iterate, primal_direction,
          current_evaluations, hessian_quadratic_form);
    }
 
-   double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
-      // start with the auxiliary measure of the initial problem
-      double predicted_auxiliary_reduction = this->inner.compute_predicted_auxiliary_reduction(current_iterate,
-         primal_direction, step_length);
-
-      // add the contribution of the barrier terms
-      const double directional_derivative = this->compute_barrier_term_directional_derivative(current_iterate, primal_direction);
-      predicted_auxiliary_reduction += step_length * (-directional_derivative);
-      // }, "α*(μ*X^{-1} e^T d)"};
-      return predicted_auxiliary_reduction;
+   PredictedAuxiliaryReduction PrimalDualInteriorPointProblem::build_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const {
+      // inner auxiliary model + barrier term  α ↦ α(−μ Xˉ¹eᵀd)
+      PredictedAuxiliaryReduction inner_model = this->inner.build_predicted_auxiliary_reduction(current_iterate, primal_direction);
+      const double barrier_directional_derivative = this->compute_barrier_term_directional_derivative(current_iterate, primal_direction);
+      return [inner_model = std::move(inner_model), barrier_directional_derivative](double step_length) {
+         return inner_model(step_length) + step_length * (-barrier_directional_derivative);
+      };
    }
 
    // protected member functions
