@@ -184,8 +184,8 @@ namespace uno {
             this->L_invsqrt_D.entry(row_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(row_index, column_index);
          }
       }
-      DEBUG << "> L: " << this->L;
-      DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
+      DEBUG3 << "> L: " << this->L;
+      DEBUG3 << "> L_invsqrt_D: " << this->L_invsqrt_D;
 
       /* recompute V = Y D^{-1/2} */
       for (size_t index: Range(this->number_entries_in_memory)) {
@@ -195,12 +195,12 @@ namespace uno {
       /* form M = L D⁻¹ Lᵀ + Sᵀ B0 S = L_invsqrt_D L_invsqrt_Dᵀ + δ Sᵀ S */
       Mk = L_invsqrt_Dk * transpose(L_invsqrt_Dk);
       Mk += this->delta * (transpose(Sk) * Sk);
-      DEBUG << "> M: " << this->M;
+      DEBUG3 << "> M: " << this->M;
 
       /* compute the Cholesky factor J of M = J Jᵀ */
       const bool success = Mk.compute_cholesky_factorization(); // J overwrites M
       DEBUG << "Cholesky success: " << success << '\n';
-      DEBUG << "> J: " << this->M;
+      DEBUG3 << "> J: " << this->M;
 
       /* form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ = (δ S + V L_invsqrt_Dᵀ) J⁻ᵀ */
       const auto Jk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory); // J overwrites M
@@ -209,8 +209,8 @@ namespace uno {
       Uk = Sk;
       Uk = this->delta * Uk + Vk * transpose(L_invsqrt_Dk);
       Uk *= transpose(inverse(lower_triangular(Jk)));
-      DEBUG << "> U: " << this->U;
-      DEBUG << "> V: " << this->V << '\n';
+      DEBUG3 << "> U: " << this->U;
+      DEBUG3 << "> V: " << this->V << '\n';
 
       // note: the newest entry already lives at slot (number_entries_in_memory - 1); there is no circular index to advance
    }

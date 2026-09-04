@@ -41,6 +41,12 @@ namespace uno {
          };
       }
 
+      // first-order predicted optimality reduction at unit step, used for the step length threshold
+      [[nodiscard]] double optimality_first_order_reduction(double objective_multiplier) const {
+         return this->objective_model(1., objective_multiplier, /* use_curvature_information = */ false)
+              + this->auxiliary_model(1.);
+      }
+
    private:
       PredictedInfeasibilityReduction infeasibility_model;
       PredictedObjectiveReduction objective_model;

@@ -62,7 +62,7 @@ namespace uno {
 
       // rank-1 contribution: U in R^{n x m}
       // work on each column of U (P⁻¹ (Uᵀ v))
-      DEBUG << "U = " << this->U << '\n';
+      DEBUG3 << "U = " << this->U << '\n';
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
          double U_coefficient = dot(current_U_column, view(vector.data(), this->model.number_variables)) /
@@ -127,7 +127,7 @@ namespace uno {
          this->N.entry(newest, column_index) = sy - this->delta * ss;
       }
       this->N.entry(newest, newest) = sTy - this->delta * dot(this->latest_s, this->latest_s);
-      DEBUG << "> N: " << this->N;
+      DEBUG3 << "> N: " << this->N;
 
       /* compute an LDLᵀ (signed Cholesky) factorization without pivoting of N */
       // N = J P Jᵀ with J lower triangular with unit diagonal, and P diagonal, indefinite with nonzero elements
@@ -150,7 +150,7 @@ namespace uno {
          this->LD.entry(committed_slot, column_index) = dot(this->S.column(committed_slot), this->Y.column(column_index));
       }
       this->LD.entry(committed_slot, committed_slot) = sTy;
-      DEBUG << "> LD: " << this->LD;
+      DEBUG3 << "> LD: " << this->LD;
 
       /* update the initial Hessian approximation δ I */
       this->delta = this->compute_delta();
@@ -162,7 +162,7 @@ namespace uno {
          this->U.column(column_index) = this->Y.column(column_index) - this->delta*this->S.column(column_index);
       }
       Uk *= transpose(inverse(lower_unit_triangular(Nk)));
-      DEBUG << "> U: " << this->U;
+      DEBUG3 << "> U: " << this->U;
 
       /* publish the column scalings P (diagonal of N = J P Jᵀ); only now, on a committed update, is the representation
        * replaced, so a subsequently skipped update leaves these last valid values in place */

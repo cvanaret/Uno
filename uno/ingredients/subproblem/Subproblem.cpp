@@ -282,18 +282,6 @@ namespace uno {
 
    // predicted reductions
 
-   /*
-   ProgressMeasures Subproblem::compute_predicted_reductions(const Iterate& current_iterate, const Direction& direction,
-         double step_length, Norm norm, Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
-      return {
-         this->problem.compute_predicted_infeasibility_reduction(current_iterate, direction.primals, step_length, norm, current_evaluations),
-         this->problem.compute_predicted_objective_reduction(current_iterate, direction.primals, step_length, current_evaluations,
-            solver_workspace.compute_hessian_quadratic_form(*this, current_iterate, direction.primals)),
-         this->problem.compute_predicted_auxiliary_reduction(current_iterate, direction.primals, step_length)
-      };
-   }
-   */
-
    PredictedReductionModels Subproblem::build_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction,
          Norm norm, Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       const double hessian_quadratic_form = solver_workspace.compute_hessian_quadratic_form(*this, current_iterate, direction.primals);
