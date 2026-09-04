@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2025 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_BARRIERPARAMETERUPDATESTRATEGY_H
@@ -67,22 +67,29 @@ namespace uno {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
       const double primal_feasibility = (problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_infeasibility;
+      double scaled_complementarity_error = problem.compute_centrality_error(current_iterate.primals,
+         current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
       double primal_dual_error = std::max({
          scaled_stationarity,
          primal_feasibility,
-         residuals.complementarity / residuals.complementarity_scaling
+         scaled_complementarity_error
       });
       DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
 
       // update the barrier parameter (Eq. 7 in IPOPT paper)
       const double tolerance_fraction = this->dual_tolerance / this->parameters.update_fraction;
+
       bool parameter_updated = false;
-      while (primal_dual_error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
+      while (primal_dual_error <= this->parameters.k_epsilon * this->barrier_parameter) {
+         const double old_barrier_parameter = this->barrier_parameter;
          this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
+         if (old_barrier_parameter <= this->barrier_parameter) {
+            break;
+         }
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
-         double scaled_complementarity_error = problem.compute_centrality_error(current_iterate.primals,
+         scaled_complementarity_error = problem.compute_centrality_error(current_iterate.primals,
             current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
