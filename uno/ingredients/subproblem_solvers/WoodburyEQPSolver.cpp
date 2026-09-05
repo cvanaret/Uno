@@ -12,7 +12,6 @@
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "options/Options.hpp"
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Transpose.hpp"
 

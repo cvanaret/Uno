@@ -10,7 +10,6 @@
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {

@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include "Evaluations.hpp"
-#include "linear_algebra/COOSparsity.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 

@@ -5,7 +5,6 @@
 #define UNO_EVALUATIONCACHE_H
 
 #include "Evaluations.hpp"
-#include "linear_algebra/COOSparsity.hpp"
 
 namespace uno {
    // forward declaration

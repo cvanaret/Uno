@@ -4,7 +4,6 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
-#include <memory>
 #include <string>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"

@@ -9,7 +9,7 @@
 namespace uno {
    // forward declarations
    class Iterate;
-   struct ProgressMeasures;
+   class ProgressMeasures;
    class Statistics;
    class Options;
 
