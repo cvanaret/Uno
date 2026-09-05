@@ -8,7 +8,6 @@
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/ScalarMultiple.hpp"
-#include "symbolic/Sum.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 

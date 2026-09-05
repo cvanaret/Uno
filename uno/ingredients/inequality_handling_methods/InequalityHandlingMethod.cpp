@@ -38,7 +38,7 @@ namespace uno {
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
-         trial_evaluations.objective = this->problem.model.evaluate_objective(trial_iterate.primals);
+         trial_evaluations.evaluate_objective(this->problem.model, trial_iterate.primals);
          accept_iterate = true;
          statistics.set("Status", "0 primal step");
       }

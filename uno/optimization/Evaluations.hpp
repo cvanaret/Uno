@@ -8,8 +8,7 @@
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   // forward declarations
-   class COOSparsity;
+   // forward declaration
    class Model;
 
    class Evaluations {
