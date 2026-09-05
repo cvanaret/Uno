@@ -177,7 +177,7 @@ namespace uno {
             // take a step as a fraction of the direction
             assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length);
             evaluation_cache.trial_evaluations.reset();
-            statistics.set("||Step||", step_length * direction.norm);
+            statistics.set("||Step||", total_step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, total_step_length, false, evaluation_cache.current_evaluations,
@@ -217,9 +217,9 @@ namespace uno {
          if (is_acceptable) {
             termination = true;
          }
-         // from here on, the trial iterate is rejected
+         // from here on, the trial iterate is rejected: decrease the step length
          else {
-            step_length = this->decrease_step_length(step_length);
+            step_length *= this->backtracking_ratio;
             // note: if minimum_step_length = 0 and step_length reaches 0 by successive divisions, this inequality
             // protects from an endless loop
             if (step_length * direction.primal_dual_step_length <= minimum_step_length) {
@@ -311,13 +311,6 @@ namespace uno {
          SOC_termination = true;
       }
       return is_acceptable;
-   }
-
-   // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
-   double BacktrackingLineSearch::decrease_step_length(double step_length) const {
-      step_length *= this->backtracking_ratio;
-      assert(0 < step_length && step_length <= 1 && "The line-search step length is not in (0, 1]");
-      return step_length;
    }
 
    void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {
