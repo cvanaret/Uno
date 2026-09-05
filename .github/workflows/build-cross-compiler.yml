@@ -69,7 +69,7 @@ jobs:
 
       - name: Compile Uno_jll.jl for ${{ matrix.platform }}
         run: |
-          julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
+          julia --color=yes -e 'using Pkg; Pkg.update(); Pkg.add("BinaryBuilder")'
           # julia --color=yes .github/julia/build_tarballs_utils.jl ${{ matrix.platform }} --verbose --deploy=local
           julia --color=yes .github/julia/build_tarballs_yggdrasil.jl ${{ matrix.platform }} --verbose --deploy=local
           julia --color=yes .github/julia/build_tarballs_release.jl ${{ matrix.platform }} --verbose --deploy=local
