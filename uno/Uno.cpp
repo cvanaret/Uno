@@ -124,7 +124,6 @@ namespace uno {
             // the trial iterate becomes the current iterate for the next iteration
             std::swap(current_iterate, trial_iterate);
             std::swap(evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
-            evaluation_cache.trial_evaluations.reset();
          }
       }
       // catch errors during the optimization process

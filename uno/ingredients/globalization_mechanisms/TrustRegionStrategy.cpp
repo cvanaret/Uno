@@ -87,7 +87,7 @@ namespace uno {
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
                warmstart_information.trust_region_changed = true;
-               evaluation_cache.trial_evaluations.reset();
+
             }
             else if (direction.status == SubproblemStatus::ERROR) {
                statistics.set("Status", "solver error");
@@ -95,12 +95,12 @@ namespace uno {
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
                warmstart_information.whole_problem_changed();
-               evaluation_cache.trial_evaluations.reset();
             }
             else {
                // take full primal-dual step
                assemble_trial_iterate(model, current_iterate, trial_iterate, direction, direction.primal_dual_step_length,
                   direction.primal_dual_step_length, direction.bound_dual_step_length);
+               evaluation_cache.trial_evaluations.reset();
                this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
                is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
@@ -113,7 +113,6 @@ namespace uno {
                else {
                   this->decrease_radius(direction.norm);
                   warmstart_information.trust_region_changed = true;
-                  evaluation_cache.trial_evaluations.reset();
                }
                if (Logger::level == INFO) statistics.print_current_line();
             }
@@ -125,7 +124,6 @@ namespace uno {
             DEBUG << "A function could not be evaluated. The trust-region radius will be reduced\n";
             this->decrease_radius();
             warmstart_information.trust_region_changed = true;
-            evaluation_cache.trial_evaluations.reset();
          }
          if (!is_acceptable && this->radius < this->minimum_radius) {
             throw std::runtime_error("Small radius");

@@ -176,6 +176,7 @@ namespace uno {
          try {
             // take a step as a fraction of the direction
             assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length);
+            evaluation_cache.trial_evaluations.reset();
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
@@ -219,13 +220,9 @@ namespace uno {
          // from here on, the trial iterate is rejected
          else {
             step_length = this->decrease_step_length(step_length);
-            // note: if minimum_step_length = 0 and step_length reaches 0 by successive divisions, the strict inequality
+            // note: if minimum_step_length = 0 and step_length reaches 0 by successive divisions, this inequality
             // protects from an endless loop
-            if (step_length * direction.primal_dual_step_length > minimum_step_length) {
-               // keep going
-               evaluation_cache.trial_evaluations.reset();
-            }
-            else {
+            if (step_length * direction.primal_dual_step_length <= minimum_step_length) {
                // minimum step length reached
                DEBUG << "The line search failed with a step length <= " << minimum_step_length << '\n';
                // check if we can terminate at a first-order point
@@ -236,10 +233,10 @@ namespace uno {
                else {
                   // switch to solving the feasibility problem
                   statistics.set("Status", "small step length");
-                  evaluation_cache.trial_evaluations.reset();
                   return false;
                }
             }
+            // otherwise, keep going
          }
 
          if (is_acceptable) {
