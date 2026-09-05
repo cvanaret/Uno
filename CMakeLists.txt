@@ -91,6 +91,7 @@ file(GLOB UNO_SOURCE_FILES CONFIGURE_DEPENDS
    uno/ingredients/inertia_correction_strategies/*.cpp
    uno/ingredients/subproblem/*.cpp
    uno/ingredients/subproblem_solvers/*.cpp
+   uno/ingredients/subproblem_solvers/TRON/*.cpp
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp

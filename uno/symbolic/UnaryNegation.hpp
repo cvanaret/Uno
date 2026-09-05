@@ -26,6 +26,8 @@ namespace uno {
          return -this->expression[index];
       }
 
+		UNO_FORWARD_ACCESSOR(get_expression, this->expression)
+
    protected:
       storage_t<Expression> expression;
    };
