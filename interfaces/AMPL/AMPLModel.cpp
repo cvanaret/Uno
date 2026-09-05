@@ -220,7 +220,11 @@ namespace uno {
       objective_multiplier *= this->optimization_sense;
 
       // compute the Hessian-vector product
-      (this->asl->p.Hvcomp)(this->asl, result.data(), vector.data(), -1, &objective_multiplier, multipliers.data());
+      fint error_flag = 0;
+      (this->asl->p.Hvcompe)(this->asl, result.data(), vector.data(), -1, &objective_multiplier, multipliers.data(), &error_flag);
+      if (0 < error_flag) {
+         throw HessianEvaluationError();
+      }
    }
 
    const std::vector<double>& AMPLModel::get_variables_lower_bounds() const {
