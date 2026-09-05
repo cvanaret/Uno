@@ -60,10 +60,8 @@ namespace uno {
          const FixedBoundsConstraintsModel fixed_bound_model(scaled_model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
          const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
-         // slightly relax the bound constraints
-         const BoundRelaxedModel bound_relaxed_model(homogeneous_model, options);
          
-         Result result = uno_solve(bound_relaxed_model, options, user_callbacks);
+         Result result = uno_solve(homogeneous_model, options, user_callbacks);
          // fix the dimensions
          result.number_variables = model.number_variables;
          result.number_constraints = model.number_constraints;
