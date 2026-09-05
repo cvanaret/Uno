@@ -68,7 +68,7 @@ namespace uno {
       // assemble the RHS
       linear_system.rhs.fill(0.);
       evaluations.evaluate_objective_gradient(subproblem.problem.model, iterate.primals);
-      view(linear_system.rhs.data(), subproblem.number_variables) = evaluations.objective_gradient;
+      view(linear_system.rhs.data(), subproblem.problem.model.number_variables) = evaluations.objective_gradient;
       for (size_t variable_index: Range(subproblem.number_variables)) {
          linear_system.rhs[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
             iterate.multipliers.upper_bounds[variable_index]);

@@ -5,6 +5,7 @@
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
 #include "optimization/OptimizationProblem.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/IntegerRange.hpp"
 
@@ -17,7 +18,6 @@ namespace uno {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
          const Parameterization& parameterization);
-      [[nodiscard]] std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
       [[nodiscard]] bool has_inequality_constraints() const override;
@@ -69,6 +69,11 @@ namespace uno {
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate) const override;
 
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double shift) const override;
+
       // progress measures
       void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const override;
       void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const override;
@@ -86,15 +91,21 @@ namespace uno {
       const OptimizationProblem& inner;
       const Parameterization& parameterization;
       const InteriorPointParameters& parameters;
+      SparseVector<size_t> slacks;
       const Vector<size_t> fixed_variables{};
       const IntegerRange equality_constraints;
       const IntegerRange inequality_constraints{0};
 
-      std::vector<double> barrier_variables_lower_bounds;
-      std::vector<double> barrier_variables_upper_bounds;
+      std::vector<double> explicit_variables_lower_bounds;
+      std::vector<double> explicit_variables_upper_bounds;
+      std::vector<double> constraints_lower_bounds;
+      std::vector<double> constraints_upper_bounds;
       // internal bounds (may be slightly relaxed if necessary)
       mutable std::vector<double> variables_lower_bounds;
       mutable std::vector<double> variables_upper_bounds;
+
+      Vector<uno_int> jacobian_row_indices{};
+      Vector<uno_int> jacobian_column_indices{};
 
       void compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const;
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
