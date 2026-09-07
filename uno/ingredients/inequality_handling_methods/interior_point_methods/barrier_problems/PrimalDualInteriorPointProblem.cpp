@@ -16,7 +16,7 @@
 
 namespace uno {
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem,
-      const InteriorPointParameters& parameters, const Parameterization& parameterization):
+      const InteriorPointParameters& parameters, const Parameterization& parameterization, double bound_relaxation_factor):
          OptimizationProblem(problem.model, problem.number_variables + problem.get_inequality_constraints().size(),
             problem.number_constraints),
          inner(problem),
@@ -43,6 +43,16 @@ namespace uno {
          this->variables_lower_bounds[slack_index] = this->inner.get_constraints_lower_bounds()[constraint_index];
          this->variables_upper_bounds[slack_index] = this->inner.get_constraints_upper_bounds()[constraint_index];
          ++inequality_index;
+      }
+
+      // slighly relax the bounds
+      for (size_t variable_index: Range(this->number_variables)) {
+         const double lower_bound = this->variables_lower_bounds[variable_index];
+         this->variables_lower_bounds[variable_index] = lower_bound - bound_relaxation_factor *
+            std::max(1., std::abs(lower_bound));
+         const double upper_bound = this->variables_upper_bounds[variable_index];
+         this->variables_upper_bounds[variable_index] = upper_bound + bound_relaxation_factor *
+            std::max(1., std::abs(upper_bound));
       }
 
       // compute the Jacobian sparsity
@@ -86,7 +96,7 @@ namespace uno {
          this->inner.evaluate_constraints(initial_iterate, constraints.view(), evaluations);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->slacks) {
-            initial_iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
+            initial_iterate.primals[slack_index] = this->push_variable_to_interior(constraints[constraint_index],
                this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
          }
          // since the slacks have been set, the function evaluations should also be updated
@@ -488,6 +498,7 @@ namespace uno {
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             barrier_terms -= std::log(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
+            assert(!std::isnan(barrier_terms));
             if (is_infinite(this->variables_upper_bounds[variable_index])) {
                // damping
                barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
@@ -495,6 +506,7 @@ namespace uno {
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
             barrier_terms -= std::log(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
+            assert(!std::isnan(barrier_terms));
             if (is_infinite(this->variables_lower_bounds[variable_index])) {
                barrier_terms += this->parameters.damping_factor*(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
             }

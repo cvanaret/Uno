@@ -17,7 +17,7 @@ namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
-         const Parameterization& parameterization);
+         const Parameterization& parameterization, double bound_relaxation_factor);
 
       [[nodiscard]] double get_objective_multiplier() const override;
       [[nodiscard]] bool has_inequality_constraints() const override;
