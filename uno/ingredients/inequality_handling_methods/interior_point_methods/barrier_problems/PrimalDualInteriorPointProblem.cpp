@@ -82,8 +82,6 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const {
-      iterate.set_number_variables(this->number_variables);
-
       if (is_initial_iterate) {
          // make the initial point strictly feasible wrt the bounds
          for (size_t variable_index: Range(this->inner.number_variables)) {
@@ -501,7 +499,7 @@ namespace uno {
       }
       barrier_terms *= barrier_parameter;
       if (std::isnan(barrier_terms)) {
-         throw std::runtime_error("The auxiliary measure is not an number.");
+         throw std::runtime_error("The auxiliary measure is not an number");
       }
       iterate.progress.auxiliary += barrier_terms;
    }
