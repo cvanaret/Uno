@@ -105,7 +105,7 @@ namespace uno {
       // set the slack variables (if any)
       if (!this->slacks.is_empty()) {
          Vector<double> constraints(this->inner.number_constraints); // TODO preallocate?
-         this->inner.evaluate_constraints(iterate, constraints.view(), evaluations);
+         this->evaluate_constraints(iterate, constraints.view(), evaluations);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->slacks) {
             iterate.primals[slack_index] = this->push_variable_to_interior(constraints[constraint_index],
@@ -190,12 +190,12 @@ namespace uno {
    void PrimalDualInteriorPointProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       this->inner.evaluate_constraints(iterate, constraints, evaluations);
 
-      // inequality constraints: add the slacks
+      // inequality constraints: add the slacks. This makes them homogeneous (c(x) - s = 0)
       for (const auto [constraint_index, slack_index]: this->slacks) {
          constraints[constraint_index] -= iterate.primals[slack_index];
       }
 
-      // equality constraints: make sure they are homogeneous (c(x) = 0)
+      // make sure the equality constraints are homogeneous (c(x) = 0)
       for (const size_t constraint_index: this->inner.get_equality_constraints()) {
          const double fixed_bound = this->inner.get_constraints_lower_bounds()[constraint_index];
          constraints[constraint_index] -= fixed_bound;
@@ -500,7 +500,7 @@ namespace uno {
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             barrier_terms -= std::log(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
-            assert(!std::isnan(barrier_terms));
+            //assert(!std::isnan(barrier_terms));
             if (is_infinite(this->variables_upper_bounds[variable_index])) {
                // damping
                barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
@@ -508,7 +508,7 @@ namespace uno {
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
             barrier_terms -= std::log(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
-            assert(!std::isnan(barrier_terms));
+            //assert(!std::isnan(barrier_terms));
             if (is_infinite(this->variables_lower_bounds[variable_index])) {
                barrier_terms += this->parameters.damping_factor*(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
             }

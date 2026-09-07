@@ -126,7 +126,7 @@ namespace uno {
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
       this->feasibility_globalization_strategy->reset();
-      // this->inequality_handling_method->compute_residuals(current_iterate, current_evaluations);
+      // this->feasibility_inequality_handling_method->compute_residuals(current_iterate, current_evaluations);
 
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
@@ -267,6 +267,8 @@ namespace uno {
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
+      DEBUG << "\nTesting the conditions to switch back to the optimality phase\n";
+
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
       compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(trial_iterate, this->reference_infeasibility)) {
@@ -315,16 +317,10 @@ namespace uno {
    }
 
    void FeasibilityRestoration::augment_iterate(Iterate& iterate) const {
-      const auto [number_variables_optimality, _] = this->inequality_handling_method->get_problem_dimensions();
-      const auto [number_variables_feasibility, __] = this->feasibility_inequality_handling_method->get_problem_dimensions();
-      // TODO constraints
-
-      const auto auxiliary_variables = view(iterate.primals, this->original_problem.number_variables,
-         number_variables_optimality);
+      const auto [number_variables_feasibility, _] = this->feasibility_inequality_handling_method->get_problem_dimensions();
       iterate.primals.resize(number_variables_feasibility);
+      view(iterate.primals, this->original_problem.model.number_variables, number_variables_feasibility).fill(0.);
       iterate.residuals.lagrangian_gradient.resize(number_variables_feasibility);
-      // copy the additional variables into the last block
-      view(iterate.primals, this->feasibility_problem.number_variables, number_variables_feasibility) = auxiliary_variables;
    }
 
    void FeasibilityRestoration::condense_primal_iterate(Iterate& iterate) const {

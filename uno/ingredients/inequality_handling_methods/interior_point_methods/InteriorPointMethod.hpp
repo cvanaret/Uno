@@ -179,18 +179,19 @@ namespace uno {
          }
       }
 
-      // push the slacks back into the interior of their bounds
-      this->barrier_problem.push_slacks_to_interior(iterate, evaluations);
+      // set the slacks and push them back into the interior of their bounds
+      this->barrier_problem.create_iterate(iterate, evaluations, false);
 
       // c(x) - p + n = 0
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
-      evaluations.evaluate_constraints(feasibility_problem.model, iterate.primals);
+      Vector<double> constraints(this->barrier_problem.number_constraints); // TODO preallocate
+      this->barrier_problem.evaluate_constraints(iterate, constraints.view(), evaluations);
       const double mu = this->barrier_parameter();
       const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
          // precomputations
-         const double constraint_j = evaluations.constraints[constraint_index];
+         const double constraint_j = constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
