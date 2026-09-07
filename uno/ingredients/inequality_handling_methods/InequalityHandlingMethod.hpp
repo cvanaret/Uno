@@ -32,7 +32,7 @@ namespace uno {
 
       [[nodiscard]] virtual std::pair<size_t, size_t> get_problem_dimensions() const = 0;
 
-      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const = 0;
+      virtual void create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) = 0;
       [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Iterate& current_iterate,

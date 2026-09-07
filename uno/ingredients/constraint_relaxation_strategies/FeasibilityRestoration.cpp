@@ -54,7 +54,7 @@ namespace uno {
          uses_trust_region, 0., options);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->create_iterate(initial_iterate, evaluation_cache.current_evaluations, true);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);

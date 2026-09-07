@@ -25,7 +25,7 @@ namespace uno {
 
       [[nodiscard]] std::pair<size_t, size_t> get_problem_dimensions() const override;
 
-      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
+      void create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
