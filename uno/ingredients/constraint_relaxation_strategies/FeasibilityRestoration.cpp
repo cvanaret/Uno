@@ -54,6 +54,8 @@ namespace uno {
          uses_trust_region, 0., options);
 
       // initial iterate
+      const auto [number_variables, _] = this->inequality_handling_method->get_problem_dimensions();
+      initial_iterate.set_number_variables(number_variables);
       this->inequality_handling_method->create_iterate(initial_iterate, evaluation_cache.current_evaluations, true);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
@@ -318,19 +320,14 @@ namespace uno {
 
    void FeasibilityRestoration::augment_iterate(Iterate& iterate) const {
       const auto [number_variables_feasibility, _] = this->feasibility_inequality_handling_method->get_problem_dimensions();
-      iterate.primals.resize(number_variables_feasibility);
+      iterate.set_number_variables(number_variables_feasibility);
       view(iterate.primals, this->original_problem.model.number_variables, number_variables_feasibility).fill(0.);
       iterate.residuals.lagrangian_gradient.resize(number_variables_feasibility);
    }
 
    void FeasibilityRestoration::condense_primal_iterate(Iterate& iterate) const {
       const auto [number_variables_optimality, _] = this->inequality_handling_method->get_problem_dimensions();
-      const auto [number_variables_feasibility, __] = this->feasibility_inequality_handling_method->get_problem_dimensions();
-      // TODO constraints
-
-      const auto current_auxiliary_variables = view(iterate.primals, this->feasibility_problem.number_variables,
-         number_variables_feasibility);
-      view(iterate.primals, this->original_problem.number_variables, number_variables_optimality) = current_auxiliary_variables;
-      iterate.primals.resize(number_variables_optimality);
+      iterate.set_number_variables(number_variables_optimality);
+      view(iterate.primals, this->original_problem.model.number_variables, number_variables_optimality).fill(0.);
    }
 } // namespace
