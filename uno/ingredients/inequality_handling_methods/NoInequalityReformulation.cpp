@@ -37,7 +37,8 @@ namespace uno {
       this->inertia_correction_strategy->initialize_statistics(statistics);
    }
 
-   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/) {
+   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         Evaluations& /*current_evaluations*/) {
       // the parameterization is not updated
       return false;
    }
@@ -105,6 +106,10 @@ namespace uno {
    void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
       // no threshold on the multipliers
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
+   }
+
+   void NoInequalityReformulation::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
+      InequalityHandlingMethod::compute_residuals(this->problem, iterate, evaluations);
    }
 
    void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {

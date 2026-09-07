@@ -74,6 +74,7 @@ namespace uno {
                // solve the feasibility problem at the next TR iteration with the same radius
                this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
                   evaluation_cache.current_evaluations, warmstart_information);
+               trial_iterate.set_number_variables(current_iterate.number_variables);
                continue;
             }
             assert(direction.status != SubproblemStatus::INFEASIBLE);

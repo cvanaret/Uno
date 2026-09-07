@@ -69,9 +69,9 @@ namespace uno {
       void postprocess_iterate(Iterate& iterate) const override;
 
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+         const Multipliers& multipliers, Norm residual_norm) const override;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const override;
+         double shift, Norm residual_norm) const override;
 
       // progress measures
       void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const override;

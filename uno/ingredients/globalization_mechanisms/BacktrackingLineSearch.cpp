@@ -94,6 +94,7 @@ namespace uno {
       // switch to solving the feasibility problem
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
+      trial_iterate.set_number_variables(current_iterate.number_variables);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
       const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);

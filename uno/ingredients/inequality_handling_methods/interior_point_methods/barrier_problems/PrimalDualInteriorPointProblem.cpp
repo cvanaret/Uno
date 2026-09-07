@@ -441,8 +441,13 @@ namespace uno {
       }
    }
 
+   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
+         const Multipliers& multipliers, Norm residual_norm) const {
+      return this->compute_centrality_error(primals, multipliers, 0., residual_norm);
+   }
+
    double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const {
+         double shift, Norm residual_norm) const {
       const Range variables_range = Range(this->number_variables);
       const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
          double result = 0.;
@@ -456,12 +461,7 @@ namespace uno {
          }
          return result;
       }};
-      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
-   }
-
-   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
-         const Multipliers& multipliers, double shift_value, Norm /*residual_norm*/) const {
-      return this->compute_centrality_error(primals, multipliers, shift_value);
+      return norm(residual_norm, shifted_bound_complementarity); // TODO use a generic norm
    }
 
    static double constraint_violation(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds,

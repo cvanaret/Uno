@@ -61,8 +61,6 @@ namespace uno {
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:
-      const Norm residual_norm;
-      const double residual_scaling_threshold;
       const double primal_tolerance;
       const double dual_tolerance;
       const double loose_primal_tolerance;
@@ -72,10 +70,6 @@ namespace uno {
       const double diverging_iterate_threshold;
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
-
-      void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
-      [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
-      [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 
       template <typename Problem>
       [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate, const Evaluations& evaluations);
