@@ -80,8 +80,7 @@ namespace uno {
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
-      void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, Evaluations& current_evaluations,
-         Evaluations& trial_evaluations);
+      void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, Evaluations& trial_evaluations);
       void augment_iterate(Iterate& iterate) const;
       void condense_primal_iterate(Iterate& iterate) const;
    };

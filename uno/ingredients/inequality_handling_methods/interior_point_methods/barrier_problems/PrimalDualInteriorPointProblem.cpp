@@ -88,16 +88,6 @@ namespace uno {
             iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
                this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
          }
-
-         // set the bound multipliers
-         for (size_t variable_index: Range(this->number_variables)) {
-            if (is_finite(this->variables_lower_bounds[variable_index])) {
-               iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
-            }
-            if (is_finite(this->variables_upper_bounds[variable_index])) {
-               iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
-            }
-         }
       }
 
       // set the slack variables (if any)
@@ -113,6 +103,33 @@ namespace uno {
          evaluations.are_constraints_computed = false;
          evaluations.is_objective_gradient_computed = false;
          evaluations.is_jacobian_computed = false;
+      }
+
+      // set the bound multipliers
+      if (is_initial_iterate) {
+         // constant
+         for (size_t variable_index: Range(this->number_variables)) {
+            if (is_finite(this->variables_lower_bounds[variable_index])) {
+               iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+            }
+            if (is_finite(this->variables_upper_bounds[variable_index])) {
+               iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+            }
+         }
+      }
+      else {
+         // satisfy complementarity
+         const double barrier_parameter = this->parameterization.get("barrier_parameter");
+         for (size_t variable_index: Range(this->number_variables)) {
+            if (is_finite(this->variables_lower_bounds[variable_index])) {
+               iterate.multipliers.lower_bounds[variable_index] = barrier_parameter /
+                  (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]); // > 0
+            }
+            if (is_finite(this->variables_upper_bounds[variable_index])) {
+               iterate.multipliers.upper_bounds[variable_index] = barrier_parameter /
+                  (iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]); // < 0
+            }
+         }
       }
    }
 
