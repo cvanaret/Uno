@@ -17,7 +17,7 @@ namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
-         const Parameterization& parameterization, double bound_relaxation_factor);
+         const Parameterization& parameterization, double bound_relaxation_factor, double residual_scaling_threshold);
 
       [[nodiscard]] double get_objective_multiplier() const override;
       [[nodiscard]] bool has_inequality_constraints() const override;
@@ -72,6 +72,8 @@ namespace uno {
          const Multipliers& multipliers, Norm residual_norm) const override;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift, Norm residual_norm) const override;
+      [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const override;
+      [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const override;
 
       // progress measures
       void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const override;
@@ -90,6 +92,7 @@ namespace uno {
       const OptimizationProblem& inner;
       const Parameterization& parameterization;
       const InteriorPointParameters& parameters;
+      const double residual_scaling_threshold;
       SparseVector<size_t> slacks;
       const Vector<size_t> fixed_variables{};
       const IntegerRange equality_constraints;

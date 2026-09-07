@@ -41,63 +41,8 @@ namespace uno {
          iterate.multipliers, this->residual_norm);
 
       // scaling factors
-      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem, iterate.multipliers);
-      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem, iterate.multipliers);
-   }
-
-   double InequalityHandlingMethod::compute_stationarity_scaling(const OptimizationProblem& problem, const Multipliers& multipliers) const {
-      size_t number_lower_bounded_variables = 0;
-      size_t number_upper_bounded_variables = 0;
-      const auto& variables_lower_bounds = problem.get_variables_lower_bounds();
-      const auto& variables_upper_bounds = problem.get_variables_upper_bounds();
-      for (size_t variable_index: Range(problem.number_variables)) {
-         if (is_finite(variables_lower_bounds[variable_index])) {
-            ++number_lower_bounded_variables;
-         }
-         if (is_finite(variables_upper_bounds[variable_index])) {
-            ++number_upper_bounded_variables;
-         }
-      }
-      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables + problem.number_constraints;
-      if (total_size == 0) {
-         return 1.;
-      }
-      else {
-         const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
-         const double multiplier_norm = norm_1(
-               view(multipliers.constraints, 0, problem.number_constraints),
-               view(multipliers.lower_bounds, 0, problem.number_variables),
-               view(multipliers.upper_bounds, 0, problem.number_variables)
-         );
-         return std::max(1., multiplier_norm / scaling_factor);
-      }
-   }
-
-   double InequalityHandlingMethod::compute_complementarity_scaling(const OptimizationProblem& problem, const Multipliers& multipliers) const {
-      size_t number_lower_bounded_variables = 0;
-      size_t number_upper_bounded_variables = 0;
-      const auto& variables_lower_bounds = problem.get_variables_lower_bounds();
-      const auto& variables_upper_bounds = problem.get_variables_upper_bounds();
-      for (size_t variable_index: Range(problem.number_variables)) {
-         if (is_finite(variables_lower_bounds[variable_index])) {
-            ++number_lower_bounded_variables;
-         }
-         if (is_finite(variables_upper_bounds[variable_index])) {
-            ++number_upper_bounded_variables;
-         }
-      }
-      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables;
-      if (total_size == 0) {
-         return 1.;
-      }
-      else {
-         const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
-         const double bound_multiplier_norm = norm_1(
-               view(multipliers.lower_bounds, 0, problem.number_variables),
-               view(multipliers.upper_bounds, 0, problem.number_variables)
-         );
-         return std::max(1., bound_multiplier_norm / scaling_factor);
-      }
+      iterate.residuals.stationarity_scaling = problem.compute_stationarity_scaling(iterate.multipliers);
+      iterate.residuals.complementarity_scaling = problem.compute_complementarity_scaling(iterate.multipliers);
    }
 
    void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,

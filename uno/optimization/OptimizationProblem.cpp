@@ -205,6 +205,14 @@ namespace uno {
       return norm(residual_norm, shifted_bound_complementarity);
    }
 
+   double OptimizationProblem::compute_stationarity_scaling(const Multipliers& /*multipliers*/) const {
+      return 1.;
+   }
+
+   double OptimizationProblem::compute_complementarity_scaling(const Multipliers& /*multipliers*/) const {
+      return 1.;
+   }
+
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions

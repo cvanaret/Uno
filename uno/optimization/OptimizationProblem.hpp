@@ -94,6 +94,8 @@ namespace uno {
          const Multipliers& multipliers, Norm residual_norm) const;
       [[nodiscard]] virtual double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift, Norm residual_norm) const;
+      [[nodiscard]] virtual double compute_stationarity_scaling(const Multipliers& multipliers) const;
+      [[nodiscard]] virtual double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
       [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;

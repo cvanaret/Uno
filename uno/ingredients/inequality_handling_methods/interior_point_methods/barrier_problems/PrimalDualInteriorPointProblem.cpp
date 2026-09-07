@@ -16,12 +16,14 @@
 
 namespace uno {
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem,
-      const InteriorPointParameters& parameters, const Parameterization& parameterization, double bound_relaxation_factor):
+      const InteriorPointParameters& parameters, const Parameterization& parameterization, double bound_relaxation_factor,
+      double residual_scaling_threshold):
          OptimizationProblem(problem.model, problem.number_variables + problem.get_inequality_constraints().size(),
             problem.number_constraints),
          inner(problem),
          parameterization(parameterization),
          parameters(parameters),
+         residual_scaling_threshold(residual_scaling_threshold),
          slacks(this->inner.get_inequality_constraints().size()),
          // all constraints are equality constraints
          equality_constraints(this->number_constraints),
@@ -462,6 +464,57 @@ namespace uno {
          return result;
       }};
       return norm(residual_norm, shifted_bound_complementarity); // TODO use a generic norm
+   }
+
+   double PrimalDualInteriorPointProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {
+      size_t number_lower_bounded_variables = 0;
+      size_t number_upper_bounded_variables = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            ++number_lower_bounded_variables;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            ++number_upper_bounded_variables;
+         }
+      }
+      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables + this->number_constraints;
+      if (total_size == 0) {
+         return 1.;
+      }
+      else {
+         const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+         const double multiplier_norm = norm_1(
+               view(multipliers.constraints, 0, this->number_constraints),
+               view(multipliers.lower_bounds, 0, this->number_variables),
+               view(multipliers.upper_bounds, 0, this->number_variables)
+         );
+         return std::max(1., multiplier_norm / scaling_factor);
+      }
+   }
+
+   double PrimalDualInteriorPointProblem::compute_complementarity_scaling(const Multipliers& multipliers) const {
+      size_t number_lower_bounded_variables = 0;
+      size_t number_upper_bounded_variables = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            ++number_lower_bounded_variables;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            ++number_upper_bounded_variables;
+         }
+      }
+      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables;
+      if (total_size == 0) {
+         return 1.;
+      }
+      else {
+         const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+         const double bound_multiplier_norm = norm_1(
+               view(multipliers.lower_bounds, 0, this->number_variables),
+               view(multipliers.upper_bounds, 0, this->number_variables)
+         );
+         return std::max(1., bound_multiplier_norm / scaling_factor);
+      }
    }
 
    static double constraint_violation(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds,

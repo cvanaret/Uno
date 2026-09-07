@@ -98,7 +98,8 @@ namespace uno {
                options.get_double("barrier_damping_factor"),
                options.get_double("barrier_default_multiplier")
          }),
-         barrier_problem(problem, this->parameters, this->parameterization, options.get_double("primal_tolerance")),
+         barrier_problem(problem, this->parameters, this->parameterization, options.get_double("primal_tolerance"),
+            options.get_double("residual_scaling_threshold")),
          barrier_parameter_update_strategy(options),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
