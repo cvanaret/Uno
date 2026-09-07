@@ -118,21 +118,6 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::push_slacks_to_interior(Iterate& iterate, Evaluations& evaluations) const {
-      // set the slack variables (if any)
-      if (!this->slacks.is_empty()) {
-         // set the slacks to the constraint values
-         for (const auto [constraint_index, slack_index]: this->slacks) {
-            iterate.primals[slack_index] = this->push_variable_to_interior(iterate.primals[slack_index],
-               this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
-         }
-         // since the slacks have been set, the function evaluations should also be updated
-         evaluations.are_constraints_computed = false;
-         evaluations.is_objective_gradient_computed = false;
-         evaluations.is_jacobian_computed = false;
-      }
-   }
-
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
       return this->inner.number_jacobian_nonzeros() + this->slacks.size();
    }
