@@ -180,6 +180,11 @@ namespace uno {
       return 1.;
    }
 
+   double OptimizationProblem::constraint_violation(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      return this->model.constraint_violation(evaluations.constraints, residual_norm);
+   }
+
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const {
       return this->model.complementarity_error(primals, constraints, multipliers, residual_norm);

@@ -32,7 +32,9 @@ namespace uno {
          constraints_lower_bounds(this->number_constraints, 0.),
          constraints_upper_bounds(this->number_constraints, 0.),
          variables_lower_bounds(this->number_variables, -INF<double>),
-         variables_upper_bounds(this->number_variables, INF<double>) {
+         variables_upper_bounds(this->number_variables, INF<double>),
+         model_constraints_lower_bounds(this->model.number_constraints),
+         model_constraints_upper_bounds(this->model.number_constraints) {
       // compute the variables bounds
       view(this->variables_lower_bounds, 0, this->inner.number_variables) = this->inner.get_variables_lower_bounds();
       view(this->variables_upper_bounds, 0, this->inner.number_variables) = this->inner.get_variables_upper_bounds();
@@ -47,6 +49,7 @@ namespace uno {
          ++inequality_index;
       }
 
+      /*
       // slighly relax the bounds
       for (size_t variable_index: Range(this->number_variables)) {
          const double lower_bound = this->variables_lower_bounds[variable_index];
@@ -56,6 +59,22 @@ namespace uno {
          this->variables_upper_bounds[variable_index] = upper_bound + bound_relaxation_factor *
             std::max(1., std::abs(upper_bound));
       }
+      */
+
+      // compute the constraints bounds
+      this->model_constraints_lower_bounds = this->model.get_constraints_lower_bounds();
+      this->model_constraints_upper_bounds = this->model.get_constraints_upper_bounds();
+      /*
+      // slighly relax the bounds
+      for (size_t variable_index: Range(this->model.number_constraints)) {
+         const double lower_bound = this->model_constraints_lower_bounds[variable_index];
+         this->model_constraints_lower_bounds[variable_index] = lower_bound - bound_relaxation_factor *
+            std::max(1., std::abs(lower_bound));
+         const double upper_bound = this->model_constraints_upper_bounds[variable_index];
+         this->model_constraints_upper_bounds[variable_index] = upper_bound + bound_relaxation_factor *
+            std::max(1., std::abs(upper_bound));
+      }
+      */
 
       // compute the Jacobian sparsity
       const size_t number_jacobian_nonzeros = this->inner.number_jacobian_nonzeros();
@@ -85,26 +104,33 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const {
       if (is_initial_iterate) {
+         bool primals_changed = false;
          // make the initial point strictly feasible wrt the bounds
          for (size_t variable_index: Range(this->inner.number_variables)) {
+            const double old_value = iterate.primals[variable_index];
             iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
                this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
+            if (iterate.primals[variable_index] != old_value) {
+               primals_changed = true;
+            }
+         }
+         if (primals_changed) {
+            // if the primals have changed, the function evaluations should also be updated
+            evaluations.are_constraints_computed = false;
+            evaluations.is_objective_gradient_computed = false;
+            evaluations.is_jacobian_computed = false;
          }
       }
 
       // set the slack variables (if any)
       if (!this->slacks.is_empty()) {
          Vector<double> constraints(this->inner.number_constraints); // TODO preallocate?
-         this->evaluate_constraints(iterate, constraints.view(), evaluations);
+         this->inner.evaluate_constraints(iterate, constraints.view(), evaluations);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->slacks) {
             iterate.primals[slack_index] = this->push_variable_to_interior(constraints[constraint_index],
                this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
          }
-         // since the slacks have been set, the function evaluations should also be updated
-         evaluations.are_constraints_computed = false;
-         evaluations.is_objective_gradient_computed = false;
-         evaluations.is_jacobian_computed = false;
       }
 
       // set the bound multipliers
@@ -145,7 +171,7 @@ namespace uno {
       }
       else {
          // barrier terms
-         for (size_t variable_index: Range(this->inner.number_variables)) {
+         for (size_t variable_index: Range(this->number_variables)) {
             if (is_finite(this->variables_lower_bounds[variable_index]) || is_finite(this->variables_upper_bounds[variable_index])) {
                return true;
             }
@@ -443,6 +469,21 @@ namespace uno {
       }
    }
 
+   double PrimalDualInteriorPointProblem::constraint_violation(double constraint_value, size_t constraint_index) const {
+      const double lower_bound_violation = std::max(0., this->model_constraints_lower_bounds[constraint_index] - constraint_value);
+      const double upper_bound_violation = std::max(0., constraint_value - this->model_constraints_upper_bounds[constraint_index]);
+      return std::max(lower_bound_violation, upper_bound_violation);
+   }
+
+   double PrimalDualInteriorPointProblem::constraint_violation(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      const Range constraints_range = Range(this->model.number_constraints);
+      const VectorExpression constraint_violation{constraints_range, [&](size_t constraint_index) {
+         return this->constraint_violation(evaluations.constraints[constraint_index], constraint_index);
+      }};
+      return norm(residual_norm, constraint_violation);
+   }
+
    double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
          const Multipliers& multipliers, Norm residual_norm) const {
       return this->compute_centrality_error(primals, multipliers, 0., residual_norm);
@@ -517,7 +558,7 @@ namespace uno {
       }
    }
 
-   static double constraint_violation(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds,
+   static double homogeneous_constraint_violation(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds,
          double constraint_value, size_t constraint_index) {
       const double lower_bound_violation = std::max(0., lower_bounds[constraint_index] - constraint_value);
       const double upper_bound_violation = std::max(0., constraint_value - upper_bounds[constraint_index]);
@@ -529,7 +570,7 @@ namespace uno {
       this->evaluate_constraints(iterate, constraints.view(), evaluations);
       const Range constraints_range = Range(this->number_constraints);
       const VectorExpression v{constraints_range, [&](size_t constraint_index) {
-         return constraint_violation(this->constraints_lower_bounds, this->constraints_upper_bounds, constraints[constraint_index],
+         return homogeneous_constraint_violation(this->constraints_lower_bounds, this->constraints_upper_bounds, constraints[constraint_index],
             constraint_index);
       }};
       iterate.progress.infeasibility = norm(Norm::L1 /* TODO */, v);

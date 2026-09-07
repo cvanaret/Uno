@@ -32,9 +32,8 @@ namespace uno {
       problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.residuals.lagrangian_gradient);
       iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
 
-      // primal feasibility/constraint violation of the *model*
-      evaluations.evaluate_constraints(problem.model, iterate.primals);
-      iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
+      // primal infeasibility/constraint violation
+      iterate.primal_infeasibility = problem.constraint_violation(iterate, evaluations, this->residual_norm);
 
       // complementarity error of the problem
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,

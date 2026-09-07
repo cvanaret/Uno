@@ -13,6 +13,7 @@
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "../interfaces/C/Uno_C_API.h"
 #include "linear_algebra/Vector.hpp"
+#include "model/BoundRelaxedModel.hpp"
 #include "model/FixedBoundsConstraintsModel.hpp"
 #include "model/Model.hpp"
 #include "model/ScaledModel.hpp"
@@ -56,8 +57,10 @@ namespace uno {
          const ScaledModel scaled_model(model, initial_primals, options);
          // move the fixed variables to the set of general constraints
          const FixedBoundsConstraintsModel fixed_bound_model(scaled_model);
+         // slightly relax the bound constraints
+         const BoundRelaxedModel bound_relaxed_model(fixed_bound_model, options);
          
-         Result result = uno_solve(fixed_bound_model, options, user_callbacks);
+         Result result = uno_solve(bound_relaxed_model, options, user_callbacks);
          // fix the dimensions
          result.number_variables = model.number_variables;
          result.number_constraints = model.number_constraints;

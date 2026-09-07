@@ -90,7 +90,8 @@ namespace uno {
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
-      [[nodiscard]] double virtual complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+      [[nodiscard]] virtual double constraint_violation(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const;
+      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const;
       [[nodiscard]] virtual double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift, Norm residual_norm) const;

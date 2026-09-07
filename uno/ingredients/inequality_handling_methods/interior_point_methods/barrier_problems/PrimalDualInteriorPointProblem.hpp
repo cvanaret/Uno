@@ -68,6 +68,7 @@ namespace uno {
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate) const override;
 
+      [[nodiscard]] double constraint_violation(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
@@ -105,6 +106,8 @@ namespace uno {
       // internal bounds (may be slightly relaxed if necessary)
       mutable std::vector<double> variables_lower_bounds;
       mutable std::vector<double> variables_upper_bounds;
+      mutable std::vector<double> model_constraints_lower_bounds;
+      mutable std::vector<double> model_constraints_upper_bounds;
 
       Vector<uno_int> jacobian_row_indices{};
       Vector<uno_int> jacobian_column_indices{};
@@ -117,6 +120,7 @@ namespace uno {
       void possibly_relax_variables_bounds(const Iterate& iterate) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
+      [[nodiscard]] double constraint_violation(double constraint_value, size_t constraint_index) const;
    };
 } // namespace
 
