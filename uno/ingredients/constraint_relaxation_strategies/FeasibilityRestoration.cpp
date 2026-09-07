@@ -216,7 +216,7 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
             trial_iterate, direction, step_length, current_evaluations, trial_evaluations)) {
-         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, trial_evaluations);
+         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
          current_iterate.set_number_variables(trial_iterate.number_variables);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
@@ -301,8 +301,8 @@ namespace uno {
       return false;
    }
 
-   void FeasibilityRestoration::switch_back_to_optimality_phase(const Iterate& current_iterate, Iterate& trial_iterate,
-         Evaluations& trial_evaluations) {
+   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       this->current_phase = Phase::OPTIMALITY;
 
       condense_primal_iterate(trial_iterate);
@@ -313,9 +313,12 @@ namespace uno {
       trial_iterate.multipliers.constraints.fill(0.);
       trial_iterate.objective_multiplier = 1.;
 
-      // evaluate the progress measures and residuals wrt the optimality problem
+      // evaluate the progress measures and residuals wrt the optimality problem at the trial iterate
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
       this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
+
+      // evaluate the progress measures at the current iterate, and send it to the globalization strategy to avoid cycling
+      this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
 
       this->initial_point.resize(this->original_problem.number_variables);
