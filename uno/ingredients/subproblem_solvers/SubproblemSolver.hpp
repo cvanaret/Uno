@@ -23,7 +23,6 @@ namespace uno {
       virtual ~SubproblemSolver() = default;
 
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
-      virtual void generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) = 0;
       virtual void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) = 0;
 

@@ -15,11 +15,6 @@ namespace uno {
       this->workspace.objective_gradient.resize(subproblem.number_variables);
    }
 
-   void BoxLPSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
-         Evaluations& /*evaluations*/) {
-      // do nothing
-   }
-
    void BoxLPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
          Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
       DEBUG << "The box LP solver does not compute least-squares multipliers, keeping existing multipliers";

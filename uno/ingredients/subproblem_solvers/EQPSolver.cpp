@@ -29,10 +29,6 @@ namespace uno {
       this->linear_solver->initialize_memory();
    }
 
-   void EQPSolver::generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) {
-      compute_least_squares_multipliers(subproblem, initial_iterate, evaluations, 1000. /* TODO add option */);
-   }
-
    void EQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) {
       DEBUG << "Computing least-squares multipliers\n";

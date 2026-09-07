@@ -81,22 +81,22 @@ namespace uno {
       return false;
    }
 
-   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
-      initial_iterate.set_number_variables(this->number_variables);
+   void PrimalDualInteriorPointProblem::create_iterate(Iterate& iterate, Evaluations& evaluations) const {
+      iterate.set_number_variables(this->number_variables);
 
       // make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(this->inner.number_variables)) {
-         initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
+         iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
             this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
       }
 
       // set the slack variables (if any)
       if (!this->slacks.is_empty()) {
          Vector<double> constraints(this->inner.number_constraints); // TODO preallocate?
-         this->inner.evaluate_constraints(initial_iterate, constraints.view(), evaluations);
+         this->inner.evaluate_constraints(iterate, constraints.view(), evaluations);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->slacks) {
-            initial_iterate.primals[slack_index] = this->push_variable_to_interior(constraints[constraint_index],
+            iterate.primals[slack_index] = this->push_variable_to_interior(constraints[constraint_index],
                this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
          }
          // since the slacks have been set, the function evaluations should also be updated
@@ -108,10 +108,10 @@ namespace uno {
       // set the bound multipliers
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
-            initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+            iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
-            initial_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+            iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
       }
    }

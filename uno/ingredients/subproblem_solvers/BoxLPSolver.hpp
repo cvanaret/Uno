@@ -29,7 +29,6 @@ namespace uno {
       ~BoxLPSolver() override = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
-      void generate_initial_iterate(const Subproblem& subproblem, Iterate& initial_iterate, Evaluations& evaluations) override;
       void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) override;
 

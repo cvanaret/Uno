@@ -20,11 +20,6 @@ namespace uno {
       this->rhs.resize(subproblem.number_variables);
    }
 
-   void InverseNewtonSolver::generate_initial_iterate(const Subproblem& /*subproblem*/, Iterate& /*initial_iterate*/,
-         Evaluations& /*evaluations*/) {
-      // do nothing
-   }
-
    void InverseNewtonSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
          Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
       DEBUG << "The inverse Newton solver does not compute least-squares multipliers, keeping existing multipliers";

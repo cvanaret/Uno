@@ -116,8 +116,8 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
-      this->barrier_problem.generate_initial_iterate(initial_iterate, evaluations);
-      this->subproblem_solver->generate_initial_iterate(*this->subproblem, initial_iterate, evaluations);
+      this->barrier_problem.create_iterate(initial_iterate, evaluations);
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations, 1000. /* TODO add option */);
    }
 
    template <typename BarrierProblem>

@@ -45,7 +45,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_inequality_constraints() const;
       [[nodiscard]] virtual bool has_bound_constraints() const;
 
-      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const;
+      virtual void create_iterate(Iterate& initial_iterate, Evaluations& evaluations) const;
       virtual void postprocess_iterate(Iterate& iterate) const;
 
       // sparsity patterns of Jacobian and Hessian
