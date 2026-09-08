@@ -24,10 +24,6 @@ namespace uno {
          primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
    }
 
-   std::unique_ptr<OptimizationProblem> OptimizationProblem::clone() const {
-      return std::make_unique<OptimizationProblem>(*this);
-   }
-
    double OptimizationProblem::get_objective_multiplier() const {
       return 1.;
    }
@@ -40,7 +36,7 @@ namespace uno {
       return this->model.has_bound_constraints();
    }
 
-   void OptimizationProblem::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+   void OptimizationProblem::create_iterate(Iterate& /*iterate*/, Evaluations& /*evaluations*/, bool /*is_initial_iterate*/) const {
       // do nothing
    }
 
@@ -183,51 +179,19 @@ namespace uno {
    double OptimizationProblem::dual_regularization_factor() const {
       return 1.;
    }
-   
-   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
-      // bound constraints
-      const Range variables_range = Range(this->number_variables);
-      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
-      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
-      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
-         if (0. < multipliers.lower_bounds[variable_index]) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]) - shift_value;
-         }
-         if (multipliers.upper_bounds[variable_index] < 0.) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]) - shift_value;
-         }
-         return 0.;
-      }};
 
-      // inequality constraints
-      const auto& constraints_lower_bounds = this->model.get_constraints_lower_bounds();
-      const auto& constraints_upper_bounds = this->model.get_constraints_upper_bounds();
-      const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
-         // if constraint is one-sided, pick that bound
-         if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
-         }
-         if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
-         }
-         // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
-         // complementarity pair
-         if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]) -
-               shift_value;
-         }
-         if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]) -
-               shift_value;
-         }
-         return 0.;
-      }};
-      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   double OptimizationProblem::constraint_violation(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      return this->model.constraint_violation(evaluations.constraints, residual_norm);
+   }
+
+   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const {
+      return this->model.complementarity_error(primals, constraints, multipliers, residual_norm);
    }
 
    double OptimizationProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const {
+         double shift, Norm residual_norm) const {
       const Range variables_range = Range(this->number_variables);
       const auto& variables_lower_bounds = this->get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->get_variables_upper_bounds();
@@ -243,7 +207,15 @@ namespace uno {
          }
          return result;
       }};
-      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
+      return norm(residual_norm, shifted_bound_complementarity);
+   }
+
+   double OptimizationProblem::compute_stationarity_scaling(const Multipliers& /*multipliers*/) const {
+      return 1.;
+   }
+
+   double OptimizationProblem::compute_complementarity_scaling(const Multipliers& /*multipliers*/) const {
+      return 1.;
    }
 
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,

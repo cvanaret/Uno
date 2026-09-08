@@ -25,6 +25,4 @@ namespace uno {
             std::max(1., std::abs(upper_bound));
       }
    }
-
-
 } // namespace

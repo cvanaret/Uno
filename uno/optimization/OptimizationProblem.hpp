@@ -36,7 +36,6 @@ namespace uno {
       explicit OptimizationProblem(const Model& model);
       OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
       virtual ~OptimizationProblem() = default;
-      [[nodiscard]] virtual std::unique_ptr<OptimizationProblem> clone() const;
 
       const Model& model;
       const size_t number_variables; /*!< Number of variables */
@@ -46,7 +45,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_inequality_constraints() const;
       [[nodiscard]] virtual bool has_bound_constraints() const;
 
-      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const;
+      virtual void create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const;
       virtual void postprocess_iterate(Iterate& iterate) const;
 
       // sparsity patterns of Jacobian and Hessian
@@ -91,10 +90,13 @@ namespace uno {
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
+      [[nodiscard]] virtual double constraint_violation(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
+         const Multipliers& multipliers, Norm residual_norm) const;
       [[nodiscard]] virtual double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const;
+         double shift, Norm residual_norm) const;
+      [[nodiscard]] virtual double compute_stationarity_scaling(const Multipliers& multipliers) const;
+      [[nodiscard]] virtual double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
       [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;

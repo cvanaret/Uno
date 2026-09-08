@@ -22,9 +22,14 @@ namespace uno {
       this->subproblem_solver->initialize_memory(*this->subproblem);
    }
 
-   void NoInequalityReformulation::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
-      this->problem.generate_initial_iterate(initial_iterate, evaluations);
-      this->subproblem_solver->generate_initial_iterate(*this->subproblem, initial_iterate, evaluations);
+   std::pair<size_t, size_t> NoInequalityReformulation::get_problem_dimensions() const {
+      return {this->problem.number_variables, this->problem.number_constraints};
+   }
+
+   void NoInequalityReformulation::create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate,
+         double multipliers_threshold) const {
+      this->problem.create_iterate(iterate, evaluations, is_initial_iterate);
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, multipliers_threshold);
    }
 
    void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
@@ -32,7 +37,8 @@ namespace uno {
       this->inertia_correction_strategy->initialize_statistics(statistics);
    }
 
-   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/) {
+   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         Evaluations& /*current_evaluations*/) {
       // the parameterization is not updated
       return false;
    }
@@ -49,7 +55,6 @@ namespace uno {
 
    void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem,
          Iterate& current_iterate, Evaluations& evaluations) {
-      current_iterate.set_number_variables(feasibility_problem.number_variables);
       // l <= c(x) - p + n <= u
       evaluations.evaluate_constraints(feasibility_problem.model, current_iterate.primals);
       feasibility_problem.set_elastic_variable_values([&](size_t constraint_index,
@@ -101,6 +106,10 @@ namespace uno {
    void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
       // no threshold on the multipliers
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
+   }
+
+   void NoInequalityReformulation::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
+      InequalityHandlingMethod::compute_residuals(this->problem, iterate, evaluations);
    }
 
    void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {

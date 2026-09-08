@@ -247,10 +247,6 @@ namespace uno {
       return this->user_model.variables_upper_bounds;
    }
 
-   const SparseVector<size_t>& PythonModel::get_slacks() const {
-      return this->slacks;
-   }
-
    const Vector<size_t>& PythonModel::get_fixed_variables() const {
       return this->fixed_variables;
    }

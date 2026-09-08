@@ -7,7 +7,6 @@
 #include <algorithm>
 #include "optimization/DualResiduals.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
@@ -25,8 +24,8 @@ namespace uno {
       explicit BarrierParameterUpdateStrategy(const Options& options);
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
-      [[nodiscard]] bool update_barrier_parameter(const OptimizationProblem& barrier_problem, const Iterate& current_iterate,
-         const DualResiduals& residuals);
+      [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
+         Evaluations& current_evaluations, const DualResiduals& residuals);
 
    protected:
       double barrier_parameter;
@@ -62,19 +61,23 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   bool BarrierParameterUpdateStrategy<BarrierProblem>::update_barrier_parameter(const OptimizationProblem& problem,
-         const Iterate& current_iterate, const DualResiduals& residuals) {
+   bool BarrierParameterUpdateStrategy<BarrierProblem>::update_barrier_parameter(const BarrierProblem& barrier_problem,
+         const Iterate& current_iterate, Evaluations& current_evaluations, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
-      const double primal_feasibility = (problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_infeasibility;
-      double scaled_complementarity_error = problem.compute_centrality_error(current_iterate.primals,
-         current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
+
+      Vector<double> constraints(barrier_problem.number_constraints);
+      barrier_problem.evaluate_constraints(current_iterate, constraints.view(), current_evaluations);
+      const double primal_feasibility = norm_inf(constraints);
+      double scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
+         current_iterate.multipliers, this->barrier_parameter, Norm::INF) / residuals.complementarity_scaling;
       double primal_dual_error = std::max({
          scaled_stationarity,
          primal_feasibility,
          scaled_complementarity_error
       });
-      DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
+      DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << " = max(" <<
+         scaled_stationarity << ", " << primal_feasibility << ", " << scaled_complementarity_error << ")\n";
 
       // update the barrier parameter (Eq. 7 in IPOPT paper)
       const double tolerance_fraction = this->dual_tolerance / this->parameters.update_fraction;
@@ -89,14 +92,15 @@ namespace uno {
          }
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
-         scaled_complementarity_error = problem.compute_centrality_error(current_iterate.primals,
-            current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
+         scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
+            current_iterate.multipliers, this->barrier_parameter, Norm::INF) / residuals.complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
             primal_feasibility,
             scaled_complementarity_error
          });
-         DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
+         DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << " = max(" <<
+            scaled_stationarity << ", " << primal_feasibility << ", " << scaled_complementarity_error << ")\n";
          parameter_updated = true;
       }
       return parameter_updated;

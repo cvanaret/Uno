@@ -94,7 +94,6 @@ namespace uno {
          return this->relaxed_variables_upper_bounds;
       }
 
-      [[nodiscard]] const SparseVector<size_t>& get_slacks() const override { return this->model.get_slacks(); }
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->model.get_fixed_variables(); }
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override {

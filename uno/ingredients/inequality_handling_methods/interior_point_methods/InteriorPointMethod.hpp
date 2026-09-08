@@ -13,7 +13,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
-#include "optimization/Evaluations.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/Parameterization.hpp"
 #include "options/Options.hpp"
@@ -27,9 +26,12 @@ namespace uno {
    public:
       InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier, Options& options);
 
-      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
+      [[nodiscard]] std::pair<size_t, size_t> get_problem_dimensions() const override;
+
+      void create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate, double multipliers_threshold) const override;
       void initialize_statistics(Statistics& statistics) override;
-      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
+      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& current_evaluations) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
@@ -44,6 +46,7 @@ namespace uno {
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) override;
+      void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
 
       void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
@@ -95,7 +98,8 @@ namespace uno {
                options.get_double("barrier_damping_factor"),
                options.get_double("barrier_default_multiplier")
          }),
-         barrier_problem(problem, this->parameters, this->parameterization),
+         barrier_problem(problem, this->parameters, this->parameterization, options.get_double("primal_tolerance"),
+            options.get_double("residual_scaling_threshold")),
          barrier_parameter_update_strategy(options),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
@@ -108,9 +112,15 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
-      this->barrier_problem.generate_initial_iterate(initial_iterate, evaluations);
-      this->subproblem_solver->generate_initial_iterate(*this->subproblem, initial_iterate, evaluations);
+   std::pair<size_t, size_t> InteriorPointMethod<BarrierProblem>::get_problem_dimensions() const {
+      return {this->barrier_problem.number_variables, this->barrier_problem.number_constraints};
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate,
+         double multipliers_threshold) const {
+      this->barrier_problem.create_iterate(iterate, evaluations, is_initial_iterate);
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, multipliers_threshold);
    }
 
    template <typename BarrierProblem>
@@ -121,11 +131,13 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate) {
+   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& current_evaluations) {
       bool update = false;
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->problem, current_iterate, current_iterate.residuals);
+         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate,
+            current_evaluations, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -172,18 +184,19 @@ namespace uno {
          }
       }
 
-      // push the slacks back into the interior of their bounds
-      this->barrier_problem.push_slacks_to_interior(iterate, evaluations);
+      // set the slacks and push them back into the interior of their bounds
+      this->barrier_problem.create_iterate(iterate, evaluations, false);
 
       // c(x) - p + n = 0
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
-      evaluations.evaluate_constraints(feasibility_problem.model, iterate.primals);
+      Vector<double> constraints(this->barrier_problem.number_constraints); // TODO preallocate
+      this->barrier_problem.evaluate_constraints(iterate, constraints.view(), evaluations);
       const double mu = this->barrier_parameter();
       const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
          // precomputations
-         const double constraint_j = evaluations.constraints[constraint_index];
+         const double constraint_j = constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
@@ -235,6 +248,11 @@ namespace uno {
    void InteriorPointMethod<BarrierProblem>::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
       // no threshold on the multipliers
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
+      InequalityHandlingMethod::compute_residuals(this->barrier_problem, iterate, evaluations);
    }
 
    template <typename BarrierProblem>

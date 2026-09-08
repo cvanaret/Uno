@@ -15,6 +15,7 @@ namespace uno {
    class GlobalizationStrategy;
    class Iterate;
    class l1RelaxedProblem;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
    class ProgressMeasures;
@@ -30,9 +31,13 @@ namespace uno {
       InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
-      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const = 0;
+      [[nodiscard]] virtual std::pair<size_t, size_t> get_problem_dimensions() const = 0;
+
+      virtual void create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate,
+         double multipliers_threshold) const = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
-      [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& current_evaluations) = 0;
       [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) = 0;
@@ -48,6 +53,7 @@ namespace uno {
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
+      virtual void compute_residuals(Iterate& iterate, Evaluations& evaluations) const = 0;
 
       virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
       [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
@@ -63,7 +69,10 @@ namespace uno {
    protected:
       const OptimizationProblem& problem;
       const Norm progress_norm;
+      const Norm residual_norm;
+      const double residual_scaling_threshold;
 
+      void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

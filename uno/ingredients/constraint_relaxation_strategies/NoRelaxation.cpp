@@ -37,9 +37,10 @@ namespace uno {
       //initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->create_iterate(initial_iterate, evaluation_cache.current_evaluations, true,
+         1000. /* TODO use option */);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
-      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
 
       // statistics
@@ -50,7 +51,7 @@ namespace uno {
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem\n";
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics,
-         current_iterate);
+         current_iterate, current_evaluations);
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (parameterization_updated) {
          this->globalization_strategy.reset();
@@ -103,7 +104,7 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
-      this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+      this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
