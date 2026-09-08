@@ -78,7 +78,7 @@ integer(uno_int), parameter :: UNO_UNBOUNDED_OBJECTIVE         = 7
 ! Uno version
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_VERSION_MAJOR = 2
-integer(uno_int), parameter :: UNO_VERSION_MINOR = 8
+integer(uno_int), parameter :: UNO_VERSION_MINOR = 9
 integer(uno_int), parameter :: UNO_VERSION_PATCH = 0
 
 !---------------------------------------------
