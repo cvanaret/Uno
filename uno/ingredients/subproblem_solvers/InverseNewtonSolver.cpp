@@ -27,7 +27,7 @@ namespace uno {
 
    void InverseNewtonSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
          Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
-      DEBUG << "The inverse Newton solver does not compute least-squares multipliers, keeping existing multipliers";
+      DEBUG << "The inverse Newton solver does not compute least-squares multipliers, keeping existing multipliers\n";
    }
 
    const Direction& InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,

@@ -22,7 +22,7 @@ namespace uno {
 
    void BoxLPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
          Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
-      DEBUG << "The box LP solver does not compute least-squares multipliers, keeping existing multipliers";
+      DEBUG << "The box LP solver does not compute least-squares multipliers, keeping existing multipliers\n";
    }
 
    const Direction& BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, const Iterate& current_iterate,
