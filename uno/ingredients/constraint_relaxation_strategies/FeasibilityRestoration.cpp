@@ -214,25 +214,17 @@ namespace uno {
       return false;
    }
 
-   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations) {
       DEBUG << "\nSwitching from restoration back to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
-      this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
-      this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
 
-      // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
-      // least-squares multipliers for the original problem
+      // swap the iterate's multipliers and the optimality multipliers maintained by the class
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
-      // this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
       trial_iterate.multipliers.constraints.fill(0.);
-      //trial_iterate.multipliers.lower_bounds.fill(1.); // TODO compute based on the linearized complementarity equation
-      //trial_iterate.multipliers.upper_bounds.fill(-1.);
 
-      current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
-      current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
+      trial_iterate.objective_multiplier = 1.;
       this->initial_point.resize(this->original_problem.number_variables);
    }
 
@@ -275,7 +267,7 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
             trial_iterate, direction, step_length, current_evaluations, trial_evaluations)) {
-         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
+         this->switch_back_to_optimality_phase(trial_iterate, trial_evaluations);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
       }
