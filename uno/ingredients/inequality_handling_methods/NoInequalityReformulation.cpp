@@ -22,9 +22,11 @@ namespace uno {
       this->subproblem_solver->initialize_memory(*this->subproblem);
    }
 
-   void NoInequalityReformulation::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
+   void NoInequalityReformulation::create_iterate(Iterate& initial_iterate, Evaluations& evaluations,
+         double multipliers_threshold) const {
       this->problem.generate_initial_iterate(initial_iterate, evaluations);
-      this->subproblem_solver->generate_initial_iterate(*this->subproblem, initial_iterate, evaluations);
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
+         multipliers_threshold);
    }
 
    void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
