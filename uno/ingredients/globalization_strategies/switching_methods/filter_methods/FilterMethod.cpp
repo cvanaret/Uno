@@ -29,13 +29,8 @@ namespace uno {
       this->filter->reset();
    }
 
-   void FilterMethod::notify_switch_to_feasibility(const ProgressMeasures& current_progress) {
-      const double current_objective_measure = SwitchingMethod::unconstrained_merit_function(current_progress);
-      this->filter->add(current_progress.infeasibility, current_objective_measure);
-   }
-
-   void FilterMethod::notify_switch_to_optimality(const ProgressMeasures& current_progress) {
-      const double current_objective_measure = SwitchingMethod::unconstrained_merit_function(current_progress);
+   void FilterMethod::avoid_cycling_back_to(const ProgressMeasures& current_progress) {
+      const double current_objective_measure = unconstrained_merit_function(current_progress);
       this->filter->add(current_progress.infeasibility, current_objective_measure);
    }
 

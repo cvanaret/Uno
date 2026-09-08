@@ -18,8 +18,7 @@ namespace uno {
             const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const override;
       void reset() override;
-      void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
-      void notify_switch_to_optimality(const ProgressMeasures& current_progress) override;
+      void avoid_cycling_back_to(const ProgressMeasures& current_progress) override;
 
       [[nodiscard]] std::string get_name() const override;
 

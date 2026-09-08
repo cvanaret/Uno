@@ -105,11 +105,8 @@ namespace uno {
       // do nothing
    }
 
-   void FunnelMethod::notify_switch_to_feasibility(const ProgressMeasures& /*current_progress_measures*/) {
-   }
-
-   void FunnelMethod::notify_switch_to_optimality(const ProgressMeasures& current_progress_measures) {
-      DEBUG << "Funnel is reduced after restoration phase\n";
+   void FunnelMethod::avoid_cycling_back_to(const ProgressMeasures& current_progress_measures) {
+      DEBUG << "Funnel is reduced\n";
       this->funnel.update_restoration(current_progress_measures.infeasibility);
    }
 

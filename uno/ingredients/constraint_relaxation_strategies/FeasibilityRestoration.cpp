@@ -97,7 +97,7 @@ namespace uno {
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
-      this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
+      this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
       this->feasibility_globalization_strategy->reset();
 
