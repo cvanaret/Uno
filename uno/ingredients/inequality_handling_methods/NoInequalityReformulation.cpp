@@ -23,8 +23,8 @@ namespace uno {
    }
 
    void NoInequalityReformulation::create_iterate(Iterate& initial_iterate, Evaluations& evaluations,
-         double multipliers_threshold) const {
-      this->problem.generate_initial_iterate(initial_iterate, evaluations);
+         double multipliers_threshold, bool is_initial_iterate) const {
+      this->problem.create_iterate(initial_iterate, evaluations, is_initial_iterate);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
    }

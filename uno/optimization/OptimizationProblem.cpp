@@ -40,7 +40,7 @@ namespace uno {
       return this->model.has_bound_constraints();
    }
 
-   void OptimizationProblem::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+   void OptimizationProblem::create_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/, bool /*is_initial_iterate*/) const {
       // do nothing
    }
 

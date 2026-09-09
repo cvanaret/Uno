@@ -45,19 +45,21 @@ namespace uno {
       return false;
    }
 
-   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
-      // make the initial point strictly feasible wrt the bounds
-      bool iterate_changed = false;
-      for (size_t variable_index: Range(this->number_variables)) {
-         const double old_value = initial_iterate.primals[variable_index];
-         initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
-            this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
-         if (initial_iterate.primals[variable_index] != old_value) {
-            iterate_changed = true;
+   void PrimalDualInteriorPointProblem::create_iterate(Iterate& initial_iterate, Evaluations& evaluations, bool is_initial_iterate) const {
+      if (is_initial_iterate) {
+         // make the initial point strictly feasible wrt the bounds
+         bool iterate_changed = false;
+         for (size_t variable_index: Range(this->number_variables)) {
+            const double old_value = initial_iterate.primals[variable_index];
+            initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
+               this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
+            if (initial_iterate.primals[variable_index] != old_value) {
+               iterate_changed = true;
+            }
          }
-      }
-      if (iterate_changed) {
-         evaluations.reset();
+         if (iterate_changed) {
+            evaluations.reset();
+         }
       }
 
       // set the slack variables (if any)
