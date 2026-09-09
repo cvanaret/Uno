@@ -21,7 +21,7 @@ nav:
     - 'Notation': 'notation.md'
     - 'Unification framework': 'unification_framework.md'
     - 'Combining the ingredients': 'combining_ingredients.md'
-  - 'CUTE benchmark': 'cute_benchmark.md'
+  - 'Benchmarks': 'benchmarks.md'
   - 'Interfaces':
     - 'Python': 'interfaces/python.md'
     - 'Julia': 'interfaces/julia.md'
