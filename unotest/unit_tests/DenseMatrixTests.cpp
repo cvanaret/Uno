@@ -12,7 +12,7 @@ TEST(DenseMatrix, Access) {
    ASSERT_EQ(matrix.entry(1, 1), 0.);
 }
 
-DenseMatrix<double> get_matrix() {
+static DenseMatrix<double> get_matrix() {
    const size_t dimension = 3;
    // lower triangular matrix expressed in column-major order
    DenseMatrix<double> matrix(dimension, dimension);
