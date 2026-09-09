@@ -54,7 +54,8 @@ namespace uno {
          uses_trust_region, 0., options);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->create_iterate(initial_iterate, evaluation_cache.current_evaluations,
+         1000. /* TODO use option */);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
@@ -96,35 +97,34 @@ namespace uno {
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
-      this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
-      this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
-      this->feasibility_globalization_strategy->reset();
 
+      this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
       this->reference_optimality_primals = current_iterate.primals;
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
+      // resize the iterate and retrieve the feasibility multipliers (stored locally)
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-      this->initial_point.resize(this->feasibility_problem.number_variables);
-      // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
-         this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
-         this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+         this->other_phase_multipliers.resize(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
+      // initialize the feasibility inequality handling method
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
       this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
+
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
 
+      this->initial_point.resize(this->feasibility_problem.number_variables);
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
@@ -213,25 +213,17 @@ namespace uno {
       return false;
    }
 
-   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate,
-         Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations) {
       DEBUG << "\nSwitching from restoration back to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
-      this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
-      this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
 
-      // swap the iterate's multipliers and the optimality multipliers maintained by the class, and possibly compute
-      // least-squares multipliers for the original problem
+      // swap the iterate's multipliers and the optimality multipliers maintained by the class
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
-      // this->inequality_handling_method->compute_least_squares_multipliers(trial_iterate, trial_evaluations);
       trial_iterate.multipliers.constraints.fill(0.);
-      //trial_iterate.multipliers.lower_bounds.fill(1.); // TODO compute based on the linearized complementarity equation
-      //trial_iterate.multipliers.upper_bounds.fill(-1.);
 
-      current_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
-      current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
+      trial_iterate.objective_multiplier = 1.;
       this->initial_point.resize(this->original_problem.number_variables);
    }
 
@@ -274,7 +266,7 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
             trial_iterate, direction, step_length, current_evaluations, trial_evaluations)) {
-         this->switch_back_to_optimality_phase(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
+         this->switch_back_to_optimality_phase(trial_iterate, trial_evaluations);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
       }

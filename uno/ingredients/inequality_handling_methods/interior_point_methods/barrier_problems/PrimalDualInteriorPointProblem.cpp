@@ -47,9 +47,17 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
       // make the initial point strictly feasible wrt the bounds
+      bool iterate_changed = false;
       for (size_t variable_index: Range(this->number_variables)) {
+         const double old_value = initial_iterate.primals[variable_index];
          initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
             this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
+         if (initial_iterate.primals[variable_index] != old_value) {
+            iterate_changed = true;
+         }
+      }
+      if (iterate_changed) {
+         evaluations.reset();
       }
 
       // set the slack variables (if any)
@@ -60,10 +68,8 @@ namespace uno {
             initial_iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
                this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
          }
-         // since the slacks have been set, the function evaluations should also be updated
+         // since the slacks have been set, the constraints should be updated
          evaluations.are_constraints_computed = false;
-         evaluations.is_objective_gradient_computed = false;
-         evaluations.is_jacobian_computed = false;
       }
 
       // set the bound multipliers

@@ -23,7 +23,7 @@ namespace uno {
          double objective_multiplier, Options& options);
       ~NoInequalityReformulation() override = default;
 
-      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
+      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,

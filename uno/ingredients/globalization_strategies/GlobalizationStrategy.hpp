@@ -26,8 +26,7 @@ namespace uno {
 
       virtual void reset() = 0;
 
-      virtual void notify_switch_to_feasibility(const ProgressMeasures& current_progress) = 0;
-      virtual void notify_switch_to_optimality(const ProgressMeasures& current_progress) = 0;
+      virtual void avoid_cycling_back_to(const ProgressMeasures& current_progress) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 

@@ -24,8 +24,7 @@ namespace uno {
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
       void reset() override;
-      void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
-      void notify_switch_to_optimality(const ProgressMeasures& current_progress) override;
+      void avoid_cycling_back_to(const ProgressMeasures& current_progress) override;
 
    protected:
       // pointer to allow polymorphism
