@@ -104,36 +104,14 @@ namespace uno {
          return *this;
       }
 
-      // specialized operation y = -x (note: no BLAS operation available)
+      // specialized operation y = -x
       template <typename Vector>
       View& operator=(UnaryNegation<Vector>&& expression) {
          const auto& x = expression.get_expression();
+         // y := -1 * x + 0 * y
+         //blas1::scale_and_add(this->size(), -1., x.data(), 0., this->data());
          *this = x;
          this->scale(-1.);
-         return *this;
-      }
-
-      // specialized operation z = x + a * y (note: no BLAS operation available)
-      template <typename Vector1, typename Vector2>
-      View& operator=(Sum<Vector1, ScalarMultiple<Vector2>>&& expression) {
-         const auto& x = expression.get_left();
-         const double a = expression.get_right().get_factor();
-         const auto& y = expression.get_right().get_expression();
-         *this = y;
-         this->scale(a);
-         *this += x;
-         return *this;
-      }
-
-      // specialized operation z = x - a * y (note: no BLAS operation available)
-      template <typename Vector1, typename Vector2>
-      View& operator=(Subtraction<Vector1, ScalarMultiple<Vector2>>&& expression) {
-         const auto& x = expression.get_left();
-         const double a = expression.get_right().get_factor();
-         const auto& y = expression.get_right().get_expression();
-         *this = y;
-         this->scale(-a);
-         *this += x;
          return *this;
       }
 
@@ -205,6 +183,28 @@ namespace uno {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
          blas1::add(this->size(), 1., other.data(), this->data());
+         return *this;
+      }
+
+      // specialized operation z = x + a * y
+      template <typename Vector1, typename Vector2>
+      View& operator=(Sum<Vector1, ScalarMultiple<Vector2>>&& expression) {
+         const auto& x = expression.get_left();
+         const double a = expression.get_right().get_factor();
+         const auto& y = expression.get_right().get_expression();
+         *this = x; // blas copy
+         blas1::add(this->size(), a, y.data(), this->data()); // axpy
+         return *this;
+      }
+
+      // specialized operation z = x - a * y
+      template <typename Vector1, typename Vector2>
+      View& operator=(Subtraction<Vector1, ScalarMultiple<Vector2>>&& expression) {
+         const auto& x = expression.get_left();
+         const double a = expression.get_right().get_factor();
+         const auto& y = expression.get_right().get_expression();
+         *this = x; // blas copy
+         blas1::add(this->size(), -a, y.data(), this->data()); // axpy
          return *this;
       }
 

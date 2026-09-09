@@ -9,6 +9,7 @@
 #define dcopy FC_GLOBAL_(dcopy, DCOPY)
 #define dscal FC_GLOBAL_(dscal, DSCAL)
 #define daxpy FC_GLOBAL_(daxpy, DAXPY)
+//#define daxpby FC_GLOBAL_(daxpby, DAXPBY)
 #define ddot FC_GLOBAL_(ddot, DDOT)
 #define dgemv FC_GLOBAL_(dgemv, DGEMV)
 #define dtrsm FC_GLOBAL_(dtrsm, DTRSM)
@@ -26,6 +27,9 @@ extern "C" {
 
    // y := alpha x + y
    void daxpy(const int* n, const double* alpha, const double* x, const int* incx, double* y, const int* incy);
+
+   // y := alpha x + beta y
+   void daxpby(const int* n, const double* alpha, const double* x, const int* incx, const double* beta, double* y, const int* incy);
 
    // x^T y
    double ddot(const int* n, const double* x, const int* incx, const double* y, const int* incy);
@@ -92,6 +96,15 @@ namespace uno {
          constexpr int increment = 1;
          daxpy(&n, &alpha, x, &increment, y, &increment);
       }
+
+      /*
+      // y := alpha x + beta y
+      inline void scale_and_add(size_t size, double alpha, const double* x, double beta, double* y) {
+         const int n = static_cast<int>(size);
+         constexpr int increment = 1;
+         daxpby(&n, &alpha, x, &increment, &beta, y, &increment);
+      }
+      */
 
       // x^T y
       inline double dot(size_t size, const double* x, const double* y) {
