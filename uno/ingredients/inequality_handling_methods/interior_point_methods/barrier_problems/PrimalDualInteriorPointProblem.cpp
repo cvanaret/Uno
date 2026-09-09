@@ -45,15 +45,15 @@ namespace uno {
       return false;
    }
 
-   void PrimalDualInteriorPointProblem::create_iterate(Iterate& initial_iterate, Evaluations& evaluations, bool is_initial_iterate) const {
+   void PrimalDualInteriorPointProblem::create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const {
       if (is_initial_iterate) {
-         // make the initial point strictly feasible wrt the bounds
+         // make the point strictly feasible wrt the bounds
          bool iterate_changed = false;
          for (size_t variable_index: Range(this->number_variables)) {
-            const double old_value = initial_iterate.primals[variable_index];
-            initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
+            const double old_value = iterate.primals[variable_index];
+            iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
                this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
-            if (initial_iterate.primals[variable_index] != old_value) {
+            if (iterate.primals[variable_index] != old_value) {
                iterate_changed = true;
             }
          }
@@ -64,10 +64,14 @@ namespace uno {
 
       // set the slack variables (if any)
       if (!this->model.get_slacks().is_empty()) {
-         evaluations.evaluate_constraints(this->model, initial_iterate.primals);
+         // reset the slacks for the constraint evaluation
+         for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
+            iterate.primals[slack_index] = 0.;
+         }
+         evaluations.evaluate_constraints(this->model, iterate.primals);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
-            initial_iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
+            iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
                this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
          }
          // since the slacks have been set, the constraints should be updated
@@ -77,26 +81,11 @@ namespace uno {
       // set the bound multipliers
       for (size_t variable_index: Range(this->inner.number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
-            initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+            iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
-            initial_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+            iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
-      }
-   }
-
-   void PrimalDualInteriorPointProblem::push_slacks_to_interior(Iterate& iterate, Evaluations& evaluations) const {
-      // set the slack variables (if any)
-      if (!this->model.get_slacks().is_empty()) {
-         // set the slacks to the constraint values
-         for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
-            iterate.primals[slack_index] = this->push_variable_to_interior(iterate.primals[slack_index],
-               this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
-         }
-         // since the slacks have been set, the function evaluations should also be updated
-         evaluations.are_constraints_computed = false;
-         evaluations.is_objective_gradient_computed = false;
-         evaluations.is_jacobian_computed = false;
       }
    }
 

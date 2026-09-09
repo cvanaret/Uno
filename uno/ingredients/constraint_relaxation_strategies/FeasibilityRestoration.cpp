@@ -117,6 +117,7 @@ namespace uno {
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
       this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
+      this->feasibility_inequality_handling_method->create_iterate(current_iterate, current_evaluations, 0., false);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
 
@@ -223,10 +224,11 @@ namespace uno {
 
       // swap the iterate's multipliers and the optimality multipliers maintained by the class
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
-      trial_iterate.multipliers.constraints.fill(0.);
-
       trial_iterate.set_number_variables(this->original_problem.number_variables);
+      trial_iterate.multipliers.constraints.fill(0.);
+      this->inequality_handling_method->create_iterate(trial_iterate, trial_evaluations, 0., false);
       trial_iterate.objective_multiplier = 1.;
+
       this->initial_point.resize(this->original_problem.number_variables);
    }
 
