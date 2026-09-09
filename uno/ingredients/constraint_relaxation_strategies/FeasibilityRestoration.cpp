@@ -226,7 +226,7 @@ namespace uno {
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.multipliers.constraints.fill(0.);
-      this->inequality_handling_method->create_iterate(trial_iterate, trial_evaluations, 0., false);
+      //this->inequality_handling_method->create_iterate(trial_iterate, trial_evaluations, 0., false);
       trial_iterate.objective_multiplier = 1.;
 
       this->initial_point.resize(this->original_problem.number_variables);
