@@ -14,7 +14,7 @@ namespace uno {
    template <typename L, typename R,
       std::enable_if_t<std::is_same_v<typename std::remove_reference_t<L>::value_type,
                                       typename std::remove_reference_t<R>::value_type>, int> = 0>
-   class Subtraction {
+   class Subtraction: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<L>::value_type;
 

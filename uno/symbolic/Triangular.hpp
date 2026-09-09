@@ -8,7 +8,7 @@
 
 namespace uno {
    template <typename Matrix>
-   class LowerTriangular {
+   class LowerTriangular: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<Matrix>::value_type;
 

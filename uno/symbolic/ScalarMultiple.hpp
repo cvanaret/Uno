@@ -9,7 +9,7 @@
 namespace uno {
    // stores the expression (factor * expression) symbolically
    template <typename Expression>
-   class ScalarMultiple {
+   class ScalarMultiple: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<Expression>::value_type;
 

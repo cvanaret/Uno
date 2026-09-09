@@ -9,10 +9,11 @@
 #include <initializer_list>
 #include "View.hpp"
 #include "symbolic/Range.hpp"
+#include "symbolic/symbolic_traits.hpp"
 
 namespace uno {
    template <typename T>
-   class Vector {
+   class Vector: public SymbolicExpression {
    public:
       using value_type = typename std::vector<T>::value_type;
       // iterators

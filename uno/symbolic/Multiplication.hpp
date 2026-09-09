@@ -9,7 +9,7 @@
 namespace uno {
    // stores the expression (left * right) symbolically
    template <typename L, typename R>
-   class Multiplication {
+   class Multiplication: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<L>::value_type;
 

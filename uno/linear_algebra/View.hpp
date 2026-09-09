@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <iostream>
 #include <vector>
 #include "BLAS.hpp"
 #include "symbolic/Inverse.hpp"
@@ -13,13 +14,16 @@
 #include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Subtraction.hpp"
+#include "symbolic/symbolic_traits.hpp"
+#include "symbolic/Sum.hpp"
 #include "symbolic/Transpose.hpp"
 #include "symbolic/Triangular.hpp"
+#include "symbolic/UnaryNegation.hpp"
 
 namespace uno {
    // constant contiguous array in memory on which BLAS can be called
    template <typename T>
-   class View {
+   class View: public SymbolicExpression {
    protected:
       T* pointer;
       size_t view_size;
@@ -83,26 +87,53 @@ namespace uno {
          return this->pointer[index];
       }
 
-      // specialized operation y = x, when the other vector has the member function data()
-      template <typename Vector, decltype(Vector{}.data()) = true>
+      // specialized operation y = x, when the other vector has the member functions data() and size()
+      template <typename Vector, typename = std::void_t<decltype(std::declval<const Vector&>().data()),
+                                                        decltype(std::declval<const Vector&>().size())>>
       View& operator=(const Vector& other) {
          if (other.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
-         blas1::copy(this->size(), other.data(), this->data());
+         // dispatch copy function on type of elements
+         if constexpr (std::is_same_v<value_type, double>) {
+            blas1::copy(this->size(), other.data(), this->data());
+         }
+         else {
+            std::copy(other.data(), other.data() + other.size(), this->data());
+         }
          return *this;
       }
 
-      // generic operation y = expression
-      template <typename Expression>
-      View& operator=(const Expression& expression) {
-         // static_assert(std::is_same_v<typename Expression::value_type, T>);
-         if (expression.size() != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between expression and y");
-         }
-         for (size_t index: Range(expression.size())) {
-            this->operator[](index) = expression[index];
-         }
+      // specialized operation y = -x (note: no BLAS operation available)
+      template <typename Vector>
+      View& operator=(UnaryNegation<Vector>&& expression) {
+         const auto& x = expression.get_expression();
+         *this = x;
+         this->scale(-1.);
+         return *this;
+      }
+
+      // specialized operation z = x + a * y (note: no BLAS operation available)
+      template <typename Vector1, typename Vector2>
+      View& operator=(Sum<Vector1, ScalarMultiple<Vector2>>&& expression) {
+         const auto& x = expression.get_left();
+         const double a = expression.get_right().get_factor();
+         const auto& y = expression.get_right().get_expression();
+         *this = y;
+         this->scale(a);
+         *this += x;
+         return *this;
+      }
+
+      // specialized operation z = x - a * y (note: no BLAS operation available)
+      template <typename Vector1, typename Vector2>
+      View& operator=(Subtraction<Vector1, ScalarMultiple<Vector2>>&& expression) {
+         const auto& x = expression.get_left();
+         const double a = expression.get_right().get_factor();
+         const auto& y = expression.get_right().get_expression();
+         *this = y;
+         this->scale(-a);
+         *this += x;
          return *this;
       }
 
@@ -114,16 +145,15 @@ namespace uno {
          if (x.size() != this->size()) {
             throw std::invalid_argument("Dimension mismatch between x and y");
          }
-         for (size_t index: Range(this->size())) {
-            this->operator[](index) = a * x[index];
-         }
+         *this = x;
+         this->scale(a);
          return *this;
       }
 
       // specialized operation y = x - z
       // note: no BLAS operation available
-      template <typename Vector>
-      View& operator=(Subtraction<Vector, Vector>&& expression) {
+      template <typename Vector1, typename Vector2>
+      View& operator=(Subtraction<Vector1, Vector2>&& expression) {
          const auto& x = expression.get_left();
          const auto& z = expression.get_right();
          if (x.size() != z.size()) {
@@ -314,8 +344,8 @@ namespace uno {
       return stream;
    }
 
-   template <typename V1, typename V2>
-   double dot(const V1& x, const V2& y) {
+   template <typename Vector1, typename Vector2>
+   double dot(const Vector1& x, const Vector2& y) {
       if (x.size() != y.size()) {
          throw std::invalid_argument("Dimension mismatch between x and y");
       }

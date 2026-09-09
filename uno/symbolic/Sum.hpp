@@ -13,7 +13,7 @@ namespace uno {
    template <typename E1, typename E2,
       std::enable_if_t<std::is_same_v<typename std::remove_reference_t<E1>::value_type,
                                       typename std::remove_reference_t<E2>::value_type>, int> = 0>
-   class Sum {
+   class Sum: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<E1>::value_type;
 
@@ -37,7 +37,8 @@ namespace uno {
    };
 
    // free function
-   template <typename L, typename R>
+   template <typename L, typename R,
+             std::enable_if_t<is_symbolic_v<L> && is_symbolic_v<R>, int> = 0>
    Sum<L, R> operator+(L&& left, R&& right) {
       return {std::forward<L>(left), std::forward<R>(right)};
    }
