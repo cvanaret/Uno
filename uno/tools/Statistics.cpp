@@ -24,7 +24,7 @@ namespace uno {
    // number of glyphs in a UTF-8 string (counts non-continuation bytes)
    static size_t length_utf8(std::string_view string) {
       size_t length = 0;
-      for (unsigned char c: string) {
+      for (const char c: string) {
          if ((c & 0xC0) != 0x80) {
             ++length;
          }

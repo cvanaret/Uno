@@ -98,7 +98,7 @@ namespace uno {
       INFO << "Running MA57\n";
    }
 
-   MA57Solver::MA57Solver(bool use_scaling): DirectSymmetricIndefiniteLinearSolver(), use_scaling(use_scaling) {
+   MA57Solver::MA57Solver(bool use_scaling): DirectSymmetricIndefiniteLinearSolver() {
 #ifdef HSL_RUNTIME_LOADING
       if (!ma57_symbols_available()) {
          throw std::runtime_error("Uno: the MA57 solver was requested but the HSL library could not be loaded at "

@@ -53,10 +53,6 @@ namespace uno {
       ~DenseMatrix() override = default;
 
       // operators
-      DenseMatrix& operator=(const DenseMatrix& other) {
-         BLASMatrix<T>::operator=(other);
-         return *this;
-      }
       using BLASMatrix<T>::operator*=;
 
       [[nodiscard]] T& entry(size_t row_index, size_t column_index);

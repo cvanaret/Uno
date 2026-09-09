@@ -365,8 +365,9 @@ namespace uno {
          while (constraint_gradient != nullptr) {
             const int variable_index = constraint_gradient->varno;
             // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
-            this->jacobian_row_indices[constraint_gradient->goff] = static_cast<uno_int>(constraint_index);
-            this->jacobian_column_indices[constraint_gradient->goff] = variable_index;
+            const size_t index = static_cast<size_t>(constraint_gradient->goff);
+            this->jacobian_row_indices[index] = static_cast<uno_int>(constraint_index);
+            this->jacobian_column_indices[index] = variable_index;
             constraint_gradient = constraint_gradient->next;
          }
       }
