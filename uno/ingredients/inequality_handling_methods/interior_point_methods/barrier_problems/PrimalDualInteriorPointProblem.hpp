@@ -23,8 +23,7 @@ namespace uno {
       [[nodiscard]] bool has_inequality_constraints() const override;
       [[nodiscard]] bool has_bound_constraints() const override;
 
-      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, bool is_initial_iterate) const override;
-      void push_slacks_to_interior(Iterate& iterate, Evaluations& evaluations) const;
+      void create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const override;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
