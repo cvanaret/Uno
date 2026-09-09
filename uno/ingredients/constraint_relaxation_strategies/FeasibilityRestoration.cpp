@@ -97,35 +97,34 @@ namespace uno {
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
-      this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
-      this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
-      this->feasibility_globalization_strategy->reset();
 
+      this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
       this->reference_optimality_primals = current_iterate.primals;
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
+      // resize the iterate and retrieve the feasibility multipliers (stored locally)
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-      this->initial_point.resize(this->feasibility_problem.number_variables);
-      // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
-         this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
-         this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+         this->other_phase_multipliers.resize(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
+      // initialize the feasibility inequality handling method
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
       this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
+
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
 
+      this->initial_point.resize(this->feasibility_problem.number_variables);
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();

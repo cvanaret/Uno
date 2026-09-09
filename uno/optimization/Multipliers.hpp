@@ -20,6 +20,7 @@ namespace uno {
       Multipliers& operator=(const Multipliers& other) = default;
       Multipliers& operator=(Multipliers&& other) noexcept = default;
 
+      void resize(size_t number_variables, size_t number_constraints);
       void reset();
       [[nodiscard]] bool not_all_zero(size_t number_variables, double tolerance) const;
    };
