@@ -27,7 +27,7 @@ namespace uno {
    }
 
    void LSR1Hessian::initialize_statistics(Statistics& statistics) const {
-      statistics.add_column("|SR1|", Statistics::double_width - 3, 2);
+      statistics.add_column("|SR1|", Statistics::double_width - 3, 2, /* is_extended = */ true);
       statistics.set("|SR1|", this->number_entries_in_memory);
    }
 
