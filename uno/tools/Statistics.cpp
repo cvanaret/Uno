@@ -18,7 +18,7 @@ namespace uno {
       {"Steplength", 10}, {"Radius", 11}, {"Phase", 20}, {"Regulariz", 21},
       {"Funnel", 25}, {"|BFGS|", 26}, {"|SR1|", 26}, {"||Step||", 31},
       {"Objective", 100}, {"Infeas", 101}, {"Statio", 104}, {"Compl", 105},
-      {"Status", 200},
+      {"Time", 200}, {"Status", 300}
    };
  
    // number of glyphs in a UTF-8 string (counts non-continuation bytes)

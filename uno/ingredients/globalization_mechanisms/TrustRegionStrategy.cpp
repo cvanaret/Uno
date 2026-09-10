@@ -87,18 +87,11 @@ namespace uno {
             if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
                statistics.set("Status", "unbounded subproblem");
-               if (this->print_minor_iterations && Logger::level == INFO) {
-                  statistics.print_current_line();
-               }
-               this->decrease_radius_aggressively();
                warmstart_information.trust_region_changed = true;
-
+               this->decrease_radius_aggressively();
             }
             else if (direction.status == SubproblemStatus::ERROR) {
                statistics.set("Status", "solver error");
-               if (this->print_minor_iterations && Logger::level == INFO) {
-                  statistics.print_current_line();
-               }
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
                warmstart_information.whole_problem_changed();
@@ -114,11 +107,13 @@ namespace uno {
                   evaluation_cache, warmstart_information, user_callbacks);
                set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                if (is_acceptable) {
+                  // possibly increase the radius if trust region is active
+                  this->possibly_increase_radius(direction.norm);
                   set_dual_residuals_statistics(statistics, trial_iterate);
                   termination = true;
                }
-               if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
-                  statistics.print_current_line();
+               else if (this->radius < this->minimum_radius) { // rejected, but small radius
+                  is_acceptable = this->check_termination_with_small_step(trial_iterate);
                }
                if (!is_acceptable) {
                   this->decrease_radius(direction.norm);
@@ -129,13 +124,17 @@ namespace uno {
          // if an evaluation error occurs, decrease the radius
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
-            if (this->print_minor_iterations && Logger::level == INFO) {
-               statistics.print_current_line();
-            }
             DEBUG << "A function could not be evaluated. The trust-region radius will be reduced\n";
             this->decrease_radius();
             warmstart_information.trust_region_changed = true;
          }
+
+         // print the statistics
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
+            statistics.print_current_line();
+         }
+
          if (!is_acceptable && this->radius < this->minimum_radius) {
             throw std::runtime_error("Small radius");
          }
@@ -173,19 +172,9 @@ namespace uno {
          this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
          evaluation_cache.current_evaluations);
       const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.);
-      bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+      return this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
          predicted_reductions, warmstart_information, user_callbacks);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
-      if (accept_iterate) {
-         // possibly increase the radius if trust region is active
-         this->possibly_increase_radius(direction.norm);
-      }
-      else if (this->radius < this->minimum_radius) { // rejected, but small radius
-         accept_iterate = this->check_termination_with_small_step(trial_iterate);
-      }
-      return accept_iterate;
-      return true;
    }
 
    // check whether a rejected step with very small norm can be tolerated

@@ -358,8 +358,9 @@ namespace uno {
          }
       }
       // print the overwritten options
+      DISCRETE << '\n';
       if (number_used_options > 0) {
-         DISCRETE << "\nNon-default options:\n" << option_list << '\n';
+         DISCRETE << "Non-default options:\n" << option_list << '\n';
       }
    }
 } // namespace

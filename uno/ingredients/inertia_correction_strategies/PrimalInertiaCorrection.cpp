@@ -21,7 +21,7 @@ namespace uno {
    }
 
    void PrimalInertiaCorrection::initialize_statistics(Statistics& statistics) {
-      statistics.add_column("Regulariz", Statistics::double_width, 2, /* is_extended = */ true);
+      statistics.add_column("Regulariz", Statistics::double_width + 1, 2, /* is_extended = */ true);
    }
 
    // Nocedal and Wright, p51

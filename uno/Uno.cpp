@@ -74,8 +74,8 @@ namespace uno {
 
    // protected solve function
    Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
-      const Timer timer{};
       Statistics statistics = create_statistics(model, options.get_bool("print_extended_statistics"));
+      statistics.timers.wallclock.start();
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
@@ -117,7 +117,7 @@ namespace uno {
             this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                evaluation_cache, warmstart_information, user_callbacks);
             termination = Uno::check_termination(trial_iterate, major_iterations, max_iterations,
-               timer.get_duration(), time_limit, optimization_status, user_callbacks);
+               statistics.timers.wallclock.get_elapsed_time(), time_limit, optimization_status, user_callbacks);
 
             // the trial iterate becomes the current iterate for the next iteration
             std::swap(current_iterate, trial_iterate);
@@ -128,6 +128,7 @@ namespace uno {
       catch (std::exception& exception) {
          statistics.start_new_line();
          statistics.set("Status", exception.what());
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
          if (Logger::level == INFO) statistics.print_current_line();
          DEBUG << exception.what() << '\n';
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
@@ -135,8 +136,9 @@ namespace uno {
       if (Logger::level == INFO) statistics.print_footer();
 
       Uno::postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
+      statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, current_iterate, evaluation_cache.current_evaluations,
-         major_iterations, timer);
+         major_iterations, statistics.timers);
       Uno::postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
@@ -181,6 +183,7 @@ namespace uno {
          }
 
          options.print_non_default();
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
          if (Logger::level == INFO) {
             statistics.print_header();
             statistics.print_current_line();
@@ -196,15 +199,16 @@ namespace uno {
 
    Statistics Uno::create_statistics(const Model& model, bool print_extended_statistics) {
       Statistics statistics{print_extended_statistics};
-      statistics.add_column("Iter", Statistics::int_width, 3);
-      statistics.add_column("||Step||", Statistics::double_width, 2, /* is_extended = */ true);
-      statistics.add_column("Objective", Statistics::double_width + 1, 3);
+      statistics.add_column("Iter", Statistics::int_width + 1, 3);
+      statistics.add_column("||Step||", Statistics::double_width + 1, 2, /* is_extended = */ true);
+      statistics.add_column("Objective", Statistics::double_width + 3, 4);
       if (model.is_constrained()) {
          statistics.add_column("Infeas", Statistics::double_width, 2);
       }
-      statistics.add_column("Statio", Statistics::double_width, 2);
-      statistics.add_column("Compl", Statistics::double_width, 2);
+      statistics.add_column("Statio", Statistics::double_width + 1, 3);
+      statistics.add_column("Compl", Statistics::double_width + 1, 3);
       statistics.add_column("Status", Statistics::string_width, 3);
+      statistics.add_column("Time", Statistics::int_width + 2, 3);
       return statistics;
    }
 
@@ -243,14 +247,14 @@ namespace uno {
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
-         const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const {
+         const Evaluations& evaluations, size_t major_iterations, const Timers& timers) const {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
          evaluations.objective, solution.primal_infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, evaluations.constraints, major_iterations,
-         timer.get_duration(), model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
+         timers, model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
          model.number_model_objective_gradient_evaluations(), model.number_model_jacobian_evaluations(),
          model.number_model_hessian_evaluations(), number_subproblems_solved};
    }

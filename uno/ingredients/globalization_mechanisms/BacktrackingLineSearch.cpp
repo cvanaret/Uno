@@ -40,7 +40,7 @@ namespace uno {
          EvaluationCache& evaluation_cache, Options& options) {
       this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
       statistics.add_column("LS", Statistics::int_width, 3, /* is_extended = */ true);
-      statistics.add_column("Steplength", Statistics::double_width + 1, 2, /* is_extended = */ true);
+      statistics.add_column("Steplength", Statistics::double_width + 2, 2, /* is_extended = */ true);
       set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       set_dual_residuals_statistics(statistics, current_iterate);
    }
@@ -221,6 +221,7 @@ namespace uno {
             termination = true;
             set_dual_residuals_statistics(statistics, trial_iterate);
          }
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
          if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
             statistics.print_current_line();
          }
