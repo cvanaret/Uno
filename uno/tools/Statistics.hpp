@@ -15,10 +15,10 @@ namespace uno {
 
    class Statistics {
    public:
-      Statistics() = default;
+      explicit Statistics(bool print_extended_statistics);
       static size_t int_width, double_width, string_width;
 
-      void add_column(std::string_view name, size_t width, size_t precision);
+      void add_column(std::string_view name, size_t width, size_t precision, bool is_extended = false);
       void start_new_line();
 
       void set(std::string_view name, std::string value);
@@ -32,6 +32,7 @@ namespace uno {
       void print_footer();
 
    protected:
+      const bool print_extended_statistics;
       // name -> index mapping
       static const std::map<std::string_view, size_t> column_order;
 
@@ -42,6 +43,7 @@ namespace uno {
          size_t precision;
          std::string value; // current-line cell, empty if !is_set
          bool is_set = false;
+         bool is_extended;   // printed only when print_extended_statistics is true
       };
 
       std::vector<Column> columns; // index = print order
@@ -54,6 +56,7 @@ namespace uno {
       [[nodiscard]] size_t index_of(std::string_view name);
       void set_value(size_t index, std::string_view value);
       void print_column_names();
+      bool is_visible(const Column& column) const;
    };
 }
 

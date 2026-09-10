@@ -57,6 +57,8 @@ namespace uno {
       options.set_double("function_scaling_threshold", 100.);
       // whether minor iterations (line search and trust-region method) are printed in the statistics table
       options.set_bool("print_minor_iterations", false);
+      // whether the statistics table is printed in extended form
+      options.set_bool("print_extended_statistics", false);
 
       /** globalization strategy options **/
       options.set_double("armijo_decrease_fraction", 1e-4);

@@ -27,7 +27,7 @@ namespace uno {
 
       static std::string current_version();
       static void print_available_strategies();
-      const std::string& get_method_description() const;
+      [[nodiscard]] const std::string& get_method_description() const;
 
    private:
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
@@ -35,7 +35,7 @@ namespace uno {
 
       [[nodiscard]] bool initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
          EvaluationCache& evaluation_cache);
-      [[nodiscard]] static Statistics create_statistics(const Model& model);
+      [[nodiscard]] static Statistics create_statistics(const Model& model, bool print_extended_statistics);
       [[nodiscard]] static bool check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, OptimizationStatus& optimization_status, UserCallbacks& user_callbacks);
       [[nodiscard]] Result uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks);

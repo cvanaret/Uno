@@ -77,7 +77,7 @@ namespace uno {
    // protected solve function
    Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
-      Statistics statistics = Uno::create_statistics(model);
+      Statistics statistics = create_statistics(model, options.get_bool("print_extended_statistics"));
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
@@ -196,10 +196,10 @@ namespace uno {
       }
    }
 
-   Statistics Uno::create_statistics(const Model& model) {
-      Statistics statistics{};
+   Statistics Uno::create_statistics(const Model& model, bool print_extended_statistics) {
+      Statistics statistics{print_extended_statistics};
       statistics.add_column("Iter", Statistics::int_width, 3);
-      statistics.add_column("||Step||", Statistics::double_width, 2);
+      statistics.add_column("||Step||", Statistics::double_width, 2, /* is_extended = */ true);
       statistics.add_column("Objective", Statistics::double_width + 1, 3);
       if (model.is_constrained()) {
          statistics.add_column("Infeas", Statistics::double_width, 2);

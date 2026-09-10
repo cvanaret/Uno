@@ -36,8 +36,8 @@ namespace uno {
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
       this->constraint_relaxation_strategy->initialize(statistics, current_iterate, true, evaluation_cache, options);
-      statistics.add_column("TR", Statistics::int_width, 3);
-      statistics.add_column("Radius", Statistics::double_width, 2);
+      statistics.add_column("TR", Statistics::int_width, 3, /* is_extended = */ true);
+      statistics.add_column("Radius", Statistics::double_width, 2, /* is_extended = */ true);
       statistics.set("Radius", this->radius);
       set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       set_dual_residuals_statistics(statistics, current_iterate);

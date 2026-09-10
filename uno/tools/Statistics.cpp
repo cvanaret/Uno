@@ -53,7 +53,10 @@ namespace uno {
       return std::string_view(buffer, count);
    }
 
-   void Statistics::add_column(std::string_view name, size_t width, size_t precision) {
+   Statistics::Statistics(bool print_extended_statistics): print_extended_statistics(print_extended_statistics) {
+   }
+
+   void Statistics::add_column(std::string_view name, size_t width, size_t precision, bool is_extended) {
       // validate and append the column
       if (column_order.find(name) == column_order.end()) {
          throw std::invalid_argument("The column " + std::string(name) + " does not exist");
@@ -63,7 +66,7 @@ namespace uno {
             [name](const Column& column) { return column.name == name; })) {
          return;
       }
-      this->columns.push_back(Column{name, width, precision, std::string{}, false});
+      this->columns.push_back(Column{name, width, precision, std::string{}, false, is_extended});
       // the name->index mapping is built in finalize()
       this->finalized = false;
    }
@@ -109,7 +112,9 @@ namespace uno {
       // count the glyphs (column-width units)
       size_t glyph_count = 0;
       for (const auto& column : this->columns) {
-         glyph_count += column.width;
+         if (this->is_visible(column)) {
+            glyph_count += column.width;
+         }
       }
       // create the horizontal line
       std::string line;
@@ -141,8 +146,10 @@ namespace uno {
       std::string line;
       line.reserve(128);
       for (const auto& column : this->columns) {
-         const std::string_view cell = column.is_set ? std::string_view(column.value) : "-";
-         append_cell(line, cell, column.width);
+         if (this->is_visible(column)) {
+            const std::string_view cell = column.is_set ? std::string_view(column.value) : "-";
+            append_cell(line, cell, column.width);
+         }
       }
       line.push_back('\n');
       INFO << line; // single insertion
@@ -192,10 +199,16 @@ namespace uno {
       std::string line;
       line.reserve(128);
       for (const auto& column : this->columns) {
-         append_cell(line, column.name, column.width);
+         if (this->is_visible(column)) {
+            append_cell(line, column.name, column.width);
+         }
       }
       line.push_back('\n');
       INFO << line; // single insertion
       Logger::flush();
+   }
+
+   bool Statistics::is_visible(const Column& column) const {
+      return !column.is_extended || this->print_extended_statistics;
    }
 }

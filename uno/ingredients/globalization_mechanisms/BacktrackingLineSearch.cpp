@@ -39,8 +39,8 @@ namespace uno {
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
       this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
-      statistics.add_column("LS", Statistics::int_width, 3);
-      statistics.add_column("Steplength", Statistics::double_width + 1, 2);
+      statistics.add_column("LS", Statistics::int_width, 3, /* is_extended = */ true);
+      statistics.add_column("Steplength", Statistics::double_width + 1, 2, /* is_extended = */ true);
       set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       set_dual_residuals_statistics(statistics, current_iterate);
    }
