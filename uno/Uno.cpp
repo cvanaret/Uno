@@ -116,7 +116,7 @@ namespace uno {
             warmstart_information.iterate_changed();
             this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                evaluation_cache, warmstart_information, user_callbacks);
-            termination = Uno::check_termination(trial_iterate, major_iterations, max_iterations,
+            termination = check_termination(trial_iterate, major_iterations, max_iterations,
                statistics.timers.wallclock.get_elapsed_time(), time_limit, optimization_status, user_callbacks);
 
             // the trial iterate becomes the current iterate for the next iteration
@@ -135,11 +135,11 @@ namespace uno {
       }
       if (Logger::level == INFO) statistics.print_footer();
 
-      Uno::postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
+      postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
       statistics.timers.wallclock.stop();
-      Result result = this->create_result(model, optimization_status, current_iterate, evaluation_cache.current_evaluations,
-         major_iterations, statistics.timers);
-      Uno::postprocess_multipliers_signs(model, result);
+      Result result = this->create_result(model, optimization_status, std::move(current_iterate),
+         std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers);
+      postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
@@ -246,17 +246,17 @@ namespace uno {
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
-   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
-         const Evaluations& evaluations, size_t major_iterations, const Timers& timers) const {
+   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
+         Evaluations&& evaluations, size_t major_iterations, const Timers& timers) const {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
          evaluations.objective, solution.primal_infeasibility, solution.residuals.stationarity,
-         solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
-         solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, evaluations.constraints, major_iterations,
-         timers, model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
-         model.number_model_objective_gradient_evaluations(), model.number_model_jacobian_evaluations(),
-         model.number_model_hessian_evaluations(), number_subproblems_solved};
+         solution.residuals.complementarity, std::move(solution.primals), std::move(solution.multipliers.constraints),
+         std::move(solution.multipliers.lower_bounds), std::move(solution.multipliers.upper_bounds),
+         std::move(evaluations.constraints), major_iterations, timers, model.number_model_objective_evaluations(),
+         model.number_model_constraints_evaluations(), model.number_model_objective_gradient_evaluations(),
+         model.number_model_jacobian_evaluations(), model.number_model_hessian_evaluations(), number_subproblems_solved};
    }
 
    // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether

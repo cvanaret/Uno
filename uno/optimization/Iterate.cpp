@@ -9,7 +9,7 @@ namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
-         residuals(number_variables) {
+         residuals(number_variables, number_constraints) {
    }
 
    void Iterate::set_number_variables(size_t new_number_variables) {

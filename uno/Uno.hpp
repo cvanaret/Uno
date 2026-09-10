@@ -40,8 +40,8 @@ namespace uno {
          double current_time, double time_limit, OptimizationStatus& optimization_status, UserCallbacks& user_callbacks);
       [[nodiscard]] Result uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks);
       static void postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations);
-      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
-         const Evaluations& evaluations, size_t major_iterations, const Timers& timers) const;
+      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
+         Evaluations&& evaluations, size_t major_iterations, const Timers& timers) const;
       static void postprocess_multipliers_signs(const Model& model, Result& result);
       void print_optimization_summary(const Result& result, bool print_solution) const;
    };
