@@ -58,6 +58,11 @@ namespace uno {
       if (column_order.find(name) == column_order.end()) {
          throw std::invalid_argument("The column " + std::string(name) + " does not exist");
       }
+      // skip if a column with this name was already added
+      if (std::any_of(this->columns.begin(), this->columns.end(),
+            [name](const Column& column) { return column.name == name; })) {
+         return;
+      }
       this->columns.push_back(Column{name, width, precision, std::string{}, false});
       // the name->index mapping is built in finalize()
       this->finalized = false;
