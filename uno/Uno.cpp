@@ -116,7 +116,7 @@ namespace uno {
             warmstart_information.iterate_changed();
             this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                evaluation_cache, warmstart_information, user_callbacks);
-            termination = Uno::check_termination(trial_iterate, major_iterations, max_iterations,
+            termination = check_termination(trial_iterate, major_iterations, max_iterations,
                statistics.timers.wallclock.get_elapsed_time(), time_limit, optimization_status, user_callbacks);
 
             // the trial iterate becomes the current iterate for the next iteration

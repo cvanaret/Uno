@@ -295,14 +295,12 @@ namespace uno {
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
 
       // cache the (expensive) Jacobian–direction product Jd and snapshot the current constraints
-      Vector<double> Jv(this->number_constraints);
-      Jv.fill(0.);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), Jv.view());
-      Vector<double> constraints = current_evaluations.constraints;
+      this->Jv_buffer.fill(0.);
+      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), this->Jv_buffer.view());
 
-      return [this, norm, current_constraint_violation, Jv = std::move(Jv), constraints = std::move(constraints)]
-            (double step_length) {
-         return current_constraint_violation - this->model.constraint_violation(constraints + step_length * Jv, norm);
+      return [this, &current_evaluations, norm, current_constraint_violation](double step_length) {
+         return current_constraint_violation - this->model.constraint_violation(current_evaluations.constraints +
+            step_length * this->Jv_buffer, norm);
       };
    }
 
