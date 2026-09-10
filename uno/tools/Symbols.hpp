@@ -36,8 +36,8 @@ namespace uno {
       static constexpr std::string_view bottom_tee = glyph(u8"\u2534", "+");  // ┴
       static constexpr std::string_view bottom_right_corner = glyph(u8"\u2518", "+");  // ┘
 
-      static constexpr std::string_view check = glyph(u8"\u2714", "v"); // ✔
-      static constexpr std::string_view fail = glyph(u8"\u2718", "x"); // ✘
+      static constexpr std::string_view check = glyph(":)", "v"); // ✔
+      static constexpr std::string_view fail = glyph(":(", "x"); // ✘
    }
 } // namespace
 

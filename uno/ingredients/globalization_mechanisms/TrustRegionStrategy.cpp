@@ -26,7 +26,8 @@ namespace uno {
          activity_tolerance(options.get_double("TR_activity_tolerance")),
          minimum_radius(options.get_double("TR_min_radius")),
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
-         primal_tolerance(options.get_double("primal_tolerance")) {
+         primal_tolerance(options.get_double("primal_tolerance")),
+         print_minor_iterations(options.get_bool("print_minor_iterations")) {
       assert(0 < this->radius && "The trust-region radius should be positive");
       assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
       assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
@@ -35,8 +36,8 @@ namespace uno {
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) {
       this->constraint_relaxation_strategy->initialize(statistics, current_iterate, true, evaluation_cache, options);
-      statistics.add_column("TR", Statistics::int_width, 3);
-      statistics.add_column("Radius", Statistics::double_width, 2);
+      statistics.add_column("TR", Statistics::int_width, 3, /* is_extended = */ true);
+      statistics.add_column("Radius", Statistics::double_width, 2, /* is_extended = */ true);
       statistics.set("Radius", this->radius);
       set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       set_dual_residuals_statistics(statistics, current_iterate);
@@ -55,7 +56,9 @@ namespace uno {
          try {
             ++number_iterations;
             DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
-            if (1 < number_iterations) { statistics.start_new_line(); }
+            if (this->print_minor_iterations && 1 < number_iterations && Logger::level == INFO) {
+               statistics.start_new_line();
+            }
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
@@ -84,14 +87,18 @@ namespace uno {
             if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
                statistics.set("Status", "unbounded subproblem");
-               if (Logger::level == INFO) statistics.print_current_line();
+               if (this->print_minor_iterations && Logger::level == INFO) {
+                  statistics.print_current_line();
+               }
                this->decrease_radius_aggressively();
                warmstart_information.trust_region_changed = true;
 
             }
             else if (direction.status == SubproblemStatus::ERROR) {
                statistics.set("Status", "solver error");
-               if (Logger::level == INFO) statistics.print_current_line();
+               if (this->print_minor_iterations && Logger::level == INFO) {
+                  statistics.print_current_line();
+               }
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
                warmstart_information.whole_problem_changed();
@@ -110,17 +117,21 @@ namespace uno {
                   set_dual_residuals_statistics(statistics, trial_iterate);
                   termination = true;
                }
-               else {
+               if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
+                  statistics.print_current_line();
+               }
+               if (!is_acceptable) {
                   this->decrease_radius(direction.norm);
                   warmstart_information.trust_region_changed = true;
                }
-               if (Logger::level == INFO) statistics.print_current_line();
             }
          }
          // if an evaluation error occurs, decrease the radius
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
-            if (Logger::level == INFO) statistics.print_current_line();
+            if (this->print_minor_iterations && Logger::level == INFO) {
+               statistics.print_current_line();
+            }
             DEBUG << "A function could not be evaluated. The trust-region radius will be reduced\n";
             this->decrease_radius();
             warmstart_information.trust_region_changed = true;

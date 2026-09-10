@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <iomanip>
@@ -6,7 +6,6 @@
 #include "SolutionStatus.hpp"
 #include "linear_algebra/View.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Symbols.hpp"
 
 namespace uno {
    void Result::print(bool print_primal_dual_solution) const {
@@ -15,17 +14,15 @@ namespace uno {
 
       DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution_objective << '\n';
 
-      DISCRETE << symbols::top_pipe << " Primal infeasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
-      DISCRETE << symbols::pipe << " Stationarity residual:\t\t" << this->solution_stationarity << '\n';
-      DISCRETE << symbols::bottom_pipe << " Complementarity residual:\t\t" << this->solution_complementarity << '\n';
+      DISCRETE << "Primal infeasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
+      DISCRETE << "Stationarity residual:\t\t\t" << this->solution_stationarity << '\n';
+      DISCRETE << "Complementarity residual:\t\t" << this->solution_complementarity << '\n';
 
       if (print_primal_dual_solution) {
          DISCRETE << "Primal solution:\t\t\t" << view(this->primal_solution, 0, this->number_variables) << '\n';
-         DISCRETE << symbols::top_pipe << " Constraint multipliers:\t\t" << this->constraint_dual_solution << '\n';
-         DISCRETE << symbols::pipe << " Lower bound multipliers:\t\t" << view(this->lower_bound_dual_solution, 0,
-            this->number_variables) << '\n';
-         DISCRETE << symbols::bottom_pipe << " Upper bound multipliers:\t\t" << view(this->upper_bound_dual_solution, 0,
-            this->number_variables) << '\n';
+         DISCRETE << "Constraint multipliers:\t\t\t" << this->constraint_dual_solution << '\n';
+         DISCRETE << "Lower bound multipliers:\t\t" << view(this->lower_bound_dual_solution, 0, this->number_variables) << '\n';
+         DISCRETE << "Upper bound multipliers:\t\t" << view(this->upper_bound_dual_solution, 0, this->number_variables) << '\n';
       }
 
       DISCRETE << "CPU time:\t\t\t\t" << this->cpu_time << "s\n";
