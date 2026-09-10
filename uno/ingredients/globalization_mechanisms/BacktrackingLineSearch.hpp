@@ -42,6 +42,7 @@ namespace uno {
       // second-order corrections
       const size_t SOC_max_iterations;
       const double SOC_infeasibility_fraction;
+      const bool print_minor_iterations;
 
       void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) const;

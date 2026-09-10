@@ -66,6 +66,8 @@ print_subproblem false
 use_function_scaling false
 # Threshold on the function scaling coefficients
 function_scaling_threshold 100.
+# Whether minor iterations (line search and trust-region method) are printed in the statistics table
+print_minor_iterations false
 # Whether the solution is printed to a file (used by AMPL and CUTEst) (bool)
 write_solution_to_file false
 

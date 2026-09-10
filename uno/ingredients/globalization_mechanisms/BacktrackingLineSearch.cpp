@@ -30,7 +30,8 @@ namespace uno {
          s_phi(options.get_double("switching_objective_exponent")),
          theta_min(options.get_double("barrier_small_infeasibility_factor")),
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
-         SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")) {
+         SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
+         print_minor_iterations(options.get_bool("print_minor_iterations")) {
       // check the initial and minimal step lengths
       assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    }
@@ -166,7 +167,9 @@ namespace uno {
       while (!termination) {
          ++number_iterations;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
-         if (1 < number_iterations) { statistics.start_new_line(); }
+         if (this->print_minor_iterations && 1 < number_iterations && Logger::level == INFO) {
+            statistics.start_new_line();
+         }
          statistics.set("Steplength", step_length);
          // the total step length is the step length scaled by the direction's step length
          const double total_step_length = step_length * direction.primal_dual_step_length;
@@ -216,9 +219,13 @@ namespace uno {
 
          if (is_acceptable) {
             termination = true;
+            set_dual_residuals_statistics(statistics, trial_iterate);
          }
-         // from here on, the trial iterate is rejected: decrease the step length
-         else {
+         if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
+            statistics.print_current_line();
+         }
+         // the trial iterate is rejected: decrease the step length
+         if (!is_acceptable) {
             step_length *= this->backtracking_ratio;
             // note: if minimum_step_length = 0 and step_length reaches 0 by successive divisions, this inequality
             // protects from an endless loop
@@ -238,11 +245,6 @@ namespace uno {
             }
             // otherwise, keep going
          }
-
-         if (is_acceptable) {
-            set_dual_residuals_statistics(statistics, trial_iterate);
-         }
-         if (Logger::level == INFO) statistics.print_current_line();
       } // end while loop
       return true;
    }

@@ -35,6 +35,7 @@ namespace uno {
       {"print_subproblem", OptionType::BOOL},
       {"use_function_scaling", OptionType::BOOL},
       {"function_scaling_threshold", OptionType::DOUBLE},
+      {"print_minor_iterations", OptionType::BOOL},
       {"armijo_decrease_fraction", OptionType::DOUBLE},
       {"armijo_tolerance", OptionType::DOUBLE},
       {"switching_delta", OptionType::DOUBLE},

@@ -28,6 +28,7 @@ namespace uno {
       const double minimum_radius;
       const double radius_reset_threshold;
       const double primal_tolerance;
+      const bool print_minor_iterations;
 
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
