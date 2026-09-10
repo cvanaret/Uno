@@ -25,8 +25,8 @@ namespace uno {
          DISCRETE << "Upper bound multipliers:\t\t" << view(this->upper_bound_dual_solution, 0, this->number_variables) << '\n';
       }
 
-      DISCRETE << "CPU time:\t\t\t\t" << this->cpu_time << "s\n";
       DISCRETE << "Iterations:\t\t\t\t" << this->number_iterations << '\n';
+      DISCRETE << "CPU time:\t\t\t\t" << this->timers.wallclock.get_duration() << "s\n";
       DISCRETE << "Objective evaluations:\t\t\t" << this->number_objective_evaluations << '\n';
       DISCRETE << "Constraints evaluations:\t\t" << this->number_constraint_evaluations << '\n';
       DISCRETE << "Objective gradient evaluations:\t\t" << this->number_objective_gradient_evaluations << '\n';

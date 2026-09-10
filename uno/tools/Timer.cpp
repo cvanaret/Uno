@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Timer.hpp"
@@ -7,13 +7,22 @@
 #include <sstream>
 
 namespace uno {
-   // timer starts upon creation
-   Timer::Timer(): start(std::chrono::steady_clock::now()) {
+   void Timer::start() {
+      this->start_point = std::chrono::steady_clock::now();
+   }
+
+   void Timer::stop() {
+      const auto now = std::chrono::steady_clock::now();
+      this->duration += std::chrono::duration<double>(now - this->start_point).count();
+   }
+
+   double Timer::get_elapsed_time() const {
+      const auto now = std::chrono::steady_clock::now();
+      return std::chrono::duration<double>(now - this->start_point).count();
    }
 
    double Timer::get_duration() const {
-      const auto now = std::chrono::steady_clock::now();
-      return std::chrono::duration<double>(now - this->start).count();
+      return this->duration;
    }
 
    std::string Timer::get_current_date() {
@@ -29,5 +38,11 @@ namespace uno {
       std::ostringstream stream;
       stream << std::put_time(&calendar_time, "%a %b %d %H:%M:%S %Y");
       return stream.str();
+   }
+
+   std::string Timer::format_to_seconds(double time) {
+      std::ostringstream oss;
+      oss << std::fixed << std::setprecision(2) << time;
+      return oss.str() + "s";
    }
 } // namespace

@@ -9,8 +9,14 @@
 #include <string_view>
 #include <vector>
 #include <unordered_map>
+#include "Timer.hpp"
 
 namespace uno {
+   class Timers {
+   public:
+      Timer wallclock{};
+   };
+
    static constexpr size_t header_print_frequency = 10;
 
    class Statistics {
@@ -26,10 +32,11 @@ namespace uno {
       void set(std::string_view name, size_t value);
       void set(std::string_view name, double value);
 
-      void print_horizontal_line();
       void print_header();
       void print_current_line();
       void print_footer();
+
+      Timers timers;
 
    protected:
       const bool print_extended_statistics;
@@ -57,6 +64,7 @@ namespace uno {
       void set_value(size_t index, std::string_view value);
       void print_column_names();
       bool is_visible(const Column& column) const;
+      void print_horizontal_line();
    };
 }
 

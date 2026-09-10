@@ -40,7 +40,9 @@ namespace uno {
          return to_owned_array(result.constraint_values);
       })
       .def_readonly("number_iterations", &Result::number_iterations)
-      .def_readonly("cpu_time", &Result::cpu_time)
+      .def_property_readonly("cpu_time", [](const Result& result) {
+         return result.timers.wallclock.get_duration();
+      })
       .def_readonly("number_objective_evaluations", &Result::number_objective_evaluations)
       .def_readonly("number_constraint_evaluations", &Result::number_constraint_evaluations)
       .def_readonly("number_objective_gradient_evaluations", &Result::number_objective_gradient_evaluations)
