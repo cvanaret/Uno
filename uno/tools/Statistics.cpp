@@ -128,9 +128,9 @@ namespace uno {
    }
 
    void Statistics::print_header() {
-      this->print_horizontal_line();
+      //this->print_horizontal_line();
       this->print_column_names();
-      this->print_horizontal_line();
+      //this->print_horizontal_line();
    }
  
    void Statistics::print_current_line() {
