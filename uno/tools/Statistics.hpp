@@ -15,7 +15,7 @@ namespace uno {
 
    class Statistics {
    public:
-      explicit Statistics(bool print_extended_statistics);
+      explicit Statistics(bool print_extended_statistics = false);
       static size_t int_width, double_width, string_width;
 
       void add_column(std::string_view name, size_t width, size_t precision, bool is_extended = false);
