@@ -29,7 +29,8 @@ extern "C" {
    void daxpy(const int* n, const double* alpha, const double* x, const int* incx, double* y, const int* incy);
 
    // y := alpha x + beta y
-   void daxpby(const int* n, const double* alpha, const double* x, const int* incx, const double* beta, double* y, const int* incy);
+   // not portable
+   // void daxpby(const int* n, const double* alpha, const double* x, const int* incx, const double* beta, double* y, const int* incy);
 
    // x^T y
    double ddot(const int* n, const double* x, const int* incx, const double* y, const int* incy);

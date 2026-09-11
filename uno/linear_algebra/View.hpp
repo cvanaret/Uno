@@ -44,6 +44,9 @@ namespace uno {
       View(View&& other) = default;
       View<T>& operator=(const View<T>& other) {
          if (&other != this) {
+            if (this->size() != other.size()) {
+               throw std::runtime_error("Dimension mismatch");
+            }
             blas1::copy(this->size(), other.data(), this->data());
          }
          return *this;
@@ -92,7 +95,7 @@ namespace uno {
                                                         decltype(std::declval<const Vector&>().size())>>
       View& operator=(const Vector& other) {
          if (other.size() != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between x and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          // dispatch copy function on type of elements
          if constexpr (std::is_same_v<value_type, double>) {
@@ -108,38 +111,29 @@ namespace uno {
       template <typename Vector>
       View& operator=(UnaryNegation<Vector>&& expression) {
          const auto& x = expression.get_expression();
-         // y := -1 * x + 0 * y
-         //blas1::scale_and_add(this->size(), -1., x.data(), 0., this->data());
+         // note: this operation can be written as axpby: y := -1 * x + 0 * y
+         // for portability reasons, we prefer to decompose it as copy + scale by -1
+         // blas1::scale_and_add(this->size(), -1., x.data(), 0., this->data());
          *this = x;
          this->scale(-1.);
          return *this;
       }
 
-      // specialized operation y = a * x (note: no BLAS operation available)
+      // specialized operation y = a * x
       template <typename Vector>
       View& operator=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
-         if (x.size() != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between x and y");
-         }
          *this = x;
          this->scale(a);
          return *this;
       }
 
       // specialized operation y = x - z
-      // note: no BLAS operation available
       template <typename Vector1, typename Vector2>
       View& operator=(Subtraction<Vector1, Vector2>&& expression) {
          const auto& x = expression.get_left();
          const auto& z = expression.get_right();
-         if (x.size() != z.size()) {
-            throw std::invalid_argument("Dimension mismatch between x and z");
-         }
-         if (x.size() != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between x and y");
-         }
          *this = x;
          *this -= z;
          return *this;
@@ -154,10 +148,10 @@ namespace uno {
          }
          const auto& A = expression.get_left();
          if (A.number_columns != x.size()) {
-            throw std::invalid_argument("Dimension mismatch between A and x");
+            throw std::invalid_argument("Dimension mismatch");
          }
          if (A.number_rows != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between A and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          blas2::matrix_vector_product('N', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             0., this->data());
@@ -170,7 +164,7 @@ namespace uno {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
          if (x.size() != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between x and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          blas1::add(this->size(), a, x.data(), this->data());
          return *this;
@@ -180,7 +174,7 @@ namespace uno {
       template <typename Vector>
       View& operator+=(const Vector& other) {
          if (other.size() != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between x and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          blas1::add(this->size(), 1., other.data(), this->data());
          return *this;
@@ -192,7 +186,10 @@ namespace uno {
          const auto& x = expression.get_left();
          const double a = expression.get_right().get_factor();
          const auto& y = expression.get_right().get_expression();
-         *this = x; // blas copy
+         if (this->size() != y.size()) {
+            throw std::runtime_error("Dimension mismatch");
+         }
+         *this = x; // blas copy (tests this->size() == x.size())
          blas1::add(this->size(), a, y.data(), this->data()); // axpy
          return *this;
       }
@@ -203,7 +200,10 @@ namespace uno {
          const auto& x = expression.get_left();
          const double a = expression.get_right().get_factor();
          const auto& y = expression.get_right().get_expression();
-         *this = x; // blas copy
+         if (this->size() != y.size()) {
+            throw std::runtime_error("Dimension mismatch");
+         }
+         *this = x; // blas copy (tests this->size() == x.size())
          blas1::add(this->size(), -a, y.data(), this->data()); // axpy
          return *this;
       }
@@ -212,7 +212,7 @@ namespace uno {
       template <typename Vector>
       View& operator-=(const Vector& other) {
          if (other.size() != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between x and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          blas1::add(this->size(), -1., other.data(), this->data());
          return *this;
@@ -224,7 +224,7 @@ namespace uno {
          const auto& U = expression.get_left().get_matrix().get_matrix().get_matrix();
          const auto& y = expression.get_right();
          if (this->size() != U.number_columns) {
-            throw std::runtime_error("Dimension mismatch in BLASVector::operator=");
+            throw std::runtime_error("Dimension mismatch");
          }
          // copy the RHS into this
          blas1::copy(this->size(), y.data(), this->data());
@@ -239,7 +239,7 @@ namespace uno {
          const auto& U = expression.get_left().get_matrix().get_matrix();
          const auto& y = expression.get_right();
          if (this->size() != U.number_columns) {
-            throw std::runtime_error("Dimension mismatch in BLASVector::operator=");
+            throw std::runtime_error("Dimension mismatch");
          }
          // copy the RHS into this
          blas1::copy(this->size(), y.data(), this->data());
@@ -254,10 +254,10 @@ namespace uno {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
          if (A.number_rows != x.size()) {
-            throw std::invalid_argument("Dimension mismatch between A and x");
+            throw std::invalid_argument("Dimension mismatch");
          }
          if (A.number_columns != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between A and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          blas2::matrix_vector_product('T', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             0., this->data());
@@ -270,10 +270,10 @@ namespace uno {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          if (A.number_columns != x.size()) {
-            throw std::invalid_argument("Dimension mismatch between A and x");
+            throw std::invalid_argument("Dimension mismatch");
          }
          if (A.number_rows != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between A and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          blas2::matrix_vector_product('N', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             1., this->data());
@@ -286,10 +286,10 @@ namespace uno {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          if (A.number_columns != x.size()) {
-            throw std::invalid_argument("Dimension mismatch between A and x");
+            throw std::invalid_argument("Dimension mismatch");
          }
          if (A.number_rows != this->size()) {
-            throw std::invalid_argument("Dimension mismatch between A and y");
+            throw std::invalid_argument("Dimension mismatch");
          }
          blas2::matrix_vector_product('N', A.number_rows, A.number_columns, -1., A.data(), A.leading_dimension, x.data(),
             1., this->data());
@@ -347,7 +347,7 @@ namespace uno {
    template <typename Vector1, typename Vector2>
    double dot(const Vector1& x, const Vector2& y) {
       if (x.size() != y.size()) {
-         throw std::invalid_argument("Dimension mismatch between x and y");
+         throw std::invalid_argument("Dimension mismatch");
       }
       return blas1::dot(x.size(), x.data(), y.data());
    }
