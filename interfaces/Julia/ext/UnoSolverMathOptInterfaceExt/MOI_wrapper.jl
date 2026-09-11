@@ -162,8 +162,6 @@ function MOI.is_empty(model::Optimizer)
     return MOI.is_empty(model.variables) &&
            isempty(model.parameters) &&
            isempty(model.variable_primal_start) &&
-           isempty(model.mult_x_L) &&
-           isempty(model.mult_x_U) &&
            model.nlp_data.evaluator isa _EmptyNLPEvaluator &&
            model.sense == MOI.FEASIBILITY_SENSE &&
            isempty(model.vector_nonlinear_oracle_constraints) &&
