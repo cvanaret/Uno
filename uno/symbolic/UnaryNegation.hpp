@@ -12,7 +12,7 @@ namespace uno {
    // limited to types that possess value_type
    // https://stackoverflow.com/questions/11055923/stdenable-if-parameter-vs-template-parameter
    template <typename Expression>
-   class UnaryNegation {
+   class UnaryNegation: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<Expression>::value_type;
 
@@ -25,6 +25,8 @@ namespace uno {
       [[nodiscard]] constexpr value_type operator[](size_t index) const noexcept {
          return -this->expression[index];
       }
+
+      UNO_FORWARD_ACCESSOR(get_expression, this->expression)
 
    protected:
       storage_t<Expression> expression;

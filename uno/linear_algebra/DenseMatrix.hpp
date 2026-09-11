@@ -9,11 +9,12 @@
 #include "linear_algebra/BLASMatrix.hpp"
 #include "View.hpp"
 #include "symbolic/Range.hpp"
+#include "symbolic/symbolic_traits.hpp"
 
 namespace uno {
    // DenseMatrix is an m x n matrix in column-major order where the columns are concatenated in a long vector
    template <typename T>
-   class DenseMatrix: public BLASMatrix<T> {
+   class DenseMatrix: public BLASMatrix<T>, SymbolicExpression {
    public:
       using value_type = T;
 

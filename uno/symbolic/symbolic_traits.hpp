@@ -8,31 +8,40 @@
 #include <utility>
 
 namespace uno {
-    template<typename T, typename = void>
-    struct has_value_type: std::false_type {};
+   // empty marker base for all symbolic expression templates
+   struct SymbolicExpression {
+   };
 
-    template<typename T>
-    struct has_value_type<T, std::void_t<typename T::value_type>>: std::true_type {};
+   template<typename T>
+   inline constexpr bool is_symbolic_v = std::is_base_of_v<SymbolicExpression, std::remove_cv_t<std::remove_reference_t<T>>>;
 
-    template<class T>
-    using storage_t = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::decay_t<T>>;
+   template<typename T, typename = void>
+   struct has_value_type : std::false_type {
+   };
 
-    #define UNO_FORWARD_ACCESSOR(name, member)                     \
-    constexpr decltype(auto) name() & noexcept {                   \
+   template<typename T>
+   struct has_value_type<T, std::void_t<typename T::value_type> > : std::true_type {
+   };
+
+   template<class T>
+   using storage_t = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::decay_t<T> >;
+
+   #define UNO_FORWARD_ACCESSOR(name, member)                     \
+   constexpr decltype(auto) name() & noexcept {                   \
       return (member);                                            \
-    }                                                              \
-    \
-    constexpr decltype(auto) name() const& noexcept {              \
+   }                                                              \
+   \
+   constexpr decltype(auto) name() const& noexcept {              \
       return (member);                                            \
-    }                                                              \
-    \
-    constexpr decltype(auto) name() && noexcept {                  \
+   }                                                              \
+   \
+   constexpr decltype(auto) name() && noexcept {                  \
       return std::move(member);                                   \
-    }                                                              \
-    \
-    constexpr decltype(auto) name() const&& noexcept {             \
+   }                                                              \
+   \
+   constexpr decltype(auto) name() const&& noexcept {             \
       return std::move(member);                                   \
-    }
+   }
 } // namespace
 
 #endif // UNO_SYMBOLIC_TRAITS_H
