@@ -40,6 +40,10 @@ namespace uno {
 #include "ingredients/subproblem_solvers/SSIDS/SSIDSSolver.hpp"
 #endif
 
+#ifdef HAS_HIPO
+#include "ingredients/subproblem_solvers/HiPO/HiPOSolver.hpp"
+#endif
+
 namespace uno {
    std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(
          const Options& options) {
@@ -92,6 +96,11 @@ namespace uno {
 #ifdef HAS_SPRAL
       if (linear_solver == "SSIDS") {
          return std::make_unique<SSIDSSolver>();
+      }
+#endif
+#ifdef HAS_HIPO
+      if (linear_solver == "HIPO") {
+         return std::make_unique<HiPOSolver>();
       }
 #endif
       // the HSL solver is supported by this build, but the HSL library is not functional
@@ -160,6 +169,10 @@ namespace uno {
 
 #ifdef HAS_SPRAL
       solvers.emplace_back("SSIDS");
+#endif
+
+#ifdef HAS_HIPO
+      solvers.emplace_back("HIPO");
 #endif
       return solvers;
    }

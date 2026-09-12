@@ -32,6 +32,7 @@ namespace uno {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
          this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
+         this->optional_linear_solver->set_expected_inertia(expected_inertia);
          this->optional_linear_solver->do_symbolic_analysis();
       }
       // copy the Hessian into the linear system
@@ -86,6 +87,7 @@ namespace uno {
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> /*primal_regularization_variables*/) {
+      linear_solver.set_expected_inertia(expected_inertia);
       this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, block_augmented_matrix.primal_inertia_correction);
       block_augmented_matrix.dual_inertia_correction.fill(0.);
    }
