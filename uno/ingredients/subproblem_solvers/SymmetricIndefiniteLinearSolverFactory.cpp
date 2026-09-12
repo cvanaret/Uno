@@ -41,6 +41,10 @@ namespace uno {
 #include "ingredients/subproblem_solvers/SSIDS/SSIDSSolver.hpp"
 #endif
 
+#ifdef HAS_HIPO
+#include "ingredients/subproblem_solvers/HiPO/HiPOSolver.hpp"
+#endif
+
 namespace uno {
    namespace {
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create_solver(const Options& options);
@@ -120,6 +124,11 @@ namespace uno {
          return std::make_unique<SSIDSSolver>();
       }
 #endif
+#ifdef HAS_HIPO
+      if (linear_solver == "HIPO") {
+         return std::make_unique<HiPOSolver>();
+      }
+#endif
       // the HSL solver is supported by this build, but the HSL library is not functional
       bool supported_hsl_solver = false;
 #if defined(HAS_HSL) || defined(HAS_MA57)
@@ -187,6 +196,10 @@ namespace uno {
 
 #ifdef HAS_SPRAL
       solvers.emplace_back("SSIDS");
+#endif
+
+#ifdef HAS_HIPO
+      solvers.emplace_back("HIPO");
 #endif
       return solvers;
    }
