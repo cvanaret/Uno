@@ -35,8 +35,8 @@ wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
-BLAS_LIBRARIES = "dependencies/lib/libcblas.a;dependencies/lib/libblas.a"
-LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
+BLAS_LIBRARIES = "dependencies/lib/libopenblas.a"
+LAPACK_LIBRARIES = "dependencies/lib/libopenblas.a"
 # enable dynamic loading of libhsl
 HSL_RUNTIME_LOADING = "ON"
 BUILD_SHARED_LIBS = "ON"
