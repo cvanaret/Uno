@@ -27,7 +27,8 @@ namespace uno {
    public:
       InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier, Options& options);
 
-      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
+      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold,
+         bool is_initial_iterate) const override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
@@ -109,8 +110,8 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::create_iterate(Iterate& initial_iterate, Evaluations& evaluations,
-         double multipliers_threshold) const {
-      this->barrier_problem.generate_initial_iterate(initial_iterate, evaluations);
+         double multipliers_threshold, bool is_initial_iterate) const {
+      this->barrier_problem.create_iterate(initial_iterate, evaluations, is_initial_iterate);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
    }
@@ -173,9 +174,6 @@ namespace uno {
             iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
       }
-
-      // push the slacks back into the interior of their bounds
-      this->barrier_problem.push_slacks_to_interior(iterate, evaluations);
 
       // c(x) - p + n = 0
       // analytical expression for p and n:

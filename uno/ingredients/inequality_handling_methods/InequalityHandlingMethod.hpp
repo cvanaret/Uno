@@ -30,7 +30,8 @@ namespace uno {
       InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
-      virtual void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const = 0;
+      virtual void create_iterate(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold,
+         bool is_initial_iterate) const = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) = 0;
       [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Iterate& current_iterate,
