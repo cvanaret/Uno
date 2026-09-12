@@ -23,7 +23,7 @@ function runtests(; preset="filtersqp")
     return
 end
 
-function test_franckgaga_instance()
+function test_franckgaga_instance(; preset="filtersqp")
     function f!(ẋ, x, u, _ , p)
         g, L, K, m = p
         θ, ω = x[1], x[2]
