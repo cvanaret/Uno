@@ -8,6 +8,7 @@ module TestMOIWrapper
 
 using UnoSolver
 using Test
+using ModelPredictiveControl, JuMP
 
 import MathOptInterface as MOI
 
@@ -20,6 +21,70 @@ function runtests(; preset="filtersqp")
         end
     end
     return
+end
+
+function test_franckgaga_instance()
+    function f!(ẋ, x, u, _ , p)
+        g, L, K, m = p
+        θ, ω = x[1], x[2]
+        τ = u[1]
+        ẋ[1] = ω
+        ẋ[2] = -g/L*sin(θ) - K/m*ω + τ/m/L^2
+    end
+    h!(y, x, _ , _ ) = (y[1] = 180/π*x[1])
+    p = [9.8, 0.4, 1.2, 0.3]
+    nu = 1; nx = 2; ny = 1; Ts = 0.1
+    pendulum_model = NonLinModel(f!, h!, Ts, nu, nx, ny; p)
+    pendulum_p = p
+
+    h2!(y, x, _ , _ ) = (y[1] = 180/π*x[1]; y[2]=x[2])
+    nu, nx, ny = 1, 2, 2
+    pendulum_model2 = NonLinModel(f!, h2!, Ts, nu, nx, ny; p)
+    pendulum_p2 = p
+
+    Hp, Hc, Mwt, Nwt, Cwt = 20, 2, [0.5], [2.5], Inf
+    umin, umax = [-1.5], [+1.5]
+
+    model2, p = pendulum_model2, pendulum_p2
+    plant2 = deepcopy(model2)
+    plant2.p[3] = 1.25*p[3]  # plant-model mismatch
+    σQ = [0.1, 1.0]; σR=[5.0]; nint_u=[1]; σQint_u=[0.1]
+    estim2 = UnscentedKalmanFilter(model2; σQ, σR, nint_u, σQint_u, i_ym=[1])
+    function JE(UE, ŶE, _ , p, _)
+        Ts = p
+        τ, ω = @views UE[1:end-1], ŶE[2:2:end-1]
+        return Ts*dot(τ, ω)
+    end
+    p = Ts; Mwt2 = [Mwt; 0.0]; Ewt = 3.5e3
+    x_0 = [0, 0]; x̂_0 = [0, 0, 0]; ry = [180; 0]
+
+    function gc!(LHS, Ue, Ŷe, _, p, ϵ)
+        Pmax = p
+        i_τ, i_ω = 1, 2
+        for i in eachindex(LHS)
+            τ, ω = Ue[i_τ], Ŷe[i_ω]
+            P = τ*ω
+            LHS[i] = P - Pmax - ϵ
+            i_τ += 1
+            i_ω += 2
+        end
+        return nothing
+    end
+    Cwt, Pmax, nc = 1e4, 3, Hp+1
+    x_0 = [0, 0]; x̂_0 = [0, 0, 0]; ry = [180; 0]
+
+    N = 35
+
+    optim = JuMP.Model(()->UnoSolver.Optimizer(preset="funnelsqp"), add_bridges=false)
+    transcription, hessian = OrthogonalCollocation(), true
+
+    nmpc = NonLinMPC(estim2; 
+        Hp, Hc, Nwt=Nwt, Mwt=[0.5, 0], Cwt, gc!, nc, p=Pmax, transcription, hessian, optim
+    )
+    nmpc = setconstraint!(nmpc; umin, umax)
+    JuMP.unset_time_limit_sec(nmpc.optim)
+
+    res = sim!(nmpc, N, ry; plant=plant2, x_0=x_0, x̂_0=x̂_0)
 end
 
 function test_MOI_Test(; preset="filtersqp")
