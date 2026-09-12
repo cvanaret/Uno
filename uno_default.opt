@@ -20,7 +20,7 @@ globalization_strategy fletcher_filter_method
 #QP_solver BQPD
 # QP solver (BQPD|HiGHS)
 #LP_solver BQPD
-# linear solver (MA57|MA27|MUMPS|SSIDS)
+# linear solver (MA57|MA27|MA86|MUMPS|SSIDS|HIPO)
 #linear_solver MA57
 # path to the HSL shared library to dlopen for MA27/MA57/MA86 (empty = platform default libhsl.{so,dylib,dll})
 #libhsl_path /path/to/libhsl.{so,dylib,dll}

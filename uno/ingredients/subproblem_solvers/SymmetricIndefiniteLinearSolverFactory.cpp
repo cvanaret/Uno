@@ -40,6 +40,10 @@ namespace uno {
 #include "ingredients/subproblem_solvers/SSIDS/SSIDSSolver.hpp"
 #endif
 
+#ifdef HAS_HIPO
+#include "ingredients/subproblem_solvers/HiPO/HiPOSolver.hpp"
+#endif
+
 namespace uno {
    std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(
          const Options& options) {
@@ -90,6 +94,11 @@ namespace uno {
          return std::make_unique<SSIDSSolver>();
       }
 #endif
+#ifdef HAS_HIPO
+      if (linear_solver == "HIPO") {
+         return std::make_unique<HiPOSolver>();
+      }
+#endif
       std::string message = "The linear solver ";
       message.append(linear_solver).append(" is unknown").append("\n").append("The following values are available: ")
             .append(join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", "));
@@ -133,6 +142,10 @@ namespace uno {
 
 #ifdef HAS_SPRAL
       solvers.emplace_back("SSIDS");
+#endif
+
+#ifdef HAS_HIPO
+      solvers.emplace_back("HIPO");
 #endif
       return solvers;
    }
