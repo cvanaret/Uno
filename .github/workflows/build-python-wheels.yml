@@ -111,6 +111,8 @@ jobs:
             CC=clang
             CXX=clang++
             FC=gfortran-15
+            OPENBLAS_NUM_THREADS=1
+            OMP_NUM_THREADS=1
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
