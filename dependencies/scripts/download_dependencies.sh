@@ -125,7 +125,6 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 
   cmake -S "$SRC_DIR" -B "$BUILD_DIR" \
     "${GEN_FLAGS[@]}" \
-    -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DZLIB=OFF \
@@ -141,7 +140,7 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
   cmake --build "$BUILD_DIR" --target highs_extras --config Release --parallel
-  cmake --install "$BUILD_DIR" --config Release
+  cp "$BUILD_DIR/libhighs_extras_openblas.a" lib/libhighs_extras_openblas.a
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
 	cp -a "${BUILD_ROOT}/install/include/." include
