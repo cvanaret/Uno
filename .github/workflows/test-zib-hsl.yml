@@ -1,0 +1,66 @@
+name: Tests at ZIB using HSL
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Release
+  LIBS: /srv/lib
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: gh-ar-cvanaret-uno-benchmark
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Test NFS
+        run: |
+          cat ${{env.LIBS}}/test.txt
+
+      - name: Configure
+        run: |
+          LIBHSL_PATH="${{env.LIBS}}/libhsl/builddir/libhsl.so"
+          LIBMETIS_PATH="${{env.LIBS}}/libmetis.a"
+          LIBAMPL_PATH="${{env.LIBS}}/ampl/amplsolver.a"
+
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DHSL=${LIBHSL_PATH} \
+            -DMETIS=${LIBMETIS_PATH} \
+            -DAMPLSOLVER=${LIBAMPL_PATH} \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --target uno_ampl --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Run instance
+        working-directory: build
+        run: ./uno_ampl "${{env.LIBS}}/Mittelmann/qssp180.nl" preset=ipopt
