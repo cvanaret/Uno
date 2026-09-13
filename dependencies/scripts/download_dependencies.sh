@@ -140,7 +140,13 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
   cmake --build "$BUILD_DIR" --target highs_extras --config Release --parallel
-  cp "$BUILD_DIR/libhighs_extras_openblas.a" lib/libhighs_extras_openblas.a
+
+  openblas_extras=$(find "$BUILD_DIR" -name 'libhighs_extras.a' | head -1)
+  if [[ -z "${openblas_extras}" ]]; then
+      echo "ERROR: libhighs_extras.a not found in the OpenBLAS HiGHS build"
+      exit 1
+  fi
+  cp "${openblas_extras}" "${PWD}/lib/libhighs_extras_openblas.a"
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
 	cp -a "${BUILD_ROOT}/install/include/." include
