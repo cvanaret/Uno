@@ -35,8 +35,8 @@ wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
-BLAS_LIBRARIES = "dependencies/lib/libcblas.a;dependencies/lib/libblas.a"
-LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
+BLAS_LIBRARIES = "dependencies/lib/libopenblas.a"
+LAPACK_LIBRARIES = "dependencies/lib/libopenblas.a"
 # enable dynamic loading of libhsl
 HSL_RUNTIME_LOADING = "ON"
 BUILD_SHARED_LIBS = "ON"
@@ -51,7 +51,7 @@ MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
 MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
 MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
 # HiGHS
-HIGHS = "dependencies/lib/libhighs.a;dependencies/lib/libhighs_extras.a"
+HIGHS = "dependencies/lib/libhighs.a;dependencies/lib/libhighs_extras_openblas.a"
 HIGHS_INCLUDE_DIR = "dependencies/include/highs"
 # SPRAL
 SPRAL = "dependencies/lib/libspral.a"
