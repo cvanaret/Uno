@@ -34,7 +34,7 @@ namespace uno {
       INFO << "- Allocating method: ";
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
          1., options);
-      //initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
+      this->inequality_handling_method->initialize_memory();
 
       // initial iterate
       this->inequality_handling_method->create_iterate(initial_iterate, evaluation_cache.current_evaluations,

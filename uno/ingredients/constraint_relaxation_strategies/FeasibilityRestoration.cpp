@@ -49,6 +49,7 @@ namespace uno {
       INFO << "- Allocating optimality (original) method: ";
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
          1., options);
+      this->inequality_handling_method->initialize_memory();
       INFO << "- Allocating feasibility method: ";
       this->feasibility_inequality_handling_method = InequalityHandlingMethodFactory::create(this->feasibility_problem,
          uses_trust_region, 0., options);
@@ -108,6 +109,7 @@ namespace uno {
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       if (this->first_switch_to_feasibility) {
          this->other_phase_multipliers.resize(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
+         this->feasibility_inequality_handling_method->initialize_memory();
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
