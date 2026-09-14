@@ -194,10 +194,19 @@ namespace uno {
    }
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
-      this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
-      compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
-      if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(trial_iterate, this->reference_infeasibility)) {
+         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      // allocate a buffer iterate if this is the first time we enter this function
+      if (this->first_test_of_switch_back) {
+         this->iterate_buffer = Iterate(this->original_problem.number_variables, this->original_problem.number_constraints);
+         this->first_test_of_switch_back = false;
+      }
+      // copy the trial iterate into the buffer iterate, and evaluate the progress measures and residuals wrt the
+      // original problem
+      this->iterate_buffer.primals = view(trial_iterate.primals, 0, this->original_problem.number_variables);
+      this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
+      compute_residuals(this->original_problem, this->iterate_buffer, trial_evaluations);
+
+      if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
             return true;
          }
@@ -207,15 +216,8 @@ namespace uno {
             this->constraints_buffer.view());
          const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
             step_length * this->constraints_buffer, this->residual_norm);
-         const bool switch_back = (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
-         if (!switch_back) {
-            this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
-            compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
-         }
-         return switch_back;
+         return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
       }
-      this->feasibility_inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
-      compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
       return false;
    }
 
