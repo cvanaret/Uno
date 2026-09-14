@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.9.13"
+version = v"2026.9.14"
 
 # Collection of sources
 sources = [
@@ -131,9 +131,7 @@ fi
 
 # Runtime kernel dispatch. We ship these binaries to unknown hardware,
 # so we embed every kernel set and let OpenBLAS pick at runtime.
-if [[ ${target} == x86_64-apple-darwin* ]]; then
-    flags+=(DYNAMIC_ARCH=0 TARGET=HASWELL)
-elif [[ ${proc_family} == intel ]]; then
+if [[ ${proc_family} == intel ]]; then
     flags+=(DYNAMIC_ARCH=1 TARGET=GENERIC)
 elif [[ ${target} == aarch64-* ]]; then
     flags+=(TARGET=ARMV8 DYNAMIC_ARCH=1)
@@ -151,7 +149,7 @@ if [[ ${target} == aarch64-*-darwin* ]]; then
 fi
 
 if [[ ${target} == x86_64-w64-mingw32 ]]; then
-    lags+=("CFLAGS=${CFLAGS} -fno-asynchronous-unwind-tables")
+    flags+=("CFLAGS=${CFLAGS} -fno-asynchronous-unwind-tables")
 fi
 
 # Choose our make parallelism. The Makefile would otherwise override our choice.
