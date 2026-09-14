@@ -106,7 +106,7 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DZLIB=OFF \
-		-DHIPO=ON \
+		-DHIPO=OFF \
 		-DBUILD_EXAMPLES=OFF \
 		-DBUILD_TESTING=OFF \
 		-DBUILD_CXX_EXE=OFF \
