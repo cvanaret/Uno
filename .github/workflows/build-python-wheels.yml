@@ -111,21 +111,10 @@ jobs:
             CC=clang
             CXX=clang++
             FC=gfortran-15
-            OPENBLAS_NUM_THREADS=1
-            OMP_NUM_THREADS=1
+            ${{ matrix.sys.os == 'macos-15-intel' && 'SKBUILD_CMAKE_DEFINE=''BLAS_LIBRARIES=dependencies/lib/liblapack.a;dependencies/lib/libblas.a;LAPACK_LIBRARIES=dependencies/lib/liblapack.a;dependencies/lib/libblas.a''' || '' }}
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
-          CIBW_TEST_COMMAND_MACOS: >-
-            printf '%s\n'
-            "settings set target.process.stop-on-exec false"
-            "run"
-            "image lookup -v -a 0x101d93d4a"
-            "disassemble -s 0x101d93d20 -c 32"
-            "thread backtrace -c 6"
-            "quit" > /tmp/cmds.lldb &&
-            lldb --batch -s /tmp/cmds.lldb
-            -- python {project}/interfaces/Python/example/example_hs015.py
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
