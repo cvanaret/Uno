@@ -19,7 +19,15 @@ namespace uno {
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->problem, uses_trust_region, objective_multiplier, options);
       this->subproblem = std::make_unique<Subproblem>(this->problem, *this->hessian_model, *this->inertia_correction_strategy);
+   }
+
+   void NoInequalityReformulation::initialize_memory() {
       this->subproblem_solver->initialize_memory(*this->subproblem);
+   }
+
+   void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
+      this->hessian_model->initialize_statistics(statistics);
+      this->inertia_correction_strategy->initialize_statistics(statistics);
    }
 
    void NoInequalityReformulation::create_iterate(Iterate& initial_iterate, Evaluations& evaluations,
@@ -27,11 +35,6 @@ namespace uno {
       this->problem.generate_initial_iterate(initial_iterate, evaluations);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
-   }
-
-   void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
-      this->hessian_model->initialize_statistics(statistics);
-      this->inertia_correction_strategy->initialize_statistics(statistics);
    }
 
    bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/) {

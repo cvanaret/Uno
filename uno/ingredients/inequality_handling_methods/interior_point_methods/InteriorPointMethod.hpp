@@ -27,8 +27,9 @@ namespace uno {
    public:
       InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier, Options& options);
 
-      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
+      void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
+      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
@@ -104,7 +105,18 @@ namespace uno {
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier, options);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::initialize_memory() {
       this->subproblem_solver->initialize_memory(*this->subproblem);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics) {
+      this->hessian_model->initialize_statistics(statistics);
+      this->inertia_correction_strategy->initialize_statistics(statistics);
+      statistics.add_column("Barrier", Statistics::double_width, 2, /* is_extended = */ true);
    }
 
    template <typename BarrierProblem>
@@ -113,13 +125,6 @@ namespace uno {
       this->barrier_problem.generate_initial_iterate(initial_iterate, evaluations);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics) {
-      this->hessian_model->initialize_statistics(statistics);
-      this->inertia_correction_strategy->initialize_statistics(statistics);
-      statistics.add_column("Barrier", Statistics::double_width, 2, /* is_extended = */ true);
    }
 
    template <typename BarrierProblem>
