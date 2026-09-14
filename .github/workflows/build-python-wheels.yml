@@ -117,14 +117,14 @@ jobs:
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
           CIBW_TEST_COMMAND_MACOS: >-
-            lldb --batch
-            -o "settings set target.process.stop-on-exec false"
-            -o run
-            -o "image lookup -v -a 0x101d93d4a"
-            -o "image lookup -a 0x101d93d4a"
-            -o "disassemble -s 0x101d93d20 -c 32"
-            -o "thread backtrace -c 6"
-            -o quit
+            printf '%s\n'
+            "settings set target.process.stop-on-exec false"
+            "run"
+            "image lookup -v -a 0x101d93d4a"
+            "disassemble -s 0x101d93d20 -c 32"
+            "thread backtrace -c 6"
+            "quit" > /tmp/cmds.lldb &&
+            lldb --batch -s /tmp/cmds.lldb
             -- python {project}/interfaces/Python/example/example_hs015.py
 
       - name: Build wheels (Windows)
