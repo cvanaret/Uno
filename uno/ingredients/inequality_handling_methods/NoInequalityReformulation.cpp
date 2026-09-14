@@ -108,6 +108,12 @@ namespace uno {
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
    }
 
+   void NoInequalityReformulation::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const {
+      this->problem.compute_bound_dual_direction(current_primals, current_multipliers, direction_primals, direction_multipliers,
+         bound_dual_step_length);
+   }
+
    void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
       InequalityHandlingMethod::evaluate_progress_measures(this->problem, iterate, evaluations);
    }

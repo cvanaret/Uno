@@ -45,29 +45,23 @@ namespace uno {
       return false;
    }
 
-   void PrimalDualInteriorPointProblem::create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const {
-      if (is_initial_iterate) {
-         // make the point strictly feasible wrt the bounds
-         bool iterate_changed = false;
-         for (size_t variable_index: Range(this->number_variables)) {
-            const double old_value = iterate.primals[variable_index];
-            iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
-               this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
-            if (iterate.primals[variable_index] != old_value) {
-               iterate_changed = true;
-            }
+   void PrimalDualInteriorPointProblem::create_iterate(Iterate& iterate, Evaluations& evaluations, bool /*is_initial_iterate*/) const {
+      // make the initial point strictly feasible wrt the bounds
+      bool iterate_changed = false;
+      for (size_t variable_index: Range(this->number_variables)) {
+         const double old_value = iterate.primals[variable_index];
+         iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
+            this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
+         if (iterate.primals[variable_index] != old_value) {
+            iterate_changed = true;
          }
-         if (iterate_changed) {
-            evaluations.reset();
-         }
+      }
+      if (iterate_changed) {
+         evaluations.reset();
       }
 
       // set the slack variables (if any)
       if (!this->model.get_slacks().is_empty()) {
-         // reset the slacks for the constraint evaluation
-         for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
-            iterate.primals[slack_index] = 0.;
-         }
          evaluations.evaluate_constraints(this->model, iterate.primals);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
@@ -306,15 +300,15 @@ namespace uno {
          Direction& direction) const {
       // assemble the primal direction and the constraint dual solution
       OptimizationProblem::assemble_primal_dual_direction(current_iterate, solution, direction);
-
-      // compute the bound duals
-      compute_bound_dual_direction(current_iterate, direction);
-
       // "fraction-to-boundary" rule for primal variables and bound constraints multipliers
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       const double tau = std::max(this->parameters.tau_min, 1. - barrier_parameter);
       direction.primal_dual_step_length = primal_fraction_to_boundary(current_iterate.primals, direction.primals, tau);
-      direction.bound_dual_step_length = dual_fraction_to_boundary(current_iterate.multipliers, direction.multipliers, tau);
+
+      // compute the bound duals + fraction-to-boundary
+      compute_bound_dual_direction(current_iterate.primals, current_iterate.multipliers, direction.primals, direction.multipliers,
+         direction.bound_dual_step_length);
+
       DEBUG << "Fraction-to-boundary rules:\n";
       DEBUG << "primal step length = " << direction.primal_dual_step_length << '\n';
       DEBUG << "bound dual step length = " << direction.bound_dual_step_length << "\n\n";
@@ -447,29 +441,34 @@ namespace uno {
 
    // protected member functions
 
-   void PrimalDualInteriorPointProblem::compute_bound_dual_direction(const Iterate& current_iterate,
-         Direction& direction) const {
-      direction.multipliers.lower_bounds.fill(0.);
-      direction.multipliers.upper_bounds.fill(0.);
+   void PrimalDualInteriorPointProblem::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const {
+      direction_multipliers.lower_bounds.fill(0.);
+      direction_multipliers.upper_bounds.fill(0.);
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
+
       for (size_t variable_index: Range(this->inner.number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
-            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
-            direction.multipliers.lower_bounds[variable_index] = (barrier_parameter - direction.primals[variable_index] *
-               current_iterate.multipliers.lower_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.lower_bounds[variable_index];
-            if (is_infinite(direction.multipliers.lower_bounds[variable_index])) {
+            const double distance_to_bound = current_primals[variable_index] - this->variables_lower_bounds[variable_index];
+            direction_multipliers.lower_bounds[variable_index] = (barrier_parameter - direction_primals[variable_index] *
+               current_multipliers.lower_bounds[variable_index]) / distance_to_bound - current_multipliers.lower_bounds[variable_index];
+            if (is_infinite(direction_multipliers.lower_bounds[variable_index])) {
                throw std::runtime_error("The lower bound dual is infinite");
             }
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
-            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_upper_bounds[variable_index];
-            direction.multipliers.upper_bounds[variable_index] = (barrier_parameter - direction.primals[variable_index] *
-               current_iterate.multipliers.upper_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.upper_bounds[variable_index];
-            if (is_infinite(direction.multipliers.upper_bounds[variable_index])) {
+            const double distance_to_bound = current_primals[variable_index] - this->variables_upper_bounds[variable_index];
+            direction_multipliers.upper_bounds[variable_index] = (barrier_parameter - direction_primals[variable_index] *
+               current_multipliers.upper_bounds[variable_index]) / distance_to_bound - current_multipliers.upper_bounds[variable_index];
+            if (is_infinite(direction_multipliers.upper_bounds[variable_index])) {
                throw std::runtime_error("The upper bound dual is infinite");
             }
          }
       }
+
+      // fraction to boundary
+      const double tau = std::max(this->parameters.tau_min, 1. - barrier_parameter);
+      bound_dual_step_length = dual_fraction_to_boundary(current_multipliers, direction_multipliers, tau);
    }
 
    // TODO use a single function for primal and dual fraction-to-boundary rules
