@@ -122,8 +122,7 @@ jobs:
             -o run
             -k "frame select 1"
             -k "register read rax rsi"
-            -k "expression -f x -- *(void**)$rsi"
-            -k "memory read -f x -c 1 -s 8 `expression -- (void*)(*(char**)$rsi) + 0x390`"
+            -k "memory read -f x -c 128 -s 8 $rax"
             -k "quit"
             -- python {project}/interfaces/Python/example/example_hs015.py
 
