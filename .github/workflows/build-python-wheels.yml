@@ -111,10 +111,10 @@ jobs:
             CC=clang
             CXX=clang++
             FC=gfortran-15
-            ${{ matrix.sys.os == 'macos-15-intel' && 'SKBUILD_CMAKE_DEFINE=''BLAS_LIBRARIES=dependencies/lib/liblapack.a;dependencies/lib/libblas.a;LAPACK_LIBRARIES=dependencies/lib/liblapack.a;dependencies/lib/libblas.a''' || '' }}
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
+          CIBW_CONFIG_SETTINGS_MACOS: ${{ matrix.sys.os == 'macos-15-intel' && 'cmake.define.BLAS_LIBRARIES=dependencies/lib/liblapack.a;dependencies/lib/libblas.a cmake.define.LAPACK_LIBRARIES=dependencies/lib/liblapack.a;dependencies/lib/libblas.a' || '' }}
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
