@@ -120,10 +120,10 @@ jobs:
             lldb --batch
             -o "settings set target.process.stop-on-exec false"
             -o run
-            -o "thread backtrace -c 20"
-            -o "register read"
-            -o "x/4i $pc"
-            -o "image lookup -a $pc"
+            -o "image lookup -v -a 0x101d93d4a"
+            -o "image lookup -a 0x101d93d4a"
+            -o "disassemble -s 0x101d93d20 -c 32"
+            -o "thread backtrace -c 6"
             -o quit
             -- python {project}/interfaces/Python/example/example_hs015.py
 
