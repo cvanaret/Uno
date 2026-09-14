@@ -42,8 +42,8 @@ namespace uno {
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
          EvaluationCache& evaluation_cache, Options& options) {
       this->initial_point.resize(this->original_problem.number_variables);
-      this->reference_optimality_primals.resize(this->original_problem.number_variables);
-      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
+      this->prerestoration_primals.resize(this->original_problem.number_variables);
+      this->feasibility_problem.set_proximal_center(this->prerestoration_primals.data());
 
       // reformulation of the original problem and the feasibility problem
       INFO << "- Allocating optimality (original) method: ";
@@ -102,8 +102,8 @@ namespace uno {
       this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
-      this->reference_optimality_primals = current_iterate.primals;
-      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
+      this->prerestoration_primals = view(current_iterate.primals, 0, this->original_problem.number_variables);
+      this->feasibility_problem.set_proximal_center(this->prerestoration_primals.data());
 
       // resize the iterate and retrieve the feasibility multipliers (stored locally)
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
@@ -230,7 +230,28 @@ namespace uno {
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
       trial_iterate.multipliers.constraints.fill(0.);
-      //this->inequality_handling_method->create_iterate(trial_iterate, trial_evaluations, 0., false);
+
+      // compute the bound duals using the linearized complementarity, pretending that restoration was a single step
+      Vector<double> primal_restoration_direction(trial_iterate.primals - this->prerestoration_primals);
+      // std::cout << "primal_restoration_direction = " << primal_restoration_direction << '\n';
+      Multipliers direction_multipliers(this->original_problem.number_variables, 0);
+      double step_length = 1.;
+      this->inequality_handling_method->compute_bound_dual_direction(this->prerestoration_primals, trial_iterate.multipliers,
+         primal_restoration_direction, direction_multipliers, step_length);
+      trial_iterate.multipliers.lower_bounds += step_length * direction_multipliers.lower_bounds;
+      trial_iterate.multipliers.upper_bounds += step_length * direction_multipliers.upper_bounds;
+      std::cout << "Lower bound duals: " << norm_inf(trial_iterate.multipliers.lower_bounds) << '\n';
+      std::cout << "Upper bound duals: " << norm_inf(trial_iterate.multipliers.upper_bounds) << '\n';
+      if (norm_inf(trial_iterate.multipliers.lower_bounds) > 1000. || norm_inf(trial_iterate.multipliers.upper_bounds) > 1000.) {
+         for (size_t variable_index: Range(this->original_problem.number_variables)) {
+            if (trial_iterate.multipliers.lower_bounds[variable_index] != 0.) {
+               trial_iterate.multipliers.lower_bounds[variable_index] = 1.;
+            }
+            if (trial_iterate.multipliers.upper_bounds[variable_index] != 0.) {
+               trial_iterate.multipliers.upper_bounds[variable_index] = -1.;
+            }
+         }
+      }
       trial_iterate.objective_multiplier = 1.;
 
       this->initial_point.resize(this->original_problem.number_variables);

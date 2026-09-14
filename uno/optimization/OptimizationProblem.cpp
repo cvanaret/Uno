@@ -180,6 +180,11 @@ namespace uno {
       direction.primal_dual_step_length = direction.bound_dual_step_length = 1.;
    }
 
+   void OptimizationProblem::compute_bound_dual_direction(const Vector<double>& /*current_primals*/, const Multipliers& /*current_multipliers*/,
+         const Vector<double>& /*direction_primals*/, Multipliers& /*direction_multipliers*/, double& /*bound_dual_step_length*/) const {
+      // do no
+   }
+
    double OptimizationProblem::dual_regularization_factor() const {
       return 1.;
    }

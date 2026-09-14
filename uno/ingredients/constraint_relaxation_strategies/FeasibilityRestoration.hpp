@@ -71,7 +71,7 @@ namespace uno {
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
       double reference_infeasibility{};
-      Vector<double> reference_optimality_primals{};
+      Vector<double> prerestoration_primals{};
       bool first_switch_to_feasibility{true};
       bool first_test_of_switch_back{true};
 
