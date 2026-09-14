@@ -30,6 +30,7 @@ namespace uno {
 
       // member functions
       Iterate(size_t number_variables, size_t number_constraints);
+      Iterate();
       Iterate(const Iterate& other) = default;
       Iterate(Iterate&& other) noexcept = default;
       Iterate& operator=(const Iterate& other) noexcept = default;
