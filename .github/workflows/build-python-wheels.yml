@@ -120,8 +120,11 @@ jobs:
             lldb --batch
             -o "settings set target.process.stop-on-exec false"
             -o run
-            -k "thread backtrace all"
-            -k quit
+            -k "frame select 1"
+            -k "register read rax rsi"
+            -k "expression -f x -- *(void**)$rsi"
+            -k "memory read -f x -c 1 -s 8 `expression -- (void*)(*(char**)$rsi) + 0x390`"
+            -k "quit"
             -- python {project}/interfaces/Python/example/example_hs015.py
 
       - name: Build wheels (Windows)
