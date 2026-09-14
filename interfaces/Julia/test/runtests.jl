@@ -6,6 +6,10 @@ using HSL_jll
 version = uno_version()
 println("The version of Uno is $version.")
 
+@testset "Interface for MathOptInterface.jl" begin
+  include("MOI_wrapper.jl")
+end
+
 @testset "C interface" begin
   include("C_wrapper.jl")
 end
@@ -14,9 +18,7 @@ end
   include("NLP_wrapper.jl")
 end
 
-@testset "Interface for MathOptInterface.jl" begin
-  include("MOI_wrapper.jl")
-end
+
 
 @testset "Interface for JuMP.jl" begin
   include("check_auto_preset.jl")
