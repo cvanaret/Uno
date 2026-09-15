@@ -31,8 +31,8 @@ namespace uno {
    }
 
    void NoInequalityReformulation::create_iterate(Iterate& initial_iterate, Evaluations& evaluations,
-         double multipliers_threshold) const {
-      this->problem.generate_initial_iterate(initial_iterate, evaluations);
+         double multipliers_threshold, bool is_initial_iterate) const {
+      this->problem.create_iterate(initial_iterate, evaluations, is_initial_iterate);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
    }
@@ -106,6 +106,12 @@ namespace uno {
    void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
       // no threshold on the multipliers
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
+   }
+
+   void NoInequalityReformulation::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const {
+      this->problem.compute_bound_dual_direction(current_primals, current_multipliers, direction_primals, direction_multipliers,
+         bound_dual_step_length);
    }
 
    void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {

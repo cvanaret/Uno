@@ -46,7 +46,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_inequality_constraints() const;
       [[nodiscard]] virtual bool has_bound_constraints() const;
 
-      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const;
+      virtual void create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const;
       virtual void postprocess_iterate(Iterate& iterate) const;
 
       // sparsity patterns of Jacobian and Hessian
@@ -89,6 +89,8 @@ namespace uno {
       [[nodiscard]] virtual Inertia get_inertia() const;
 
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
+      virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,

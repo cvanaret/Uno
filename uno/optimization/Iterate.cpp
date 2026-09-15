@@ -12,6 +12,8 @@ namespace uno {
          residuals(number_variables, number_constraints) {
    }
 
+   Iterate::Iterate(): Iterate(0, 0) {}
+
    void Iterate::set_number_variables(size_t new_number_variables) {
       this->number_variables = new_number_variables;
       this->primals.resize(new_number_variables);

@@ -40,7 +40,7 @@ namespace uno {
       return this->model.has_bound_constraints();
    }
 
-   void OptimizationProblem::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+   void OptimizationProblem::create_iterate(Iterate& /*iterate*/, Evaluations& /*evaluations*/, bool /*is_initial_iterate*/) const {
       // do nothing
    }
 
@@ -178,6 +178,11 @@ namespace uno {
          this->number_variables + this->number_constraints);
       // set the step lengths (direction unscaled)
       direction.primal_dual_step_length = direction.bound_dual_step_length = 1.;
+   }
+
+   void OptimizationProblem::compute_bound_dual_direction(const Vector<double>& /*current_primals*/, const Multipliers& /*current_multipliers*/,
+         const Vector<double>& /*direction_primals*/, Multipliers& /*direction_multipliers*/, double& /*bound_dual_step_length*/) const {
+      // do no
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
