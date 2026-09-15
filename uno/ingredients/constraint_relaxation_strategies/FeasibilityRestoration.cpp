@@ -34,6 +34,7 @@ namespace uno {
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
+         bound_multiplier_max_norm(options.get_double("bound_multiplier_max_norm")),
          constraints_buffer(model.number_constraints) {
    }
 
@@ -233,21 +234,21 @@ namespace uno {
 
       // compute the bound duals using the linearized complementarity, pretending that restoration was a single step
       Vector<double> primal_restoration_direction(trial_iterate.primals - this->prerestoration_primals);
-      // std::cout << "primal_restoration_direction = " << primal_restoration_direction << '\n';
       Multipliers direction_multipliers(this->original_problem.number_variables, 0);
       double step_length = 1.;
       this->inequality_handling_method->compute_bound_dual_direction(this->prerestoration_primals, trial_iterate.multipliers,
          primal_restoration_direction, direction_multipliers, step_length);
       trial_iterate.multipliers.lower_bounds += step_length * direction_multipliers.lower_bounds;
       trial_iterate.multipliers.upper_bounds += step_length * direction_multipliers.upper_bounds;
-      std::cout << "Lower bound duals: " << norm_inf(trial_iterate.multipliers.lower_bounds) << '\n';
-      std::cout << "Upper bound duals: " << norm_inf(trial_iterate.multipliers.upper_bounds) << '\n';
-      if (norm_inf(trial_iterate.multipliers.lower_bounds) > 1000. || norm_inf(trial_iterate.multipliers.upper_bounds) > 1000.) {
+      // discard the multipliers if their magnitude exceeds a threshold
+      if (norm_inf(trial_iterate.multipliers.lower_bounds, trial_iterate.multipliers.upper_bounds) > this->bound_multiplier_max_norm) {
+         const auto& variables_lower_bounds = this->original_problem.get_variables_lower_bounds();
+         const auto& variables_upper_bounds = this->original_problem.get_variables_upper_bounds();
          for (size_t variable_index: Range(this->original_problem.number_variables)) {
-            if (trial_iterate.multipliers.lower_bounds[variable_index] != 0.) {
+            if (is_finite(variables_lower_bounds[variable_index])) {
                trial_iterate.multipliers.lower_bounds[variable_index] = 1.;
             }
-            if (trial_iterate.multipliers.upper_bounds[variable_index] != 0.) {
+            if (is_finite(variables_upper_bounds[variable_index])) {
                trial_iterate.multipliers.upper_bounds[variable_index] = -1.;
             }
          }

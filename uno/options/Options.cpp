@@ -101,6 +101,7 @@ namespace uno {
       {"barrier_damping_factor", OptionType::DOUBLE},
       {"barrier_small_infeasibility_factor", OptionType::DOUBLE},
       {"least_square_multiplier_max_norm", OptionType::DOUBLE},
+      {"bound_multiplier_max_norm", OptionType::DOUBLE},
       {"BQPD_kmax_heuristic", OptionType::STRING},
       {"QP_solver", OptionType::STRING},
       {"LP_solver", OptionType::STRING},
