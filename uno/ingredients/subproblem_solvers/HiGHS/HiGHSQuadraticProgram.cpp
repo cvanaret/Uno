@@ -1,6 +1,10 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <cassert>
+#include <numeric>
+#include <stdexcept>
 #include "HiGHSQuadraticProgram.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
@@ -15,20 +19,21 @@ namespace uno {
       this->number_constraints = subproblem.number_constraints;
       this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
 
-      this->model.lp_.num_col_ = static_cast<HighsInt>(this->number_variables);
-      this->model.lp_.num_row_ = static_cast<HighsInt>(this->number_constraints);
-      this->model.lp_.sense_ = ObjSense::kMinimize;
-      this->model.lp_.offset_ = 0.;
       this->constraints.resize(this->number_constraints);
       this->linear_objective.resize(this->number_variables);
       // the linear part of the objective is a dense vector
-      this->model.lp_.col_cost_.resize(this->number_variables);
+      this->col_cost.resize(this->number_variables);
       // variable bounds
-      this->model.lp_.col_lower_.resize(this->number_variables);
-      this->model.lp_.col_upper_.resize(this->number_variables);
+      this->col_lower.resize(this->number_variables);
+      this->col_upper.resize(this->number_variables);
       // constraint bounds
-      this->model.lp_.row_lower_.resize(this->number_constraints);
-      this->model.lp_.row_upper_.resize(this->number_constraints);
+      this->row_lower.resize(this->number_constraints);
+      this->row_upper.resize(this->number_constraints);
+      // solution buffers (Highs_getSolution writes into these)
+      this->col_value.resize(this->number_variables);
+      this->col_dual.resize(this->number_variables);
+      this->row_value.resize(this->number_constraints);
+      this->row_dual.resize(this->number_constraints);
 
       this->compute_jacobian_sparsity(subproblem);
       this->compute_hessian_sparsity(subproblem);
@@ -36,16 +41,16 @@ namespace uno {
 
    void HiGHSQuadraticProgram::fill(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      // evaluate the functions and derivatives into the HiGHS model
+      // evaluate the functions and derivatives into the model arrays
       this->evaluate_functions(statistics, subproblem, current_iterate, current_evaluations, warmstart_information);
 
       // variable bounds
       if (warmstart_information.trust_region_changed) {
-         subproblem.set_variables_bounds(current_iterate, this->model.lp_.col_lower_, this->model.lp_.col_upper_, trust_region_radius);
+         subproblem.set_variables_bounds(current_iterate, this->col_lower, this->col_upper, trust_region_radius);
       }
       // constraint bounds
       if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
-         subproblem.set_constraints_bounds(this->model.lp_.row_lower_, this->model.lp_.row_upper_, this->constraints);
+         subproblem.set_constraints_bounds(this->row_lower, this->row_upper, this->constraints);
       }
    }
 
@@ -59,33 +64,34 @@ namespace uno {
       this->number_variables = linear_objective.size();
       this->number_constraints = constraints_lower_bounds.size();
 
-      this->model.lp_.num_col_ = static_cast<HighsInt>(this->number_variables);
-      this->model.lp_.num_row_ = static_cast<HighsInt>(this->number_constraints);
-      this->model.lp_.sense_ = ObjSense::kMinimize;
-      this->model.lp_.offset_ = 0.;
       this->constraints.resize(this->number_constraints);
       this->linear_objective.resize(this->number_variables);
       // the linear part of the objective is a dense vector
-      this->model.lp_.col_cost_.resize(this->number_variables);
+      this->col_cost.resize(this->number_variables);
       // variable bounds
-      this->model.lp_.col_lower_.resize(this->number_variables);
-      this->model.lp_.col_upper_.resize(this->number_variables);
+      this->col_lower.resize(this->number_variables);
+      this->col_upper.resize(this->number_variables);
       // constraint bounds
-      this->model.lp_.row_lower_.resize(this->number_constraints);
-      this->model.lp_.row_upper_.resize(this->number_constraints);
+      this->row_lower.resize(this->number_constraints);
+      this->row_upper.resize(this->number_constraints);
+      // solution buffers
+      this->col_value.resize(this->number_variables);
+      this->col_dual.resize(this->number_variables);
+      this->row_value.resize(this->number_constraints);
+      this->row_dual.resize(this->number_constraints);
 
-      // allocate the HighsModel and convert the COO Jacobian/Hessian to HiGHS' CSC layout
+      // size the model arrays and convert the COO Jacobian/Hessian to HiGHS' CSC layout
       this->set_from_coo(this->number_variables, this->number_constraints, linear_objective, jacobian_row_indices,
          jacobian_column_indices, jacobian_values, hessian_row_indices, hessian_column_indices, hessian_values);
 
       // variable and constraint bounds (HiGHS uses its own infinity, so no clamping is required)
       for (size_t variable_index: Range(this->number_variables)) {
-         this->model.lp_.col_lower_[variable_index] = variables_lower_bounds[variable_index];
-         this->model.lp_.col_upper_[variable_index] = variables_upper_bounds[variable_index];
+         this->col_lower[variable_index] = variables_lower_bounds[variable_index];
+         this->col_upper[variable_index] = variables_upper_bounds[variable_index];
       }
       for (size_t constraint_index: Range(this->number_constraints)) {
-         this->model.lp_.row_lower_[constraint_index] = constraints_lower_bounds[constraint_index];
-         this->model.lp_.row_upper_[constraint_index] = constraints_upper_bounds[constraint_index];
+         this->row_lower[constraint_index] = constraints_lower_bounds[constraint_index];
+         this->row_upper[constraint_index] = constraints_upper_bounds[constraint_index];
       }
    }
 
@@ -140,7 +146,7 @@ namespace uno {
 
       // dense objective gradient
       for (size_t variable_index: Range(number_variables)) {
-         this->model.lp_.col_cost_[variable_index] = linear_objective[variable_index];
+         this->col_cost[variable_index] = linear_objective[variable_index];
       }
 
       // constraint Jacobian: copy the values, build the CSC sparsity, scatter the values
@@ -165,7 +171,10 @@ namespace uno {
          this->scatter_hessian_values();
       }
       else {
-         this->model.hessian_.dim_ = 0;
+         // LP: leave the Hessian empty so Highs_passModel receives q_num_nz == 0
+         this->q_start.clear();
+         this->q_index.clear();
+         this->q_value.clear();
       }
    }
 
@@ -174,15 +183,15 @@ namespace uno {
       // evaluate the functions based on warmstart information
       if (warmstart_information.new_iterate) {
          for (size_t index: Range(subproblem.number_variables)) {
-            this->model.lp_.col_cost_[index] = 0.;
+            this->col_cost[index] = 0.;
          }
-         subproblem.problem.evaluate_objective_gradient(current_iterate, view(this->model.lp_.col_cost_), current_evaluations);
+         subproblem.problem.evaluate_objective_gradient(current_iterate, view(this->col_cost), current_evaluations);
          subproblem.problem.evaluate_constraints(current_iterate, this->constraints.view(), current_evaluations);
          this->evaluate_jacobian(subproblem.problem, current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
          subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
-         this->scatter_hessian_values(); // copy the Hessian with permutation into this->model.hessian_.value_
-         subproblem.regularize_lagrangian_hessian(statistics, view(this->model.hessian_.value_));
+         this->scatter_hessian_values(); // copy the Hessian with permutation into this->q_value
+         subproblem.regularize_lagrangian_hessian(statistics, view(this->q_value));
       }
    }
 
@@ -192,17 +201,16 @@ namespace uno {
       this->scatter_jacobian_values();
    }
 
-   // build HiGHS' CSC Jacobian (a_matrix_) and the sorting permutation from the COO arrays already present in
+   // build HiGHS' CSC Jacobian (a_start/a_index) and the sorting permutation from the COO arrays already present in
    // jacobian_row_indices/jacobian_column_indices. Shared by the Subproblem path and the data-driven path.
    void HiGHSQuadraticProgram::build_csc_jacobian_from_coo(size_t number_variables, size_t number_constraints,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices) {
       (void) number_constraints;
       const size_t number_jacobian_nonzeros = jacobian_row_indices.size();
       // column-wise constraint Jacobian
-      this->model.lp_.a_matrix_.format_ = MatrixFormat::kColwise;
-      this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
-      this->model.lp_.a_matrix_.start_.resize(number_variables + 1);
-      this->model.lp_.a_matrix_.value_.resize(number_jacobian_nonzeros);
+      this->a_index.resize(number_jacobian_nonzeros); // constraint indices
+      this->a_start.resize(number_variables + 1);
+      this->a_value.resize(number_jacobian_nonzeros);
 
       // HiGHS requires a CSC Jacobian: the entries should be in increasing column indices.
       this->jacobian_permutation_vector.resize(number_jacobian_nonzeros);
@@ -220,38 +228,36 @@ namespace uno {
           }
       );
 
-      this->model.lp_.a_matrix_.start_[0] = 0;
+      this->a_start[0] = 0;
       int current_variable = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->jacobian_permutation_vector[jacobian_nonzero_index];
          // constraint index is used as is
          const HighsInt constraint_index = static_cast<HighsInt>(jacobian_row_indices[permuted_nonzero_index]);
-         this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = constraint_index;
+         this->a_index[jacobian_nonzero_index] = constraint_index;
 
          // variable index is used to build the pointers to the column starts
          const uno_int variable_index = jacobian_column_indices[permuted_nonzero_index];
          assert(current_variable <= variable_index);
          while (current_variable < variable_index) {
             ++current_variable;
-            this->model.lp_.a_matrix_.start_[static_cast<size_t>(current_variable)] = static_cast<HighsInt>(jacobian_nonzero_index);
+            this->a_start[static_cast<size_t>(current_variable)] = static_cast<HighsInt>(jacobian_nonzero_index);
          }
       }
       // fill the remaining (trailing) empty columns
       while (current_variable < static_cast<int>(number_variables)) {
          ++current_variable;
-         this->model.lp_.a_matrix_.start_[static_cast<size_t>(current_variable)] = static_cast<HighsInt>(number_jacobian_nonzeros);
+         this->a_start[static_cast<size_t>(current_variable)] = static_cast<HighsInt>(number_jacobian_nonzeros);
       }
    }
 
-   // build HiGHS' lower-triangular CSC Hessian (model.hessian_) and the sorting permutation from the COO arrays
+   // build HiGHS' lower-triangular CSC Hessian (q_start/q_index) and the sorting permutation from the COO arrays
    // already present in hessian_row_indices/hessian_column_indices. Shared by both build paths.
    void HiGHSQuadraticProgram::build_csc_hessian_from_coo(size_t number_variables) {
       const size_t number_hessian_nonzeros = this->hessian_row_indices.size();
-      this->model.hessian_.dim_ = static_cast<HighsInt>(number_variables);
-      this->model.hessian_.format_ = HessianFormat::kTriangular;
-      this->model.hessian_.index_.resize(number_hessian_nonzeros);
-      this->model.hessian_.start_.resize(number_variables + 1);
-      this->model.hessian_.value_.resize(number_hessian_nonzeros);
+      this->q_index.resize(number_hessian_nonzeros);
+      this->q_start.resize(number_variables + 1);
+      this->q_value.resize(number_hessian_nonzeros);
 
       // HiGHS requires a lower-triangular CSC Hessian: the entries should be in increasing column indices.
       this->hessian_permutation_vector.resize(number_hessian_nonzeros);
@@ -270,44 +276,44 @@ namespace uno {
       );
 
       // copy the COO format into HiGHS' CSC format
-      this->model.hessian_.start_[0] = 0;
+      this->q_start[0] = 0;
       int current_column = 0;
       for (size_t hessian_nonzero_index: Range(number_hessian_nonzeros)) {
          const size_t permuted_nonzero_index = this->hessian_permutation_vector[hessian_nonzero_index];
          // row index
          const HighsInt row_index = static_cast<HighsInt>(this->hessian_row_indices[permuted_nonzero_index]);
-         this->model.hessian_.index_[hessian_nonzero_index] = row_index;
+         this->q_index[hessian_nonzero_index] = row_index;
 
          // column index
          const uno_int column_index = this->hessian_column_indices[permuted_nonzero_index];
          assert(current_column <= column_index);
          while (current_column < column_index) {
             ++current_column;
-            this->model.hessian_.start_[static_cast<size_t>(current_column)] = static_cast<HighsInt>(hessian_nonzero_index);
+            this->q_start[static_cast<size_t>(current_column)] = static_cast<HighsInt>(hessian_nonzero_index);
          }
       }
       // fill the remaining empty columns
       while (current_column < static_cast<int>(number_variables)) {
          ++current_column;
-         this->model.hessian_.start_[static_cast<size_t>(current_column)] = static_cast<HighsInt>(number_hessian_nonzeros);
+         this->q_start[static_cast<size_t>(current_column)] = static_cast<HighsInt>(number_hessian_nonzeros);
       }
    }
 
    void HiGHSQuadraticProgram::scatter_jacobian_values() {
-      // copy the Jacobian values with permutation into this->model.lp_.a_matrix_.value_
+      // copy the Jacobian values with permutation into this->a_value
       const size_t number_jacobian_nonzeros = this->jacobian_values.size();
       for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
-         this->model.lp_.a_matrix_.value_[nonzero_index] = this->jacobian_values[permuted_nonzero_index];
+         this->a_value[nonzero_index] = this->jacobian_values[permuted_nonzero_index];
       }
    }
 
    void HiGHSQuadraticProgram::scatter_hessian_values() {
-      // copy the Hessian values with permutation into this->model.hessian_.value_
+      // copy the Hessian values with permutation into this->q_value
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
          const size_t permuted_nonzero_index = this->hessian_permutation_vector[nonzero_index];
-         this->model.hessian_.value_[nonzero_index] = this->hessian_values[permuted_nonzero_index];
+         this->q_value[nonzero_index] = this->hessian_values[permuted_nonzero_index];
       }
    }
 } // namespace
