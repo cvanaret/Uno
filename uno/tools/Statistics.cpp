@@ -156,10 +156,6 @@ namespace uno {
       Logger::flush();
       ++this->line_index;
    }
- 
-   void Statistics::print_footer() {
-      this->print_header();
-   }
 
    // protected member functions
 

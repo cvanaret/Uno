@@ -134,7 +134,6 @@ namespace uno {
          DEBUG << exception.what() << '\n';
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
-      if (Logger::level == INFO) statistics.print_footer();
 
       postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
       statistics.timers.wallclock.stop();
