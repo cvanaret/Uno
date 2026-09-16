@@ -62,6 +62,10 @@ namespace uno {
 
       // set the slack variables (if any)
       if (!this->model.get_slacks().is_empty()) {
+         // zero the slack to get an accurate evaluation of the constraints
+         for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
+            iterate.primals[slack_index] = 0.;
+         }
          evaluations.evaluate_constraints(this->model, iterate.primals);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
