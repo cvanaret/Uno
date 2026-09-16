@@ -106,14 +106,18 @@ namespace uno {
       this->prerestoration_primals = view(current_iterate.primals, 0, this->original_problem.number_variables);
       this->feasibility_problem.set_proximal_center(this->prerestoration_primals.data());
 
-      // resize the iterate and retrieve the feasibility multipliers (stored locally)
+      // prepare the iterate for restoration (resize + set primal-dual values)
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       if (this->first_switch_to_feasibility) {
          this->other_phase_multipliers.resize(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
          this->feasibility_inequality_handling_method->initialize_memory();
          this->first_switch_to_feasibility = false;
       }
+      // carry the optimality bound multipliers over to restoration
+      const size_t n = this->original_problem.number_variables;
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      view(current_iterate.multipliers.lower_bounds, 0, n) = view(this->other_phase_multipliers.lower_bounds, 0, n);
+      view(current_iterate.multipliers.upper_bounds, 0, n) = view(this->other_phase_multipliers.upper_bounds, 0, n);
 
       // initialize the feasibility inequality handling method
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
