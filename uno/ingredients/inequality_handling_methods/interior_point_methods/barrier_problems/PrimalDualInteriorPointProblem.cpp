@@ -407,6 +407,7 @@ namespace uno {
          if (is_finite(this->variables_upper_bounds[variable_index])) {
             barrier_terms -= std::log(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
             if (is_infinite(this->variables_lower_bounds[variable_index])) {
+               // damping
                barrier_terms += this->parameters.damping_factor*(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
             }
          }
