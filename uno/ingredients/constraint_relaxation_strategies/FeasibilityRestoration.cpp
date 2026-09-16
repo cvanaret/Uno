@@ -118,6 +118,7 @@ namespace uno {
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
       view(current_iterate.multipliers.lower_bounds, 0, n) = view(this->other_phase_multipliers.lower_bounds, 0, n);
       view(current_iterate.multipliers.upper_bounds, 0, n) = view(this->other_phase_multipliers.upper_bounds, 0, n);
+      current_iterate.multipliers.constraints.fill(0.);
 
       // initialize the feasibility inequality handling method
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
