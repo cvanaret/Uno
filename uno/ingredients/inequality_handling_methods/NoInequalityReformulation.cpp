@@ -30,9 +30,9 @@ namespace uno {
       this->inertia_correction_strategy->initialize_statistics(statistics);
    }
 
-   void NoInequalityReformulation::create_iterate(Iterate& initial_iterate, Evaluations& evaluations,
-         double multipliers_threshold, bool is_initial_iterate) const {
-      this->problem.create_iterate(initial_iterate, evaluations, is_initial_iterate);
+   void NoInequalityReformulation::create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations,
+         double multipliers_threshold) const {
+      this->problem.create_initial_iterate(initial_iterate, evaluations);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
    }

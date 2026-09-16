@@ -25,8 +25,7 @@ namespace uno {
 
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
-      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold,
-         bool is_initial_iterate) const override;
+      void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;

@@ -45,31 +45,19 @@ namespace uno {
       return false;
    }
 
-   void PrimalDualInteriorPointProblem::create_iterate(Iterate& iterate, Evaluations& evaluations, bool is_initial_iterate) const {
-      if (is_initial_iterate) {
-         // make the initial point strictly feasible wrt the bounds
-         bool iterate_changed = false;
-         for (size_t variable_index: Range(this->number_variables)) {
-            const double old_value = iterate.primals[variable_index];
-            iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
-               this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
-            if (iterate.primals[variable_index] != old_value) {
-               iterate_changed = true;
-            }
+   void PrimalDualInteriorPointProblem::create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const {
+      // make the initial point strictly feasible wrt the bounds
+      bool iterate_changed = false;
+      for (size_t variable_index: Range(this->number_variables)) {
+         const double old_value = iterate.primals[variable_index];
+         iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
+            this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
+         if (iterate.primals[variable_index] != old_value) {
+            iterate_changed = true;
          }
-         if (iterate_changed) {
-            evaluations.reset();
-         }
-
-         // set the bound multipliers
-         for (size_t variable_index: Range(this->inner.number_variables)) {
-            if (is_finite(this->variables_lower_bounds[variable_index])) {
-               iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
-            }
-            if (is_finite(this->variables_upper_bounds[variable_index])) {
-               iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
-            }
-         }
+      }
+      if (iterate_changed) {
+         evaluations.reset();
       }
 
       // set the slack variables (if any)
@@ -82,6 +70,16 @@ namespace uno {
          }
          // since the slacks have been set, the constraints should be updated
          evaluations.are_constraints_computed = false;
+      }
+
+      // set the bound multipliers
+      for (size_t variable_index: Range(this->inner.number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+         }
       }
    }
 

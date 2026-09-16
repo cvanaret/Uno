@@ -56,8 +56,8 @@ namespace uno {
          uses_trust_region, 0., options);
 
       // initial iterate
-      this->inequality_handling_method->create_iterate(initial_iterate, evaluation_cache.current_evaluations,
-         1000. /* TODO use option */, true);
+      this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
+         1000. /* TODO use option */);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
@@ -120,7 +120,6 @@ namespace uno {
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
       this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
-      this->feasibility_inequality_handling_method->create_iterate(current_iterate, current_evaluations, 0., false);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
 

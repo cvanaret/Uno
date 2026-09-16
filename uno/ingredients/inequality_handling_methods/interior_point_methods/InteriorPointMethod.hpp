@@ -29,8 +29,7 @@ namespace uno {
 
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
-      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold,
-         bool is_initial_iterate) const override;
+      void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
@@ -123,9 +122,9 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::create_iterate(Iterate& initial_iterate, Evaluations& evaluations,
-         double multipliers_threshold, bool is_initial_iterate) const {
-      this->barrier_problem.create_iterate(initial_iterate, evaluations, is_initial_iterate);
+   void InteriorPointMethod<BarrierProblem>::create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations,
+         double multipliers_threshold) const {
+      this->barrier_problem.create_initial_iterate(initial_iterate, evaluations);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
    }
