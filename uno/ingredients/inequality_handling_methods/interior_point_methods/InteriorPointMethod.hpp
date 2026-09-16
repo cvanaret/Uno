@@ -174,10 +174,10 @@ namespace uno {
       const auto& variables_upper_bounds = feasibility_problem.get_variables_upper_bounds();
       for (size_t variable_index: Range(feasibility_problem.number_variables)) {
          if (is_finite(variables_lower_bounds[variable_index])) {
-            iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+            iterate.multipliers.lower_bounds[variable_index] = feasibility_problem.constraint_violation_coefficient;
          }
          if (is_finite(variables_upper_bounds[variable_index])) {
-            iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+            iterate.multipliers.upper_bounds[variable_index] = -feasibility_problem.constraint_violation_coefficient;
          }
       }
 
