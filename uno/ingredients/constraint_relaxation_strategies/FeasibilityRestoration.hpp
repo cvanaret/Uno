@@ -64,14 +64,17 @@ namespace uno {
       std::unique_ptr<GlobalizationStrategy> feasibility_globalization_strategy;
       Vector<double> initial_point;
 
+      Iterate iterate_buffer{};
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
       // and vice versa). These multipliers and those of the iterate are swapped whenever we switch phases.
       Multipliers other_phase_multipliers;
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
       double reference_infeasibility{};
-      Vector<double> reference_optimality_primals{};
+      Vector<double> prerestoration_primals{};
       bool first_switch_to_feasibility{true};
+      bool first_test_of_switch_back{true};
+      const double bound_multiplier_max_norm;
 
       mutable Vector<double> constraints_buffer;
 
@@ -81,7 +84,7 @@ namespace uno {
       void switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
+         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations);
    };
 } // namespace
 

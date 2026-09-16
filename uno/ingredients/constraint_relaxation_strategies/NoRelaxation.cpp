@@ -37,7 +37,7 @@ namespace uno {
       this->inequality_handling_method->initialize_memory();
 
       // initial iterate
-      this->inequality_handling_method->create_iterate(initial_iterate, evaluation_cache.current_evaluations,
+      this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
          1000. /* TODO use option */);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);

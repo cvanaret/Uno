@@ -25,7 +25,7 @@ namespace uno {
 
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
-      void create_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
+      void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
@@ -42,6 +42,8 @@ namespace uno {
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) override;
+      void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
       void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,

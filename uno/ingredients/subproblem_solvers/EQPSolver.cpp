@@ -31,6 +31,9 @@ namespace uno {
 
    void EQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) {
+      if (multipliers_threshold == 0.) {
+         return;
+      }
       DEBUG << "Computing least-squares multipliers\n";
 
       // compute least-square multipliers

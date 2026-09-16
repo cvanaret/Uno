@@ -81,11 +81,12 @@ namespace uno {
       [[nodiscard]] PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const override;
 
+      const double constraint_violation_coefficient;
+
    protected:
       ElasticVariables elastic_variables;
       const size_t number_elastic_variables;
       const double objective_multiplier;
-      const double constraint_violation_coefficient;
       double proximal_coefficient{0.};
       double* proximal_center{};
       const IntegerRange dual_regularization_constraints;

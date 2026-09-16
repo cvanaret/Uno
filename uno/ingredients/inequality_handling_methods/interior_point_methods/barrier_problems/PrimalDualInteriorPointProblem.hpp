@@ -23,8 +23,7 @@ namespace uno {
       [[nodiscard]] bool has_inequality_constraints() const override;
       [[nodiscard]] bool has_bound_constraints() const override;
 
-      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
-      void push_slacks_to_interior(Iterate& iterate, Evaluations& evaluations) const;
+      void create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -64,6 +63,8 @@ namespace uno {
       [[nodiscard]] Inertia get_inertia() const override;
 
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
+      void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       [[nodiscard]] double dual_regularization_factor() const override;
@@ -96,7 +97,6 @@ namespace uno {
       mutable std::vector<double> variables_lower_bounds;
       mutable std::vector<double> variables_upper_bounds;
 
-      void compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const;
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
          double tau) const;
       [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers, const Multipliers& direction_multipliers,
