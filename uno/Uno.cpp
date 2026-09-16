@@ -45,15 +45,16 @@ namespace uno {
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
       DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
+      // scale the functions
+      Vector<double> initial_primals(model.number_variables);
+      model.initial_primal_point(initial_primals);
+      const ScaledModel scaled_model(model, initial_primals, options);
+
       // reformulate the model if:
       // - the user wants an interior-point method with log barrier function
       // - the model has bound constraints or inequality constraints
       if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
             (model.has_bound_constraints() || model.has_inequality_constraints())) {
-         // scale the functions
-         Vector<double> initial_primals(model.number_variables);
-         model.initial_primal_point(initial_primals);
-         const ScaledModel scaled_model(model, initial_primals, options);
          // move the fixed variables to the set of general constraints
          const FixedBoundsConstraintsModel fixed_bound_model(scaled_model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
@@ -68,7 +69,7 @@ namespace uno {
          return result;
       }
       else {
-         return uno_solve(model, options, user_callbacks);
+         return uno_solve(scaled_model, options, user_callbacks);
       }
    }
 
@@ -133,7 +134,6 @@ namespace uno {
          DEBUG << exception.what() << '\n';
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
-      if (Logger::level == INFO) statistics.print_footer();
 
       postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
       statistics.timers.wallclock.stop();
