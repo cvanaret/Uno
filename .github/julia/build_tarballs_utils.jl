@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.9.18"
+version = v"2026.9.20"
 
 # Collection of sources
 sources = [
@@ -132,7 +132,16 @@ fi
 
 # Runtime kernel dispatch. We ship these binaries to unknown hardware,
 # so we embed every kernel set and let OpenBLAS pick at runtime.
-if [[ ${proc_family} == intel ]]; then
+#
+# EXCEPTION: x86_64-apple-darwin is built single-target (no DYNAMIC_ARCH).
+# objconv mis-resolves cross-object branch relocations between the per-arch
+# kernels when the archive is statically linked into a .so (dgemm_beta_SANDYBRIDGE's
+# early-out jle lands in scopy_k_PRESCOTT). Single-target removes the per-arch
+# kernels and the inter-object branches entirely. Every macOS-15 Intel Mac is
+# Haswell-or-newer, so TARGET=HASWELL is a safe baseline.
+if [[ ${target} == x86_64-apple-darwin* ]]; then
+    flags+=(DYNAMIC_ARCH=0 TARGET=HASWELL)
+elif [[ ${proc_family} == intel ]]; then
     flags+=(DYNAMIC_ARCH=1 TARGET=GENERIC)
 elif [[ ${target} == aarch64-* ]]; then
     flags+=(TARGET=ARMV8 DYNAMIC_ARCH=1)
