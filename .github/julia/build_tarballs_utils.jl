@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.9.14"
+version = v"2026.9.17"
 
 # Collection of sources
 sources = [
@@ -25,9 +25,10 @@ sources = [
     # BLAS / LAPACK v3.12.1
     GitSource("https://github.com/Reference-LAPACK/lapack.git",
               "6ec7f2bc4ecf4c4a93496aa2fa519575bc0e39ca"),
-    # OpenBLAS v0.3.34
-    GitSource("https://github.com/OpenMathLib/OpenBLAS.git",
-              "e0166008be8e466242aa76b2ff75ce3f0fbf574a"),
+    # OpenBLAS v0.3.34 (release tarball + sha used by the known-good Yggdrasil OpenBLAS_jll build,
+    # instead of an untested bare commit)
+    ArchiveSource("https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.34/OpenBLAS-0.3.34.tar.gz",
+                  "cd7e129868320cc2d033afa920e31202dfe0b8066a5b66661900ccc0f197dfed"),
     # MUMPS v5.9.1
     ArchiveSource("https://mumps-solver.org/MUMPS_5.9.1.tar.gz",
                   "659c9b57646b5a003ac618baa1faf9dd2044e46c732b3daaccbc7158003e1b46"),
@@ -94,7 +95,7 @@ make -j$(nproc)
 make install
 
 ## ----- Compile OpenBLAS -----
-cd $WORKSPACE/srcdir/OpenBLAS
+cd $WORKSPACE/srcdir/OpenBLAS*
 
 # Fix the issue with the symbol __imp__cprintf on Windows.
 if [[ ${target} == *mingw* ]]; then
@@ -383,6 +384,7 @@ build_tarballs(
     dependencies;
     julia_compat = "1.6",
     preferred_gcc_version = v"13.2.0",
+    preferred_llvm_version = v"18.1.7",
     clang_use_lld=false,
     lock_microarchitecture=false,
 )

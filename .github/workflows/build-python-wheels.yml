@@ -114,7 +114,6 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
-          CIBW_CONFIG_SETTINGS_MACOS: ${{ matrix.sys.os == 'macos-15-intel' && 'cmake.define.BLAS_LIBRARIES=dependencies/lib/libcblas.a;dependencies/lib/liblapack.a;dependencies/lib/libblas.a cmake.define.LAPACK_LIBRARIES=dependencies/lib/liblapack.a;dependencies/lib/libblas.a cmake.define.HIGHS=dependencies/lib/libhighs.a;dependencies/lib/libhighs_extras.a' || '' }}
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
