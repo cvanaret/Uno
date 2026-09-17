@@ -116,10 +116,14 @@ jobs:
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
           CIBW_TEST_COMMAND_MACOS: |
             cd "$(mktemp -d)"
-            unzip -o {wheel} -d w >/dev/null 2>&1 || python -c "import zipfile,glob,sys; zipfile.ZipFile(glob.glob('{project}/wheelhouse/*x86_64*.whl')[0] if False else '{wheel}').extractall('w')"
+            unzip -o {wheel} -d w >/dev/null
             SO="$(ls w/unopy/unopy*.so)"
-            echo "== dgemm_beta_SANDYBRIDGE in the SHIPPED .so =="
-            otool -tv "$SO" 2>/dev/null | awk '/_dgemm_beta_SANDYBRIDGE:/{f=1} f{print} f&&/ret[qw]?$/{exit}' | sed -n '1,25p'
+            echo "== is the symbol still in the .so? =="
+            nm "$SO" | grep -i dgemm_beta_SANDYBRIDGE || echo "  symbol ABSENT from nm"
+            echo "== full disasm around it (no awk filter) =="
+            otool -tvV "$SO" | grep -A6 -i dgemm_beta_SANDYBRIDGE | head -40
+            echo "== does the .so contain ANY executable zero-hole? =="
+            otool -tv "$SO" | grep -cE 'addb\s+%al, \(%rax\)'
             python {project}/interfaces/Python/example/example_hs015.py
           CIBW_BEFORE_BUILD_MACOS: |
             cd {project}/dependencies/lib
