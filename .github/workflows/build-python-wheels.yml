@@ -125,8 +125,8 @@ jobs:
           CIBW_BEFORE_BUILD_MACOS: |
             cd {project}/dependencies/lib
             ar x libopenblas.a dgemm_beta_SANDYBRIDGE.o
-            llvm-objdump -d dgemm_beta_SANDYBRIDGE.o | sed -n '1,20p'
-            if llvm-objdump -d dgemm_beta_SANDYBRIDGE.o | grep -q 'addb.*%al, (%rax)'; then echo 'CI ARCHIVE: HOLED'; else echo 'CI ARCHIVE: CLEAN'; fi
+            otool -tv dgemm_beta_SANDYBRIDGE.o | sed -n '1,25p'
+            if otool -tv dgemm_beta_SANDYBRIDGE.o | grep -qE 'addb\s+%al, \(%rax\)'; then echo 'CI ARCHIVE: HOLED'; else echo 'CI ARCHIVE: CLEAN'; fi
             rm -f dgemm_beta_SANDYBRIDGE.o
 
       - name: Build wheels (Windows)
