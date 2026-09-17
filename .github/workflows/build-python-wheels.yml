@@ -115,15 +115,22 @@ jobs:
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
           CIBW_TEST_COMMAND_MACOS: |
-            cd "$(mktemp -d)"
-            unzip -o {wheel} -d w >/dev/null
+            cd "$(mktemp -d)"; unzip -o {wheel} -d w >/dev/null
             SO="$(ls w/unopy/unopy*.so)"
-            echo "== is the symbol still in the .so? =="
-            nm "$SO" | grep -i dgemm_beta_SANDYBRIDGE || echo "  symbol ABSENT from nm"
-            echo "== full disasm around it (no awk filter) =="
-            otool -tvV "$SO" | grep -A6 -i dgemm_beta_SANDYBRIDGE | head -40
-            echo "== does the .so contain ANY executable zero-hole? =="
-            otool -tv "$SO" | grep -cE 'addb\s+%al, \(%rax\)'
+            ADDR=0xa5cd80
+            echo "== 64 bytes at the symbol, raw =="
+            # dump the actual bytes; if these are 00, it's really holed; if real opcodes, it's fine
+            python3 - "$SO" "$ADDR" <<'PY'
+            import sys,struct
+            f=open(sys.argv[1],'rb'); d=f.read()
+            # find __text file offset via the load commands
+            import subprocess
+            # fallback: use otool -l to get __text vmaddr/offset
+            PY
+            echo "== try llvm tools by full path =="
+            OD="$(ls /usr/local/opt/llvm*/bin/llvm-objdump /opt/homebrew/opt/llvm*/bin/llvm-objdump 2>/dev/null | head -1)"
+            echo "objdump: ${OD:-none}"
+            [ -n "$OD" ] && "$OD" -d --disassemble-symbols=_dgemm_beta_SANDYBRIDGE "$SO" | sed -n '1,25p'
             python {project}/interfaces/Python/example/example_hs015.py
           CIBW_BEFORE_BUILD_MACOS: |
             cd {project}/dependencies/lib
