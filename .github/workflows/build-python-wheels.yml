@@ -114,14 +114,13 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
-          CIBW_TEST_COMMAND_MACOS: >-
-            lldb --batch
-            -o "settings set target.process.stop-on-exec false"
-            -o run
-            -k "thread backtrace -c 20"
-            -k "image lookup -a $pc"
-            -k quit
-            -- python {project}/interfaces/Python/example/example_hs015.py
+          CIBW_TEST_COMMAND_MACOS: |
+            cd "$(mktemp -d)"
+            unzip -o {wheel} -d w >/dev/null 2>&1 || python -c "import zipfile,glob,sys; zipfile.ZipFile(glob.glob('{project}/wheelhouse/*x86_64*.whl')[0] if False else '{wheel}').extractall('w')"
+            SO="$(ls w/unopy/unopy*.so)"
+            echo "== dgemm_beta_SANDYBRIDGE in the SHIPPED .so =="
+            otool -tv "$SO" 2>/dev/null | awk '/_dgemm_beta_SANDYBRIDGE:/{f=1} f{print} f&&/ret[qw]?$/{exit}' | sed -n '1,25p'
+            python {project}/interfaces/Python/example/example_hs015.py
           CIBW_BEFORE_BUILD_MACOS: |
             cd {project}/dependencies/lib
             ar x libopenblas.a dgemm_beta_SANDYBRIDGE.o
