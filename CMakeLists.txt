@@ -421,6 +421,12 @@ if(SKBUILD)
 	   target_link_options(unopy PRIVATE -static-libstdc++)
 	endif()
 
+   # Keep the symbols of the statically linked third-party stack (OpenBLAS, HSL,
+   # MUMPS, HiGHS, SPRAL, METIS) out of the module's dynamic symbol table.
+   if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      target_link_options(unopy PRIVATE "-Wl,--exclude-libs,ALL")
+   endif()
+
    if(UNO_PYBIND11_DETAILED_ERRORS)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
    endif()
