@@ -116,6 +116,7 @@ namespace uno {
       MA57_ICNTL(15) = use_scaling ? 1 : 0; // MC64 scaling
       MA57_ICNTL(16) = 0; // small entries removed (disabled)
       MA57_CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
+      MA57_CNTL(2) = 1e-12;
    }
 
    void MA57Solver::initialize_memory() {
@@ -132,6 +133,8 @@ namespace uno {
    void MA57Solver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 
+      //std::cout << "MA57 rows: " << view(this->linear_system.matrix_row_indices) << '\n';
+      //std::cout << "MA57 cols: " << view(this->linear_system.matrix_column_indices) << '\n';
       MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
          this->linear_system.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
@@ -153,6 +156,7 @@ namespace uno {
 
    void MA57Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
+      //std::cout << "MA57 values: " << this->linear_system.matrix_values << '\n';
 
       bool factorization_done = false;
       while (!factorization_done) {
@@ -235,20 +239,13 @@ namespace uno {
    size_t MA57Solver::number_negative_eigenvalues() const {
       return static_cast<size_t>(MA57_INFO(24));
    }
-
-   /*
-   bool MA57Solver::matrix_is_positive_definite() const {
-      // positive definite = non-singular and no negative eigenvalues
-      return not this->matrix_is_singular() && this->number_negative_eigenvalues() == 0;
-   }
-   */
-
+   
    bool MA57Solver::matrix_is_singular() const {
-      return (MA57_INFO(1) == 4);
+      return this->rank() < static_cast<size_t>(this->workspace.n);
    }
 
    size_t MA57Solver::rank() const {
-      return static_cast<size_t>(this->workspace.info[24]);
+      return static_cast<size_t>(MA57_INFO(25));
    }
 
    LinearSystem& MA57Solver::get_linear_system() {
