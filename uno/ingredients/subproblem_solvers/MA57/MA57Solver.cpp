@@ -239,7 +239,7 @@ namespace uno {
    size_t MA57Solver::number_negative_eigenvalues() const {
       return static_cast<size_t>(MA57_INFO(24));
    }
-   
+
    bool MA57Solver::matrix_is_singular() const {
       return this->rank() < static_cast<size_t>(this->workspace.n);
    }
