@@ -69,7 +69,9 @@ namespace uno {
       barrier_problem.evaluate_lagrangian_gradient(current_iterate, evaluations, lag);
       const double stationarity_error = norm_inf(lag);
       const double scaled_stationarity = stationarity_error / residuals.stationarity_scaling;
-      const double primal_feasibility = (barrier_problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_infeasibility;
+      Vector<double> constraints(barrier_problem.number_constraints);
+      barrier_problem.evaluate_constraints(current_iterate, constraints.view(), evaluations);
+      const double primal_feasibility = norm_inf(constraints);
       double scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
          current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
       double primal_dual_error = std::max({
