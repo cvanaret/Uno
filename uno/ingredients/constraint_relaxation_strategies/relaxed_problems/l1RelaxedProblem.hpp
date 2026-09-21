@@ -62,6 +62,8 @@ namespace uno {
 
       [[nodiscard]] Inertia get_inertia() const override;
 
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const override;
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const override;
 

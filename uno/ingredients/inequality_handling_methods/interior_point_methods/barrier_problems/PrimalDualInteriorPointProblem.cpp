@@ -489,6 +489,24 @@ namespace uno {
       };
    }
 
+   double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double shift) const {
+      const Range variables_range = Range(this->number_variables);
+      const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
+         double result = 0.;
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            result += std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - variables_lower_bounds[variable_index]) - shift));
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) { // upper bound
+            result += std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - variables_upper_bounds[variable_index]) - shift));
+         }
+         return result;
+      }};
+      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
+   }
+
    // protected member functions
 
    void PrimalDualInteriorPointProblem::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,

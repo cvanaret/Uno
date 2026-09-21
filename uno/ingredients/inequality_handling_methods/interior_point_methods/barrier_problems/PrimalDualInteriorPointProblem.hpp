@@ -83,6 +83,8 @@ namespace uno {
       [[nodiscard]] PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const override;
 
+      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers, double shift) const;
+
    protected:
       const OptimizationProblem& unslacked_problem;
       const Parameterization& parameterization;

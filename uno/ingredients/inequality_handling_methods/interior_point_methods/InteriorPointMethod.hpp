@@ -30,7 +30,10 @@ namespace uno {
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
-      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
+      [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
+
+      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
@@ -130,11 +133,18 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate) {
+   std::pair<size_t, size_t> InteriorPointMethod<BarrierProblem>::get_dimensions() const {
+      return {this->barrier_problem.number_variables, this->barrier_problem.number_constraints};
+   }
+
+   template <typename BarrierProblem>
+   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations) {
       bool update = false;
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->problem, current_iterate, current_iterate.residuals);
+         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate,
+            evaluations, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
