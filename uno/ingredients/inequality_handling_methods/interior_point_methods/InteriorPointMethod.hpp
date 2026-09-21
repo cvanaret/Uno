@@ -183,14 +183,14 @@ namespace uno {
       // cap the original variables to [-rho, +rho]
       const auto& variables_lower_bounds = feasibility_problem.model.get_variables_lower_bounds();
       const auto& variables_upper_bounds = feasibility_problem.model.get_variables_upper_bounds();
-      for (size_t variable_index: Range(feasibility_problem.model.number_variables)) {
+      for (size_t variable_index: Range(this->barrier_problem.number_variables)) {
          if (is_finite(variables_lower_bounds[variable_index])) {
             iterate.multipliers.lower_bounds[variable_index] = std::min(iterate.multipliers.lower_bounds[variable_index],
-               feasibility_problem.constraint_violation_coefficient);
+               2.*feasibility_problem.constraint_violation_coefficient);
          }
          if (is_finite(variables_upper_bounds[variable_index])) {
             iterate.multipliers.upper_bounds[variable_index] = std::max(iterate.multipliers.upper_bounds[variable_index],
-               -feasibility_problem.constraint_violation_coefficient);
+               -2.*feasibility_problem.constraint_violation_coefficient);
          }
       }
 
