@@ -55,10 +55,6 @@ namespace uno {
       }
    }
 
-   std::unique_ptr<OptimizationProblem> l1RelaxedProblem::clone() const {
-      return std::make_unique<l1RelaxedProblem>(*this);
-   }
-
    double l1RelaxedProblem::get_objective_multiplier() const {
       return this->objective_multiplier;
    }

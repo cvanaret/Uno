@@ -59,7 +59,7 @@ namespace uno {
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
          1000. /* TODO use option */);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
-      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->compute_residuals(this->original_problem.model, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
 
       // statistics
@@ -131,7 +131,7 @@ namespace uno {
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
-      compute_residuals(this->feasibility_problem, current_iterate, current_evaluations);
+      compute_residuals(this->original_problem.model, current_iterate, current_evaluations);
 
       this->initial_point.resize(this->feasibility_problem.number_variables);
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
@@ -210,7 +210,7 @@ namespace uno {
       // original problem
       this->iterate_buffer.primals = view(trial_iterate.primals, 0, this->original_problem.number_variables);
       this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
-      compute_residuals(this->original_problem, this->iterate_buffer, trial_evaluations);
+      compute_residuals(this->original_problem.model, this->iterate_buffer, trial_evaluations);
 
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
@@ -312,7 +312,7 @@ namespace uno {
 
       // check termination
       if (this->current_phase == Phase::OPTIMALITY) {
-         this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         this->compute_residuals(this->original_problem.model, trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
@@ -321,7 +321,7 @@ namespace uno {
          }
       }
       else {
-         this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
+         this->compute_residuals(this->original_problem.model, trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
          if (accept_iterate) {
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,

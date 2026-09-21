@@ -159,10 +159,6 @@ namespace uno {
       return this->model.get_variables_upper_bounds();
    }
 
-   const SparseVector<size_t>& ScaledModel::get_slacks() const {
-      return this->model.get_slacks();
-   }
-
    const Vector<size_t>& ScaledModel::get_fixed_variables() const {
       return this->model.get_fixed_variables();
    }

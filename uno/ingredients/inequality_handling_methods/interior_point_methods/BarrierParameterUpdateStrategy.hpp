@@ -74,7 +74,8 @@ namespace uno {
          primal_feasibility,
          scaled_complementarity_error
       });
-      DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
+      DEBUG << "Max scaled primal-dual error for barrier subproblem is {" << scaled_stationarity << ", " <<
+         primal_feasibility << ", " << scaled_complementarity_error << "} = " << primal_dual_error << '\n';
 
       // update the barrier parameter (Eq. 7 in IPOPT paper)
       const double tolerance_fraction = this->dual_tolerance / this->parameters.update_fraction;

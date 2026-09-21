@@ -235,10 +235,6 @@ namespace uno {
       return this->variables_upper_bounds;
    }
 
-   const SparseVector<size_t>& AMPLModel::get_slacks() const {
-      return this->slacks;
-   }
-
    const Vector<size_t>& AMPLModel::get_fixed_variables() const {
       return this->fixed_variables;
    }

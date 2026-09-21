@@ -36,7 +36,6 @@ namespace uno {
       explicit OptimizationProblem(const Model& model);
       OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
       virtual ~OptimizationProblem() = default;
-      [[nodiscard]] virtual std::unique_ptr<OptimizationProblem> clone() const;
 
       const Model& model;
       const size_t number_variables; /*!< Number of variables */
@@ -93,8 +92,6 @@ namespace uno {
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
-      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
       [[nodiscard]] virtual double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const;
 
