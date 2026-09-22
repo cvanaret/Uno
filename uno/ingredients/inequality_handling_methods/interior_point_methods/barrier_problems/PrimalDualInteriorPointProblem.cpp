@@ -181,6 +181,8 @@ namespace uno {
          Evaluations& evaluations) const {
       this->unslacked_problem.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
+      possibly_relax_variables_bounds(iterate);
+
       // barrier terms
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       for (size_t variable_index: Range(this->number_variables)) {
