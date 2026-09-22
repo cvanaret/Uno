@@ -28,7 +28,9 @@ namespace uno {
          variables_lower_bounds(this->number_variables, -INF<double>),
          variables_upper_bounds(this->number_variables, INF<double>),
          constraints_lower_bounds(this->number_constraints, 0.),
-         constraints_upper_bounds(this->number_constraints, 0.) {
+         constraints_upper_bounds(this->number_constraints, 0.),
+         constraints_buffer(this->number_constraints),
+         constraints_buffer2(this->number_constraints) {
       // copy the variables bounds
       const size_t dimension = this->unslacked_problem.number_variables;
       view(this->variables_lower_bounds, 0, dimension) = this->unslacked_problem.get_variables_lower_bounds();
@@ -181,21 +183,19 @@ namespace uno {
          Evaluations& evaluations) const {
       this->unslacked_problem.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
-      possibly_relax_variables_bounds(iterate);
-
       // barrier terms
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       for (size_t variable_index: Range(this->number_variables)) {
          double barrier_term = 0.;
          if (is_finite(this->variables_lower_bounds[variable_index])) { // lower bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
+            barrier_term -= barrier_parameter/(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
             // damping
             if (is_infinite(this->variables_upper_bounds[variable_index])) {
                barrier_term += this->parameters.damping_factor * barrier_parameter;
             }
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) { // upper bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]);
+            barrier_term -= barrier_parameter/(iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]);
             // damping
             if (is_infinite(this->variables_lower_bounds[variable_index])) {
                barrier_term -= this->parameters.damping_factor * barrier_parameter;
@@ -414,6 +414,57 @@ namespace uno {
       }
    }
 
+   double PrimalDualInteriorPointProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {
+      size_t number_lower_bounded_variables = 0;
+      size_t number_upper_bounded_variables = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            ++number_lower_bounded_variables;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            ++number_upper_bounded_variables;
+         }
+      }
+      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables + model.number_constraints;
+      if (total_size == 0) {
+         return 1.;
+      }
+      else {
+         const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
+         const double multiplier_norm = norm_1(
+               view(multipliers.constraints, 0, model.number_constraints),
+               view(multipliers.lower_bounds, 0, model.number_variables),
+               view(multipliers.upper_bounds, 0, model.number_variables)
+         );
+         return std::max(1., multiplier_norm / scaling_factor);
+      }
+   }
+
+   double PrimalDualInteriorPointProblem::compute_complementarity_scaling(const Multipliers& multipliers) const {
+      size_t number_lower_bounded_variables = 0;
+      size_t number_upper_bounded_variables = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            ++number_lower_bounded_variables;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            ++number_upper_bounded_variables;
+         }
+      }
+      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables;
+      if (total_size == 0) {
+         return 1.;
+      }
+      else {
+         const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
+         const double bound_multiplier_norm = norm_1(
+               view(multipliers.lower_bounds, 0, model.number_variables),
+               view(multipliers.upper_bounds, 0, model.number_variables)
+         );
+         return std::max(1., bound_multiplier_norm / scaling_factor);
+      }
+   }
+
    static double homogeneous_constraint_violation(double constraint_value) {
       const double lower_bound_violation = std::max(0., -constraint_value);
       const double upper_bound_violation = std::max(0., constraint_value);
@@ -421,7 +472,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const {
-      Vector<double> constraints(this->number_constraints);
+      Vector<double> constraints(this->number_constraints); // TODO preallocate
       this->evaluate_constraints(iterate, constraints.view(), evaluations);
       const Range constraints_range = Range(this->number_constraints);
       const VectorExpression v{constraints_range, [&](size_t constraint_index) {
@@ -471,8 +522,23 @@ namespace uno {
    // predicted reductions
 
    PredictedInfeasibilityReduction PrimalDualInteriorPointProblem::build_predicted_infeasibility_reduction(
-         const Iterate& current_iterate, const Vector<double>& primal_direction, Norm norm, Evaluations& current_evaluations) const {
-      return this->unslacked_problem.build_predicted_infeasibility_reduction(current_iterate, primal_direction, norm, current_evaluations);
+         const Iterate& current_iterate, const Vector<double>& primal_direction, Norm progress_norm,
+         Evaluations& current_evaluations) const {
+      this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
+      const Range constraints_range = Range(this->number_constraints);
+      const VectorExpression constraint_violation{constraints_range, [&](size_t constraint_index) {
+         return homogeneous_constraint_violation(this->constraints_buffer[constraint_index]);
+      }};
+      const double current_constraint_violation = norm(progress_norm, constraint_violation);
+
+      this->constraints_buffer2.fill(0.);
+      this->compute_jacobian_vector_product(primal_direction.view(), this->constraints_buffer2.view(), current_evaluations);
+
+      return [current_constraint_violation, progress_norm, this](double step_length) {
+         const auto linearized_constraints = this->constraints_buffer + step_length * this->constraints_buffer2;
+         const double trial_constraint_violation = norm(progress_norm, linearized_constraints);
+         return current_constraint_violation - trial_constraint_violation;
+      };
    }
 
    PredictedObjectiveReduction PrimalDualInteriorPointProblem::build_predicted_objective_reduction(const Iterate& current_iterate,
@@ -497,11 +563,11 @@ namespace uno {
       const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
          double result = 0.;
          if (is_finite(this->variables_lower_bounds[variable_index])) {
-            result += std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
                (primals[variable_index] - variables_lower_bounds[variable_index]) - shift));
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) { // upper bound
-            result += std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
                (primals[variable_index] - variables_upper_bounds[variable_index]) - shift));
          }
          return result;

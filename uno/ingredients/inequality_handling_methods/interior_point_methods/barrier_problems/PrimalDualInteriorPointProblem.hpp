@@ -69,6 +69,8 @@ namespace uno {
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate) const override;
+      [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
+      [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
       // progress measures
       void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const override;
@@ -104,7 +106,10 @@ namespace uno {
       std::vector<double> constraints_upper_bounds;
 
       Vector<uno_int> jacobian_row_indices{};
+
       Vector<uno_int> jacobian_column_indices{};
+      mutable Vector<double> constraints_buffer;
+      mutable Vector<double> constraints_buffer2;
 
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
          double tau) const;
