@@ -109,24 +109,24 @@ namespace uno {
       // inequality constraints
       const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
-      const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
+      Vector<double> constraint_complementarity(this->number_constraints, 0.);
+      for (size_t constraint_index: this->get_inequality_constraints()) {
          // if constraint is one-sided, pick that bound
          if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
          // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
          // complementarity pair
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
-         return 0.;
-      }};
+      }
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 
