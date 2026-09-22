@@ -183,6 +183,10 @@ namespace uno {
          Evaluations& evaluations) const {
       this->unslacked_problem.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
+      for (const auto [_, slack_index]: this->slacks) {
+         objective_gradient[slack_index] = 0.;
+      }
+
       // barrier terms
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
       for (size_t variable_index: Range(this->number_variables)) {
@@ -221,13 +225,15 @@ namespace uno {
          Vector<double>& lagrangian_gradient) const {
       this->unslacked_problem.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
-      // bound multipliers for slacks
-      for (const auto [constraint_index, slack_index]: this->slacks) {
-         lagrangian_gradient[slack_index] -= (iterate.multipliers.lower_bounds[slack_index] + iterate.multipliers.upper_bounds[slack_index]);
+      for (const auto [_, slack_index]: this->slacks) {
+         lagrangian_gradient[slack_index] = 0.;
       }
 
-      // Jacobian block for slacks
+      // slacks
       for (const auto [constraint_index, slack_index]: this->slacks) {
+         // bound multipliers
+         lagrangian_gradient[slack_index] -= (iterate.multipliers.lower_bounds[slack_index] + iterate.multipliers.upper_bounds[slack_index]);
+         // Jacobian block
          lagrangian_gradient[slack_index] += iterate.multipliers.constraints[constraint_index];
       }
    }

@@ -193,7 +193,6 @@ namespace uno {
          }
       }
 
-
       // reset the elastics
       const auto elastic_reset = [&](size_t /*constraint_index*/, size_t elastic_index, ElasticType /*elastic_type*/) {
          iterate.primals[elastic_index] = 0.;
