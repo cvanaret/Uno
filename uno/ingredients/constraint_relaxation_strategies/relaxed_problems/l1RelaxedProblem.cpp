@@ -446,7 +446,9 @@ namespace uno {
       // r = c(x) − p + n ; since JΔx − Δp + Δn = −r (KKT), pred(α) = α‖r‖₁
       this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
       const double residual_violation = this->model.constraint_violation(this->constraints_buffer, Norm::L1);
-      return [residual_violation](double step_length) { return step_length * residual_violation; };
+      return [residual_violation](double step_length) {
+         return step_length * residual_violation;
+      };
    }
 
    PredictedObjectiveReduction l1RelaxedProblem::build_predicted_objective_reduction(const Iterate& /*current_iterate*/,

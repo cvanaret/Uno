@@ -63,23 +63,24 @@ namespace uno {
 
    template <typename BarrierProblem>
    bool BarrierParameterUpdateStrategy<BarrierProblem>::update_barrier_parameter(const BarrierProblem& barrier_problem,
-         const Iterate& current_iterate, Evaluations& evaluations, const DualResiduals& residuals) {
+         const Iterate& current_iterate, Evaluations& evaluations, const DualResiduals& /*residuals*/) {
       // primal-dual errors
       Vector<double> lag(barrier_problem.number_variables);
       barrier_problem.evaluate_lagrangian_gradient(current_iterate, evaluations, lag);
       const double stationarity_error = norm_inf(lag);
-      const double scaled_stationarity = stationarity_error / residuals.stationarity_scaling;
+      const double scaled_stationarity = stationarity_error / barrier_problem.compute_stationarity_scaling(current_iterate.multipliers);
       Vector<double> constraints(barrier_problem.number_constraints);
       barrier_problem.evaluate_constraints(current_iterate, constraints.view(), evaluations);
       const double primal_feasibility = norm_inf(constraints);
+      const double complementarity_scaling = barrier_problem.compute_complementarity_scaling(current_iterate.multipliers);
       double scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
-         current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
+         current_iterate.multipliers, this->barrier_parameter) / complementarity_scaling;
       double primal_dual_error = std::max({
          scaled_stationarity,
          primal_feasibility,
          scaled_complementarity_error
       });
-      DEBUG << "Max scaled primal-dual error for barrier subproblem is {" << scaled_stationarity << ", " <<
+      DEBUG << "Max scaled primal-dual error for barrier subproblem is max{" << scaled_stationarity << ", " <<
          primal_feasibility << ", " << scaled_complementarity_error << "} = " << primal_dual_error << '\n';
 
       // update the barrier parameter (Eq. 7 in IPOPT paper)
@@ -96,13 +97,13 @@ namespace uno {
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
          scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
-            current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
+            current_iterate.multipliers, this->barrier_parameter) / complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
             primal_feasibility,
             scaled_complementarity_error
          });
-         DEBUG << "Max scaled primal-dual error for barrier subproblem is {" << scaled_stationarity << ", " <<
+         DEBUG << "Max scaled primal-dual error for barrier subproblem is max{" << scaled_stationarity << ", " <<
             primal_feasibility << ", " << scaled_complementarity_error << "} = " << primal_dual_error << '\n';
          parameter_updated = true;
       }
