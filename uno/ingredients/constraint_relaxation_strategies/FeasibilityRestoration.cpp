@@ -84,9 +84,6 @@ namespace uno {
          // solve the feasibility problem (minimize the constraint violation)
          DEBUG << "Solving the feasibility subproblem\n";
          statistics.set("Phase", "FEAS");
-         const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
-         this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
-         DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
          return this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method,
             *this->feasibility_globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
             warmstart_information);
@@ -198,6 +195,12 @@ namespace uno {
       if (inequality_handling_method.update_parameterization(statistics, current_iterate, current_evaluations)) {
          globalization_strategy.reset();
          inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
+         // update the proximal coefficient
+         if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
+            const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
+            this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
+            DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
+         }
       }
 
       const Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius,
