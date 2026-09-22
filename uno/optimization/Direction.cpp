@@ -32,7 +32,7 @@ namespace uno {
       stream << symbols::pipe << " constraint multipliers = " << direction.multipliers.constraints << '\n';
       stream << symbols::pipe << " lower bound multipliers = " << direction.multipliers.lower_bounds << '\n';
       stream << symbols::pipe << " upper bound multipliers = " << direction.multipliers.upper_bounds << '\n';
-      stream << symbols::pipe << " objective = " << direction.subproblem_objective << '\n';
+      //stream << symbols::pipe << " objective = " << direction.subproblem_objective << '\n';
       stream << symbols::bottom_pipe << " norm = " << direction.norm << '\n';
       return stream;
    }

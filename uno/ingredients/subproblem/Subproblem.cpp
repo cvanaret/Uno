@@ -165,7 +165,6 @@ namespace uno {
 
       // flip the sign
       rhs.scale(-1.);
-      DEBUG2 << "RHS: " << view(rhs, 0, this->number_variables + this->number_constraints) << '\n';
    }
 
    void Subproblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const {
