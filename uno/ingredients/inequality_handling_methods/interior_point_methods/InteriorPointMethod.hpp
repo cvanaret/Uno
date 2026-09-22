@@ -180,6 +180,7 @@ namespace uno {
          Iterate& iterate, Evaluations& evaluations) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
+      /*
       // cap the original variables to [-rho, +rho]
       const auto& variables_lower_bounds = feasibility_problem.model.get_variables_lower_bounds();
       const auto& variables_upper_bounds = feasibility_problem.model.get_variables_upper_bounds();
@@ -193,6 +194,7 @@ namespace uno {
                -2.*feasibility_problem.constraint_violation_coefficient);
          }
       }
+      */
 
       // c(x) - p + n = 0
       // analytical expression for p and n:
