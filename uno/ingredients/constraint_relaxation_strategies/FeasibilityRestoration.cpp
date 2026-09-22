@@ -43,8 +43,6 @@ namespace uno {
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
          EvaluationCache& evaluation_cache, Options& options) {
       this->initial_point.resize(this->original_problem.number_variables);
-      this->pre_restoration_primals.resize(this->original_problem.number_variables);
-      this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.data());
 
       // reformulation of the original problem and the feasibility problem
       INFO << "- Allocating optimality (original) method: ";
@@ -61,6 +59,10 @@ namespace uno {
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
+
+      const auto [number_optimality_variables, _] = this->inequality_handling_method->get_dimensions();
+      this->pre_restoration_primals.resize(number_optimality_variables);
+      this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.data());
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics);
@@ -101,14 +103,16 @@ namespace uno {
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
 
       this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
+
+      const auto [number_optimality_variables, number_optimality_constraints] = this->inequality_handling_method->get_dimensions();
+      const auto [number_feasibility_variables, number_feasibility_constraints] = this->feasibility_inequality_handling_method->get_dimensions();
+
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
-      this->pre_restoration_primals = view(current_iterate.primals, 0, this->original_problem.number_variables);
+      this->pre_restoration_primals = view(current_iterate.primals, 0, number_optimality_variables);
       this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.data());
 
       // prepare the iterate for restoration (resize + set primal-dual values)
-      const auto [number_optimality_variables, number_optimality_constraints] = this->inequality_handling_method->get_dimensions();
-      const auto [number_feasibility_variables, number_feasibility_constraints] = this->feasibility_inequality_handling_method->get_dimensions();
       current_iterate.set_number_variables(number_feasibility_variables);
       // copy the slacks
       view(current_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables) =
@@ -260,9 +264,9 @@ namespace uno {
       trial_iterate.multipliers.constraints.fill(0.);
 
       // compute the bound duals using the linearized complementarity, pretending that restoration was a single step
-      Vector<double> primal_restoration_direction(view(trial_iterate.primals, 0, this->original_problem.number_variables)
+      Vector<double> primal_restoration_direction(view(trial_iterate.primals, 0, number_optimality_variables)
          - this->pre_restoration_primals);
-      Multipliers direction_multipliers(this->original_problem.number_variables, 0);
+      Multipliers direction_multipliers(number_optimality_variables, 0);
       double step_length = 1.;
       this->inequality_handling_method->compute_bound_dual_direction(this->pre_restoration_primals, trial_iterate.multipliers,
          primal_restoration_direction, direction_multipliers, step_length);
