@@ -661,7 +661,7 @@ namespace uno {
       }
       return step_length;
    }
-
+   
    double PrimalDualInteriorPointProblem::compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const {
       double directional_derivative = 0.;
