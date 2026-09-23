@@ -199,11 +199,14 @@ namespace uno {
       if (inequality_handling_method.update_parameterization(statistics, current_iterate, current_evaluations)) {
          globalization_strategy.reset();
          inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
-         // update the proximal coefficient
+         // update the proximal term
          if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
+            // refresh the proximal coefficient
             const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
             this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
             DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
+            // re-center the proximal term at the current iterate
+            this->feasibility_problem.set_proximal_center(current_iterate.primals.data());
          }
       }
 
