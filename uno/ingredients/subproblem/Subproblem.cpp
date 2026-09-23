@@ -154,6 +154,7 @@ namespace uno {
       rhs.scale(-1.);
 
       // objective gradient
+      this->objective_gradient_buffer.fill(0.);
       this->problem.evaluate_objective_gradient(current_iterate, this->objective_gradient_buffer.view(), evaluations);
       view(rhs.data(), this->problem.number_variables) += this->objective_gradient_buffer;
 
