@@ -15,7 +15,7 @@ namespace uno {
  
    const std::map<std::string_view, size_t> Statistics::column_order = {
       {"Iter", 1}, {"LS", 2}, {"TR", 2}, {"Penalty", 5}, {"Barrier", 8},
-      {"Steplength", 10}, {"Radius", 11}, {"Phase", 20}, {"Regulariz", 21},
+      {"Steplength", 10}, {"Radius", 11}, {"Phase", 20}, {"Prim reg", 21}, {"Dual reg", 21},
       {"Funnel", 25}, {"|BFGS|", 26}, {"|SR1|", 26}, {"||Step||", 31},
       {"Objective", 100}, {"Infeas", 101}, {"Statio", 104}, {"Compl", 105},
       {"Time", 200}, {"Status", 300}

@@ -21,7 +21,7 @@ namespace uno {
    }
 
    void PrimalInertiaCorrection::initialize_statistics(Statistics& statistics) {
-      statistics.add_column("Regulariz", Statistics::double_width + 1, 2, /* is_extended = */ true);
+      statistics.add_column("Primal reg", Statistics::double_width + 1, 2, /* is_extended = */ true);
    }
 
    // Nocedal and Wright, p51
@@ -80,7 +80,7 @@ namespace uno {
             }
          }
       }
-      statistics.set("Regulariz", this->regularization_factor);
+      statistics.set("Primal reg", this->regularization_factor);
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
