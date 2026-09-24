@@ -141,6 +141,8 @@ namespace uno {
             expected_inertia, linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
       }
       else {
+         primal_inertia_correction_block.fill(0.);
+         dual_inertia_correction_block.fill(0.);
          linear_solver.do_numerical_factorization(false);
       }
    }
