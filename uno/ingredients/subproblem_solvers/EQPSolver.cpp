@@ -179,12 +179,8 @@ namespace uno {
       rhs_constraints.scale(-1.);
       DEBUG2 << "SOC RHS: " << linear_system.rhs << '\n';
 
-      // solve the linear system
+      // solve the linear system and assemble the full primal-dual direction
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
-      if (this->linear_solver->matrix_is_singular()) {
-         this->direction_SOC.status = SubproblemStatus::INFEASIBLE;
-      }
-      // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(current_iterate, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
    }
