@@ -63,7 +63,6 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      double previous_barrier_parameter;
       const InteriorPointParameters parameters;
 
       Parameterization parameterization;
@@ -90,7 +89,6 @@ namespace uno {
    InteriorPointMethod<BarrierProblem>::InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region,
       double objective_multiplier, Options& options):
          InequalityHandlingMethod(problem, options),
-         previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
          parameters({
                options.get_double("barrier_tau_min"),
                options.get_double("barrier_k_sigma"),
@@ -167,12 +165,11 @@ namespace uno {
    void InteriorPointMethod<BarrierProblem>::initialize_feasibility_problem(Iterate& current_iterate) {
       this->first_feasibility_iteration = true;
 
-      // temporarily update the objective multiplier
-      this->previous_barrier_parameter = this->barrier_parameter();
+      // update the objective multiplier
       const double new_barrier_parameter = std::max(this->barrier_parameter(), current_iterate.primal_infeasibility);
       this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
-      DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
+      DEBUG << "Barrier parameter = " << this->barrier_parameter() << '\n';
    }
 
    template <typename BarrierProblem>
