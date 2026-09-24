@@ -13,20 +13,21 @@
 
 namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-         bool relax_linear_constraints):
+         bool relax_linear_constraints, bool use_proximal_term):
       // call delegating constructor
       l1RelaxedProblem(model, ElasticVariables::generate(model, relax_linear_constraints), objective_multiplier,
-         constraint_violation_coefficient) {
+         constraint_violation_coefficient, use_proximal_term) {
    }
 
    // delegating constructor
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
-            double constraint_violation_coefficient):
+            double constraint_violation_coefficient, bool use_proximal_term):
          OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints),
          constraint_violation_coefficient(constraint_violation_coefficient),
          elastic_variables(std::move(elastic_variables)),
          number_elastic_variables(this->elastic_variables.size()),
          objective_multiplier(objective_multiplier),
+         use_proximal_term(use_proximal_term),
          dual_regularization_constraints(this->number_constraints),
          variables_lower_bounds(this->number_variables, 0.),
          variables_upper_bounds(this->number_variables, INF<double>),
@@ -36,6 +37,11 @@ namespace uno {
       // copy the original variables. The elastic variables have bounds [0, inf)
       view(this->variables_lower_bounds, 0, model.number_variables) = model.get_variables_lower_bounds();
       view(this->variables_upper_bounds, 0, model.number_variables) = model.get_variables_upper_bounds();
+
+      // proximal term
+      if (this->use_proximal_term) {
+         this->proximal_center.resize(this->model.number_variables);
+      }
 
       // create the Jacobian sparsity
       const size_t number_model_jacobian_nonzeros = this->model.number_jacobian_nonzeros();
@@ -71,8 +77,11 @@ namespace uno {
       this->proximal_coefficient = proximal_coefficient;
    }
 
-   void l1RelaxedProblem::set_proximal_center(double* proximal_center) {
-      this->proximal_center = proximal_center;
+   void l1RelaxedProblem::set_proximal_center(View<const double> point) {
+      if (this->use_proximal_term) {
+         assert(point.size() >= this->model.number_variables);
+         this->proximal_center = view(point.data(), 0, this->model.number_variables);
+      }
    }
 
    size_t l1RelaxedProblem::number_jacobian_nonzeros() const {
@@ -87,7 +96,7 @@ namespace uno {
    size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = hessian_model.number_nonzeros();
       // proximal contribution
-      if (this->proximal_center != nullptr) {
+      if (this->use_proximal_term) {
          number_nonzeros += this->model.number_variables;
       }
       return number_nonzeros;
@@ -106,7 +115,7 @@ namespace uno {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
-      if (this->proximal_center != nullptr) {
+      if (this->use_proximal_term) {
          size_t current_index = hessian_model.number_nonzeros();
          for (size_t variable_index: Range(this->model.number_variables)) {
             row_indices[current_index] = static_cast<uno_int>(variable_index) + solver_indexing;
@@ -151,7 +160,7 @@ namespace uno {
       }
 
       // proximal contribution
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+      if (this->use_proximal_term && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling * (iterate.primals[variable_index] - this->proximal_center[variable_index]);
@@ -212,7 +221,7 @@ namespace uno {
       }
 
       // proximal contribution
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+      if (this->use_proximal_term && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling;
@@ -230,7 +239,7 @@ namespace uno {
       // proximal contribution
       const size_t number_hessian_nonzeros = hessian_model.number_nonzeros();
       size_t nonzero_index = number_hessian_nonzeros;
-      if (this->proximal_center != nullptr) {
+      if (this->use_proximal_term) {
          if (this->proximal_coefficient == 0.) {
             view(hessian_values.data(), number_hessian_nonzeros, number_hessian_nonzeros + this->model.number_variables).fill(0.);
          }
@@ -275,7 +284,7 @@ namespace uno {
       hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
 
       // proximal contribution
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+      if (this->use_proximal_term && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling;
@@ -427,7 +436,7 @@ namespace uno {
    void l1RelaxedProblem::set_auxiliary_measure(Iterate& iterate) const {
       iterate.progress.auxiliary = 0.;
       // form the proximal term: zeta/2 ||D_R (x - x_R)||^2
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+      if (this->use_proximal_term && this->proximal_coefficient != 0.) {
          double proximal_term = 0.;
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
@@ -471,7 +480,7 @@ namespace uno {
          const Vector<double>& primal_direction) const {
       // proximal directional derivative ζ D_R² (x − x_R)ᵀd, cached once (0 when the proximal term is off)
       double proximal_directional_derivative = 0.;
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+      if (this->use_proximal_term && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double distance_to_center = current_iterate.primals[variable_index] - this->proximal_center[variable_index];

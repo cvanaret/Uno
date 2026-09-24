@@ -99,6 +99,7 @@ namespace uno {
          options.set_double("barrier_tau_min", 0.99);
          options.set_double("barrier_damping_factor", 1e-5);
          options.set_double("l1_constraint_violation_coefficient", 1000.);
+         options.set_bool("use_proximal_term", true);
          options.set_string("progress_norm", "L1");
          options.set_string("residual_norm", "INF");
          options.set_double("primal_tolerance", 1e-8);
@@ -122,6 +123,7 @@ namespace uno {
          options.set_string("residual_norm", "L2");
          options.set_double("TR_radius", 10.);
          options.set_double("l1_constraint_violation_coefficient", 1.);
+         options.set_bool("use_proximal_term", false);
          options.set_double("primal_tolerance", 1e-6);
          options.set_double("dual_tolerance", 1e-6);
          options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
@@ -138,6 +140,7 @@ namespace uno {
          options.set_string("residual_norm", "L2");
          options.set_double("TR_radius", 10);
          options.set_double("l1_constraint_violation_coefficient", 1.);
+         options.set_bool("use_proximal_term", false);
          options.set_double("primal_tolerance", 1e-6);
          options.set_double("dual_tolerance", 1e-6);
          options.set_bool("switch_to_optimality_requires_acceptance", false);
@@ -164,6 +167,7 @@ namespace uno {
          options.set_string("residual_norm", "L2");
          options.set_double("TR_radius", 10);
          options.set_double("l1_constraint_violation_coefficient", 1.);
+         options.set_bool("use_proximal_term", false);
          options.set_double("primal_tolerance", 1e-6);
          options.set_double("dual_tolerance", 1e-5);
          options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);

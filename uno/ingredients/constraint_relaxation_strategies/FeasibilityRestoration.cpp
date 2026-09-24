@@ -29,7 +29,8 @@ namespace uno {
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
-         feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */),
+         feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */,
+            options.get_bool("use_proximal_term")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
@@ -62,7 +63,7 @@ namespace uno {
 
       const auto [number_optimality_variables, _] = this->inequality_handling_method->get_dimensions();
       this->pre_restoration_primals.resize(number_optimality_variables);
-      this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.data());
+      this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.view());
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics);
@@ -110,7 +111,7 @@ namespace uno {
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
       this->pre_restoration_primals = view(current_iterate.primals, 0, number_optimality_variables);
-      this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.data());
+      this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.view());
 
       // prepare the iterate for restoration (resize + set primal-dual values)
       current_iterate.set_number_variables(number_feasibility_variables);
@@ -206,7 +207,7 @@ namespace uno {
             this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
             DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
             // re-center the proximal term at the current iterate
-            this->feasibility_problem.set_proximal_center(current_iterate.primals.data());
+            this->feasibility_problem.set_proximal_center(current_iterate.primals.view());
          }
       }
 

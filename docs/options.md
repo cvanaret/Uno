@@ -184,6 +184,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | :---                                                   | :---   | :---    |:--------------------------------------------------------------------------------------------|
 | `switch_to_optimality_requires_linearized_feasibility` | bool   | `true`  | Whether the switch to optimality phase requires the linearized constraints to be consistent |
 | `l1_constraint_violation_coefficient`                  | double | 1       | Coefficient of the constraint violation in the $\ell_1$ relaxed problem                     |
+| `use_proximal_term`                                    | bool   | false   | Whether a proximal term is used in the feasibility problem                                  |
 
 ## Barrier subproblem options
 
