@@ -300,13 +300,16 @@ namespace uno {
       const auto& variables_lower_bounds = model.get_variables_lower_bounds();
       const auto& variables_upper_bounds = model.get_variables_upper_bounds();
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
+         double result = 0.;
          if (is_finite(variables_lower_bounds[variable_index])) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]);
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - variables_lower_bounds[variable_index])));
          }
          if (is_finite(variables_upper_bounds[variable_index])) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]);
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - variables_upper_bounds[variable_index])));
          }
-         return 0.;
+         return result;
       }};
 
       // inequality constraints
