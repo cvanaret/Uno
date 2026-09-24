@@ -53,7 +53,6 @@ namespace uno {
       // - ∇c(x_k) λ_k
       if (0 < this->number_constraints) {
          // TODO test whether λ_k != 0
-         evaluations.is_jacobian_computed = false;
          evaluations.evaluate_jacobian(*this, primals);
          evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.view(), lagrangian_gradient.view());
          lagrangian_gradient.scale(-1.);
