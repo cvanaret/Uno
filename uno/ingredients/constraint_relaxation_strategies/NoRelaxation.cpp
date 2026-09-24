@@ -51,7 +51,7 @@ namespace uno {
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem\n";
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics,
-         current_iterate);
+         current_iterate, current_evaluations);
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (parameterization_updated) {
          this->globalization_strategy.reset();

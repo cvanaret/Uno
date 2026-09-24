@@ -6,7 +6,6 @@
 
 #include <vector>
 #include "model/Model.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/ProblemType.hpp"
 #include "symbolic/CollectionAdapter.hpp"
@@ -62,7 +61,6 @@ namespace uno {
 
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
-      [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
@@ -114,7 +112,6 @@ namespace uno {
       CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
       CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
-      SparseVector<size_t> slacks{};
       Vector<size_t> fixed_variables;
 
       mutable NumberModelEvaluations number_model_evaluations{};

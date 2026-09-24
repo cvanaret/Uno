@@ -37,7 +37,12 @@ namespace uno {
          multipliers_threshold);
    }
 
-   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/) {
+   std::pair<size_t, size_t> NoInequalityReformulation::get_dimensions() const {
+      return {this->problem.number_variables, this->problem.number_constraints};
+   }
+
+   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         Evaluations& /*evaluations*/) {
       // the parameterization is not updated
       return false;
    }

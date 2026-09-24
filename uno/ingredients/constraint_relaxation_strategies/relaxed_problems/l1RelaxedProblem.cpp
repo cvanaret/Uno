@@ -55,10 +55,6 @@ namespace uno {
       }
    }
 
-   std::unique_ptr<OptimizationProblem> l1RelaxedProblem::clone() const {
-      return std::make_unique<l1RelaxedProblem>(*this);
-   }
-
    double l1RelaxedProblem::get_objective_multiplier() const {
       return this->objective_multiplier;
    }
@@ -288,6 +284,56 @@ namespace uno {
       }
    }
 
+   double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const {
+      // bound constraints
+      const Range variables_range = Range(this->model.number_variables);
+      const auto& variables_lower_bounds = model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = model.get_variables_upper_bounds();
+      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]);
+         }
+         if (is_finite(variables_upper_bounds[variable_index])) {
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]);
+         }
+         return 0.;
+      }};
+
+      // inequality constraints
+      const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
+      const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
+         // violated constraints
+         if (constraints[constraint_index] < constraints_lower_bounds[constraint_index]) {
+            return (multipliers.constraints[constraint_index] - this->constraint_violation_coefficient) *
+               (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+         else if (constraints_upper_bounds[constraint_index] < constraints[constraint_index]) {
+            return (multipliers.constraints[constraint_index] + this->constraint_violation_coefficient) *
+               (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+         // the constraint is satisfied
+         // if constraint is one-sided, pick that bound
+         else if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+         else if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+         // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
+         // complementarity pair
+         else if (0. < multipliers.constraints[constraint_index]) { // lower bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+         else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+         return 0.;
+      }};
+      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
    SolutionStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
@@ -400,7 +446,9 @@ namespace uno {
       // r = c(x) − p + n ; since JΔx − Δp + Δn = −r (KKT), pred(α) = α‖r‖₁
       this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
       const double residual_violation = this->model.constraint_violation(this->constraints_buffer, Norm::L1);
-      return [residual_violation](double step_length) { return step_length * residual_violation; };
+      return [residual_violation](double step_length) {
+         return step_length * residual_violation;
+      };
    }
 
    PredictedObjectiveReduction l1RelaxedProblem::build_predicted_objective_reduction(const Iterate& /*current_iterate*/,

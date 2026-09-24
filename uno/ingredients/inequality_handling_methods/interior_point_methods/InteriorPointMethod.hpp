@@ -30,7 +30,10 @@ namespace uno {
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
-      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) override;
+      [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
+
+      [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
@@ -130,11 +133,18 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate) {
+   std::pair<size_t, size_t> InteriorPointMethod<BarrierProblem>::get_dimensions() const {
+      return {this->barrier_problem.number_variables, this->barrier_problem.number_constraints};
+   }
+
+   template <typename BarrierProblem>
+   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations) {
       bool update = false;
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->problem, current_iterate, current_iterate.residuals);
+         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate,
+            evaluations, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -148,6 +158,7 @@ namespace uno {
    const Direction& InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
+      DEBUG << "Barrier parameter = " << this->barrier_parameter() << '\n';
       return this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius,
          initial_point, current_evaluations, warmstart_information);
    }
@@ -171,28 +182,33 @@ namespace uno {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
       // cap the original variables to [-rho, +rho]
-      const auto& variables_lower_bounds = feasibility_problem.model.get_variables_lower_bounds();
-      const auto& variables_upper_bounds = feasibility_problem.model.get_variables_upper_bounds();
-      for (size_t variable_index: Range(feasibility_problem.model.number_variables)) {
-         if (is_finite(variables_lower_bounds[variable_index])) {
+      for (size_t variable_index: Range(this->barrier_problem.number_variables)) {
+         if (iterate.multipliers.lower_bounds[variable_index] > 0.) {
             iterate.multipliers.lower_bounds[variable_index] = std::min(iterate.multipliers.lower_bounds[variable_index],
                feasibility_problem.constraint_violation_coefficient);
          }
-         if (is_finite(variables_upper_bounds[variable_index])) {
+         if (iterate.multipliers.upper_bounds[variable_index] < 0.) {
             iterate.multipliers.upper_bounds[variable_index] = std::max(iterate.multipliers.upper_bounds[variable_index],
                -feasibility_problem.constraint_violation_coefficient);
          }
       }
 
+      // reset the elastics
+      const auto elastic_reset = [&](size_t /*constraint_index*/, size_t elastic_index, ElasticType /*elastic_type*/) {
+         iterate.primals[elastic_index] = 0.;
+      };
+      feasibility_problem.set_elastic_variable_values(elastic_reset);
+
       // c(x) - p + n = 0
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
-      evaluations.evaluate_constraints(feasibility_problem.model, iterate.primals);
+      Vector<double> constraints(this->barrier_problem.number_constraints); // TODO preallocate
+      this->barrier_problem.evaluate_constraints(iterate, constraints.view(), evaluations);
       const double mu = this->barrier_parameter();
       const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
          // precomputations
-         const double constraint_j = evaluations.constraints[constraint_index];
+         const double constraint_j = constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
@@ -202,6 +218,10 @@ namespace uno {
          iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
          iterate.multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
          iterate.multipliers.upper_bounds[elastic_index] = 0.;
+         // set the constraint multipliers to keep them consistent wrt the l1 feasibility KKT conditions
+         iterate.multipliers.constraints[constraint_index] = (elastic_type == ElasticType::POSITIVE) ?
+            iterate.multipliers.lower_bounds[elastic_index] - rho:
+            rho - iterate.multipliers.lower_bounds[elastic_index];
          if (iterate.primals[elastic_index] <= 0.) {
             throw std::runtime_error("The elastic variable is not strictly positive.");
          }

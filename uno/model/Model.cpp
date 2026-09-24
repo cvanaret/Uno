@@ -5,10 +5,12 @@
 #include <cmath>
 #include <utility>
 #include "Model.hpp"
+#include "linear_algebra/Norm.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Collection.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -85,6 +87,47 @@ namespace uno {
       const double lower_bound_violation = std::max(0., this->get_constraints_lower_bounds()[constraint_index] - constraint_value);
       const double upper_bound_violation = std::max(0., constraint_value - this->get_constraints_upper_bounds()[constraint_index]);
       return std::max(lower_bound_violation, upper_bound_violation);
+   }
+
+   double Model::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const {
+      // bound constraints
+      const Range variables_range = Range(this->number_variables);
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
+      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
+         double result = 0.;
+         if (is_finite(variables_lower_bounds[variable_index])) {
+            result += std::abs(multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]));
+         }
+         if (is_finite(variables_upper_bounds[variable_index])) {
+            result += std::abs(multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]));
+         }
+         return result;
+      }};
+
+      // inequality constraints
+      const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
+      Vector<double> constraint_complementarity(this->number_constraints, 0.);
+      for (size_t constraint_index: this->get_inequality_constraints()) {
+         // if constraint is one-sided, pick that bound
+         if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+         else if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+         // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
+         // complementarity pair
+         else if (0. < multipliers.constraints[constraint_index]) { // lower bound
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+         else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+         }
+      }
+      return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 
    void Model::find_fixed_variables(Vector<size_t>& fixed_variables) const {

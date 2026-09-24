@@ -5,6 +5,7 @@
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
 #include "optimization/OptimizationProblem.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/IntegerRange.hpp"
 
@@ -17,7 +18,6 @@ namespace uno {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
          const Parameterization& parameterization);
-      [[nodiscard]] std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
       [[nodiscard]] bool has_inequality_constraints() const override;
@@ -69,9 +69,11 @@ namespace uno {
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate) const override;
+      [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
+      [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
       // progress measures
-      void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const override;
+      void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const override;
       void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const override;
       void set_auxiliary_measure(Iterate& iterate) const override;
 
@@ -83,19 +85,31 @@ namespace uno {
       [[nodiscard]] PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const override;
 
+      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers, double shift) const;
+
    protected:
-      const OptimizationProblem& inner;
+      const OptimizationProblem& unslacked_problem;
       const Parameterization& parameterization;
       const InteriorPointParameters& parameters;
+      SparseVector<size_t> slacks;
       const Vector<size_t> fixed_variables{};
       const IntegerRange equality_constraints;
       const IntegerRange inequality_constraints{0};
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
-      // internal bounds (may be slightly relaxed if necessary)
-      mutable std::vector<double> variables_lower_bounds;
-      mutable std::vector<double> variables_upper_bounds;
+      // internal bounds
+      std::vector<double> variables_lower_bounds;
+      std::vector<double> variables_upper_bounds;
+
+      std::vector<double> constraints_lower_bounds;
+      std::vector<double> constraints_upper_bounds;
+
+      Vector<uno_int> jacobian_row_indices{};
+
+      Vector<uno_int> jacobian_column_indices{};
+      mutable Vector<double> constraints_buffer;
+      mutable Vector<double> constraints_buffer2;
 
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
          double tau) const;

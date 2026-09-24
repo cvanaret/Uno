@@ -34,7 +34,10 @@ namespace uno {
       virtual void initialize_memory() = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       virtual void create_initial_iterate(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold) const = 0;
-      [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual std::pair<size_t, size_t> get_dimensions() const = 0;
+
+      [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations) = 0;
       [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) = 0;

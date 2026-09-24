@@ -42,7 +42,9 @@ namespace uno {
    void ConstraintRelaxationStrategy::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
       // stationarity error (norm of the Lagrangian gradient)
-      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.residuals.lagrangian_gradient);
+      problem.model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, problem.get_objective_multiplier(),
+         evaluations, iterate.residuals.lagrangian_gradient);
+      //problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.residuals.lagrangian_gradient);
       iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
 
       // primal feasibility/constraint violation of the model
@@ -50,9 +52,8 @@ namespace uno {
       iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
-      problem.evaluate_constraints(iterate, iterate.residuals.constraints_buffer.view(), evaluations);
-      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, iterate.residuals.constraints_buffer,
-         iterate.multipliers, 0., this->residual_norm);
+      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,
+         iterate.multipliers, this->residual_norm);
 
       // scaling factors
       iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, iterate.multipliers);
