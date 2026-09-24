@@ -170,13 +170,7 @@ namespace uno {
       // copy the constraints at the end of the RHS
       auto rhs_constraints = view(linear_system.rhs, subproblem.number_variables, subproblem.number_variables +
          subproblem.number_constraints);
-      rhs_constraints = this->constraints_SOC;
-      // shift the bound (lb == ub)
-      for (size_t constraint_index: Range(subproblem.number_constraints)) {
-         rhs_constraints[constraint_index] -= subproblem.problem.get_constraints_lower_bounds()[constraint_index];
-      }
-      // flip sign
-      rhs_constraints.scale(-1.);
+      rhs_constraints = subproblem.problem.get_constraints_lower_bounds() - this->constraints_SOC;
       DEBUG2 << "SOC RHS: " << linear_system.rhs << '\n';
 
       // solve the linear system and assemble the full primal-dual direction

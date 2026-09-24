@@ -133,8 +133,6 @@ namespace uno {
    void MA57Solver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 
-      //std::cout << "MA57 rows: " << view(this->linear_system.matrix_row_indices) << '\n';
-      //std::cout << "MA57 cols: " << view(this->linear_system.matrix_column_indices) << '\n';
       MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
          this->linear_system.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
@@ -156,7 +154,6 @@ namespace uno {
 
    void MA57Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
-      //std::cout << "MA57 values: " << this->linear_system.matrix_values << '\n';
 
       bool factorization_done = false;
       while (!factorization_done) {
