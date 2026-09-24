@@ -88,13 +88,13 @@ function test_nactive()
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 0.) <= tolerance
     (tolerance, dual_solution) = if preset == "ipopt"
-       (1000. * tolerance, [1000., 500., 0.]) # IPOPT scales the feasibility objective by 1000
+       (1000. * tolerance, [1000., 500.]) # IPOPT scales the feasibility objective by 1000
     else
-       (tolerance, [1., 0.5, 0.])
+       (tolerance, [1., 0.5])
     end
     @assert abs(dual(c1) - dual_solution[1]) <= tolerance
-    @assert abs(dual(c2) - dual_solution[2]) <= tolerance
-    @assert abs(dual(c3) - dual_solution[3]) <= tolerance
+    # the multipliers are not unique and satisfy y2 - y3 = 0.5 (500 for ipopt)
+    @assert abs((dual(c2) - dual(c3)) - dual_solution[2]) <= tolerance
 end
 
 function test_unique()
