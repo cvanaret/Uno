@@ -207,7 +207,7 @@ namespace uno {
       // ρ f(x_k)
       if (this->objective_multiplier != 0.) {
          evaluations.evaluate_objective_gradient(this->model, iterate.primals);
-         lagrangian_gradient += this->objective_multiplier * evaluations.objective_gradient;
+         view(lagrangian_gradient, 0, this->model.number_variables) += this->objective_multiplier * evaluations.objective_gradient;
       }
 
       // elastic variables
