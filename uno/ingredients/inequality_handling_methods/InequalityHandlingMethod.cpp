@@ -42,6 +42,11 @@ namespace uno {
          accept_iterate = true;
          statistics.set("Status", "0 primal step");
       }
+      else if (is_infinite(trial_iterate.progress.auxiliary)) {
+         DEBUG << "The auxiliary measure is infinite (iterate too close to the bounds), rejecting the trial iterate\n";
+         accept_iterate = false;
+         statistics.set("Status", "inf auxiliary");
+      }
       else {
          // determine acceptance wrt the globalization strategy
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,

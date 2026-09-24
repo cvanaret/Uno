@@ -339,9 +339,6 @@ namespace uno {
    void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
 
-      // if the primals are too close to their bounds, push the bounds away by a small fraction (Section 3.5)
-      possibly_relax_variables_bounds(iterate);
-
       // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       for (size_t variable_index: Range(this->inner.number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
@@ -395,8 +392,6 @@ namespace uno {
       if (is_infinite(barrier_parameter)) {
          throw std::runtime_error("Barrier parameter is infinite");
       }
-
-      possibly_relax_variables_bounds(iterate);
 
       // add the contribution of the barrier terms
       double barrier_terms = 0.;
@@ -525,32 +520,6 @@ namespace uno {
          throw std::runtime_error("The dual fraction-to-boundary step length is not in (0, 1]");
       }
       return step_length;
-   }
-
-   void PrimalDualInteriorPointProblem::possibly_relax_variables_bounds(const Iterate& iterate) const {
-      const double barrier_parameter = this->parameterization.get("barrier_parameter");
-      constexpr double macheps = std::numeric_limits<double>::epsilon();
-      const double safe = std::pow(macheps, 0.75);
-      size_t adjusted = 0;
-      for (size_t variable_index: Range(this->number_variables)) {
-         if (is_finite(this->variables_lower_bounds[variable_index])) {
-            const double floor = safe * std::max(1.0, std::abs(this->variables_lower_bounds[variable_index]));
-            if (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index] < macheps * barrier_parameter) {
-               this->variables_lower_bounds[variable_index] -= floor;
-               ++adjusted;
-            }
-         }
-         if (is_finite(this->variables_upper_bounds[variable_index])) {
-            const double floor = safe * std::max(1.0, std::abs(this->variables_upper_bounds[variable_index]));
-            if (this->variables_upper_bounds[variable_index] - iterate.primals[variable_index] < macheps * barrier_parameter) {
-               this->variables_upper_bounds[variable_index] += floor;
-               ++adjusted;
-            }
-         }
-      }
-      if (adjusted > 0) {
-         DEBUG << adjusted << " slack(s) too close to their bounds, slightly relaxing the bounds\n";
-      }
    }
 
    double PrimalDualInteriorPointProblem::compute_barrier_term_directional_derivative(const Iterate& current_iterate,

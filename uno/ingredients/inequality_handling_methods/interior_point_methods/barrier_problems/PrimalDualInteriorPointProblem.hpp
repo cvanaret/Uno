@@ -101,7 +101,6 @@ namespace uno {
          double tau) const;
       [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers, const Multipliers& direction_multipliers,
          double tau) const;
-      void possibly_relax_variables_bounds(const Iterate& iterate) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
    };
