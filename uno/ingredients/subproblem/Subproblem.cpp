@@ -121,7 +121,8 @@ namespace uno {
       // contribution of the regularization strategy
       const double regularization_factor = this->inertia_correction_strategy.get_primal_regularization_factor();
       if (0. < regularization_factor) {
-         for (size_t variable_index: this->get_primal_regularization_variables()) {
+         // for (size_t variable_index: this->get_primal_regularization_variables()) { // TODO
+         for (size_t variable_index: Range(this->number_variables)) { // loop over all the variables for now
             result[variable_index] += regularization_factor*vector[variable_index];
          }
       }
