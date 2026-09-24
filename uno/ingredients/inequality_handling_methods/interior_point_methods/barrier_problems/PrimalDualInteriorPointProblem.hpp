@@ -98,9 +98,9 @@ namespace uno {
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
-      // internal bounds (may be slightly relaxed if necessary)
-      mutable std::vector<double> variables_lower_bounds;
-      mutable std::vector<double> variables_upper_bounds;
+      // internal bounds
+      std::vector<double> variables_lower_bounds;
+      std::vector<double> variables_upper_bounds;
 
       std::vector<double> constraints_lower_bounds;
       std::vector<double> constraints_upper_bounds;
