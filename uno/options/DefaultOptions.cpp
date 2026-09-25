@@ -170,6 +170,8 @@ namespace uno {
       options.set_double("barrier_small_infeasibility_factor", 1e-4);
       options.set_double("least_square_multiplier_max_norm", 1e3);
       options.set_double("bound_multiplier_max_norm", 1e3);
+      options.set_double("constraint_violation_tolerance", 1e-4);
+      options.set_double("bound_relaxation_factor", 1e-8);
 
       /** BQPD options **/
       options.set_string("BQPD_kmax_heuristic", "filtersqp");

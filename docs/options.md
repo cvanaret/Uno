@@ -214,6 +214,8 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `barrier_small_infeasibility_factor`   | double | 1e-4    | Factor in the small infeasibility test                                     |
 | `least_square_multiplier_max_norm`     | double | 1e3     | Maximum accepted norm of the least-square multipliers                      |
 | `bound_multiplier_max_norm`            | double | 1e3     | Maximum accepted norm of the bound duals when switching from restoration to optimality |
+| `constraint_violation_tolerance`       | double | 1e-4    | Constraint violation tolerance                                             |
+| `bound_relaxation_factor`              | double | 1e-8    | Bound relaxation factor                                                    |
 
 ## BQPD options
 
