@@ -50,19 +50,21 @@ namespace uno {
          Evaluations& evaluations, Vector<double>& lagrangian_gradient) const {
       lagrangian_gradient.fill(0.);
 
-      // - ∇c(x_k) λ_k
+      // -∇f(x_k)
+      if (objective_multiplier != 0.) {
+         evaluations.evaluate_objective_gradient(*this, primals);
+         view(lagrangian_gradient, 0, this->number_variables) = -objective_multiplier * evaluations.objective_gradient;
+      }
+
+      // ∇c(x_k) λ_k
       if (0 < this->number_constraints) {
          // TODO test whether λ_k != 0
          evaluations.evaluate_jacobian(*this, primals);
-         evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.view(), lagrangian_gradient.view());
-         lagrangian_gradient.scale(-1.);
+         evaluations.add_jacobian_transposed_vector_product(*this, multipliers.constraints.view(), lagrangian_gradient.view());
       }
 
-      // ∇f(x_k)
-      if (objective_multiplier != 0.) {
-         evaluations.evaluate_objective_gradient(*this, primals);
-         view(lagrangian_gradient, 0, this->number_variables) += objective_multiplier * evaluations.objective_gradient;
-      }
+      // ∇f(x_k) - ∇c(x_k) λ_k
+      lagrangian_gradient.scale(-1.);
 
       // z_k
       view(lagrangian_gradient, 0, this->number_variables) -= view(multipliers.lower_bounds, 0, this->number_variables);
