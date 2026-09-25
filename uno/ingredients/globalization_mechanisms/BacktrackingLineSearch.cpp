@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <stdexcept>
 #include "BacktrackingLineSearch.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
@@ -32,7 +33,9 @@ namespace uno {
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
-      assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
+      if (this->backtracking_ratio <= 0. || this->backtracking_ratio >= 1.) {
+         throw std::runtime_error("The LS backtracking ratio should be in (0, 1)");
+      }
    }
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
