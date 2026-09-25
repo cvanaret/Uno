@@ -32,7 +32,6 @@ namespace uno {
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
-      // check the initial and minimal step lengths
       assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    }
 

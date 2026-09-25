@@ -77,7 +77,6 @@ namespace uno {
       }
    }
 
-   // warning: adds to objective_gradient (objective_gradient must be reset prior, if necessary)
    void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       objective_gradient.fill(0.);
@@ -178,7 +177,7 @@ namespace uno {
 
    void OptimizationProblem::compute_bound_dual_direction(const Vector<double>& /*current_primals*/, const Multipliers& /*current_multipliers*/,
          const Vector<double>& /*direction_primals*/, Multipliers& /*direction_multipliers*/, double& /*bound_dual_step_length*/) const {
-      // do no
+      // do nothing
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
