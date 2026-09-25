@@ -63,7 +63,6 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      double previous_barrier_parameter;
       const InteriorPointParameters parameters;
 
       Parameterization parameterization;
@@ -76,7 +75,6 @@ namespace uno {
       std::unique_ptr<Subproblem> subproblem;
 
       const double least_square_multiplier_max_norm;
-      const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)
 
       bool first_feasibility_iteration{false};
 
@@ -90,7 +88,6 @@ namespace uno {
    InteriorPointMethod<BarrierProblem>::InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region,
       double objective_multiplier, Options& options):
          InequalityHandlingMethod(problem, options),
-         previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
          parameters({
                options.get_double("barrier_tau_min"),
                options.get_double("barrier_k_sigma"),
@@ -103,8 +100,7 @@ namespace uno {
          }),
          barrier_problem(problem, this->parameters, this->parameterization),
          barrier_parameter_update_strategy(options),
-         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
-         l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
+         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
@@ -167,12 +163,11 @@ namespace uno {
    void InteriorPointMethod<BarrierProblem>::initialize_feasibility_problem(Iterate& current_iterate) {
       this->first_feasibility_iteration = true;
 
-      // temporarily update the objective multiplier
-      this->previous_barrier_parameter = this->barrier_parameter();
+      // update the objective multiplier
       const double new_barrier_parameter = std::max(this->barrier_parameter(), current_iterate.primal_infeasibility);
       this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
-      DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
+      DEBUG << "Barrier parameter = " << this->barrier_parameter() << '\n';
    }
 
    template <typename BarrierProblem>
@@ -209,7 +204,7 @@ namespace uno {
       const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
          // precomputations
          const double constraint_j = constraints[constraint_index];
-         const double rho = this->l1_constraint_violation_coefficient;
+         const double rho = feasibility_problem.constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
          const double sqrt_radical = std::sqrt(radical);

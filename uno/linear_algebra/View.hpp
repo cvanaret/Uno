@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 #include "BLAS.hpp"
 #include "symbolic/Inverse.hpp"

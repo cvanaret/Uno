@@ -77,11 +77,10 @@ namespace uno {
       }
    }
 
-   // warning: adds to objective_gradient (objective_gradient must be reset prior, if necessary)
    void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       objective_gradient.fill(0.);
-      for (size_t index: Range(this->number_variables)) {
+      for (size_t index: Range(this->model.number_variables)) {
          objective_gradient[index] += evaluations.objective_gradient[index];
       }
    }
@@ -97,7 +96,8 @@ namespace uno {
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    void OptimizationProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
          Vector<double>& lagrangian_gradient) const {
-      this->model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, 1., evaluations, lagrangian_gradient);
+      this->model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, this->get_objective_multiplier(),
+         evaluations, lagrangian_gradient);
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
@@ -178,7 +178,7 @@ namespace uno {
 
    void OptimizationProblem::compute_bound_dual_direction(const Vector<double>& /*current_primals*/, const Multipliers& /*current_multipliers*/,
          const Vector<double>& /*direction_primals*/, Multipliers& /*direction_multipliers*/, double& /*bound_dual_step_length*/) const {
-      // do no
+      // do nothing
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
@@ -238,7 +238,7 @@ namespace uno {
       current_evaluations.evaluate_jacobian(this->model, current_iterate.primals);
       const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
 
-      // cache the (expensive) Jacobian–direction product Jd and snapshot the current constraints
+      // cache the (expensive) Jacobian–direction product Jd
       this->Jv_buffer.fill(0.);
       current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), this->Jv_buffer.view());
 

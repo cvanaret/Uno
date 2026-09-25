@@ -194,6 +194,8 @@ TR_radius_reset_threshold 1e-4
 switch_to_optimality_requires_linearized_feasibility true
 # Coefficient of the constraint violation in the ℓ_1 relaxed problem (double)
 l1_constraint_violation_coefficient 1
+# Whether a proximal term is used in the feasibility problem
+use_proximal_term false
 
 ## Barrier subproblem options
 # Type of the barrier function (log)

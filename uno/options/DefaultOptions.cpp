@@ -149,6 +149,7 @@ namespace uno {
       // test linearized feasibility when switching back to the optimality phase
       options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
       options.set_double("l1_constraint_violation_coefficient", 1.);
+      options.set_bool("use_proximal_term", false);
 
       /** barrier subproblem options **/
       options.set_string("barrier_function", "log");

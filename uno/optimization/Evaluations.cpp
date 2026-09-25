@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cmath>
+#include <stdexcept>
 #include "Evaluations.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -13,7 +15,7 @@ namespace uno {
       jacobian_values(model.number_jacobian_nonzeros()) {
    }
 
-   bool invalid_value(double value) {
+   static bool invalid_value(double value) {
       return is_infinite(value) || std::isnan(value);
    }
 

@@ -15,7 +15,7 @@ namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-         bool relax_linear_constraints);
+         bool relax_linear_constraints, bool use_proximal_term);
       ~l1RelaxedProblem() override = default;
 
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -23,7 +23,7 @@ namespace uno {
       [[nodiscard]] bool has_bound_constraints() const override;
 
       void set_proximal_coefficient(double proximal_coefficient);
-      void set_proximal_center(double* proximal_center);
+      void set_proximal_center(View<const double> point);
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -88,8 +88,9 @@ namespace uno {
       ElasticVariables elastic_variables;
       const size_t number_elastic_variables;
       const double objective_multiplier;
+      const bool use_proximal_term;
       double proximal_coefficient{0.};
-      double* proximal_center{};
+      Vector<double> proximal_center;
       const IntegerRange dual_regularization_constraints;
 
       std::vector<double> variables_lower_bounds;
@@ -102,7 +103,7 @@ namespace uno {
 
       // delegating constructor
       l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
-         double constraint_violation_coefficient);
+         double constraint_violation_coefficient, bool use_proximal_term);
    };
 } // namespace
 

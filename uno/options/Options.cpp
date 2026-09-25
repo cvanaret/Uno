@@ -85,6 +85,7 @@ namespace uno {
       {"TR_radius_reset_threshold", OptionType::DOUBLE},
       {"switch_to_optimality_requires_linearized_feasibility", OptionType::BOOL},
       {"l1_constraint_violation_coefficient", OptionType::DOUBLE},
+      {"use_proximal_term", OptionType::BOOL},
       {"barrier_function", OptionType::STRING},
       {"barrier_initial_parameter", OptionType::DOUBLE},
       {"barrier_default_multiplier", OptionType::DOUBLE},

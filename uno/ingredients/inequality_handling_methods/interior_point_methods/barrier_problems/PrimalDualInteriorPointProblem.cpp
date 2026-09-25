@@ -435,15 +435,9 @@ namespace uno {
       if (total_size == 0) {
          return 1.;
       }
-      else {
-         const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
-         const double multiplier_norm = norm_1(
-               view(multipliers.constraints, 0, model.number_constraints),
-               view(multipliers.lower_bounds, 0, model.number_variables),
-               view(multipliers.upper_bounds, 0, model.number_variables)
-         );
-         return std::max(1., multiplier_norm / scaling_factor);
-      }
+      const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
+      const double multiplier_norm = norm_1(multipliers.constraints, multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., multiplier_norm / scaling_factor);
    }
 
    double PrimalDualInteriorPointProblem::compute_complementarity_scaling(const Multipliers& multipliers) const {
@@ -461,14 +455,9 @@ namespace uno {
       if (total_size == 0) {
          return 1.;
       }
-      else {
-         const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
-         const double bound_multiplier_norm = norm_1(
-               view(multipliers.lower_bounds, 0, model.number_variables),
-               view(multipliers.upper_bounds, 0, model.number_variables)
-         );
-         return std::max(1., bound_multiplier_norm / scaling_factor);
-      }
+      const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
+      const double bound_multiplier_norm = norm_1(multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 
    static double homogeneous_constraint_violation(double constraint_value) {

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <stdexcept>
 #include "BacktrackingLineSearch.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
@@ -32,8 +33,9 @@ namespace uno {
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
-      // check the initial and minimal step lengths
-      assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
+      if (this->backtracking_ratio <= 0. || this->backtracking_ratio >= 1.) {
+         throw std::runtime_error("The LS backtracking ratio should be in (0, 1)");
+      }
    }
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -98,6 +100,7 @@ namespace uno {
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
+      this->number_consecutive_tiny_directions = 0;
       const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
@@ -166,6 +169,12 @@ namespace uno {
       bool termination = false;
       size_t number_iterations = 0;
       DEBUG << "\nLine search: minimum step length set to " << minimum_step_length << '\n';
+
+      const bool tiny_direction = is_tiny_direction(current_iterate, direction);
+      if (!tiny_direction) {
+         this->number_consecutive_tiny_directions = 0;
+      }
+
       while (!termination) {
          ++number_iterations;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
@@ -191,7 +200,7 @@ namespace uno {
 
             // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
             // accept the step unconditionally
-            if (!is_acceptable && number_iterations == 1 && is_tiny_direction(current_iterate, direction)) {
+            if (!is_acceptable && number_iterations == 1 && tiny_direction) {
                // try to evaluate the functions at the trial iterate, so that the next subproblem is well defined
                evaluation_cache.trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
                evaluation_cache.trial_evaluations.evaluate_jacobian(model, trial_iterate.primals);
