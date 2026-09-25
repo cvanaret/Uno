@@ -75,7 +75,6 @@ namespace uno {
       std::unique_ptr<Subproblem> subproblem;
 
       const double least_square_multiplier_max_norm;
-      const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)
 
       bool first_feasibility_iteration{false};
 
@@ -101,8 +100,7 @@ namespace uno {
          }),
          barrier_problem(problem, this->parameters, this->parameterization),
          barrier_parameter_update_strategy(options),
-         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
-         l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
+         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
@@ -206,7 +204,7 @@ namespace uno {
       const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
          // precomputations
          const double constraint_j = constraints[constraint_index];
-         const double rho = this->l1_constraint_violation_coefficient;
+         const double rho = feasibility_problem.constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
          const double sqrt_radical = std::sqrt(radical);
