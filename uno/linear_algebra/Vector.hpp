@@ -4,6 +4,8 @@
 #ifndef UNO_VECTOR_H
 #define UNO_VECTOR_H
 
+#include <cassert>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <initializer_list>
