@@ -194,7 +194,7 @@ namespace uno {
 
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
-      evaluations.compute_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.view(),
+      evaluations.add_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.view(),
          lagrangian_gradient.view());
       lagrangian_gradient.scale(-1.);
 
@@ -254,8 +254,8 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const {
-      evaluations.compute_jacobian_vector_product(this->model, vector, result);
+   void l1RelaxedProblem::add_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const {
+      evaluations.add_jacobian_vector_product(this->model, vector, result);
 
       // add the contribution of the elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
@@ -266,9 +266,9 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
+   void l1RelaxedProblem::add_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
-      evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
+      evaluations.add_jacobian_transposed_vector_product(this->model, vector, result);
 
       // add the contribution of the elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
