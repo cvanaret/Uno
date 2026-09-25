@@ -94,14 +94,16 @@ namespace uno {
          return this->relaxed_variables_upper_bounds;
       }
 
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->model.get_fixed_variables(); }
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override {
+         return this->model.get_fixed_variables();
+      }
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override {
-         return this->model.get_constraints_lower_bounds();
+         return this->relaxed_constraints_lower_bounds;
       }
 
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override {
-         return this->model.get_constraints_upper_bounds();
+         return this->relaxed_constraints_upper_bounds;
       }
 
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->model.get_equality_constraints(); }
@@ -145,8 +147,13 @@ namespace uno {
    private:
       const Model& model;
       const double relaxation_factor;
+      const double constraint_violation_tolerance;
       std::vector<double> relaxed_variables_lower_bounds;
       std::vector<double> relaxed_variables_upper_bounds;
+      std::vector<double> relaxed_constraints_lower_bounds;
+      std::vector<double> relaxed_constraints_upper_bounds;
+
+      [[nodiscard]] double bound_relaxation(double bound) const;
    };
 } // namespace
 
