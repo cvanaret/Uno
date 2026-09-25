@@ -493,17 +493,27 @@ namespace uno {
       double barrier_terms = 0.;
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
-            barrier_terms -= std::log(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
+            const double distance = iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
+            if (distance <= 0.) {
+               iterate.progress.auxiliary = INF<double>;
+               return;
+            }
+            barrier_terms -= std::log(distance);
             if (is_infinite(this->variables_upper_bounds[variable_index])) {
                // damping
-               barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
+               barrier_terms += this->parameters.damping_factor*distance;
             }
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
-            barrier_terms -= std::log(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
+            const double distance = this->variables_upper_bounds[variable_index] - iterate.primals[variable_index];
+            if (distance <= 0.) {
+               iterate.progress.auxiliary = INF<double>;
+               return;
+            }
+            barrier_terms -= std::log(distance);
             if (is_infinite(this->variables_lower_bounds[variable_index])) {
                // damping
-               barrier_terms += this->parameters.damping_factor*(this->variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
+               barrier_terms += this->parameters.damping_factor*distance;
             }
          }
       }
