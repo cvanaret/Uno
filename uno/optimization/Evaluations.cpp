@@ -13,7 +13,7 @@ namespace uno {
       jacobian_values(model.number_jacobian_nonzeros()) {
    }
 
-   bool invalid_value(double value) {
+   static bool invalid_value(double value) {
       return is_infinite(value) || std::isnan(value);
    }
 

@@ -77,7 +77,7 @@ namespace uno {
       return current_objective - trial_objective;
    }
 
-   std::string to_string(double number) {
+   static std::string to_string(double number) {
       std::ostringstream stream;
       stream << std::defaultfloat << std::setprecision(7) << number;
       return stream.str();
