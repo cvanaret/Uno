@@ -99,8 +99,8 @@ namespace uno {
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
       // internal bounds
-      std::vector<double> variables_lower_bounds;
-      std::vector<double> variables_upper_bounds;
+      mutable std::vector<double> variables_lower_bounds;
+      mutable std::vector<double> variables_upper_bounds;
 
       std::vector<double> constraints_lower_bounds;
       std::vector<double> constraints_upper_bounds;
@@ -117,6 +117,7 @@ namespace uno {
          double tau) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
+      void possibly_relax_variables_bounds(const Iterate& iterate) const;
    };
 } // namespace
 
