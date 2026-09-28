@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_OPTIONS_H
@@ -6,12 +6,26 @@
 
 #include <unordered_map>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
    enum class OptionType {INTEGER, DOUBLE, BOOL, STRING};
+
+   using OptionValue = std::variant<uno_int, double, bool, std::string>;
+
+   class OptionOverride {
+   public:
+      std::string option_name;
+      std::optional<std::string> old_value;
+      std::string new_value;
+      std::string reason;
+
+      OptionOverride(std::string option_name, std::optional<std::string> old_value, std::string new_value, std::string reason);
+   };
 
    class Options {
    public:
@@ -32,11 +46,11 @@ namespace uno {
       [[nodiscard]] bool get_bool(const std::string& option_name) const;
       [[nodiscard]] const std::string& get_string(const std::string& option_name) const;
 
-      [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
       [[nodiscard]] std::optional<uno_int> get_int_optional(const std::string& option_name) const;
       [[nodiscard]] std::optional<size_t> get_unsigned_int_optional(const std::string& option_name) const;
       [[nodiscard]] std::optional<double> get_double_optional(const std::string& option_name) const;
       [[nodiscard]] std::optional<bool> get_bool_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
 
       [[nodiscard]] OptionType get_option_type(const std::string& option_name) const;
 
@@ -51,21 +65,53 @@ namespace uno {
 
       static const std::unordered_map<std::string, OptionType> option_types;
 
-   private:
-      std::unordered_map<std::string, uno_int> integer_options{};
-      std::unordered_map<std::string, double> double_options{};
-      std::unordered_map<std::string, bool> bool_options{};
-      std::unordered_map<std::string, std::string> string_options{};
-   };
+   protected:
+      std::unordered_map<std::string, OptionValue> values;
 
-   class OptionOverride {
-   public:
-      std::string option_name;
-      std::optional<std::string> old_value;
-      std::string new_value;
-      std::string reason;
+      mutable std::unordered_map<std::string, bool> used{};
+      mutable std::unordered_map<std::string, bool> overwritten_options{};
 
-      OptionOverride(std::string option_name, std::optional<std::string> old_value, std::string new_value, std::string reason);
+      static std::string to_string(const OptionValue& value);
+
+      template <typename T>
+      static constexpr const char* option_type_name() {
+         if constexpr (std::is_same_v<T, int>) return "int";
+         else if constexpr (std::is_same_v<T, double>) return "double";
+         else if constexpr (std::is_same_v<T, bool>) return "bool";
+         else if constexpr (std::is_same_v<T, std::string>) return "string";
+         else {
+            static_assert(sizeof(T) == 0, "Unsupported option type");
+            return "";
+         }
+      }
+
+      template <typename T>
+      const T& get(const std::string& option_name) const {
+         try {
+            const OptionValue& value = this->values.at(option_name);
+            if (const T* typed_value = std::get_if<T>(&value)) {
+               this->used[option_name] = true;
+               return *typed_value;
+            }
+            throw std::runtime_error("Option " + option_name + " has the wrong type");
+         }
+         catch (const std::out_of_range&) {
+            throw std::out_of_range(std::string("The ") + option_type_name<T>() + " option " + option_name + " is not available");
+         }
+      }
+
+      template <typename T>
+      std::optional<T> get_optional(const std::string& option_name) const {
+         const auto it = this->values.find(option_name);
+         if (it == this->values.end()) {
+            return std::nullopt;
+         }
+         if (const T* typed_value = std::get_if<T>(&it->second)) {
+            this->used[option_name] = true;
+            return *typed_value;
+         }
+         throw std::runtime_error("The option " + option_name + " is not a " + option_type_name<T>() + " option");
+      }
    };
 } // namespace
 
