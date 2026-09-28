@@ -181,21 +181,21 @@ namespace uno {
    void DefaultOptions::determine_subproblem_solvers(Options& options) {
       // QP solver
       if (0 < QPSolverFactory::available_solvers.size()) {
-         options.set_string("QP_solver", *QPSolverFactory::available_solvers.begin(), true);
+         options.set_string("QP_solver", *QPSolverFactory::available_solvers.begin());
       }
       // LP solver
       if (0 < LPSolverFactory::available_solvers.size()) {
-         options.set_string("LP_solver", *LPSolverFactory::available_solvers.begin(), true);
+         options.set_string("LP_solver", *LPSolverFactory::available_solvers.begin());
       }
       // linear solver
       // HSL runtime loading: this runs before user options are parsed, so it can't see "libhsl_path" below.
       // Set UNO_HSL_LIBRARY to auto-select MA27/MA57, or choose linear_solver explicitly.
       const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
       if (!linear_solvers.empty()) {
-         options.set_string("linear_solver", linear_solvers[0], true);
+         options.set_string("linear_solver", linear_solvers[0]);
       }
       // path to the HSL shared library to dlopen for MA27/MA57 at runtime
       // (empty = platform default libhsl.{so,dylib,dll})
-      options.set_string("libhsl_path", "", true);
+      options.set_string("libhsl_path", "");
    }
 } // namespace

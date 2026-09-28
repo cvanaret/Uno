@@ -17,12 +17,12 @@ namespace uno {
    public:
       Options() = default;
 
-      void set_integer(const std::string& option_name, uno_int option_value, bool flag_as_overwritten = false);
-      void set_double(const std::string& option_name, double option_value, bool flag_as_overwritten = false);
-      void set_bool(const std::string& option_name, bool option_value, bool flag_as_overwritten = false);
-      void set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
+      void set_integer(const std::string& option_name, uno_int option_value);
+      void set_double(const std::string& option_name, double option_value);
+      void set_bool(const std::string& option_name, bool option_value);
+      void set_string(const std::string& option_name, const std::string& option_value);
       // setter for option with unknown type
-      void set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
+      void set(const std::string& option_name, const std::string& option_value);
 
       void overwrite(const Options& options);
 
@@ -50,9 +50,6 @@ namespace uno {
       std::unordered_map<std::string, double> double_options{};
       std::unordered_map<std::string, bool> bool_options{};
       std::unordered_map<std::string, std::string> string_options{};
-
-      mutable std::unordered_map<std::string, bool> used{};
-      mutable std::unordered_map<std::string, bool> overwritten_options{};
    };
 } // namespace
 

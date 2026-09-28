@@ -16,7 +16,7 @@ namespace uno {
       if (model.number_constraints == 0) {
          DEBUG << "The model is unconstrained, picking no relaxation\n";
          // override user defined option
-         options.set_string("constraint_relaxation_strategy", "no_relaxation", true);
+         options.set_string("constraint_relaxation_strategy", "no_relaxation");
          return std::make_unique<NoRelaxation>(model, options);
       }
       // from now on, there are constraints

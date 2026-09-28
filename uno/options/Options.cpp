@@ -119,41 +119,37 @@ namespace uno {
    };
 
    // setters
-   void Options::set_integer(const std::string& option_name, uno_int option_value, bool flag_as_overwritten) {
+   void Options::set_integer(const std::string& option_name, uno_int option_value) {
       this->integer_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
-   void Options::set_double(const std::string& option_name, double option_value, bool flag_as_overwritten) {
+   void Options::set_double(const std::string& option_name, double option_value) {
       this->double_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
-   void Options::set_bool(const std::string& option_name, bool option_value, bool flag_as_overwritten) {
+   void Options::set_bool(const std::string& option_name, bool option_value) {
       this->bool_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
-   void Options::set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
+   void Options::set_string(const std::string& option_name, const std::string& option_value) {
       this->string_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
    // setter for option with unknown type
-   void Options::set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
+   void Options::set(const std::string& option_name, const std::string& option_value) {
       try {
          const OptionType type = option_types.at(option_name);
          if (type == OptionType::INTEGER) {
-            this->set_integer(option_name, std::stoi(option_value), flag_as_overwritten);
+            this->set_integer(option_name, std::stoi(option_value));
          }
          else if (type == OptionType::DOUBLE) {
-            this->set_double(option_name, std::stod(option_value), flag_as_overwritten);
+            this->set_double(option_name, std::stod(option_value));
          }
          else if (type == OptionType::BOOL) {
-            this->set_bool(option_name, option_value == "yes" || option_value == "true", flag_as_overwritten);
+            this->set_bool(option_name, option_value == "yes" || option_value == "true");
          }
          else if (type == OptionType::STRING) {
-            this->set_string(option_name, option_value, flag_as_overwritten);
+            this->set_string(option_name, option_value);
          }
       }
       catch(const std::out_of_range&) {
@@ -178,7 +174,6 @@ namespace uno {
 
    // getters
    uno_int Options::get_int(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->integer_options.at(option_name);
       }
@@ -188,7 +183,6 @@ namespace uno {
    }
 
    size_t Options::get_unsigned_int(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return static_cast<size_t>(this->integer_options.at(option_name));
       }
@@ -198,7 +192,6 @@ namespace uno {
    }
 
    double Options::get_double(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->double_options.at(option_name);
       }
@@ -208,7 +201,6 @@ namespace uno {
    }
 
    bool Options::get_bool(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->bool_options.at(option_name);
       }
@@ -218,7 +210,6 @@ namespace uno {
    }
 
    const std::string& Options::get_string(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->string_options.at(option_name);
       }
@@ -229,9 +220,7 @@ namespace uno {
 
    std::optional<std::string> Options::get_string_optional(const std::string& option_name) const {
       try {
-         const std::string& option_value = this->string_options.at(option_name);
-         this->used[option_name] = true;
-         return option_value;
+         return this->string_options.at(option_name);
       }
       catch(const std::out_of_range&) {
          return std::nullopt;

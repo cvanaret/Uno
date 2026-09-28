@@ -19,7 +19,7 @@ namespace uno {
       if (model.number_constraints == 0) {
          INFO << "The model is unconstrained, picking a merit function as globalization strategy\n";
          // override user defined option
-         options.set_string("globalization_strategy", "merit_function", true);
+         options.set_string("globalization_strategy", "merit_function");
          return std::make_unique<MeritFunction>(options);
       }
       const std::string& strategy_type = options.get_string("globalization_strategy");

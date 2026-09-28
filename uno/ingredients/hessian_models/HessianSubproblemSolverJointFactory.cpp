@@ -28,7 +28,7 @@ namespace uno {
       // first look at the problem type. If it is an LP, pick zero Hessian model
       if (model.get_problem_type() == ProblemType::LINEAR) {
          // override user defined option
-         options.set_string("hessian_model", "zero", true);
+         options.set_string("hessian_model", "zero");
          auto hessian_model = std::make_unique<ZeroHessian>(model.number_variables);
          Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
          auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
@@ -57,7 +57,7 @@ namespace uno {
          if (default_to_lbfgs) {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-LBFGS Hessian instead\n";
             // override user defined option
-            options.set_string("hessian_model", "LBFGS", true);
+            options.set_string("hessian_model", "LBFGS");
          }
          if (0 < model.number_constraints || model.has_bound_constraints() || uses_trust_region) { // constrained
             auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
