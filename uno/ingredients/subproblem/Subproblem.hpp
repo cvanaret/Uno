@@ -89,7 +89,6 @@ namespace uno {
       HessianModel& hessian_model;
       InertiaCorrectionStrategy& inertia_correction_strategy;
       const IntegerRange empty_set{0};
-      mutable Vector<double> objective_gradient_buffer;
    };
 
    template <typename Array>

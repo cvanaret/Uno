@@ -264,9 +264,9 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
+   void PrimalDualInteriorPointProblem::add_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
-      this->unslacked_problem.compute_jacobian_vector_product(vector, result, evaluations);
+      this->unslacked_problem.add_jacobian_vector_product(vector, result, evaluations);
 
       // add the slack contributions
       for (const auto [constraint_index, slack_index]: this->slacks) {
@@ -274,13 +274,13 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
+   void PrimalDualInteriorPointProblem::add_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
-      this->unslacked_problem.compute_jacobian_transposed_vector_product(vector, result, evaluations);
+      this->unslacked_problem.add_jacobian_transposed_vector_product(vector, result, evaluations);
 
       // add the slack contributions
       for (const auto [constraint_index, slack_index]: this->slacks) {
-         result[slack_index] = -vector[constraint_index];
+         result[slack_index] -= vector[constraint_index];
       }
    }
 
@@ -537,7 +537,7 @@ namespace uno {
       const double current_constraint_violation = norm(progress_norm, constraint_violation);
 
       this->constraints_buffer2.fill(0.);
-      this->compute_jacobian_vector_product(primal_direction.view(), this->constraints_buffer2.view(), current_evaluations);
+      this->add_jacobian_vector_product(primal_direction.view(), this->constraints_buffer2.view(), current_evaluations);
 
       return [current_constraint_violation, progress_norm, this](double step_length) {
          const auto linearized_constraints = this->constraints_buffer + step_length * this->constraints_buffer2;

@@ -106,14 +106,14 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
-   void OptimizationProblem::compute_jacobian_vector_product(View<const double> vector, View<double> result,
+   void OptimizationProblem::add_jacobian_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
-      evaluations.compute_jacobian_vector_product(this->model, vector, result);
+      evaluations.add_jacobian_vector_product(this->model, vector, result);
    }
 
-   void OptimizationProblem::compute_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
+   void OptimizationProblem::add_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
          const Evaluations& evaluations) const {
-      evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
+      evaluations.add_jacobian_transposed_vector_product(this->model, vector, result);
    }
 
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
@@ -240,7 +240,7 @@ namespace uno {
 
       // cache the (expensive) Jacobian–direction product Jd
       this->Jv_buffer.fill(0.);
-      current_evaluations.compute_jacobian_vector_product(this->model, primal_direction.view(), this->Jv_buffer.view());
+      current_evaluations.add_jacobian_vector_product(this->model, primal_direction.view(), this->Jv_buffer.view());
 
       return [this, &current_evaluations, norm, current_constraint_violation](double step_length) {
          return current_constraint_violation - this->model.constraint_violation(current_evaluations.constraints +

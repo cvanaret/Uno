@@ -129,6 +129,7 @@ namespace uno {
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
+         DEBUG << "RHS: " << linear_system.rhs << '\n';
       }
 
       // solve the linear system
