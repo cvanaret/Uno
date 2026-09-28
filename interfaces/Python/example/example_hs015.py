@@ -98,8 +98,6 @@ if __name__ == '__main__':
 	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
 	  hessian_column_indices, lagrangian_hessian)
 	model.set_lagrangian_sign_convention(lagrangian_sign_convention)
-	# the Hessian model was overwritten. Set it again
-	uno_solver.set_option("hessian_model", "exact")
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
 	print("Objective at solution:", result.solution_objective)
