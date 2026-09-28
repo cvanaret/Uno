@@ -115,24 +115,19 @@ jobs:
         #   curl -L -o "$MASTSIF/HS15.SIF" \
         #     https://bitbucket.org/optrove/sif/raw/HEAD/HS15.SIF
 
-      - name: Locate installed uno.opt
-        run: |
-          find "$CUTEST" -name uno.opt -not -path "$CUTEST/src/*" -print -exec cat {} \;
-
       - name: Run HS15 with shipped uno.opt
         run: |
           mkdir run-shipped && cd run-shipped
           bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HS15
 
       - name: Run HS15 with custom uno.opt
-        if: ${{ !cancelled() }}        # run even if the shipped-options run failed
+        if: ${{ !cancelled() }}
         run: |
           custom="$GITHUB_WORKSPACE/uno_default.opt"
-          mapfile -t copies < <(find "$CUTEST" -name uno.opt -not -path "$CUTEST/src/*")
-          if [ ${#copies[@]} -eq 0 ]; then
-            echo "::error::No installed uno.opt found under \$CUTEST"; exit 1
-          fi
-          for f in "${copies[@]}"; do cp -v "$custom" "$f"; done
+          # show how uno.opt is resolved (diagnostic)
+          grep -n 'uno.opt' "$CUTEST/bin/runcutest" "$CUTEST"/src/uno/* || true
+          cp -v "$custom" "$CUTEST/src/uno/uno.opt"   # the default that gets picked up
           mkdir run-custom && cd run-custom
-          cp "$custom" ./uno.opt                 # also cover a cwd lookup
-          bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" custom HS15
+          cp "$custom" uno.opt                        # in case a local copy takes precedence
+          bash "$GITHUB_WORKSPACE/.github/scripts/run_cutest.sh" custom HS15
+          diff -u "$custom" uno.opt && echo "custom uno.opt was used"
