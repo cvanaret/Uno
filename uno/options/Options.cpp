@@ -272,30 +272,31 @@ namespace uno {
    }
 
    void Options::load_option_file(Options& options, const std::string& file_name) {
-      std::ifstream file;
-      file.open(file_name);
+      std::ifstream file(file_name);
       if (!file) {
          throw std::invalid_argument("The option file " + file_name + " was not found");
       }
-      else {
-         std::string option_name, option_value;
-         std::string line;
-         while (std::getline(file, line)) {
-            // Remove comments
-            const size_t comment_position = line.find('#');
-            if (comment_position != std::string::npos) {
-               line.erase(comment_position);
-            }
-            trim(line);
-            std::istringstream iss;
-            iss.str(line);
-            if (iss >> option_name >> option_value) {
-               // set option (with unknown type)
-               options.set(option_name, option_value);
-            }
+      std::string line;
+      size_t line_number = 0;
+      while (std::getline(file, line)) {
+         ++line_number;
+         // Remove comments
+         const size_t comment_position = line.find('#');
+         if (comment_position != std::string::npos) {
+            line.erase(comment_position);
          }
-         file.close();
+         trim(line);
+         if (line.empty()) {
+            continue;
+         }
+         std::istringstream stream(line);
+         std::string option_name, option_value, extra_token;
+         if (!(stream >> option_name >> option_value) || (stream >> extra_token)) {
+            throw std::invalid_argument("Malformed line " + std::to_string(line_number) + " in option file " + file_name + ": " + line);
+         }
+         options.set(option_name, option_value);
       }
+      file.close();
    }
 
    void Options::dump_default_options() {
