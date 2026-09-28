@@ -227,6 +227,42 @@ namespace uno {
       }
    }
 
+   std::optional<uno_int> Options::get_int_optional(const std::string& option_name) const {
+      try {
+         return this->integer_options.at(option_name);
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
+   std::optional<size_t> Options::get_unsigned_int_optional(const std::string& option_name) const {
+      try {
+         return static_cast<size_t>(this->integer_options.at(option_name));
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
+   std::optional<double> Options::get_double_optional(const std::string& option_name) const {
+      try {
+         return this->double_options.at(option_name);
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
+   std::optional<bool> Options::get_bool_optional(const std::string& option_name) const {
+      try {
+         return this->bool_options.at(option_name);
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
    OptionType Options::get_option_type(const std::string& option_name) const {
       try {
          return option_types.at(option_name);

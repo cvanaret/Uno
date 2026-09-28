@@ -11,6 +11,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "options/DefaultOptions.hpp"
+#include "options/Options.hpp"
 #include "options/Presets.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
@@ -438,7 +439,8 @@ COStream* c_ostream = nullptr;
 
 struct Solver {
    Uno* solver;
-   Options* user_options;
+   Options user_options;
+   Options default_options;
    UserCallbacks* user_callbacks;
    Result* result;
 };
@@ -828,10 +830,9 @@ bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterat
 }
 
 void* uno_create_solver() {
-   Options* options = new Options; // user-set options only, no defaults
-   UserCallbacks* user_callbacks = new NoUserCallbacks; // default user callbacks
-   Uno* uno_solver = new Uno;
-   return new Solver{uno_solver, options, user_callbacks, nullptr}; // no result yet
+   Solver* solver = new Solver{new Uno, {}, {}, new NoUserCallbacks, nullptr};
+   DefaultOptions::load(solver->default_options);
+   return solver;
 }
 
 bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) {
@@ -840,7 +841,7 @@ bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_in
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->user_options->set_integer(option_name, option_value);
+   uno_solver->user_options.set_integer(option_name, option_value);
    return true;
 }
 
@@ -850,7 +851,7 @@ bool uno_set_solver_double_option(void* solver, const char* option_name, double 
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->user_options->set_double(option_name, option_value);
+   uno_solver->user_options.set_double(option_name, option_value);
    return true;
 }
 
@@ -860,7 +861,7 @@ bool uno_set_solver_bool_option(void* solver, const char* option_name, bool opti
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->user_options->set_bool(option_name, option_value);
+   uno_solver->user_options.set_bool(option_name, option_value);
    return true;
 }
 
@@ -870,7 +871,7 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->user_options->set_string(option_name, option_value);
+   uno_solver->user_options.set_string(option_name, option_value);
    return true;
 }
 
@@ -881,7 +882,7 @@ uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    try {
-      return static_cast<uno_int>(uno_solver->user_options->get_option_type(option_name));
+      return static_cast<uno_int>(uno_solver->user_options.get_option_type(option_name));
    }
    catch(const std::out_of_range&) {
       return UNO_OPTION_TYPE_NOT_FOUND;
@@ -955,7 +956,7 @@ bool uno_load_solver_option_file(void* solver, const char* file_name) {
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    try {
-      Options::load_option_file(*uno_solver->user_options, file_name);
+      Options::load_option_file(uno_solver->user_options, file_name);
       return true;
    }
    catch (const std::exception& exception) {
@@ -970,7 +971,7 @@ bool uno_set_solver_preset(void* solver, const char* preset_name) {
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   Presets::set(*uno_solver->user_options, preset_name);
+   Presets::set(uno_solver->user_options, preset_name);
    return true;
 }
 
@@ -1018,16 +1019,15 @@ void uno_optimize(void* solver, void* model) {
    const UnoModel uno_model(*user_model);
 
    // defaults -> preset -> user options
-   Options full_options;
-   DefaultOptions::load(full_options);
-   const std::string preset = uno_solver->user_options->get_string_optional("preset").value_or(full_options.get_string("preset"));
+   Options full_options = uno_solver->default_options;
+   const std::string preset = uno_solver->user_options.get_string_optional("preset").value_or(full_options.get_string("preset"));
    Presets::set(uno_model, full_options, preset);
-   full_options.overwrite(*uno_solver->user_options);
+   full_options.overwrite(uno_solver->user_options);
 
    // resolve logger
    Logger::set_logger(full_options.get_string("logger"));
 
-   uno_solver->user_options->print("User options");
+   uno_solver->user_options.print("User options");
 
    // solve the model
    Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
@@ -1050,43 +1050,82 @@ double uno_get_solver_double_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   return uno_solver->user_options->get_double(option_name);
+   if (option_name == nullptr) {
+      throw std::runtime_error("Please specify a valid option name.");
+   }
+   const Solver* uno_solver = static_cast<const Solver*>(solver);
+   const std::optional<double> user_value = uno_solver->user_options.get_double_optional(option_name);
+   if (user_value.has_value()) {
+      return *user_value;
+   }
+   // falls back to the default; throws if the option has no default (e.g. preset-dependent)
+   return uno_solver->default_options.get_double(option_name);
 }
 
 uno_int uno_get_solver_integer_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   return uno_solver->user_options->get_int(option_name);
+   if (option_name == nullptr) {
+      throw std::runtime_error("Please specify a valid option name.");
+   }
+   const Solver* uno_solver = static_cast<const Solver*>(solver);
+   const std::optional<uno_int> user_value = uno_solver->user_options.get_int_optional(option_name);
+   if (user_value.has_value()) {
+      return *user_value;
+   }
+   // falls back to the default; throws if the option has no default (e.g. preset-dependent)
+   return uno_solver->default_options.get_int(option_name);
 }
 
 bool uno_get_solver_bool_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   return uno_solver->user_options->get_bool(option_name);
+   if (option_name == nullptr) {
+      throw std::runtime_error("Please specify a valid option name.");
+   }
+   const Solver* uno_solver = static_cast<const Solver*>(solver);
+   const std::optional<bool> user_value = uno_solver->user_options.get_bool_optional(option_name);
+   if (user_value.has_value()) {
+      return *user_value;
+   }
+   // falls back to the default; throws if the option has no default (e.g. preset-dependent)
+   return uno_solver->default_options.get_bool(option_name);
 }
 
 const char* uno_get_solver_string_option(void* solver, const char* option_name) {
    if (solver == nullptr) {
       throw std::runtime_error("Please specify a valid solver.");
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   // handle the preset and option_file separately
-   if (strcmp(option_name, "option_file") == 0 || strcmp(option_name, "preset") == 0) {
+   if (option_name == nullptr) {
+      throw std::runtime_error("Please specify a valid option name.");
+   }
+   const Solver* uno_solver = static_cast<const Solver*>(solver);
+
+   // pointer to the stored string (not a copy), or nullptr if the option is not set
+   const auto find_string = [&](const Options& options) -> const std::string* {
       try {
-         return uno_solver->user_options->get_string(option_name).c_str();
+         return &options.get_string(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          return nullptr;
       }
+   };
+
+   const std::string* user_value = find_string(uno_solver->user_options);
+   if (user_value != nullptr) {
+      return user_value->c_str();
    }
-   else {
-      return uno_solver->user_options->get_string(option_name).c_str();
+   const std::string* default_value = find_string(uno_solver->default_options);
+   if (default_value != nullptr) {
+      return default_value->c_str();
    }
+   // option_file (and preset, if it ever loses its default) may legitimately be unset
+   if (strcmp(option_name, "option_file") == 0 || strcmp(option_name, "preset") == 0) {
+      return nullptr;
+   }
+   throw std::out_of_range(std::string("The string option ") + option_name + " is not available");
 }
 
 // auxiliary function
@@ -1260,7 +1299,6 @@ void uno_destroy_solver(void* solver) {
    if (solver != nullptr) {
       Solver* uno_solver = static_cast<Solver*>(solver);
       delete uno_solver->solver;
-      delete uno_solver->user_options;
       delete uno_solver->user_callbacks;
       if (uno_solver->result != nullptr) {
          delete uno_solver->result;

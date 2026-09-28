@@ -31,7 +31,13 @@ namespace uno {
       [[nodiscard]] double get_double(const std::string& option_name) const;
       [[nodiscard]] bool get_bool(const std::string& option_name) const;
       [[nodiscard]] const std::string& get_string(const std::string& option_name) const;
+
       [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<uno_int> get_int_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<size_t> get_unsigned_int_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<double> get_double_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<bool> get_bool_optional(const std::string& option_name) const;
+
       [[nodiscard]] OptionType get_option_type(const std::string& option_name) const;
 
       [[nodiscard]] static std::vector<std::pair<std::string, std::string>> get_command_line_options(int argc, char* argv[],
