@@ -115,23 +115,24 @@ jobs:
         #   curl -L -o "$MASTSIF/HS15.SIF" \
         #     https://bitbucket.org/optrove/sif/raw/HEAD/HS15.SIF
 
-      - name: Run HS15 with Uno via CUTEst
-        shell: bash
+      - name: Locate installed uno.opt
         run: |
-          export TERM=xterm
-          set +e
-          # 2>&1 so stderr (std::terminate, gfortran backtrace) is captured; tee prints everything live
-          export GFORTRAN_UNBUFFERED_PRECONNECTED=y   # unbuffer the Fortran driver's stdout/stderr
-          stdbuf -oL -eL "$CUTEST/bin/runcutest" -A "$MYARCH" -p uno -D HS15 -o 1 2>&1 | tee hs15.log
-          status=${PIPESTATUS[0]}
-          set -e
-          
-          if [ "$status" -ne 0 ]; then
-            echo "::error::runcutest exited with status $status"
-            exit 1
+          find "$CUTEST" -name uno.opt -not -path "$CUTEST/src/*" -print -exec cat {} \;
+
+      - name: Run HS15 with shipped uno.opt
+        run: |
+          mkdir run-shipped && cd run-shipped
+          bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HS15
+
+      - name: Run HS15 with custom uno.opt
+        if: ${{ !cancelled() }}        # run even if the shipped-options run failed
+        run: |
+          custom="$GITHUB_WORKSPACE/uno_default.opt"
+          mapfile -t copies < <(find "$CUTEST" -name uno.opt -not -path "$CUTEST/src/*")
+          if [ ${#copies[@]} -eq 0 ]; then
+            echo "::error::No installed uno.opt found under \$CUTEST"; exit 1
           fi
-          # runcutest swallows the solver's exit code, so detect crashes from the output
-          if grep -Eq 'terminate called|Program received signal|Segmentation fault|Backtrace for this error' hs15.log; then
-            echo "::error::Uno crashed while solving HS15 (see output above)"
-            exit 1
-          fi
+          for f in "${copies[@]}"; do cp -v "$custom" "$f"; done
+          mkdir run-custom && cd run-custom
+          cp "$custom" ./uno.opt                 # also cover a cwd lookup
+          bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" custom HS15
