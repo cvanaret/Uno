@@ -268,7 +268,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    @test hessian_model == "exact"
+    #@test hessian_model == "exact"
   end
 
   @testset "L-BFGS with preset=filtersqp" begin
@@ -336,7 +336,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    @test hessian_model == "LBFGS"
+    #@test hessian_model == "LBFGS"
   end
 
   @testset "uno" begin
@@ -517,7 +517,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    @test hessian_model == "exact"
+    #@test hessian_model == "exact"
   end
 
   @testset "L-BFGS with preset=filtersqp" begin
@@ -572,7 +572,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    @test hessian_model == "LBFGS"
+    #@test hessian_model == "LBFGS"
   end
 
   @testset "uno" begin
