@@ -244,7 +244,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
@@ -312,7 +312,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
@@ -498,7 +498,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
@@ -553,7 +553,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
