@@ -40,9 +40,6 @@ namespace uno {
       options.set_bool("write_solution_to_file", false);
       // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options.set_string("logger", "INFO");
-      // Hessian model (exact|LBFGS|identity|zero)
-      options.set_string("hessian_model", "exact");
-      options.set_string("inertia_correction_strategy", "primal");
       // norm of the progress measures (L1|L2|INF)
       options.set_string("progress_norm", "L1");
       // norm of the primal-dual residuals (L1|L2|INF)

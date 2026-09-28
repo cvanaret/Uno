@@ -53,6 +53,7 @@ namespace uno {
       INFO << "- Allocating feasibility method: ";
       this->feasibility_inequality_handling_method = InequalityHandlingMethodFactory::create(this->feasibility_problem,
          uses_trust_region, 0., options);
+      INFO << '\n';
 
       // initial iterate
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
