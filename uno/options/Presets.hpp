@@ -20,11 +20,11 @@ namespace uno {
 
    class Presets {
    public:
+      static Preset from_string(const std::string& preset);
       static void set(Options& options, const std::string& preset);
       static void set(const Model& model, Options& options, const std::string& preset);
 
    protected:
-      [[nodiscard]] static Preset from_string(const std::string& preset);
       [[nodiscard]] static Preset pick_auto_preset(const Model& model);
       static void set(Options& options, Preset preset);
    };

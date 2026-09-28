@@ -45,11 +45,30 @@ namespace uno {
       return false;
    }
 
+   UnoSolverWrapper::UnoSolverWrapper() {
+      DefaultOptions::load(this->default_options);
+   }
+
    UnoSolverWrapper::~UnoSolverWrapper() {
       // Logger holds a non-owning reference to *this->ostream. Repoint it at a process-lifetime sink now: the
       // destructor body runs *before* stream_buffer/ostream are destroyed. Otherwise the next Logger write
       // dereferences a freed ostream -> SIGSEGV in sentry
       Logger::set_stream(std::cout);
+   }
+
+   void UnoSolverWrapper::validate_preset(const std::string& preset) {
+      if (preset != "auto") {
+         Presets::from_string(preset); // throws on an unknown preset
+      }
+   }
+
+   void UnoSolverWrapper::refresh_preset_options() {
+      Options new_preset_options;
+      const std::string preset = this->user_options.get_string_optional("preset").value_or(this->default_options.get_string("preset"));
+      if (preset != "auto") {
+         Presets::set(new_preset_options, preset);
+      }
+      this->preset_options = std::move(new_preset_options);
    }
 
    void UnoSolverWrapper::set_logger_stream(py::object python_stream) {
@@ -72,12 +91,18 @@ namespace uno {
       const PythonModel model{user_model};
 
       // defaults -> preset -> user options
-      Options full_options;
-      DefaultOptions::load(full_options);
-      Logger::set_logger(this->user_options.get_string_optional("logger").value_or(full_options.get_string("logger")));
-      const std::string preset = this->user_options.get_string_optional("preset").value_or(full_options.get_string("preset"));
-      Presets::set(model, full_options, preset);
+      Options full_options = this->default_options;
+      Logger::set_logger(this->user_options.get_string_optional("logger").value_or(this->default_options.get_string("logger")));
+      const std::string preset = this->user_options.get_string_optional("preset").value_or(this->default_options.get_string("preset"));
+      if (preset == "auto") {
+         Presets::set(model, full_options, preset);
+      }
+      else {
+         full_options.overwrite(this->preset_options);
+      }
       full_options.overwrite(this->user_options);
+
+      this->user_options.print("User options");
 
       // solve the model
       UnopyUserCallbacks callbacks{this->notify_acceptable_iterate_callback, this->termination_callback};
