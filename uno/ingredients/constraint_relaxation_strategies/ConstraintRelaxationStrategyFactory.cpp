@@ -11,19 +11,19 @@
 
 namespace uno {
    std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model,
-         bool use_trust_region, Options& options) {
+         bool use_trust_region, const Options& options, std::vector<OptionOverride>& option_overrides) {
+      const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       // figure out whether there are constraints altogether
       if (model.number_constraints == 0) {
          DEBUG << "The model is unconstrained, picking no relaxation\n";
-         // override user defined option
-         options.set_string("constraint_relaxation_strategy", "no_relaxation");
+         option_overrides.emplace_back("constraint_relaxation_strategy", constraint_relaxation_type, "no_relaxation",
+            "unconstrained problem");
          return std::make_unique<NoRelaxation>(model, options);
       }
       // from now on, there are constraints
-      const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       if (constraint_relaxation_type == "feasibility_restoration") {
          DEBUG << "Picking feasibility restoration\n";
-         return std::make_unique<FeasibilityRestoration>(model, use_trust_region, options);
+         return std::make_unique<FeasibilityRestoration>(model, use_trust_region, options, option_overrides);
       }
       throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
    }

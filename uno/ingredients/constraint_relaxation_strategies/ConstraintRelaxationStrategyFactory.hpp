@@ -6,16 +6,18 @@
 
 #include <array>
 #include <memory>
+#include <vector>
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declarations
    class ConstraintRelaxationStrategy;
    class Model;
-   class Options;
 
    class ConstraintRelaxationStrategyFactory {
    public:
-      static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, bool use_trust_region, Options& options);
+      static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, bool use_trust_region,
+         const Options& options, std::vector<OptionOverride>& option_overrides);
 
       constexpr static std::array available_strategies{
          "feasibility_restoration"

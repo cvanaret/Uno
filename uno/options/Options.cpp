@@ -377,4 +377,9 @@ namespace uno {
       }
       DISCRETE << header << ":\n" << option_list << '\n';
    }
+
+   OptionOverride::OptionOverride(std::string option_name, std::optional<std::string> old_value, std::string new_value,
+      std::string reason): option_name(std::move(option_name)), old_value(std::move(old_value)), new_value(std::move(new_value)),
+      reason(std::move(reason)) {
+   }
 } // namespace

@@ -16,11 +16,11 @@ namespace uno {
 
    class NoRelaxation : public ConstraintRelaxationStrategy {
    public:
-      NoRelaxation(const Model& model, Options& options);
+      NoRelaxation(const Model& model, const Options& options);
       ~NoRelaxation() override;
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, Options& options) override;
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) override;
 
       // direction computation
       const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate,

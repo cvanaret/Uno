@@ -57,6 +57,16 @@ namespace uno {
       std::unordered_map<std::string, bool> bool_options{};
       std::unordered_map<std::string, std::string> string_options{};
    };
+
+   class OptionOverride {
+   public:
+      std::string option_name;
+      std::optional<std::string> old_value;
+      std::string new_value;
+      std::string reason;
+
+      OptionOverride(std::string option_name, std::optional<std::string> old_value, std::string new_value, std::string reason);
+   };
 } // namespace
 
 #endif // UNO_OPTIONS_H

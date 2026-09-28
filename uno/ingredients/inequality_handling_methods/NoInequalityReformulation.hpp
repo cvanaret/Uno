@@ -6,21 +6,22 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include "InequalityHandlingMethod.hpp"
 #include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declaration
    class HessianModel;
    class InertiaCorrectionStrategy;
-   class Options;
    class SubproblemSolver;
 
    class NoInequalityReformulation : public InequalityHandlingMethod {
    public:
       NoInequalityReformulation(std::string name, const OptimizationProblem& problem, bool uses_trust_region,
-         double objective_multiplier, Options& options);
+         double objective_multiplier, const Options& options, std::vector<OptionOverride>& option_overrides);
       ~NoInequalityReformulation() override = default;
 
       void initialize_memory() override;

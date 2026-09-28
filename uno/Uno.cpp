@@ -22,7 +22,6 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
-#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
 #include "tools/UserCallbacks.hpp"
@@ -31,14 +30,14 @@ namespace uno {
    Level Logger::level = INFO;
 
    // solve without user callbacks
-   Result Uno::solve(const Model& model, Options& options) {
+   Result Uno::solve(const Model& model, const Options& options) {
       // pass user callbacks that do nothing
       NoUserCallbacks user_callbacks{};
       return this->solve(model, options, user_callbacks);
    }
 
    // solve with user callbacks
-   Result Uno::solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       DISCRETE << "Model " << model.name << " has " << model.number_variables <<
          " variables, " << model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
@@ -71,7 +70,7 @@ namespace uno {
    }
 
    // protected solve function
-   Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       Statistics statistics = create_statistics(model, options.get_bool("print_extended_statistics"));
       statistics.timers.wallclock.start();
 
@@ -86,7 +85,9 @@ namespace uno {
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
 
       // initialize the strategies and generate the initial iterate
-      const bool initialization_success = this->initialize(statistics, model, current_iterate, options, evaluation_cache);
+      std::vector<OptionOverride> option_overrides;
+      const bool initialization_success = this->initialize(statistics, model, current_iterate, evaluation_cache, options,
+         option_overrides);
       if (!initialization_success) {
          termination = true;
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
@@ -135,7 +136,7 @@ namespace uno {
       postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
       statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, std::move(current_iterate),
-         std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers);
+         std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
       postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
@@ -163,8 +164,8 @@ namespace uno {
       return this->method_description;
    }
 
-   bool Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
-         EvaluationCache& evaluation_cache) {
+   bool Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, EvaluationCache& evaluation_cache,
+         const Options& options, std::vector<OptionOverride>& option_overrides) {
       try {
          statistics.start_new_line();
          statistics.set("Iter", 0);
@@ -173,8 +174,9 @@ namespace uno {
          model.project_onto_variable_bounds(current_iterate.primals);
 
          // set the ingredients based on the user-defined options
-         this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
-         this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options);
+         this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options, option_overrides);
+         this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options,
+            option_overrides);
          if (this->globalization_mechanism != nullptr) {
             this->method_description = this->globalization_mechanism->get_name();
          }
@@ -243,7 +245,7 @@ namespace uno {
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
-         Evaluations&& evaluations, size_t major_iterations, const Timers& timers) const {
+         Evaluations&& evaluations, size_t major_iterations, const Timers& timers, std::vector<OptionOverride>&& option_overrides) const {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
@@ -252,7 +254,8 @@ namespace uno {
          std::move(solution.multipliers.lower_bounds), std::move(solution.multipliers.upper_bounds),
          std::move(evaluations.constraints), major_iterations, timers, model.number_model_objective_evaluations(),
          model.number_model_constraints_evaluations(), model.number_model_objective_gradient_evaluations(),
-         model.number_model_jacobian_evaluations(), model.number_model_hessian_evaluations(), number_subproblems_solved};
+         model.number_model_jacobian_evaluations(), model.number_model_hessian_evaluations(), number_subproblems_solved,
+         std::move(option_overrides)};
    }
 
    // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether

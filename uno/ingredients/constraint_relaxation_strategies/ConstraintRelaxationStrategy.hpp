@@ -5,11 +5,13 @@
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
 #include <cstddef>
+#include <vector>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/SolutionStatus.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declarations
@@ -20,7 +22,6 @@ namespace uno {
    class Model;
    class Multipliers;
    class OptimizationProblem;
-   class Options;
    class SolverWorkspace;
    class Statistics;
    class Subproblem;
@@ -33,7 +34,7 @@ namespace uno {
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, Options& options) = 0;
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) = 0;
 
       // direction computation
       virtual const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,

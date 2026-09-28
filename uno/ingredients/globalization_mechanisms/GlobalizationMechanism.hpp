@@ -6,6 +6,8 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declarations
@@ -15,18 +17,18 @@ namespace uno {
    class Evaluations;
    class Iterate;
    class Model;
-   class Options;
    class Statistics;
    class UserCallbacks;
    class WarmstartInformation;
 
    class GlobalizationMechanism {
    public:
-      GlobalizationMechanism(const Model& model, bool use_trust_region, Options& options);
+      GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
       virtual ~GlobalizationMechanism();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         EvaluationCache& evaluation_cache, Options& options) = 0;
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 

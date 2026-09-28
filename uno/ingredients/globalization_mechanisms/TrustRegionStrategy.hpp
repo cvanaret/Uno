@@ -9,11 +9,11 @@
 namespace uno {
    class TrustRegionStrategy : public GlobalizationMechanism {
    public:
-      TrustRegionStrategy(const Model& model, Options& options);
+      TrustRegionStrategy(const Model& model, const Options& options, std::vector<OptionOverride>& option_overrides);
       ~TrustRegionStrategy() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, EvaluationCache& evaluation_cache,
-         Options& options) override;
+         const Options& options, std::vector<OptionOverride>& option_overrides) override;
       void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 

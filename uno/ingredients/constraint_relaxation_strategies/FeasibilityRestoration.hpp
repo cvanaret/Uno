@@ -5,11 +5,13 @@
 #define UNO_FEASIBILITYRESTORATION_H
 
 #include <memory>
+#include <vector>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declaration
@@ -23,11 +25,12 @@ namespace uno {
 
    class FeasibilityRestoration : public ConstraintRelaxationStrategy {
    public:
-      FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options);
+      FeasibilityRestoration(const Model& model, bool use_trust_region, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
       ~FeasibilityRestoration() override;
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, Options& options) override;
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) override;
 
       // direction computation
       const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
