@@ -129,5 +129,5 @@ jobs:
           cp -v "$custom" "$CUTEST/src/uno/uno.opt"   # the default that gets picked up
           mkdir run-custom && cd run-custom
           cp "$custom" uno.opt                        # in case a local copy takes precedence
-          bash "$GITHUB_WORKSPACE/.github/scripts/run_cutest.sh" custom HS15
+          bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" custom HS15
           diff -u "$custom" uno.opt && echo "custom uno.opt was used"
