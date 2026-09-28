@@ -179,7 +179,6 @@ namespace uno {
             this->method_description = this->globalization_mechanism->get_name();
          }
 
-         options.print_non_default();
          statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
          if (Logger::level == INFO) {
             statistics.print_header();

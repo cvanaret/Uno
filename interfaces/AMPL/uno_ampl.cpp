@@ -46,56 +46,41 @@ int main(int argc, char* argv[]) {
    }
    else { // argc >= 2
       // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value, ...]
-      // set the default options
-      Options options;
-      DefaultOptions::load(options);
-
       // the -AMPL flag indicates that the solution should be written to the AMPL solution file
-      size_t offset = 2;
-      if (argc > 2 && std::string(argv[2]) == "-AMPL") {
-         options.set_bool("write_solution_to_file", true);
-         ++offset;
-      }
-      else {
-         options.set_bool("write_solution_to_file", false);
-      }
+      const bool write_solution_to_file = (argc > 2 && std::string(argv[2]) == "-AMPL");
+      const size_t offset = write_solution_to_file ? 3 : 2;
       try {
          // get the command line arguments (options start at index offset)
          const auto command_line_options = Options::get_command_line_options(argc, argv, offset);
 
-         // [optional] read an option file
-         std::optional<std::string> optional_option_file{};
+         // user options: option file first, then command line (takes precedence)
+         Options user_options;
          for (const auto& [option_name, option_value]: command_line_options) {
             if (option_name == "option_file") {
-               optional_option_file = option_value;
+               Options::load_option_file(user_options, option_value);
             }
-         }
-         if (optional_option_file.has_value()) {
-            Options::load_option_file(options, *optional_option_file);
          }
          for (const auto& [option_name, option_value]: command_line_options) {
-            if (option_name == "preset") {
-               options.set_string("preset", option_value);
-            }
-            else if (option_name == "logger") {
-               options.set_string("logger", option_value);
+            if (option_name != "option_file") {
+               user_options.set(option_name, option_value);
             }
          }
-         Logger::set_logger(options.get_string("logger"));
+         user_options.set_bool("write_solution_to_file", write_solution_to_file);
+
+         // defaults -> preset -> user options
+         Options options;
+         DefaultOptions::load(options);
+         Logger::set_logger(user_options.get_string_optional("logger").value_or(options.get_string("logger")));
+
+         user_options.print("User options");
 
          // create the model
          const char* model_name = argv[1];
          const AMPLModel model(model_name);
 
-         // set the preset (default: auto)
-         Presets::set(model, options, options.get_string("preset"));
-
-         // set the rest of the command line options
-         for (const auto& [option_name, option_value]: command_line_options) {
-            if (option_name != "option_file" && option_name != "preset" && option_name != "logger") {
-               options.set(option_name, option_value);
-            }
-         }
+         const std::string preset = user_options.get_string_optional("preset").value_or(options.get_string("preset"));
+         Presets::set(model, options, preset);
+         options.overwrite(user_options);
 
          // solve the model
          run_uno_ampl(model, options);

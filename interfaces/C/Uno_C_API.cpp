@@ -828,17 +828,10 @@ bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterat
 }
 
 void* uno_create_solver() {
-   // default options
-   Options* options = new Options;
-   DefaultOptions::load(*options);
-
-   // default user callbacks
-   UserCallbacks* user_callbacks = new NoUserCallbacks;
-
-   // Uno solver
+   Options* options = new Options; // user-set options only, no defaults
+   UserCallbacks* user_callbacks = new NoUserCallbacks; // default user callbacks
    Uno* uno_solver = new Uno;
-   Solver* solver = new Solver{uno_solver, options, user_callbacks, nullptr}; // no result yet
-   return solver;
+   return new Solver{uno_solver, options, user_callbacks, nullptr}; // no result yet
 }
 
 bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) {
@@ -1013,14 +1006,18 @@ void uno_optimize(void* solver, void* model) {
 
    // create an instance of UnoModel, a subclass of Model
    const UnoModel uno_model(*user_model);
-   Logger::set_logger(uno_solver->user_options->get_string("logger"));
 
-   // set the preset (default: auto) and gather the options starting from the preset
+   // defaults -> preset -> user options
    Options full_options;
-   Presets::set(uno_model, full_options, uno_solver->user_options->get_string("preset"));
-
-   // copy the rest of the options
+   DefaultOptions::load(full_options);
+   const std::string preset = uno_solver->user_options->get_string_optional("preset").value_or(full_options.get_string("preset"));
+   Presets::set(uno_model, full_options, preset);
    full_options.overwrite(*uno_solver->user_options);
+
+   // resolve logger
+   Logger::set_logger(full_options.get_string("logger"));
+
+   uno_solver->user_options->print("User options");
 
    // solve the model
    Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);

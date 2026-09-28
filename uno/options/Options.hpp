@@ -41,7 +41,7 @@ namespace uno {
       // Print all available options with their type and default value
       static void dump_default_options();
 
-      void print_non_default() const;
+      void print(const std::string& header) const;
 
       static const std::unordered_map<std::string, OptionType> option_types;
 

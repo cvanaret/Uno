@@ -334,37 +334,21 @@ namespace uno {
       }
    }
 
-   void Options::print_non_default() const {
-      size_t number_used_options = 0;
+   void Options::print(const std::string& header) const {
       std::string option_list{};
       for (const auto& [option_name, option_value]: this->integer_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
-         }
+         option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
       }
       for (const auto& [option_name, option_value]: this->double_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
-         }
+         option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
       }
       for (const auto& [option_name, option_value]: this->bool_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
-         }
+         const std::string value = option_value ? "true" : "false";
+         option_list.append(option_name).append(" = ").append(value).append("\n");
       }
       for (const auto& [option_name, option_value]: this->string_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(option_value).append("\n");
-         }
+         option_list.append(option_name).append(" = ").append(option_value).append("\n");
       }
-      // print the overwritten options
-      DISCRETE << '\n';
-      if (number_used_options > 0) {
-         DISCRETE << "Non-default options:\n" << option_list << '\n';
-      }
+      DISCRETE << header << ":\n" << option_list << '\n';
    }
 } // namespace
