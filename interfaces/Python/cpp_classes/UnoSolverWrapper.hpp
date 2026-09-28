@@ -34,7 +34,7 @@ namespace uno {
       Uno uno_solver{};
       Options user_options{};
 
-      UnoSolverWrapper();
+      UnoSolverWrapper() = default;
       ~UnoSolverWrapper();
 
       void set_logger_stream(py::object py_stream);

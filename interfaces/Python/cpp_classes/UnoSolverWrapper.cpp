@@ -45,10 +45,6 @@ namespace uno {
       return false;
    }
 
-   UnoSolverWrapper::UnoSolverWrapper() {
-      DefaultOptions::load(this->user_options);
-   }
-
    UnoSolverWrapper::~UnoSolverWrapper() {
       // Logger holds a non-owning reference to *this->ostream. Repoint it at a process-lifetime sink now: the
       // destructor body runs *before* stream_buffer/ostream are destroyed. Otherwise the next Logger write
@@ -74,13 +70,13 @@ namespace uno {
    Result UnoSolverWrapper::optimize(const PythonUserModel& user_model) {
       // create an instance of PythonModel, a subclass of Model
       const PythonModel model{user_model};
-      Logger::set_logger(this->user_options.get_string("logger"));
 
-      // set the preset (default: auto)
+      // defaults -> preset -> user options
       Options full_options;
-      Presets::set(model, full_options, this->user_options.get_string("preset"));
-
-      // copy the rest of the options
+      DefaultOptions::load(full_options);
+      Logger::set_logger(this->user_options.get_string_optional("logger").value_or(full_options.get_string("logger")));
+      const std::string preset = this->user_options.get_string_optional("preset").value_or(full_options.get_string("preset"));
+      Presets::set(model, full_options, preset);
       full_options.overwrite(this->user_options);
 
       // solve the model
