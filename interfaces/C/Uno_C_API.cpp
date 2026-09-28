@@ -949,9 +949,19 @@ bool uno_load_solver_option_file(void* solver, const char* file_name) {
       WARNING << "Please specify a valid solver."  << std::endl;
       return false;
    }
+   if (file_name == nullptr) {
+      WARNING << "Please specify a valid option file name." << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   Options::load_option_file(*uno_solver->user_options, file_name);
-   return true;
+   try {
+      Options::load_option_file(*uno_solver->user_options, file_name);
+      return true;
+   }
+   catch (const std::exception& exception) {
+      std::cerr << exception.what() << std::endl;
+      return false;
+   }
 }
 
 bool uno_set_solver_preset(void* solver, const char* preset_name) {
