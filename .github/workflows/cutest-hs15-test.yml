@@ -116,8 +116,22 @@ jobs:
         #     https://bitbucket.org/optrove/sif/raw/HEAD/HS15.SIF
 
       - name: Run HS15 with Uno via CUTEst
+        shell: bash
         run: |
           export TERM=xterm
-          # -A: architecture key   -p uno: package   -D HS15: decode & solve HS15.SIF
-          # runcutest copies the default uno.opt (from $CUTEST/src/uno) into the run dir.
-          "$CUTEST/bin/runcutest" -A "$MYARCH" -p uno -D HS15
+          set +e
+          # 2>&1 so stderr (std::terminate, gfortran backtrace) is captured; tee prints everything live
+          export GFORTRAN_UNBUFFERED_PRECONNECTED=y   # unbuffer the Fortran driver's stdout/stderr
+          stdbuf -oL -eL "$CUTEST/bin/runcutest" -A "$MYARCH" -p uno -D HS15 -o 1 2>&1 | tee hs15.log
+          status=${PIPESTATUS[0]}
+          set -e
+          
+          if [ "$status" -ne 0 ]; then
+            echo "::error::runcutest exited with status $status"
+            exit 1
+          fi
+          # runcutest swallows the solver's exit code, so detect crashes from the output
+          if grep -Eq 'terminate called|Program received signal|Segmentation fault|Backtrace for this error' hs15.log; then
+            echo "::error::Uno crashed while solving HS15 (see output above)"
+            exit 1
+          fi
