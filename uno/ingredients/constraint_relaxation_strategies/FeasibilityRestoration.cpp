@@ -29,7 +29,7 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),
-         // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
+         // all constraints (including linear constraints) are relaxed
          feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */,
             options.get_bool("use_proximal_term")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
