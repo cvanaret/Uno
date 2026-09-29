@@ -32,6 +32,7 @@ namespace uno {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
          this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
+         this->optional_linear_solver->set_expected_inertia(expected_inertia);
          this->optional_linear_solver->do_symbolic_analysis();
       }
       // copy the Hessian into the linear system
@@ -91,6 +92,7 @@ namespace uno {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
          this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
+         this->optional_linear_solver->set_expected_inertia(expected_inertia);
          this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
