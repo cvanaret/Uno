@@ -49,11 +49,11 @@ namespace uno {
    }
 
    bool ScaledModel::has_jacobian_operator() const {
-      return this->model.has_jacobian_operator();
+      return false; // this->model.has_jacobian_operator();
    }
 
    bool ScaledModel::has_jacobian_transposed_operator() const {
-      return this->model.has_jacobian_transposed_operator();
+      return false; // this->model.has_jacobian_transposed_operator();
    }
 
    bool ScaledModel::has_hessian_operator() const {
