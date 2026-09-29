@@ -460,20 +460,10 @@ namespace uno {
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 
-   static double homogeneous_constraint_violation(double constraint_value) {
-      const double lower_bound_violation = std::max(0., -constraint_value);
-      const double upper_bound_violation = std::max(0., constraint_value);
-      return std::max(lower_bound_violation, upper_bound_violation);
-   }
-
    void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const {
       Vector<double> constraints(this->number_constraints); // TODO preallocate
       this->evaluate_constraints(iterate, constraints.view(), evaluations);
-      const Range constraints_range = Range(this->number_constraints);
-      const VectorExpression v{constraints_range, [&](size_t constraint_index) {
-         return homogeneous_constraint_violation(constraints[constraint_index]);
-      }};
-      iterate.progress.infeasibility = norm(progress_norm, v);
+      iterate.progress.infeasibility = norm(progress_norm, constraints);
    }
 
    void PrimalDualInteriorPointProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
@@ -530,11 +520,7 @@ namespace uno {
          const Iterate& current_iterate, const Vector<double>& primal_direction, Norm progress_norm,
          Evaluations& current_evaluations) const {
       this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
-      const Range constraints_range = Range(this->number_constraints);
-      const VectorExpression constraint_violation{constraints_range, [&](size_t constraint_index) {
-         return homogeneous_constraint_violation(this->constraints_buffer[constraint_index]);
-      }};
-      const double current_constraint_violation = norm(progress_norm, constraint_violation);
+      const double current_constraint_violation = norm(progress_norm, this->constraints_buffer);
 
       this->constraints_buffer2.fill(0.);
       this->add_jacobian_vector_product(primal_direction.view(), this->constraints_buffer2.view(), current_evaluations);
@@ -564,8 +550,8 @@ namespace uno {
 
    double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const {
-      const Range variables_range = Range(this->number_variables);
-      const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
+      Vector<double> shifted_bound_complementarity(this->number_variables, 0.); // TODO preallocate
+      for (size_t variable_index: Range(this->number_variables)) {
          double result = 0.;
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
@@ -575,8 +561,8 @@ namespace uno {
             result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
                (primals[variable_index] - variables_upper_bounds[variable_index]) - shift));
          }
-         return result;
-      }};
+         shifted_bound_complementarity[variable_index] = result;
+      }
       return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
    }
 

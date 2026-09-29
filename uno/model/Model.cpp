@@ -94,10 +94,10 @@ namespace uno {
    double Model::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const {
       // bound constraints
-      const Range variables_range = Range(this->number_variables);
       const auto& variables_lower_bounds = this->get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->get_variables_upper_bounds();
-      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
+      Vector<double> variable_complementarity(this->number_variables, 0.); // TODO preallocate
+      for (size_t variable_index: Range(this->number_variables)) {
          double result = 0.;
          if (is_finite(variables_lower_bounds[variable_index])) {
             result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
@@ -107,13 +107,13 @@ namespace uno {
             result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
                (primals[variable_index] - variables_upper_bounds[variable_index])));
          }
-         return result;
-      }};
+         variable_complementarity[variable_index] = result;
+      }
 
       // inequality constraints
       const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
-      Vector<double> constraint_complementarity(this->number_constraints, 0.);
+      Vector<double> constraint_complementarity(this->number_constraints, 0.); // TODO preallocate
       for (size_t constraint_index: this->get_inequality_constraints()) {
          // free constraint: no complementarity pair, the multiplier must vanish
          if (is_infinite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
