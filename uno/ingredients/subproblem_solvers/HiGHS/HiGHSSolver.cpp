@@ -73,12 +73,17 @@ namespace uno {
       HighsModelStatus model_status = highs_solver.getModelStatus();
       DEBUG << "HiGHS model status: " << static_cast<int>(model_status) << '\n';
 
-      if (model_status == HighsModelStatus::kInfeasible) {
+      if (model_status == HighsModelStatus::kInfeasible || model_status == HighsModelStatus::kUnboundedOrInfeasible) {
          direction.status = SubproblemStatus::INFEASIBLE;
          return;
       }
       else if (model_status == HighsModelStatus::kUnbounded) {
          direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
+         return;
+      }
+      // catch all other errors
+      else if (model_status != HighsModelStatus::kOptimal) {
+         direction.status = SubproblemStatus::ERROR;
          return;
       }
 
