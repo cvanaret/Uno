@@ -52,6 +52,7 @@ namespace uno {
       void left_shift(size_t start, size_t shift_size);
       void right_shift(size_t start, size_t shift_size);
       static void print_line(std::string& table, const std::string& infeasibility, const std::string& objective);
+      [[nodiscard]] bool is_sorted() const;
    };
 } // namespace
 
