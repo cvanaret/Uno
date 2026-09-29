@@ -326,6 +326,10 @@ namespace uno {
                (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
          // the constraint is satisfied
+         // free constraint: no complementarity pair, the multiplier must vanish
+         if (is_infinite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
+            return multipliers.constraints[constraint_index];
+         }
          // if constraint is one-sided, pick that bound
          else if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
             return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
