@@ -99,6 +99,7 @@ namespace uno {
                DEBUG << "Resetting the filter\n";
                this->filter->reset();
                ++this->number_filter_resets;
+               this->number_successive_filter_rejections = 0;
             }
          }
          else {
