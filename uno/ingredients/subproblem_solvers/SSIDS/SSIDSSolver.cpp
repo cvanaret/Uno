@@ -13,6 +13,10 @@ namespace uno {
       this->workspace.options.print_level = -1; // no printing
    }
 
+   SSIDSSolver::~SSIDSSolver() {
+      spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
+   }
+
    void SSIDSSolver::initialize_memory() {
       this->workspace.n = static_cast<int>(this->linear_system.dimension);
       this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
@@ -38,6 +42,7 @@ namespace uno {
          this->workspace.akeep, &this->workspace.fkeep, &this->workspace.options, &this->workspace.inform);
       if(this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
+         this->analysis_performed = false;
          throw std::runtime_error("SSIDS could not compute the factorization");
       }
       this->factorization_performed = true;
