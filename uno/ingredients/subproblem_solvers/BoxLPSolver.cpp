@@ -3,8 +3,11 @@
 
 #include <stdexcept>
 #include "BoxLPSolver.hpp"
+
+#include "IQPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -35,26 +38,29 @@ namespace uno {
       // compute the variables bounds
       subproblem.set_variables_bounds(current_iterate, this->variable_lower_bounds, this->variable_upper_bounds, trust_region_radius);
 
-      // move the variables to one of their bounds
+      // move the variables to one of their bounds and set the multipliers
       this->direction.subproblem_objective = 0.;
       for (size_t variable_index: Range(subproblem.number_variables)) {
          if (0. < this->workspace.objective_gradient[variable_index]) {
             this->direction.primals[variable_index] = this->variable_lower_bounds[variable_index];
-            this->direction.multipliers.lower_bounds[variable_index] = this->workspace.objective_gradient[variable_index];
+            this->direction.multipliers.lower_bounds[variable_index] = this->workspace.objective_gradient[variable_index] -
+               current_iterate.multipliers.lower_bounds[variable_index];
             if (is_infinite(this->variable_lower_bounds[variable_index])) {
                this->direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
             }
          }
          else if (this->workspace.objective_gradient[variable_index] < 0.) {
             this->direction.primals[variable_index] = this->variable_upper_bounds[variable_index];
-            this->direction.multipliers.upper_bounds[variable_index] = this->workspace.objective_gradient[variable_index];
+            this->direction.multipliers.upper_bounds[variable_index] = this->workspace.objective_gradient[variable_index] -
+               current_iterate.multipliers.upper_bounds[variable_index];
             if (is_infinite(this->variable_upper_bounds[variable_index])) {
                this->direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
             }
          }
          else {
             this->direction.primals[variable_index] = 0.;
-            this->direction.multipliers.lower_bounds[variable_index] = this->direction.multipliers.upper_bounds[variable_index] = 0.;
+            this->direction.multipliers.lower_bounds[variable_index] = 0. - current_iterate.multipliers.lower_bounds[variable_index];
+            this->direction.multipliers.upper_bounds[variable_index] = 0. - current_iterate.multipliers.upper_bounds[variable_index];
          }
          this->direction.subproblem_objective += this->workspace.objective_gradient[variable_index] * this->direction.primals[variable_index];
       }
