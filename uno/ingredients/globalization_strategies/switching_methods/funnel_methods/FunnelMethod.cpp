@@ -35,9 +35,9 @@ namespace uno {
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
       statistics.set("Funnel", this->funnel.current_width());
       // in filter and funnel methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
-      const double current_merit = SwitchingMethod::unconstrained_merit_function(current_progress);
-      const double trial_merit = SwitchingMethod::unconstrained_merit_function(trial_progress);
-      const double merit_predicted_reduction = SwitchingMethod::unconstrained_merit_function(predicted_reduction);
+      const double current_merit = unconstrained_merit_function(current_progress);
+      const double trial_merit = unconstrained_merit_function(trial_progress);
+      const double merit_predicted_reduction = unconstrained_merit_function(predicted_reduction);
       DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
@@ -50,7 +50,7 @@ namespace uno {
          if (!this->require_acceptance_wrt_current_iterate ||
              this->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
             // f-type step
-            if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
+            if (this->switching_condition(merit_predicted_reduction, predicted_reduction.step_length, current_progress.infeasibility)) {
                DEBUG << "Trial iterate satisfies switching condition\n";
                // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
                const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, trial_merit);

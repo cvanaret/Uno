@@ -27,9 +27,9 @@ namespace uno {
    bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double /*objective_multiplier*/) {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
-      const double current_merit = FilterMethod::unconstrained_merit_function(current_progress);
-      const double trial_merit = FilterMethod::unconstrained_merit_function(trial_progress);
-      const double merit_predicted_reduction = FilterMethod::unconstrained_merit_function(predicted_reductions);
+      const double current_merit = unconstrained_merit_function(current_progress);
+      const double trial_merit = unconstrained_merit_function(trial_progress);
+      const double merit_predicted_reduction = unconstrained_merit_function(predicted_reductions);
       DEBUG << "Current (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Current filter:\n" << this->filter;
@@ -48,7 +48,7 @@ namespace uno {
       const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_factor *
          std::max(1., this->initial_infeasibility);
       const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction,
-         current_progress.infeasibility);
+         predicted_reductions.step_length, current_progress.infeasibility);
       const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction);
 
       // switching condition: the unconstrained predicted reduction is sufficiently positive

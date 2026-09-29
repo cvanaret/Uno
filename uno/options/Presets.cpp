@@ -87,7 +87,7 @@ namespace uno {
          options.set_double("switching_delta", 1);
          options.set_double("filter_ubd", 1e4);
          options.set_double("filter_fact", 1e4);
-         options.set_double("switching_objective_exponent", 2.3);
+         options.set_double("switching_merit_exponent", 2.3);
          options.set_double("switching_infeasibility_exponent", 1.1);
          options.set_double("armijo_decrease_fraction", 1e-8);
          options.set_double("LS_backtracking_ratio", 0.5);

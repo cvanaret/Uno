@@ -37,7 +37,8 @@ namespace uno {
             [objective = this->objective_model, step_length](double objective_multiplier) {
                return objective(step_length, objective_multiplier, /* use_curvature_information = */ true);
             },
-            this->auxiliary_model(step_length)
+            this->auxiliary_model(step_length),
+            step_length
          };
       }
 

@@ -14,10 +14,11 @@ namespace uno {
 
    protected:
       const double delta;
+      const double switching_merit_exponent;
       const double switching_infeasibility_exponent;
 
       [[nodiscard]] static double unconstrained_merit_function(const ProgressMeasures& progress);
-      [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility) const;
+      [[nodiscard]] bool switching_condition(double predicted_reduction, double step_length, double current_infeasibility) const;
    };
 } // namespace
 
