@@ -178,7 +178,7 @@ namespace uno {
       switch (bqpd_status) {
          case BQPDStatus::REDUCED_HESSIAN_INSUFFICIENT_SPACE:
             // increase kmax
-            this->kmax = (this->kmax*4)/3;
+            this->kmax = std::min((this->kmax*4)/3, static_cast<int>(this->quadratic_program->number_variables)); // no need to go above n
             return false;
 
          case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
@@ -206,13 +206,12 @@ namespace uno {
       const int n = static_cast<int>(quadratic_program.number_variables);
       const int m = static_cast<int>(quadratic_program.number_constraints);
 
-      const BQPDMode mode = determine_mode(warmstart_information);
-      const int mode_integer = static_cast<int>(mode);
-
+      BQPDMode mode = determine_mode(warmstart_information);
       // solve the LP/QP
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
+         const int mode_integer = static_cast<int>(mode);
          BQPD(&n, &m, &this->k, &this->kmax, quadratic_program.gradients.data(),
             quadratic_program.gradients_sparsity.data(), direction.primals.data(),
             quadratic_program.lower_bounds.data(), quadratic_program.upper_bounds.data(), &direction.subproblem_objective,
@@ -224,6 +223,9 @@ namespace uno {
          termination = this->check_sufficient_workspace_size(bqpd_status);
          if (termination) {
             direction.status = status_from_bqpd_status(bqpd_status);
+         }
+         else {
+            mode = BQPDMode::COLD_START;
          }
       }
 
