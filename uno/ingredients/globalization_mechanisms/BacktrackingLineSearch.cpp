@@ -29,7 +29,7 @@ namespace uno {
          gamma_theta(1. - options.get_double("filter_beta")),
          gamma_phi(options.get_double("filter_gamma")),
          s_theta(options.get_double("switching_infeasibility_exponent")),
-         s_phi(options.get_double("switching_objective_exponent")),
+         s_phi(options.get_double("switching_merit_exponent")),
          theta_min(options.get_double("barrier_small_infeasibility_factor")),
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),

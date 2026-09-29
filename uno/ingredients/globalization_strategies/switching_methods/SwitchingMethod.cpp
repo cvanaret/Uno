@@ -9,13 +9,21 @@
 namespace uno {
    SwitchingMethod::SwitchingMethod(const Options& options): GlobalizationStrategy(options),
       delta(options.get_double("switching_delta")),
+      switching_merit_exponent(options.get_double("switching_merit_exponent")),
       switching_infeasibility_exponent(options.get_double("switching_infeasibility_exponent")) { }
 
    double SwitchingMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
       return progress.objective(1.) + progress.auxiliary;
    }
 
-   bool SwitchingMethod::switching_condition(double predicted_reduction, double current_infeasibility) const {
-      return predicted_reduction > this->delta * std::pow(current_infeasibility, this->switching_infeasibility_exponent);
+   // IPOPT, eq. (19): α (-∇φᵀd)^{sφ} > δ θ^{sθ}
+   // in Uno, m(α) = -α ∇φᵀd, therefore the LHS is given by α (m(α)/α)^{sφ} > δ θ^{sθ}
+   bool SwitchingMethod::switching_condition(double predicted_reduction, double step_length, double current_infeasibility) const {
+      if (predicted_reduction <= 0.) {
+         return false;
+      }
+      const double unit_step_reduction = predicted_reduction / step_length;
+      return step_length * std::pow(unit_step_reduction, this->switching_merit_exponent) >
+         this->delta * std::pow(current_infeasibility, this->switching_infeasibility_exponent);
    }
 } // namespace

@@ -19,9 +19,9 @@ namespace uno {
    bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double /*objective_multiplier*/) {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
-      const double current_merit = FilterMethod::unconstrained_merit_function(current_progress);
-      const double trial_merit = FilterMethod::unconstrained_merit_function(trial_progress);
-      const double merit_predicted_reduction = FilterMethod::unconstrained_merit_function(predicted_reductions);
+      const double current_merit = unconstrained_merit_function(current_progress);
+      const double trial_merit = unconstrained_merit_function(trial_progress);
+      const double merit_predicted_reduction = unconstrained_merit_function(predicted_reductions);
       DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Current filter:\n" << this->filter << '\n';
@@ -46,7 +46,7 @@ namespace uno {
       }
       // now acceptable wrt current iterate
       // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
-      else if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
+      else if (this->switching_condition(merit_predicted_reduction, predicted_reductions.step_length, current_progress.infeasibility)) {
          // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
          const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, trial_merit);
          DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';

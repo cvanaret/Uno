@@ -63,7 +63,7 @@ namespace uno {
 
       /** switching method options **/
       options.set_double("switching_delta", 0.999);
-      options.set_double("switching_objective_exponent", 1.);
+      options.set_double("switching_merit_exponent", 1.);
       options.set_double("switching_infeasibility_exponent", 2.);
 
       /** merit function options **/
