@@ -23,6 +23,7 @@ namespace uno {
    void Direction::reset() {
       this->primals.fill(0.);
       this->multipliers.reset();
+      this->status = SubproblemStatus::OPTIMAL;
    }
 
    std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
