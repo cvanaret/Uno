@@ -291,14 +291,13 @@ namespace uno {
       trial_iterate.multipliers.lower_bounds += step_length * direction_multipliers.lower_bounds;
       trial_iterate.multipliers.upper_bounds += step_length * direction_multipliers.upper_bounds;
       // discard the multipliers if their magnitude exceeds a threshold
+      // note: this assumes that the infinite bounds get a 0 multiplier (which Uno satisfies)
       if (norm_inf(trial_iterate.multipliers.lower_bounds, trial_iterate.multipliers.upper_bounds) > this->bound_multiplier_max_norm) {
-         const auto& variables_lower_bounds = this->original_problem.get_variables_lower_bounds();
-         const auto& variables_upper_bounds = this->original_problem.get_variables_upper_bounds();
-         for (size_t variable_index: Range(this->original_problem.number_variables)) {
-            if (is_finite(variables_lower_bounds[variable_index])) {
+         for (size_t variable_index: Range(number_optimality_variables)) {
+            if (trial_iterate.multipliers.lower_bounds[variable_index] > 0.) {
                trial_iterate.multipliers.lower_bounds[variable_index] = 1.;
             }
-            if (is_finite(variables_upper_bounds[variable_index])) {
+            if (trial_iterate.multipliers.upper_bounds[variable_index] < 0.) {
                trial_iterate.multipliers.upper_bounds[variable_index] = -1.;
             }
          }
