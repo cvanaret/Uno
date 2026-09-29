@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Joris Gillis, Alexis Montoison and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#ifndef UNO_DYNAMICLOADER_H
+#define UNO_DYNAMICLOADER_H
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -26,3 +29,5 @@ namespace uno {
    [[nodiscard]] std::string resolve_library_name(const std::string& user_library_name, const char* env_library_name,
       const char* default_library);
 } // namespace
+
+#endif // UNO_DYNAMICLOADER_H
