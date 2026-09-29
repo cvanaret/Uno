@@ -200,6 +200,7 @@ namespace uno {
                evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
 
+            /*
             // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
             // accept the step unconditionally
             if (!is_acceptable && number_iterations == 1 && tiny_direction) {
@@ -215,6 +216,7 @@ namespace uno {
                   this->number_consecutive_tiny_directions = 0;
                }
             }
+            */
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
