@@ -79,6 +79,7 @@ namespace uno {
       const bool print_subproblem;
 
       [[nodiscard]] size_t compute_mxws() const;
+      [[nodiscard]] size_t compute_mxlws() const;
       void display_subproblem(const Vector<double>& initial_point) const;
       // allocate the BQPD algorithm scratch (active set, residuals, ws/lws) for the given problem shape
       void allocate_workspace(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, bool is_qp);

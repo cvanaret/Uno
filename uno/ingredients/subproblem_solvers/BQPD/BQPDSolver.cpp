@@ -102,10 +102,7 @@ namespace uno {
       // allocation of integer and real workspaces
       this->nprof = std::max(number_jacobian_nonzeros + number_variables, 5 /* heuristic */ * number_jacobian_nonzeros);
       this->mxws = this->compute_mxws();
-      // 1 pointer hidden in lws (the quadratic program)
-      constexpr size_t hidden_pointers_size = sizeof(intptr_t);
-      this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
-         9 * number_variables + number_constraints /* (required by sparseL.f) */;
+      this->mxlws = this->compute_mxlws();
       this->ws.resize(this->mxws);
       this->lws.resize(this->mxlws);
    }
@@ -114,6 +111,13 @@ namespace uno {
       return static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * this->quadratic_program->number_variables +
          this->quadratic_program->number_constraints /* (required by bqpd.f) */ +
          5 * this->quadratic_program->number_variables + this->nprof; /* (required by sparseL.f) */
+   }
+
+   size_t BQPDSolver::compute_mxlws() const {
+      // 1 pointer hidden in lws (the quadratic program)
+      constexpr size_t hidden_pointers_size = 1 * sizeof(intptr_t);
+      return hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
+         9 * this->quadratic_program->number_variables + this->quadratic_program->number_constraints /* (required by sparseL.f) */;
    }
 
    QuadraticProgram& BQPDSolver::get_quadratic_program() {
@@ -177,15 +181,22 @@ namespace uno {
    bool BQPDSolver::check_sufficient_workspace_size(BQPDStatus bqpd_status) {
       switch (bqpd_status) {
          case BQPDStatus::REDUCED_HESSIAN_INSUFFICIENT_SPACE:
+            assert(this->kmax > 0);
             // increase kmax
-            this->kmax = (this->kmax*4)/3;
+            this->kmax = static_cast<int>(std::ceil((this->kmax*4)/3));
+            // reallocate the vectors ws and lws
+            this->mxws = this->compute_mxws();
+            this->mxlws = this->compute_mxlws();
+            this->ws.resize(this->mxws);
+            this->lws.resize(this->mxlws);
+            WSC.mxws = static_cast<int>(this->mxws);
+            WSC.mxlws = static_cast<int>(this->mxlws);
             return false;
 
          case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
             // allocate more size for (sparse) factors
             this->nprof *= 2;
             this->mxws = this->compute_mxws();
-            // this->mxws = (this->mxws*4)/3;
             this->mxlws = (this->mxlws*4)/3;
             this->ws.resize(this->mxws);
             this->lws.resize(this->mxlws);
