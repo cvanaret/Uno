@@ -70,8 +70,6 @@ namespace uno {
       options.set_double("sufficient_infeasibility_decrease_ratio", 0.9);
 
       /** filter method options **/
-      // filter type (standard)
-      options.set_string("filter_type", "standard");
       options.set_double("filter_beta", 0.999);
       options.set_double("filter_gamma", 0.001);
       options.set_double("filter_ubd", 1e2);

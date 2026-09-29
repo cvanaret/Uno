@@ -82,7 +82,6 @@ namespace uno {
          options.set_string("globalization_mechanism", "LS");
          options.set_string("globalization_strategy", "waechter_filter_method");
          options.set_bool("use_function_scaling", true);
-         options.set_string("filter_type", "standard");
          options.set_double("filter_beta", 0.99999);
          options.set_double("filter_gamma", 1e-8);
          options.set_double("switching_delta", 1);
@@ -114,7 +113,6 @@ namespace uno {
          options.set_string("inertia_correction_strategy", "none");
          options.set_string("globalization_mechanism", "TR");
          options.set_string("globalization_strategy", "fletcher_filter_method");
-         options.set_string("filter_type", "standard");
          options.set_string("progress_norm", "L1");
          options.set_string("residual_norm", "L2");
          options.set_double("TR_radius", 10.);
@@ -158,7 +156,6 @@ namespace uno {
          options.set_string("inertia_correction_strategy", "none");
          options.set_string("globalization_mechanism", "TR");
          options.set_string("globalization_strategy", "fletcher_filter_method");
-         options.set_string("filter_type", "standard");
          options.set_string("progress_norm", "L1");
          options.set_string("residual_norm", "L2");
          options.set_double("TR_radius", 10);

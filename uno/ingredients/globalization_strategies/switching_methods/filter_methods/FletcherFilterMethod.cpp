@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FletcherFilterMethod.hpp"
-#include "filters/Filter.hpp"
+#include "Filter.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
@@ -24,22 +24,22 @@ namespace uno {
       const double merit_predicted_reduction = FilterMethod::unconstrained_merit_function(predicted_reductions);
       DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
-      DEBUG << "Current filter:\n" << *this->filter << '\n';
+      DEBUG << "Current filter:\n" << this->filter << '\n';
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
       std::string scenario;
       bool accept = false;
-      if (!this->filter->acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
+      if (!this->filter.acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
          DEBUG << "Trial iterate not acceptable wrt infeasibility upper bound\n";
          scenario = "upper bound";
       }
       // now acceptable wrt infeasibility upper bound
-      else if (!this->filter->filter_acceptable(trial_progress.infeasibility, trial_merit)) {
+      else if (!this->filter.filter_acceptable(trial_progress.infeasibility, trial_merit)) {
          DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
       }
       // now filter acceptable
-      else if (!this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
+      else if (!this->filter.acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
          trial_progress.infeasibility, trial_merit)) {
          DEBUG << "Trial iterate not acceptable with respect to current point\n";
          scenario = "current";
@@ -48,8 +48,7 @@ namespace uno {
       // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
       else if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
          // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
-         const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
-            trial_merit);
+         const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, trial_merit);
          DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
          if (this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction)) {
             DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
@@ -64,7 +63,7 @@ namespace uno {
       else {
          DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
          accept = true;
-         this->filter->add(current_progress.infeasibility, current_merit);
+         this->filter.add(current_progress.infeasibility, current_merit);
          DEBUG << "Current iterate was added to the filter\n";
          scenario = "h-type";
       }
@@ -76,7 +75,7 @@ namespace uno {
          double reference_infeasibility) const {
       // if the trial infeasibility improves upon the best known infeasibility
       return trial_iterate.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
-         this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_iterate.progress.infeasibility);
+         this->filter.infeasibility_sufficient_reduction(this->filter.get_smallest_infeasibility(), trial_iterate.progress.infeasibility);
    }
 
    std::string FletcherFilterMethod::get_name() const {

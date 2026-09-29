@@ -22,7 +22,6 @@ The **default preset** `auto` decides between `filtersqp` and `ipopt`, depending
 | `inertia_correction_strategy`                          | string | `none`                    |
 | `globalization_mechanism`                              | string | `TR`                      |
 | `globalization_strategy`                               | string | `fletcher_filter_method`  |
-| `filter_type`                                          | string | `standard`                |
 | `progress_norm`                                        | string | `L1`                      |
 | `residual_norm`                                        | string | `L2`                      |
 | `TR_radius`                                            | double | 10                        |
@@ -45,7 +44,6 @@ If not provided, the QP solver is chosen automatically from the available QP sol
 | `inertia_correction_strategy`                          | string | `primal_dual`             |
 | `globalization_mechanism`                              | string | `LS`                      |
 | `globalization_strategy`                               | string | `waechter_filter_method`  |
-| `filter_type`                                          | string | `standard`                |
 | `filter_beta`                                          | double | 0.99999                   |
 | `filter_gamma`                                         | double | 1e-8                      |
 | `switching_delta`                                      | double | 1                         |
