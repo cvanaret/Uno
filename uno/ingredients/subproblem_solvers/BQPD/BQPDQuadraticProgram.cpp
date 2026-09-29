@@ -286,16 +286,22 @@ namespace uno {
       int current_constraint = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
-         // variable index
          const uno_int variable_index = jacobian_column_indices[permuted_nonzero_index];
+         const uno_int constraint_index = jacobian_row_indices[permuted_nonzero_index];
+         // validate before anything is written (both paths into this function can carry user-provided COO data)
+         if (variable_index < 0 || static_cast<size_t>(variable_index) >= number_variables) {
+            throw std::out_of_range("BQPDQuadraticProgram: Jacobian column index " + std::to_string(variable_index) +
+               " is out of range [0, " + std::to_string(number_variables) + ")");
+         }
+         if (constraint_index < 0 || static_cast<size_t>(constraint_index) >= number_constraints) {
+            throw std::out_of_range("BQPDQuadraticProgram: Jacobian row index " + std::to_string(constraint_index) +
+               " is out of range [0, " + std::to_string(number_constraints) + ")");
+         }
+
+         // variable index
          this->gradients_sparsity[1 + number_variables + jacobian_nonzero_index] = variable_index +
             Indexing::Fortran_indexing;
-
-         // constraint index
-         const uno_int constraint_index = jacobian_row_indices[permuted_nonzero_index];
-         if (current_constraint > constraint_index) {
-            throw std::runtime_error("Dimension mismatch in BQPDQuadraticProgram::build_gradients_sparsity_from_jacobian_coo");
-         }
+         // constraint index: fill the starts of the rows up to this one (empty rows get the same start)
          while (current_constraint < constraint_index) {
             ++current_constraint;
             this->gradients_sparsity[1 + number_variables + number_jacobian_nonzeros + 1 +
@@ -303,9 +309,13 @@ namespace uno {
                   jacobian_nonzero_index) + Indexing::Fortran_indexing;
          }
       }
-      // since there cannot be empty rows, we don't need to loop over empty rows like we do for the HiGHS Hessian
-      this->gradients_sparsity[1 + number_variables + number_jacobian_nonzeros + 1 + number_constraints] =
-         static_cast<int>(number_variables + number_jacobian_nonzeros) + Indexing::Fortran_indexing;
+      // fill the remaining (trailing) empty rows
+      while (current_constraint < static_cast<int>(number_constraints)) {
+         ++current_constraint;
+         this->gradients_sparsity[1 + number_variables + number_jacobian_nonzeros + 1 +
+            static_cast<size_t>(current_constraint)] = static_cast<int>(number_variables + number_jacobian_nonzeros) +
+            Indexing::Fortran_indexing;
+      }
    }
 
    void BQPDQuadraticProgram::scatter_jacobian_values(size_t number_variables) {

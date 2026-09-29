@@ -43,7 +43,7 @@ namespace uno {
 
    // approach implemented in Minotaur
    // https://github.com/coin-or/minotaur/blob/51a8bb78241a0b2e9ae94802aa76af8319f99192/src/interfaces/UnoEngine.cpp#L277
-   int pick_kmax_minotaur(size_t number_variables, size_t number_constraints) {
+   int pick_kmax_minotaur(size_t number_variables, size_t /*number_constraints*/) {
       size_t kmax = 0;
       if (number_variables <= 1500) {
          kmax = number_variables;
