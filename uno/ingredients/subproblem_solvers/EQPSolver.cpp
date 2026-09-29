@@ -129,7 +129,7 @@ namespace uno {
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
-         DEBUG << "RHS: " << linear_system.rhs << '\n';
+         DEBUG3 << "RHS: " << linear_system.rhs << '\n';
       }
 
       // solve the linear system
@@ -180,7 +180,7 @@ namespace uno {
       auto rhs_constraints = view(linear_system.rhs, subproblem.number_variables, subproblem.number_variables +
          subproblem.number_constraints);
       rhs_constraints = -this->constraints_SOC;
-      DEBUG2 << "SOC RHS: " << linear_system.rhs << '\n';
+      DEBUG3 << "SOC RHS: " << linear_system.rhs << '\n';
 
       // solve the linear system and assemble the full primal-dual direction
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());

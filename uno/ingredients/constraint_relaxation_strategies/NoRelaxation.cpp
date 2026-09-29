@@ -105,9 +105,9 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
-      this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
-      trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       if (accept_iterate) {
+         this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
             trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
