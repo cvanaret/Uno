@@ -68,7 +68,7 @@ namespace uno {
             size_t elastic_index, ElasticType elastic_type) {
          // by default
          current_iterate.primals[elastic_index] = 0.;
-         current_iterate.multipliers.lower_bounds[elastic_index] = 1.;
+         current_iterate.multipliers.lower_bounds[elastic_index] = feasibility_problem.constraint_violation_coefficient;
          current_iterate.multipliers.upper_bounds[elastic_index] = 0.;
 
          // violated lower bound: set n
