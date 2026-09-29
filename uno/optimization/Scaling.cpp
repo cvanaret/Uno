@@ -6,6 +6,7 @@
 #include "linear_algebra/Norm.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -15,9 +16,12 @@ namespace uno {
 
    void Scaling::compute(const Model& model, const Vector<double>& objective_gradient, const Vector<double>& jacobian_values) {
       // objective
-      this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
+      const double objective_gradient_norm = norm_inf(objective_gradient);
+      if (is_finite(objective_gradient_norm) && objective_gradient_norm > 0.) {
+         this->objective_scaling = std::min(1., this->gradient_threshold / objective_gradient_norm);
+         this->is_objective_scaled_flag = (this->objective_scaling < 1.);
+      }
       assert(this->objective_scaling > 0.);
-      this->is_objective_scaled_flag = (this->objective_scaling < 1.);
 
       // constraints
       // compute the inf norm of each row of the Jacobian
@@ -28,12 +32,15 @@ namespace uno {
          norm_inf_constraints[constraint_index] = std::max(norm_inf_constraints[constraint_index], std::abs(jacobian_values[nonzero_index]));
       }
       for (size_t constraint_index: Range(model.number_constraints)) {
-         const double row_norm = norm_inf_constraints[constraint_index];
-         this->constraint_scaling[constraint_index] = (row_norm > 0.) ? std::min(1., this->gradient_threshold / row_norm) : 1.;
-         assert(this->constraint_scaling[constraint_index] > 0.);
-         if (this->constraint_scaling[constraint_index] < 1.) {
-            this->are_constraints_scaled_flag = true;
+         const double jacobian_row_norm = norm_inf_constraints[constraint_index];
+         if (is_finite(jacobian_row_norm) && jacobian_row_norm > 0.) {
+            this->constraint_scaling[constraint_index] = std::min(1., this->gradient_threshold / jacobian_row_norm);
+            if (this->constraint_scaling[constraint_index] < 1.) {
+               this->are_constraints_scaled_flag = true;
+            }
          }
+         assert(this->constraint_scaling[constraint_index] > 0.);
+
       }
       DEBUG2 << "Objective scaling: " << this->objective_scaling << '\n';
       DEBUG2 << "Constraint scaling: " << view(this->constraint_scaling) << '\n';
