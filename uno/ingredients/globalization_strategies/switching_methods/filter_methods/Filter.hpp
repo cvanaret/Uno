@@ -4,7 +4,7 @@
 #ifndef UNO_FILTER_H
 #define UNO_FILTER_H
 
-#include <memory>
+#include <string>
 #include <vector>
 #include "tools/Infinity.hpp"
 
