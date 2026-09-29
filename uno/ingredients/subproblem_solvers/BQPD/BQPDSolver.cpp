@@ -48,9 +48,11 @@ namespace uno {
       if (number_variables <= 1500) {
          kmax = number_variables;
       }
+      /*
       else if (number_variables <= 5000) {
-         kmax = number_variables - number_constraints/5;
+         kmax = number_variables - number_constraints/5; // caution, this may underflow
       }
+      */
       else {
          kmax = 5000;
       }
