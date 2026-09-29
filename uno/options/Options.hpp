@@ -17,12 +17,12 @@ namespace uno {
    public:
       Options() = default;
 
-      void set_integer(const std::string& option_name, uno_int option_value, bool flag_as_overwritten = false);
-      void set_double(const std::string& option_name, double option_value, bool flag_as_overwritten = false);
-      void set_bool(const std::string& option_name, bool option_value, bool flag_as_overwritten = false);
-      void set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
+      void set_integer(const std::string& option_name, uno_int option_value);
+      void set_double(const std::string& option_name, double option_value);
+      void set_bool(const std::string& option_name, bool option_value);
+      void set_string(const std::string& option_name, const std::string& option_value);
       // setter for option with unknown type
-      void set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
+      void set(const std::string& option_name, const std::string& option_value);
 
       void overwrite(const Options& options);
 
@@ -31,7 +31,13 @@ namespace uno {
       [[nodiscard]] double get_double(const std::string& option_name) const;
       [[nodiscard]] bool get_bool(const std::string& option_name) const;
       [[nodiscard]] const std::string& get_string(const std::string& option_name) const;
+
       [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<uno_int> get_int_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<size_t> get_unsigned_int_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<double> get_double_optional(const std::string& option_name) const;
+      [[nodiscard]] std::optional<bool> get_bool_optional(const std::string& option_name) const;
+
       [[nodiscard]] OptionType get_option_type(const std::string& option_name) const;
 
       [[nodiscard]] static std::vector<std::pair<std::string, std::string>> get_command_line_options(int argc, char* argv[],
@@ -41,7 +47,7 @@ namespace uno {
       // Print all available options with their type and default value
       static void dump_default_options();
 
-      void print_non_default() const;
+      void print(const std::string& header) const;
 
       static const std::unordered_map<std::string, OptionType> option_types;
 
@@ -50,9 +56,16 @@ namespace uno {
       std::unordered_map<std::string, double> double_options{};
       std::unordered_map<std::string, bool> bool_options{};
       std::unordered_map<std::string, std::string> string_options{};
+   };
 
-      mutable std::unordered_map<std::string, bool> used{};
-      mutable std::unordered_map<std::string, bool> overwritten_options{};
+   class OptionOverride {
+   public:
+      std::string option_name;
+      std::optional<std::string> old_value;
+      std::string new_value;
+      std::string reason;
+
+      OptionOverride(std::string option_name, std::optional<std::string> old_value, std::string new_value, std::string reason);
    };
 } // namespace
 

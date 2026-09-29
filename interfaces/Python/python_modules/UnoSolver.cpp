@@ -83,7 +83,9 @@ namespace uno {
       .def("set_logger_stream", &UnoSolverWrapper::set_logger_stream)
 
       .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
-         Presets::set(solver.user_options, preset_name);
+         solver.validate_preset(preset_name);
+         solver.user_options.set_string("preset", preset_name);
+         solver.refresh_preset_options();
       }, py::arg("preset_name"))
 
       .def("set_notify_acceptable_iterate_callback", [](UnoSolverWrapper& solver, NotifyAcceptableIterateCallback callback) {

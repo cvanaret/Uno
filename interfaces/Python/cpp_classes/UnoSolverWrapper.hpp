@@ -33,9 +33,14 @@ namespace uno {
    public:
       Uno uno_solver{};
       Options user_options{};
+      Options preset_options{};
+      Options default_options{};
 
       UnoSolverWrapper();
       ~UnoSolverWrapper();
+
+      void validate_preset(const std::string& preset);
+      void refresh_preset_options();
 
       void set_logger_stream(py::object py_stream);
       void set_notify_acceptable_iterate_callback(NotifyAcceptableIterateCallback notify_acceptable_iterate_callback);

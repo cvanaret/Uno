@@ -12,6 +12,6 @@ if [ "$status" -ne 0 ]; then
   echo "::error::[$label] runcutest exited with status $status"; exit 1
 fi
 # runcutest swallows the solver's exit code, so detect crashes from the output
-if grep -Eq 'terminate called|Program received signal|Segmentation fault|Backtrace for this error' "$label.log"; then
+if grep -Eq 'terminate called|Program received signal|Segmentation fault|Backtrace for this error|could not be found' "$label.log"; then
   echo "::error::[$label] Uno crashed on $problem"; exit 1
 fi

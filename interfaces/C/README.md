@@ -146,6 +146,8 @@ double uno_set_solver_double_option(solver, "primal_tolerance");
 bool uno_get_solver_bool_option(solver, "print_solution");
 const char* uno_get_solver_string_option(solver, "hessian_model");
 ```
+Before the solve, the getters return the options specified by the user. After the solve, they may return options overridden by the solver (e.g., `hessian_model` may contain `LBFGS` if no Hessian is available).
+Note: the user-specified options are persistent between consecutive solves (the possibly overridden options are stored separately).
 
 Setting a preset has Uno mimic an existing solver:
 ```c

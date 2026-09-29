@@ -14,19 +14,19 @@
 
 namespace uno {
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const OptimizationProblem& problem,
-         bool uses_trust_region, double objective_multiplier, Options& options) {
+         bool uses_trust_region, double objective_multiplier, const Options& options, std::vector<OptionOverride>& option_overrides) {
       // figure out whether there are inequality constraints altogether
       if (!problem.has_inequality_constraints() && !problem.has_bound_constraints() && !uses_trust_region) {
          // no reformulation
          if (0 < problem.number_constraints) {
             INFO << "picking a pure SQP method\n";
             return std::make_unique<NoInequalityReformulation>("pure SQP method", problem, uses_trust_region,
-               objective_multiplier, options);
+               objective_multiplier, options, option_overrides);
          }
          else {
             INFO << "picking a pure Newton method\n";
             return std::make_unique<NoInequalityReformulation>("pure Newton method", problem, uses_trust_region,
-               objective_multiplier, options);
+               objective_multiplier, options, option_overrides);
          }
       }
       // from now on, the problem has inequalities
@@ -36,7 +36,7 @@ namespace uno {
          // no inequality reformulation: let the subproblem solver handle them
          INFO << "picking an inequality-constrained (LP or QP) method\n";
          return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method", problem, uses_trust_region,
-            objective_multiplier, options);
+            objective_multiplier, options, option_overrides);
       }
       // interior-point method
       else if (inequality_handling_method == "interior_point") {
@@ -44,7 +44,7 @@ namespace uno {
          if (barrier_function == "log") {
             INFO << "picking a barrier method\n";
             return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(problem, uses_trust_region,
-               objective_multiplier, options);
+               objective_multiplier, options, option_overrides);
          }
          else {
             throw std::invalid_argument("The barrier function " + barrier_function + " is not supported");

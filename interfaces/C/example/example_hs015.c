@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "uno/Uno_C_API.h"
 
@@ -163,13 +164,17 @@ int main() {
    assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
    double solution_objective = uno_get_solution_objective(solver);
    printf("Solution objective = %g\n", solution_objective);
+   const char* hessian_model = uno_get_solver_string_option(solver, "hessian_model");
+   if (hessian_model != NULL) {
+      printf("Hessian model picked by Uno = %s\n", hessian_model);
+      assert(strcmp(hessian_model, "LBFGS") == 0);
+   }
+   printf("\n");
 
    // run 2: solve with exact Hessian
    uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
       hessian_column_indices, lagrangian_hessian);
    uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
-   // the Hessian model was overwritten. Set it again
-   uno_set_solver_string_option(solver, "hessian_model", "exact");
    uno_optimize(solver, model);
    
    printf("Method used: %s\n", uno_get_method_description(solver));

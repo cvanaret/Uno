@@ -13,8 +13,10 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   GlobalizationMechanism::GlobalizationMechanism(const Model& model, bool use_trust_region, Options& options):
-      constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(model, use_trust_region, options)) {
+   GlobalizationMechanism::GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options,
+      std::vector<OptionOverride>& option_overrides):
+         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(model, use_trust_region, options,
+            option_overrides)) {
    }
 
    GlobalizationMechanism::~GlobalizationMechanism() = default;

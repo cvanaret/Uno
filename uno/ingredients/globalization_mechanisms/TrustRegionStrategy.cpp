@@ -17,8 +17,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   TrustRegionStrategy::TrustRegionStrategy(const Model& model, Options& options) :
-         GlobalizationMechanism(model, true, options),
+   TrustRegionStrategy::TrustRegionStrategy(const Model& model, const Options& options, std::vector<OptionOverride>& option_overrides) :
+         GlobalizationMechanism(model, true, options, option_overrides),
          radius(options.get_double("TR_radius")),
          increase_factor(options.get_double("TR_increase_factor")),
          decrease_factor(options.get_double("TR_decrease_factor")),
@@ -34,8 +34,9 @@ namespace uno {
    }
 
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         EvaluationCache& evaluation_cache, Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, true, evaluation_cache, options);
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) {
+      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, true, evaluation_cache, options,
+         option_overrides);
       statistics.add_column("TR", Statistics::int_width, 3, /* is_extended = */ true);
       statistics.add_column("Radius", Statistics::double_width, 2, /* is_extended = */ true);
       statistics.set("Radius", this->radius);

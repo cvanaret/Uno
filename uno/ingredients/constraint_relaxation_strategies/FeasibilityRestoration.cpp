@@ -24,15 +24,16 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool /*use_trust_region*/, Options& options) :
+   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool /*use_trust_region*/, const Options& options,
+      std::vector<OptionOverride>& option_overrides) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
          feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */,
             options.get_bool("use_proximal_term")),
-         globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
-         feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options)),
+         globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
+         feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
          bound_multiplier_max_norm(options.get_double("bound_multiplier_max_norm")),
@@ -42,17 +43,18 @@ namespace uno {
    FeasibilityRestoration::~FeasibilityRestoration() = default;
 
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, Options& options) {
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) {
       this->initial_point.resize(this->original_problem.number_variables);
 
       // reformulation of the original problem and the feasibility problem
       INFO << "- Allocating optimality (original) method: ";
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
-         1., options);
+         1., options, option_overrides);
       this->inequality_handling_method->initialize_memory();
       INFO << "- Allocating feasibility method: ";
       this->feasibility_inequality_handling_method = InequalityHandlingMethodFactory::create(this->feasibility_problem,
-         uses_trust_region, 0., options);
+         uses_trust_region, 0., options, option_overrides);
+      INFO << '\n';
 
       // initial iterate
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,

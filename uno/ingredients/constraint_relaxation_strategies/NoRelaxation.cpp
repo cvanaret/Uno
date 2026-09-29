@@ -18,7 +18,7 @@
 namespace uno {
    class ExactHessian;
 
-   NoRelaxation::NoRelaxation(const Model& model, Options& options):
+   NoRelaxation::NoRelaxation(const Model& model, const Options& options):
          ConstraintRelaxationStrategy(options),
          original_problem(model),
          globalization_strategy(options) {
@@ -27,14 +27,15 @@ namespace uno {
    NoRelaxation::~NoRelaxation() = default;
 
    void NoRelaxation::initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
-         EvaluationCache& evaluation_cache, Options& options) {
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) {
       this->initial_point.resize(this->original_problem.number_variables);
 
       // reformulation of the original problem
       INFO << "- Allocating method: ";
       this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
-         1., options);
+         1., options, option_overrides);
       this->inequality_handling_method->initialize_memory();
+      INFO << '\n';
 
       // initial iterate
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,

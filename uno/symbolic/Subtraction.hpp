@@ -38,7 +38,8 @@ namespace uno {
    };
 
    // free function
-   template <typename E1, typename E2>
+   template <typename E1, typename E2,
+            typename = std::enable_if_t<is_symbolic_v<std::decay_t<E1>> || is_symbolic_v<std::decay_t<E2>>>>
    Subtraction<E1, E2> operator-(E1&& left, E2&& right) {
       return {std::forward<E1>(left), std::forward<E2>(right)};
    }

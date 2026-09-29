@@ -6,16 +6,18 @@
 
 #include <array>
 #include <memory>
+#include <vector>
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declarations
    class GlobalizationStrategy;
    class Model;
-   class Options;
 
    class GlobalizationStrategyFactory {
    public:
-      static std::unique_ptr<GlobalizationStrategy> create(const Model& model, Options& options);
+      static std::unique_ptr<GlobalizationStrategy> create(const Model& model, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
 
       constexpr static std::array available_strategies{
          "merit_function", "fletcher_filter_method", "waechter_filter_method", "funnel_method"

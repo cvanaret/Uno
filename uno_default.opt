@@ -1,19 +1,19 @@
 ## Ingredients
 # constraint relaxation strategy (feasibility_restoration)
-constraint_relaxation_strategy feasibility_restoration
+#constraint_relaxation_strategy feasibility_restoration
 # inequality handling method (inequality_constrained|interior_point)
-inequality_handling_method inequality_constrained
+#inequality_handling_method inequality_constrained
 # Hessian model (exact|LBFGS|LSR1|identity|zero)
-hessian_model exact
+#hessian_model exact
 # inertia correction strategy (primal|primal_dual|none)
-inertia_correction_strategy none
+#inertia_correction_strategy none
 # globalization mechanism (TR|LS)
-globalization_mechanism TR
+#globalization_mechanism TR
 # globalization strategy (merit_function|fletcher_filter_method|waechter_filter_method|funnel_method)
-globalization_strategy fletcher_filter_method
+#globalization_strategy fletcher_filter_method
 
 ## Preset (uncomment to force) (filtersqp|ipopt)
-#preset filtersqp
+preset ipopt
 
 ## Subproblem solver (picked by Uno automatically, uncomment to force)
 # QP solver (BQPD|HiGHS)

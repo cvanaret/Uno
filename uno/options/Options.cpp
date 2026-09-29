@@ -119,41 +119,37 @@ namespace uno {
    };
 
    // setters
-   void Options::set_integer(const std::string& option_name, uno_int option_value, bool flag_as_overwritten) {
+   void Options::set_integer(const std::string& option_name, uno_int option_value) {
       this->integer_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
-   void Options::set_double(const std::string& option_name, double option_value, bool flag_as_overwritten) {
+   void Options::set_double(const std::string& option_name, double option_value) {
       this->double_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
-   void Options::set_bool(const std::string& option_name, bool option_value, bool flag_as_overwritten) {
+   void Options::set_bool(const std::string& option_name, bool option_value) {
       this->bool_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
-   void Options::set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
+   void Options::set_string(const std::string& option_name, const std::string& option_value) {
       this->string_options[option_name] = option_value;
-      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
    // setter for option with unknown type
-   void Options::set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
+   void Options::set(const std::string& option_name, const std::string& option_value) {
       try {
          const OptionType type = option_types.at(option_name);
          if (type == OptionType::INTEGER) {
-            this->set_integer(option_name, std::stoi(option_value), flag_as_overwritten);
+            this->set_integer(option_name, std::stoi(option_value));
          }
          else if (type == OptionType::DOUBLE) {
-            this->set_double(option_name, std::stod(option_value), flag_as_overwritten);
+            this->set_double(option_name, std::stod(option_value));
          }
          else if (type == OptionType::BOOL) {
-            this->set_bool(option_name, option_value == "yes" || option_value == "true", flag_as_overwritten);
+            this->set_bool(option_name, option_value == "yes" || option_value == "true");
          }
          else if (type == OptionType::STRING) {
-            this->set_string(option_name, option_value, flag_as_overwritten);
+            this->set_string(option_name, option_value);
          }
       }
       catch(const std::out_of_range&) {
@@ -178,7 +174,6 @@ namespace uno {
 
    // getters
    uno_int Options::get_int(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->integer_options.at(option_name);
       }
@@ -188,7 +183,6 @@ namespace uno {
    }
 
    size_t Options::get_unsigned_int(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return static_cast<size_t>(this->integer_options.at(option_name));
       }
@@ -198,7 +192,6 @@ namespace uno {
    }
 
    double Options::get_double(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->double_options.at(option_name);
       }
@@ -208,7 +201,6 @@ namespace uno {
    }
 
    bool Options::get_bool(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->bool_options.at(option_name);
       }
@@ -218,7 +210,6 @@ namespace uno {
    }
 
    const std::string& Options::get_string(const std::string& option_name) const {
-      this->used[option_name] = true;
       try {
          return this->string_options.at(option_name);
       }
@@ -229,9 +220,43 @@ namespace uno {
 
    std::optional<std::string> Options::get_string_optional(const std::string& option_name) const {
       try {
-         const std::string& option_value = this->string_options.at(option_name);
-         this->used[option_name] = true;
-         return option_value;
+         return this->string_options.at(option_name);
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
+   std::optional<uno_int> Options::get_int_optional(const std::string& option_name) const {
+      try {
+         return this->integer_options.at(option_name);
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
+   std::optional<size_t> Options::get_unsigned_int_optional(const std::string& option_name) const {
+      try {
+         return static_cast<size_t>(this->integer_options.at(option_name));
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
+   std::optional<double> Options::get_double_optional(const std::string& option_name) const {
+      try {
+         return this->double_options.at(option_name);
+      }
+      catch(const std::out_of_range&) {
+         return std::nullopt;
+      }
+   }
+
+   std::optional<bool> Options::get_bool_optional(const std::string& option_name) const {
+      try {
+         return this->bool_options.at(option_name);
       }
       catch(const std::out_of_range&) {
          return std::nullopt;
@@ -272,30 +297,31 @@ namespace uno {
    }
 
    void Options::load_option_file(Options& options, const std::string& file_name) {
-      std::ifstream file;
-      file.open(file_name);
+      std::ifstream file(file_name);
       if (!file) {
          throw std::invalid_argument("The option file " + file_name + " was not found");
       }
-      else {
-         std::string option_name, option_value;
-         std::string line;
-         while (std::getline(file, line)) {
-            // Remove comments
-            const size_t comment_position = line.find('#');
-            if (comment_position != std::string::npos) {
-               line.erase(comment_position);
-            }
-            trim(line);
-            std::istringstream iss;
-            iss.str(line);
-            if (iss >> option_name >> option_value) {
-               // set option (with unknown type)
-               options.set(option_name, option_value);
-            }
+      std::string line;
+      size_t line_number = 0;
+      while (std::getline(file, line)) {
+         ++line_number;
+         // Remove comments
+         const size_t comment_position = line.find('#');
+         if (comment_position != std::string::npos) {
+            line.erase(comment_position);
          }
-         file.close();
+         trim(line);
+         if (line.empty()) {
+            continue;
+         }
+         std::istringstream stream(line);
+         std::string option_name, option_value, extra_token;
+         if (!(stream >> option_name >> option_value) || (stream >> extra_token)) {
+            throw std::invalid_argument("Malformed line " + std::to_string(line_number) + " in option file " + file_name + ": " + line);
+         }
+         options.set(option_name, option_value);
       }
+      file.close();
    }
 
    void Options::dump_default_options() {
@@ -334,37 +360,26 @@ namespace uno {
       }
    }
 
-   void Options::print_non_default() const {
-      size_t number_used_options = 0;
+   void Options::print(const std::string& header) const {
       std::string option_list{};
       for (const auto& [option_name, option_value]: this->integer_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
-         }
+         option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
       }
       for (const auto& [option_name, option_value]: this->double_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
-         }
+         option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
       }
       for (const auto& [option_name, option_value]: this->bool_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
-         }
+         const std::string value = option_value ? "true" : "false";
+         option_list.append(option_name).append(" = ").append(value).append("\n");
       }
       for (const auto& [option_name, option_value]: this->string_options) {
-         if (this->used[option_name] && this->overwritten_options[option_name]) {
-            ++number_used_options;
-            option_list.append(option_name).append(" = ").append(option_value).append("\n");
-         }
+         option_list.append(option_name).append(" = ").append(option_value).append("\n");
       }
-      // print the overwritten options
-      DISCRETE << '\n';
-      if (number_used_options > 0) {
-         DISCRETE << "Non-default options:\n" << option_list << '\n';
-      }
+      DISCRETE << header << ":\n" << option_list << '\n';
+   }
+
+   OptionOverride::OptionOverride(std::string option_name, std::optional<std::string> old_value, std::string new_value,
+      std::string reason): option_name(std::move(option_name)), old_value(std::move(old_value)), new_value(std::move(new_value)),
+      reason(std::move(reason)) {
    }
 } // namespace

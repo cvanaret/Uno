@@ -13,11 +13,13 @@
 
 namespace uno {
    NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
-         bool uses_trust_region, double objective_multiplier, Options& options):
+         bool uses_trust_region, double objective_multiplier, const Options& options,
+         std::vector<OptionOverride>& option_overrides):
       InequalityHandlingMethod(problem, options), name(std::move(name)) {
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
-         HessianSubproblemSolverJointFactory::create(this->problem, uses_trust_region, objective_multiplier, options);
+         HessianSubproblemSolverJointFactory::create(this->problem, uses_trust_region, objective_multiplier, options,
+            option_overrides);
       this->subproblem = std::make_unique<Subproblem>(this->problem, *this->hessian_model, *this->inertia_correction_strategy);
    }
 

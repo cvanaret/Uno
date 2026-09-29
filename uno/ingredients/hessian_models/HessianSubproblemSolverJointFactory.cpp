@@ -21,14 +21,14 @@
 
 namespace uno {
    Ingredients HessianSubproblemSolverJointFactory::create(const OptimizationProblem& problem, bool uses_trust_region,
-         double objective_multiplier, Options& options) {
+         double objective_multiplier, const Options& options, std::vector<OptionOverride>& option_overrides) {
       const Model& model = problem.model;
       std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy = InertiaCorrectionStrategyFactory::create(options);
+      const std::string& hessian_model_type = options.get_string("hessian_model");
 
       // first look at the problem type. If it is an LP, pick zero Hessian model
       if (model.get_problem_type() == ProblemType::LINEAR) {
-         // override user defined option
-         options.set_string("hessian_model", "zero", true);
+         option_overrides.emplace_back("hessian_model", hessian_model_type, "zero", "LP");
          auto hessian_model = std::make_unique<ZeroHessian>(model.number_variables);
          Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
          auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
@@ -38,7 +38,6 @@ namespace uno {
       // then look at the option hessian_model
       // from now onwards, the problem is nonlinear (QP or NLP)
       bool default_to_lbfgs = false;
-      const std::string& hessian_model_type = options.get_string("hessian_model");
       if (hessian_model_type == "exact") {
          if (model.has_hessian_matrix() || model.has_hessian_operator()) {
             auto hessian_model = std::make_unique<ExactHessian>(model);
@@ -56,8 +55,7 @@ namespace uno {
       if (hessian_model_type == "LBFGS" || default_to_lbfgs) {
          if (default_to_lbfgs) {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-LBFGS Hessian instead\n";
-            // override user defined option
-            options.set_string("hessian_model", "LBFGS", true);
+            option_overrides.emplace_back("hessian_model", hessian_model_type, "LBFGS", "no Hessian available");
          }
          if (0 < model.number_constraints || model.has_bound_constraints() || uses_trust_region) { // constrained
             auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);

@@ -14,15 +14,15 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const Model& model, Options& options) {
+   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const Model& model, const Options& options,
+         std::vector<OptionOverride>& option_overrides) {
+      const std::string& strategy_type = options.get_string("globalization_strategy");
       // set unconstrained strategy automatically
       if (model.number_constraints == 0) {
          INFO << "The model is unconstrained, picking a merit function as globalization strategy\n";
-         // override user defined option
-         options.set_string("globalization_strategy", "merit_function", true);
+         option_overrides.emplace_back("globalization_strategy", strategy_type, "merit_function", "unconstrained problem");
          return std::make_unique<MeritFunction>(options);
       }
-      const std::string& strategy_type = options.get_string("globalization_strategy");
       if (strategy_type == "merit_function") {
          return std::make_unique<MeritFunction>(options);
       }

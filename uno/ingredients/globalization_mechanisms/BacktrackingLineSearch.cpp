@@ -19,8 +19,9 @@
 #include "tools/Symbols.hpp"
 
 namespace uno {
-   BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, Options& options):
-         GlobalizationMechanism(model, false, options),
+   BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, const Options& options,
+      std::vector<OptionOverride>& option_overrides):
+         GlobalizationMechanism(model, false, options, option_overrides),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")),
          delta(options.get_double("switching_delta")),
@@ -39,8 +40,9 @@ namespace uno {
    }
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         EvaluationCache& evaluation_cache, Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options);
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) {
+      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, false, evaluation_cache, options,
+         option_overrides);
       statistics.add_column("LS", Statistics::int_width, 3, /* is_extended = */ true);
       statistics.add_column("Steplength", Statistics::double_width + 2, 2, /* is_extended = */ true);
       set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);

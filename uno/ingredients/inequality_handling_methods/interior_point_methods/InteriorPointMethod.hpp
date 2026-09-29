@@ -5,6 +5,7 @@
 #define UNO_INTERIORPOINTMETHOD_H
 
 #include <memory>
+#include <vector>
 #include "../InequalityHandlingMethod.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 #include "InteriorPointParameters.hpp"
@@ -25,7 +26,8 @@ namespace uno {
    template <typename BarrierProblem>
    class InteriorPointMethod : public InequalityHandlingMethod {
    public:
-      InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier, Options& options);
+      InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier,
+         const Options& options, std::vector<OptionOverride>& option_overrides);
 
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
@@ -86,7 +88,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    InteriorPointMethod<BarrierProblem>::InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region,
-      double objective_multiplier, Options& options):
+      double objective_multiplier, const Options& options, std::vector<OptionOverride>& option_overrides):
          InequalityHandlingMethod(problem, options),
          parameters({
                options.get_double("barrier_tau_min"),
@@ -104,7 +106,8 @@ namespace uno {
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
-         HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier, options);
+         HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier,
+            options, option_overrides);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
    }
 

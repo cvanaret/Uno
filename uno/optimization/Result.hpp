@@ -7,6 +7,7 @@
 #include "Iterate.hpp"
 #include "OptimizationStatus.hpp"
 #include "../interfaces/C/uno_int.h"
+#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -36,6 +37,7 @@ namespace uno {
       const size_t number_jacobian_evaluations;
       const size_t number_hessian_evaluations;
       const size_t number_subproblems_solved;
+      std::vector<OptionOverride> option_overrides;
 
       void print(bool print_primal_dual_solution) const;
    };

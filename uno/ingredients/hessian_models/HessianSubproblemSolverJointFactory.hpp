@@ -7,13 +7,14 @@
 #include <array>
 #include <memory>
 #include <tuple>
+#include <vector>
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declarations
    class HessianModel;
    class InertiaCorrectionStrategy;
    class OptimizationProblem;
-   class Options;
    class SubproblemSolver;
 
    using Ingredients = std::tuple<std::unique_ptr<InertiaCorrectionStrategy>,
@@ -25,7 +26,7 @@ namespace uno {
    public:
       // joint factory of inertia correction strategy, Hessian models, and subproblem solver
       static Ingredients create(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier,
-         Options& options);
+         const Options& options, std::vector<OptionOverride>& option_overrides);
 
       constexpr static std::array available_strategies{"exact", "LFBGS", "LSR1", "identity", "zero"};
    };
