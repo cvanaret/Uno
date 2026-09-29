@@ -126,11 +126,23 @@ namespace uno {
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      // carry the optimality bound multipliers over to restoration
-      view(current_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables, number_feasibility_variables) =
-         view(this->other_phase_multipliers.lower_bounds, this->original_problem.number_variables, number_optimality_variables);
-      view(current_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables, number_feasibility_variables) =
-         view(this->other_phase_multipliers.upper_bounds, this->original_problem.number_variables, number_optimality_variables);
+      // carry the optimality bound multipliers over to restoration. Layouts:
+      // optimality (x, s) = [0, n) [n, n + s); restoration (x, p/n, s) = [0, n) [n, n + e) [n + e, n + e + s)
+      // the elastic multipliers are initialized by set_elastic_variable_values
+      const size_t number_original_variables = this->original_problem.number_variables;
+      const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
+      auto& restoration_multipliers = current_iterate.multipliers;
+      const auto& optimality_multipliers = this->other_phase_multipliers;
+      // original variables
+      view(restoration_multipliers.lower_bounds, 0, number_original_variables) =
+         view(optimality_multipliers.lower_bounds, 0, number_original_variables);
+      view(restoration_multipliers.upper_bounds, 0, number_original_variables) =
+         view(optimality_multipliers.upper_bounds, 0, number_original_variables);
+      // slacks
+      view(restoration_multipliers.lower_bounds, first_restoration_slack, number_feasibility_variables) =
+         view(optimality_multipliers.lower_bounds, number_original_variables, number_optimality_variables);
+      view(restoration_multipliers.upper_bounds, first_restoration_slack, number_feasibility_variables) =
+         view(optimality_multipliers.upper_bounds, number_original_variables, number_optimality_variables);
       current_iterate.multipliers.constraints.fill(0.);
 
       // initialize the feasibility inequality handling method
