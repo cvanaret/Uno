@@ -89,7 +89,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
-         this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
