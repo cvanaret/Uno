@@ -1125,6 +1125,10 @@ double uno_get_solver_double_option(void* solver, const char* option_name) {
    if (user_value.has_value()) {
       return *user_value;
    }
+   const std::optional<double> preset_value = uno_solver->preset_options.get_double_optional(option_name);
+   if (preset_value.has_value()) {
+      return *preset_value;
+   }
    // falls back to the default; throws if the option has no default (e.g. preset-dependent)
    return uno_solver->default_options.get_double(option_name);
 }
@@ -1141,6 +1145,10 @@ uno_int uno_get_solver_integer_option(void* solver, const char* option_name) {
    if (user_value.has_value()) {
       return *user_value;
    }
+   const std::optional<uno_int> preset_value = uno_solver->preset_options.get_int_optional(option_name);
+   if (preset_value.has_value()) {
+      return *preset_value;
+   }
    // falls back to the default; throws if the option has no default (e.g. preset-dependent)
    return uno_solver->default_options.get_int(option_name);
 }
@@ -1156,6 +1164,10 @@ bool uno_get_solver_bool_option(void* solver, const char* option_name) {
    const std::optional<bool> user_value = uno_solver->user_options.get_bool_optional(option_name);
    if (user_value.has_value()) {
       return *user_value;
+   }
+   const std::optional<bool> preset_value = uno_solver->preset_options.get_bool_optional(option_name);
+   if (preset_value.has_value()) {
+      return *preset_value;
    }
    // falls back to the default; throws if the option has no default (e.g. preset-dependent)
    return uno_solver->default_options.get_bool(option_name);
@@ -1179,6 +1191,7 @@ const char* uno_get_solver_string_option(void* solver, const char* option_name) 
       }
    }
 
+   // then look in the user options, the preset options, and the default options
    // pointer to the stored string (not a copy), or nullptr if the option is not set
    const auto find_string = [&](const Options& options) -> const std::string* {
       try {
@@ -1192,6 +1205,10 @@ const char* uno_get_solver_string_option(void* solver, const char* option_name) 
    const std::string* user_value = find_string(uno_solver->user_options);
    if (user_value != nullptr) {
       return user_value->c_str();
+   }
+   const std::string* preset_value = find_string(uno_solver->preset_options);
+   if (preset_value != nullptr) {
+      return preset_value->c_str();
    }
    const std::string* default_value = find_string(uno_solver->default_options);
    if (default_value != nullptr) {
