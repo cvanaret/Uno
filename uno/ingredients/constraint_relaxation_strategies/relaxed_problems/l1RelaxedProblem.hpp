@@ -5,7 +5,6 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include <functional>
-#include <memory>
 #include "ElasticVariables.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/OptimizationProblem.hpp"

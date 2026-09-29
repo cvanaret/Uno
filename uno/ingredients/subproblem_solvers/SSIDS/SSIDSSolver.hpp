@@ -23,7 +23,7 @@ namespace uno {
    class SSIDSSolver: public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
       SSIDSSolver();
-      ~SSIDSSolver() override = default;
+      ~SSIDSSolver() override;
 
       void initialize_memory() override;
 

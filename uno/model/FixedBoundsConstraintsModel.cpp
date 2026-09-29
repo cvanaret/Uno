@@ -3,6 +3,7 @@
 
 #include "FixedBoundsConstraintsModel.hpp"
 #include "linear_algebra/View.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 
 namespace uno {
@@ -122,7 +123,7 @@ namespace uno {
       this->model.compute_jacobian_vector_product(x, vector, result);
 
       // add the contributions of the fixed variables
-      size_t constraint_index = this->number_constraints;
+      size_t constraint_index = this->model.number_constraints;
       for (size_t fixed_variable_index: this->model.get_fixed_variables()) {
          result[constraint_index] = vector[fixed_variable_index];
          ++constraint_index;
@@ -134,7 +135,7 @@ namespace uno {
       this->model.compute_jacobian_transposed_vector_product(x, vector, result);
 
       // add the contributions of the fixed variables
-      size_t constraint_index = this->number_constraints;
+      size_t constraint_index = this->model.number_constraints;
       for (size_t fixed_variable_index: this->model.get_fixed_variables()) {
          result[fixed_variable_index] += vector[constraint_index];
          ++constraint_index;
@@ -207,6 +208,13 @@ namespace uno {
          }
          ++current_constraint;
       }
+
+      // resize the iterate
+      iterate.multipliers.constraints.resize(this->model.number_constraints);
+      if (evaluations.are_constraints_computed) {
+         evaluations.constraints.resize(this->model.number_constraints);
+      }
+
       this->model.postprocess_solution(iterate, evaluations);
    }
 

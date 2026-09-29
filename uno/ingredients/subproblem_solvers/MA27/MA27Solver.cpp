@@ -112,7 +112,7 @@ namespace uno {
       // resize IW
       const int nirnec = MA27_INFO(6);
       this->workspace.liw = MA27Settings::liw_init_factor * nirnec;
-      this->workspace.iw.reserve(static_cast<size_t>(this->workspace.liw));
+      this->workspace.iw.resize(static_cast<size_t>(this->workspace.liw));
       // resize factor (A)
       const int nrlnec = MA27_INFO(5);
       this->workspace.la = MA27Settings::la_init_factor * nrlnec;

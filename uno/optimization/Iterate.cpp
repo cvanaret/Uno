@@ -35,7 +35,13 @@ namespace uno {
       stream << "Lagrangian gradient: " << iterate.residuals.lagrangian_gradient << '\n';
 
       stream << "                  " << symbols::top_pipe << " Infeasibility: " << iterate.progress.infeasibility << '\n';
-      stream << "Progress measures " << symbols::pipe << " Optimality: " << iterate.progress.objective(1.) << '\n';
+      stream << "Progress measures " << symbols::pipe << " Optimality: ";
+      if (iterate.progress.objective != nullptr) {
+         stream << iterate.progress.objective(1.) << '\n';
+      }
+      else {
+         stream << "unset" << '\n';
+      }
       stream << "                  " << symbols::bottom_pipe << " Auxiliary terms: " << iterate.progress.auxiliary << '\n';
 
       return stream;

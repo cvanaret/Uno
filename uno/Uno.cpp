@@ -86,17 +86,20 @@ namespace uno {
 
       // initialize the strategies and generate the initial iterate
       std::vector<OptionOverride> option_overrides;
-      const bool initialization_success = this->initialize(statistics, model, current_iterate, evaluation_cache, options,
-         option_overrides);
-      if (!initialization_success) {
-         termination = true;
-         optimization_status = OptimizationStatus::EVALUATION_ERROR;
-      }
       const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
       if (max_iterations == 0) {
          termination = true;
          optimization_status = OptimizationStatus::ITERATION_LIMIT;
       }
+      else {
+         const bool initialization_success = this->initialize(statistics, model, current_iterate, evaluation_cache, options,
+            option_overrides);
+         if (!initialization_success) {
+            termination = true;
+            optimization_status = OptimizationStatus::EVALUATION_ERROR;
+         }
+      }
+
       // outer loop: compute a sequence of accepted iterates
       size_t major_iterations = 0;
       // allocate the trial iterate once and for all

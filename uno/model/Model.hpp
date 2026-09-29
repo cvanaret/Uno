@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/ProblemType.hpp"
-#include "symbolic/VectorExpression.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
@@ -122,10 +122,10 @@ namespace uno {
    // compute ||c||
    template <typename Array>
    double Model::constraint_violation(const Array& constraints, Norm residual_norm) const {
-      const Range constraints_range = Range(constraints.size());
-      const VectorExpression constraint_violation{constraints_range, [&](size_t constraint_index) {
-         return this->constraint_violation(constraints[constraint_index], constraint_index);
-      }};
+      Vector<double> constraint_violation(constraints.size()); // TODO preallocate
+      for (size_t constraint_index: Range(constraints.size())) {
+         constraint_violation[constraint_index] = this->constraint_violation(constraints[constraint_index], constraint_index);
+      }
       return norm(residual_norm, constraint_violation);
    }
 } // namespace

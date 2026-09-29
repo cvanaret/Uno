@@ -33,7 +33,7 @@ namespace uno {
       Iterate();
       Iterate(const Iterate& other) = default;
       Iterate(Iterate&& other) noexcept = default;
-      Iterate& operator=(const Iterate& other) noexcept = default;
+      Iterate& operator=(const Iterate& other) = default;
       Iterate& operator=(Iterate&& other) noexcept = default;
 
       void set_number_variables(size_t number_variables);

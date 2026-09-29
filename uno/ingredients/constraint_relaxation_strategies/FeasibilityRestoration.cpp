@@ -29,7 +29,7 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),
-         // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
+         // all constraints (including linear constraints) are relaxed
          feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */,
             options.get_bool("use_proximal_term")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
@@ -126,11 +126,23 @@ namespace uno {
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      // carry the optimality bound multipliers over to restoration
-      view(current_iterate.multipliers.lower_bounds, this->feasibility_problem.number_variables, number_feasibility_variables) =
-         view(this->other_phase_multipliers.lower_bounds, this->original_problem.number_variables, number_optimality_variables);
-      view(current_iterate.multipliers.upper_bounds, this->feasibility_problem.number_variables, number_feasibility_variables) =
-         view(this->other_phase_multipliers.upper_bounds, this->original_problem.number_variables, number_optimality_variables);
+      // carry the optimality bound multipliers over to restoration. Layouts:
+      // optimality (x, s) = [0, n) [n, n + s); restoration (x, p/n, s) = [0, n) [n, n + e) [n + e, n + e + s)
+      // the elastic multipliers are initialized by set_elastic_variable_values
+      const size_t number_original_variables = this->original_problem.number_variables;
+      const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
+      auto& restoration_multipliers = current_iterate.multipliers;
+      const auto& optimality_multipliers = this->other_phase_multipliers;
+      // original variables
+      view(restoration_multipliers.lower_bounds, 0, number_original_variables) =
+         view(optimality_multipliers.lower_bounds, 0, number_original_variables);
+      view(restoration_multipliers.upper_bounds, 0, number_original_variables) =
+         view(optimality_multipliers.upper_bounds, 0, number_original_variables);
+      // slacks
+      view(restoration_multipliers.lower_bounds, first_restoration_slack, number_feasibility_variables) =
+         view(optimality_multipliers.lower_bounds, number_original_variables, number_optimality_variables);
+      view(restoration_multipliers.upper_bounds, first_restoration_slack, number_feasibility_variables) =
+         view(optimality_multipliers.upper_bounds, number_original_variables, number_optimality_variables);
       current_iterate.multipliers.constraints.fill(0.);
 
       // initialize the feasibility inequality handling method
@@ -279,14 +291,13 @@ namespace uno {
       trial_iterate.multipliers.lower_bounds += step_length * direction_multipliers.lower_bounds;
       trial_iterate.multipliers.upper_bounds += step_length * direction_multipliers.upper_bounds;
       // discard the multipliers if their magnitude exceeds a threshold
+      // note: this assumes that the infinite bounds get a 0 multiplier (which Uno satisfies)
       if (norm_inf(trial_iterate.multipliers.lower_bounds, trial_iterate.multipliers.upper_bounds) > this->bound_multiplier_max_norm) {
-         const auto& variables_lower_bounds = this->original_problem.get_variables_lower_bounds();
-         const auto& variables_upper_bounds = this->original_problem.get_variables_upper_bounds();
-         for (size_t variable_index: Range(this->original_problem.number_variables)) {
-            if (is_finite(variables_lower_bounds[variable_index])) {
+         for (size_t variable_index: Range(number_optimality_variables)) {
+            if (trial_iterate.multipliers.lower_bounds[variable_index] > 0.) {
                trial_iterate.multipliers.lower_bounds[variable_index] = 1.;
             }
-            if (is_finite(variables_upper_bounds[variable_index])) {
+            if (trial_iterate.multipliers.upper_bounds[variable_index] < 0.) {
                trial_iterate.multipliers.upper_bounds[variable_index] = -1.;
             }
          }

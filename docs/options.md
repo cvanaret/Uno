@@ -96,14 +96,6 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 ## Filter method options
 
-### String options
-
-| Option        | Possible values           | Default    | Description                       |
-| :---          | :---                      | :---       |:----------------------------------|
-| `filter_type` | `standard`                | `standard` | Type of the filter data structure |
-
-### Numerical options
-
 | Option                                            | Type    | Default | Description                                                                            |
 |:--------------------------------------------------|:--------|:--------|:---------------------------------------------------------------------------------------|
 | `filter_beta`                                     | double  | 0.999   | Fraction in the infeasibility sufficient reduction condition                           |
@@ -115,7 +107,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `filter_reset_iteration_threshold`                | integer | 5       | Number of consecutive filter rejections before the filter is reset                     |
 | `max_number_filter_resets`                        | integer | 5       | Maximum number of filter resets                                                        |
 
-## Funnel options
+## Funnel method options
 
 | Option                                          | Type    | Default | Description                                                                            |
 | :---                                            | :---    | :---    |:---------------------------------------------------------------------------------------|

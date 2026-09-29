@@ -4,12 +4,11 @@
 #ifndef UNO_FILTERMETHOD_H
 #define UNO_FILTERMETHOD_H
 
-#include <memory>
+#include "Filter.hpp"
 #include "ingredients/globalization_strategies/switching_methods/SwitchingMethod.hpp"
 
 namespace uno {
-   // forward declarations
-   class Filter;
+   // forward declaration
    class Options;
 
    struct FilterStrategyParameters {
@@ -27,12 +26,10 @@ namespace uno {
       void avoid_cycling_back_to(const ProgressMeasures& current_progress) override;
 
    protected:
-      // pointer to allow polymorphism
-      const std::unique_ptr<Filter> filter;
+      Filter filter;
       const FilterStrategyParameters parameters; /*!< Set of constants */
 
-      [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility,
-         double trial_objective_measure) const;
+      [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) const;
    };
 } // namespace
 

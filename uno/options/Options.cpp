@@ -43,7 +43,6 @@ namespace uno {
       {"switching_objective_exponent", OptionType::DOUBLE},
       {"switching_infeasibility_exponent", OptionType::DOUBLE},
       {"sufficient_infeasibility_decrease_ratio", OptionType::DOUBLE},
-      {"filter_type", OptionType::STRING},
       {"filter_beta", OptionType::DOUBLE},
       {"filter_gamma", OptionType::DOUBLE},
       {"filter_ubd", OptionType::DOUBLE},
