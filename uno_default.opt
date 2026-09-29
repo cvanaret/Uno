@@ -92,8 +92,6 @@ switching_infeasibility_exponent 2
 sufficient_infeasibility_decrease_ratio 0.9
 
 ## Filter method options
-# Type of the filter data structure (standard)
-filter_type standard
 # Fraction in the infeasibility sufficient reduction condition (double)
 filter_beta 0.999
 # Slope in the objective sufficient reduction condition (double)
