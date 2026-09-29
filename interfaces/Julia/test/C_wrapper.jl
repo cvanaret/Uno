@@ -244,7 +244,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
@@ -268,7 +268,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    #@test hessian_model == "exact"
+    @test hessian_model == "exact"
   end
 
   @testset "L-BFGS with preset=filtersqp" begin
@@ -312,7 +312,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
@@ -336,7 +336,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    #@test hessian_model == "LBFGS"
+    @test hessian_model == "LBFGS"
   end
 
   @testset "uno" begin
@@ -498,7 +498,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
@@ -517,7 +517,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    #@test hessian_model == "exact"
+    @test hessian_model == "exact"
   end
 
   @testset "L-BFGS with preset=filtersqp" begin
@@ -553,7 +553,7 @@ end
     solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
     solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
     solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-    #hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
+    hessian_model = UnoSolver.uno_get_solver_string_option(solver, "hessian_model")
 
     primal_solution = Vector{Float64}(undef, nvar)
     UnoSolver.uno_get_primal_solution(solver, primal_solution)
@@ -572,7 +572,7 @@ end
     @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
     @test solution_stationarity ≈ 0.0 atol = 1e-5
     @test solution_complementarity ≈ 0.0 atol = 1e-5
-    #@test hessian_model == "LBFGS"
+    @test hessian_model == "LBFGS"
   end
 
   @testset "uno" begin

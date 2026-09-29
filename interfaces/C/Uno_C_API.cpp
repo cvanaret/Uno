@@ -444,6 +444,7 @@ struct Solver {
    Options default_options;
    UserCallbacks* user_callbacks;
    Result* result;
+   bool options_consistent_with_solve{false}; // is true only after the solve, false whenever new options are set
 };
 
 void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) {
@@ -843,6 +844,7 @@ bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_in
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->user_options.set_integer(option_name, option_value);
+   uno_solver->options_consistent_with_solve = false;
    return true;
 }
 
@@ -853,6 +855,7 @@ bool uno_set_solver_double_option(void* solver, const char* option_name, double 
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->user_options.set_double(option_name, option_value);
+   uno_solver->options_consistent_with_solve = false;
    return true;
 }
 
@@ -863,6 +866,7 @@ bool uno_set_solver_bool_option(void* solver, const char* option_name, bool opti
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->user_options.set_bool(option_name, option_value);
+   uno_solver->options_consistent_with_solve = false;
    return true;
 }
 
@@ -902,6 +906,7 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
       if (is_preset) {
          refresh_preset_options(*uno_solver);
       }
+      uno_solver->options_consistent_with_solve = false;
       return true;
    }
    catch (const std::exception& exception) {
@@ -1022,6 +1027,7 @@ bool uno_set_solver_preset(void* solver, const char* preset_name) {
       validate_preset(preset);
       uno_solver->user_options.set_string("preset", preset);
       refresh_preset_options(*uno_solver);
+      uno_solver->options_consistent_with_solve = false;
       return true;
    }
    catch (const std::exception& exception) {
@@ -1094,6 +1100,7 @@ void uno_optimize(void* solver, void* model) {
    // clean up the previous result (if any) and move the new result into uno_solver
    delete uno_solver->result;
    uno_solver->result = new Result(std::move(result));
+   uno_solver->options_consistent_with_solve = true;
    // flush the logger
    Logger::flush();
 }
@@ -1162,6 +1169,15 @@ const char* uno_get_solver_string_option(void* solver, const char* option_name) 
       throw std::runtime_error("Please specify a valid option name.");
    }
    const Solver* uno_solver = static_cast<const Solver*>(solver);
+
+   // first look into options overridden by the solver
+   if (uno_solver->result != nullptr && uno_solver->options_consistent_with_solve) {
+      for (const auto& override: uno_solver->result->option_overrides) {
+         if (strcmp(override.option_name.c_str(), option_name) == 0) {
+            return override.new_value.c_str();
+         }
+      }
+   }
 
    // pointer to the stored string (not a copy), or nullptr if the option is not set
    const auto find_string = [&](const Options& options) -> const std::string* {
