@@ -3,6 +3,7 @@
 
 #include "FixedBoundsConstraintsModel.hpp"
 #include "linear_algebra/View.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 
 namespace uno {
@@ -207,6 +208,13 @@ namespace uno {
          }
          ++current_constraint;
       }
+
+      // resize the iterate
+      iterate.multipliers.constraints.resize(this->model.number_constraints);
+      if (evaluations.are_constraints_computed) {
+         evaluations.constraints.resize(this->model.number_constraints);
+      }
+
       this->model.postprocess_solution(iterate, evaluations);
    }
 
