@@ -115,6 +115,7 @@ namespace uno {
                }
                else if (this->radius < this->minimum_radius) { // rejected, but small radius
                   is_acceptable = this->check_termination_with_small_step(trial_iterate);
+                  termination = true;
                }
                if (!is_acceptable) {
                   this->decrease_radius(direction.norm);
