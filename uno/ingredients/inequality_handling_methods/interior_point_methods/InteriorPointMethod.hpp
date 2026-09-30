@@ -14,8 +14,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
-#include "optimization/Evaluations.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "optimization/Parameterization.hpp"
 #include "options/Options.hpp"
 #include "tools/Infinity.hpp"
@@ -58,7 +56,7 @@ namespace uno {
          const Direction& direction, Evaluations& current_evaluations) const override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const override;
+         const ProgressMeasures& predicted_reductions, bool is_full_step) const override;
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
@@ -287,9 +285,9 @@ namespace uno {
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const {
+         const ProgressMeasures& predicted_reductions, bool is_full_step) const {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions, is_full_step);
    }
 
    template <typename BarrierProblem>

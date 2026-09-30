@@ -176,7 +176,7 @@ namespace uno {
       const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.);
       return this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
-         predicted_reductions, warmstart_information, user_callbacks);
+         predicted_reductions, true, warmstart_information, user_callbacks);
    }
 
    // check whether a rejected step with very small norm can be tolerated

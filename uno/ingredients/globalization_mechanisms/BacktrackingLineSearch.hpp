@@ -36,9 +36,6 @@ namespace uno {
       const double s_theta;
       const double s_phi;
       const double theta_min;
-      // tiny directions
-      size_t number_consecutive_tiny_directions{0};
-      const size_t consecutive_tiny_directions_threshold{2}; // TODO add option
       // second-order corrections
       const size_t SOC_max_iterations;
       const double SOC_infeasibility_fraction;
@@ -52,7 +49,6 @@ namespace uno {
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const PredictedReductionModels& predicted_reduction_models, double minimum_step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
-      [[nodiscard]] bool is_tiny_direction(const Iterate& current_iterate, const Direction& direction) const;
       [[nodiscard]] bool compute_second_order_directions(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const;

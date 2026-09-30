@@ -54,7 +54,7 @@ namespace uno {
          const Direction& direction, Evaluations& current_evaluations) const override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const override;
+         const ProgressMeasures& predicted_reductions, bool is_full_step) const override;
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 

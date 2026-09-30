@@ -102,7 +102,6 @@ namespace uno {
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
-      this->number_consecutive_tiny_directions = 0;
       const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
@@ -172,11 +171,6 @@ namespace uno {
       size_t number_iterations = 0;
       DEBUG << "\nLine search: minimum step length set to " << minimum_step_length << '\n';
 
-      const bool tiny_direction = is_tiny_direction(current_iterate, direction);
-      if (!tiny_direction) {
-         this->number_consecutive_tiny_directions = 0;
-      }
-
       while (!termination) {
          ++number_iterations;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
@@ -197,26 +191,8 @@ namespace uno {
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, total_step_length, false, evaluation_cache.current_evaluations,
-               evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
+               evaluation_cache.trial_evaluations, predicted_reductions, number_iterations == 1, warmstart_information, user_callbacks);
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
-
-            /*
-            // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
-            // accept the step unconditionally
-            if (!is_acceptable && number_iterations == 1 && tiny_direction) {
-               // try to evaluate the functions at the trial iterate, so that the next subproblem is well defined
-               evaluation_cache.trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
-               evaluation_cache.trial_evaluations.evaluate_jacobian(model, trial_iterate.primals);
-               // TODO compute progress measures
-               ++this->number_consecutive_tiny_directions;
-               if (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold) {
-                  is_acceptable = true;
-                  DEBUG << "Accepting tiny step\n";
-                  statistics.set("Status", std::string(symbols::check) + " (tiny)");
-                  this->number_consecutive_tiny_directions = 0;
-               }
-            }
-            */
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
@@ -265,19 +241,6 @@ namespace uno {
       return true;
    }
 
-   bool BacktrackingLineSearch::is_tiny_direction(const Iterate& current_iterate, const Direction& direction) const {
-      constexpr double macheps = std::numeric_limits<double>::epsilon();
-      for (size_t variable_index: Range(current_iterate.number_variables)) {
-         if (std::abs(direction.primals[variable_index]) / (1. + std::abs(current_iterate.primals[variable_index])) >= 10.*macheps) {
-            return false;
-         }
-      }
-      if (current_iterate.primal_infeasibility > this->theta_min) {
-         return false;
-      }
-      return true;
-   }
-
    bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
@@ -301,7 +264,7 @@ namespace uno {
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction /* this is correct, see IPOPT paper */, direction.primal_dual_step_length, false,
-               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, predicted_reductions,
+               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, predicted_reductions, true,
                warmstart_information, user_callbacks);
 
             if (is_acceptable) {

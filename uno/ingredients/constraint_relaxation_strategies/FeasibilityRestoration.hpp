@@ -51,8 +51,8 @@ namespace uno {
          const Direction& direction, Evaluations& current_evaluations) const override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
-         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) override;
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, bool is_full_step,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
 

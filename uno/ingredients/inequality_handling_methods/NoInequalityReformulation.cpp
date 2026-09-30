@@ -133,9 +133,9 @@ namespace uno {
 
    bool NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const {
+         const ProgressMeasures& predicted_reductions, bool is_full_step) const {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions, is_full_step);
    }
 
    void NoInequalityReformulation::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,

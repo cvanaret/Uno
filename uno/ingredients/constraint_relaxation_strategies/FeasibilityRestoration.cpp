@@ -322,13 +322,13 @@ namespace uno {
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
-         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) {
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, bool is_full_step,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
          accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, *this->globalization_strategy,
-            current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+            current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions, is_full_step);
          if (uses_trust_region || accept_iterate) {
             this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
                trial_evaluations);
@@ -337,7 +337,7 @@ namespace uno {
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
             *this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, trial_evaluations,
-            predicted_reductions);
+            predicted_reductions, is_full_step);
          if (uses_trust_region || accept_iterate) {
             this->feasibility_inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate,
                current_evaluations, trial_evaluations);

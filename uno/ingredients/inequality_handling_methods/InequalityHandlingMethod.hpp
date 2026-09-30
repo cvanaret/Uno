@@ -61,7 +61,7 @@ namespace uno {
          const Direction& direction, Evaluations& current_evaluations) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const = 0;
+         const ProgressMeasures& predicted_reductions, bool is_full_step) const = 0;
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
@@ -70,11 +70,16 @@ namespace uno {
    protected:
       const OptimizationProblem& problem;
       const Norm progress_norm;
+      // tiny directions
+      mutable size_t number_consecutive_tiny_directions{0};
+      const size_t consecutive_tiny_directions_threshold{2}; // TODO add option
+      const double theta_min;
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, bool is_full_step) const;
+      [[nodiscard]] bool is_tiny_direction(const Iterate& current_iterate, const Direction& direction) const;
    };
 } // namespace
 

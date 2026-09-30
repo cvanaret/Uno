@@ -55,8 +55,8 @@ namespace uno {
          const Direction& direction, Evaluations& current_evaluations) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
-         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) = 0;
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, bool is_full_step,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
