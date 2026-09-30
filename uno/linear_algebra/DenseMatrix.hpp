@@ -59,8 +59,8 @@ namespace uno {
       [[nodiscard]] T& entry(size_t row_index, size_t column_index);
       [[nodiscard]] const T& entry(size_t row_index, size_t column_index) const;
       // vector view
-      [[nodiscard]] View<double> column(size_t column_index);
-      [[nodiscard]] View<const double> column(size_t column_index) const;
+      [[nodiscard]] View<T> column(size_t column_index);
+      [[nodiscard]] View<const T> column(size_t column_index) const;
       [[nodiscard]] Submatrix submatrix(size_t number_rows, size_t number_columns);
 
       [[nodiscard]] T* data() override;
@@ -89,12 +89,12 @@ namespace uno {
    }
 
    template <typename T>
-   View<double> DenseMatrix<T>::column(size_t column_index) {
+   View<T> DenseMatrix<T>::column(size_t column_index) {
       return {this->matrix.data() + column_index * this->number_rows, this->number_rows};
    }
 
    template <typename T>
-   View<const double> DenseMatrix<T>::column(size_t column_index) const {
+   View<const T> DenseMatrix<T>::column(size_t column_index) const {
       return {this->matrix.data() + column_index * this->number_rows, this->number_rows};
    }
 
