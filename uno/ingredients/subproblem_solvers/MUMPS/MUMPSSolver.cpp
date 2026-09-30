@@ -97,8 +97,8 @@ namespace uno {
          else {
             break;
          }
-         this->factorization_performed = true;
       }
+      this->factorization_performed = true;
    }
 
    void MUMPSSolver::solve_indefinite_system(double* solution) {
