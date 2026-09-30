@@ -123,9 +123,6 @@ namespace uno {
    void MA27Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
-      // initialize factor with the entries of the matrix. It will be modified by MA27BD
-      std::copy_n(this->linear_system.matrix_values.data(), this->workspace.nnz, this->workspace.factor.begin());
-
       // numerical factorization
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
       bool factorization_done = false;
@@ -135,6 +132,9 @@ namespace uno {
          if (this->workspace.number_factorization_attempts < attempt) {
             throw std::runtime_error("MA27 reached the maximum number of factorization attempts");
          }
+
+         // initialize factor with the entries of the matrix. It will be modified by MA27BD
+         std::copy_n(this->linear_system.matrix_values.data(), this->workspace.nnz, this->workspace.factor.begin());
 
          int la = static_cast<int>(this->workspace.factor.size());
          int liw = static_cast<int>(this->workspace.iw.size());
