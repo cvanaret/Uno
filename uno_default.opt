@@ -1,4 +1,4 @@
-## Ingredients
+## Ingredients (set by presets or manually)
 # constraint relaxation strategy (feasibility_restoration)
 #constraint_relaxation_strategy feasibility_restoration
 # inequality handling method (inequality_constrained|interior_point)
@@ -13,7 +13,7 @@
 #globalization_strategy fletcher_filter_method
 
 ## Preset (uncomment to force) (filtersqp|ipopt)
-preset ipopt
+# preset ipopt
 
 ## Subproblem solver (picked by Uno automatically, uncomment to force)
 # QP solver (BQPD|HiGHS)
