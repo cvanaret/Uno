@@ -22,7 +22,9 @@ on:
 
 env:
   BUILD_TYPE: Release
-  LIBS: /srv/lib
+  NFS: /srv/lib
+  LD_PRELOAD: /srv/lib/openblas/libopenblas.so
+  OPENBLAS_NUM_THREADS: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -39,13 +41,13 @@ jobs:
 
       - name: Test NFS
         run: |
-          cat ${{env.LIBS}}/test.txt
+          cat ${{env.NFS}}/test.txt
 
       - name: Configure
         run: |
-          LIBHSL_PATH="${{env.LIBS}}/libhsl/builddir/libhsl.so"
-          LIBMETIS_PATH="${{env.LIBS}}/libmetis.a"
-          LIBAMPL_PATH="${{env.LIBS}}/ampl/amplsolver.a"
+          LIBHSL_PATH="${{env.NFS}}/libhsl/builddir/libhsl.so"
+          LIBMETIS_PATH="${{env.NFS}}/libmetis.a"
+          LIBAMPL_PATH="${{env.NFS}}/ampl/amplsolver.a"
 
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
@@ -55,15 +57,96 @@ jobs:
             -DHSL=${LIBHSL_PATH} \
             -DMETIS=${LIBMETIS_PATH} \
             -DAMPLSOLVER=${LIBAMPL_PATH} \
-            -DBUILD_STATIC_LIBS=OFF \
-            -DBUILD_SHARED_LIBS=ON
+            -DBUILD_SHARED_NFS=ON \
+            -DBUILD_STATIC_NFS=OFF
 
       - name: Build
         run: cmake --build build --target uno_ampl --config ${{env.BUILD_TYPE}} --parallel
 
-      - name: Run instance
-        working-directory: build
-        env:
-          LD_PRELOAD: /srv/lib/openblas/libopenblas.so
-          OPENBLAS_NUM_THREADS: 4
-        run: ./uno_ampl "${{env.LIBS}}/Mittelmann/qssp180.nl" preset=ipopt
+      - name: Run Mittelmann instances and summarize
+        run: |
+          set -uo pipefail
+          UNO="${{ github.workspace }}/build/uno_ampl"
+          DIR="${{ env.NFS }}/Mittelmann"
+          # 10 minutes
+          TIMELIMIT=600
+          OPTION_FILE="uno_mittelmann.opt"
+
+          mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
+          if [ "${#INSTANCES[@]}" -eq 0 ]; then
+            echo "::error::No .nl files found under '$DIR'"; exit 1
+          fi
+
+          mkdir -p logs
+          solved=0
+          total=${#INSTANCES[@]}
+          declare -a CONSOLE
+          rows=""
+
+          for nl in "${INSTANCES[@]}"; do
+            name="$(basename "$nl" .nl)"
+            log="logs/${name}.log"
+
+            start=$(date +%s.%N)
+            # Uno enforces time_limit=$TIMELIMIT itself; the outer `timeout` is only a
+            # safety net in case a run gets stuck past its own limit.
+            echo "Solving ${name}"
+            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" option_file="$OPTION_FILE" time_limit="$TIMELIMIT" > "$log" 2>&1 || true
+            end=$(date +%s.%N)
+            secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
+
+            if grep -Eq '^Optimization status:[[:space:]]+Success' "$log"; then
+              solved=$((solved + 1))
+              CONSOLE+=("✓ instance ${name} was solved in ${secs} seconds")
+              rows+="| ✅ | \`${name}\` | solved in ${secs}s |"$'\n'
+              echo "solved in ${secs}s"
+            else
+              CONSOLE+=("✗ instance ${name} failed in ${secs} seconds")
+              rows+="| ❌ | \`${name}\` | failed in ${secs}s |"$'\n'
+              echo "failed in ${secs}s"
+            fi
+          done
+
+          # ---- console summary (what you asked for) ----
+          echo ""
+          echo "================= SUMMARY ================="
+          for line in "${CONSOLE[@]}"; do echo "$line"; done
+          echo "------------------------------------------"
+          echo "Solved ${solved} / ${total} instances"
+          echo "=========================================="
+
+          # ---- build the markdown report (shared by the run page and the PR comment) ----
+          {
+            echo "## Mittelmann benchmark — uno_ampl (time_limit=${TIMELIMIT}s)"
+            echo ""
+            echo "Commit \`${GITHUB_SHA:0:7}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo ""
+            echo "| | instance | result |"
+            echo "|:-:|:--|:--|"
+            printf '%s' "$rows"
+            echo ""
+            echo "**Solved ${solved} / ${total} instances**"
+          } > benchmark-comment.md
+
+          # ---- pretty summary on the workflow run page ----
+          cat benchmark-comment.md >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::notice title=Mittelmann benchmark::Solved ${solved}/${total} instances"
+
+      # Posts the benchmark report as a comment on the PR. The `header` makes it a
+      # "sticky" comment: subsequent runs on the same PR (i.e. new commits) update
+      # this same comment in place instead of adding a new one.
+      - name: Post benchmark results as a PR comment
+        if: github.event_name == 'workflow_dispatch'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: mittelmann-benchmark
+          number: ${{ inputs.pr_number }}
+          path: benchmark-comment.md
+
+      - name: Upload run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mittelmann-logs
+          path: logs/
