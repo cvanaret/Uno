@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <stdexcept>
 #include "WoodburyEQPSolver.hpp"
 #include "LinearSystem.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -209,6 +210,9 @@ namespace uno {
          Vector<double> d(correction_rank);
          const bool success = WoodburyEQPSolver::solve_dense_indefinite_system(T, c, d);
          DEBUG2 << "Bunch-Kaufman success: " << success << '\n';
+         if (!success) {
+            throw std::runtime_error("WoodburyEQPSolver: the indefinite solve failed");
+         }
          DEBUG2 << "d = " << d << '\n';
          // add the correction to b: b := b - H d
          b -= H * d;
