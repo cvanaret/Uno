@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <stdexcept>
 #include "LBFGSHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
@@ -200,6 +201,9 @@ namespace uno {
       /* compute the Cholesky factor J of M = J Jᵀ */
       const bool success = Mk.compute_cholesky_factorization(); // J overwrites M
       DEBUG << "Cholesky success: " << success << '\n';
+      if (!success) {
+         throw std::runtime_error("L-BFGSHessian: the Cholesky factorization failed");
+      }
       DEBUG3 << "> J: " << this->M;
 
       /* form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ = (δ S + V L_invsqrt_Dᵀ) J⁻ᵀ */
