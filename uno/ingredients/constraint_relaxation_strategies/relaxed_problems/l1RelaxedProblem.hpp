@@ -90,7 +90,6 @@ namespace uno {
       const bool use_proximal_term;
       double proximal_coefficient{0.};
       Vector<double> proximal_center;
-      const IntegerRange dual_regularization_constraints;
 
       std::vector<double> variables_lower_bounds;
       std::vector<double> variables_upper_bounds;
