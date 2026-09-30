@@ -84,17 +84,8 @@ namespace uno {
          // switch to the feasibility problem (below)
       }
 
-      // feasibility problem: test corner cases
-      if (model.number_constraints == 0) {
-         throw std::runtime_error("The model is unconstrained, should not happen");
-      }
-      /*
-      if (current_iterate.primal_infeasibility == 0.) {
-         throw std::runtime_error("The current iterate is exactly feasible, should not happen");
-      }
-      */
       // if the line search failed, switch to solving the feasibility problem (test first if we can)
-      if (this->constraint_relaxation_strategy->solving_feasibility_problem()) {
+      if (model.number_constraints == 0 || this->constraint_relaxation_strategy->solving_feasibility_problem()) {
          throw std::runtime_error("Line search failed");
       }
 
