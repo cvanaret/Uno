@@ -216,10 +216,6 @@ namespace uno {
          iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
          iterate.multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
          iterate.multipliers.upper_bounds[elastic_index] = 0.;
-         // set the constraint multipliers to keep them consistent wrt the l1 feasibility KKT conditions
-         iterate.multipliers.constraints[constraint_index] = (elastic_type == ElasticType::POSITIVE) ?
-            iterate.multipliers.lower_bounds[elastic_index] - rho:
-            rho - iterate.multipliers.lower_bounds[elastic_index];
          if (iterate.primals[elastic_index] <= 0.) {
             throw std::runtime_error("The elastic variable is not strictly positive.");
          }
