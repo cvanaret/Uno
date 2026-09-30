@@ -137,7 +137,6 @@ namespace uno {
       }
 
       // initialize wsc_ common block (Hessian & workspace for BQPD)
-      // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->mxws);
       WSC.mxlws = static_cast<int>(this->mxlws);
       WSC.kk = 0; // length of ws that is used by gdotx
