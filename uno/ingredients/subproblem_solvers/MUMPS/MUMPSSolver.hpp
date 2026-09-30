@@ -20,6 +20,7 @@ namespace uno {
       static constexpr double pivtolmax = 1e-1;
       static constexpr int scaling = 1; // diagonal scaling computed during the numerical factorization phase
       static constexpr size_t max_number_factorization_failures = 10;
+      static constexpr int max_memory_increase_percent = 10000;
    };
 
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {
@@ -58,8 +59,6 @@ namespace uno {
 
       bool analysis_performed{false};
       bool factorization_performed{false};
-      size_t number_factorization_failures{0};
-      const size_t max_number_factorization_failures{MUMPSSettings::max_number_factorization_failures};
 
       [[nodiscard]] int& MUMPS_ICNTL(size_t index);
       [[nodiscard]] double& MUMPS_CNTL(size_t index);
