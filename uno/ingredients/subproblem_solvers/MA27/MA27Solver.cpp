@@ -6,7 +6,6 @@
 #include <stdexcept>
 #include "MA27Solver.hpp"
 
-#include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
 #include "tools/Logger.hpp"
 #ifdef HSL_RUNTIME_LOADING
 #include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
