@@ -23,7 +23,7 @@ namespace uno {
          latest_y(this->model.number_variables),
          delta_lower_bound(options.get_double("quasi_newton_delta_lower_bound")),
          delta_upper_bound(options.get_double("quasi_newton_delta_upper_bound")) {
-      if (this->memory_size <= 0) {
+      if (this->memory_size == 0) {
          throw std::runtime_error("The quasi-Newton memory size should be positive");
       }
    }
