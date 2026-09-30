@@ -200,6 +200,14 @@ namespace uno {
                evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
 
+            // try second-order corrections if the full step was rejected
+            if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
+                  this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
+               assert(step_length == 1.);
+               is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
+                  evaluation_cache, predicted_reductions, warmstart_information, user_callbacks);
+            }
+
             /*
             // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
             // accept the step unconditionally
@@ -223,14 +231,6 @@ namespace uno {
             DEBUG << "An evaluation error occurred, reducing the step length further\n";
          }
          statistics.set("LS", number_iterations);
-
-         // try second-order corrections if the full step was rejected
-         if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
-               this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
-            assert(step_length == 1.);
-            is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
-               evaluation_cache, predicted_reductions, warmstart_information, user_callbacks);
-         }
 
          if (is_acceptable) {
             termination = true;
