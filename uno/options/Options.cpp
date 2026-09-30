@@ -183,7 +183,11 @@ namespace uno {
 
    size_t Options::get_unsigned_int(const std::string& option_name) const {
       try {
-         return static_cast<size_t>(this->integer_options.at(option_name));
+         const uno_int int_value = this->integer_options.at(option_name);
+         if (int_value < 0) {
+            throw std::out_of_range("The unsigned int option with name " + option_name + " is negative");
+         }
+         return static_cast<size_t>(int_value);
       }
       catch(const std::out_of_range&) {
          throw std::out_of_range("The unsigned int option with name " + option_name + " was not found");
