@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <cassert>
+#include <stdexcept>
 #include "TrustRegionStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
@@ -28,9 +29,15 @@ namespace uno {
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
          primal_tolerance(options.get_double("primal_tolerance")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
-      assert(0 < this->radius && "The trust-region radius should be positive");
-      assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
-      assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
+      if (this->radius <= 0.) {
+         throw std::runtime_error("The trust-region radius should be positive");
+      }
+      if (this->increase_factor <= 1.) {
+         throw std::runtime_error("The trust-region increase factor should be > 1");
+      }
+      if (this->decrease_factor <= 1.) {
+         throw std::runtime_error("The trust-region decrease factor should be > 1");
+      }
    }
 
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
