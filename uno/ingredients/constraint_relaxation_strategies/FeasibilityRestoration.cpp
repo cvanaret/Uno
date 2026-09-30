@@ -361,14 +361,14 @@ namespace uno {
             this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
             trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-               this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+               this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
                trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
          }
          else {
             this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
             trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-               this->feasibility_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+               this->feasibility_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
                trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
          }
       }
