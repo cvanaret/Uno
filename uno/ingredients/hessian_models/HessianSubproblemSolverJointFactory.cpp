@@ -46,15 +46,14 @@ namespace uno {
             return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
          }
          else {
-            // no Hessian (matrix or operator) is available: pick a quasi-Newton Hessian (L-BFGS for line search, L-SR1
-            // for trust-region methods)
+            // no Hessian (matrix or operator) is available: pick L-BFGS
             default_to_lbfgs = true;
          }
       }
 
       if (hessian_model_type == "LBFGS" || default_to_lbfgs) {
          if (default_to_lbfgs) {
-            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-LBFGS Hessian instead\n";
+            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
             option_overrides.emplace_back("hessian_model", hessian_model_type, "LBFGS", "no Hessian available");
          }
          if (0 < model.number_constraints || model.has_bound_constraints() || uses_trust_region) { // constrained
