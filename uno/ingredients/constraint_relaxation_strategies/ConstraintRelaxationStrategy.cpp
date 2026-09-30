@@ -44,7 +44,6 @@ namespace uno {
       // stationarity error (norm of the Lagrangian gradient)
       problem.model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, problem.get_objective_multiplier(),
          evaluations, iterate.residuals.lagrangian_gradient);
-      //problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.residuals.lagrangian_gradient);
       iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
 
       // primal feasibility/constraint violation of the model

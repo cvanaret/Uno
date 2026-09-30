@@ -73,28 +73,29 @@ namespace uno {
 
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
       this->workspace.a = this->linear_system.matrix_values.data();
-      bool success = false;
-      while (!success) {
+      size_t number_factorization_failures = 0;
+      while (true) {
          dmumps_c(&this->workspace);
          if (MUMPS_INFO(1) == -8 || MUMPS_INFO(1) == -9) { // workspace too small
-            if (this->number_factorization_failures >= this->max_number_factorization_failures) {
-               this->number_factorization_failures = 0;
+            if (number_factorization_failures >= MUMPSSettings::max_number_factorization_failures ||
+                  MUMPS_ICNTL(14) >= MUMPSSettings::max_memory_increase_percent) {
                throw std::runtime_error("The MUMPS factorization failed (workspace too small)");
             }
-            // increase the workspace size and retry
-            MUMPS_ICNTL(14) = MUMPS_ICNTL(14) * MUMPSSettings::mem_percent_increase;
-            ++this->number_factorization_failures;
+            // increase the workspace size (kept for subsequent factorizations) and retry
+            MUMPS_ICNTL(14) = std::min(MUMPS_ICNTL(14) * MUMPSSettings::mem_percent_increase,
+               MUMPSSettings::max_memory_increase_percent);
+            ++number_factorization_failures;
          }
          else if (MUMPS_INFO(1) == -10) {
             // singular matrix, should be caught by the calling code via the inertia
             DEBUG << "MUMPS detected a numerically singular matrix\n";
-            success = true;
+            break;
          }
          else if (MUMPS_INFO(1) < 0) {
             throw std::runtime_error("The MUMPS factorization failed");
          }
          else {
-            success = true;
+            break;
          }
       }
       this->factorization_performed = true;

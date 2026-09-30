@@ -26,7 +26,7 @@ namespace uno {
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
       [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
-         Evaluations& evaluations, const DualResiduals& residuals);
+         Evaluations& evaluations);
 
    protected:
       double barrier_parameter;
@@ -63,7 +63,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    bool BarrierParameterUpdateStrategy<BarrierProblem>::update_barrier_parameter(const BarrierProblem& barrier_problem,
-         const Iterate& current_iterate, Evaluations& evaluations, const DualResiduals& /*residuals*/) {
+         const Iterate& current_iterate, Evaluations& evaluations) {
       // primal-dual errors
       Vector<double> lag(barrier_problem.number_variables);
       barrier_problem.evaluate_lagrangian_gradient(current_iterate, evaluations, lag);

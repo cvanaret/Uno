@@ -23,7 +23,7 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      double smallest_known_infeasibility{INF<double>};
+      double smallest_known_infeasibility{Inf};
       const double sufficient_infeasibility_decrease_ratio;
 
       [[nodiscard]] static double constrained_merit_function(const ProgressMeasures& progress, double objective_multiplier);

@@ -14,11 +14,11 @@ namespace uno {
          lagrangian_gradient(number_variables) {
       }
 
-      double stationarity{INF<double>};
-      double complementarity{INF<double>};
+      double stationarity{Inf};
+      double complementarity{Inf};
 
-      double stationarity_scaling{INF<double>};
-      double complementarity_scaling{INF<double>};
+      double stationarity_scaling{Inf};
+      double complementarity_scaling{Inf};
 
       Vector<double> lagrangian_gradient;
    };

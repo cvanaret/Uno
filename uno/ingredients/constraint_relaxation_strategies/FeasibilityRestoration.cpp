@@ -104,11 +104,13 @@ namespace uno {
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
-
       this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
 
       const auto [number_optimality_variables, number_optimality_constraints] = this->inequality_handling_method->get_dimensions();
       const auto [number_feasibility_variables, number_feasibility_constraints] = this->feasibility_inequality_handling_method->get_dimensions();
+      // layouts: optimality (x, s) = [0, n) [n, n + s); restoration (x, p/n, s) = [0, n) [n, n + e) [n + e, n + e + s)
+      const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
+      const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables;                       // s
 
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = current_iterate.primal_infeasibility;
@@ -117,32 +119,30 @@ namespace uno {
 
       // prepare the iterate for restoration (resize + set primal-dual values)
       current_iterate.set_number_variables(number_feasibility_variables);
-      // copy the slacks
-      view(current_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables) =
-         view(current_iterate.primals, this->original_problem.number_variables, number_optimality_variables);
+      // move the slacks [n, n + s) -> [n + e, n + e + s). The destination lies after the source:
+      // copy backward so that the copy is correct even if the ranges overlap (e < s)
+      for (size_t index = number_slacks; index-- > 0;) {
+         current_iterate.primals[first_restoration_slack + index] =
+            current_iterate.primals[this->original_problem.number_variables + index];
+      }
       if (this->first_switch_to_feasibility) {
          this->other_phase_multipliers.resize(number_feasibility_variables, number_feasibility_constraints);
          this->feasibility_inequality_handling_method->initialize_memory();
          this->first_switch_to_feasibility = false;
       }
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      // carry the optimality bound multipliers over to restoration. Layouts:
-      // optimality (x, s) = [0, n) [n, n + s); restoration (x, p/n, s) = [0, n) [n, n + e) [n + e, n + e + s)
+      // carry the optimality bound multipliers over to restoration (separate storage, no overlap)
       // the elastic multipliers are initialized by set_elastic_variable_values
-      const size_t number_original_variables = this->original_problem.number_variables;
-      const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
       auto& restoration_multipliers = current_iterate.multipliers;
       const auto& optimality_multipliers = this->other_phase_multipliers;
-      // original variables
-      view(restoration_multipliers.lower_bounds, 0, number_original_variables) =
-         view(optimality_multipliers.lower_bounds, 0, number_original_variables);
-      view(restoration_multipliers.upper_bounds, 0, number_original_variables) =
-         view(optimality_multipliers.upper_bounds, 0, number_original_variables);
-      // slacks
+      view(restoration_multipliers.lower_bounds, 0, this->original_problem.number_variables) =
+         view(optimality_multipliers.lower_bounds, 0, this->original_problem.number_variables);
+      view(restoration_multipliers.upper_bounds, 0, this->original_problem.number_variables) =
+         view(optimality_multipliers.upper_bounds, 0, this->original_problem.number_variables);
       view(restoration_multipliers.lower_bounds, first_restoration_slack, number_feasibility_variables) =
-         view(optimality_multipliers.lower_bounds, number_original_variables, number_optimality_variables);
+         view(optimality_multipliers.lower_bounds, this->original_problem.number_variables, number_optimality_variables);
       view(restoration_multipliers.upper_bounds, first_restoration_slack, number_feasibility_variables) =
-         view(optimality_multipliers.upper_bounds, number_original_variables, number_optimality_variables);
+         view(optimality_multipliers.upper_bounds, this->original_problem.number_variables, number_optimality_variables);
       current_iterate.multipliers.constraints.fill(0.);
 
       // initialize the feasibility inequality handling method
@@ -271,10 +271,14 @@ namespace uno {
       this->current_phase = Phase::OPTIMALITY;
 
       const auto [number_optimality_variables, number_optimality_constraints] = this->inequality_handling_method->get_dimensions();
-      const auto [number_feasibility_variables, number_feasibility_constraints] = this->feasibility_inequality_handling_method->get_dimensions();
-      // copy the slacks
-      view(trial_iterate.primals, this->original_problem.number_variables, number_optimality_variables) =
-         view(trial_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables);
+      const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
+      const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables;
+
+      // move the slacks [n + e, n + e + s) -> [n, n + s) BEFORE shrinking. The destination lies before
+      // the source: a forward copy is correct even if the ranges overlap
+      for (size_t index = 0; index < number_slacks; ++index) {
+         trial_iterate.primals[this->original_problem.number_variables + index] = trial_iterate.primals[first_restoration_slack + index];
+      }
 
       // swap the iterate's multipliers and the optimality multipliers maintained by the class
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
@@ -361,14 +365,14 @@ namespace uno {
             this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
             trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-               this->original_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+               this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
                trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
          }
          else {
             this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
             trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-               this->feasibility_problem.get_objective_multiplier(), trial_iterate.progress.infeasibility,
+               this->feasibility_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
                trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
          }
       }

@@ -137,7 +137,6 @@ namespace uno {
       }
 
       // initialize wsc_ common block (Hessian & workspace for BQPD)
-      // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->mxws);
       WSC.mxlws = static_cast<int>(this->mxlws);
       WSC.kk = 0; // length of ws that is used by gdotx
@@ -304,7 +303,7 @@ namespace uno {
    }
 
    BQPDStatus BQPDSolver::bqpd_status_from_int(int ifail) {
-      assert(0 <= ifail && ifail <= 9 && "BQPDSolver.bqpd_status_from_int: ifail does not belong to [0, 9]");
+      assert(0 <= ifail && ifail <= 8 && "BQPDSolver.bqpd_status_from_int: ifail does not belong to [0, 8]");
       return static_cast<BQPDStatus>(ifail);
    }
 

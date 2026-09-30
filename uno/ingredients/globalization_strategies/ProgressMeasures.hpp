@@ -13,13 +13,13 @@ namespace uno {
       double infeasibility{}; // constraint violation
       std::function<double(double objective_multiplier)> objective{}; // objective measure (scaled by penalty parameter): objective, Lagrangian
       double auxiliary{}; // auxiliary terms (independent of penalty parameter): barrier terms, proximal term, ...
-      double step_length{INF<double>};
+      double step_length{Inf};
 
       void reset() {
-         this->infeasibility = INF<double>;
-         this->objective = [](double) { return INF<double>; };
-         this->auxiliary = INF<double>;
-         this->step_length = INF<double>;
+         this->infeasibility = Inf;
+         this->objective = [](double) { return Inf; };
+         this->auxiliary = Inf;
+         this->step_length = Inf;
       }
    };
 } // namespace

@@ -23,7 +23,7 @@ namespace uno {
    //
    // then recurses on the (n-1)x(n-1) trailing Schur complement A22'.
    // Only the lower triangle of A is read and updated throughout.
-   inline bool ldlt_nopiv_lvl2_rightlooking(double* A, size_t n, size_t lda, double zero_pivot_tolerance) noexcept {
+   inline bool ldlt_nopiv_lvl2_rightlooking(double* A, size_t n, size_t lda, double zero_pivot_tolerance) {
       // base case
       if (n == 0) {
          return true;
@@ -45,7 +45,7 @@ namespace uno {
       double* A22 = A + lda + 1;
       blas3::symmetric_rank_1_update('L', n - 1, -d11, l21, A22, lda);
 
-      // step 4: recurse on the (n-1)x(n-1) trailing sub-matrix
+      // step 4: recurse on the (n-1)x(n-1) trailing sub-matrix. Note: this is tail recursion
       return ldlt_nopiv_lvl2_rightlooking(A22, n - 1, lda, zero_pivot_tolerance);
    }
 } // namespace

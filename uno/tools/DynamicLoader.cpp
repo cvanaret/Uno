@@ -50,7 +50,6 @@ namespace uno {
 
    // resolve the effective library name (explicit request > env > platform default)
    std::string resolve_library_name(const std::string& user_library_name, const char* env_library_name, const char* default_library) {
-      std::string name = "";
       if (!user_library_name.empty()) {
          return user_library_name;
       }

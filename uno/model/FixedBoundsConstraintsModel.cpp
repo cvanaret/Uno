@@ -26,8 +26,8 @@ namespace uno {
       size_t fixed_variable_constraint_index = original_model.number_constraints;
       for (size_t fixed_variable_index: original_model.get_fixed_variables()) {
          // relax the bounds of the fixed variables
-         this->variables_lower_bounds[fixed_variable_index] = -INF<double>;
-         this->variables_upper_bounds[fixed_variable_index] = INF<double>;
+         this->variables_lower_bounds[fixed_variable_index] = -Inf;
+         this->variables_upper_bounds[fixed_variable_index] = Inf;
          const double fixed_value = original_model.get_variables_lower_bounds()[fixed_variable_index];
          // set the bounds of the corresponding new constraint
          this->constraints_lower_bounds[fixed_variable_constraint_index] = fixed_value;

@@ -143,7 +143,7 @@ namespace uno {
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
          update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate,
-            evaluations, current_iterate.residuals);
+            evaluations);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -261,7 +261,7 @@ namespace uno {
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
       // no threshold on the multipliers
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, Inf);
    }
 
    template <typename BarrierProblem>

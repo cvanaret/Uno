@@ -38,8 +38,8 @@ namespace uno {
    bool Model::has_bound_constraints() const {
       const auto& variables_lower_bounds = this->get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->get_variables_upper_bounds();
-      if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||
-            std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite<double>)) {
+      if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite) ||
+            std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite)) {
          return true;
       }
       return false;
