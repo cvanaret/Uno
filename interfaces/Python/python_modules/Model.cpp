@@ -28,8 +28,8 @@ namespace uno {
       .def(py::init<>([](const std::string& problem_type, uno_int number_variables, uno_int base_indexing) {
          PythonUserModel model(problem_type.data(), number_variables, base_indexing);
          const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
-         model.variables_lower_bounds.resize(unsigned_number_variables, -INF<double>);
-         model.variables_upper_bounds.resize(unsigned_number_variables, INF<double>);
+         model.variables_lower_bounds.resize(unsigned_number_variables, -Inf);
+         model.variables_upper_bounds.resize(unsigned_number_variables, Inf);
          model.initial_primal_iterate.resize(unsigned_number_variables, 0.);
          return model;
       }), "Constructor")

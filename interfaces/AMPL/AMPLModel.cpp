@@ -59,10 +59,10 @@ namespace uno {
          asl(asl),
          // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
          number_asl_hessian_nonzeros(this->compute_lagrangian_hessian_sparsity()),
-         variables_lower_bounds(this->number_variables, -INF<double>),
-         variables_upper_bounds(this->number_variables, INF<double>),
-         constraints_lower_bounds(this->number_constraints, -INF<double>),
-         constraints_upper_bounds(this->number_constraints, INF<double>),
+         variables_lower_bounds(this->number_variables, -Inf),
+         variables_upper_bounds(this->number_variables, Inf),
+         constraints_lower_bounds(this->number_constraints, -Inf),
+         constraints_upper_bounds(this->number_constraints, Inf),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),

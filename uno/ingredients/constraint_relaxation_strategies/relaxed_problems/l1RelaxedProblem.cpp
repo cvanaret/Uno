@@ -30,7 +30,7 @@ namespace uno {
          use_proximal_term(use_proximal_term),
          dual_regularization_constraints(this->number_constraints),
          variables_lower_bounds(this->number_variables, 0.),
-         variables_upper_bounds(this->number_variables, INF<double>),
+         variables_upper_bounds(this->number_variables, Inf),
          jacobian_row_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),
          jacobian_column_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),
          constraints_buffer(this->number_constraints) {

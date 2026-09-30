@@ -478,8 +478,8 @@ void* uno_create_unconstrained_model(const char* problem_type, uno_int number_va
    CUserModel* user_model = new CUserModel(problem_type, number_variables, base_indexing);
    // set (-inf, +inf) bounds
    const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
-   user_model->variables_lower_bounds.resize(unsigned_number_variables, -INF<double>);
-   user_model->variables_upper_bounds.resize(unsigned_number_variables, INF<double>);
+   user_model->variables_lower_bounds.resize(unsigned_number_variables, -Inf);
+   user_model->variables_upper_bounds.resize(unsigned_number_variables, Inf);
    // create the initial primal point
    user_model->initial_primal_iterate.resize(unsigned_number_variables);
    for (size_t variable_index: Range(unsigned_number_variables)) {

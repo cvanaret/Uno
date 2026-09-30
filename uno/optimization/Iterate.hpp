@@ -19,11 +19,11 @@ namespace uno {
       double objective_multiplier{1.};
 
       // primal-dual residuals
-      double primal_infeasibility{INF<double>};
+      double primal_infeasibility{Inf};
       DualResiduals residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)
-      ProgressMeasures progress{INF<double>, {}, INF<double>};
+      ProgressMeasures progress{Inf, {}, Inf};
 
       // status
       SolutionStatus status{SolutionStatus::NOT_OPTIMAL};

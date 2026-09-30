@@ -46,9 +46,9 @@ TEST(HiGHSSolver, LP) {
    const Vector<double> hessian_values{};
    // bounds
    const std::vector<double> variables_lower_bounds{0., 1.};
-   const std::vector<double> variables_upper_bounds{4., INF<double>};
-   const std::vector<double> constraints_lower_bounds{-INF<double>, 5., 6.};
-   const std::vector<double> constraints_upper_bounds{7., 15., INF<double>};
+   const std::vector<double> variables_upper_bounds{4., Inf};
+   const std::vector<double> constraints_lower_bounds{-Inf, 5., 6.};
+   const std::vector<double> constraints_upper_bounds{7., 15., Inf};
 
    QuadraticProgram& quadratic_program = solver.get_quadratic_program();
    quadratic_program.fill(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,

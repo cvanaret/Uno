@@ -23,10 +23,10 @@ namespace uno {
          parameterization(parameterization),
          parameters(parameters),
          equality_constraints(problem.number_constraints),
-         barrier_variables_lower_bounds(this->number_variables, -INF<double>),
-         barrier_variables_upper_bounds(this->number_variables, INF<double>),
-         variables_lower_bounds(this->number_variables, -INF<double>),
-         variables_upper_bounds(this->number_variables, INF<double>),
+         barrier_variables_lower_bounds(this->number_variables, -Inf),
+         barrier_variables_upper_bounds(this->number_variables, Inf),
+         variables_lower_bounds(this->number_variables, -Inf),
+         variables_upper_bounds(this->number_variables, Inf),
          constraints_lower_bounds(this->number_constraints, 0.),
          constraints_upper_bounds(this->number_constraints, 0.),
          constraints_buffer(this->number_constraints),
@@ -485,7 +485,7 @@ namespace uno {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             const double distance = iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
             if (distance <= 0.) {
-               iterate.progress.auxiliary = INF<double>;
+               iterate.progress.auxiliary = Inf;
                return;
             }
             barrier_terms -= std::log(distance);
@@ -497,7 +497,7 @@ namespace uno {
          if (is_finite(this->variables_upper_bounds[variable_index])) {
             const double distance = this->variables_upper_bounds[variable_index] - iterate.primals[variable_index];
             if (distance <= 0.) {
-               iterate.progress.auxiliary = INF<double>;
+               iterate.progress.auxiliary = Inf;
                return;
             }
             barrier_terms -= std::log(distance);

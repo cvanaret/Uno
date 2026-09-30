@@ -23,7 +23,7 @@ namespace uno {
       if (!this->is_objective_computed) {
          this->objective = model.evaluate_objective(primals);
          // NaN or +inf: evaluation error. -inf (minimization sense): unbounded, handled by the acceptance test
-         if (std::isnan(this->objective) || objective == INF<double>) {
+         if (std::isnan(this->objective) || objective == Inf) {
             throw FunctionEvaluationError();
          }
          this->is_objective_computed = true;

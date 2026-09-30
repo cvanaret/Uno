@@ -57,7 +57,7 @@ namespace uno {
       // compute a feasible direction
       try {
          const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
-            INF<double>, evaluation_cache.current_evaluations, warmstart_information);
+            Inf, evaluation_cache.current_evaluations, warmstart_information);
          if (direction.status != SubproblemStatus::INFEASIBLE) {
             check_unboundedness(direction);
             const PredictedReductionModels predicted_reduction_models =
@@ -95,7 +95,7 @@ namespace uno {
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
       this->number_consecutive_tiny_directions = 0;
       const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
-         INF<double>, evaluation_cache.current_evaluations, warmstart_information);
+         Inf, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
       const PredictedReductionModels predicted_reduction_models =
          this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,

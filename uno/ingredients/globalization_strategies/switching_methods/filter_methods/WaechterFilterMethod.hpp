@@ -22,7 +22,7 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      double initial_infeasibility{INF<double>};
+      double initial_infeasibility{Inf};
       const double sufficient_infeasibility_decrease_factor;
       const double small_infeasibility_factor;
       bool last_rejection_due_to_filter{false};

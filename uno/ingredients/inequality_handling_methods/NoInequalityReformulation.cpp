@@ -112,7 +112,7 @@ namespace uno {
 
    void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
       // no threshold on the multipliers
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, INF<double>);
+      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, Inf);
    }
 
    void NoInequalityReformulation::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,

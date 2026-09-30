@@ -13,7 +13,7 @@ namespace uno {
 
    class Evaluations {
    public:
-      double objective{INF<double>};
+      double objective{Inf};
       Vector<double> constraints;
       Vector<double> objective_gradient;
       Vector<double> jacobian_values;

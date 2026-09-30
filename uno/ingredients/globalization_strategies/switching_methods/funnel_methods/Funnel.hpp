@@ -26,7 +26,7 @@ namespace uno {
       void print() const;
 
    protected:
-      double width{INF<double>};
+      double width{Inf};
       const double margin;
       const uno_int update_strategy;
       const double kappa;

@@ -28,7 +28,7 @@ namespace uno {
       // maximum number of outer iterations
       options.set_integer("max_iterations", 2000);
       // CPU time limit (in seconds)
-      options.set_double("time_limit", INF<double>);
+      options.set_double("time_limit", Inf);
       // print optimal solution (true|false)
       options.set_bool("print_solution", false);
       // threshold on norm of primal variables to declare diverging iterate

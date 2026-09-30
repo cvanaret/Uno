@@ -25,8 +25,8 @@ namespace uno {
 
       SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
-      double norm{INF<double>}; /*!< Norm of \f$x\f$ */
-      double subproblem_objective{INF<double>}; /*!< Objective value */
+      double norm{Inf}; /*!< Norm of \f$x\f$ */
+      double subproblem_objective{Inf}; /*!< Objective value */
 
       void set_dimensions(size_t new_number_variables, size_t new_number_constraints);
       void reset();

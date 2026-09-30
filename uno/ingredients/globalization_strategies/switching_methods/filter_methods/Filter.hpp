@@ -41,7 +41,7 @@ namespace uno {
       const size_t capacity; /*!< Max filter size */
       std::vector<double> infeasibility{}; // infeasibility increases
       std::vector<double> objective{}; // objective decreases
-      double infeasibility_upper_bound{INF<double>}; /*!< Upper bound on infeasibility measure */
+      double infeasibility_upper_bound{Inf}; /*!< Upper bound on infeasibility measure */
       size_t number_entries{0};
       const FilterParameters parameters; /*!< Set of parameters */
       static constexpr size_t fixed_length_column1 = 14;

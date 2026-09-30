@@ -241,7 +241,7 @@ namespace uno {
       }
       catch (const std::exception& e) {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
-         evaluations.objective = INF<double>;
+         evaluations.objective = Inf;
       }
       model.postprocess_solution(iterate, evaluations);
       DEBUG2 << "Final iterate:\n" << iterate;
