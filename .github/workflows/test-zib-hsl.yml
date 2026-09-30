@@ -63,4 +63,8 @@ jobs:
 
       - name: Run instance
         working-directory: build
-        run: ./uno_ampl "${{env.LIBS}}/Mittelmann/qssp180.nl" preset=ipopt
+        run: |
+          cp "${{env.LIBS}}/Mittelmann/qssp180.nl" /tmp/
+          ldd ./uno_ampl | grep -Ei 'blas|lapack|hsl|gomp'
+          nproc; lscpu | grep -E 'Model name|MHz'
+          time ./uno_ampl /tmp/qssp180.nl preset=ipopt
