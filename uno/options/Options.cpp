@@ -151,7 +151,7 @@ namespace uno {
             this->set_string(option_name, option_value);
          }
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
       }
    }
@@ -176,7 +176,7 @@ namespace uno {
       try {
          return this->integer_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          throw std::out_of_range("The int option with name " + option_name + " was not found");
       }
    }
@@ -185,11 +185,11 @@ namespace uno {
       try {
          const uno_int int_value = this->integer_options.at(option_name);
          if (int_value < 0) {
-            throw std::out_of_range("The unsigned int option with name " + option_name + " is negative");
+            throw std::runtime_error("The unsigned int option with name " + option_name + " is negative");
          }
          return static_cast<size_t>(int_value);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          throw std::out_of_range("The unsigned int option with name " + option_name + " was not found");
       }
    }
@@ -198,7 +198,7 @@ namespace uno {
       try {
          return this->double_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          throw std::out_of_range("The double option with name " + option_name + " was not found");
       }
    }
@@ -207,7 +207,7 @@ namespace uno {
       try {
          return this->bool_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          throw std::out_of_range("The bool option with name " + option_name + " was not found");
       }
    }
@@ -216,7 +216,7 @@ namespace uno {
       try {
          return this->string_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          throw std::out_of_range("The option with name " + option_name + " was not found");
       }
    }
@@ -225,7 +225,7 @@ namespace uno {
       try {
          return this->string_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          return std::nullopt;
       }
    }
@@ -234,16 +234,20 @@ namespace uno {
       try {
          return this->integer_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          return std::nullopt;
       }
    }
 
    std::optional<size_t> Options::get_unsigned_int_optional(const std::string& option_name) const {
       try {
-         return static_cast<size_t>(this->integer_options.at(option_name));
+         const uno_int int_value = this->integer_options.at(option_name);
+         if (int_value < 0) {
+            throw std::runtime_error("The unsigned int option with name " + option_name + " is negative");
+         }
+         return static_cast<size_t>(int_value);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          return std::nullopt;
       }
    }
@@ -252,7 +256,7 @@ namespace uno {
       try {
          return this->double_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          return std::nullopt;
       }
    }
@@ -261,7 +265,7 @@ namespace uno {
       try {
          return this->bool_options.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          return std::nullopt;
       }
    }
@@ -270,7 +274,7 @@ namespace uno {
       try {
          return option_types.at(option_name);
       }
-      catch(const std::out_of_range&) {
+      catch (const std::out_of_range&) {
          throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
       }
    }
