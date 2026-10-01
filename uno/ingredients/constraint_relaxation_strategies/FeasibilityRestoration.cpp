@@ -166,6 +166,7 @@ namespace uno {
          statistics.print_current_line();
       }
       warmstart_information.whole_problem_changed();
+      this->loose_tolerance_consecutive_iterations = 0;
    }
 
    bool FeasibilityRestoration::has_second_order_corrections() const {
@@ -310,6 +311,7 @@ namespace uno {
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
 
       this->initial_point.resize(this->original_problem.number_variables);
+      this->loose_tolerance_consecutive_iterations = 0;
    }
 
    PredictedReductionModels FeasibilityRestoration::build_predicted_reduction_models(const Iterate& current_iterate,
