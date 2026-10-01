@@ -57,8 +57,8 @@ jobs:
             -DHSL=${LIBHSL_PATH} \
             -DMETIS=${LIBMETIS_PATH} \
             -DAMPLSOLVER=${LIBAMPL_PATH} \
-            -DBUILD_SHARED_NFS=ON \
-            -DBUILD_STATIC_NFS=OFF
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_STATIC_LIBS=OFF
 
       - name: Build
         run: cmake --build build --target uno_ampl --config ${{env.BUILD_TYPE}} --parallel
