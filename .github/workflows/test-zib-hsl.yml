@@ -23,8 +23,6 @@ on:
 env:
   BUILD_TYPE: Release
   NFS: /srv/lib
-  LD_PRELOAD: /srv/lib/openblas/libopenblas.so
-  OPENBLAS_NUM_THREADS: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -64,6 +62,9 @@ jobs:
         run: cmake --build build --target uno_ampl --config ${{env.BUILD_TYPE}} --parallel
 
       - name: Run Mittelmann instances and summarize
+        env:
+          LD_PRELOAD: /srv/lib/openblas/libopenblas.so
+          OPENBLAS_NUM_THREADS: 1
         run: |
           set -uo pipefail
           UNO="${{ github.workspace }}/build/uno_ampl"
