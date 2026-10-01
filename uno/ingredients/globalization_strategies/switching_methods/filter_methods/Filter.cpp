@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <stdexcept>
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
@@ -18,6 +19,9 @@ namespace uno {
          infeasibility(this->capacity),
          objective(this->capacity),
          parameters({options.get_double("filter_beta"), options.get_double("filter_gamma")}) {
+      if (this->capacity == 0) {
+         throw std::runtime_error("The filter has capacity 0");
+      }
    }
 
    void Filter::reset() {
