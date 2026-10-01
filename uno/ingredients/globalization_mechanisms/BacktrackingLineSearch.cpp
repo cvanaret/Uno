@@ -163,10 +163,12 @@ namespace uno {
       size_t number_iterations = 0;
       DEBUG << "\nLine search: minimum step length set to " << minimum_step_length << '\n';
 
+      /*
       const bool tiny_direction = is_tiny_direction(current_iterate, direction);
       if (!tiny_direction) {
          this->number_consecutive_tiny_directions = 0;
       }
+      */
 
       while (!termination) {
          ++number_iterations;
