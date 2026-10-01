@@ -32,13 +32,4 @@ namespace uno {
       const double current_objective_measure = unconstrained_merit_function(current_progress);
       this->filter.add(current_progress.infeasibility, current_objective_measure);
    }
-
-   double FilterMethod::compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) const {
-      double actual_reduction = current_objective_measure - trial_objective_measure;
-      if (this->protect_actual_reduction_against_roundoff) {
-         static double machine_epsilon = std::numeric_limits<double>::epsilon();
-         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_objective_measure);
-      }
-      return actual_reduction;
-   }
 } // namespace

@@ -48,9 +48,9 @@ namespace uno {
       // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
       else if (this->switching_condition(merit_predicted_reduction, predicted_reductions.step_length, current_progress.infeasibility)) {
          // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
-         const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, trial_merit);
-         DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
-         if (this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction)) {
+         const double actual_merit_reduction = this->compute_actual_merit_reduction(current_merit, trial_merit);
+         DEBUG << "Unconstrained actual reduction = " << actual_merit_reduction << '\n';
+         if (this->armijo_sufficient_decrease(merit_predicted_reduction, actual_merit_reduction)) {
             DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
             accept = true;
          }

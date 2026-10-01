@@ -78,10 +78,6 @@ namespace uno {
       return (trial_infeasibility <= this->parameters.beta * current_infeasibility);
    }
 
-   double Filter::compute_actual_objective_reduction(double current_objective, double /*current_infeasibility*/, double trial_objective) {
-      return current_objective - trial_objective;
-   }
-
    static std::string to_string(double number) {
       std::ostringstream stream;
       stream << std::defaultfloat << std::setprecision(7) << number;

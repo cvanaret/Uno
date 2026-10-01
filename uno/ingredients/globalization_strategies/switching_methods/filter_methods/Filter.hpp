@@ -31,7 +31,6 @@ namespace uno {
       [[nodiscard]] bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective,
          double trial_infeasibility, double trial_objective) const;
       [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;
-      [[nodiscard]] double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective);
 
       void add(double current_infeasibility, double current_objective);
 
