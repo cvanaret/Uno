@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include "Options.hpp"
@@ -373,7 +374,9 @@ namespace uno {
          option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
       }
       for (const auto& [option_name, option_value]: this->double_options) {
-         option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
+         std::ostringstream stream;
+         stream << std::setprecision(12) << option_value;
+         option_list.append(option_name).append(" = ").append(stream.str()).append("\n");
       }
       for (const auto& [option_name, option_value]: this->bool_options) {
          const std::string value = option_value ? "true" : "false";
