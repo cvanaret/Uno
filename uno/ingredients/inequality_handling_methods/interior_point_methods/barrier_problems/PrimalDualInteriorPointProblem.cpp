@@ -1,6 +1,7 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <limits>
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
@@ -79,8 +80,9 @@ namespace uno {
       bool iterate_changed = false;
       for (size_t variable_index: Range(this->unslacked_problem.number_variables)) {
          const double old_value = iterate.primals[variable_index];
-         iterate.primals[variable_index] = this->push_variable_to_interior(iterate.primals[variable_index],
-            this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index]);
+         iterate.primals[variable_index] = push_variable_to_interior(iterate.primals[variable_index],
+            this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index],
+            this->parameters.push_variable_to_interior_k1, this->parameters.push_variable_to_interior_k2);
          if (iterate.primals[variable_index] != old_value) {
             iterate_changed = true;
          }
@@ -94,8 +96,9 @@ namespace uno {
          evaluations.evaluate_constraints(this->model, iterate.primals);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->slacks) {
-            iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
-               this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index]);
+            iterate.primals[slack_index] = push_variable_to_interior(evaluations.constraints[constraint_index],
+               this->variables_lower_bounds[slack_index], this->variables_upper_bounds[slack_index],
+               this->parameters.push_variable_to_interior_k1, this->parameters.push_variable_to_interior_k2);
          }
       }
 
@@ -369,21 +372,43 @@ namespace uno {
 
    // protected member functions
 
-   double PrimalDualInteriorPointProblem::push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const {
-      const double range = upper_bound - lower_bound;
-      const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(lower_bound)),
-         this->parameters.push_variable_to_interior_k2 * range);
-      const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(upper_bound)),
-         this->parameters.push_variable_to_interior_k2 * range);
-      variable_value = std::max(variable_value, lower_bound + perturbation_lb);
-      variable_value = std::min(variable_value, upper_bound - perturbation_ub);
-      return variable_value;
+   double PrimalDualInteriorPointProblem::push_variable_to_interior(double value, double lower_bound, double upper_bound,
+         double absolute_factor, double relative_factor) {
+      assert(0. < absolute_factor && 0. < relative_factor && relative_factor <= 0.5);
+      const bool has_lower_bound = is_finite(lower_bound);
+      const bool has_upper_bound = is_finite(upper_bound);
+      if (has_lower_bound && has_upper_bound) {
+         const double range = upper_bound - lower_bound;
+         assert(0. < range && "push_variable_to_interior: the bounds must satisfy lower_bound < upper_bound");
+         const double lower_perturbation = std::min(absolute_factor * std::max(1., std::abs(lower_bound)), relative_factor * range);
+         const double upper_perturbation = std::min(absolute_factor * std::max(1., std::abs(upper_bound)), relative_factor * range);
+         value = std::max(value, lower_bound + lower_perturbation);
+         value = std::min(value, upper_bound - upper_perturbation);
+      }
+      else if (has_lower_bound) {
+         value = std::max(value, lower_bound + absolute_factor * std::max(1., std::abs(lower_bound)));
+      }
+      else if (has_upper_bound) {
+         value = std::min(value, upper_bound - absolute_factor * std::max(1., std::abs(upper_bound)));
+      }
+      return value;
    }
 
    void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
-      const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      // 1. push the primals strictly inside the bounds: with tiny slacks (x - lb), x + alpha d may round onto (or past)
+      // a bound
+      for (size_t variable_index: Range(this->number_variables)) {
+         const double old_value = iterate.primals[variable_index];
+         iterate.primals[variable_index] = push_variable_to_interior(old_value, this->variables_lower_bounds[variable_index],
+            this->variables_upper_bounds[variable_index], this->parameters.slack_move, 0.5);
+         if (iterate.primals[variable_index] != old_value) {
+            DEBUG << "Slack too small: variable " << variable_index << " pushed from " << old_value << " to " <<
+               iterate.primals[variable_index] << '\n';
+         }
+      }
 
-      // rescale the bound multipliers (Eq. 16 in Ipopt paper)
+      // 2. κ_Σ reset of the bound multipliers (Eq. 16 in Ipopt paper)
+      const double barrier_parameter = this->parameterization.get("barrier_parameter");
       for (size_t variable_index: Range(this->number_variables)) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             const double coefficient = barrier_parameter / (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);

@@ -4,6 +4,7 @@
 #ifndef UNO_INTERIORPOINTMETHOD_H
 #define UNO_INTERIORPOINTMETHOD_H
 
+#include <limits>
 #include <memory>
 #include <vector>
 #include "../InequalityHandlingMethod.hpp"
@@ -14,8 +15,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
-#include "optimization/Evaluations.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "optimization/Parameterization.hpp"
 #include "options/Options.hpp"
 #include "tools/Infinity.hpp"
@@ -90,14 +89,15 @@ namespace uno {
       double objective_multiplier, const Options& options, std::vector<OptionOverride>& option_overrides):
          InequalityHandlingMethod(problem, options),
          parameters({
-               options.get_double("barrier_tau_min"),
-               options.get_double("barrier_k_sigma"),
-               options.get_double("barrier_regularization_exponent"),
-               options.get_double("barrier_small_direction_factor"),
-               options.get_double("barrier_push_variable_to_interior_k1"),
-               options.get_double("barrier_push_variable_to_interior_k2"),
-               options.get_double("barrier_damping_factor"),
-               options.get_double("barrier_default_multiplier")
+            options.get_double("barrier_tau_min"),
+            options.get_double("barrier_k_sigma"),
+            options.get_double("barrier_regularization_exponent"),
+            options.get_double("barrier_small_direction_factor"),
+            options.get_double("barrier_push_variable_to_interior_k1"),
+            options.get_double("barrier_push_variable_to_interior_k2"),
+            options.get_double("barrier_damping_factor"),
+            options.get_double("barrier_default_multiplier"),
+            std::pow(std::numeric_limits<double>::epsilon(), 0.75) // slack_move
          }),
          barrier_problem(problem, this->parameters, this->parameterization),
          barrier_parameter_update_strategy(options),

@@ -66,7 +66,8 @@ namespace uno {
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
-      [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
+      [[nodiscard]] static double push_variable_to_interior(double value, double lower_bound, double upper_bound,
+         double absolute_factor, double relative_factor);
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate) const override;
       [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
