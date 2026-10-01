@@ -50,8 +50,10 @@ namespace uno {
       options.set_bool("print_subproblem", false);
       // use function scaling based on the initial gradients (true|false)
       options.set_bool("use_function_scaling", false);
-      // threshold on the function scaling coefficients
+      // threshold on the magnitudes of the functions' gradients
       options.set_double("function_scaling_threshold", 100.);
+      // lower bound on the function scaling coefficients
+      options.set_double("function_scaling_lower_bound", 1e-8);
       // whether minor iterations (line search and trust-region method) are printed in the statistics table
       options.set_bool("print_minor_iterations", false);
       // whether the statistics table is printed in extended form

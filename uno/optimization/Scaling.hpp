@@ -16,7 +16,7 @@ namespace uno {
 
    class Scaling {
    public:
-      Scaling(size_t number_constraints, double gradient_threshold);
+      Scaling(size_t number_constraints, double gradient_threshold, double lower_bound);
 
       void compute(const Model& model, const Vector<double>& objective_gradient, const Vector<double>& jacobian_values);
 
@@ -28,6 +28,7 @@ namespace uno {
 
    protected:
       const double gradient_threshold;
+      const double lower_bound;
       double objective_scaling;
       std::vector<double> constraint_scaling;
       // lazy flags
