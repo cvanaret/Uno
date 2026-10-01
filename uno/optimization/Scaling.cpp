@@ -10,15 +10,16 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   Scaling::Scaling(size_t number_constraints, double gradient_threshold):
-         gradient_threshold(gradient_threshold), objective_scaling(1.), constraint_scaling(number_constraints, 1.) {
+   Scaling::Scaling(size_t number_constraints, double gradient_threshold, double lower_bound):
+         gradient_threshold(gradient_threshold), lower_bound(lower_bound), objective_scaling(1.),
+         constraint_scaling(number_constraints, 1.) {
    }
 
    void Scaling::compute(const Model& model, const Vector<double>& objective_gradient, const Vector<double>& jacobian_values) {
       // objective
       const double objective_gradient_norm = norm_inf(objective_gradient);
       if (is_finite(objective_gradient_norm) && objective_gradient_norm > 0.) {
-         this->objective_scaling = std::min(1., this->gradient_threshold / objective_gradient_norm);
+         this->objective_scaling = std::max(this->lower_bound, std::min(1., this->gradient_threshold / objective_gradient_norm));
          this->is_objective_scaled_flag = (this->objective_scaling < 1.);
       }
       assert(this->objective_scaling > 0.);
@@ -34,7 +35,7 @@ namespace uno {
       for (size_t constraint_index: Range(model.number_constraints)) {
          const double jacobian_row_norm = norm_inf_constraints[constraint_index];
          if (is_finite(jacobian_row_norm) && jacobian_row_norm > 0.) {
-            this->constraint_scaling[constraint_index] = std::min(1., this->gradient_threshold / jacobian_row_norm);
+            this->constraint_scaling[constraint_index] = std::max(this->lower_bound, std::min(1., this->gradient_threshold / jacobian_row_norm));
             if (this->constraint_scaling[constraint_index] < 1.) {
                this->are_constraints_scaled_flag = true;
             }

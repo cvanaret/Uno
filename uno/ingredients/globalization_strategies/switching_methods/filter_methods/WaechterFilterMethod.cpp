@@ -42,14 +42,14 @@ namespace uno {
       }
       // now acceptable wrt infeasibility upper bound
 
-      const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, trial_merit);
-      DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
+      const double actual_merit_reduction = this->compute_actual_merit_reduction(current_merit, trial_merit);
+      DEBUG << "Unconstrained actual reduction = " << actual_merit_reduction << '\n';
 
       const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_factor *
          std::max(1., this->initial_infeasibility);
       const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction,
          predicted_reductions.step_length, current_progress.infeasibility);
-      const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction);
+      const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, actual_merit_reduction);
 
       // switching condition: the unconstrained predicted reduction is sufficiently positive
       if (switching && small_infeasibility) {

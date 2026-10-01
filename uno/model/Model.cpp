@@ -120,7 +120,7 @@ namespace uno {
             constraint_complementarity[constraint_index] = std::abs(multipliers.constraints[constraint_index]);
          }
          // if constraint is one-sided, pick that bound
-         if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
+         else if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
             constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          else if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {

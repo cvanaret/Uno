@@ -311,11 +311,11 @@ namespace uno {
          variable_complementarity[variable_index] = result;
       }
 
-      // inequality constraints
+      // constraints
       const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
       Vector<double> constraint_complementarity(this->model.number_constraints, 0.); // TODO preallocate
-      for (size_t constraint_index: this->get_inequality_constraints()) {
+      for (size_t constraint_index: Range(this->model.number_constraints)) {
          // violated constraints
          if (constraints[constraint_index] < constraints_lower_bounds[constraint_index]) {
             constraint_complementarity[constraint_index] = (multipliers.constraints[constraint_index] - this->constraint_violation_coefficient) *

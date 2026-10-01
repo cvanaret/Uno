@@ -132,7 +132,7 @@ namespace uno {
 
       // mathematical operators: delegate to underlying VectorView
 
-      template <typename Expression>
+      template <typename Expression, typename = std::enable_if_t<!std::is_same_v<std::decay_t<Expression>, Vector>>>
       Vector<T>& operator=(Expression&& expression) {
          this->view() = std::forward<Expression>(expression);
          return *this;

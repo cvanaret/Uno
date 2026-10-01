@@ -137,7 +137,6 @@ namespace uno {
          options.set_bool("use_proximal_term", false);
          options.set_double("primal_tolerance", 1e-6);
          options.set_double("dual_tolerance", 1e-6);
-         options.set_bool("switch_to_optimality_requires_acceptance", false);
          options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
 
          options.set_double("funnel_beta", 0.9999);
@@ -146,7 +145,7 @@ namespace uno {
          options.set_double("funnel_kappa", 0.5);
          options.set_double("funnel_ubd", 1.0);
          options.set_double("funnel_fact", 1.5);
-         options.set_double("funnel_switching_infeasibility_exponent", 2);
+         options.set_double("switching_infeasibility_exponent", 2);
          options.set_integer("funnel_update_strategy", 2);
       }
       else if (preset == Preset::FILTERSLP) {

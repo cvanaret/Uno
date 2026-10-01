@@ -14,7 +14,8 @@ namespace uno {
          Model(original_model.name + " -> scaled", original_model.number_variables, original_model.number_constraints,
                original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
          model(original_model),
-         scaling(this->model.number_constraints, options.get_double("function_scaling_threshold")),
+         scaling(this->model.number_constraints, options.get_double("function_scaling_threshold"),
+            options.get_double("function_scaling_lower_bound")),
          constraints_lower_bounds(this->model.get_constraints_lower_bounds()),
          constraints_upper_bounds(this->model.get_constraints_upper_bounds()) {
       if (options.get_bool("use_function_scaling")) {

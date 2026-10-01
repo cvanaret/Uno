@@ -110,6 +110,7 @@ namespace uno {
          ++this->loose_tolerance_consecutive_iterations;
       }
       else {
+         this->loose_tolerance_consecutive_iterations = 0;
          return SolutionStatus::NOT_OPTIMAL;
       }
       // check if loose tolerance achieved for enough consecutive iterations

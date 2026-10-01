@@ -211,9 +211,7 @@ namespace uno {
 
       // resize the iterate
       iterate.multipliers.constraints.resize(this->model.number_constraints);
-      if (evaluations.are_constraints_computed) {
-         evaluations.constraints.resize(this->model.number_constraints);
-      }
+      evaluations.constraints.resize(this->model.number_constraints);
 
       this->model.postprocess_solution(iterate, evaluations);
    }

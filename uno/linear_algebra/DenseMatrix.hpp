@@ -14,7 +14,7 @@
 namespace uno {
    // DenseMatrix is an m x n matrix in column-major order where the columns are concatenated in a long vector
    template <typename T>
-   class DenseMatrix: public BLASMatrix<T>, SymbolicExpression {
+   class DenseMatrix: public BLASMatrix<T>, public SymbolicExpression {
    public:
       using value_type = T;
 

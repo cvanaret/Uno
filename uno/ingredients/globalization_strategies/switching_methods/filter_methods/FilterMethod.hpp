@@ -28,8 +28,6 @@ namespace uno {
    protected:
       Filter filter;
       const FilterStrategyParameters parameters; /*!< Set of constants */
-
-      [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) const;
    };
 } // namespace
 

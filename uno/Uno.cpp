@@ -178,6 +178,9 @@ namespace uno {
 
          // set the ingredients based on the user-defined options
          this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options, option_overrides);
+         if (this->globalization_mechanism == nullptr) {
+            throw std::runtime_error("The ingredients could not be initialized");
+         }
          this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options,
             option_overrides);
          if (this->globalization_mechanism != nullptr) {
@@ -227,7 +230,7 @@ namespace uno {
          return true;
       }
       else if (user_callbacks.termination(trial_iterate.primals, trial_iterate.multipliers, trial_iterate.objective_multiplier,
-            trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity)) {
+            trial_iterate.primal_infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity)) {
          optimization_status = OptimizationStatus::USER_TERMINATION;
          return true;
       }

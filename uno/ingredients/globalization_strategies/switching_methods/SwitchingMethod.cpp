@@ -26,4 +26,13 @@ namespace uno {
       return step_length * std::pow(unit_step_reduction, this->switching_merit_exponent) >
          this->delta * std::pow(current_infeasibility, this->switching_infeasibility_exponent);
    }
+
+   double SwitchingMethod::compute_actual_merit_reduction(double current_merit, double trial_merit) const {
+      double actual_reduction = current_merit - trial_merit;
+      if (this->protect_actual_reduction_against_roundoff) {
+         static double machine_epsilon = std::numeric_limits<double>::epsilon();
+         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_merit);
+      }
+      return actual_reduction;
+   }
 } // namespace

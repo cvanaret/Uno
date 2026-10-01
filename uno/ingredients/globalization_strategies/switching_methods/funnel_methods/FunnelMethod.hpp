@@ -43,8 +43,6 @@ namespace uno {
       Funnel funnel;
       const FunnelMethodParameters parameters; /*!< Set of constants */
       const bool require_acceptance_wrt_current_iterate;
-
-      [[nodiscard]] double compute_actual_objective_reduction(double current_optimality_measure, double trial_optimality_measure) const;
    };
 } // namespace
 

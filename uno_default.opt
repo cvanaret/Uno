@@ -101,8 +101,11 @@ print_subproblem false
 # use function scaling based on the initial gradients (bool)
 use_function_scaling false
 
-# Threshold on the function scaling coefficients (double)
+# Threshold on the magnitudes of the functions' gradients (double)
 function_scaling_threshold 100.
+
+# Lower bound on the function scaling coefficients
+function_scaling_lower_bound 1e-8
 
 # Whether minor iterations (line search and trust-region method) are printed in the statistics table (bool)
 print_minor_iterations false

@@ -15,8 +15,8 @@ namespace uno {
          sufficient_infeasibility_decrease_ratio(options.get_double("sufficient_infeasibility_decrease_ratio")) {
    }
 
-   void MeritFunction::initialize(Statistics& /*statistics*/, const Iterate& /*initial_iterate*/) {
-      // do nothing
+   void MeritFunction::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate) {
+      this->smallest_known_infeasibility = initial_iterate.progress.infeasibility;
    }
 
    bool MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

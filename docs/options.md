@@ -68,7 +68,8 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `protected_actual_reduction_macheps_coefficient` | double | 10      | Coefficient of the machine epsilon in the protected actual reduction      |
 | `print_subproblem`                               | bool   | `false` | Whether the subproblem is printed in `DEBUG` mode                         |
 | `use_function_scaling`                           | bool   | false   | Use function scaling based on the initial gradients                       |    
-| `function_scaling_threshold`                     | double | 100.    | Threshold on the function scaling coefficients                            |    
+| `function_scaling_threshold`                     | double | 100.    | Threshold on the magnitudes of the functions' gradients                   |    
+| `function_scaling_lower_bound`                   | double | 1e-8    | Lower bound on the function scaling coefficients                          |    
 | `print_minor_iterations`                         | bool   | false   | Whether minor iterations are printed in the statistics table              |    
 | `print_extended_statistics`                      | bool   | false   | Whether the statistics table is printed in extended form                  |    
 | `write_solution_to_file`                         | bool   | `false` | Whether the solution is printed to a file (used by AMPL and CUTEst)       |

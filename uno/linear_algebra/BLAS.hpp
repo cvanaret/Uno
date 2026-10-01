@@ -129,6 +129,19 @@ namespace uno {
          constexpr int increment = 1;
          dgemv(&trans, &m, &n, &alpha, a, &lda, x, &increment, &beta, y, &increment);
       }
+
+      // performs symmetric rank-1 update:
+      // A := alpha x x^T + A
+      inline void symmetric_rank_1_update(char uplo, size_t dimension, double alpha, const double* x, double* a,
+            size_t leading_dimension_a) {
+         const int n = static_cast<int>(dimension);
+         constexpr int increment = 1;
+         const int lda = static_cast<int>(leading_dimension_a);
+         if (lda < std::max(1, n)) {
+            throw std::invalid_argument("lda is too small");
+         }
+         dsyr(&uplo, &n, &alpha, x, &increment, a, &lda);
+      }
    }
 
    namespace blas3 {
@@ -202,19 +215,6 @@ namespace uno {
             throw std::invalid_argument("ldb is too small");
          }
          dtrsm(&side, &uplo, &transa, &diag, &m, &n, &alpha, a, &lda, b, &ldb);
-      }
-
-      // performs symmetric rank-1 update:
-      // A := alpha x x^T + A
-      inline void symmetric_rank_1_update(char uplo, size_t dimension, double alpha, const double* x, double* a,
-            size_t leading_dimension_a) {
-         const int n = static_cast<int>(dimension);
-         constexpr int increment = 1;
-         const int lda = static_cast<int>(leading_dimension_a);
-         if (lda < std::max(1, n)) {
-            throw std::invalid_argument("lda is too small");
-         }
-         dsyr(&uplo, &n, &alpha, x, &increment, a, &lda);
       }
 
       // performs symmetric rank k update:

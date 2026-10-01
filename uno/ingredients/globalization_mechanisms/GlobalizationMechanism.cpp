@@ -29,8 +29,6 @@ namespace uno {
          const Direction& direction, double primal_step_length, double constraint_dual_step_length, double bound_dual_step_length) {
       trial_iterate.set_number_variables(current_iterate.primals.size());
       trial_iterate.multipliers.constraints.resize(current_iterate.multipliers.constraints.size());
-      trial_iterate.multipliers.lower_bounds.resize(current_iterate.multipliers.lower_bounds.size());
-      trial_iterate.multipliers.upper_bounds.resize(current_iterate.multipliers.upper_bounds.size());
 
       // take primal step
       trial_iterate.primals = current_iterate.primals + primal_step_length * direction.primals;

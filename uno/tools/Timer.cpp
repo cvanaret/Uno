@@ -41,8 +41,8 @@ namespace uno {
    }
 
    std::string Timer::format_to_seconds(double time) {
-      std::ostringstream oss;
-      oss << std::fixed << std::setprecision(2) << time;
-      return oss.str() + "s";
+      std::ostringstream stream;
+      stream << std::fixed << std::setprecision(2) << time;
+      return stream.str() + "s";
    }
 } // namespace

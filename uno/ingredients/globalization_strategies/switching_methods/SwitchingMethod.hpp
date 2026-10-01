@@ -19,6 +19,7 @@ namespace uno {
 
       [[nodiscard]] static double unconstrained_merit_function(const ProgressMeasures& progress);
       [[nodiscard]] bool switching_condition(double predicted_reduction, double step_length, double current_infeasibility) const;
+      [[nodiscard]] double compute_actual_merit_reduction(double current_merit, double trial_merit) const;
    };
 } // namespace
 

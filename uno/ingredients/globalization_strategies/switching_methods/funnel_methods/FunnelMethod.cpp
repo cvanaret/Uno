@@ -53,7 +53,7 @@ namespace uno {
             if (this->switching_condition(merit_predicted_reduction, predicted_reduction.step_length, current_progress.infeasibility)) {
                DEBUG << "Trial iterate satisfies switching condition\n";
                // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
-               const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, trial_merit);
+               const double objective_actual_reduction = this->compute_actual_merit_reduction(current_merit, trial_merit);
                DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
                if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction)) {
                   DEBUG << "Trial iterate (f-type) was ACCEPTED by satisfying Armijo condition\n";
@@ -127,14 +127,5 @@ namespace uno {
 
    std::string FunnelMethod::get_name() const {
       return "funnel";
-   }
-
-   double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) const {
-      double actual_reduction = current_objective_measure - trial_objective_measure;
-      if (this->protect_actual_reduction_against_roundoff) {
-         static double machine_epsilon = std::numeric_limits<double>::epsilon();
-         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_objective_measure);
-      }
-      return actual_reduction;
    }
 } // namespace
