@@ -41,8 +41,9 @@ namespace uno {
       // do nothing
    }
 
-   void OptimizationProblem::postprocess_iterate(Iterate& /*iterate*/) const {
-      // do nothing
+   void OptimizationProblem::postprocess_iterate(Iterate& iterate) const {
+      // project the trial iterate onto the bounds to avoid numerical errors
+      this->model.project_onto_variable_bounds(iterate.primals);
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {

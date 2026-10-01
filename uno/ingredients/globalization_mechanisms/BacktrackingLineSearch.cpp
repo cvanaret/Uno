@@ -115,9 +115,9 @@ namespace uno {
 
    // protected member functions
 
-   void BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+   void BacktrackingLineSearch::assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length) const {
-      GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
+      GlobalizationMechanism::assemble_trial_iterate(current_iterate, trial_iterate, direction,
          // primal step length
          step_length * direction.primal_dual_step_length,
          // constraint dual step length: scale or not with the LS step length
@@ -157,7 +157,7 @@ namespace uno {
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const PredictedReductionModels& predicted_reduction_models, double minimum_step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -184,7 +184,7 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length);
+            assemble_trial_iterate(current_iterate, trial_iterate, direction, step_length);
             evaluation_cache.trial_evaluations.reset();
             statistics.set("||Step||", total_step_length * direction.norm);
 
@@ -289,7 +289,7 @@ namespace uno {
             DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
 
             const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate);
-            assemble_trial_iterate(model, current_iterate, trial_iterate, direction_SOC, 1.);
+            assemble_trial_iterate(current_iterate, trial_iterate, direction_SOC, 1.);
             evaluation_cache.trial_evaluations.reset();
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,

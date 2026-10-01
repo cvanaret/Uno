@@ -77,7 +77,7 @@ namespace uno {
                   throw std::runtime_error("The model is unconstrained but the iterate is infeasible, should not happen");
                }
                if (this->constraint_relaxation_strategy->solving_feasibility_problem()) {
-                  throw std::runtime_error("Uno is solving the feasibility problem but the iterate is infeasible, should not happen");
+                  throw std::runtime_error("Uno is solving the feasibility problem but the subproblem is infeasible, should not happen");
                }
                statistics.set("Status", std::string("infeasible"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
@@ -106,7 +106,7 @@ namespace uno {
             }
             else {
                // take full primal-dual step
-               assemble_trial_iterate(model, current_iterate, trial_iterate, direction, direction.primal_dual_step_length,
+               assemble_trial_iterate(current_iterate, trial_iterate, direction, direction.primal_dual_step_length,
                   direction.primal_dual_step_length, direction.bound_dual_step_length);
                evaluation_cache.trial_evaluations.reset();
                this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
