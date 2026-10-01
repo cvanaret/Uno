@@ -178,6 +178,9 @@ namespace uno {
 
          // set the ingredients based on the user-defined options
          this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options, option_overrides);
+         if (this->globalization_mechanism == nullptr) {
+            throw std::runtime_error("The ingredients could not be initialized");
+         }
          this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options,
             option_overrides);
          if (this->globalization_mechanism != nullptr) {
