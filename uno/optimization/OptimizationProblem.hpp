@@ -28,7 +28,6 @@ namespace uno {
    class Iterate;
    class Model;
    class Multipliers;
-   class Parameterization;
    class Statistics;
 
    class OptimizationProblem {

@@ -81,7 +81,6 @@ namespace uno {
       bool first_feasibility_iteration{false};
 
       [[nodiscard]] double barrier_parameter() const;
-      //[[nodiscard]] bool is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
    };
 
    // class template implementation
