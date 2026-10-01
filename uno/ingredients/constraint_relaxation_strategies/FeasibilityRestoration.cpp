@@ -24,13 +24,13 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool /*use_trust_region*/, const Options& options,
+   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, const Options& options,
       std::vector<OptionOverride>& option_overrides) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),
-         // all constraints (including linear constraints) are relaxed
-         feasibility_problem(model, 0., this->constraint_violation_coefficient, true /* relax linear constraints */,
+         // relax nonlinear constraints + linear constraints in the presence of a trust region
+         feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region,
             options.get_bool("use_proximal_term")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
