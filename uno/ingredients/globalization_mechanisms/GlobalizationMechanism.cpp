@@ -25,15 +25,13 @@ namespace uno {
       return this->constraint_relaxation_strategy->get_number_subproblems_solved();
    }
 
-   void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+   void GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double primal_step_length, double constraint_dual_step_length, double bound_dual_step_length) {
       trial_iterate.set_number_variables(current_iterate.primals.size());
       trial_iterate.multipliers.constraints.resize(current_iterate.multipliers.constraints.size());
 
       // take primal step
       trial_iterate.primals = current_iterate.primals + primal_step_length * direction.primals;
-      // project the trial iterate onto the bounds to avoid numerical errors
-      model.project_onto_variable_bounds(trial_iterate.primals);
       // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full step
       trial_iterate.multipliers.constraints = current_iterate.multipliers.constraints + constraint_dual_step_length * direction.multipliers.constraints;
       trial_iterate.multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + bound_dual_step_length * direction.multipliers.lower_bounds;
