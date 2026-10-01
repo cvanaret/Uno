@@ -16,8 +16,6 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   class ExactHessian;
-
    NoRelaxation::NoRelaxation(const Model& model, const Options& options):
          ConstraintRelaxationStrategy(options),
          original_problem(model),
