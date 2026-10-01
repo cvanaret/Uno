@@ -244,13 +244,14 @@ namespace uno {
          this->iterate_buffer = Iterate(number_optimality_variables, number_optimality_constraints);
          this->first_test_of_switch_back = false;
       }
-      // copy the trial iterate into the buffer iterate, and evaluate the progress measures and residuals wrt the
-      // original problem
+      // copy the trial iterate into the buffer iterate, and evaluate the progress measures and primal infeasibility wrt
+      // the original problem
       view(this->iterate_buffer.primals, 0, this->original_problem.number_variables) = view(trial_iterate.primals, 0, this->original_problem.number_variables);
       view(this->iterate_buffer.primals, this->original_problem.number_variables, number_optimality_variables) =
          view(trial_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables);
+      trial_evaluations.evaluate_constraints(model, this->iterate_buffer.primals);
       this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
-      compute_residuals(this->original_problem, this->iterate_buffer, trial_evaluations);
+      this->iterate_buffer.primal_infeasibility = model.constraint_violation(trial_evaluations.constraints, this->residual_norm);
 
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
