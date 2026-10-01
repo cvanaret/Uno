@@ -189,7 +189,7 @@ namespace uno {
    // check whether a rejected step with very small norm can be tolerated
    bool TrustRegionStrategy::check_termination_with_small_step(Iterate& trial_iterate) const {
       // terminate with a feasible point
-      if (trial_iterate.progress.infeasibility <= this->primal_tolerance) {
+      if (trial_iterate.primal_infeasibility <= this->primal_tolerance) {
          trial_iterate.status = SolutionStatus::FEASIBLE_SMALL_STEP;
          return true;
       }
