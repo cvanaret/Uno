@@ -21,7 +21,7 @@ namespace uno {
 
    OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
          model(model), number_variables(number_variables), number_constraints(number_constraints),
-         primal_regularization_variables(number_variables), dual_regularization_constraints(number_constraints),
+         primal_regularization_variables(model.number_variables), dual_regularization_constraints(number_constraints),
          Jv_buffer(number_constraints) {
    }
 
