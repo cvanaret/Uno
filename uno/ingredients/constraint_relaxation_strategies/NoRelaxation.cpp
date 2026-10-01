@@ -62,6 +62,7 @@ namespace uno {
       this->initial_point.fill(0.);
       const Direction& direction = this->inequality_handling_method->solve(statistics, current_iterate, trust_region_radius,
          this->initial_point, current_evaluations, warmstart_information);
+      ++this->number_subproblems_solved;
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
       return direction;
