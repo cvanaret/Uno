@@ -43,6 +43,7 @@ namespace uno {
       double infeasibility_upper_bound{Inf}; /*!< Upper bound on infeasibility measure */
       size_t number_entries{0};
       const FilterParameters parameters; /*!< Set of parameters */
+      const bool margin_uses_entry_infeasibility;
       static constexpr size_t fixed_length_column1 = 14;
       static constexpr size_t fixed_length_column2 = 10;
 
