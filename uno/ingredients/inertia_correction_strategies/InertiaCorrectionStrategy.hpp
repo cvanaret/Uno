@@ -28,10 +28,11 @@ namespace uno {
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> hessian_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix) = 0;
+         double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix,
+         const Collection<size_t>& primal_regularization_variables) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-        BlockAugmentedMatrix block_augmented_matrix) = 0;
+        BlockAugmentedMatrix block_augmented_matrix, const Collection<size_t>& primal_regularization_variables) = 0;
 
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;
       [[nodiscard]] virtual bool performs_dual_regularization() const = 0;

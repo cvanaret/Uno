@@ -129,6 +129,7 @@ namespace uno {
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const {
+      // if regularization is required
       if ((!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
          const Inertia expected_inertia = this->problem.get_inertia();
@@ -137,16 +138,16 @@ namespace uno {
             throw std::runtime_error("Mismatch in expected inertia");
          }
          this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, dual_regularization_parameter,
-            expected_inertia, linear_solver, block_augmented_matrix);
+            expected_inertia, linear_solver, block_augmented_matrix, this->get_primal_regularization_variables());
       }
-      else {
+      else { // no regularization required
          block_augmented_matrix.primal_inertia_correction.fill(0.);
          block_augmented_matrix.dual_inertia_correction.fill(0.);
          linear_solver.do_numerical_factorization(false);
       }
    }
 
-   // (-(∇f(x_k) - ∇c(x_k) y_k), -c(x_k)) = (∇c(x_k) y_k) - ∇f(x_k), -c(x_k))
+   // (-(∇f(x_k) - ∇c(x_k) y_k), -c(x_k)) = (∇c(x_k) y_k - ∇f(x_k), -c(x_k))
    void Subproblem::assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const {
       rhs.fill(0.);
       auto rhs_lagrangian = view(rhs.data(), this->number_variables);
