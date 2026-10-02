@@ -174,7 +174,7 @@ filter_reset_iteration_threshold 5
 # Maximum number of filter resets (integer)
 max_number_filter_resets 5
 
-Whether the filter condition on the objective uses the entry (true) or the iterate (false) infeasibility (bool)
+# Whether the filter condition on the objective uses the entry (true) or the iterate (false) infeasibility (bool)
 filter_margin_uses_entry_infeasibility false
 
 # ---------------
