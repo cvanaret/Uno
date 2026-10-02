@@ -18,8 +18,16 @@ namespace uno {
    class HessianModel;
    class InertiaCorrectionStrategy;
    class Iterate;
+   class LinearSystem;
    class Model;
    class Statistics;
+
+   struct BlockAugmentedMatrix {
+      View<double> hessian;
+      View<double> primal_inertia_correction;
+      View<double> jacobian;
+      View<double> dual_inertia_correction;
+   };
 
    class Subproblem {
    public:
@@ -43,11 +51,11 @@ namespace uno {
          View<double> result) const;
 
       // augmented system
-      void regularize_augmented_matrix(Statistics& statistics, View<double> primal_inertia_correction_block,
-         View<double> dual_inertia_correction_block, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
+      void regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
       void assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
+      [[nodiscard]] BlockAugmentedMatrix compute_block_augmented_matrix(LinearSystem& linear_system) const;
 
       // variables bounds
       void set_variables_bounds(const Iterate& current_iterate, std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,

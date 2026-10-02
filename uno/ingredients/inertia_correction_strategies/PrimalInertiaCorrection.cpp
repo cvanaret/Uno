@@ -84,8 +84,8 @@ namespace uno {
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, View<double> primal_inertia_correction_block,
-         View<double> dual_inertia_correction_block) {
+         double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix,
+         const Collection<size_t>& primal_regularization_variables) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
@@ -94,14 +94,14 @@ namespace uno {
          this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
-         *this->optional_linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
+         *this->optional_linear_solver, block_augmented_matrix, primal_regularization_variables);
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         View<double> primal_inertia_correction_block, View<double> dual_inertia_correction_block) {
-      this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, primal_inertia_correction_block);
-      dual_inertia_correction_block.fill(0.);
+         BlockAugmentedMatrix block_augmented_matrix, const Collection<size_t>& /*primal_regularization_variables*/) {
+      this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, block_augmented_matrix.primal_inertia_correction);
+      block_augmented_matrix.dual_inertia_correction.fill(0.);
    }
 
    bool PrimalInertiaCorrection::performs_primal_regularization() const {

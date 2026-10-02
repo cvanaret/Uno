@@ -127,9 +127,9 @@ namespace uno {
       }
    }
 
-   void Subproblem::regularize_augmented_matrix(Statistics& statistics, View<double> primal_inertia_correction_block,
-         View<double> dual_inertia_correction_block, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
+   void Subproblem::regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const {
+      // if regularization is required
       if ((!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
          const Inertia expected_inertia = this->problem.get_inertia();
@@ -138,16 +138,16 @@ namespace uno {
             throw std::runtime_error("Mismatch in expected inertia");
          }
          this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, dual_regularization_parameter,
-            expected_inertia, linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
+            expected_inertia, linear_solver, block_augmented_matrix, this->get_primal_regularization_variables());
       }
-      else {
-         primal_inertia_correction_block.fill(0.);
-         dual_inertia_correction_block.fill(0.);
+      else { // no regularization required
+         block_augmented_matrix.primal_inertia_correction.fill(0.);
+         block_augmented_matrix.dual_inertia_correction.fill(0.);
          linear_solver.do_numerical_factorization(false);
       }
    }
 
-   // (-(∇f(x_k) - ∇c(x_k) y_k), -c(x_k)) = (∇c(x_k) y_k) - ∇f(x_k), -c(x_k))
+   // (-(∇f(x_k) - ∇c(x_k) y_k), -c(x_k)) = (∇c(x_k) y_k - ∇f(x_k), -c(x_k))
    void Subproblem::assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const {
       rhs.fill(0.);
       auto rhs_lagrangian = view(rhs.data(), this->number_variables);
@@ -169,6 +169,18 @@ namespace uno {
 
    void Subproblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const {
       this->problem.assemble_primal_dual_direction(current_iterate, solution, direction);
+   }
+
+   BlockAugmentedMatrix Subproblem::compute_block_augmented_matrix(LinearSystem& linear_system) const {
+      const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
+      const size_t number_primal_inertia_correction_nonzeros = this->number_variables; // full block
+      const size_t number_jacobian_nonzeros = this->number_jacobian_nonzeros();
+      const size_t number_dual_inertia_correction_nonzeros = this->number_dual_inertia_correction_nonzeros();
+      View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
+      View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
+      View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
+      View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
+      return {hessian, primal_inertia_correction, jacobian, dual_inertia_correction};
    }
 
    void Subproblem::set_variables_bounds(const Iterate& current_iterate, std::vector<double>& subproblem_variables_lower_bounds,

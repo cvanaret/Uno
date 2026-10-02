@@ -40,15 +40,7 @@ namespace uno {
       auto& linear_system = this->linear_solver->get_linear_system();
 
       // set up the linear system
-      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t number_primal_inertia_correction_nonzeros = subproblem.number_variables; // full block
-      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
-      View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
-      View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
-      View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
-      View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
-
+      auto [hessian, primal_inertia_correction, jacobian, dual_inertia_correction] = subproblem.compute_block_augmented_matrix(linear_system);
       hessian.fill(0.); // no Hessian contribution
       primal_inertia_correction.fill(1.); // Identity block
       subproblem.evaluate_jacobian(iterate, jacobian, evaluations);
@@ -104,17 +96,9 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       if (warmstart_information.new_iterate) {
          // assemble the augmented matrix
-         const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-         const size_t number_primal_inertia_correction_nonzeros = subproblem.number_variables; // full block
-         const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-         const size_t number_dual_inertia_correction_nonzeros = subproblem.number_dual_inertia_correction_nonzeros();
-         View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
-         View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
-         View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
-         View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
-
-         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, hessian);
-         subproblem.evaluate_jacobian(current_iterate, jacobian, current_evaluations);
+         auto block_augmented_matrix = subproblem.compute_block_augmented_matrix(linear_system);
+         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, block_augmented_matrix.hessian);
+         subproblem.evaluate_jacobian(current_iterate, block_augmented_matrix.jacobian, current_evaluations);
 
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
@@ -124,8 +108,8 @@ namespace uno {
          }
 
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, primal_inertia_correction, dual_inertia_correction,
-            subproblem.dual_regularization_factor(), *this->linear_solver);
+         subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
+            block_augmented_matrix);
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
