@@ -171,6 +171,18 @@ namespace uno {
       this->problem.assemble_primal_dual_direction(current_iterate, solution, direction);
    }
 
+   BlockAugmentedMatrix Subproblem::compute_block_augmented_matrix(LinearSystem& linear_system) const {
+      const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
+      const size_t number_primal_inertia_correction_nonzeros = this->number_variables; // full block
+      const size_t number_jacobian_nonzeros = this->number_jacobian_nonzeros();
+      const size_t number_dual_inertia_correction_nonzeros = this->number_dual_inertia_correction_nonzeros();
+      View hessian(linear_system.matrix_values.data(), number_hessian_nonzeros);
+      View primal_inertia_correction(hessian.end(), number_primal_inertia_correction_nonzeros);
+      View jacobian(primal_inertia_correction.end(), number_jacobian_nonzeros);
+      View dual_inertia_correction(jacobian.end(), number_dual_inertia_correction_nonzeros);
+      return {hessian, primal_inertia_correction, jacobian, dual_inertia_correction};
+   }
+
    void Subproblem::set_variables_bounds(const Iterate& current_iterate, std::vector<double>& subproblem_variables_lower_bounds,
          std::vector<double>& subproblem_variables_upper_bounds, double trust_region_radius) const {
       const auto& variables_lower_bounds = this->problem.get_variables_lower_bounds();
