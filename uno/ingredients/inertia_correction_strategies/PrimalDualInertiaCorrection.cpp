@@ -52,8 +52,7 @@ namespace uno {
 
    // the augmented matrix has been factorized prior to calling this function
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, View<double> primal_inertia_correction_block,
-         View<double> dual_inertia_correction_block) {
+         double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
          this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
@@ -61,20 +60,20 @@ namespace uno {
          this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
-         *this->optional_linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
+         *this->optional_linear_solver, block_augmented_matrix);
    }
 
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         View<double> primal_inertia_correction_block, View<double> dual_inertia_correction_block) {
+         BlockAugmentedMatrix block_augmented_matrix) {
       const double dual_regularization_value = this->dual_regularization_fraction * dual_regularization_parameter;
       this->primal_regularization = 0.;
       this->dual_regularization = 0.;
       size_t number_attempts = 0;
 
       while (true) {
-         primal_inertia_correction_block.fill(this->primal_regularization);
-         dual_inertia_correction_block.fill(-this->dual_regularization);
+         block_augmented_matrix.primal_inertia_correction.fill(this->primal_regularization);
+         block_augmented_matrix.dual_inertia_correction.fill(-this->dual_regularization);
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
          linear_solver.do_numerical_factorization(false);
          ++number_attempts;

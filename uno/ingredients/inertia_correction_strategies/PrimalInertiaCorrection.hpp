@@ -25,11 +25,10 @@ namespace uno {
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> hessian_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, View<double> primal_inertia_correction_block,
-         View<double> dual_inertia_correction_block) override;
+         double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         View<double> primal_inertia_correction_block, View<double> dual_inertia_correction_block) override;
+         BlockAugmentedMatrix block_augmented_matrix) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;

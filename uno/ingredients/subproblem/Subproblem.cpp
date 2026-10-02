@@ -127,9 +127,8 @@ namespace uno {
       }
    }
 
-   void Subproblem::regularize_augmented_matrix(Statistics& statistics, View<double> primal_inertia_correction_block,
-         View<double> dual_inertia_correction_block, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
+   void Subproblem::regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const {
       if ((!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
          const Inertia expected_inertia = this->problem.get_inertia();
@@ -138,11 +137,11 @@ namespace uno {
             throw std::runtime_error("Mismatch in expected inertia");
          }
          this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, dual_regularization_parameter,
-            expected_inertia, linear_solver, primal_inertia_correction_block, dual_inertia_correction_block);
+            expected_inertia, linear_solver, block_augmented_matrix);
       }
       else {
-         primal_inertia_correction_block.fill(0.);
-         dual_inertia_correction_block.fill(0.);
+         block_augmented_matrix.primal_inertia_correction.fill(0.);
+         block_augmented_matrix.dual_inertia_correction.fill(0.);
          linear_solver.do_numerical_factorization(false);
       }
    }
