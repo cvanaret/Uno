@@ -146,7 +146,8 @@ namespace uno {
       current_iterate.multipliers.constraints.fill(0.);
 
       // initialize the feasibility inequality handling method
-      this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
+      const PhaseHandoff handoff = this->inequality_handling_method->export_handoff();
+      this->feasibility_inequality_handling_method->import_handoff(handoff, current_iterate);
       const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
       this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';

@@ -60,8 +60,12 @@ namespace uno {
          initial_point, current_evaluations, warmstart_information);
    }
 
-   void NoInequalityReformulation::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
+   void NoInequalityReformulation::import_handoff(const PhaseHandoff& /*handoff*/, Iterate& /*current_iterate*/) {
       // do nothing
+   }
+
+   PhaseHandoff NoInequalityReformulation::export_handoff() const {
+      return {std::nullopt};
    }
 
    void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem,
