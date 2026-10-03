@@ -126,6 +126,7 @@ namespace uno {
       options.set_double("primal_regularization_fast_increase_factor", 100.);
       options.set_double("primal_regularization_slow_increase_factor", 8.);
       options.set_integer("threshold_unsuccessful_attempts", 8);
+      options.set_bool("regularize_all_variables", true);
 
       /** trust region options **/
       // initial trust region radius
