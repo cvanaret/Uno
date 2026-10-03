@@ -62,7 +62,7 @@ namespace uno {
 
    void InequalityHandlingMethod::accept_iterate_unconditionally(const Subproblem& subproblem, Iterate& trial_iterate,
          Evaluations& trial_evaluations) const {
-      subproblem.problem.postprocess_iterate(trial_iterate);
+      subproblem.problem.postprocess_iterate(trial_iterate, trial_evaluations);
       evaluate_progress_measures(subproblem.problem, trial_iterate, trial_evaluations);
       trial_iterate.objective_multiplier = subproblem.problem.get_objective_multiplier();
       // the next subproblem must be well defined (an exception is thrown upon evaluation failure)
