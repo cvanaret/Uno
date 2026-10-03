@@ -119,6 +119,25 @@ namespace uno {
       return accept_iterate;
    }
 
+   void NoRelaxation::accept_tiny_step(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
+      Iterate& trial_iterate, const Direction& /*direction*/, double /*step_length*/, bool force_parameterization_update,
+      Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+      UserCallbacks& user_callbacks) {
+      // update the parameterization first: the progress measures and the postprocessing of the trial iterate depend on it
+      if (force_parameterization_update && this->inequality_handling_method->force_parameterization_update(statistics)) {
+         this->globalization_strategy.reset();
+      }
+      this->inequality_handling_method->accept_iterate_unconditionally(trial_iterate, trial_evaluations);
+      this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+      trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
+      user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+         this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
+         trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+      this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+         trial_evaluations);
+      warmstart_information.no_changes();
+   }
+
    std::string NoRelaxation::get_name() const {
       return this->globalization_strategy.get_name() + " " + this->inequality_handling_method->get_name();
    }

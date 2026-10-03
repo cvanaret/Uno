@@ -35,6 +35,7 @@ namespace uno {
 
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
          Evaluations& evaluations) override;
+      [[nodiscard]] bool force_parameterization_update(Statistics& statistics) override;
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
@@ -58,6 +59,7 @@ namespace uno {
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
          const ProgressMeasures& predicted_reductions) const override;
+      void accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const override;
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
@@ -147,6 +149,14 @@ namespace uno {
       else {
          this->first_feasibility_iteration = false;
       }
+      this->parameterization.set("barrier_parameter", this->barrier_parameter());
+      statistics.set("Barrier", this->barrier_parameter());
+      return update;
+   }
+
+   template <typename BarrierProblem>
+   bool InteriorPointMethod<BarrierProblem>::force_parameterization_update(Statistics& statistics) {
+      const bool update = this->barrier_parameter_update_strategy.force_barrier_parameter_decrease();
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
       statistics.set("Barrier", this->barrier_parameter());
       return update;
@@ -285,6 +295,11 @@ namespace uno {
          const ProgressMeasures& predicted_reductions) const {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const {
+      InequalityHandlingMethod::accept_iterate_unconditionally(*this->subproblem, trial_iterate, trial_evaluations);
    }
 
    template <typename BarrierProblem>

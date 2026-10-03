@@ -49,6 +49,11 @@ namespace uno {
       return false;
    }
 
+   bool NoInequalityReformulation::force_parameterization_update(Statistics& /*statistics*/) {
+      // no parameterization
+      return false;
+   }
+
    const Direction& NoInequalityReformulation::solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       return this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius,
@@ -136,6 +141,10 @@ namespace uno {
          const ProgressMeasures& predicted_reductions) const {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+   }
+
+   void NoInequalityReformulation::accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const {
+      InequalityHandlingMethod::accept_iterate_unconditionally(*this->subproblem, trial_iterate, trial_evaluations);
    }
 
    void NoInequalityReformulation::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,

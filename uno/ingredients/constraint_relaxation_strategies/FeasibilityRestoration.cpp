@@ -351,8 +351,41 @@ namespace uno {
          }
       }
 
+      if (accept_iterate) {
+         this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,
+            warmstart_information, user_callbacks);
+      }
+      else {
+         warmstart_information.no_changes();
+      }
+      return accept_iterate;
+   }
+
+   void FeasibilityRestoration::accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) {
+      InequalityHandlingMethod& inequality_handling_method = (this->current_phase == Phase::OPTIMALITY) ?
+         *this->inequality_handling_method : *this->feasibility_inequality_handling_method;
+      GlobalizationStrategy& globalization_strategy = (this->current_phase == Phase::OPTIMALITY) ?
+         *this->globalization_strategy : *this->feasibility_globalization_strategy;
+      // update the parameterization first: the progress measures and the postprocessing of the trial iterate depend on it
+      if (force_parameterization_update && inequality_handling_method.force_parameterization_update(statistics)) {
+         globalization_strategy.reset();
+      }
+      inequality_handling_method.accept_iterate_unconditionally(trial_iterate, trial_evaluations);
+      inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+         trial_evaluations);
+      this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,
+         warmstart_information, user_callbacks);
+   }
+
+   // possibly switch back to the optimality phase, then compute the residuals and check termination
+   void FeasibilityRestoration::finalize_accepted_iterate(const Model& model, Iterate& trial_iterate, const Direction& direction,
+         double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       // possibly go from restoration phase to optimality phase
-      if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model,
             trial_iterate, direction, step_length, current_evaluations, trial_evaluations)) {
          this->switch_back_to_optimality_phase(trial_iterate, trial_evaluations);
          // set a cold start in the subproblem solver
@@ -363,23 +396,20 @@ namespace uno {
       }
 
       // check termination
-      if (accept_iterate) {
-         if (this->current_phase == Phase::OPTIMALITY) {
-            this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
-            trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
-            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-               this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
-               trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
-         }
-         else {
-            this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
-            trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
-            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-               this->feasibility_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
-               trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
-         }
+      if (this->current_phase == Phase::OPTIMALITY) {
+         this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+            this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
+            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
       }
-      return accept_iterate;
+      else {
+         this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
+         trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+            this->feasibility_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
+            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+      }
    }
 
    std::string FeasibilityRestoration::get_name() const {

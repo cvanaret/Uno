@@ -27,6 +27,7 @@ namespace uno {
       void set_barrier_parameter(double new_barrier_parameter);
       [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
          Evaluations& evaluations);
+      [[nodiscard]] bool force_barrier_parameter_decrease();
 
    protected:
       double barrier_parameter;
@@ -108,6 +109,17 @@ namespace uno {
          parameter_updated = true;
       }
       return parameter_updated;
+   }
+
+   // unconditional decrease (Eq. 7 in IPOPT paper), e.g. after consecutive tiny steps. Returns false if mu is already minimal
+   template <typename BarrierProblem>
+   bool BarrierParameterUpdateStrategy<BarrierProblem>::force_barrier_parameter_decrease() {
+      const double tolerance_fraction = this->dual_tolerance / this->parameters.update_fraction;
+      const double old_barrier_parameter = this->barrier_parameter;
+      this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
+         std::pow(this->barrier_parameter, this->parameters.theta_mu)));
+      DEBUG << "Barrier parameter mu forcefully updated to " << this->barrier_parameter << '\n';
+      return (this->barrier_parameter < old_barrier_parameter);
    }
 } // namespace
 
