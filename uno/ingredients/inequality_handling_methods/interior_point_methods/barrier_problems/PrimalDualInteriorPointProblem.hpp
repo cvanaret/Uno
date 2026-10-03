@@ -69,7 +69,7 @@ namespace uno {
       [[nodiscard]] static double push_variable_to_interior(double value, double lower_bound, double upper_bound,
          double absolute_factor, double relative_factor);
       [[nodiscard]] double dual_regularization_factor() const override;
-      void postprocess_iterate(Iterate& iterate) const override;
+      void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 

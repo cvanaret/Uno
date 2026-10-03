@@ -28,7 +28,7 @@ namespace uno {
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const {
-      subproblem.problem.postprocess_iterate(trial_iterate);
+      subproblem.problem.postprocess_iterate(trial_iterate, trial_evaluations);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
       // evaluate progress measures

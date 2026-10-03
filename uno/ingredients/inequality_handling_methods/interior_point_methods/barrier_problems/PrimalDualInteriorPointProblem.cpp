@@ -394,17 +394,22 @@ namespace uno {
       return value;
    }
 
-   void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
+   void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const {
       // 1. push the primals strictly inside the bounds: with tiny slacks (x - lb), x + alpha d may round onto (or past)
       // a bound
+      bool iterate_changed = false;
       for (size_t variable_index: Range(this->number_variables)) {
          const double old_value = iterate.primals[variable_index];
          iterate.primals[variable_index] = push_variable_to_interior(old_value, this->variables_lower_bounds[variable_index],
             this->variables_upper_bounds[variable_index], this->parameters.slack_move, 0.5);
          if (iterate.primals[variable_index] != old_value) {
+            iterate_changed = true;
             DEBUG << "Slack too small: variable " << variable_index << " pushed from " << old_value << " to " <<
                iterate.primals[variable_index] << '\n';
          }
+      }
+      if (iterate_changed) {
+         evaluations.reset();
       }
 
       // 2. κ_Σ reset of the bound multipliers (Eq. 16 in Ipopt paper)
