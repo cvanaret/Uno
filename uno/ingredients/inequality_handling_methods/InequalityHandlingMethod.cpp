@@ -13,7 +13,9 @@
 
 namespace uno {
    InequalityHandlingMethod::InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options):
-         problem(problem), progress_norm(norm_from_string(options.get_string("progress_norm"))) {
+         problem(problem),
+         progress_norm(norm_from_string(options.get_string("progress_norm"))),
+         residual_norm(norm_from_string(options.get_string("residual_norm"))) {
    }
 
    // protected member functions
@@ -23,6 +25,30 @@ namespace uno {
       problem.set_infeasibility_measure(iterate, evaluations, this->progress_norm);
       problem.set_objective_measure(iterate, evaluations);
       problem.set_auxiliary_measure(iterate);
+   }
+
+   // stationarity errors:
+   // - for KKT conditions: with standard multipliers and current objective multiplier
+   // - for FJ conditions: with standard multipliers and 0 objective multiplier
+   // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
+   void InequalityHandlingMethod::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
+         Evaluations& evaluations) const {
+      // stationarity error (norm of the Lagrangian gradient)
+      problem.model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, problem.get_objective_multiplier(),
+         evaluations, iterate.residuals.lagrangian_gradient);
+      iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
+
+      // primal feasibility/constraint violation of the model
+      evaluations.evaluate_constraints(problem.model, iterate.primals);
+      iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
+
+      // complementarity error
+      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,
+         iterate.multipliers, this->residual_norm);
+
+      // scaling factors
+      iterate.residuals.stationarity_scaling = 1.;//this->compute_stationarity_scaling(problem.model, iterate.multipliers);
+      iterate.residuals.complementarity_scaling = 1.;//this->compute_complementarity_scaling(problem.model, iterate.multipliers);
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

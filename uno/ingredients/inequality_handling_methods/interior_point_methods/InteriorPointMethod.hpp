@@ -64,6 +64,8 @@ namespace uno {
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
+      void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
+
       [[nodiscard]] std::string get_name() const override;
 
    protected:
@@ -313,6 +315,11 @@ namespace uno {
    void InteriorPointMethod<BarrierProblem>::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,
          const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
+      InequalityHandlingMethod::compute_residuals(this->barrier_problem, iterate, evaluations);
    }
 
    // protected member functions

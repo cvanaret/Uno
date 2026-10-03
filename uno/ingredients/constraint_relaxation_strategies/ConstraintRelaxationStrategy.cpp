@@ -35,30 +35,6 @@ namespace uno {
 
    // protected member functions
 
-   // stationarity errors:
-   // - for KKT conditions: with standard multipliers and current objective multiplier
-   // - for FJ conditions: with standard multipliers and 0 objective multiplier
-   // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-   void ConstraintRelaxationStrategy::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
-         Evaluations& evaluations) const {
-      // stationarity error (norm of the Lagrangian gradient)
-      problem.model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, problem.get_objective_multiplier(),
-         evaluations, iterate.residuals.lagrangian_gradient);
-      iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
-
-      // primal feasibility/constraint violation of the model
-      evaluations.evaluate_constraints(problem.model, iterate.primals);
-      iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
-
-      // complementarity error
-      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,
-         iterate.multipliers, this->residual_norm);
-
-      // scaling factors
-      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, iterate.multipliers);
-      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem.model, iterate.multipliers);
-   }
-
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {
       size_t number_lower_bounded_variables = 0;
       size_t number_upper_bounded_variables = 0;

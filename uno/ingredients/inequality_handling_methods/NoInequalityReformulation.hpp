@@ -61,6 +61,8 @@ namespace uno {
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
+      void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
+
       [[nodiscard]] std::string get_name() const override;
 
    protected:

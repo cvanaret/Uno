@@ -39,7 +39,7 @@ namespace uno {
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
          1000. /* TODO use option */);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
-      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
 
       // statistics
@@ -105,7 +105,7 @@ namespace uno {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (accept_iterate) {
-         this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
@@ -128,7 +128,7 @@ namespace uno {
          this->globalization_strategy.reset();
       }
       this->inequality_handling_method->accept_iterate_unconditionally(trial_iterate, trial_evaluations);
-      this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+      this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
          this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,

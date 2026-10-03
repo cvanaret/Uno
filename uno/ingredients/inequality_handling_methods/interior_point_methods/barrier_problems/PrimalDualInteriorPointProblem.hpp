@@ -70,6 +70,10 @@ namespace uno {
          double absolute_factor, double relative_factor);
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const override;
+
       [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
