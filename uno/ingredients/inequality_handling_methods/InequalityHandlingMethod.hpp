@@ -38,6 +38,8 @@ namespace uno {
 
       [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
          Evaluations& evaluations) = 0;
+      // unconditional update of the parameterization (e.g. after tiny steps). Returns true if it changed
+      [[nodiscard]] virtual bool force_parameterization_update(Statistics& statistics) = 0;
       [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) = 0;
@@ -62,6 +64,8 @@ namespace uno {
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
          const ProgressMeasures& predicted_reductions) const = 0;
+      // accept the trial iterate without globalization test (tiny steps)
+      virtual void accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const = 0;
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
@@ -75,6 +79,7 @@ namespace uno {
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
+      void accept_iterate_unconditionally(const Subproblem& subproblem, Iterate& trial_iterate, Evaluations& trial_evaluations) const;
    };
 } // namespace
 

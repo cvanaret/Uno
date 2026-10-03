@@ -43,6 +43,10 @@ namespace uno {
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) override;
+      // accept a tiny trial step without globalization test (IPOPT, Section 3.9)
+      void accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, double step_length, bool force_parameterization_update, Evaluations& current_evaluations,
+         Evaluations& trial_evaluations, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
 

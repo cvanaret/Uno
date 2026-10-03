@@ -157,18 +157,17 @@ namespace uno {
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const PredictedReductionModels& predicted_reduction_models, double minimum_step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      // tiny direction: accept the full step without globalization test (Section 3.9 in IPOPT paper)
+      if (this->try_tiny_step(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
+            warmstart_information, user_callbacks)) {
+         return true;
+      }
+
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
       DEBUG << "\nLine search: minimum step length set to " << minimum_step_length << '\n';
-
-      /*
-      const bool tiny_direction = is_tiny_direction(current_iterate, direction);
-      if (!tiny_direction) {
-         this->number_consecutive_tiny_directions = 0;
-      }
-      */
 
       while (!termination) {
          ++number_iterations;
@@ -200,24 +199,6 @@ namespace uno {
                is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
                   evaluation_cache, predicted_reductions, warmstart_information, user_callbacks);
             }
-
-            /*
-            // tiny direction test: if the primal direction is tiny over a certain number of successive iterations,
-            // accept the step unconditionally
-            if (!is_acceptable && number_iterations == 1 && tiny_direction) {
-               // try to evaluate the functions at the trial iterate, so that the next subproblem is well defined
-               evaluation_cache.trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
-               evaluation_cache.trial_evaluations.evaluate_jacobian(model, trial_iterate.primals);
-               // TODO compute progress measures
-               ++this->number_consecutive_tiny_directions;
-               if (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold) {
-                  is_acceptable = true;
-                  DEBUG << "Accepting tiny step\n";
-                  statistics.set("Status", std::string(symbols::check) + " (tiny)");
-                  this->number_consecutive_tiny_directions = 0;
-               }
-            }
-            */
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
@@ -255,6 +236,45 @@ namespace uno {
             // otherwise, keep going
          }
       } // end while loop
+      return true;
+   }
+
+   // returns true if the direction is tiny and the full step was accepted
+   bool BacktrackingLineSearch::try_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      if (!this->is_tiny_direction(current_iterate, direction)) {
+         this->number_consecutive_tiny_directions = 0;
+         return false;
+      }
+      ++this->number_consecutive_tiny_directions;
+      // consecutive tiny steps: force an update of the parameterization (e.g. barrier parameter decrease)
+      const bool force_parameterization_update =
+         (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold);
+      DEBUG << "Tiny direction detected, accepting the full step unchecked\n";
+      try {
+         // full step (the fraction-to-boundary rule is accounted for in the direction's step length)
+         assemble_trial_iterate(current_iterate, trial_iterate, direction, 1.);
+         evaluation_cache.trial_evaluations.reset();
+         this->constraint_relaxation_strategy->accept_tiny_step(statistics, model, current_iterate, trial_iterate, direction,
+            direction.primal_dual_step_length, force_parameterization_update, evaluation_cache.current_evaluations,
+            evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
+      }
+      catch (const EvaluationError&) {
+         DEBUG << "An evaluation error occurred at the tiny step, falling back to the line search\n";
+         this->number_consecutive_tiny_directions = 0;
+         return false;
+      }
+      statistics.set("Steplength", 1.);
+      statistics.set("||Step||", direction.primal_dual_step_length * direction.norm);
+      statistics.set("LS", 1);
+      statistics.set("Status", std::string(symbols::check) + " (tiny)");
+      set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+      set_dual_residuals_statistics(statistics, trial_iterate);
+      statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+      if (Logger::level == INFO) {
+         statistics.print_current_line();
+      }
       return true;
    }
 
