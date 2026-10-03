@@ -39,7 +39,8 @@ namespace uno {
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
-      void initialize_feasibility_problem(Iterate& current_iterate) override;
+      void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) override;
+      [[nodiscard]] PhaseHandoff export_handoff() const override;
       void set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem, Iterate& iterate, Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
@@ -172,14 +173,20 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::initialize_feasibility_problem(Iterate& current_iterate) {
+   void InteriorPointMethod<BarrierProblem>::import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) {
       this->first_feasibility_iteration = true;
 
-      // update the objective multiplier
-      const double new_barrier_parameter = std::max(this->barrier_parameter(), current_iterate.primal_infeasibility);
+      // update the barrier parameter
+      const double new_barrier_parameter = std::max(handoff.barrier_parameter.value_or(this->barrier_parameter()),
+         current_iterate.primal_infeasibility);
       this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
       this->parameterization.set("barrier_parameter", this->barrier_parameter());
       DEBUG << "Barrier parameter = " << this->barrier_parameter() << '\n';
+   }
+
+   template <typename BarrierProblem>
+   PhaseHandoff InteriorPointMethod<BarrierProblem>::export_handoff() const {
+      return {this->barrier_parameter()};
    }
 
    template <typename BarrierProblem>

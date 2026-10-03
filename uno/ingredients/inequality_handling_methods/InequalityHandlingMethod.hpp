@@ -4,6 +4,7 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
+#include <optional>
 #include <string>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
@@ -25,6 +26,12 @@ namespace uno {
    template <typename T>
    class Vector;
    class WarmstartInformation;
+
+   // the PhaseHandoff class is an object that is exchanged between phases. It is exported from the optimality
+   // InequalityHandlingMethod and imported by the restoration InequalityHandlingMethod in FeasibilityRestoration
+   struct PhaseHandoff {
+      std::optional<double> barrier_parameter; // set by barrier methods only
+   };
    
    class InequalityHandlingMethod {
    public:
@@ -44,7 +51,8 @@ namespace uno {
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) = 0;
 
-      virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
+      virtual void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual PhaseHandoff export_handoff() const = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 

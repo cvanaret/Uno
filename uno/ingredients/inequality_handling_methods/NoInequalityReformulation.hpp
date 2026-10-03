@@ -35,7 +35,8 @@ namespace uno {
       [[nodiscard]] const Direction& solve(Statistics& statistics, const Iterate& current_iterate, double trust_region_radius,
          const Vector<double>& initial_point, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
-      void initialize_feasibility_problem(Iterate& current_iterate) override;
+      void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) override;
+      [[nodiscard]] PhaseHandoff export_handoff() const override;
       void set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem, Iterate& current_iterate,
          Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
