@@ -28,6 +28,8 @@ env:
   VENV: /home/optimi/cvanaret/myenv
   HOME: /home/optimi/cvanaret
   SCRATCH: /scratch/local/opt-008547/cvanaret
+  OPENBLAS_NUM_THREADS: 1
+  OMP_NUM_THREADS: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}

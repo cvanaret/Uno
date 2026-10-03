@@ -53,6 +53,7 @@ namespace uno {
       {"filter_sufficient_infeasibility_decrease_factor", OptionType::DOUBLE},
       {"filter_reset_iteration_threshold", OptionType::INTEGER},
       {"max_number_filter_resets", OptionType::INTEGER},
+      {"filter_margin_uses_entry_infeasibility", OptionType::BOOL},
       {"funnel_kappa", OptionType::DOUBLE},
       {"funnel_beta", OptionType::DOUBLE},
       {"funnel_gamma", OptionType::DOUBLE},

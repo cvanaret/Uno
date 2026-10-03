@@ -18,7 +18,8 @@ namespace uno {
          capacity(options.get_unsigned_int("filter_capacity")),
          infeasibility(this->capacity),
          objective(this->capacity),
-         parameters({options.get_double("filter_beta"), options.get_double("filter_gamma")}) {
+         parameters({options.get_double("filter_beta"), options.get_double("filter_gamma")}),
+         margin_uses_entry_infeasibility(options.get_bool("filter_margin_uses_entry_infeasibility")) {
       if (this->capacity == 0) {
          throw std::runtime_error("The filter has capacity 0");
       }
@@ -51,7 +52,8 @@ namespace uno {
    bool Filter::filter_acceptable(double trial_infeasibility, double trial_objective) const {
       // TODO: use binary search (use some form of https://en.cppreference.com/w/cpp/algorithm/binary_search.html)
       size_t position = 0;
-      while (position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[position], trial_infeasibility)) {
+      while (position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[position],
+            trial_infeasibility)) {
          ++position;
       }
 
@@ -60,7 +62,8 @@ namespace uno {
          return true; // acceptable as left-most entry
       }
       // until here, the objective measure was not evaluated
-      else if (this->objective_sufficient_reduction(this->objective[position - 1], trial_objective, trial_infeasibility)) {
+      if (this->objective_sufficient_reduction(this->objective[position - 1], trial_objective,
+            this->margin_uses_entry_infeasibility ? this->infeasibility[position - 1] : trial_infeasibility)) {
          return true; // point acceptable
       }
       DEBUG << "Rejected because of filter domination\n";
@@ -71,7 +74,8 @@ namespace uno {
    bool Filter::acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
          double trial_objective) const {
       return this->infeasibility_sufficient_reduction(current_infeasibility, trial_infeasibility) ||
-         this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility);
+         this->objective_sufficient_reduction(current_objective, trial_objective,
+            this->margin_uses_entry_infeasibility ? current_infeasibility : trial_infeasibility);
    }
 
    bool Filter::infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const {

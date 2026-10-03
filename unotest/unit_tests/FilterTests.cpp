@@ -15,6 +15,7 @@ namespace {
       options.set_double("filter_beta", beta);
       options.set_double("filter_gamma", gamma);
       options.set_integer("filter_capacity", capacity);
+      options.set_bool("filter_margin_uses_entry_infeasibility", true); // a la IPOPT
       return options;
    }
 

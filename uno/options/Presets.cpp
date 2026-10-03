@@ -84,6 +84,7 @@ namespace uno {
          options.set_bool("use_function_scaling", true);
          options.set_double("filter_beta", 0.99999);
          options.set_double("filter_gamma", 1e-8);
+         options.set_bool("filter_margin_uses_entry_infeasibility", true);
          options.set_double("switching_delta", 1);
          options.set_double("filter_ubd", 1e4);
          options.set_double("filter_fact", 1e4);
@@ -118,6 +119,7 @@ namespace uno {
          options.set_double("TR_radius", 10.);
          options.set_double("l1_constraint_violation_coefficient", 1.);
          options.set_bool("use_proximal_term", false);
+         options.set_bool("filter_margin_uses_entry_infeasibility", false);
          options.set_double("primal_tolerance", 1e-6);
          options.set_double("dual_tolerance", 1e-6);
          options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
@@ -155,6 +157,7 @@ namespace uno {
          options.set_string("inertia_correction_strategy", "none");
          options.set_string("globalization_mechanism", "TR");
          options.set_string("globalization_strategy", "fletcher_filter_method");
+         options.set_bool("filter_margin_uses_entry_infeasibility", false);
          options.set_string("progress_norm", "L1");
          options.set_string("residual_norm", "L2");
          options.set_double("TR_radius", 10);
