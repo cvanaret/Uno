@@ -78,6 +78,7 @@ namespace uno {
       {"primal_regularization_fast_increase_factor", OptionType::DOUBLE},
       {"primal_regularization_slow_increase_factor", OptionType::DOUBLE},
       {"threshold_unsuccessful_attempts", OptionType::INTEGER},
+      {"regularize_all_variables", OptionType::BOOL},
       {"TR_radius", OptionType::DOUBLE},
       {"TR_increase_factor", OptionType::DOUBLE},
       {"TR_decrease_factor", OptionType::DOUBLE},

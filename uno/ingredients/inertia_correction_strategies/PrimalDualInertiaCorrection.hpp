@@ -49,6 +49,7 @@ namespace uno {
       const double primal_regularization_fast_increase_factor;
       const double primal_regularization_slow_increase_factor;
       const size_t threshold_unsuccessful_attempts;
+      const bool regularize_all_variables;
    };
 } // namespace
 

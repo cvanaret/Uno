@@ -149,6 +149,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `primal_regularization_fast_increase_factor` | double  | 100.0   | Fast increase factor for the primal inertia correction coefficient                      |
 | `primal_regularization_slow_increase_factor` | double  | 8.0     | Slow increase factor for the primal inertia correction coefficient                      |
 | `threshold_unsuccessful_attempts`            | integer | 8       | Number of unsuccessful attempts until inertia correction becomes more aggressive        |
+| `regularize_all_variables`                   | bool | true       | Whether all variables or only the original variables are regularized        |
 
 ## Quasi-Newton options
 

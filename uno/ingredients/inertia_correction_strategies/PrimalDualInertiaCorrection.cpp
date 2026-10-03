@@ -22,7 +22,8 @@ namespace uno {
          primal_regularization_decrease_factor(options.get_double("primal_regularization_decrease_factor")),
          primal_regularization_fast_increase_factor(options.get_double("primal_regularization_fast_increase_factor")),
          primal_regularization_slow_increase_factor(options.get_double("primal_regularization_slow_increase_factor")),
-         threshold_unsuccessful_attempts(options.get_unsigned_int("threshold_unsuccessful_attempts")) {
+         threshold_unsuccessful_attempts(options.get_unsigned_int("threshold_unsuccessful_attempts")),
+         regularize_all_variables(options.get_bool("regularize_all_variables")) {
    }
 
    void PrimalDualInertiaCorrection::initialize_statistics(Statistics& statistics) {
@@ -73,9 +74,14 @@ namespace uno {
       size_t number_attempts = 0;
 
       while (true) {
-         block_augmented_matrix.primal_inertia_correction.fill(0.);
-         for (size_t variable_index: primal_regularization_variables) {
-            block_augmented_matrix.primal_inertia_correction[variable_index] = this->primal_regularization;
+         if (this->regularize_all_variables) {
+            block_augmented_matrix.primal_inertia_correction.fill(this->primal_regularization);
+         }
+         else {
+            block_augmented_matrix.primal_inertia_correction.fill(0.);
+            for (size_t variable_index: primal_regularization_variables) {
+               block_augmented_matrix.primal_inertia_correction[variable_index] = this->primal_regularization;
+            }
          }
          block_augmented_matrix.dual_inertia_correction.fill(-this->dual_regularization);
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
