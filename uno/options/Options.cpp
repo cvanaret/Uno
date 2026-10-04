@@ -351,7 +351,6 @@ namespace uno {
    }
 
    void Options::dump_default_options() {
-      std::cout << "preset\tauto\n";
       Options default_options;
       DefaultOptions::load(default_options);
 

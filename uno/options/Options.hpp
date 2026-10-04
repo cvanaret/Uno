@@ -58,7 +58,7 @@ namespace uno {
          size_t offset);
       static void load_option_file(Options& options, const std::string& file_name);
 
-      // Print all available options with their type and default value
+      // print the default options
       static void dump_default_options();
 
       void print(const std::string& header) const;
