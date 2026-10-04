@@ -29,7 +29,7 @@ namespace uno {
       result.timers.model_read = model_read_timer;
       DISCRETE << "Model read time:\t\t\t" << result.timers.model_read.get_duration() << "s\n";
       if (options.get_bool("write_solution_to_file")) {
-         //model.write_solution_to_file(result);
+         model.write_solution_to_file(result);
       }
       // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
    }
