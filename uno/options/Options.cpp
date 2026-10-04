@@ -369,9 +369,17 @@ namespace uno {
 
    void Options::print(const std::string& header) const {
       if (!this->values.empty()) {
-         std::string option_list{};
+         // sort the names for deterministic output
+         std::vector<std::string> option_names;
+         option_names.reserve(this->values.size());
          for (const auto& [option_name, option_value]: this->values) {
-            option_list.append(option_name).append(" = ").append(to_string(option_value)).append("\n");
+            option_names.push_back(option_name);
+         }
+         std::sort(option_names.begin(), option_names.end());
+
+         std::string option_list{};
+         for (const std::string& option_name: option_names) {
+            option_list.append(option_name).append(" = ").append(to_string(this->values.at(option_name))).append("\n");
          }
          DISCRETE << header << ":\n" << option_list << '\n';
       }
