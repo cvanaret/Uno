@@ -68,14 +68,11 @@ namespace uno {
    protected:
       std::unordered_map<std::string, OptionValue> values;
 
-      mutable std::unordered_map<std::string, bool> used{};
-      mutable std::unordered_map<std::string, bool> overwritten_options{};
-
       static std::string to_string(const OptionValue& value);
 
       template <typename T>
       static constexpr const char* option_type_name() {
-         if constexpr (std::is_same_v<T, int>) return "int";
+         if constexpr (std::is_same_v<T, uno_int>) return "int";
          else if constexpr (std::is_same_v<T, double>) return "double";
          else if constexpr (std::is_same_v<T, bool>) return "bool";
          else if constexpr (std::is_same_v<T, std::string>) return "string";
@@ -90,7 +87,6 @@ namespace uno {
          try {
             const OptionValue& value = this->values.at(option_name);
             if (const T* typed_value = std::get_if<T>(&value)) {
-               this->used[option_name] = true;
                return *typed_value;
             }
             throw std::runtime_error("Option " + option_name + " has the wrong type");
@@ -107,7 +103,6 @@ namespace uno {
             return std::nullopt;
          }
          if (const T* typed_value = std::get_if<T>(&it->second)) {
-            this->used[option_name] = true;
             return *typed_value;
          }
          throw std::runtime_error("The option " + option_name + " is not a " + option_type_name<T>() + " option");
