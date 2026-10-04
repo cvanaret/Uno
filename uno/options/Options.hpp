@@ -4,10 +4,13 @@
 #ifndef UNO_OPTIONS_H
 #define UNO_OPTIONS_H
 
-#include <unordered_map>
+#include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 #include "../interfaces/C/uno_int.h"

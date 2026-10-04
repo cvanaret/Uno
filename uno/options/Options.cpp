@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <locale>
 #include <sstream>
 #include "Options.hpp"
 #include "DefaultOptions.hpp"
