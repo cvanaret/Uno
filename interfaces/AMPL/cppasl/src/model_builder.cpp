@@ -56,10 +56,13 @@ namespace cppasl::detail {
       model.functions.resize(static_cast<std::size_t>(header.number_objectives) + m);
       model.elements.reserve(static_cast<std::size_t>(header.number_nonlinear_constraints + header.number_nonlinear_objectives));
       this->arena.defined_variables.resize(static_cast<std::size_t>(header.number_defined_variables()));
-      if (options.hessian_objective_index >= header.number_objectives) {
+      // the default (0) silently becomes -1 for feasibility problems without objective
+      const int hessian_objective_index = (header.number_objectives == 0 && options.hessian_objective_index == 0) ? -1 :
+         options.hessian_objective_index;
+      if (hessian_objective_index >= header.number_objectives) {
          throw std::invalid_argument("cppasl: hessian_objective_index is out of range");
       }
-      model.hessian_objective_index = options.hessian_objective_index;
+      model.hessian_objective_index = hessian_objective_index;
    }
 
    void ModelBuilder::define_variable(int defined_index, const LinearTerm* linear_terms, std::size_t number_linear_terms,
