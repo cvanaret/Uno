@@ -90,7 +90,7 @@ namespace uno {
             if (const T* typed_value = std::get_if<T>(&value)) {
                return *typed_value;
             }
-            throw std::runtime_error("Option " + option_name + " has the wrong type");
+            throw std::runtime_error("The option " + option_name + " is not a " + option_type_name<T>() + " option");
          }
          catch (const std::out_of_range&) {
             throw std::out_of_range(std::string("The ") + option_type_name<T>() + " option " + option_name + " is not available");
