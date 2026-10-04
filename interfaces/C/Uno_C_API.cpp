@@ -843,9 +843,15 @@ bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_in
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->user_options.set_integer(option_name, option_value);
-   uno_solver->options_consistent_with_solve = false;
-   return true;
+   try {
+      uno_solver->user_options.set_integer(option_name, option_value);
+      uno_solver->options_consistent_with_solve = false;
+      return true;
+   }
+   catch (const std::exception& exception) {
+      WARNING << exception.what() << std::endl;
+      return false;
+   }
 }
 
 bool uno_set_solver_double_option(void* solver, const char* option_name, double option_value) {
@@ -854,9 +860,15 @@ bool uno_set_solver_double_option(void* solver, const char* option_name, double 
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->user_options.set_double(option_name, option_value);
-   uno_solver->options_consistent_with_solve = false;
-   return true;
+   try {
+      uno_solver->user_options.set_double(option_name, option_value);
+      uno_solver->options_consistent_with_solve = false;
+      return true;
+   }
+   catch (const std::exception& exception) {
+      WARNING << exception.what() << std::endl;
+      return false;
+   }
 }
 
 bool uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) {
@@ -865,9 +877,15 @@ bool uno_set_solver_bool_option(void* solver, const char* option_name, bool opti
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->user_options.set_bool(option_name, option_value);
-   uno_solver->options_consistent_with_solve = false;
-   return true;
+   try {
+      uno_solver->user_options.set_bool(option_name, option_value);
+      uno_solver->options_consistent_with_solve = false;
+      return true;
+   }
+   catch (const std::exception& exception) {
+      WARNING << exception.what() << std::endl;
+      return false;
+   }
 }
 
 // throws if the preset name is invalid
