@@ -10,6 +10,7 @@
 #include <sstream>
 #include "Options.hpp"
 #include "DefaultOptions.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -160,6 +161,12 @@ namespace uno {
       }
 
       double parse_double(const std::string& option_name, const std::string& option_value) {
+         if (option_value == "inf" || option_value == "infinity" || option_value == "+inf" || option_value == "+infinity") {
+            return Inf;
+         }
+         if (option_value == "-inf" || option_value == "-infinity") {
+            return -Inf;
+         }
          std::istringstream stream(option_value);
          stream.imbue(std::locale::classic());
          double value{};
