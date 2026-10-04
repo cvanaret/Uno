@@ -45,7 +45,7 @@ jobs:
           set -euo pipefail
           git clone --depth 1 https://github.com/ampl/asl.git ${{ runner.temp }}/asl
           cd ${{ runner.temp }}/asl/src/solvers
-          ./configurehere
+          sh ./configurehere
           make -j"$(nproc)" CFLAGS="-O2 -fPIC"
           test -f amplsolver.a
 
