@@ -255,8 +255,8 @@ namespace uno {
       if (4 <= stub.size() && stub.compare(stub.size() - 3, 3, ".nl") == 0) {
          stub.resize(stub.size() - 3);
       }
-      //this->nl_model.write_solution(stub + ".sol", message, result.primal_solution.data(), ampl_dual_solution.data(),
-      //   solve_code, suffixes);
+      this->nl_model.write_solution(stub + ".sol", message, result.primal_solution.data(), ampl_dual_solution.data(),
+         solve_code, suffixes);
    }
 
    size_t NLModel::number_jacobian_nonzeros() const {
