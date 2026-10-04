@@ -124,9 +124,10 @@ namespace cppasl {
       void multiply_hessian(const double* hessian_values, const double* vector, double* result) const;
 
       /// Writes an AMPL solution file (text .sol, as ASL's write_sol): message, options, duals y (size m, may be
-      /// null), primal x (size n, may be null) and the solve result code (AMPL's solve_result_num).
+      /// null), primal x (size n, may be null), the solve result code (AMPL's solve_result_num) and output suffixes
+      /// (dense values, only the nonzero entries are written).
       void write_solution(const std::string& file_name, const std::string& message, const double* x, const double* y,
-         int solve_result_code = 0) const;
+         int solve_result_code = 0, const std::vector<Suffix>& output_suffixes = {}) const;
 
    private:
       explicit NlModel(std::shared_ptr<const detail::ModelData> data);

@@ -602,7 +602,7 @@ namespace cppasl {
    // ------------------------------------------------------------------------------------------------------------------
 
    void NlModel::write_solution(const std::string& file_name, const std::string& message, const double* x,
-         const double* y, int solve_result_code) const {
+         const double* y, int solve_result_code, const std::vector<Suffix>& output_suffixes) const {
       const ModelData& model = *this->data;
       const NlHeader& header = model.header;
       std::string contents;
@@ -639,6 +639,21 @@ namespace cppasl {
       if (y != nullptr) for (int i = 0; i < model.number_constraints; ++i) number(y[i]);
       if (x != nullptr) for (int j = 0; j < model.number_variables; ++j) number(x[j]);
       if (header.flags & 1) contents += "objno 0 " + std::to_string(solve_result_code) + "\n";
+      // suffix sections (ASL's write_sol): "suffix kind n namelen tablen tablines", name, then "index value" lines
+      for (const Suffix& suffix: output_suffixes) {
+         std::size_t number_nonzeros = 0;
+         for (const double value: suffix.values) number_nonzeros += (value != 0.);
+         if (number_nonzeros == 0) continue;
+         const int kind = static_cast<int>(suffix.target) | (suffix.is_real ? 4 : 0);
+         contents += "suffix " + std::to_string(kind) + " " + std::to_string(number_nonzeros) + " " +
+            std::to_string(suffix.name.size() + 1) + " 0 0\n" + suffix.name + "\n";
+         for (std::size_t index = 0; index < suffix.values.size(); ++index) {
+            if (suffix.values[index] == 0.) continue;
+            contents += std::to_string(index) + " ";
+            if (suffix.is_real) number(suffix.values[index]);
+            else integer(static_cast<long long>(suffix.values[index]));
+         }
+      }
       std::ofstream file(file_name, std::ios::binary);
       if (!file) throw std::runtime_error("cppasl: cannot write " + file_name);
       file << contents;
