@@ -25,7 +25,7 @@ namespace uno {
       Uno uno{};
       Result result = uno.solve(model, options);
       if (options.get_bool("write_solution_to_file")) {
-         //model.write_solution_to_file(result);
+         model.write_solution_to_file(result);
       }
       // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
    }
