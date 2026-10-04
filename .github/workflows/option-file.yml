@@ -1,0 +1,83 @@
+name: Read the option files
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'uno/options/**'
+      - 'interfaces/AMPL/**'
+      - 'uno_default.opt'
+      - '.github/workflows/ampl-option-file.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'uno/options/**'
+      - 'interfaces/AMPL/**'
+      - 'uno_default.opt'
+      - '.github/workflows/ampl-option-file.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  option-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt update
+          sudo apt install -y gfortran cmake
+
+      - name: Download Uno dependencies
+        shell: bash
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      # Builds amplsolver.a next to its headers (asl.h, arith.h): Uno's CMake
+      # takes the include directory from the library's directory.
+      - name: Build the AMPL Solver Library
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ampl/asl.git ${{ runner.temp }}/asl
+          cd ${{ runner.temp }}/asl/src/solvers
+          sh ./configurehere
+          make -j"$(nproc)" CFLAGS="-O2 -fPIC"
+          test -f amplsolver.a
+
+      - name: Configure Uno
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                -DAMPLSOLVER=${{ runner.temp }}/asl/src/solvers/amplsolver.a \
+                -DBQPD=${DEPS}/lib/libbqpd.a \
+                -DMETIS_INCLUDE_DIR=${DEPS}/include \
+                -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+                -DMETIS=${DEPS}/lib/libmetis.a \
+                -DSPRAL=${DEPS}/lib/libspral.a \
+                -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+                -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+                -DBUILD_STATIC_LIBS=OFF \
+                -DBUILD_SHARED_LIBS=ON
+
+      # uno_ampl is EXCLUDE_FROM_ALL
+      - name: Build uno_ampl
+        run: cmake --build ${{ github.workspace }}/build --target uno_ampl --parallel
+
+      - name: Solve hs015 with uno_default.opt
+        run: |
+          set -euo pipefail
+          ./build/uno_ampl interfaces/AMPL/examples/hs015.nl option_file=uno_default.opt | tee run_default.log
+          grep -q "Optimization status:.*Success" run_default.log
+
+      - name: Round-trip the dumped default options
+        run: |
+          set -euo pipefail
+          ./build/uno_ampl --dump-options > dumped.opt
+          cat dumped.opt
+          ./build/uno_ampl interfaces/AMPL/examples/hs015.nl option_file=dumped.opt | tee run_dumped.log
+          grep -q "Optimization status:.*Success" run_dumped.log

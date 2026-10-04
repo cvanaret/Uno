@@ -198,6 +198,6 @@ namespace uno {
       }
       // path to the HSL shared library to dlopen for MA27/MA57 at runtime
       // (empty = platform default libhsl.{so,dylib,dll})
-      options.set_string("libhsl_path", "");
+      // options.set_string("libhsl_path", "");
    }
 } // namespace

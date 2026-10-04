@@ -1,12 +1,16 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
+#include <locale>
 #include <sstream>
 #include "Options.hpp"
 #include "DefaultOptions.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -123,155 +127,146 @@ namespace uno {
 
    // setters
    void Options::set_integer(const std::string& option_name, uno_int option_value) {
-      this->integer_options[option_name] = option_value;
+      check_option_type(option_name, OptionType::INTEGER);
+      this->values[option_name] = option_value;
    }
 
    void Options::set_double(const std::string& option_name, double option_value) {
-      this->double_options[option_name] = option_value;
+      check_option_type(option_name, OptionType::DOUBLE);
+      this->values[option_name] = option_value;
    }
 
    void Options::set_bool(const std::string& option_name, bool option_value) {
-      this->bool_options[option_name] = option_value;
+      check_option_type(option_name, OptionType::BOOL);
+      this->values[option_name] = option_value;
    }
 
    void Options::set_string(const std::string& option_name, const std::string& option_value) {
-      this->string_options[option_name] = option_value;
+      check_option_type(option_name, OptionType::STRING);
+      this->values[option_name] = option_value;
+   }
+
+   namespace {
+      uno_int parse_integer(const std::string& option_name, const std::string& option_value) {
+         std::istringstream stream(option_value);
+         stream.imbue(std::locale::classic());
+         long long value{};
+         if (!(stream >> value) || !(stream >> std::ws).eof()) {
+            throw std::invalid_argument("The value " + option_value + " of option " + option_name + " is not an integer");
+         }
+         if (value < std::numeric_limits<uno_int>::min() || std::numeric_limits<uno_int>::max() < value) {
+            throw std::out_of_range("The value " + option_value + " of option " + option_name + " is out of range");
+         }
+         return static_cast<uno_int>(value);
+      }
+
+      double parse_double(const std::string& option_name, const std::string& option_value) {
+         if (option_value == "inf" || option_value == "infinity" || option_value == "+inf" || option_value == "+infinity") {
+            return Inf;
+         }
+         if (option_value == "-inf" || option_value == "-infinity") {
+            return -Inf;
+         }
+         std::istringstream stream(option_value);
+         stream.imbue(std::locale::classic());
+         double value{};
+         if (!(stream >> value) || !(stream >> std::ws).eof()) {
+            throw std::invalid_argument("The value " + option_value + " of option " + option_name + " is not a number");
+         }
+         return value;
+      }
+
+      bool parse_bool(const std::string& option_name, const std::string& option_value) {
+         if (option_value == "yes" || option_value == "true") {
+            return true;
+         }
+         if (option_value == "no" || option_value == "false") {
+            return false;
+         }
+         throw std::invalid_argument("The value " + option_value + " of option " + option_name +
+            " is not a boolean (expected yes/no/true/false)");
+      }
    }
 
    // setter for option with unknown type
    void Options::set(const std::string& option_name, const std::string& option_value) {
-      try {
-         const OptionType type = option_types.at(option_name);
-         if (type == OptionType::INTEGER) {
-            this->set_integer(option_name, std::stoi(option_value));
-         }
-         else if (type == OptionType::DOUBLE) {
-            this->set_double(option_name, std::stod(option_value));
-         }
-         else if (type == OptionType::BOOL) {
-            this->set_bool(option_name, option_value == "yes" || option_value == "true");
-         }
-         else if (type == OptionType::STRING) {
-            this->set_string(option_name, option_value);
-         }
+      const auto type = option_types.find(option_name);
+      if (type == option_types.end()) {
+         throw std::out_of_range("The option with name " + option_name + " does not exist");
       }
-      catch (const std::out_of_range&) {
-         throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
+      switch (type->second) {
+         case OptionType::INTEGER:
+            this->set_integer(option_name, parse_integer(option_name, option_value));
+            break;
+         case OptionType::DOUBLE:
+            this->set_double(option_name, parse_double(option_name, option_value));
+            break;
+         case OptionType::BOOL:
+            this->set_bool(option_name, parse_bool(option_name, option_value));
+            break;
+         case OptionType::STRING:
+            this->set_string(option_name, option_value);
+            break;
       }
    }
 
-   void Options::overwrite(const Options& options) {
-      for (const auto& [option_name, option_value]: options.integer_options) {
-         this->integer_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: options.double_options) {
-         this->double_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: options.bool_options) {
-         this->bool_options[option_name] = option_value;
-      }
-      for (const auto& [option_name, option_value]: options.string_options) {
-         this->string_options[option_name] = option_value;
+   void Options::overwrite(const Options& other) {
+      for (const auto& [key, value]: other.values) {
+         this->values[key] = value;
       }
    }
 
    // getters
+
    uno_int Options::get_int(const std::string& option_name) const {
-      try {
-         return this->integer_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         throw std::out_of_range("The int option with name " + option_name + " was not found");
-      }
+      return this->get<uno_int>(option_name);
    }
 
    size_t Options::get_unsigned_int(const std::string& option_name) const {
-      try {
-         const uno_int int_value = this->integer_options.at(option_name);
-         if (int_value < 0) {
-            throw std::runtime_error("The unsigned int option with name " + option_name + " is negative");
-         }
-         return static_cast<size_t>(int_value);
+      const uno_int int_value = this->get<uno_int>(option_name);
+      if (int_value < 0) {
+         throw std::runtime_error("The unsigned int option with name " + option_name + " is negative");
       }
-      catch (const std::out_of_range&) {
-         throw std::out_of_range("The unsigned int option with name " + option_name + " was not found");
-      }
+      return static_cast<size_t>(int_value);
    }
 
    double Options::get_double(const std::string& option_name) const {
-      try {
-         return this->double_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         throw std::out_of_range("The double option with name " + option_name + " was not found");
-      }
+      return this->get<double>(option_name);
    }
 
    bool Options::get_bool(const std::string& option_name) const {
-      try {
-         return this->bool_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         throw std::out_of_range("The bool option with name " + option_name + " was not found");
-      }
+      return this->get<bool>(option_name);
    }
 
    const std::string& Options::get_string(const std::string& option_name) const {
-      try {
-         return this->string_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
-      }
-   }
-
-   std::optional<std::string> Options::get_string_optional(const std::string& option_name) const {
-      try {
-         return this->string_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         return std::nullopt;
-      }
+      return this->get<std::string>(option_name);
    }
 
    std::optional<uno_int> Options::get_int_optional(const std::string& option_name) const {
-      try {
-         return this->integer_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         return std::nullopt;
-      }
+      return this->get_optional<uno_int>(option_name);
    }
 
    std::optional<size_t> Options::get_unsigned_int_optional(const std::string& option_name) const {
-      try {
-         const uno_int int_value = this->integer_options.at(option_name);
-         if (int_value < 0) {
-            throw std::runtime_error("The unsigned int option with name " + option_name + " is negative");
-         }
-         return static_cast<size_t>(int_value);
-      }
-      catch (const std::out_of_range&) {
+      const std::optional<uno_int> int_value = this->get_int_optional(option_name);
+      if (!int_value.has_value()) {
          return std::nullopt;
       }
+      if (*int_value < 0) {
+         throw std::runtime_error("The unsigned int option with name " + option_name + " is negative");
+      }
+      return static_cast<size_t>(*int_value);
    }
 
    std::optional<double> Options::get_double_optional(const std::string& option_name) const {
-      try {
-         return this->double_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         return std::nullopt;
-      }
+      return this->get_optional<double>(option_name);
    }
 
    std::optional<bool> Options::get_bool_optional(const std::string& option_name) const {
-      try {
-         return this->bool_options.at(option_name);
-      }
-      catch (const std::out_of_range&) {
-         return std::nullopt;
-      }
+      return this->get_optional<bool>(option_name);
+   }
+
+   std::optional<std::string> Options::get_string_optional(const std::string& option_name) const {
+      return this->get_optional<std::string>(option_name);
    }
 
    OptionType Options::get_option_type(const std::string& option_name) const {
@@ -335,60 +330,67 @@ namespace uno {
       file.close();
    }
 
+   std::string Options::to_string(const OptionValue& option_value) {
+      if (const uno_int* value = std::get_if<uno_int>(&option_value)) {
+         return std::to_string(*value);
+      }
+      if (const double* value = std::get_if<double>(&option_value)) {
+         std::ostringstream stream;
+         stream << std::setprecision(12) << *value;
+         return stream.str();
+      }
+      if (const bool* value = std::get_if<bool>(&option_value)) {
+         return *value ? "true" : "false";
+      }
+      if (const std::string* value = std::get_if<std::string>(&option_value)) {
+         return *value;
+      }
+      return "<invalid>"; // valueless_by_exception
+   }
+
+   void Options::check_option_type(const std::string& option_name, OptionType expected_type) {
+      const auto type = option_types.find(option_name);
+      if (type == option_types.end()) {
+         throw std::out_of_range("The option with name " + option_name + " does not exist");
+      }
+      if (type->second != expected_type) {
+         throw std::invalid_argument("The option with name " + option_name + " has a different type");
+      }
+   }
+
    void Options::dump_default_options() {
-      std::cout << "preset\tauto\n";
       Options default_options;
       DefaultOptions::load(default_options);
 
-      for (const auto& [option_name, option_type]: option_types) {
-         try {
-            switch (option_type) {
-               case OptionType::INTEGER:
-                  if (default_options.integer_options.find(option_name) != default_options.integer_options.end()) {
-                     std::cout << option_name << '\t' << default_options.integer_options.at(option_name) << '\n';
-                  }
-                  break;
-               case OptionType::DOUBLE:
-                  if (default_options.double_options.find(option_name) != default_options.double_options.end()) {
-                     std::cout << option_name << '\t' << default_options.double_options.at(option_name) << '\n';
-                  }
-                  break;
-               case OptionType::BOOL:
-                  if (default_options.bool_options.find(option_name) != default_options.bool_options.end()) {
-                     std::cout << option_name << '\t' << (default_options.bool_options.at(option_name) ? "true" : "false") << '\n';
-                  }
-                  break;
-               case OptionType::STRING:
-                  if (default_options.string_options.find(option_name) != default_options.string_options.end()) {
-                     std::cout << option_name << '\t' << default_options.string_options.at(option_name) << '\n';
-                  }
-                  break;
-            }
-         }
-         catch (const std::out_of_range &) {
-            std::cout << "<error>\n";
-         }
+      // sort the names for deterministic output
+      std::vector<std::string> option_names;
+      option_names.reserve(default_options.values.size());
+      for (const auto& [option_name, option_value]: default_options.values) {
+         option_names.push_back(option_name);
+      }
+      std::sort(option_names.begin(), option_names.end());
+
+      for (const std::string& option_name: option_names) {
+         std::cout << option_name << '\t' << to_string(default_options.values.at(option_name)) << '\n';
       }
    }
 
    void Options::print(const std::string& header) const {
-      std::string option_list{};
-      for (const auto& [option_name, option_value]: this->integer_options) {
-         option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
+      if (!this->values.empty()) {
+         // sort the names for deterministic output
+         std::vector<std::string> option_names;
+         option_names.reserve(this->values.size());
+         for (const auto& [option_name, option_value]: this->values) {
+            option_names.push_back(option_name);
+         }
+         std::sort(option_names.begin(), option_names.end());
+
+         std::string option_list{};
+         for (const std::string& option_name: option_names) {
+            option_list.append(option_name).append(" = ").append(to_string(this->values.at(option_name))).append("\n");
+         }
+         DISCRETE << header << ":\n" << option_list << '\n';
       }
-      for (const auto& [option_name, option_value]: this->double_options) {
-         std::ostringstream stream;
-         stream << std::setprecision(12) << option_value;
-         option_list.append(option_name).append(" = ").append(stream.str()).append("\n");
-      }
-      for (const auto& [option_name, option_value]: this->bool_options) {
-         const std::string value = option_value ? "true" : "false";
-         option_list.append(option_name).append(" = ").append(value).append("\n");
-      }
-      for (const auto& [option_name, option_value]: this->string_options) {
-         option_list.append(option_name).append(" = ").append(option_value).append("\n");
-      }
-      DISCRETE << header << ":\n" << option_list << '\n';
    }
 
    OptionOverride::OptionOverride(std::string option_name, std::optional<std::string> old_value, std::string new_value,
