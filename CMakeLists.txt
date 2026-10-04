@@ -386,18 +386,31 @@ endif()
 # AMPL executable
 # ======================
 
-find_library(AMPLSOLVER amplsolver)
-if(AMPLSOLVER)
-   message(STATUS "Found amplsolver")
+# cppasl (.nl reader)
+set(CPPASL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/interfaces/AMPL/cppasl" CACHE PATH "cppasl source directory")
+if(EXISTS "${CPPASL_DIR}/CMakeLists.txt")
+   message(STATUS "Found cppasl")
 
-   add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
-   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
-   target_compile_definitions(uno_ampl PRIVATE HAS_AMPLSOLVER)
+   set(CPPASL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+   add_subdirectory(${CPPASL_DIR} ${CMAKE_BINARY_DIR}/cppasl EXCLUDE_FROM_ALL)
 
-   # include the corresponding directory
-   get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
-   target_include_directories(uno_ampl PRIVATE ${directory})
+   add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/NLModel.cpp interfaces/AMPL/uno_ampl.cpp)
+   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} cppasl uno_dependencies)
+   target_compile_definitions(uno_ampl PRIVATE HAS_CPPASL)
 endif()
+
+#find_library(AMPLSOLVER amplsolver)
+#if(AMPLSOLVER)
+#   message(STATUS "Found amplsolver")
+
+#   add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
+#   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
+#   target_compile_definitions(uno_ampl PRIVATE HAS_AMPLSOLVER)
+
+#   # include the corresponding directory
+#   get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
+#   target_include_directories(uno_ampl PRIVATE ${directory})
+#endif()
 
 # =========================
 # unopy (pybind11 bindings)
