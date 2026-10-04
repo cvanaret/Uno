@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <string>
-#include "AMPLModel.hpp"
+#include "NLModel.hpp"
 #include "optimization/Result.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
@@ -22,14 +22,14 @@ void* operator new(size_t size) {
 */
 
 namespace uno {
-   void run_uno_ampl(const AMPLModel& model, const Timer& model_read_timer, Options& options) {
+   void run_uno_ampl(const NLModel& model, const Timer& model_read_timer, Options& options) {
       Uno uno{};
       Result result = uno.solve(model, options);
       // the model was read before the solve (not part of the optimization summary)
       result.timers.model_read = model_read_timer;
       DISCRETE << "Model read time:\t\t\t" << result.timers.model_read.get_duration() << "s\n";
       if (options.get_bool("write_solution_to_file")) {
-         model.write_solution_to_file(result);
+         //model.write_solution_to_file(result);
       }
       // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
    }
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
          const char* model_name = argv[1];
          Timer model_read_timer;
          model_read_timer.start();
-         const AMPLModel model(model_name);
+         const NLModel model(model_name);
          model_read_timer.stop();
 
          const std::string preset = user_options.get_string_optional("preset").value_or(options.get_string("preset"));
