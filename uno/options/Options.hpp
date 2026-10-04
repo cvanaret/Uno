@@ -69,6 +69,7 @@ namespace uno {
       std::unordered_map<std::string, OptionValue> values;
 
       static std::string to_string(const OptionValue& value);
+      static void check_option_type(const std::string& option_name, OptionType expected_type);
 
       template <typename T>
       static constexpr const char* option_type_name() {

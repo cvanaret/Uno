@@ -125,18 +125,22 @@ namespace uno {
 
    // setters
    void Options::set_integer(const std::string& option_name, uno_int option_value) {
+      check_option_type(option_name, OptionType::INTEGER);
       this->values[option_name] = option_value;
    }
 
    void Options::set_double(const std::string& option_name, double option_value) {
+      check_option_type(option_name, OptionType::DOUBLE);
       this->values[option_name] = option_value;
    }
 
    void Options::set_bool(const std::string& option_name, bool option_value) {
+      check_option_type(option_name, OptionType::BOOL);
       this->values[option_name] = option_value;
    }
 
    void Options::set_string(const std::string& option_name, const std::string& option_value) {
+      check_option_type(option_name, OptionType::STRING);
       this->values[option_name] = option_value;
    }
 
@@ -334,6 +338,16 @@ namespace uno {
          return *value;
       }
       return "<invalid>"; // valueless_by_exception
+   }
+
+   void Options::check_option_type(const std::string& option_name, OptionType expected_type) {
+      const auto type = option_types.find(option_name);
+      if (type == option_types.end()) {
+         throw std::out_of_range("The option with name " + option_name + " does not exist");
+      }
+      if (type->second != expected_type) {
+         throw std::invalid_argument("The option with name " + option_name + " has a different type");
+      }
    }
 
    void Options::dump_default_options() {
