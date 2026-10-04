@@ -484,9 +484,6 @@ endif()
 if(TARGET uno_shared)
    list(APPEND INSTALL_TARGETS uno_shared)
 endif()
-if(TARGET uno_ampl)
-   list(APPEND INSTALL_TARGETS uno_ampl)
-endif()
 include(GNUInstallDirs)  # ensures CMAKE_INSTALL_INCLUDEDIR is set to "include"
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
@@ -496,3 +493,10 @@ install(TARGETS ${INSTALL_TARGETS}
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # shared libraries
    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/uno # headers
 )
+
+# executables built on demand (EXCLUDE_FROM_ALL): install only if they were built
+if(TARGET uno_ampl)
+   install(TARGETS uno_ampl OPTIONAL
+           COMPONENT libuno
+           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
