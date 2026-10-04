@@ -140,25 +140,61 @@ namespace uno {
       this->values[option_name] = option_value;
    }
 
+   namespace {
+      uno_int parse_integer(const std::string& option_name, const std::string& option_value) {
+         std::istringstream stream(option_value);
+         stream.imbue(std::locale::classic());
+         long long value{};
+         if (!(stream >> value) || !(stream >> std::ws).eof()) {
+            throw std::invalid_argument("The value " + option_value + " of option " + option_name + " is not an integer");
+         }
+         if (value < std::numeric_limits<uno_int>::min() || std::numeric_limits<uno_int>::max() < value) {
+            throw std::out_of_range("The value " + option_value + " of option " + option_name + " is out of range");
+         }
+         return static_cast<uno_int>(value);
+      }
+
+      double parse_double(const std::string& option_name, const std::string& option_value) {
+         std::istringstream stream(option_value);
+         stream.imbue(std::locale::classic());
+         double value{};
+         if (!(stream >> value) || !(stream >> std::ws).eof()) {
+            throw std::invalid_argument("The value " + option_value + " of option " + option_name + " is not a number");
+         }
+         return value;
+      }
+
+      bool parse_bool(const std::string& option_name, const std::string& option_value) {
+         if (option_value == "yes" || option_value == "true") {
+            return true;
+         }
+         if (option_value == "no" || option_value == "false") {
+            return false;
+         }
+         throw std::invalid_argument("The value " + option_value + " of option " + option_name +
+            " is not a boolean (expected yes/no/true/false)");
+      }
+   }
+
    // setter for option with unknown type
    void Options::set(const std::string& option_name, const std::string& option_value) {
-      try {
-         const OptionType type = option_types.at(option_name);
-         if (type == OptionType::INTEGER) {
-            this->set_integer(option_name, std::stoi(option_value));
-         }
-         else if (type == OptionType::DOUBLE) {
-            this->set_double(option_name, std::stod(option_value));
-         }
-         else if (type == OptionType::BOOL) {
-            this->set_bool(option_name, option_value == "yes" || option_value == "true");
-         }
-         else if (type == OptionType::STRING) {
-            this->set_string(option_name, option_value);
-         }
+      const auto type = option_types.find(option_name);
+      if (type == option_types.end()) {
+         throw std::out_of_range("The option with name " + option_name + " does not exist");
       }
-      catch (const std::out_of_range&) {
-         throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
+      switch (type->second) {
+         case OptionType::INTEGER:
+            this->set_integer(option_name, parse_integer(option_name, option_value));
+            break;
+         case OptionType::DOUBLE:
+            this->set_double(option_name, parse_double(option_name, option_value));
+            break;
+         case OptionType::BOOL:
+            this->set_bool(option_name, parse_bool(option_name, option_value));
+            break;
+         case OptionType::STRING:
+            this->set_string(option_name, option_value);
+            break;
       }
    }
 
