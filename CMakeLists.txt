@@ -392,7 +392,12 @@ if(EXISTS "${CPPASL_DIR}/CMakeLists.txt")
    message(STATUS "Found cppasl")
 
    set(CPPASL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+   # cppasl is an internal dependency: always link it statically, whatever BUILD_SHARED_LIBS says
+   set(UNO_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+   set(BUILD_SHARED_LIBS OFF)
    add_subdirectory(${CPPASL_DIR} ${CMAKE_BINARY_DIR}/cppasl EXCLUDE_FROM_ALL)
+   set(BUILD_SHARED_LIBS ${UNO_BUILD_SHARED_LIBS})
+   set_target_properties(cppasl PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/NLModel.cpp interfaces/AMPL/uno_ampl.cpp)
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} cppasl uno_dependencies)
