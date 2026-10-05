@@ -29,18 +29,6 @@ namespace uno {
       throw std::invalid_argument("The norm " + norm_string + " is not known");
    }
 
-   // generic norm function for iterators that return [key, value] pairs
-   // https://stackoverflow.com/questions/38701475/how-to-overload-function-for-different-iterator-value-types-in-c
-   template <typename KeyValueIterable, typename AccumulationFunction, typename ElementType = typename KeyValueIterable::value_type,
-      std::enable_if_t<!std::is_member_function_pointer_v<decltype(&KeyValueIterable::operator[])>, int> = 0>
-   ElementType generic_norm(const KeyValueIterable& x, const AccumulationFunction& accumulation_function) {
-      ElementType result{0};
-      for (const auto [_, element]: x) {
-         accumulation_function(result, element);
-      }
-      return result;
-   }
-
    // generic norm function for iterators that return the elements
    template <typename Array, typename AccumulationFunction, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType generic_norm(const Array& x, const AccumulationFunction& accumulation_function) {
@@ -108,7 +96,10 @@ namespace uno {
    //**************
    template <typename ElementType>
    void norm_inf_accumulation(ElementType& result, ElementType element) {
-      result = std::max(result, std::abs(element));
+      // protect against NaNs
+      if (std::isnan(element) || std::abs(element) > result) {
+         result = std::abs(element);
+      }
    }
 
    template <typename Array, typename ElementType = std::remove_const_t<typename Array::value_type>>
@@ -119,7 +110,10 @@ namespace uno {
    // inf norm of several arrays
    template <typename Array, typename... Arrays, typename ElementType = std::remove_const_t<typename Array::value_type>>
    ElementType norm_inf(const Array& x, const Arrays& ... other_arrays) {
-      return std::max(norm_inf(x), norm_inf(other_arrays...));
+      const ElementType first_norm = norm_inf(x);
+      const ElementType other_norm = norm_inf(other_arrays...);
+      // protect against NaNs
+      return (std::isnan(other_norm) || first_norm < other_norm) ? other_norm : first_norm;
    }
 
    //*********************
