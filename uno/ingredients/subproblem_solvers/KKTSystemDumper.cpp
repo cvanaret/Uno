@@ -17,7 +17,7 @@
 
 namespace uno {
    KKTSystemDumper::KKTSystemDumper(const Options& options):
-         path(options.get_string("dump_kkt_path")),
+         path(options.get_string_optional("dump_kkt_path").value_or("")),
          // a frequency of 0 would divide by zero; clamp it to "every iteration"
          frequency(std::max<size_t>(1, options.get_unsigned_int("dump_kkt_frequency"))) {
    }
