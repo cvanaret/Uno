@@ -31,7 +31,7 @@ namespace uno {
    };
 
    inline void warn_if_kkt_dump_unsupported(const Options& options) {
-      if (!options.get_string("dump_kkt_path").empty()) {
+      if (!options.get_string_optional("dump_kkt_path").value_or("").empty()) {
          WARNING << "Uno: 'dump_kkt_path' is set, but KKT system dumping is only supported with an exact Hessian; "
             "no systems will be dumped with the quasi-Newton Hessian\n";
       }
