@@ -66,6 +66,17 @@ TEST(Norm, NaNPropagates) {
    EXPECT_TRUE(std::isnan(norm_inf(x)));
 }
 
+TEST(Norm, NaNPropagatesForSeveralVectors) {
+   const Vector<double> x{1., 2.};
+   const Vector<double> y{std::numeric_limits<double>::quiet_NaN()};
+   EXPECT_TRUE(std::isnan(norm_1(x, y)));
+   EXPECT_TRUE(std::isnan(norm_1(y, x)));
+   EXPECT_TRUE(std::isnan(norm_2(x, y)));
+   EXPECT_TRUE(std::isnan(norm_2(y, x)));
+   EXPECT_TRUE(std::isnan(norm_inf(x, y)));
+   EXPECT_TRUE(std::isnan(norm_inf(y, x)));
+}
+
 // stress test: equivalence inequalities ||x||_inf <= ||x||_2 <= ||x||_1 <= n ||x||_inf on many vectors
 TEST(Norm, EquivalenceInequalities) {
    for (size_t size: {1u, 2u, 10u, 1000u}) {
