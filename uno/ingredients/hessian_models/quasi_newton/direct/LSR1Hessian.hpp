@@ -27,7 +27,7 @@ namespace uno {
       void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
          const Vector<double>& constraint_multipliers, View<double> result) override;
 
-      // functions that can be called by WoodburyEQPSolver
+      // functions that can be called by WoodburyCorrection
       [[nodiscard]] size_t get_correction_rank() const override;
       [[nodiscard]] View<const double> get_correction_column(size_t column_index) const override;
       [[nodiscard]] double get_correction_column_scaling(size_t column_index) const override;

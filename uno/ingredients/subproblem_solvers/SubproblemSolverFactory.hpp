@@ -12,7 +12,6 @@
 #include "InverseNewtonSolver.hpp"
 #include "QPSolver.hpp"
 #include "QPSolverFactory.hpp"
-#include "WoodburyEQPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -54,11 +53,11 @@ namespace uno {
          else if constexpr (std::is_base_of_v<DirectQuasiNewtonHessian, HessianType>) { // equality-constrained
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with quasi-Newton Hessian\n";
             // the hessian_model we pass has type QuasiNewtonHessian
-            return std::make_unique<WoodburyEQPSolver>(hessian_model, options);
+            return std::make_unique<EQPSolver<WoodburyCorrection>>(options, WoodburyCorrection{hessian_model});
          }
          else {
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver\n";
-            return std::make_unique<EQPSolver>(options);
+            return std::make_unique<EQPSolver<NoLowRankCorrection>>(options);
          }
       }
       // otherwise, allocate QP solver
