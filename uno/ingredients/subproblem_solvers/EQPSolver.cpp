@@ -15,7 +15,8 @@
 namespace uno {
    EQPSolver::EQPSolver(const Options& options):
          SubproblemSolver(),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)) {
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
+         kkt_dumper(options) {
    }
 
    void EQPSolver::initialize_memory(const Subproblem& subproblem) {
@@ -114,6 +115,10 @@ namespace uno {
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
          DEBUG3 << "RHS: " << linear_system.rhs << '\n';
+
+         // optionally dump the regularized KKT system to disk
+         this->kkt_dumper.dump(linear_system, subproblem.problem.model.name,
+            subproblem.problem.get_objective_multiplier() == 0., warmstart_information.iteration);
       }
 
       // solve the linear system
