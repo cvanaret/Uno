@@ -59,7 +59,7 @@ namespace uno {
       // whether the statistics table is printed in extended form
       options.set_bool("print_extended_statistics", false);
       // dump KKT systems
-      options.set_string("dump_kkt_path", "");
+      //options.set_string("dump_kkt_path", "");
       options.set_integer("dump_kkt_frequency", 1);
 
       /** globalization strategy options **/
