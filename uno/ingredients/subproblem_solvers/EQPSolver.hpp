@@ -5,6 +5,7 @@
 #define UNO_EQPSOLVER_H
 
 #include <memory>
+#include "LowRankCorrection.hpp"
 #include "SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
 
@@ -14,10 +15,13 @@ namespace uno {
    class DirectSymmetricIndefiniteLinearSolver;
    class Options;
 
+   // LowRankCorrection = NoLowRankCorrection: explicit Hessian in the augmented matrix
+   // LowRankCorrection = WoodburyCorrection: diagonal + low-rank quasi-Newton Hessian (L-BFGS, L-SR1)
+   template <typename LowRankCorrection>
    class EQPSolver: public SubproblemSolver {
    public:
-      explicit EQPSolver(const Options& options);
-      ~EQPSolver() override = default;
+      explicit EQPSolver(const Options& options, LowRankCorrection correction = {});
+      ~EQPSolver() override; // defined in EQPSolver.cpp (incomplete linear solver type)
 
       void initialize_memory(const Subproblem& subproblem) override;
       void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
@@ -39,6 +43,7 @@ namespace uno {
    protected:
       Direction direction;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
+      LowRankCorrection correction;
       bool analysis_performed{false};
 
       bool SOC_initialized{false};
@@ -46,6 +51,10 @@ namespace uno {
       Vector<double> constraints_buffer_SOC;
       Direction direction_SOC;
    };
+
+   // explicitly instantiated in EQPSolver.cpp
+   extern template class EQPSolver<NoLowRankCorrection>;
+   extern template class EQPSolver<WoodburyCorrection>;
 } // namespace
 
 #endif // UNO_EQPSOLVER_H

@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
+#include <utility>
 #include "EQPSolver.hpp"
 #include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -13,14 +15,22 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   EQPSolver::EQPSolver(const Options& options):
+   template <typename LowRankCorrection>
+   EQPSolver<LowRankCorrection>::EQPSolver(const Options& options, LowRankCorrection correction):
          SubproblemSolver(),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)) {
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
+         correction(std::move(correction)) {
    }
 
-   void EQPSolver::initialize_memory(const Subproblem& subproblem) {
-      if (!subproblem.has_hessian_matrix()) {
-         throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
+   template <typename LowRankCorrection>
+   EQPSolver<LowRankCorrection>::~EQPSolver() = default;
+
+   template <typename LowRankCorrection>
+   void EQPSolver<LowRankCorrection>::initialize_memory(const Subproblem& subproblem) {
+      if constexpr (LowRankCorrection::requires_hessian_matrix) {
+         if (!subproblem.has_hessian_matrix()) {
+            throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
+         }
       }
       this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
       // access the linear system of the linear solver
@@ -29,7 +39,8 @@ namespace uno {
       this->linear_solver->initialize_memory();
    }
 
-   void EQPSolver::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
+   template <typename LowRankCorrection>
+   void EQPSolver<LowRankCorrection>::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) {
       if (multipliers_threshold == 0.) {
          return;
@@ -82,7 +93,8 @@ namespace uno {
       }
    }
 
-   const Direction& EQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+   template <typename LowRankCorrection>
+   const Direction& EQPSolver<LowRankCorrection>::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
          double trust_region_radius, const Vector<double>& /*initial_point*/, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
@@ -110,6 +122,9 @@ namespace uno {
          // regularize the augmented matrix (this calls the analysis and the factorization)
          subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
             block_augmented_matrix);
+         if (!this->linear_solver->matrix_is_singular()) {
+            this->correction.update(subproblem, *this->linear_solver);
+         }
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
@@ -123,6 +138,7 @@ namespace uno {
          this->direction.status = SubproblemStatus::INFEASIBLE;
       }
       else {
+         this->correction.apply(linear_system.solution);
          // assemble the full primal-dual direction
          subproblem.assemble_primal_dual_direction(current_iterate, linear_system.solution, this->direction);
       }
@@ -130,7 +146,8 @@ namespace uno {
       return this->direction;
    }
 
-   bool EQPSolver::has_second_order_corrections() const {
+   template <typename LowRankCorrection>
+   bool EQPSolver<LowRankCorrection>::has_second_order_corrections() const {
       return true;
    }
 
@@ -141,7 +158,8 @@ namespace uno {
       residuals -= subproblem.problem.get_constraints_lower_bounds();
    }
 
-   void EQPSolver::initialize_second_order_corrections(const Subproblem& subproblem, const Iterate& current_iterate,
+   template <typename LowRankCorrection>
+   void EQPSolver<LowRankCorrection>::initialize_second_order_corrections(const Subproblem& subproblem, const Iterate& current_iterate,
          const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       if (!this->SOC_initialized) {
          this->constraints_SOC.resize(subproblem.number_constraints);
@@ -156,7 +174,8 @@ namespace uno {
    }
 
    // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
-   const Direction& EQPSolver::compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate) {
+   template <typename LowRankCorrection>
+   const Direction& EQPSolver<LowRankCorrection>::compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate) {
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
 
@@ -168,11 +187,13 @@ namespace uno {
 
       // solve the linear system and assemble the full primal-dual direction
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+      this->correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
    }
 
-   void EQPSolver::update_second_order_corrections(const Subproblem& subproblem, const Iterate& trial_iterate,
+   template <typename LowRankCorrection>
+   void EQPSolver<LowRankCorrection>::update_second_order_corrections(const Subproblem& subproblem, const Iterate& trial_iterate,
          Evaluations& trial_evaluations) {
       // r_soc = α_soc r_soc + r(x_trial_soc)
       this->constraints_SOC.scale(this->direction_SOC.primal_dual_step_length);
@@ -180,7 +201,11 @@ namespace uno {
       this->constraints_SOC += this->constraints_buffer_SOC;
    }
 
-   const SolverWorkspace& EQPSolver::get_workspace() const {
+   template <typename LowRankCorrection>
+   const SolverWorkspace& EQPSolver<LowRankCorrection>::get_workspace() const {
       return this->linear_solver->get_linear_system();
    }
+
+   template class EQPSolver<NoLowRankCorrection>;
+   template class EQPSolver<WoodburyCorrection>;
 } // namespace
