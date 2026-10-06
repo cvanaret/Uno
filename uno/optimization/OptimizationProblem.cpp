@@ -143,6 +143,21 @@ namespace uno {
       return this->primal_regularization_variables;
    }
 
+   size_t OptimizationProblem::get_number_bounded_variables() const {
+      size_t number_bounded_variables = 0;
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+         if (is_finite(variables_upper_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+      }
+      return number_bounded_variables;
+   }
+
    const std::vector<double>& OptimizationProblem::get_constraints_lower_bounds() const {
       return this->model.get_constraints_lower_bounds();
    }

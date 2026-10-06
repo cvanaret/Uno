@@ -77,13 +77,20 @@ namespace uno {
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
+      virtual void compute_residuals(Iterate& iterate, Evaluations& evaluations) const = 0;
+
       [[nodiscard]] virtual std::string get_name() const = 0;
 
    protected:
       const OptimizationProblem& problem;
       const Norm progress_norm;
+      const Norm residual_norm;
+      const double residual_scaling_threshold;
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
+      void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
+      [[nodiscard]] double compute_stationarity_scaling(const OptimizationProblem& problem, const Multipliers& multipliers) const;
+      [[nodiscard]] double compute_complementarity_scaling(const OptimizationProblem& problem, const Multipliers& multipliers) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;

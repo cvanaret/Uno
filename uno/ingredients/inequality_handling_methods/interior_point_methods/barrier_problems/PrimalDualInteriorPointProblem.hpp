@@ -53,6 +53,7 @@ namespace uno {
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
       // [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] size_t get_number_bounded_variables() const override;
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
@@ -70,6 +71,10 @@ namespace uno {
          double absolute_factor, double relative_factor);
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const override;
+
       [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 

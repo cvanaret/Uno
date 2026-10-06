@@ -135,6 +135,7 @@ function test_bfpc()
     optimize!(model)
 
     tolerance = 1
+    @assert termination_status(model) == MOI.LOCALLY_SOLVED
     @assert abs(objective_value(model) - 119250) <= tolerance
 end
 

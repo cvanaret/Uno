@@ -323,6 +323,19 @@ namespace uno {
       return this->fixed_variables;
    }
 
+   size_t PrimalDualInteriorPointProblem::get_number_bounded_variables() const {
+      size_t number_bounded_variables = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+      }
+      return number_bounded_variables;
+   }
+
    const std::vector<double>& PrimalDualInteriorPointProblem::get_constraints_lower_bounds() const {
       return this->constraints_lower_bounds;
    }
@@ -448,6 +461,28 @@ namespace uno {
             }
          }
       }
+   }
+
+   // cheap variant: slack bound duals (sign-correct by construction) paired with c(x) instead of s,
+   // so that the termination test doesn't require c(x) ≈ s. Requires λ ≈ z, certified by the slack
+   // block of the Lagrangian gradient (see evaluate_lagrangian_gradient)
+   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
+         const Multipliers& multipliers, Norm residual_norm) const {
+      Vector<double> variable_complementarity(this->number_variables, 0.); // TODO preallocate
+      for (size_t variable_index: Range(this->number_variables)) {
+         double result = 0.;
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - this->variables_lower_bounds[variable_index])));
+            // TODO: taking a max works for the inf norm only
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - this->variables_upper_bounds[variable_index])));
+         }
+         variable_complementarity[variable_index] = result;
+      }
+      return norm(residual_norm, variable_complementarity);
    }
 
    double PrimalDualInteriorPointProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {

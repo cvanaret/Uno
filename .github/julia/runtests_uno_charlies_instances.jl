@@ -31,6 +31,7 @@ function test_hs015()
     optimize!(model)
 
     tolerance = 1e-3
+    @assert termination_status(model) == MOI.LOCALLY_SOLVED
     @assert abs(objective_value(model) - 306.5) <= tolerance
     @assert abs(value(x) - 0.5) <= tolerance
     @assert abs(value(y) - 2.) <= tolerance
@@ -55,6 +56,7 @@ function test_isolated()
     optimize!(model)
 
     tolerance = 1e-3
+    @assert termination_status(model) == MOI.LOCALLY_INFEASIBLE
     @assert abs(objective_value(model) - 0.) <= tolerance
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 0.) <= tolerance
@@ -84,6 +86,7 @@ function test_nactive()
     optimize!(model)
 
     tolerance = 1e-3
+    @assert termination_status(model) == MOI.LOCALLY_INFEASIBLE
     @assert abs(objective_value(model) - 0.) <= tolerance
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 0.) <= tolerance
@@ -111,6 +114,7 @@ function test_unique()
     optimize!(model)
 
     tolerance = 1e-3
+    @assert termination_status(model) == MOI.LOCALLY_INFEASIBLE
     @assert abs(objective_value(model) - 1.) <= tolerance
     @assert abs(value(x[1]) - 0.) <= tolerance
     @assert abs(value(x[2]) - 1.) <= tolerance

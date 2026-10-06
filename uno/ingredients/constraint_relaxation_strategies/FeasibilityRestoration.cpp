@@ -60,7 +60,7 @@ namespace uno {
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
          1000. /* TODO use option */);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
-      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
 
       const auto [number_optimality_variables, _] = this->inequality_handling_method->get_dimensions();
@@ -157,7 +157,7 @@ namespace uno {
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
-      compute_residuals(this->feasibility_problem, current_iterate, current_evaluations);
+      this->feasibility_inequality_handling_method->compute_residuals(current_iterate, current_evaluations);
 
       this->initial_point.resize(this->feasibility_problem.number_variables);
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
@@ -398,14 +398,14 @@ namespace uno {
 
       // check termination
       if (this->current_phase == Phase::OPTIMALITY) {
-         this->compute_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
             trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
       }
       else {
-         this->compute_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
+         this->feasibility_inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->feasibility_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
