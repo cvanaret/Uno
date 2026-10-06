@@ -1,3 +1,5 @@
 preset ipopt
 #MA57_use_scaling true
 max_iterations 20000
+barrier_push_variable_to_interior_k1 0.5
+barrier_push_variable_to_interior_k2 0.5
