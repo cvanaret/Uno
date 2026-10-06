@@ -15,7 +15,8 @@ namespace uno {
    InequalityHandlingMethod::InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options):
          problem(problem),
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
-         residual_norm(norm_from_string(options.get_string("residual_norm"))) {
+         residual_norm(norm_from_string(options.get_string("residual_norm"))),
+         residual_scaling_threshold(options.get_double("residual_scaling_threshold")) {
    }
 
    // protected member functions
@@ -46,8 +47,28 @@ namespace uno {
          iterate.multipliers, this->residual_norm);
 
       // scaling factors
-      iterate.residuals.stationarity_scaling = 1.;//this->compute_stationarity_scaling(problem.model, iterate.multipliers);
-      iterate.residuals.complementarity_scaling = 1.;//this->compute_complementarity_scaling(problem.model, iterate.multipliers);
+      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem, iterate.multipliers);
+      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem, iterate.multipliers);
+   }
+
+   double InequalityHandlingMethod::compute_stationarity_scaling(const OptimizationProblem& problem, const Multipliers& multipliers) const {
+      const size_t total_size = problem.get_number_bounded_variables() + problem.number_constraints;
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double multiplier_norm = norm_1(multipliers.constraints, multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., multiplier_norm / scaling_factor);
+   }
+
+   double InequalityHandlingMethod::compute_complementarity_scaling(const OptimizationProblem& problem, const Multipliers& multipliers) const {
+      const size_t total_size = problem.get_number_bounded_variables();
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double bound_multiplier_norm = norm_1(multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

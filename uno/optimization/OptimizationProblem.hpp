@@ -77,6 +77,7 @@ namespace uno {
       [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] virtual size_t get_number_bounded_variables() const;
 
       [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const;
       [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const;

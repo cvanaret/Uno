@@ -323,6 +323,19 @@ namespace uno {
       return this->fixed_variables;
    }
 
+   size_t PrimalDualInteriorPointProblem::get_number_bounded_variables() const {
+      size_t number_bounded_variables = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+      }
+      return number_bounded_variables;
+   }
+
    const std::vector<double>& PrimalDualInteriorPointProblem::get_constraints_lower_bounds() const {
       return this->constraints_lower_bounds;
    }
