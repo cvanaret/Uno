@@ -453,16 +453,15 @@ namespace uno {
    // cheap variant: slack bound duals (sign-correct by construction) paired with c(x) instead of s,
    // so that the termination test doesn't require c(x) ≈ s. Requires λ ≈ z, certified by the slack
    // block of the Lagrangian gradient (see evaluate_lagrangian_gradient)
-   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
          const Multipliers& multipliers, Norm residual_norm) const {
-      // original variables
-      const size_t number_original_variables = this->unslacked_problem.number_variables;
-      Vector<double> variable_complementarity(number_original_variables, 0.); // TODO preallocate
-      for (size_t variable_index: Range(number_original_variables)) {
+      Vector<double> variable_complementarity(this->number_variables, 0.); // TODO preallocate
+      for (size_t variable_index: Range(this->number_variables)) {
          double result = 0.;
          if (is_finite(this->variables_lower_bounds[variable_index])) {
             result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
                (primals[variable_index] - this->variables_lower_bounds[variable_index])));
+            // TODO: taking a max works for the inf norm only
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
             result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
@@ -470,23 +469,7 @@ namespace uno {
          }
          variable_complementarity[variable_index] = result;
       }
-
-      // inequality constraints: z_s * (c(x) - bound). A free constraint has no finite slack bound:
-      // λ_j = 0 is enforced by the slack stationarity instead
-      Vector<double> constraint_complementarity(this->number_constraints, 0.); // TODO preallocate
-      for (const auto [constraint_index, slack_index]: this->slacks) {
-         double result = 0.;
-         if (is_finite(this->variables_lower_bounds[slack_index])) {
-            result = std::max(result, std::abs(multipliers.lower_bounds[slack_index] *
-               (constraints[constraint_index] - this->variables_lower_bounds[slack_index])));
-         }
-         if (is_finite(this->variables_upper_bounds[slack_index])) {
-            result = std::max(result, std::abs(multipliers.upper_bounds[slack_index] *
-               (constraints[constraint_index] - this->variables_upper_bounds[slack_index])));
-         }
-         constraint_complementarity[constraint_index] = result;
-      }
-      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+      return norm(residual_norm, variable_complementarity);
    }
 
    double PrimalDualInteriorPointProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {
