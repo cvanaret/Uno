@@ -54,7 +54,7 @@ namespace uno {
    // the augmented matrix has been factorized prior to calling this function
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix,
-         const Collection<size_t>& primal_regularization_variables) {
+         Range<> primal_regularization_variables) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
          this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
@@ -67,7 +67,7 @@ namespace uno {
 
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix block_augmented_matrix, const Collection<size_t>& primal_regularization_variables) {
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
       const double dual_regularization_value = this->dual_regularization_fraction * dual_regularization_parameter;
       this->primal_regularization = 0.;
       this->dual_regularization = 0.;

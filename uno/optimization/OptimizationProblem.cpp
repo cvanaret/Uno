@@ -139,8 +139,8 @@ namespace uno {
       return this->model.get_fixed_variables();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_primal_regularization_variables() const {
-      return this->primal_regularization_variables;
+   Range<> OptimizationProblem::get_primal_regularization_variables() const {
+      return Range(this->model.number_variables);
    }
 
    size_t OptimizationProblem::get_number_bounded_variables() const {

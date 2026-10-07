@@ -222,7 +222,7 @@ namespace uno {
       else {
          // otherwise, the regularization strategy may introduce curvature
          if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
-            return !this->problem.get_primal_regularization_variables().empty();
+            return (0 < this->problem.get_primal_regularization_variables().size());
          }
          return false;
       }
@@ -244,11 +244,11 @@ namespace uno {
       return this->inertia_correction_strategy.performs_dual_regularization();
    }
 
-   const Collection<size_t>& Subproblem::get_primal_regularization_variables() const {
+   Range<> Subproblem::get_primal_regularization_variables() const {
       if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          return this->problem.get_primal_regularization_variables();
       }
-      return this->empty_set;
+      return Range(0);
    }
 
    const Collection<size_t>& Subproblem::get_dual_regularization_constraints() const {

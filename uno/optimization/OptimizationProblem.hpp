@@ -5,7 +5,6 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <functional>
-#include <memory>
 #include <vector>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
@@ -16,6 +15,7 @@
 #include "../interfaces/C/uno_int.h"
 #include "model/Model.hpp"
 #include "symbolic/IntegerRange.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
    // forward declarations
@@ -76,7 +76,7 @@ namespace uno {
       [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const;
       [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] Range<> get_primal_regularization_variables() const;
       [[nodiscard]] virtual size_t get_number_bounded_variables() const;
 
       [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const;
