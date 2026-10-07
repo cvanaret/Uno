@@ -16,9 +16,7 @@ namespace uno {
          static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
          static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention), 0),
          user_model(user_model),
-         nonlinear_constraints(this->number_constraints),
-         equality_constraints_collection(this->equality_constraints),
-         inequality_constraints_collection(this->inequality_constraints) {
+         nonlinear_constraints(this->number_constraints) {
       // find fixed variables
       this->find_fixed_variables(this->fixed_variables);
 
@@ -259,12 +257,12 @@ namespace uno {
       return this->user_model.constraints_upper_bounds;
    }
 
-   const Collection<size_t>& PythonModel::get_equality_constraints() const {
-      return this->equality_constraints_collection;
+   const std::vector<size_t>& PythonModel::get_equality_constraints() const {
+      return this->equality_constraints;
    }
 
-   const Collection<size_t>& PythonModel::get_inequality_constraints() const {
-      return this->inequality_constraints_collection;
+   const std::vector<size_t>& PythonModel::get_inequality_constraints() const {
+      return this->inequality_constraints;
    }
 
    const Collection<size_t>& PythonModel::get_linear_constraints() const {
