@@ -23,7 +23,7 @@ namespace uno {
    class BarrierParameterUpdateStrategy {
    public:
       explicit BarrierParameterUpdateStrategy(const Options& options);
-      [[nodiscard]] double get_barrier_parameter() const;
+      [[nodiscard]] const double& get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
       [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
          Evaluations& evaluations);
@@ -50,7 +50,7 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   double BarrierParameterUpdateStrategy<BarrierProblem>::get_barrier_parameter() const {
+   const double& BarrierParameterUpdateStrategy<BarrierProblem>::get_barrier_parameter() const {
       return this->barrier_parameter;
    }
 

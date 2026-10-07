@@ -10,14 +10,14 @@
 #include "symbolic/IntegerRange.hpp"
 
 namespace uno {
-   // forward declarations
+   // forward declaration
    struct InteriorPointParameters;
-   class Parameterization;
 
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
-         const Parameterization& parameterization);
+         const double& barrier_parameter);
+      PrimalDualInteriorPointProblem(const OptimizationProblem&, const InteriorPointParameters&, const double&&) = delete;
 
       [[nodiscard]] double get_objective_multiplier() const override;
       [[nodiscard]] bool has_inequality_constraints() const override;
@@ -93,7 +93,7 @@ namespace uno {
 
    protected:
       const OptimizationProblem& unslacked_problem;
-      const Parameterization& parameterization;
+      const double& barrier_parameter;
       const InteriorPointParameters& parameters;
       SparseVector<size_t> slacks;
       const Vector<size_t> fixed_variables{};
