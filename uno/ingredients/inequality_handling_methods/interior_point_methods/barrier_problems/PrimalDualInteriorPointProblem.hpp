@@ -58,7 +58,6 @@ namespace uno {
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
       [[nodiscard]] Inertia get_inertia() const override;
 

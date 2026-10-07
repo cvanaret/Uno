@@ -81,7 +81,7 @@ namespace uno {
       // dual inertia correction (if applicable)
       nonzero_index += number_jacobian_nonzeros;
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
-         for (size_t constraint_index: this->get_dual_regularization_constraints()) {
+         for (size_t constraint_index: Range(this->number_constraints)) {
             const uno_int shifted_constraint_index = static_cast<uno_int>(this->number_variables + constraint_index);
             row_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
             column_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
@@ -251,10 +251,6 @@ namespace uno {
       return Range(0);
    }
 
-   const Collection<size_t>& Subproblem::get_dual_regularization_constraints() const {
-      return this->problem.get_dual_regularization_constraints();
-   }
-
    size_t Subproblem::number_jacobian_nonzeros() const {
       return this->problem.number_jacobian_nonzeros();
    }
@@ -280,7 +276,7 @@ namespace uno {
 
    size_t Subproblem::number_dual_inertia_correction_nonzeros() const {
       if (this->performs_dual_regularization()) {
-         return this->get_dual_regularization_constraints().size();
+         return this->number_constraints;
       }
       return 0;
    }

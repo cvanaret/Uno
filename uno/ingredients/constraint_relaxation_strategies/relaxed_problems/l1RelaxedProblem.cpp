@@ -399,10 +399,6 @@ namespace uno {
       return this->model.get_inequality_constraints();
    }
 
-   const Collection<size_t>& l1RelaxedProblem::get_dual_regularization_constraints() const {
-      return this->dual_regularization_constraints;
-   }
-
    Inertia l1RelaxedProblem::get_inertia() const {
       return {this->model.number_variables, this->number_constraints, this->elastic_variables.size()};
    }

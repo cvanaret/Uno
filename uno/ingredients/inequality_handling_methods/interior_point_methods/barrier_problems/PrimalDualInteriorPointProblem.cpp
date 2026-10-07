@@ -352,10 +352,6 @@ namespace uno {
       return this->inequality_constraints;
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_dual_regularization_constraints() const {
-      return this->unslacked_problem.get_dual_regularization_constraints();
-   }
-
    Inertia PrimalDualInteriorPointProblem::get_inertia() const {
       return {this->number_variables, this->number_constraints, 0};
    }

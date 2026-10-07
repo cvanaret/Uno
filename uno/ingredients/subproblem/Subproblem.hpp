@@ -77,7 +77,6 @@ namespace uno {
       [[nodiscard]] bool performs_dual_regularization() const;
 
       [[nodiscard]] Range<> get_primal_regularization_variables() const;
-      [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const;
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const;
       [[nodiscard]] size_t number_hessian_nonzeros() const;
