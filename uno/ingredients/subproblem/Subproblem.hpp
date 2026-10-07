@@ -8,7 +8,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // forward declarations
@@ -95,7 +94,6 @@ namespace uno {
    protected:
       HessianModel& hessian_model;
       InertiaCorrectionStrategy& inertia_correction_strategy;
-      const IntegerRange empty_set{0};
    };
 
    template <typename Array>

@@ -14,7 +14,6 @@
 #include "optimization/SolutionStatus.hpp"
 #include "../interfaces/C/uno_int.h"
 #include "model/Model.hpp"
-#include "symbolic/IntegerRange.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
