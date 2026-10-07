@@ -5,7 +5,6 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <functional>
-#include <memory>
 #include <vector>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
@@ -15,12 +14,10 @@
 #include "optimization/SolutionStatus.hpp"
 #include "../interfaces/C/uno_int.h"
 #include "model/Model.hpp"
-#include "symbolic/IntegerRange.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
    // forward declarations
-   template <typename ElementType>
-   class Collection;
    class Direction;
    class Evaluations;
    class SolverWorkspace;
@@ -76,14 +73,13 @@ namespace uno {
       [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const;
       [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] Range<> get_primal_regularization_variables() const;
       [[nodiscard]] virtual size_t get_number_bounded_variables() const;
 
       [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const;
       [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
+      [[nodiscard]] virtual const std::vector<size_t>& get_equality_constraints() const;
+      [[nodiscard]] virtual const std::vector<size_t>& get_inequality_constraints() const;
 
       [[nodiscard]] virtual Inertia get_inertia() const;
 
@@ -103,15 +99,6 @@ namespace uno {
       virtual void set_auxiliary_measure(Iterate& iterate) const;
 
       // predicted reductions
-      /*
-      [[nodiscard]] virtual double compute_predicted_infeasibility_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Norm norm, Evaluations& current_evaluations) const;
-      [[nodiscard]] virtual std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, Evaluations& current_evaluations,
-         double hessian_quadratic_form) const;
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const;
-      */
       [[nodiscard]] virtual PredictedInfeasibilityReduction build_predicted_infeasibility_reduction(
          const Iterate& current_iterate, const Vector<double>& primal_direction, Norm norm,
          Evaluations& current_evaluations) const;
@@ -122,8 +109,6 @@ namespace uno {
          const Iterate& current_iterate, const Vector<double>& primal_direction) const;
 
    protected:
-      const IntegerRange primal_regularization_variables;
-      const IntegerRange dual_regularization_constraints;
       mutable Vector<double> Jv_buffer;
    };
 } // namespace

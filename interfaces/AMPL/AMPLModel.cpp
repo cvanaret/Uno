@@ -67,9 +67,7 @@ namespace uno {
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),
          // problem_type is computed based on number_asl_hessian_nonzeros and linear_constraints
-         problem_type(this->determine_problem_type()),
-         equality_constraints_collection(this->equality_constraints),
-         inequality_constraints_collection(this->inequality_constraints) {
+         problem_type(this->determine_problem_type()) {
       // Jacobian storage: use goff fields of struct cgrad
       this->asl->i.congrd_mode = 2;
 
@@ -90,10 +88,10 @@ namespace uno {
       }
 
       // detect fix variables
-      Model::find_fixed_variables(this->fixed_variables);
+      find_fixed_variables(this->fixed_variables);
 
       // partition equality/inequality constraints
-      Model::partition_constraints(this->equality_constraints, this->inequality_constraints);
+      partition_constraints(this->equality_constraints, this->inequality_constraints);
 
       // Jacobian sparsity
       this->compute_jacobian_sparsity();
@@ -247,12 +245,12 @@ namespace uno {
       return this->constraints_upper_bounds;
    }
 
-   const Collection<size_t>& AMPLModel::get_equality_constraints() const {
-      return this->equality_constraints_collection;
+   const std::vector<size_t>& AMPLModel::get_equality_constraints() const {
+      return this->equality_constraints;
    }
 
-   const Collection<size_t>& AMPLModel::get_inequality_constraints() const {
-      return this->inequality_constraints_collection;
+   const std::vector<size_t>& AMPLModel::get_inequality_constraints() const {
+      return this->inequality_constraints;
    }
 
    const Collection<size_t>& AMPLModel::get_linear_constraints() const {

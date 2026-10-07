@@ -84,8 +84,8 @@ namespace uno {
 
       [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const = 0;
       [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const = 0;
-      [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const = 0;
-      [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const = 0;
+      [[nodiscard]] virtual const std::vector<size_t>& get_equality_constraints() const = 0;
+      [[nodiscard]] virtual const std::vector<size_t>& get_inequality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_linear_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_nonlinear_constraints() const = 0;
 
@@ -108,7 +108,7 @@ namespace uno {
       [[nodiscard]] bool is_constrained() const;
 
       // constraint violation
-      [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
+      [[nodiscard]] virtual double constraint_violation(double constraint_value, double lower_bound, double upper_bound) const;
       template <typename Array>
       double constraint_violation(const Array& constraints, Norm residual_norm) const;
 
@@ -123,8 +123,11 @@ namespace uno {
    template <typename Array>
    double Model::constraint_violation(const Array& constraints, Norm residual_norm) const {
       Vector<double> constraint_violation(constraints.size()); // TODO preallocate
+      const auto& lower_bounds = this->get_constraints_lower_bounds();
+      const auto& upper_bounds = this->get_constraints_upper_bounds();
       for (size_t constraint_index: Range(constraints.size())) {
-         constraint_violation[constraint_index] = this->constraint_violation(constraints[constraint_index], constraint_index);
+         constraint_violation[constraint_index] = this->constraint_violation(constraints[constraint_index], lower_bounds[constraint_index],
+            upper_bounds[constraint_index]);
       }
       return norm(residual_norm, constraint_violation);
    }

@@ -6,10 +6,8 @@
 
 #include <vector>
 #include "../unopy.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
-#include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/IntegerRange.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 
@@ -57,8 +55,8 @@ namespace uno {
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
-      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override;
 
@@ -83,9 +81,7 @@ namespace uno {
       const IntegerRange linear_constraints{0};
       const IntegerRange nonlinear_constraints;
       std::vector<size_t> equality_constraints;
-      CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
       std::vector<size_t> inequality_constraints;
-      CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
    };
 } // namespace
 

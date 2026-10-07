@@ -81,7 +81,7 @@ namespace uno {
       // dual inertia correction (if applicable)
       nonzero_index += number_jacobian_nonzeros;
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
-         for (size_t constraint_index: this->get_dual_regularization_constraints()) {
+         for (size_t constraint_index: Range(this->number_constraints)) {
             const uno_int shifted_constraint_index = static_cast<uno_int>(this->number_variables + constraint_index);
             row_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
             column_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
@@ -222,7 +222,7 @@ namespace uno {
       else {
          // otherwise, the regularization strategy may introduce curvature
          if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
-            return !this->problem.get_primal_regularization_variables().empty();
+            return (0 < this->problem.get_primal_regularization_variables().size());
          }
          return false;
       }
@@ -244,15 +244,11 @@ namespace uno {
       return this->inertia_correction_strategy.performs_dual_regularization();
    }
 
-   const Collection<size_t>& Subproblem::get_primal_regularization_variables() const {
+   Range<> Subproblem::get_primal_regularization_variables() const {
       if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
          return this->problem.get_primal_regularization_variables();
       }
-      return this->empty_set;
-   }
-
-   const Collection<size_t>& Subproblem::get_dual_regularization_constraints() const {
-      return this->problem.get_dual_regularization_constraints();
+      return Range(0);
    }
 
    size_t Subproblem::number_jacobian_nonzeros() const {
@@ -280,7 +276,7 @@ namespace uno {
 
    size_t Subproblem::number_dual_inertia_correction_nonzeros() const {
       if (this->performs_dual_regularization()) {
-         return this->get_dual_regularization_constraints().size();
+         return this->number_constraints;
       }
       return 0;
    }

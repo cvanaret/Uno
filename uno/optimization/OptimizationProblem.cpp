@@ -15,13 +15,11 @@
 namespace uno {
    OptimizationProblem::OptimizationProblem(const Model& model):
          model(model), number_variables(model.number_variables), number_constraints(model.number_constraints),
-         primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints),
          Jv_buffer(this->model.number_constraints) {
    }
 
    OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
          model(model), number_variables(number_variables), number_constraints(number_constraints),
-         primal_regularization_variables(model.number_variables), dual_regularization_constraints(number_constraints),
          Jv_buffer(number_constraints) {
    }
 
@@ -139,8 +137,8 @@ namespace uno {
       return this->model.get_fixed_variables();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_primal_regularization_variables() const {
-      return this->primal_regularization_variables;
+   Range<> OptimizationProblem::get_primal_regularization_variables() const {
+      return Range(this->model.number_variables);
    }
 
    size_t OptimizationProblem::get_number_bounded_variables() const {
@@ -166,16 +164,12 @@ namespace uno {
       return this->model.get_constraints_upper_bounds();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_equality_constraints() const {
+   const std::vector<size_t>& OptimizationProblem::get_equality_constraints() const {
       return this->model.get_equality_constraints();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_inequality_constraints() const {
+   const std::vector<size_t>& OptimizationProblem::get_inequality_constraints() const {
       return this->model.get_inequality_constraints();
-   }
-
-   const Collection<size_t>& OptimizationProblem::get_dual_regularization_constraints() const {
-      return this->dual_regularization_constraints;
    }
 
    Inertia OptimizationProblem::get_inertia() const {

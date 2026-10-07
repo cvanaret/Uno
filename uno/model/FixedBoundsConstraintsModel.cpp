@@ -13,7 +13,7 @@ namespace uno {
             original_model.number_constraints + original_model.get_fixed_variables().size(),
             original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
          model(original_model),
-         equality_constraints(concatenate(this->model.get_equality_constraints(), IntegerRange(this->model.number_constraints, this->number_constraints))),
+         equality_constraints(this->model.get_equality_constraints().size() + original_model.get_fixed_variables().size()),
          linear_constraints(concatenate(this->model.get_linear_constraints(), IntegerRange(this->model.number_constraints, this->number_constraints))),
          variables_lower_bounds(original_model.get_variables_lower_bounds()),
          variables_upper_bounds(original_model.get_variables_upper_bounds()),
@@ -23,16 +23,20 @@ namespace uno {
       view(constraints_lower_bounds, 0, original_model.number_constraints) = original_model.get_constraints_lower_bounds();
       view(constraints_upper_bounds, 0, original_model.number_constraints) = original_model.get_constraints_upper_bounds();
       // handle the fixed variables
+      view(this->equality_constraints.data(), original_model.get_equality_constraints().size()) = original_model.get_equality_constraints();
       size_t fixed_variable_constraint_index = original_model.number_constraints;
+      size_t equality_constraint_index = original_model.get_equality_constraints().size();
       for (size_t fixed_variable_index: original_model.get_fixed_variables()) {
          // relax the bounds of the fixed variables
          this->variables_lower_bounds[fixed_variable_index] = -Inf;
          this->variables_upper_bounds[fixed_variable_index] = Inf;
          const double fixed_value = original_model.get_variables_lower_bounds()[fixed_variable_index];
+         this->equality_constraints[equality_constraint_index] = fixed_variable_constraint_index;
          // set the bounds of the corresponding new constraint
          this->constraints_lower_bounds[fixed_variable_constraint_index] = fixed_value;
          this->constraints_upper_bounds[fixed_variable_constraint_index] = fixed_value;
          ++fixed_variable_constraint_index;
+         ++equality_constraint_index;
       }
 
       // Jacobian sparsity
@@ -167,11 +171,11 @@ namespace uno {
       return this->constraints_upper_bounds;
    }
 
-   const Collection<size_t>& FixedBoundsConstraintsModel::get_equality_constraints() const {
+   const std::vector<size_t>& FixedBoundsConstraintsModel::get_equality_constraints() const {
       return this->equality_constraints;
    }
 
-   const Collection<size_t>& FixedBoundsConstraintsModel::get_inequality_constraints() const {
+   const std::vector<size_t>& FixedBoundsConstraintsModel::get_inequality_constraints() const {
       return this->model.get_inequality_constraints();
    }
 

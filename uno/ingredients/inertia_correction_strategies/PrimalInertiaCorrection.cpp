@@ -85,7 +85,7 @@ namespace uno {
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix,
-         const Collection<size_t>& primal_regularization_variables) {
+         Range<> primal_regularization_variables) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
@@ -99,7 +99,7 @@ namespace uno {
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix block_augmented_matrix, const Collection<size_t>& /*primal_regularization_variables*/) {
+         BlockAugmentedMatrix block_augmented_matrix, Range<> /*primal_regularization_variables*/) {
       this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, block_augmented_matrix.primal_inertia_correction);
       block_augmented_matrix.dual_inertia_correction.fill(0.);
    }

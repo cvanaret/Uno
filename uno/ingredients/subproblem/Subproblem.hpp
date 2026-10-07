@@ -8,7 +8,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // forward declarations
@@ -76,8 +75,7 @@ namespace uno {
       [[nodiscard]] bool performs_primal_regularization() const;
       [[nodiscard]] bool performs_dual_regularization() const;
 
-      [[nodiscard]] const Collection<size_t>& get_primal_regularization_variables() const;
-      [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const;
+      [[nodiscard]] Range<> get_primal_regularization_variables() const;
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const;
       [[nodiscard]] size_t number_hessian_nonzeros() const;
@@ -96,7 +94,6 @@ namespace uno {
    protected:
       HessianModel& hessian_model;
       InertiaCorrectionStrategy& inertia_correction_strategy;
-      const IntegerRange empty_set{0};
    };
 
    template <typename Array>

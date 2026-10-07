@@ -15,7 +15,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
-#include "optimization/Parameterization.hpp"
 #include "options/Options.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -27,6 +26,8 @@ namespace uno {
    public:
       InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier,
          const Options& options, std::vector<OptionOverride>& option_overrides);
+      InteriorPointMethod(const InteriorPointMethod&) = delete;
+      InteriorPointMethod& operator=(const InteriorPointMethod&) = delete;
 
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
@@ -70,10 +71,8 @@ namespace uno {
 
    protected:
       const InteriorPointParameters parameters;
-
-      Parameterization parameterization;
-      BarrierProblem barrier_problem;
       BarrierParameterUpdateStrategy<BarrierProblem> barrier_parameter_update_strategy;
+      BarrierProblem barrier_problem;
 
       std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
       std::unique_ptr<HessianModel> hessian_model;
@@ -84,7 +83,7 @@ namespace uno {
 
       bool first_feasibility_iteration{false};
 
-      [[nodiscard]] double barrier_parameter() const;
+      [[nodiscard]] const double& barrier_parameter() const;
    };
 
    // class template implementation
@@ -104,10 +103,9 @@ namespace uno {
             options.get_double("barrier_default_multiplier"),
             std::pow(std::numeric_limits<double>::epsilon(), 0.75) // slack_move
          }),
-         barrier_problem(problem, this->parameters, this->parameterization),
          barrier_parameter_update_strategy(options),
+         barrier_problem(problem, this->parameters, this->barrier_parameter()),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
-      this->parameterization.set("barrier_parameter", this->barrier_parameter());
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier,
@@ -152,7 +150,6 @@ namespace uno {
       else {
          this->first_feasibility_iteration = false;
       }
-      this->parameterization.set("barrier_parameter", this->barrier_parameter());
       statistics.set("Barrier", this->barrier_parameter());
       return update;
    }
@@ -160,7 +157,6 @@ namespace uno {
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::force_parameterization_update(Statistics& statistics) {
       const bool update = this->barrier_parameter_update_strategy.force_barrier_parameter_decrease();
-      this->parameterization.set("barrier_parameter", this->barrier_parameter());
       statistics.set("Barrier", this->barrier_parameter());
       return update;
    }
@@ -182,7 +178,6 @@ namespace uno {
       const double new_barrier_parameter = std::max(handoff.barrier_parameter.value_or(this->barrier_parameter()),
          current_iterate.primal_infeasibility);
       this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
-      this->parameterization.set("barrier_parameter", this->barrier_parameter());
       DEBUG << "Barrier parameter = " << this->barrier_parameter() << '\n';
    }
 
@@ -325,7 +320,7 @@ namespace uno {
    // protected member functions
 
    template <typename BarrierProblem>
-   double InteriorPointMethod<BarrierProblem>::barrier_parameter() const {
+   const double& InteriorPointMethod<BarrierProblem>::barrier_parameter() const {
       return this->barrier_parameter_update_strategy.get_barrier_parameter();
    }
 

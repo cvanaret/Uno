@@ -9,12 +9,12 @@
 
 namespace uno {
    // direction of the range (FORWARD = increasing or BACKWARD = decreasing)
-   enum RangeDirection {
+   enum class RangeDirection {
       FORWARD, BACKWARD
    };
 
    // Default direction is FORWARD (increasing)
-   template <RangeDirection direction = FORWARD>
+   template <RangeDirection direction = RangeDirection::FORWARD>
    class Range {
    public:
       using value_type = size_t;
@@ -23,14 +23,14 @@ namespace uno {
       public:
          using value_type = size_t;
 
-         iterator(size_t start): index(start) { }
+         explicit iterator(size_t start): index(start) { }
 
          [[nodiscard]] constexpr value_type operator*() const {
             return this->index;
          }
 
          constexpr iterator& operator++() {
-            if constexpr (direction == FORWARD) {
+            if constexpr (direction == RangeDirection::FORWARD) {
                ++this->index;
             }
             else {
@@ -47,21 +47,21 @@ namespace uno {
          size_t index;
       };
 
-      explicit Range(size_t end_value): Range(0, end_value) {
-         static_assert(direction == FORWARD);
+      explicit constexpr Range(size_t end_value): Range(0, end_value) {
+         static_assert(direction == RangeDirection::FORWARD);
       }
 
-      Range(size_t start_value, size_t end_value): start_value(start_value), end_value(end_value) {
-         if (direction == FORWARD && end_value < start_value) {
+      constexpr Range(size_t start_value, size_t end_value): start_value(start_value), end_value(end_value) {
+         if (direction == RangeDirection::FORWARD && end_value < start_value) {
             throw std::invalid_argument("Forward range: end index is smaller than start index");
          }
-         else if (direction == BACKWARD && end_value > start_value) {
+         else if (direction == RangeDirection::BACKWARD && end_value > start_value) {
             throw std::invalid_argument("Backward range: end index is larger than start index");
          }
       }
 
       [[nodiscard]] constexpr size_t size() const noexcept {
-         if constexpr (direction == FORWARD) {
+         if constexpr (direction == RangeDirection::FORWARD) {
             return this->end_value - this->start_value;
          }
          else {
@@ -82,8 +82,8 @@ namespace uno {
       const size_t end_value;
    };
 
-   using ForwardRange = Range<FORWARD>;
-   using BackwardRange = Range<BACKWARD>;
+   using ForwardRange = Range<>;
+   using BackwardRange = Range<RangeDirection::BACKWARD>;
 } // namespace
 
 #endif // UNO_RANGE_H

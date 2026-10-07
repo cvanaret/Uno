@@ -15,7 +15,6 @@
 #include "options/Presets.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/IntegerRange.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
@@ -40,9 +39,7 @@ public:
             static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention),
             user_model.base_indexing),
          user_model(user_model),
-         nonlinear_constraints(this->number_constraints),
-         equality_constraints_collection(this->equality_constraints),
-         inequality_constraints_collection(this->inequality_constraints) {
+         nonlinear_constraints(this->number_constraints) {
       this->find_fixed_variables(this->fixed_variables);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
@@ -244,12 +241,12 @@ public:
       return this->user_model.constraints_upper_bounds;
    }
 
-   [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override {
-      return this->equality_constraints_collection;
+   [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override {
+      return this->equality_constraints;
    }
 
-   [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override {
-      return this->inequality_constraints_collection;
+   [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override {
+      return this->inequality_constraints;
    }
 
    [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override {
@@ -325,9 +322,7 @@ protected:
    const IntegerRange linear_constraints{0};
    const IntegerRange nonlinear_constraints;
    std::vector<size_t> equality_constraints;
-   CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
    std::vector<size_t> inequality_constraints;
-   CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
 };
 
 class CUserCallbacks: public UserCallbacks {

@@ -106,8 +106,8 @@ namespace uno {
          return this->relaxed_constraints_upper_bounds;
       }
 
-      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->model.get_equality_constraints(); }
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->model.get_inequality_constraints(); }
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override { return this->model.get_equality_constraints(); }
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override { return this->model.get_inequality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override { return this->model.get_linear_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override { return this->model.get_nonlinear_constraints(); }
 

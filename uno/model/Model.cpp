@@ -85,9 +85,9 @@ namespace uno {
    }
 
    // individual constraint violation
-   double Model::constraint_violation(double constraint_value, size_t constraint_index) const {
-      const double lower_bound_violation = std::max(0., this->get_constraints_lower_bounds()[constraint_index] - constraint_value);
-      const double upper_bound_violation = std::max(0., constraint_value - this->get_constraints_upper_bounds()[constraint_index]);
+   double Model::constraint_violation(double constraint_value, double lower_bound, double upper_bound) const {
+      const double lower_bound_violation = std::max(0., lower_bound - constraint_value);
+      const double upper_bound_violation = std::max(0., constraint_value - upper_bound);
       return std::max(lower_bound_violation, upper_bound_violation);
    }
 

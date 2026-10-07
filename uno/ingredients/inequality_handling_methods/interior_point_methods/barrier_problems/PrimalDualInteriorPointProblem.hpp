@@ -7,17 +7,16 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
-   // forward declarations
+   // forward declaration
    struct InteriorPointParameters;
-   class Parameterization;
 
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
-         const Parameterization& parameterization);
+         const double& barrier_parameter);
+      PrimalDualInteriorPointProblem(const OptimizationProblem&, const InteriorPointParameters&, const double&&) = delete;
 
       [[nodiscard]] double get_objective_multiplier() const override;
       [[nodiscard]] bool has_inequality_constraints() const override;
@@ -52,14 +51,12 @@ namespace uno {
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
-      // [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
       [[nodiscard]] size_t get_number_bounded_variables() const override;
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
-      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
 
       [[nodiscard]] Inertia get_inertia() const override;
 
@@ -95,12 +92,12 @@ namespace uno {
 
    protected:
       const OptimizationProblem& unslacked_problem;
-      const Parameterization& parameterization;
+      const double& barrier_parameter;
       const InteriorPointParameters& parameters;
       SparseVector<size_t> slacks;
       const Vector<size_t> fixed_variables{};
-      const IntegerRange equality_constraints;
-      const IntegerRange inequality_constraints{0};
+      std::vector<size_t> equality_constraints;
+      const std::vector<size_t> inequality_constraints{}; // empty
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
