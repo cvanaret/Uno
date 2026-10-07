@@ -3,6 +3,9 @@
 
 #include <limits>
 #include "PrimalDualInteriorPointProblem.hpp"
+
+#include <numeric>
+
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -45,6 +48,8 @@ namespace uno {
          this->variables_upper_bounds[slack_index] = this->unslacked_problem.get_constraints_upper_bounds()[constraint_index];
          ++inequality_index;
       }
+      // construct the list of equality constraints
+      std::iota(this->equality_constraints.begin(), this->equality_constraints.end(), 0);
 
       // compute the Jacobian sparsity
       const size_t number_jacobian_nonzeros = this->unslacked_problem.number_jacobian_nonzeros();
@@ -342,11 +347,11 @@ namespace uno {
       return this->constraints_upper_bounds;
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_equality_constraints() const {
+   const std::vector<size_t>& PrimalDualInteriorPointProblem::get_equality_constraints() const {
       return this->equality_constraints;
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_inequality_constraints() const {
+   const std::vector<size_t>& PrimalDualInteriorPointProblem::get_inequality_constraints() const {
       return this->inequality_constraints;
    }
 

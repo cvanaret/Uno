@@ -18,8 +18,6 @@
 
 namespace uno {
    // forward declarations
-   template <typename ElementType>
-   class Collection;
    class Direction;
    class Evaluations;
    class SolverWorkspace;
@@ -80,8 +78,8 @@ namespace uno {
 
       [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const;
       [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
+      [[nodiscard]] virtual const std::vector<size_t>& get_equality_constraints() const;
+      [[nodiscard]] virtual const std::vector<size_t>& get_inequality_constraints() const;
 
       [[nodiscard]] virtual Inertia get_inertia() const;
 

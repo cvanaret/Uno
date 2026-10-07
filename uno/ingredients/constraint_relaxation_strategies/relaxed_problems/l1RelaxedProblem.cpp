@@ -391,11 +391,11 @@ namespace uno {
       return this->model.get_constraints_upper_bounds();
    }
 
-   const Collection<size_t>& l1RelaxedProblem::get_equality_constraints() const {
+   const std::vector<size_t>& l1RelaxedProblem::get_equality_constraints() const {
       return this->model.get_equality_constraints();
    }
 
-   const Collection<size_t>& l1RelaxedProblem::get_inequality_constraints() const {
+   const std::vector<size_t>& l1RelaxedProblem::get_inequality_constraints() const {
       return this->model.get_inequality_constraints();
    }
 

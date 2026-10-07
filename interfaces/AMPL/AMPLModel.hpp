@@ -65,8 +65,8 @@ namespace uno {
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
-      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override;
 
@@ -104,14 +104,12 @@ namespace uno {
       Vector<uno_int> jacobian_row_indices;
       Vector<uno_int> jacobian_column_indices;
 
-      // lists of variables and constraints + corresponding collection objects
+      // lists of variables and constraints
       const IntegerRange linear_constraints;
       const IntegerRange nonlinear_constraints;
       const ProblemType problem_type;
       std::vector<size_t> equality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
       Vector<size_t> fixed_variables;
 
       mutable NumberModelEvaluations number_model_evaluations{};

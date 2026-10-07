@@ -8,7 +8,6 @@
 #include "ElasticVariables.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
@@ -54,8 +53,8 @@ namespace uno {
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
-      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
 
       [[nodiscard]] Inertia get_inertia() const override;
 

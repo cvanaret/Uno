@@ -7,7 +7,6 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "symbolic/IntegerRange.hpp"
 
 namespace uno {
    // forward declaration
@@ -56,8 +55,8 @@ namespace uno {
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
-      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
 
       [[nodiscard]] Inertia get_inertia() const override;
 
@@ -97,8 +96,8 @@ namespace uno {
       const InteriorPointParameters& parameters;
       SparseVector<size_t> slacks;
       const Vector<size_t> fixed_variables{};
-      const IntegerRange equality_constraints;
-      const IntegerRange inequality_constraints{0};
+      std::vector<size_t> equality_constraints;
+      const std::vector<size_t> inequality_constraints{}; // empty
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
