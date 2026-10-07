@@ -632,17 +632,21 @@ namespace uno {
             const double distance_to_bound = current_primals[variable_index] - this->variables_lower_bounds[variable_index];
             direction_multipliers.lower_bounds[variable_index] = (this->barrier_parameter - direction_primals[variable_index] *
                current_multipliers.lower_bounds[variable_index]) / distance_to_bound - current_multipliers.lower_bounds[variable_index];
-            if (is_infinite(direction_multipliers.lower_bounds[variable_index])) {
-               throw std::runtime_error("The lower bound dual is infinite");
-            }
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) {
             const double distance_to_bound = current_primals[variable_index] - this->variables_upper_bounds[variable_index];
             direction_multipliers.upper_bounds[variable_index] = (this->barrier_parameter - direction_primals[variable_index] *
                current_multipliers.upper_bounds[variable_index]) / distance_to_bound - current_multipliers.upper_bounds[variable_index];
-            if (is_infinite(direction_multipliers.upper_bounds[variable_index])) {
-               throw std::runtime_error("The upper bound dual is infinite");
-            }
+         }
+      }
+
+      // check finiteness
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index]) && is_infinite(direction_multipliers.lower_bounds[variable_index])) {
+            throw std::runtime_error("The lower bound dual is infinite");
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index]) && is_infinite(direction_multipliers.upper_bounds[variable_index])) {
+            throw std::runtime_error("The upper bound dual is infinite");
          }
       }
 
