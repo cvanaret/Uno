@@ -36,7 +36,7 @@ namespace uno {
       Iterate& operator=(const Iterate& other) = default;
       Iterate& operator=(Iterate&& other) noexcept = default;
 
-      void set_number_variables(size_t number_variables);
+      void set_dimensions(size_t number_variables, size_t new_number_constraints);
 
       friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
    };

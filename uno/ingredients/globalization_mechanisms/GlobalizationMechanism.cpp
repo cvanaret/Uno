@@ -27,7 +27,7 @@ namespace uno {
 
    void GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double primal_step_length, double constraint_dual_step_length, double bound_dual_step_length) {
-      trial_iterate.set_number_variables(current_iterate.primals.size());
+      trial_iterate.set_dimensions(current_iterate.primals.size(), current_iterate.multipliers.constraints.size());
       trial_iterate.multipliers.constraints.resize(current_iterate.multipliers.constraints.size());
 
       // take primal step

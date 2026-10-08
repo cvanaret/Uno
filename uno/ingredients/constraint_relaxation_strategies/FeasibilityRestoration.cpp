@@ -118,7 +118,7 @@ namespace uno {
       this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.view());
 
       // prepare the iterate for restoration (resize + set primal-dual values)
-      current_iterate.set_number_variables(number_feasibility_variables);
+      current_iterate.set_dimensions(number_feasibility_variables, number_feasibility_constraints);
       // move the slacks [n, n + s) -> [n + e, n + e + s). The destination lies after the source:
       // copy backward so that the copy is correct even if the ranges overlap (e < s)
       for (size_t index = number_slacks; index-- > 0;) {
@@ -285,7 +285,7 @@ namespace uno {
 
       // swap the iterate's multipliers and the optimality multipliers maintained by the class
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
-      trial_iterate.set_number_variables(number_optimality_variables);
+      trial_iterate.set_dimensions(number_optimality_variables, number_optimality_constraints);
       trial_iterate.multipliers.constraints.fill(0.);
 
       // compute the bound duals using the linearized complementarity, pretending that restoration was a single step

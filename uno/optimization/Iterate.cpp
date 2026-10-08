@@ -14,9 +14,11 @@ namespace uno {
 
    Iterate::Iterate(): Iterate(0, 0) {}
 
-   void Iterate::set_number_variables(size_t new_number_variables) {
+   void Iterate::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
       this->number_variables = new_number_variables;
+      this->number_constraints = new_number_constraints;
       this->primals.resize(new_number_variables);
+      this->multipliers.constraints.resize(new_number_constraints);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);

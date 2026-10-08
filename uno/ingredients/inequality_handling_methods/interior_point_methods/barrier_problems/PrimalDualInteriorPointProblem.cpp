@@ -2,10 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <limits>
-#include "PrimalDualInteriorPointProblem.hpp"
-
 #include <numeric>
-
+#include "PrimalDualInteriorPointProblem.hpp"
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -122,7 +120,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const {
-      iterate.set_number_variables(this->number_variables);
+      iterate.set_dimensions(this->number_variables, this->number_constraints);
 
       // make the initial point strictly feasible wrt the bounds
       bool iterate_changed = false;
