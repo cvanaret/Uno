@@ -50,7 +50,6 @@ namespace uno {
 
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
       [[nodiscard]] size_t get_number_bounded_variables() const override;
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
@@ -95,7 +94,7 @@ namespace uno {
       const double& barrier_parameter;
       const InteriorPointParameters& parameters;
       SparseVector<size_t> slacks;
-      const Vector<size_t> fixed_variables{};
+      std::vector<size_t> fixed_variables{};
       std::vector<size_t> equality_constraints;
       const std::vector<size_t> inequality_constraints{}; // empty
 

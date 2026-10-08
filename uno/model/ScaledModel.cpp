@@ -160,10 +160,6 @@ namespace uno {
       return this->model.get_variables_upper_bounds();
    }
 
-   const Vector<size_t>& ScaledModel::get_fixed_variables() const {
-      return this->model.get_fixed_variables();
-   }
-
    const std::vector<double>& ScaledModel::get_constraints_lower_bounds() const {
       return this->constraints_lower_bounds;
    }

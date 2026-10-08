@@ -70,7 +70,7 @@ namespace uno {
 
    void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem,
          Iterate& current_iterate, Evaluations& evaluations) {
-      current_iterate.set_number_variables(feasibility_problem.number_variables);
+      current_iterate.set_dimensions(feasibility_problem.number_variables, feasibility_problem.number_constraints);
       // l <= c(x) - p + n <= u
       evaluations.evaluate_constraints(feasibility_problem.model, current_iterate.primals);
       feasibility_problem.set_elastic_variable_values([&](size_t constraint_index,
