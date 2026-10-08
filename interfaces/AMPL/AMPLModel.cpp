@@ -87,9 +87,6 @@ namespace uno {
          }
       }
 
-      // detect fix variables
-      find_fixed_variables(this->fixed_variables);
-
       // partition equality/inequality constraints
       partition_constraints(this->equality_constraints, this->inequality_constraints);
 
@@ -231,10 +228,6 @@ namespace uno {
 
    const std::vector<double>& AMPLModel::get_variables_upper_bounds() const {
       return this->variables_upper_bounds;
-   }
-
-   const Vector<size_t>& AMPLModel::get_fixed_variables() const {
-      return this->fixed_variables;
    }
 
    const std::vector<double>& AMPLModel::get_constraints_lower_bounds() const {

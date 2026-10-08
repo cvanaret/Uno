@@ -133,10 +133,6 @@ namespace uno {
       return this->model.get_variables_upper_bounds();
    }
 
-   const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {
-      return this->model.get_fixed_variables();
-   }
-
    Range<> OptimizationProblem::get_primal_regularization_variables() const {
       return Range(this->model.number_variables);
    }

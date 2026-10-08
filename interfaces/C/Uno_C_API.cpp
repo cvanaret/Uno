@@ -40,7 +40,6 @@ public:
             user_model.base_indexing),
          user_model(user_model),
          nonlinear_constraints(this->number_constraints) {
-      this->find_fixed_variables(this->fixed_variables);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
@@ -229,10 +228,6 @@ public:
       return this->user_model.variables_upper_bounds;
    }
 
-   [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override {
-      return this->fixed_variables;
-   }
-
    [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override {
       return this->user_model.constraints_lower_bounds;
    }
@@ -318,7 +313,6 @@ public:
 protected:
    const CUserModel& user_model;
    mutable NumberModelEvaluations number_model_evaluations{};
-   Vector<size_t> fixed_variables{};
    const IntegerRange linear_constraints{0};
    const IntegerRange nonlinear_constraints;
    std::vector<size_t> equality_constraints;

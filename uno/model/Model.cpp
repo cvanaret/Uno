@@ -138,19 +138,6 @@ namespace uno {
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 
-   void Model::find_fixed_variables(Vector<size_t>& fixed_variables) const {
-      fixed_variables.reserve(this->number_variables);
-
-      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
-      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
-      for (size_t variable_index: Range(this->number_variables)) {
-         if (variables_lower_bounds[variable_index] == variables_upper_bounds[variable_index]) {
-            WARNING << "Variable x" << variable_index << " has identical bounds\n";
-            fixed_variables.emplace_back(variable_index);
-         }
-      }
-   }
-
    void Model::partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const {
       equality_constraints.reserve(this->number_constraints);
       inequality_constraints.reserve(this->number_constraints);

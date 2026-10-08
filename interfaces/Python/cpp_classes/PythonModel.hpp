@@ -51,7 +51,6 @@ namespace uno {
       // purely functions
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
@@ -77,7 +76,6 @@ namespace uno {
    protected:
       const PythonUserModel& user_model;
       mutable NumberModelEvaluations number_model_evaluations{};
-      Vector<size_t> fixed_variables{};
       const IntegerRange linear_constraints{0};
       const IntegerRange nonlinear_constraints;
       std::vector<size_t> equality_constraints;

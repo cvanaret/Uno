@@ -80,7 +80,6 @@ namespace uno {
       // purely virtual functions
       [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const = 0;
       [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const = 0;
-      [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const = 0;
 
       [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const = 0;
       [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const = 0;
@@ -115,7 +114,6 @@ namespace uno {
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const;
 
-      void find_fixed_variables(Vector<size_t>& fixed_variables) const;
       void partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const;
    };
 

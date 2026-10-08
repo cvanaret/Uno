@@ -379,10 +379,6 @@ namespace uno {
       return this->variables_upper_bounds;
    }
 
-   const Vector<size_t>& l1RelaxedProblem::get_fixed_variables() const {
-      return this->model.get_fixed_variables();
-   }
-
    const std::vector<double>& l1RelaxedProblem::get_constraints_lower_bounds() const {
       return this->model.get_constraints_lower_bounds();
    }
