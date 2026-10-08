@@ -62,11 +62,12 @@ namespace uno {
          ++inequality_index;
       }
       // construct the list of equality constraints (first the original equality constraints)
-      std::iota(this->equality_constraints.begin(), this->equality_constraints.begin() + problem.number_constraints, /* start */ 0);
+      std::iota(this->equality_constraints.begin(), this->equality_constraints.begin() +
+         static_cast<std::vector<size_t>::difference_type>(problem.number_constraints), /* start */ 0);
 
       // handle the fixed variables
       size_t fixed_variable_constraint_index = problem.number_constraints;
-      size_t equality_constraint_index = problem.get_equality_constraints().size();
+      size_t equality_constraint_index = problem.number_constraints;
       const auto& lower_bounds = problem.get_variables_lower_bounds();
       const auto& upper_bounds = problem.get_variables_upper_bounds();
       this->fixed_variables.reserve(count_fixed_variables(problem));
@@ -101,12 +102,10 @@ namespace uno {
       }
       // fixed variables
       fixed_variable_constraint_index = problem.number_constraints;
-      equality_constraint_index = problem.get_equality_constraints().size();
       for (size_t fixed_variable_index: this->fixed_variables) {
          this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(fixed_variable_constraint_index); // constraint
          this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(fixed_variable_index); // variable
          ++fixed_variable_constraint_index;
-         ++equality_constraint_index;
       }
    }
 
