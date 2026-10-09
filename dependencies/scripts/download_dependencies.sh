@@ -39,7 +39,7 @@ tar -xzf BQPD.tar.gz
 pwd
 
 # download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
-VERSION="2026.8.29"
+VERSION="2026.9.20"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5-cxx11.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
@@ -75,6 +75,7 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	# fix-destroy.patch
 	sed -i 's/Highs::resetGlobalScheduler(true);//' "${BUILD_ROOT}/HiGHS/highs/interfaces/highs_c_api.cpp"
 
+
 	# Build HiGHS with the SAME compiler the consuming workflow links with.
 	# A mismatch here is what produces the __emutls_v._ZSt*__once_call* and
 	# libstdc++ undefined references (e.g. GCC 8.1.0 emutls vs GCC 16 native TLS).
@@ -93,29 +94,59 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DCMAKE_CXX_COMPILER="$(towin "$CXX_BIN")")
 		
 	# native cmake needs Windows paths, not MSYS ones
-	SRC_W="$(cygpath -m "${BUILD_ROOT}/HiGHS")"
-	BLD_W="$(cygpath -m "${BUILD_ROOT}/build")"
-	PREFIX_W="$(cygpath -m "${BUILD_ROOT}/install")"
-	BLAS_W="$(cygpath -m "${PWD}/lib/libblas.a")"
+	SRC_DIR="$(cygpath -m "${BUILD_ROOT}/HiGHS")"
+	BUILD_DIR="$(cygpath -m "${BUILD_ROOT}/build")"
+	INSTALL_PREFIX="$(cygpath -m "${BUILD_ROOT}/install")"
+	LIBBLAS="$(cygpath -m "${PWD}/lib/libblas.a")"
 
-	# build
-	cmake -S "$SRC_W" -B "$BLD_W" \
+	# build libhighs
+	cmake -S "$SRC_DIR" -B "$BUILD_DIR" \
 		"${GEN_FLAGS[@]}" \
-		-DCMAKE_INSTALL_PREFIX="$PREFIX_W" \
+		-DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DZLIB=OFF \
-		-DHIPO=ON \
+		-DHIPO=OFF \
 		-DBUILD_EXAMPLES=OFF \
 		-DBUILD_TESTING=OFF \
 		-DBUILD_CXX_EXE=OFF \
 		-DBLA_VENDOR=Generic \
-		-DBLAS_LIBRARIES="$BLAS_W" \
+		-DBLAS_LIBRARIES="$LIBBLAS" \
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
 		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-	cmake --build "$BLD_W" --config Release --parallel
-	cmake --install "$BLD_W" --config Release
+	cmake --build "$BUILD_DIR" --config Release --parallel
+	cmake --install "$BUILD_DIR" --config Release
+
+  # build highs_extras, this one tied to OpenBLAS
+  BUILD_DIR="$(cygpath -m "${BUILD_ROOT}/build_openblas")"
+  LIBBLAS="$(cygpath -m "${PWD}/lib/libopenblas.a")"
+  INCLUDE_DIR="$(cygpath -m "${PWD}/include")"
+
+  cmake -S "$SRC_DIR" -B "$BUILD_DIR" \
+    "${GEN_FLAGS[@]}" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DZLIB=OFF \
+    -DHIPO=ON \
+    -DBUILD_EXAMPLES=OFF \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_CXX_EXE=OFF \
+    -DBLA_VENDOR=OpenBLAS \
+    -DBLAS_LIBRARIES="$LIBBLAS" \
+    -DOPENBLAS_LIB="$LIBBLAS" \
+    -DOPENBLAS_INCLUDE_DIR="$INCLUDE_DIR" \
+    -DBUILD_SHARED_EXTRAS_LIB=OFF \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+  cmake --build "$BUILD_DIR" --target highs_extras --config Release --parallel
+
+  openblas_extras=$(find "$BUILD_DIR" -name 'libhighs_extras.a' | head -1)
+  if [[ -z "${openblas_extras}" ]]; then
+      echo "ERROR: libhighs_extras.a not found in the OpenBLAS HiGHS build"
+      exit 1
+  fi
+  cp "${openblas_extras}" "${PWD}/lib/libhighs_extras_openblas.a"
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
 	cp -a "${BUILD_ROOT}/install/include/." include
