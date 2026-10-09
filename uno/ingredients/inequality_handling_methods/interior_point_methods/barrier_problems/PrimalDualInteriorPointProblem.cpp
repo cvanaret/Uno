@@ -74,12 +74,8 @@ namespace uno {
             // relax the bounds of the fixed variables
             this->variables_lower_bounds[variable_index] = -Inf;
             this->variables_upper_bounds[variable_index] = Inf;
-            const double fixed_value = lower_bounds[variable_index];
             this->equality_constraints[equality_constraint_index] = fixed_variable_constraint_index;
-            // set the bounds of the corresponding new constraint
-            this->constraints_lower_bounds[fixed_variable_constraint_index] = fixed_value;
-            this->constraints_upper_bounds[fixed_variable_constraint_index] = fixed_value;
-            this->fixed_variables.push_back(fixed_variable_constraint_index);
+            this->fixed_variables.insert(fixed_variable_constraint_index, variable_index);
             ++fixed_variable_constraint_index;
             ++equality_constraint_index;
          }
@@ -93,17 +89,17 @@ namespace uno {
       view(this->jacobian_row_indices, 0, number_jacobian_nonzeros) = this->unslacked_problem.get_jacobian_row_indices();
       view(this->jacobian_column_indices, 0, number_jacobian_nonzeros) = this->unslacked_problem.get_jacobian_column_indices();
       size_t nonzero_index = number_jacobian_nonzeros;
+      // then the slacks
       for (const auto [constraint_index, slack_index]: this->slacks) {
          this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index);
          this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(slack_index);
          ++nonzero_index;
       }
-      // fixed variables
-      fixed_variable_constraint_index = problem.number_constraints;
-      for (size_t fixed_variable_index: this->fixed_variables) {
-         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(fixed_variable_constraint_index); // constraint
-         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(fixed_variable_index); // variable
-         ++fixed_variable_constraint_index;
+      // then the fixed variables
+      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
+         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index); // constraint
+         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(variable_index); // variable
+         ++nonzero_index;
       }
    }
 
@@ -135,8 +131,12 @@ namespace uno {
       }
       // fixed variables
       const auto& fixed_values = this->unslacked_problem.get_variables_lower_bounds();
-      for (size_t variable_index: this->fixed_variables) {
+      for (const auto [_, variable_index]: this->fixed_variables) {
+         const double old_value = iterate.primals[variable_index];
          iterate.primals[variable_index] = fixed_values[variable_index];
+         if (iterate.primals[variable_index] != old_value) {
+            iterate_changed = true;
+         }
       }
       if (iterate_changed) {
          evaluations.reset();
@@ -165,7 +165,7 @@ namespace uno {
    }
 
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
-      return this->unslacked_problem.number_jacobian_nonzeros() + this->slacks.size();
+      return this->unslacked_problem.number_jacobian_nonzeros() + this->slacks.size() + this->fixed_variables.size();
    }
 
    bool PrimalDualInteriorPointProblem::has_curvature(const HessianModel& hessian_model) const {
@@ -233,10 +233,9 @@ namespace uno {
       }
 
       // add the fixed variables
-      size_t current_constraint = this->unslacked_problem.number_constraints;
-      for (size_t fixed_variable_index: this->fixed_variables) {
-         constraints[current_constraint] = iterate.primals[fixed_variable_index];
-         ++current_constraint;
+      const auto& fixed_bounds = this->unslacked_problem.get_variables_lower_bounds();
+      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
+         constraints[constraint_index] = iterate.primals[variable_index] - fixed_bounds[variable_index];
       }
    }
 
@@ -281,7 +280,7 @@ namespace uno {
       }
 
       // add the contributions of the fixed variables
-      for ([[maybe_unused]] size_t _: this->fixed_variables) {
+      for ([[maybe_unused]] const auto _: this->fixed_variables) {
          jacobian_values[nonzero_index] = 1.;
          ++nonzero_index;
       }
@@ -301,6 +300,11 @@ namespace uno {
          lagrangian_gradient[slack_index] -= (iterate.multipliers.lower_bounds[slack_index] + iterate.multipliers.upper_bounds[slack_index]);
          // Jacobian block
          lagrangian_gradient[slack_index] += iterate.multipliers.constraints[constraint_index];
+      }
+
+      // fixed variables
+      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
+         lagrangian_gradient[variable_index] -= iterate.multipliers.constraints[constraint_index];
       }
    }
 
@@ -340,10 +344,8 @@ namespace uno {
       }
 
       // add the contributions of the fixed variables
-      size_t constraint_index = this->unslacked_problem.number_constraints + this->slacks.size();
-      for (size_t fixed_variable_index: this->fixed_variables) {
-         result[constraint_index] = vector[fixed_variable_index];
-         ++constraint_index;
+      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
+         result[constraint_index] += vector[variable_index];
       }
    }
 
@@ -357,10 +359,8 @@ namespace uno {
       }
 
       // add the contributions of the fixed variables
-      size_t constraint_index = this->model.number_constraints + this->slacks.size();
-      for (size_t fixed_variable_index: this->fixed_variables) {
-         result[fixed_variable_index] += vector[constraint_index];
-         ++constraint_index;
+      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
+         result[variable_index] += vector[constraint_index];
       }
    }
 
@@ -529,9 +529,6 @@ namespace uno {
       }
    }
 
-   // cheap variant: slack bound duals (sign-correct by construction) paired with c(x) instead of s,
-   // so that the termination test doesn't require c(x) ≈ s. Requires λ ≈ z, certified by the slack
-   // block of the Lagrangian gradient (see evaluate_lagrangian_gradient)
    double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
          const Multipliers& multipliers, Norm residual_norm) const {
       Vector<double> variable_complementarity(this->number_variables, 0.); // TODO preallocate
