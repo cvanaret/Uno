@@ -8,6 +8,7 @@
 #include <vector>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "model/Model.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/SolutionStatus.hpp"
@@ -138,13 +139,14 @@ namespace uno {
       // 1. scaled overall optimality error
       const SolutionStatus status = problem.check_first_order_convergence(iterate, this->acceptable_tolerance,
          this->acceptable_tolerance);
-      if (status == SolutionStatus::NOT_OPTIMAL) {
+      if (status != SolutionStatus::FEASIBLE_KKT_POINT) { // exclude infeasible points from the acceptable termination
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 2-4. unscaled residuals
-      if (this->acceptable_dual_infeasibility_tolerance < iterate.scaled_residuals.stationarity ||
-            this->acceptable_primal_infeasibility_tolerance < iterate.scaled_residuals.primal_infeasibility ||
-            this->acceptable_complementarity_tolerance < iterate.scaled_residuals.complementarity) {
+      const Model& model = problem.model;
+      if (this->acceptable_dual_infeasibility_tolerance < model.unscaled_stationarity(iterate.scaled_residuals.stationarity) ||
+            this->acceptable_primal_infeasibility_tolerance < model.unscaled_primal_infeasibility(evaluations.constraints, this->residual_norm) ||
+            this->acceptable_complementarity_tolerance < model.unscaled_complementarity(iterate.scaled_residuals.complementarity)) {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 5. relative change of the objective (unavailable at the first iteration: skip the test)
