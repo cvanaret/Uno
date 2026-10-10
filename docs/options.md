@@ -41,9 +41,6 @@ If not provided, the solver is chosen automatically from the available solvers (
 |:--------------------------------------|:--------|:---------|:-------------------------------------------------------------------|
 | `primal_tolerance`                    | double  | 1e-8     | Tolerance on constraint violation                                  |
 | `dual_tolerance`                      | double  | 1e-8     | Tolerance on stationarity and complementarity                      |
-| `loose_primal_tolerance`              | double  | 1e-6     | Loose tolerance on constraint violation                            |
-| `loose_dual_tolerance`                | double  | 1e-6     | Loose tolerance on stationarity and complementarity                |
-| `loose_tolerance_iteration_threshold` | integer | 15       | Number of iterations for the loose tolerance to apply              |
 | `max_iterations`                      | integer | 2000     | Maximum number of outer iterations                                 |
 | `time_limit`                          | double  | infinity | Time limit                                                         |
 | `print_solution`                      | bool    | false    | Whether the primal-dual solution is printed                        |

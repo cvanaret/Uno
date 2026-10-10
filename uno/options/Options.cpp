@@ -17,9 +17,6 @@ namespace uno {
    const std::unordered_map<std::string, OptionType> Options::option_types = {
       {"primal_tolerance", OptionType::DOUBLE},
       {"dual_tolerance", OptionType::DOUBLE},
-      {"loose_primal_tolerance", OptionType::DOUBLE},
-      {"loose_dual_tolerance", OptionType::DOUBLE},
-      {"loose_tolerance_iteration_threshold", OptionType::INTEGER},
       {"max_iterations", OptionType::INTEGER},
       {"time_limit", OptionType::DOUBLE},
       {"print_solution", OptionType::BOOL},

@@ -100,9 +100,6 @@ namespace uno {
          options.set_string("residual_norm", "INF");
          options.set_double("primal_tolerance", 1e-8);
          options.set_double("dual_tolerance", 1e-8);
-         options.set_double("loose_primal_tolerance", 1e-6);
-         options.set_double("loose_dual_tolerance", 1e-6);
-         options.set_integer("loose_tolerance_iteration_threshold", 15);
          options.set_bool("switch_to_optimality_requires_linearized_feasibility", false);
          options.set_bool("LS_scale_duals_with_step_length", true);
          options.set_bool("protect_actual_reduction_against_roundoff", true);

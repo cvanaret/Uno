@@ -49,15 +49,6 @@ primal_tolerance 1e-8
 # Tolerance on stationarity and complementarity (double)
 dual_tolerance 1e-8
 
-# Loose tolerance on constraint violation (double)
-loose_primal_tolerance 1e-6
-
-# Loose tolerance on stationarity and complementarity (double)
-loose_dual_tolerance 1e-6
-
-# Number of iterations for the loose tolerance to apply (integer)
-loose_tolerance_iteration_threshold 15
-
 # Maximum number of outer iterations (integer)
 max_iterations 2000
 
