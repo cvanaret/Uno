@@ -252,6 +252,10 @@ namespace uno {
       this->model.reset_number_evaluations();
    }
 
+   double ScaledModel::unscaled_objective(double objective_value) const {
+      return objective_value / this->scaling.get_objective_scaling();
+   }
+
    double ScaledModel::unscaled_stationarity(double scaled_stationarity) const {
       return scaled_stationarity / this->scaling.get_objective_scaling();
    }

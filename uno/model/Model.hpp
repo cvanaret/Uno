@@ -116,6 +116,7 @@ namespace uno {
 
       void partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const;
 
+      [[nodiscard]] virtual double unscaled_objective(double objective_value) const;
       [[nodiscard]] virtual double unscaled_stationarity(double scaled_stationarity) const;
       [[nodiscard]] virtual double unscaled_complementarity(double scaled_complementarity) const;
       [[nodiscard]] virtual double unscaled_primal_infeasibility(const Vector<double>& scaled_constraints, Norm residual_norm) const;

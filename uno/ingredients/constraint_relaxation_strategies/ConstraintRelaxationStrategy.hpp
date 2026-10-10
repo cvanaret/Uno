@@ -4,7 +4,11 @@
 #ifndef UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
+#include <algorithm>
+#include <cassert>
+#include <cmath>
 #include <cstddef>
+#include <optional>
 #include <vector>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
@@ -18,9 +22,7 @@ namespace uno {
    // forward declarations
    class Direction;
    class EvaluationCache;
-   class Evaluations;
    class GlobalizationStrategy;
-   class Model;
    class Multipliers;
    class OptimizationProblem;
    class SolverWorkspace;
@@ -70,62 +72,91 @@ namespace uno {
       const Norm residual_norm;
       const double primal_tolerance;
       const double dual_tolerance;
-      const double loose_primal_tolerance;
-      const double loose_dual_tolerance;
-      size_t loose_tolerance_consecutive_iterations{0};
-      const size_t loose_tolerance_iteration_threshold;
       const double diverging_iterate_threshold;
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
 
+      // tight unscaled tolerances
+      const double tight_unscaled_stationarity_tolerance;
+      const double tight_unscaled_primal_infeasibility_tolerance;
+      const double tight_unscaled_complementarity_tolerance;
+
       // acceptable termination (IPOPT-like)
       const double acceptable_tolerance;                    // scaled overall error [1e-6]
-      const double acceptable_dual_infeasibility_tolerance; // unscaled [1e10]
-      const double acceptable_primal_infeasibility_tolerance; // unscaled [1e-2]
-      const double acceptable_complementarity_tolerance;    // unscaled [1e-2]
+      const double acceptable_unscaled_stationarity_tolerance; // unscaled [1e10]
+      const double acceptable_unscaled_primal_infeasibility_tolerance; // unscaled [1e-2]
+      const double acceptable_unscaled_complementarity_tolerance;    // unscaled [1e-2]
       const double acceptable_objective_change_tolerance;   // relative [1e20]
       const size_t acceptable_iteration_threshold;          // [15], 0 disables the heuristic
       size_t acceptable_consecutive_iterations{0};
       std::optional<double> previous_objective{};
 
       template <typename Problem>
-      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate, const Evaluations& evaluations);
+      [[nodiscard]] static bool satisfies_unscaled_tolerances(const Problem& problem, const Iterate& iterate,
+         double unscaled_primal_infeasibility, double stationarity_tolerance, double primal_infeasibility_tolerance,
+         double complementarity_tolerance);
+      template <typename Problem>
+      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, const Iterate& iterate, Evaluations& evaluations);
       template <typename Problem>
       [[nodiscard]] SolutionStatus check_acceptable_termination(const Problem& problem, const Iterate& iterate,
          const Evaluations& evaluations) const;
    };
 
    template <typename Problem>
-   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate,
-         const Evaluations& evaluations) {
-      // unbounded iterate or objective
+   bool ConstraintRelaxationStrategy::satisfies_unscaled_tolerances(const Problem& problem, const Iterate& iterate,
+         double unscaled_primal_infeasibility, double stationarity_tolerance, double primal_infeasibility_tolerance,
+         double complementarity_tolerance) {
+      const Model& model = problem.model;
+      return model.unscaled_stationarity(iterate.scaled_residuals.stationarity) <= stationarity_tolerance &&
+         unscaled_primal_infeasibility <= primal_infeasibility_tolerance &&
+         model.unscaled_complementarity(iterate.scaled_residuals.complementarity) <= complementarity_tolerance;
+   }
+
+   template <typename Problem>
+   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, const Iterate& iterate,
+         Evaluations& evaluations) {
+      // diverging iterate
       if (norm_inf(view(iterate.primals, 0, problem.get_number_original_variables())) > this->diverging_iterate_threshold) {
          return SolutionStatus::DIVERGING_ITERATE;
       }
-      if (iterate.scaled_residuals.primal_infeasibility <= this->primal_tolerance && evaluations.is_objective_computed &&
-            evaluations.objective < this->unbounded_objective_threshold) {
-         return SolutionStatus::UNBOUNDED_OBJECTIVE;
+      // unbounded objective + feasible
+      evaluations.evaluate_constraints(problem.model, iterate.primals); // no-op if cached or unconstrained
+      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(evaluations.constraints,
+         this->residual_norm);
+      if (unscaled_primal_infeasibility <= this->tight_unscaled_primal_infeasibility_tolerance) {
+         evaluations.evaluate_objective(problem.model, iterate.primals);
+         if (problem.model.unscaled_objective(evaluations.objective) < this->unbounded_objective_threshold) {
+            return SolutionStatus::UNBOUNDED_OBJECTIVE;
+         }
       }
 
       // tight termination: test convergence wrt the tight tolerance
       const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->dual_tolerance);
-      if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL) {
+      if (status_tight_tolerance == SolutionStatus::FEASIBLE_KKT_POINT && satisfies_unscaled_tolerances(problem, iterate,
+            unscaled_primal_infeasibility, this->tight_unscaled_stationarity_tolerance,
+            this->tight_unscaled_primal_infeasibility_tolerance, this->tight_unscaled_complementarity_tolerance)) {
          return status_tight_tolerance;
+      }
+      else if (status_tight_tolerance == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         // the point should also be infeasible for the original (unscaled) constraints
+         if (this->tight_unscaled_primal_infeasibility_tolerance < unscaled_primal_infeasibility) {
+            return status_tight_tolerance;
+         }
       }
 
       // acceptable termination: all acceptable conditions must hold for enough consecutive iterations
-      const SolutionStatus status_acceptable = this->check_acceptable_termination(problem, iterate, evaluations);
+      const SolutionStatus status_acceptable = (0 < this->acceptable_iteration_threshold) ?
+         this->check_acceptable_termination(problem, iterate, evaluations) : SolutionStatus::NOT_OPTIMAL;
       if (evaluations.is_objective_computed) {
-         this->previous_objective = evaluations.objective;
+         this->previous_objective = evaluations.objective; // after the objective-change test
       }
       if (status_acceptable == SolutionStatus::NOT_OPTIMAL) {
          this->acceptable_consecutive_iterations = 0;
          return SolutionStatus::NOT_OPTIMAL;
       }
       ++this->acceptable_consecutive_iterations;
-      if (0 < this->acceptable_iteration_threshold &&
-            this->acceptable_iteration_threshold <= this->acceptable_consecutive_iterations) {
+      if (this->acceptable_iteration_threshold <= this->acceptable_consecutive_iterations) {
          return status_acceptable;
       }
       return SolutionStatus::NOT_OPTIMAL;
@@ -143,10 +174,10 @@ namespace uno {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 2-4. unscaled residuals
-      const Model& model = problem.model;
-      if (this->acceptable_dual_infeasibility_tolerance < model.unscaled_stationarity(iterate.scaled_residuals.stationarity) ||
-            this->acceptable_primal_infeasibility_tolerance < model.unscaled_primal_infeasibility(evaluations.constraints, this->residual_norm) ||
-            this->acceptable_complementarity_tolerance < model.unscaled_complementarity(iterate.scaled_residuals.complementarity)) {
+      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(evaluations.constraints,
+         this->residual_norm);
+      if (!satisfies_unscaled_tolerances(problem, iterate, unscaled_primal_infeasibility, this->acceptable_unscaled_stationarity_tolerance,
+            this->acceptable_unscaled_primal_infeasibility_tolerance, this->acceptable_unscaled_complementarity_tolerance)) {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 5. relative change of the objective (unavailable at the first iteration: skip the test)
