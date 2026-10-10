@@ -77,8 +77,21 @@ namespace uno {
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
 
+      // acceptable termination (IPOPT-like)
+      const double acceptable_tolerance;                    // scaled overall error [1e-6]
+      const double acceptable_dual_infeasibility_tolerance; // unscaled [1e10]
+      const double acceptable_primal_infeasibility_tolerance; // unscaled [1e-2]
+      const double acceptable_complementarity_tolerance;    // unscaled [1e-2]
+      const double acceptable_objective_change_tolerance;   // relative [1e20]
+      const size_t acceptable_iteration_threshold;          // [15], 0 disables the heuristic
+      size_t acceptable_consecutive_iterations{0};
+      std::optional<double> previous_objective{};
+
       template <typename Problem>
       [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate, const Evaluations& evaluations);
+      template <typename Problem>
+      [[nodiscard]] SolutionStatus check_acceptable_termination(const Problem& problem, const Iterate& iterate,
+         const Evaluations& evaluations) const;
    };
 
    template <typename Problem>
@@ -93,32 +106,56 @@ namespace uno {
          return SolutionStatus::UNBOUNDED_OBJECTIVE;
       }
 
-      // test convergence wrt the tight tolerance
+      // tight termination: test convergence wrt the tight tolerance
       const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->dual_tolerance);
-      if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL || (this->loose_primal_tolerance <= this->primal_tolerance &&
-            this->loose_dual_tolerance <= this->dual_tolerance)) {
+      if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL) {
          return status_tight_tolerance;
       }
 
-      // if not converged, check convergence wrt loose tolerances (provided they are strictly looser than the tight tolerances)
-      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->loose_primal_tolerance,
-         this->loose_dual_tolerance);
-      // if converged, keep track of the number of consecutive iterations
-      if (status_loose_tolerance != SolutionStatus::NOT_OPTIMAL) {
-         ++this->loose_tolerance_consecutive_iterations;
+      // acceptable termination: all acceptable conditions must hold for enough consecutive iterations
+      const SolutionStatus status_acceptable = this->check_acceptable_termination(problem, iterate, evaluations);
+      if (evaluations.is_objective_computed) {
+         this->previous_objective = evaluations.objective;
       }
-      else {
-         this->loose_tolerance_consecutive_iterations = 0;
+      if (status_acceptable == SolutionStatus::NOT_OPTIMAL) {
+         this->acceptable_consecutive_iterations = 0;
          return SolutionStatus::NOT_OPTIMAL;
       }
-      // check if loose tolerance achieved for enough consecutive iterations
-      if (this->loose_tolerance_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
-         return status_loose_tolerance;
+      ++this->acceptable_consecutive_iterations;
+      if (0 < this->acceptable_iteration_threshold &&
+            this->acceptable_iteration_threshold <= this->acceptable_consecutive_iterations) {
+         return status_acceptable;
       }
-      else {
+      return SolutionStatus::NOT_OPTIMAL;
+   }
+
+   // returns the convergence status if the iterate is acceptable, NOT_OPTIMAL otherwise.
+   // Stateless (apart from the previous objective): can be reused as a fallback when the algorithm fails
+   template <typename Problem>
+   SolutionStatus ConstraintRelaxationStrategy::check_acceptable_termination(const Problem& problem,
+         const Iterate& iterate, const Evaluations& evaluations) const {
+      // 1. scaled overall optimality error
+      const SolutionStatus status = problem.check_first_order_convergence(iterate, this->acceptable_tolerance,
+         this->acceptable_tolerance);
+      if (status == SolutionStatus::NOT_OPTIMAL) {
          return SolutionStatus::NOT_OPTIMAL;
       }
+      // 2-4. unscaled residuals
+      if (this->acceptable_dual_infeasibility_tolerance < iterate.residuals.stationarity ||
+            this->acceptable_primal_infeasibility_tolerance < iterate.primal_infeasibility ||
+            this->acceptable_complementarity_tolerance < iterate.residuals.complementarity) {
+         return SolutionStatus::NOT_OPTIMAL;
+      }
+      // 5. relative change of the objective (unavailable at the first iteration: skip the test)
+      if (evaluations.is_objective_computed && this->previous_objective.has_value()) {
+         const double objective_change = std::abs(evaluations.objective - *this->previous_objective) /
+            std::max(1., std::abs(evaluations.objective));
+         if (this->acceptable_objective_change_tolerance < objective_change) {
+            return SolutionStatus::NOT_OPTIMAL;
+         }
+      }
+      return status;
    }
 } // namespace
 
