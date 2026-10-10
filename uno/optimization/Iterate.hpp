@@ -20,7 +20,7 @@ namespace uno {
 
       // primal-dual residuals
       double primal_infeasibility{Inf};
-      DualResiduals residuals;
+      DualResiduals scaled_residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)
       ProgressMeasures progress{Inf, {}, Inf};

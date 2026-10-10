@@ -142,9 +142,9 @@ namespace uno {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 2-4. unscaled residuals
-      if (this->acceptable_dual_infeasibility_tolerance < iterate.residuals.stationarity ||
+      if (this->acceptable_dual_infeasibility_tolerance < iterate.scaled_residuals.stationarity ||
             this->acceptable_primal_infeasibility_tolerance < iterate.primal_infeasibility ||
-            this->acceptable_complementarity_tolerance < iterate.residuals.complementarity) {
+            this->acceptable_complementarity_tolerance < iterate.scaled_residuals.complementarity) {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 5. relative change of the objective (unavailable at the first iteration: skip the test)

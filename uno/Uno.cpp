@@ -227,7 +227,7 @@ namespace uno {
          return true;
       }
       else if (user_callbacks.termination(trial_iterate.primals, trial_iterate.multipliers, trial_iterate.objective_multiplier,
-            trial_iterate.primal_infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity)) {
+            trial_iterate.primal_infeasibility, trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity)) {
          optimization_status = OptimizationStatus::USER_TERMINATION;
          return true;
       }
@@ -252,8 +252,8 @@ namespace uno {
       const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
          this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, model.base_indexing, optimization_status, solution.status,
-         evaluations.objective, solution.primal_infeasibility, solution.residuals.stationarity,
-         solution.residuals.complementarity, std::move(solution.primals), std::move(solution.multipliers.constraints),
+         evaluations.objective, solution.primal_infeasibility, solution.scaled_residuals.stationarity,
+         solution.scaled_residuals.complementarity, std::move(solution.primals), std::move(solution.multipliers.constraints),
          std::move(solution.multipliers.lower_bounds), std::move(solution.multipliers.upper_bounds),
          std::move(evaluations.constraints), major_iterations, timers, model.number_model_objective_evaluations(),
          model.number_model_constraints_evaluations(), model.number_model_objective_gradient_evaluations(),
