@@ -30,7 +30,7 @@ namespace uno {
       stream << "Multipliers " << symbols::pipe << " Lower bound: " << iterate.multipliers.lower_bounds << '\n';
       stream << "            " << symbols::bottom_pipe << " Upper bound: " << iterate.multipliers.upper_bounds << '\n';
 
-      stream << "          " << symbols::top_pipe << " Primal infeasibility: " << iterate.primal_infeasibility << '\n';
+      stream << "          " << symbols::top_pipe << " Primal infeasibility: " << iterate.scaled_residuals.primal_infeasibility << '\n';
       stream << "Residuals " << symbols::pipe << " Stationarity: " << iterate.scaled_residuals.stationarity << '\n';
       stream << "          " << symbols::bottom_pipe << " Complementarity: " << iterate.scaled_residuals.complementarity << '\n';
 

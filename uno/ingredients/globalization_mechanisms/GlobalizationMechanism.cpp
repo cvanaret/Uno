@@ -46,7 +46,7 @@ namespace uno {
          statistics.set("Objective", evaluations.objective);
       }
       if (model.is_constrained()) {
-         statistics.set("Infeas", iterate.primal_infeasibility);
+         statistics.set("Infeas", iterate.scaled_residuals.primal_infeasibility);
       }
    }
 

@@ -40,7 +40,7 @@ namespace uno {
 
       // primal feasibility/constraint violation of the model
       evaluations.evaluate_constraints(problem.model, iterate.primals);
-      iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
+      iterate.scaled_residuals.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
       iterate.scaled_residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,

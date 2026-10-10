@@ -74,7 +74,7 @@ namespace uno {
    bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const {
       // if the trial infeasibility improves upon the best known infeasibility
-      return trial_iterate.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
+      return trial_iterate.scaled_residuals.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
          this->filter.infeasibility_sufficient_reduction(this->filter.get_smallest_infeasibility(), trial_iterate.progress.infeasibility);
    }
 

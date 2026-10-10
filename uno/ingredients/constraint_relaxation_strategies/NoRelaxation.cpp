@@ -108,7 +108,7 @@ namespace uno {
          this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-            this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
+            this->original_problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
             trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
       }
       if (uses_trust_region || accept_iterate) {
@@ -131,7 +131,7 @@ namespace uno {
       this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-         this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
+         this->original_problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
          trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
       this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
          trial_evaluations);

@@ -200,7 +200,7 @@ namespace uno {
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool primal_feasibility = (current_iterate.primal_infeasibility <= primal_tolerance);
+      const bool primal_feasibility = (current_iterate.scaled_residuals.primal_infeasibility <= primal_tolerance);
       const bool stationarity = (current_iterate.scaled_residuals.stationarity / current_iterate.scaled_residuals.stationarity_scaling <= dual_tolerance);
       const bool complementarity = (current_iterate.scaled_residuals.complementarity / current_iterate.scaled_residuals.complementarity_scaling <= dual_tolerance);
 
