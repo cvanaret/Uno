@@ -74,6 +74,7 @@ jobs:
 
       - name: Comment out outdated options
         run: |
+          cd pyoptsparse
           sed -i.bak -E 's|^([[:space:]]*)("loose)|\1# \2|' pyoptsparse/pyUno/pyUno.py
 
       - name: Install pyOptSparse (no external solvers)
