@@ -37,7 +37,8 @@ namespace uno {
          EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides);
       [[nodiscard]] static Statistics create_statistics(const Model& model, bool print_extended_statistics);
       [[nodiscard]] static bool check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations,
-         double current_time, double time_limit, OptimizationStatus& optimization_status, UserCallbacks& user_callbacks);
+         double current_time, double time_limit, bool user_interruption, OptimizationStatus& optimization_status,
+         UserCallbacks& user_callbacks);
       [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
       static void postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,

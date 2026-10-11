@@ -18,9 +18,10 @@
 #include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
-#include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
+#include "optimization/WarmstartInformation.hpp"
+#include "tools/InterruptHandler.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
 #include "tools/UserCallbacks.hpp"
@@ -105,6 +106,7 @@ namespace uno {
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
       try {
+         InterruptGuard interrupt_guard;
          while (!termination) {
             ++major_iterations;
             statistics.start_new_line();
@@ -116,7 +118,8 @@ namespace uno {
             this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                evaluation_cache, warmstart_information, user_callbacks);
             termination = check_termination(trial_iterate, major_iterations, max_iterations,
-               statistics.timers.wallclock.get_elapsed_time(), time_limit, optimization_status, user_callbacks);
+               statistics.timers.wallclock.get_elapsed_time(), time_limit, InterruptGuard::interrupt_requested(),
+               optimization_status, user_callbacks);
 
             // the trial iterate becomes the current iterate for the next iteration
             std::swap(current_iterate, trial_iterate);
@@ -214,7 +217,7 @@ namespace uno {
    }
 
    bool Uno::check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations, double current_time,
-         double time_limit, OptimizationStatus& optimization_status, UserCallbacks& user_callbacks) {
+         double time_limit, bool user_interruption, OptimizationStatus& optimization_status, UserCallbacks& user_callbacks) {
       if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
          return true;
       }
@@ -230,6 +233,10 @@ namespace uno {
             trial_iterate.scaled_residuals.primal_infeasibility, trial_iterate.scaled_residuals.stationarity,
             trial_iterate.scaled_residuals.complementarity)) {
          optimization_status = OptimizationStatus::USER_TERMINATION;
+         return true;
+      }
+      else if (user_interruption) {
+         optimization_status = OptimizationStatus::USER_INTERRUPTION;
          return true;
       }
       return false;
