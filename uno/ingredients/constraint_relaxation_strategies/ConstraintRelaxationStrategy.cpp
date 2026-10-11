@@ -13,15 +13,15 @@ namespace uno {
          dual_tolerance(options.get_double("dual_tolerance")),
          diverging_iterate_threshold(options.get_double("diverging_iterate_threshold")),
          unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")),
-         tight_unscaled_stationarity_tolerance(1.),
-         tight_unscaled_primal_infeasibility_tolerance(1e-4),
-         tight_unscaled_complementarity_tolerance(1e-4),
-         acceptable_tolerance(1e-6),
-         acceptable_unscaled_stationarity_tolerance(1e10),
-         acceptable_unscaled_primal_infeasibility_tolerance(1e-2),
-         acceptable_unscaled_complementarity_tolerance(1e-2),
-         acceptable_objective_change_tolerance(1e20),
-         acceptable_iteration_threshold(15) {
+         tight_unscaled_stationarity_tolerance(options.get_double("tight_unscaled_stationarity_tolerance")),
+         tight_unscaled_primal_infeasibility_tolerance(options.get_double("tight_unscaled_primal_infeasibility_tolerance")),
+         tight_unscaled_complementarity_tolerance(options.get_double("tight_unscaled_complementarity_tolerance")),
+         acceptable_tolerance(options.get_double("acceptable_tolerance")),
+         acceptable_unscaled_stationarity_tolerance(options.get_double("acceptable_unscaled_stationarity_tolerance")),
+         acceptable_unscaled_primal_infeasibility_tolerance(options.get_double("acceptable_unscaled_primal_infeasibility_tolerance")),
+         acceptable_unscaled_complementarity_tolerance(options.get_double("acceptable_unscaled_complementarity_tolerance")),
+         acceptable_objective_change_tolerance(options.get_double("acceptable_objective_change_tolerance")),
+         acceptable_iteration_threshold(options.get_unsigned_int("acceptable_iteration_threshold")) {
    }
 
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() = default;

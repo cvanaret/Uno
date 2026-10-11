@@ -41,6 +41,15 @@ If not provided, the solver is chosen automatically from the available solvers (
 |:--------------------------------------|:--------|:---------|:-------------------------------------------------------------------|
 | `primal_tolerance`                    | double  | 1e-8     | Tolerance on constraint violation                                  |
 | `dual_tolerance`                      | double  | 1e-8     | Tolerance on stationarity and complementarity                      |
+| `tight_unscaled_stationarity_tolerance`              | double  | 1.     | Bound on the unscaled stationarity residual required for optimal termination                                   |
+| `tight_unscaled_primal_infeasibility_tolerance`      | double  | 1e-4   | Bound on the unscaled constraint violation required for optimal termination                                    |
+| `tight_unscaled_complementarity_tolerance`           | double  | 1e-4   | Bound on the unscaled complementarity residual                                                                 |
+| `acceptable_tolerance`                               | double  | 1e-6   | Tolerance on the scaled primal infeasibility, stationarity and complementarity for a solution to be acceptable |
+| `acceptable_unscaled_stationarity_tolerance`         | double  | 1e10   | Bound on the unscaled stationarity residual for a solution to be acceptable                                    |
+| `acceptable_unscaled_primal_infeasibility_tolerance` | double  | 1e-2   | Bound on the unscaled constraint violation for a solution to be acceptable                                     |
+| `acceptable_unscaled_complementarity_tolerance`      | double  | 1e-2   | Bound on the unscaled complementarity residual for a solution to be acceptable                                 |
+| `acceptable_objective_change_tolerance`              | double  | 1e20   | Bound on the relative change of the objective between consecutive iterates for a solution to be acceptable     |
+| `acceptable_iteration_threshold`                     | integer | 15     | Number of consecutive acceptable iterates until acceptable termination                                         |
 | `max_iterations`                      | integer | 2000     | Maximum number of outer iterations                                 |
 | `time_limit`                          | double  | infinity | Time limit                                                         |
 | `print_solution`                      | bool    | false    | Whether the primal-dual solution is printed                        |
