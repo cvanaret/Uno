@@ -264,7 +264,8 @@ namespace uno {
       return scaled_complementarity / this->scaling.get_objective_scaling();
    }
 
-   double ScaledModel::unscaled_primal_infeasibility(const Vector<double>& scaled_constraints, Norm residual_norm) const {
+   double ScaledModel::unscaled_primal_infeasibility(double /*scaled_primal_infeasibility*/,
+         const Vector<double>& scaled_constraints, Norm residual_norm) const {
       Vector<double> constraint_violation(scaled_constraints); // TODO preallocate
       const auto& constraint_scaling = this->scaling.get_constraint_scaling();
       const auto& lower_bounds = this->get_constraints_lower_bounds();

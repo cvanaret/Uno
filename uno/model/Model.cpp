@@ -171,14 +171,8 @@ namespace uno {
       return scaled_complementarity;  // identity
    }
 
-   double Model::unscaled_primal_infeasibility(const Vector<double>& scaled_constraints, Norm residual_norm) const {
-      Vector<double> constraint_violation(scaled_constraints); // TODO preallocate
-      const auto& lower_bounds = this->get_constraints_lower_bounds();
-      const auto& upper_bounds = this->get_constraints_upper_bounds();
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         constraint_violation[constraint_index] = this->constraint_violation(scaled_constraints[constraint_index],
-            lower_bounds[constraint_index], upper_bounds[constraint_index]);
-      }
-      return norm(residual_norm, constraint_violation);
+   double Model::unscaled_primal_infeasibility(double scaled_primal_infeasibility, const Vector<double>& /*scaled_constraints*/,
+         Norm /*residual_norm*/) const {
+      return scaled_primal_infeasibility; // identity
    }
 } // namespace

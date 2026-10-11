@@ -76,7 +76,8 @@ namespace uno {
       [[nodiscard]] double unscaled_objective(double objective_value) const override;
       [[nodiscard]] double unscaled_stationarity(double scaled_stationarity) const override;
       [[nodiscard]] double unscaled_complementarity(double scaled_complementarity) const override;
-      [[nodiscard]] double unscaled_primal_infeasibility(const Vector<double>& scaled_constraints, Norm residual_norm) const override;
+      [[nodiscard]] double unscaled_primal_infeasibility(double scaled_primal_infeasibility,
+         const Vector<double>& scaled_constraints, Norm residual_norm) const override;
 
    private:
       const Model& model;

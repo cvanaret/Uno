@@ -121,8 +121,8 @@ namespace uno {
       }
       // unbounded objective + feasible
       evaluations.evaluate_constraints(problem.model, iterate.primals); // no-op if cached or unconstrained
-      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(evaluations.constraints,
-         this->residual_norm);
+      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(iterate.scaled_residuals.primal_infeasibility,
+         evaluations.constraints, this->residual_norm);
       if (unscaled_primal_infeasibility <= this->tight_unscaled_primal_infeasibility_tolerance) {
          evaluations.evaluate_objective(problem.model, iterate.primals);
          if (problem.model.unscaled_objective(evaluations.objective) < this->unbounded_objective_threshold) {
@@ -174,8 +174,8 @@ namespace uno {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 2-4. unscaled residuals
-      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(evaluations.constraints,
-         this->residual_norm);
+      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(iterate.scaled_residuals.primal_infeasibility,
+         evaluations.constraints, this->residual_norm);
       if (!satisfies_unscaled_tolerances(problem, iterate, unscaled_primal_infeasibility, this->acceptable_unscaled_stationarity_tolerance,
             this->acceptable_unscaled_primal_infeasibility_tolerance, this->acceptable_unscaled_complementarity_tolerance)) {
          return SolutionStatus::NOT_OPTIMAL;
