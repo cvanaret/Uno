@@ -45,9 +45,7 @@ namespace uno {
          jacobian_values(this->nl_model.number_jacobian_nonzeros()),
          cppasl_multipliers(this->number_constraints),
          linear_constraints_collection(this->linear_constraints),
-         nonlinear_constraints_collection(this->nonlinear_constraints),
-         equality_constraints_collection(this->equality_constraints),
-         inequality_constraints_collection(this->inequality_constraints) {
+         nonlinear_constraints_collection(this->nonlinear_constraints) {
       // Jacobian sparsity (CSR order, as the values)
       std::copy(this->nl_model.jacobian_row_indices().begin(), this->nl_model.jacobian_row_indices().end(),
          this->jacobian_row_indices.begin());
@@ -63,7 +61,6 @@ namespace uno {
             this->nonlinear_constraints.emplace_back(constraint_index);
          }
       }
-      Model::find_fixed_variables(this->fixed_variables);
       Model::partition_constraints(this->equality_constraints, this->inequality_constraints);
       this->problem_type = this->determine_problem_type();
    }
@@ -186,10 +183,6 @@ namespace uno {
       return this->nl_model.variable_upper_bounds();
    }
 
-   const Vector<size_t>& NLModel::get_fixed_variables() const {
-      return this->fixed_variables;
-   }
-
    const std::vector<double>& NLModel::get_constraints_lower_bounds() const {
       return this->nl_model.constraint_lower_bounds();
    }
@@ -198,12 +191,12 @@ namespace uno {
       return this->nl_model.constraint_upper_bounds();
    }
 
-   const Collection<size_t>& NLModel::get_equality_constraints() const {
-      return this->equality_constraints_collection;
+   const std::vector<size_t>& NLModel::get_equality_constraints() const {
+      return this->equality_constraints;
    }
 
-   const Collection<size_t>& NLModel::get_inequality_constraints() const {
-      return this->inequality_constraints_collection;
+   const std::vector<size_t>& NLModel::get_inequality_constraints() const {
+      return this->inequality_constraints;
    }
 
    const Collection<size_t>& NLModel::get_linear_constraints() const {

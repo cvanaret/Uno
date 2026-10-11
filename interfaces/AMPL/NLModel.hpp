@@ -50,12 +50,11 @@ namespace uno {
 
       [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
       [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
-      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override;
 
@@ -93,10 +92,7 @@ namespace uno {
       std::vector<size_t> nonlinear_constraints{};
       CollectionAdapter<std::vector<size_t>&> nonlinear_constraints_collection;
       std::vector<size_t> equality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
-      Vector<size_t> fixed_variables;
       ProblemType problem_type{ProblemType::NONLINEAR};
 
       mutable NumberModelEvaluations number_model_evaluations{};
