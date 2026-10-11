@@ -487,6 +487,8 @@ function uno_statistics(model::Model, solver::Solver)
     status = :exception
   elseif optimization_status == UNO_USER_TERMINATION
     status = :user
+  elseif optimization_status == UNO_USER_INTERRUPTION
+    status = :user
   else
     @assert optimization_status == UNO_SUCCESS
     if solution_status == UNO_FEASIBLE_KKT_POINT

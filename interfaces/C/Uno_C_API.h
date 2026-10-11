@@ -47,6 +47,7 @@ extern "C" {
    const uno_int UNO_EVALUATION_ERROR = 3;
    const uno_int UNO_ALGORITHMIC_ERROR = 4;
    const uno_int UNO_USER_TERMINATION = 5;
+   const uno_int UNO_USER_INTERRUPTION = 6;
 
    // Iterate status
    const uno_int UNO_NOT_OPTIMAL = 0;
