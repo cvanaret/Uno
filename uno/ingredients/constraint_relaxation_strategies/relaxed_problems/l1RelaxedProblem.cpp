@@ -352,9 +352,9 @@ namespace uno {
    SolutionStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool primal_feasibility = (current_iterate.primal_infeasibility <= primal_tolerance);
-      const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= dual_tolerance);
-      const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= dual_tolerance);
+      const bool primal_feasibility = (current_iterate.scaled_residuals.primal_infeasibility <= primal_tolerance);
+      const bool feasibility_stationarity = (current_iterate.scaled_residuals.stationarity / current_iterate.scaled_residuals.stationarity_scaling <= dual_tolerance);
+      const bool feasibility_complementarity = (current_iterate.scaled_residuals.complementarity / current_iterate.scaled_residuals.complementarity_scaling <= dual_tolerance);
       const bool no_trivial_duals = (dual_tolerance < norm_inf(current_iterate.multipliers.constraints));
 
       DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";

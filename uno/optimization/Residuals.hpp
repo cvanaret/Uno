@@ -1,19 +1,20 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_DUALRESIDUALS_H
-#define UNO_DUALRESIDUALS_H
+#ifndef UNO_RESIDUALS_H
+#define UNO_RESIDUALS_H
 
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   class DualResiduals {
+   class Residuals {
    public:
-      DualResiduals(size_t number_variables):
+      Residuals(size_t number_variables):
          lagrangian_gradient(number_variables) {
       }
 
+      double primal_infeasibility{Inf};
       double stationarity{Inf};
       double complementarity{Inf};
 
@@ -24,4 +25,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_DUALRESIDUALS_H
+#endif // UNO_RESIDUALS_H

@@ -158,4 +158,21 @@ namespace uno {
          }
       }
    }
+
+   double Model::unscaled_objective(double scaled_objective) const {
+      return scaled_objective; // identity
+   }
+
+   double Model::unscaled_stationarity(double scaled_stationarity) const {
+      return scaled_stationarity; // identity
+   }
+
+   double Model::unscaled_complementarity(double scaled_complementarity) const {
+      return scaled_complementarity;  // identity
+   }
+
+   double Model::unscaled_primal_infeasibility(double scaled_primal_infeasibility, const Vector<double>& /*scaled_constraints*/,
+         Norm /*residual_norm*/) const {
+      return scaled_primal_infeasibility; // identity
+   }
 } // namespace

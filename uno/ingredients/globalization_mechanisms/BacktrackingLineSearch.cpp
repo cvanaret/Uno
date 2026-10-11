@@ -285,7 +285,7 @@ namespace uno {
             return false;
          }
       }
-      if (current_iterate.primal_infeasibility > this->theta_min) {
+      if (current_iterate.scaled_residuals.primal_infeasibility > this->theta_min) {
          return false;
       }
       return true;

@@ -7,7 +7,7 @@
 #include "SolutionStatus.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Multipliers.hpp"
-#include "optimization/DualResiduals.hpp"
+#include "optimization/Residuals.hpp"
 
 namespace uno {
    class Iterate {
@@ -19,8 +19,7 @@ namespace uno {
       double objective_multiplier{1.};
 
       // primal-dual residuals
-      double primal_infeasibility{Inf};
-      DualResiduals residuals;
+      Residuals scaled_residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)
       ProgressMeasures progress{Inf, {}, Inf};

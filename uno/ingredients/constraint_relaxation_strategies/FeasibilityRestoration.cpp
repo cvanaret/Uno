@@ -110,10 +110,10 @@ namespace uno {
       const auto [number_feasibility_variables, number_feasibility_constraints] = this->feasibility_inequality_handling_method->get_dimensions();
       // layouts: optimality (x, s) = [0, n) [n, n + s); restoration (x, p/n, s) = [0, n) [n, n + e) [n + e, n + e + s)
       const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
-      const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables;                       // s
+      const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables; // s
 
       // save the current point (infeasibility and primals) upon switching
-      this->reference_infeasibility = current_iterate.primal_infeasibility;
+      this->reference_infeasibility = current_iterate.scaled_residuals.primal_infeasibility;
       this->pre_restoration_primals = view(current_iterate.primals, 0, number_optimality_variables);
       this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.view());
 
@@ -167,7 +167,7 @@ namespace uno {
          statistics.print_current_line();
       }
       warmstart_information.whole_problem_changed();
-      this->loose_tolerance_consecutive_iterations = 0;
+      this->acceptable_consecutive_iterations = 0;
    }
 
    bool FeasibilityRestoration::has_second_order_corrections() const {
@@ -252,7 +252,7 @@ namespace uno {
          view(trial_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables);
       trial_evaluations.evaluate_constraints(model, this->iterate_buffer.primals);
       this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
-      this->iterate_buffer.primal_infeasibility = model.constraint_violation(trial_evaluations.constraints, this->residual_norm);
+      this->iterate_buffer.scaled_residuals.primal_infeasibility = model.constraint_violation(trial_evaluations.constraints, this->residual_norm);
 
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
@@ -313,7 +313,8 @@ namespace uno {
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
 
       this->initial_point.resize(this->original_problem.number_variables);
-      this->loose_tolerance_consecutive_iterations = 0;
+      this->acceptable_consecutive_iterations = 0;
+      this->previous_objective.reset();
    }
 
    PredictedReductionModels FeasibilityRestoration::build_predicted_reduction_models(const Iterate& current_iterate,
@@ -401,15 +402,15 @@ namespace uno {
          this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-            this->original_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
-            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+            this->original_problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
+            trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
       }
       else {
          this->feasibility_inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
-            this->feasibility_problem.get_objective_multiplier(), trial_iterate.primal_infeasibility,
-            trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+            this->feasibility_problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
+            trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
       }
    }
 

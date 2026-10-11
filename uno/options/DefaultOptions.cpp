@@ -19,12 +19,25 @@ namespace uno {
       options.set_double("primal_tolerance", 1e-8);
       // dual tolerance (stationarity and complementarity)
       options.set_double("dual_tolerance", 1e-8);
-      // loose tolerance used if primal tolerance cannot be reached
-      options.set_double("loose_primal_tolerance", 1e-6);
-      // loose tolerance used if dual tolerance cannot be reached
-      options.set_double("loose_dual_tolerance", 1e-6);
-      // number of iterations during which the loose tolerance is monitored
-      options.set_integer("loose_tolerance_iteration_threshold", 15);
+      // bound on the unscaled stationarity residual required for optimal termination
+      options.set_double("tight_unscaled_stationarity_tolerance", 1.);
+      // bound on the unscaled constraint violation required for optimal termination
+      options.set_double("tight_unscaled_primal_infeasibility_tolerance", 1e-4);
+      // bound on the unscaled complementarity residual
+      options.set_double("tight_unscaled_complementarity_tolerance", 1e-4);
+      // tolerance on the scaled primal infeasibility, stationarity and complementarity for a solution to be acceptable
+      options.set_double("acceptable_tolerance", 1e-6);
+      // bound on the unscaled stationarity residual for a solution to be acceptable
+      options.set_double("acceptable_unscaled_stationarity_tolerance", 1e10);
+      // bound on the unscaled constraint violation for a solution to be acceptable
+      options.set_double("acceptable_unscaled_primal_infeasibility_tolerance", 1e-2);
+      // bound on the unscaled complementarity residual for a solution to be acceptable
+      options.set_double("acceptable_unscaled_complementarity_tolerance", 1e-2);
+      // bound on the relative change of the objective between consecutive iterates for a solution to be acceptable
+      options.set_double("acceptable_objective_change_tolerance", 1e20);
+      // number of consecutive acceptable iterates until acceptable termination
+      options.set_integer("acceptable_iteration_threshold", 15);
+
       // maximum number of outer iterations
       options.set_integer("max_iterations", 2000);
       // CPU time limit (in seconds)

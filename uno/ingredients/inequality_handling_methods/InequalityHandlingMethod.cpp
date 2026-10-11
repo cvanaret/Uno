@@ -35,20 +35,20 @@ namespace uno {
    void InequalityHandlingMethod::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
       // stationarity error (norm of the Lagrangian gradient)
-      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.residuals.lagrangian_gradient);
-      iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
+      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.scaled_residuals.lagrangian_gradient);
+      iterate.scaled_residuals.stationarity = norm(this->residual_norm, iterate.scaled_residuals.lagrangian_gradient);
 
       // primal feasibility/constraint violation of the model
       evaluations.evaluate_constraints(problem.model, iterate.primals);
-      iterate.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
+      iterate.scaled_residuals.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
-      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,
+      iterate.scaled_residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,
          iterate.multipliers, this->residual_norm);
 
       // scaling factors
-      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem, iterate.multipliers);
-      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem, iterate.multipliers);
+      iterate.scaled_residuals.stationarity_scaling = this->compute_stationarity_scaling(problem, iterate.multipliers);
+      iterate.scaled_residuals.complementarity_scaling = this->compute_complementarity_scaling(problem, iterate.multipliers);
    }
 
    double InequalityHandlingMethod::compute_stationarity_scaling(const OptimizationProblem& problem, const Multipliers& multipliers) const {

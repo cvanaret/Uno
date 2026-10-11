@@ -46,12 +46,12 @@ namespace uno {
          statistics.set("Objective", evaluations.objective);
       }
       if (model.is_constrained()) {
-         statistics.set("Infeas", iterate.primal_infeasibility);
+         statistics.set("Infeas", iterate.scaled_residuals.primal_infeasibility);
       }
    }
 
    void GlobalizationMechanism::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) {
-      statistics.set("Statio", iterate.residuals.stationarity / iterate.residuals.stationarity_scaling);
-      statistics.set("Compl", iterate.residuals.complementarity / iterate.residuals.complementarity_scaling);
+      statistics.set("Statio", iterate.scaled_residuals.stationarity / iterate.scaled_residuals.stationarity_scaling);
+      statistics.set("Compl", iterate.scaled_residuals.complementarity / iterate.scaled_residuals.complementarity_scaling);
    }
 } // namespace

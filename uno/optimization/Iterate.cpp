@@ -9,7 +9,7 @@ namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
-         residuals(number_variables) {
+         scaled_residuals(number_variables) {
    }
 
    Iterate::Iterate(): Iterate(0, 0) {}
@@ -21,7 +21,7 @@ namespace uno {
       this->multipliers.constraints.resize(new_number_constraints);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
-      this->residuals.lagrangian_gradient.resize(new_number_variables);
+      this->scaled_residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
@@ -30,11 +30,11 @@ namespace uno {
       stream << "Multipliers " << symbols::pipe << " Lower bound: " << iterate.multipliers.lower_bounds << '\n';
       stream << "            " << symbols::bottom_pipe << " Upper bound: " << iterate.multipliers.upper_bounds << '\n';
 
-      stream << "          " << symbols::top_pipe << " Primal infeasibility: " << iterate.primal_infeasibility << '\n';
-      stream << "Residuals " << symbols::pipe << " Stationarity: " << iterate.residuals.stationarity << '\n';
-      stream << "          " << symbols::bottom_pipe << " Complementarity: " << iterate.residuals.complementarity << '\n';
+      stream << "          " << symbols::top_pipe << " Primal infeasibility: " << iterate.scaled_residuals.primal_infeasibility << '\n';
+      stream << "Residuals " << symbols::pipe << " Stationarity: " << iterate.scaled_residuals.stationarity << '\n';
+      stream << "          " << symbols::bottom_pipe << " Complementarity: " << iterate.scaled_residuals.complementarity << '\n';
 
-      stream << "Lagrangian gradient: " << iterate.residuals.lagrangian_gradient << '\n';
+      stream << "Lagrangian gradient: " << iterate.scaled_residuals.lagrangian_gradient << '\n';
 
       stream << "                  " << symbols::top_pipe << " Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures " << symbols::pipe << " Optimality: ";

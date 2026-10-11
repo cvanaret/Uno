@@ -176,7 +176,7 @@ namespace uno {
 
       // update the barrier parameter
       const double new_barrier_parameter = std::max(handoff.barrier_parameter.value_or(this->barrier_parameter()),
-         current_iterate.primal_infeasibility);
+         current_iterate.scaled_residuals.primal_infeasibility);
       this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
       DEBUG << "Barrier parameter = " << this->barrier_parameter() << '\n';
    }
