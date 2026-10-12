@@ -37,8 +37,13 @@ namespace uno {
 
       // relaxed variables bounds
       for (size_t variable_index: Range(this->number_variables)) {
-         relax_lower(this->relaxed_variables_lower_bounds[variable_index]);
-         relax_upper(this->relaxed_variables_upper_bounds[variable_index]);
+         double& lower_bound = this->relaxed_variables_lower_bounds[variable_index];
+         double& upper_bound = this->relaxed_variables_upper_bounds[variable_index];
+         // preserve fixed variables
+         if (lower_bound != upper_bound) {
+            relax_lower(lower_bound);
+            relax_upper(upper_bound);
+         }
       }
 
       // relaxed constraints bounds

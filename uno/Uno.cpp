@@ -53,12 +53,7 @@ namespace uno {
             (model.has_bound_constraints() || model.has_inequality_constraints())) {
          // slightly relax the bound constraints
          const BoundRelaxedModel bound_relaxed_model(scaled_model, options);
-         
-         Result result = uno_solve(bound_relaxed_model, options, user_callbacks);
-         // fix the dimensions
-         result.number_variables = model.number_variables;
-         result.number_constraints = model.number_constraints;
-         return result;
+         return uno_solve(bound_relaxed_model, options, user_callbacks);
       }
       else {
          return uno_solve(scaled_model, options, user_callbacks);
@@ -134,7 +129,7 @@ namespace uno {
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
 
-      postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
+      this->postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
       statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, std::move(current_iterate),
          std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
@@ -240,7 +235,7 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) {
+   void Uno::postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) const {
       try {
          // in case the objective was not yet evaluated, evaluate it
          evaluations.evaluate_objective(model, iterate.primals);
@@ -249,7 +244,7 @@ namespace uno {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
          evaluations.objective = Inf;
       }
-      model.postprocess_solution(iterate, evaluations);
+      this->globalization_mechanism->postprocess_solution(iterate, evaluations);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 

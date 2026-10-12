@@ -38,6 +38,7 @@ namespace uno {
 
       virtual void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
          EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) = 0;
+      virtual void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const = 0;
 
       // direction computation
       virtual const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,

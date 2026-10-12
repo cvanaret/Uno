@@ -23,6 +23,7 @@ namespace uno {
       [[nodiscard]] bool has_bound_constraints() const override;
 
       void create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -94,7 +95,7 @@ namespace uno {
       const double& barrier_parameter;
       const InteriorPointParameters& parameters;
       SparseVector<size_t> slacks;
-      std::vector<size_t> fixed_variables{};
+      SparseVector<size_t> fixed_variables;
       std::vector<size_t> equality_constraints;
       const std::vector<size_t> inequality_constraints{}; // empty
 

@@ -20,7 +20,9 @@ namespace uno {
       [[nodiscard]] bool has_inequality_constraints() const override;
       [[nodiscard]] bool has_bound_constraints() const override;
 
-      void set_proximal_coefficient(double proximal_coefficient);
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
+
+      void set_proximal_coefficient(double new_proximal_coefficient);
       void set_proximal_center(View<const double> point);
 
       // sparsity patterns of Jacobian and Hessian

@@ -19,10 +19,10 @@ namespace uno {
       DISCRETE << "Complementarity residual:\t\t" << this->solution_complementarity << '\n';
 
       if (print_primal_dual_solution) {
-         DISCRETE << "Primal solution:\t\t\t" << view(this->primal_solution, 0, this->number_variables) << '\n';
+         DISCRETE << "Primal solution:\t\t\t" << this->primal_solution << '\n';
          DISCRETE << "Constraint multipliers:\t\t\t" << this->constraint_dual_solution << '\n';
-         DISCRETE << "Lower bound multipliers:\t\t" << view(this->lower_bound_dual_solution, 0, this->number_variables) << '\n';
-         DISCRETE << "Upper bound multipliers:\t\t" << view(this->upper_bound_dual_solution, 0, this->number_variables) << '\n';
+         DISCRETE << "Lower bound multipliers:\t\t" << this->lower_bound_dual_solution << '\n';
+         DISCRETE << "Upper bound multipliers:\t\t" << this->upper_bound_dual_solution << '\n';
       }
 
       DISCRETE << "Iterations:\t\t\t\t" << this->number_iterations << '\n';
