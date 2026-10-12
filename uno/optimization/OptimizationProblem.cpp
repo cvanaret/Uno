@@ -44,8 +44,8 @@ namespace uno {
       this->model.project_onto_variable_bounds(iterate.primals);
    }
 
-   void OptimizationProblem::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->model.postprocess_solution(iterate, evaluations);
+   void OptimizationProblem::postprocess_solution(Iterate& iterate) const {
+      this->model.postprocess_solution(iterate);
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {

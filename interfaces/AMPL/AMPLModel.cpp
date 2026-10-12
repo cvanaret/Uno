@@ -266,7 +266,7 @@ namespace uno {
       std::copy_n(this->asl->i.pi0_, this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& /*iterate*/, Evaluations& /*evaluations*/) const {
+   void AMPLModel::postprocess_solution(Iterate& /*iterate*/) const {
       // do nothing
    }
 

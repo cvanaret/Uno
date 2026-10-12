@@ -46,8 +46,8 @@ namespace uno {
       this->inequality_handling_method->initialize_statistics(statistics);
    }
 
-   void NoRelaxation::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->inequality_handling_method->postprocess_solution(iterate, evaluations);
+   void NoRelaxation::postprocess_solution(Iterate& iterate) const {
+      this->inequality_handling_method->postprocess_solution(iterate);
    }
 
    const Direction& NoRelaxation::compute_direction(Statistics& statistics, Iterate& current_iterate,

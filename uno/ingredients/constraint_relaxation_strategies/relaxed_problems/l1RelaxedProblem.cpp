@@ -72,11 +72,11 @@ namespace uno {
       return true;
    }
 
-   void l1RelaxedProblem::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
+   void l1RelaxedProblem::postprocess_solution(Iterate& iterate) const {
       // remove the elastics
       iterate.set_dimensions(this->model.number_variables, this->model.number_constraints);
 
-      this->model.postprocess_solution(iterate, evaluations);
+      this->model.postprocess_solution(iterate);
    }
 
    void l1RelaxedProblem::set_proximal_coefficient(double new_proximal_coefficient) {

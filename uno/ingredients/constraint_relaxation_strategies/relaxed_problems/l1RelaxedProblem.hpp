@@ -20,7 +20,7 @@ namespace uno {
       [[nodiscard]] bool has_inequality_constraints() const override;
       [[nodiscard]] bool has_bound_constraints() const override;
 
-      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
+      void postprocess_solution(Iterate& iterate) const override;
 
       void set_proximal_coefficient(double new_proximal_coefficient);
       void set_proximal_center(View<const double> point);

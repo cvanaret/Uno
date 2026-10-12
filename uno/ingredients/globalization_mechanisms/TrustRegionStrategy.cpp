@@ -150,8 +150,8 @@ namespace uno {
       }
    }
 
-   void TrustRegionStrategy::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->constraint_relaxation_strategy->postprocess_solution(iterate, evaluations);
+   void TrustRegionStrategy::postprocess_solution(Iterate& iterate) const {
+      this->constraint_relaxation_strategy->postprocess_solution(iterate);
    }
 
    std::string TrustRegionStrategy::get_name() const {

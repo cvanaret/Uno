@@ -33,7 +33,7 @@ namespace uno {
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
-      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
+      void postprocess_solution(Iterate& iterate) const override;
 
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
          Evaluations& evaluations) override;
@@ -140,8 +140,8 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->barrier_problem.postprocess_solution(iterate, evaluations);
+   void InteriorPointMethod<BarrierProblem>::postprocess_solution(Iterate& iterate) const {
+      this->barrier_problem.postprocess_solution(iterate);
    }
 
    template <typename BarrierProblem>

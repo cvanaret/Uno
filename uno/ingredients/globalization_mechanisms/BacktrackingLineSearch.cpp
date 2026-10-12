@@ -109,8 +109,8 @@ namespace uno {
       }
    }
 
-   void BacktrackingLineSearch::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->constraint_relaxation_strategy->postprocess_solution(iterate, evaluations);
+   void BacktrackingLineSearch::postprocess_solution(Iterate& iterate) const {
+      this->constraint_relaxation_strategy->postprocess_solution(iterate);
    }
 
    std::string BacktrackingLineSearch::get_name() const {

@@ -17,6 +17,7 @@
 #include "model/Model.hpp"
 #include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -53,15 +54,17 @@ namespace uno {
             (model.has_bound_constraints() || model.has_inequality_constraints())) {
          // slightly relax the bound constraints
          const BoundRelaxedModel bound_relaxed_model(scaled_model, options);
-         return uno_solve(bound_relaxed_model, options, user_callbacks);
+         return uno_solve(model, bound_relaxed_model, options, user_callbacks);
       }
       else {
-         return uno_solve(scaled_model, options, user_callbacks);
+         return uno_solve(model, scaled_model, options, user_callbacks);
       }
    }
 
    // protected solve function
-   Result Uno::uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
+   // user_model is the original model provided by the user, model is the possibly reformulated model (function scaling,
+   // relaxed bounds)
+   Result Uno::uno_solve(const Model& user_model, const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       InterruptGuard interrupt_guard;
       Statistics statistics = create_statistics(model, options.get_bool("print_extended_statistics"));
       statistics.timers.wallclock.start();
@@ -129,7 +132,14 @@ namespace uno {
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
 
-      this->postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
+      // 1. primal-dual postprocessing only (no function values)
+      if (this->globalization_mechanism != nullptr) {
+         this->globalization_mechanism->postprocess_solution(current_iterate);
+      }
+      // 2. final function values on the original model at the final primals
+      evaluation_cache.current_evaluations.reset();
+      evaluate_final_functions(user_model, current_iterate.primals, evaluation_cache.current_evaluations);
+
       statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, std::move(current_iterate),
          std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
@@ -242,9 +252,7 @@ namespace uno {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
          evaluations.objective = Inf;
       }
-      if (this->globalization_mechanism != nullptr) {
-         this->globalization_mechanism->postprocess_solution(iterate, evaluations);
-      }
+
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
@@ -276,6 +284,21 @@ namespace uno {
          result.upper_bound_dual_solution.scale(-1.);
       }
       result.solution_objective *= model.optimization_sense;
+   }
+
+   void Uno::evaluate_final_functions(const Model& user_model, const Vector<double>& primals, Evaluations& evaluations) {
+      try {
+         evaluations.evaluate_objective(user_model, primals);
+      }
+      catch (const EvaluationError&) {
+         evaluations.objective = Inf;
+      }
+      try {
+         evaluations.evaluate_constraints(user_model, primals);
+      }
+      catch (const EvaluationError&) {
+         evaluations.constraints.fill(std::numeric_limits<double>::quiet_NaN());
+      }
    }
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {

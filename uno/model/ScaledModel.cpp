@@ -192,32 +192,24 @@ namespace uno {
       this->model.initial_dual_point(multipliers);
    }
 
-   void ScaledModel::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
+   void ScaledModel::postprocess_solution(Iterate& iterate) const {
       // unscale the constraints and the constraint multipliers
       if (scaling.is_objective_scaled() || scaling.are_constraints_scaled()) {
          const double objective_scaling = this->scaling.get_objective_scaling();
          const auto& constraints_scaling = this->scaling.get_constraint_scaling();
          for (size_t constraint_index: Range(this->model.number_constraints)) {
-            evaluations.constraints[constraint_index] /= constraints_scaling[constraint_index];
             iterate.multipliers.constraints[constraint_index] *= constraints_scaling[constraint_index] / objective_scaling;
          }
       }
 
-
       // unscale the objective value and the bound multipliers
       if (scaling.is_objective_scaled()) {
          const double objective_scaling = this->scaling.get_objective_scaling();
-         if (evaluations.is_objective_computed) {
-            evaluations.objective /= objective_scaling;
-         }
-
-         for (size_t variable_index: Range(this->model.number_variables)) {
-            iterate.multipliers.lower_bounds[variable_index] /= objective_scaling;
-            iterate.multipliers.upper_bounds[variable_index] /= objective_scaling;
-         }
+         iterate.multipliers.lower_bounds.scale(1. / objective_scaling);
+         iterate.multipliers.upper_bounds.scale(1. / objective_scaling);
       }
 
-      this->model.postprocess_solution(iterate, evaluations);
+      this->model.postprocess_solution(iterate);
    }
 
    size_t ScaledModel::number_jacobian_nonzeros() const {
