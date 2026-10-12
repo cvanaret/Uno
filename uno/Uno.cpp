@@ -176,9 +176,7 @@ namespace uno {
          }
          this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options,
             option_overrides);
-         if (this->globalization_mechanism != nullptr) {
-            this->method_description = this->globalization_mechanism->get_name();
-         }
+         this->method_description = this->globalization_mechanism->get_name();
 
          statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
          if (Logger::level == INFO) {
@@ -244,7 +242,9 @@ namespace uno {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
          evaluations.objective = Inf;
       }
-      this->globalization_mechanism->postprocess_solution(iterate, evaluations);
+      if (this->globalization_mechanism != nullptr) {
+         this->globalization_mechanism->postprocess_solution(iterate, evaluations);
+      }
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
