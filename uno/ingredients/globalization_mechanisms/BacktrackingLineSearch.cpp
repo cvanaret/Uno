@@ -226,16 +226,9 @@ namespace uno {
             if (step_length * direction.primal_dual_step_length <= minimum_step_length) {
                // minimum step length reached
                DEBUG << "The line search failed with a step length <= " << minimum_step_length << '\n';
-               // check if we can terminate at a first-order point
-               if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
-                  statistics.set("Status", "accepted (small step length)");
-                  termination = true;
-               }
-               else {
-                  // switch to solving the feasibility problem
-                  statistics.set("Status", "small step length");
-                  return false;
-               }
+               // switch to solving the feasibility problem
+               statistics.set("Status", "small step length");
+               return false;
             }
             // otherwise, keep going
          }
