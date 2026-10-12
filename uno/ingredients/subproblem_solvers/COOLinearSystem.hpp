@@ -24,7 +24,6 @@ namespace uno {
       std::vector<uno_int> matrix_row_indices{};
       std::vector<uno_int> matrix_column_indices{};
 
-   protected:
       const int solver_indexing;
    };
 } // namespace
