@@ -31,7 +31,7 @@ namespace uno {
          EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
-      virtual void postprocess_solution(Iterate& iterate) const = 0;
+      virtual void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;

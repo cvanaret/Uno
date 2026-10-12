@@ -43,8 +43,8 @@ namespace uno {
       return {this->problem.number_variables, this->problem.number_constraints};
    }
 
-   void NoInequalityReformulation::postprocess_solution(Iterate& iterate) const {
-      this->problem.postprocess_solution(iterate);
+   void NoInequalityReformulation::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
+      this->problem.postprocess_solution(iterate, evaluations);
    }
 
    bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,

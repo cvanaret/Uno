@@ -164,7 +164,7 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::postprocess_solution(Iterate& iterate) const {
+   void PrimalDualInteriorPointProblem::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
       // fixed variables
       const auto& fixed_bounds = this->unslacked_problem.get_variables_lower_bounds();
       for (const auto [constraint_index, variable_index]: this->fixed_variables) {
@@ -178,7 +178,7 @@ namespace uno {
       // remove the slacks and additional constraints
       iterate.set_dimensions(this->unslacked_problem.number_variables, this->unslacked_problem.number_constraints);
 
-      this->unslacked_problem.postprocess_solution(iterate);
+      this->unslacked_problem.postprocess_solution(iterate, evaluations);
    }
 
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {

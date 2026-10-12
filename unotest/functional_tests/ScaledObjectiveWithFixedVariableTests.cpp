@@ -115,7 +115,7 @@ namespace {
          x[2] = 0.3; // not on its fixed value
       }
       void initial_dual_point(Vector<double>& multipliers) const override { multipliers.fill(0.); }
-      void postprocess_solution(Iterate& /*iterate*/) const override { }
+      void postprocess_solution(Iterate& /*iterate*/, Evaluations& /*evaluations*/) const override { }
 
       size_t number_jacobian_nonzeros() const override { return 3; }
       size_t number_hessian_nonzeros() const override { return 4; }

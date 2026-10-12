@@ -43,7 +43,7 @@ namespace uno {
 
       virtual void create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const;
       virtual void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const;
-      virtual void postprocess_solution(Iterate& iterate) const;
+      virtual void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;

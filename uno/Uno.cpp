@@ -132,14 +132,7 @@ namespace uno {
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
 
-      // 1. primal-dual postprocessing only (no function values)
-      if (this->globalization_mechanism != nullptr) {
-         this->globalization_mechanism->postprocess_solution(current_iterate);
-      }
-      // 2. final function values on the original model at the final primals
-      evaluation_cache.current_evaluations.reset();
-      evaluate_final_functions(user_model, current_iterate.primals, evaluation_cache.current_evaluations);
-
+      this->postprocess_solution(user_model, current_iterate, evaluation_cache.current_evaluations);
       statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, std::move(current_iterate),
          std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
@@ -243,16 +236,27 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) const {
+   void Uno::postprocess_solution(const Model& user_model, Iterate& iterate, Evaluations& evaluations) const {
+      // 1. primal-dual postprocessing only (unscaling of the multipliers, removal of slacks, fixed variables, ...)
+      if (this->globalization_mechanism != nullptr) {
+         this->globalization_mechanism->postprocess_solution(iterate, evaluations);
+      }
+      // 2. function values of the original model at the final primals. The postprocessing chain has either converted
+      // the cached values to the units of the original model (ScaledModel) or invalidated them (e.g. snapped fixed
+      // variables): only the invalidated values are evaluated, so that the user functions are not called again needlessly
       try {
-         // in case the objective was not yet evaluated, evaluate it
-         evaluations.evaluate_objective(model, iterate.primals);
+         evaluations.evaluate_objective(user_model, iterate.primals);
       }
       catch (const std::exception& e) {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
          evaluations.objective = Inf;
       }
-
+      try {
+         evaluations.evaluate_constraints(user_model, iterate.primals);
+      }
+      catch (const std::exception& e) {
+         DISCRETE  << "The constraints could not be evaluated at the final iterate: " << e.what()  << '\n';
+      }
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
