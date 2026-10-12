@@ -67,6 +67,7 @@ namespace uno {
 
    // protected solve function
    Result Uno::uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
+      InterruptGuard interrupt_guard;
       Statistics statistics = create_statistics(model, options.get_bool("print_extended_statistics"));
       statistics.timers.wallclock.start();
 
@@ -104,7 +105,6 @@ namespace uno {
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
       try {
-         InterruptGuard interrupt_guard;
          while (!termination) {
             ++major_iterations;
             statistics.start_new_line();
