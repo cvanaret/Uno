@@ -23,6 +23,7 @@ namespace uno {
       [[nodiscard]] bool has_bound_constraints() const override;
 
       void create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;

@@ -74,6 +74,15 @@ namespace uno {
       statistics.set("Phase", "OPT");
    }
 
+   void FeasibilityRestoration::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
+      if (this->current_phase == Phase::OPTIMALITY) {
+         this->inequality_handling_method->postprocess_solution(iterate, evaluations);
+      }
+      else {
+         this->feasibility_inequality_handling_method->postprocess_solution(iterate, evaluations);
+      }
+   }
+
    const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
 

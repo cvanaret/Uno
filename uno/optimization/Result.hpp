@@ -15,8 +15,8 @@ namespace uno {
    public:
       Result() = delete;
 
-      size_t number_variables;
-      size_t number_constraints;
+      const size_t number_variables;
+      const size_t number_constraints;
       uno_int base_indexing;
       const OptimizationStatus optimization_status;
       const SolutionStatus solution_status;
