@@ -98,8 +98,8 @@ def main():
     if child.returncode != 0:
         fail(f"the child exited with code {child.returncode} (-2 means killed by SIGINT)", lines)
     output = "".join(lines)
-    if not re.search(r"^STATUS USER_INTERRUPT$", output, re.MULTILINE):
-        fail("the child did not report STATUS USER_INTERRUPT", lines)
+    if not re.search(r"^STATUS USER_INTERRUPTION$", output, re.MULTILINE):
+        fail("the child did not report STATUS USER_INTERRUPTION", lines)
     match = re.search(r"^ITERATIONS (\d+)$", output, re.MULTILINE)
     if match is None:
         fail("the child did not report its number of iterations", lines)

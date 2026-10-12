@@ -74,7 +74,7 @@ const status_names = Dict(
   UnoSolver.UNO_EVALUATION_ERROR => "EVALUATION_ERROR",
   UnoSolver.UNO_ALGORITHMIC_ERROR => "ALGORITHMIC_ERROR",
   UnoSolver.UNO_USER_TERMINATION => "USER_TERMINATION",
-  UnoSolver.UNO_USER_INTERRUPT => "USER_INTERRUPT",
+  UnoSolver.UNO_USER_INTERRUPTION => "USER_INTERRUPTION",
 )
 
 x0 = [isodd(i) ? -1.2 : 1.0 for i in 1:n]

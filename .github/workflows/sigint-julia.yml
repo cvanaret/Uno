@@ -4,7 +4,7 @@ name: Ctrl+C (SIGINT) through UnoSolver.jl
 # solves a large chained Rosenbrock problem with UnoSolver.jl (.github/sigint/unosolver_sigint.jl)
 # and sends a real SIGINT after a few outer iterations. .github/sigint/driver.py checks that:
 #  - the solve terminates within the shutdown timeout and Julia exits normally,
-#  - the status is USER_INTERRUPT, at most one outer iteration after the signal (+1 for a printing race),
+#  - the status is USER_INTERRUPTION, at most one outer iteration after the signal (+1 for a printing race),
 #  - the returned iterate is finite.
 # The child runs with Base.exit_on_sigint(false), i.e. like the REPL. If Julia instead delivers the
 # signal as an InterruptException in a callback, the child prints ESCAPED_INTERRUPT_EXCEPTION and

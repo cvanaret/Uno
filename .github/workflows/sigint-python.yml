@@ -4,7 +4,7 @@ name: Ctrl+C (SIGINT) through unopy
 # (.github/sigint/unopy_sigint.py) and sends a real SIGINT after a few outer iterations.
 # .github/sigint/driver.py checks that:
 #  - the solve terminates within the shutdown timeout and the process exits normally,
-#  - the status is USER_INTERRUPT, at most one outer iteration after the signal (+1 for a printing race),
+#  - the status is USER_INTERRUPTION, at most one outer iteration after the signal (+1 for a printing race),
 #  - the returned iterate is finite,
 #  - Python's own SIGINT handler is restored after the solve (a new Ctrl+C raises KeyboardInterrupt).
 # Windows is not covered: sending a console Ctrl+C to a child process is unreliable on hosted runners.
