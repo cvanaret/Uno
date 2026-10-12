@@ -4,6 +4,8 @@
 #include "Logger.hpp"
 
 namespace uno {
+   Level Logger::level = INFO;
+
    void Logger::set_logger(const std::string& logger_level) {
       if (logger_level == "SILENT") {
          Logger::level = SILENT;

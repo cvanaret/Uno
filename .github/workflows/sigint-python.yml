@@ -1,0 +1,89 @@
+name: Ctrl+C (SIGINT) through unopy
+
+# Builds unopy from source, solves a large chained Rosenbrock problem from Python
+# (.github/sigint/unopy_sigint.py) and sends a real SIGINT after a few outer iterations.
+# .github/sigint/driver.py checks that:
+#  - the solve terminates within the shutdown timeout and the process exits normally,
+#  - the status is USER_INTERRUPTION, at most one outer iteration after the signal (+1 for a printing race),
+#  - the returned iterate is finite,
+#  - Python's own SIGINT handler is restored after the solve (a new Ctrl+C raises KeyboardInterrupt).
+# Windows is not covered: sending a console Ctrl+C to a child process is unreliable on hosted runners.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'uno/**'
+      - 'interfaces/C/**'
+      - 'interfaces/Python/**'
+      - '.github/sigint/**'
+      - '.github/workflows/sigint-python.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'uno/**'
+      - 'interfaces/C/**'
+      - 'interfaces/Python/**'
+      - '.github/sigint/**'
+      - '.github/workflows/sigint-python.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  sigint:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-15 ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pybind11 (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt install -y python3-pybind11 pybind11-dev
+
+      - name: Set up the toolchain (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install libomp
+          LIBGFORTRAN_FOLDER=$(dirname "$(gfortran-15 -print-file-name=libgfortran.dylib)")
+          OPENMP_LIB=$(brew --prefix libomp)/lib/libomp.dylib
+          cat > ${{ runner.temp }}/clang_toolchain.cmake << EOF
+          set(CMAKE_C_COMPILER clang)
+          set(CMAKE_CXX_COMPILER clang++)
+          set(CMAKE_Fortran_COMPILER gfortran-15)
+          set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
+          set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+          set(OpenMP_C_LIB_NAMES omp)
+          set(OpenMP_CXX_LIB_NAMES omp)
+          set(OpenMP_omp_LIBRARY ${OPENMP_LIB})
+          set(CMAKE_EXE_LINKER_FLAGS "-L${LIBGFORTRAN_FOLDER} -lgfortran -Wl,-rpath,${LIBGFORTRAN_FOLDER}")
+          set(CMAKE_SHARED_LINKER_FLAGS "-L${LIBGFORTRAN_FOLDER} -lgfortran -Wl,-rpath,${LIBGFORTRAN_FOLDER}")
+          EOF
+          echo "CMAKE_TOOLCHAIN_FILE=${{ runner.temp }}/clang_toolchain.cmake" >> $GITHUB_ENV
+
+      - name: Download dependencies
+        shell: bash
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Compile and install unopy
+        shell: bash
+        run: |
+          python -m pip install numpy
+          CMAKE_BUILD_PARALLEL_LEVEL=4 python -m pip install . -v
+
+      - name: Interrupt a unopy solve with Ctrl+C
+        run: |
+          python .github/sigint/driver.py --min-iterations 3 --startup-timeout 600 --shutdown-timeout 60 \
+            --expect FINITE_ITERATE --expect PYTHON_HANDLER_RESTORED \
+            -- python -u .github/sigint/unopy_sigint.py 200000

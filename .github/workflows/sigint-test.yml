@@ -1,0 +1,215 @@
+name: Ctrl+C (SIGINT) end-to-end
+
+# Builds uno_ampl, starts it on a Mittelmann instance in the background, waits for a
+# few outer iterations, sends a real SIGINT (Ctrl+C) and checks that Uno:
+#  - terminates within SHUTDOWN_TIMEOUT seconds (the signal is not ignored),
+#  - exits normally (exit code 0, not 130 = killed by SIGINT),
+#  - reports "Optimization status: User interrupt",
+#  - stops at most one outer iteration after the signal (+1 for a printing race).
+# Windows is not covered: sending a console Ctrl+C to a child process is unreliable on
+# hosted runners. The C++ functional tests (InterruptTests) cover it via std::raise.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'uno/**'
+      - 'interfaces/AMPL/**'
+      - '.github/sigint/arki0009.nl'
+      - '.github/workflows/sigint-test.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'uno/**'
+      - 'interfaces/AMPL/**'
+      - '.github/sigint/arki0009.nl'
+      - '.github/workflows/sigint-test.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  sigint:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-15 ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # =========================================================
+      # TOOLCHAIN AND DEPENDENCIES
+      # =========================================================
+
+      - name: Install libomp (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install libomp
+          LIBGFORTRAN_FOLDER=$(dirname "$(gfortran-15 -print-file-name=libgfortran.dylib)")
+          echo "LIBGFORTRAN_FOLDER=$LIBGFORTRAN_FOLDER" >> $GITHUB_ENV
+          echo "OPENMP_LIB=$(brew --prefix libomp)/lib/libomp.dylib" >> $GITHUB_ENV
+
+      - name: Download Uno dependencies
+        shell: bash
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      # Builds amplsolver.a next to its headers (asl.h, arith.h): Uno's CMake
+      # takes the include directory from the library's directory.
+      - name: Build the AMPL Solver Library
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ampl/asl.git ${{ runner.temp }}/asl
+          cd ${{ runner.temp }}/asl/src/solvers
+          sh ./configurehere
+          make -j4 CFLAGS="-O2 -fPIC"
+          test -f amplsolver.a
+
+      # =========================================================
+      # CONFIGURE AND BUILD
+      # =========================================================
+
+      - name: Configure Uno (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DAMPLSOLVER=${{ runner.temp }}/asl/src/solvers/amplsolver.a \
+            -DMUMPS_INCLUDE_DIR=${DEPS}/include \
+            -DMETIS_INCLUDE_DIR=${DEPS}/include \
+            -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
+            -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+            -DBQPD=${DEPS}/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a \
+            -DSPRAL=${DEPS}/lib/libspral.a \
+            -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+            -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Configure Uno (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_Fortran_COMPILER=gfortran-15 \
+            -DCMAKE_EXE_LINKER_FLAGS="-L${{ env.LIBGFORTRAN_FOLDER }}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-L${{ env.LIBGFORTRAN_FOLDER }}" \
+            -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
+            -DOpenMP_C_LIB_NAMES="omp" \
+            -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
+            -DOpenMP_CXX_LIB_NAMES="omp" \
+            -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
+            -DAMPLSOLVER=${{ runner.temp }}/asl/src/solvers/amplsolver.a \
+            -DMUMPS_INCLUDE_DIR=${DEPS}/include \
+            -DMETIS_INCLUDE_DIR=${DEPS}/include \
+            -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
+            -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+            -DBQPD=${DEPS}/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a \
+            -DSPRAL=${DEPS}/lib/libspral.a \
+            -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+            -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DBUILD_STATIC_LIBS=ON \
+            -DBUILD_SHARED_LIBS=OFF
+
+      - name: Build uno_ampl
+        run: cmake --build build --target uno_ampl --config ${{ env.BUILD_TYPE }} --parallel
+
+      # =========================================================
+      # TEST
+      # =========================================================
+
+      - name: Interrupt arki0009 with Ctrl+C
+        shell: bash
+        env:
+          UNO: build/uno_ampl
+          INSTANCE: .github/sigint/arki0009.nl
+          LOG: sigint.log
+          MIN_ITERATIONS: 3      # outer iterations to complete before sending Ctrl+C
+          STARTUP_TIMEOUT: 300   # seconds allowed to reach MIN_ITERATIONS
+          SHUTDOWN_TIMEOUT: 60   # seconds allowed to terminate after Ctrl+C
+        run: |
+          set -uo pipefail
+
+          fail() { echo "::error::$1"; echo "------ log ------"; cat "$LOG"; exit 1; }
+          alive() { kill -0 "$pid" 2>/dev/null; }
+          # rows of the iteration table, e.g. " 12      OPT    5.0000e+01 ...", minus iteration 0
+          iterations() { local n; n=$(grep -Ec '^ *[0-9]+ +[A-Z]+ ' "$LOG"); echo $(( n > 0 ? n - 1 : 0 )); }
+
+          test -f "$INSTANCE" || { echo "::error::instance $INSTANCE not found"; exit 1; }
+
+          # Non-interactive bash starts background jobs with SIGINT ignored (SIG_IGN):
+          # Uno installs its handler unconditionally, so the signal still reaches it.
+          # time_limit is a safety net: the run must be interrupted long before.
+          "$UNO" "$INSTANCE" preset=ipopt max_iterations=1000000 time_limit=1800 > "$LOG" 2>&1 &
+          pid=$!
+
+          # wait for a few outer iterations (the iteration lines are flushed)
+          for (( t = 0; t < STARTUP_TIMEOUT * 10; t++ )); do
+            alive || break
+            [ "$(iterations)" -ge "$MIN_ITERATIONS" ] && break
+            sleep 0.1
+          done
+          alive || fail "uno_ampl exited before Ctrl+C was sent (instance solved too quickly?)"
+          if [ "$(iterations)" -lt "$MIN_ITERATIONS" ]; then
+            kill -KILL "$pid"; fail "uno_ampl did not reach ${MIN_ITERATIONS} iterations within ${STARTUP_TIMEOUT}s"
+          fi
+
+          iterations_at_signal=$(iterations)
+          echo "Sending SIGINT after ${iterations_at_signal} iterations"
+          kill -INT "$pid"
+
+          # the solver must stop at the end of the current outer iteration
+          for (( t = 0; t < SHUTDOWN_TIMEOUT * 10; t++ )); do
+            alive || break
+            sleep 0.1
+          done
+          if alive; then
+            kill -KILL "$pid"; fail "uno_ampl ignored SIGINT: still running ${SHUTDOWN_TIMEOUT}s after Ctrl+C"
+          fi
+          wait "$pid"
+          exit_code=$?
+          cat "$LOG"
+
+          # 130 = 128 + SIGINT: killed by the default handler, i.e. the signal was not caught
+          [ "$exit_code" -eq 0 ] || fail "uno_ampl exited with code ${exit_code} (130 means killed by SIGINT)"
+          grep -Eq '^Optimization status:[[:space:]]+User interrupt' "$LOG" || \
+            fail "termination status is not 'User interrupt'"
+          final_iterations=$(grep -E '^Iterations:' "$LOG" | awk '{print $2}')
+          # the iteration in progress when the signal arrived may complete (+1), plus a printing race (+1)
+          [ "$final_iterations" -le $(( iterations_at_signal + 2 )) ] || \
+            fail "uno_ampl ran ${final_iterations} iterations, expected at most $(( iterations_at_signal + 2 ))"
+
+          echo "::notice title=SIGINT::interrupted after ${final_iterations} iterations (signal sent after ${iterations_at_signal})"
+
+      - name: Upload log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sigint-log-${{ matrix.os }}
+          path: sigint.log
+          if-no-files-found: ignore

@@ -1605,6 +1605,8 @@ function _status_code_mapping(uno_termination_status::Cint, uno_solution_status:
         return (MOI.OTHER_ERROR, MOI.UNKNOWN_RESULT_STATUS)
     elseif uno_termination_status == UnoSolver.UNO_USER_TERMINATION
         return (MOI.INTERRUPTED, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
+    elseif uno_termination_status == UnoSolver.UNO_USER_INTERRUPTION
+        return (MOI.INTERRUPTED, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
     else # UNO_SUCCESS
         if uno_solution_status == UnoSolver.UNO_FEASIBLE_KKT_POINT
             return (MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT)

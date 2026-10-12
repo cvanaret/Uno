@@ -23,6 +23,9 @@ namespace uno {
       else if (status == OptimizationStatus::USER_TERMINATION) {
          return "User termination";
       }
+      else if (status == OptimizationStatus::USER_INTERRUPTION) {
+         return "User interruption";
+      }
       return "Unknown";
    }
 } // namespace
