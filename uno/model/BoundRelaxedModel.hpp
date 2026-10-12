@@ -140,6 +140,23 @@ namespace uno {
          this->model.reset_number_evaluations();
       }
 
+      [[nodiscard]] double unscaled_objective(double objective_value) const override {
+         return this->model.unscaled_objective(objective_value);
+      }
+
+      [[nodiscard]] double unscaled_stationarity(double scaled_stationarity) const override {
+         return this->model.unscaled_stationarity(scaled_stationarity);
+      }
+
+      [[nodiscard]] double unscaled_complementarity(double scaled_complementarity) const override {
+         return this->model.unscaled_complementarity(scaled_complementarity);
+      }
+
+      [[nodiscard]] double unscaled_primal_infeasibility(double scaled_primal_infeasibility,
+            const Vector<double>& scaled_constraints, Norm residual_norm) const override {
+         return this->model.unscaled_primal_infeasibility(scaled_primal_infeasibility, scaled_constraints, residual_norm);
+      }
+
    private:
       const Model& model;
       const double relaxation_factor;
