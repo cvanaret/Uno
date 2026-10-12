@@ -27,8 +27,6 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   Level Logger::level = INFO;
-
    // solve without user callbacks
    Result Uno::solve(const Model& model, const Options& options) {
       // pass user callbacks that do nothing
