@@ -18,13 +18,13 @@ namespace uno {
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const override;
+      [[nodiscard]] double small_infeasibility_threshold() const override;
 
       [[nodiscard]] std::string get_name() const override;
 
    protected:
       double initial_infeasibility{Inf};
       const double sufficient_infeasibility_decrease_factor;
-      const double small_infeasibility_factor;
       bool last_rejection_due_to_filter{false};
       // filter resets
       size_t number_successive_filter_rejections{0};

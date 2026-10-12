@@ -30,7 +30,6 @@ namespace uno {
          gamma_phi(options.get_double("filter_gamma")),
          s_theta(options.get_double("switching_infeasibility_exponent")),
          s_phi(options.get_double("switching_merit_exponent")),
-         theta_min(options.get_double("barrier_small_infeasibility_factor")),
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
@@ -145,10 +144,12 @@ namespace uno {
       */
       const double predicted_optimality_reduction = predicted_reduction_models.optimality_first_order_reduction(objective_multiplier);
       const double theta = current_iterate.progress.infeasibility;
+      // same theta_min as the switching rule of the globalization strategy (of the current phase)
+      const double theta_min = this->constraint_relaxation_strategy->small_infeasibility_threshold();
       double alpha_min = this->gamma_theta;
       if (predicted_optimality_reduction > 0.) {
          alpha_min = std::min(alpha_min, this->gamma_phi * theta / predicted_optimality_reduction);
-         if (theta <= this->theta_min) {
+         if (theta <= theta_min) {
             alpha_min = std::min(alpha_min, this->delta * std::pow(theta, this->s_theta) /
                std::pow(predicted_optimality_reduction, this->s_phi));
          }
@@ -282,7 +283,8 @@ namespace uno {
             return false;
          }
       }
-      if (current_iterate.scaled_residuals.primal_infeasibility > this->theta_min) {
+      // large infeasibility: the starting point may be a local minimizer of the infeasibility
+      if (current_iterate.scaled_residuals.primal_infeasibility > BacktrackingLineSearch::tiny_step_infeasibility_threshold) {
          return false;
       }
       return true;

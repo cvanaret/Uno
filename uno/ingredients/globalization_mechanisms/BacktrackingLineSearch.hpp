@@ -36,7 +36,8 @@ namespace uno {
       const double gamma_phi;
       const double s_theta;
       const double s_phi;
-      const double theta_min;
+      // IPOPT hard-codes this absolute threshold in BacktrackingLineSearch::DetectTinyStep (independent of theta_min)
+      static constexpr double tiny_step_infeasibility_threshold{1e-4};
       // tiny directions
       size_t number_consecutive_tiny_directions{0};
       const size_t consecutive_tiny_directions_threshold{2}; // TODO add option

@@ -142,6 +142,10 @@ namespace uno {
       warmstart_information.no_changes();
    }
 
+   double NoRelaxation::small_infeasibility_threshold() const {
+      return this->globalization_strategy.small_infeasibility_threshold();
+   }
+
    std::string NoRelaxation::get_name() const {
       return this->globalization_strategy.get_name() + " " + this->inequality_handling_method->get_name();
    }

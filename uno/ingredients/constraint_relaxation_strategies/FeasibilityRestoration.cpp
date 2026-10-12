@@ -423,6 +423,11 @@ namespace uno {
       }
    }
 
+   double FeasibilityRestoration::small_infeasibility_threshold() const {
+      return (this->current_phase == Phase::OPTIMALITY) ? this->globalization_strategy->small_infeasibility_threshold() :
+         this->feasibility_globalization_strategy->small_infeasibility_threshold();
+   }
+
    std::string FeasibilityRestoration::get_name() const {
       return this->globalization_strategy->get_name() + " restoration " + this->inequality_handling_method->get_name();
    }
