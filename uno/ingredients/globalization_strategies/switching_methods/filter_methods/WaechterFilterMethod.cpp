@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include "WaechterFilterMethod.hpp"
 #include "Filter.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
@@ -14,7 +15,6 @@ namespace uno {
    WaechterFilterMethod::WaechterFilterMethod(const Options& options):
          FilterMethod(options),
          sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")),
-         small_infeasibility_factor(options.get_double("barrier_small_infeasibility_factor")),
          filter_reset_iteration_threshold(options.get_unsigned_int("filter_reset_iteration_threshold")),
          max_number_filter_resets(options.get_unsigned_int("max_number_filter_resets")) {
    }
@@ -45,8 +45,7 @@ namespace uno {
       const double actual_merit_reduction = this->compute_actual_merit_reduction(current_merit, trial_merit);
       DEBUG << "Unconstrained actual reduction = " << actual_merit_reduction << '\n';
 
-      const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_factor *
-         std::max(1., this->initial_infeasibility);
+      const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_threshold();
       const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction,
          predicted_reductions.step_length, current_progress.infeasibility);
       const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, actual_merit_reduction);
@@ -124,6 +123,12 @@ namespace uno {
          << "*" << reference_infeasibility << " = " << this->sufficient_infeasibility_decrease_factor * reference_infeasibility << '\n';
       return trial_iterate.scaled_residuals.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
          this->filter.filter_acceptable(trial_iterate.progress.infeasibility, unconstrained_merit_function(trial_iterate.progress));
+   }
+
+   // IPOPT: theta_min = theta_min_fact * max(1, theta(x_0)), where x_0 is the point at which this filter was initialized
+   // (the initial point, or the first restoration iterate for the restoration filter)
+   double WaechterFilterMethod::small_infeasibility_threshold() const {
+      return this->small_infeasibility_factor * std::max(1., this->initial_infeasibility);
    }
 
    std::string WaechterFilterMethod::get_name() const {

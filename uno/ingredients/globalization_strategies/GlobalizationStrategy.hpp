@@ -26,6 +26,10 @@ namespace uno {
 
       virtual void reset() = 0;
 
+      // theta_min: below this infeasibility, the switching rule may declare f-type iterations. The line search uses the
+      // same threshold to compute its minimum step length (IPOPT, Wächter & Biegler 2006, eq. (23))
+      [[nodiscard]] virtual double small_infeasibility_threshold() const;
+
       virtual void avoid_cycling_back_to(const ProgressMeasures& current_progress) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
@@ -35,6 +39,7 @@ namespace uno {
       const double armijo_tolerance;
       const bool protect_actual_reduction_against_roundoff;
       const double protected_actual_reduction_macheps_coefficient;
+      const double small_infeasibility_factor;
 
       [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
    };

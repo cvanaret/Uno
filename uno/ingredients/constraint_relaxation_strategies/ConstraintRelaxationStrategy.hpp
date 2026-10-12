@@ -66,6 +66,9 @@ namespace uno {
          const Direction& direction, double step_length, bool force_parameterization_update, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
+      // threshold theta_min of the globalization strategy of the current phase
+      [[nodiscard]] virtual double small_infeasibility_threshold() const = 0;
+
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 

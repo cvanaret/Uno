@@ -103,6 +103,8 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
    unotest/functional_tests/InterruptTests.cpp
+   unotest/functional_tests/PostprocessingEvaluationsTests.cpp
+   unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)

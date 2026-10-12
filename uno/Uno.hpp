@@ -39,11 +39,13 @@ namespace uno {
       [[nodiscard]] static bool check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, bool user_interruption, OptimizationStatus& optimization_status,
          UserCallbacks& user_callbacks);
-      [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
+      [[nodiscard]] Result uno_solve(const Model& user_model, const Model& model, const Options& options,
+         UserCallbacks& user_callbacks);
       void postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
          Evaluations&& evaluations, size_t major_iterations, const Timers& timers, std::vector<OptionOverride>&& option_overrides) const;
       static void postprocess_multipliers_signs(const Model& model, Result& result);
+      static void evaluate_final_functions(const Model& user_model, const Vector<double>& primals, Evaluations& evaluations);
       void print_optimization_summary(const Result& result, bool print_solution) const;
    };
 } // namespace

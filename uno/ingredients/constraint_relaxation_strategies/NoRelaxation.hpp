@@ -49,6 +49,7 @@ namespace uno {
          const Direction& direction, double step_length, bool force_parameterization_update, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
+      [[nodiscard]] double small_infeasibility_threshold() const override;
       [[nodiscard]] std::string get_name() const override;
 
    private:
