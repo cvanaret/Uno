@@ -89,7 +89,6 @@ namespace uno {
    }
 
    // add (infeasibility, objective) to the filter
-   // add (infeasibility, objective) to the filter
 // invariant: infeasibility strictly increasing, objective strictly decreasing (raw values, no margins)
 void Filter::add(double current_infeasibility, double current_objective) {
    // first entry whose infeasibility is >= the new one (raw comparison, same as the removal below)
@@ -121,13 +120,19 @@ void Filter::add(double current_infeasibility, double current_objective) {
       this->number_entries -= number_dominated_entries;
    }
 
-   // make room if the filter is full: drop the entry with the largest infeasibility and tighten the upper bound
+   // make room if the filter is full: drop the pair (existing or new) with the largest infeasibility h_max and
+   // set the upper bound to h_max. Since the bound test is h <= beta*ub, every point with h > beta*h_max is
+   // rejected, which includes the whole region dominated by the dropped pair.
    if (this->number_entries >= this->capacity) {
-      const double largest_filter_infeasibility = std::max(this->infeasibility_upper_bound,
-         this->infeasibility[this->number_entries - 1]);
-      this->set_infeasibility_upper_bound(this->parameters.beta * largest_filter_infeasibility);
-      --this->number_entries;
-      position = std::min(position, this->number_entries);
+      if (position == this->number_entries) {
+         // the new pair has the largest infeasibility: keep the filter and let the bound encode the new pair
+         this->set_infeasibility_upper_bound(std::min(this->infeasibility_upper_bound, current_infeasibility));
+         assert(this->is_sorted());
+         return;
+      }
+      const double largest_filter_infeasibility = this->infeasibility[this->number_entries - 1];
+      this->set_infeasibility_upper_bound(std::min(this->infeasibility_upper_bound, largest_filter_infeasibility));
+      --this->number_entries; // position < number_entries still holds (or equals it: insertion at the end)
    }
 
    // insert at `position` (no recomputation, no margin)
