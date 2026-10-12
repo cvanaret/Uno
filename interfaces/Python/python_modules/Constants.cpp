@@ -35,6 +35,8 @@ namespace uno {
       module.attr("TIME_LIMIT") = UNO_TIME_LIMIT;
       module.attr("EVALUATION_ERROR") = UNO_EVALUATION_ERROR;
       module.attr("ALGORITHMIC_ERROR") = UNO_ALGORITHMIC_ERROR;
+      module.attr("USER_TERMINATION") = UNO_USER_TERMINATION;
+      module.attr("USER_INTERRUPTION") = UNO_USER_INTERRUPTION;
 
       // Iterate status
       module.attr("NOT_OPTIMAL") = UNO_NOT_OPTIMAL;

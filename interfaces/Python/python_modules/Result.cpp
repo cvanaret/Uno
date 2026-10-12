@@ -55,7 +55,9 @@ namespace uno {
       .value("ITERATION_LIMIT", OptimizationStatus::ITERATION_LIMIT)
       .value("TIME_LIMIT", OptimizationStatus::TIME_LIMIT)
       .value("EVALUATION_ERROR", OptimizationStatus::EVALUATION_ERROR)
-      .value("ALGORITHMIC_ERROR", OptimizationStatus::ALGORITHMIC_ERROR);
+      .value("ALGORITHMIC_ERROR", OptimizationStatus::ALGORITHMIC_ERROR)
+      .value("USER_TERMINATION", OptimizationStatus::USER_TERMINATION)
+      .value("USER_INTERRUPTION", OptimizationStatus::USER_INTERRUPTION);
 
       py::enum_<SolutionStatus>(module, "SolutionStatus")
       .value("NOT_OPTIMAL", SolutionStatus::NOT_OPTIMAL)
