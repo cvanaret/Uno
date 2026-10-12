@@ -1,0 +1,97 @@
+name: Ctrl+C (SIGINT) through UnoSolver.jl
+
+# Builds Uno_jll.jl from this commit with BinaryBuilder (as in julia-tests-unosolver.yml),
+# solves a large chained Rosenbrock problem with UnoSolver.jl (.github/sigint/unosolver_sigint.jl)
+# and sends a real SIGINT after a few outer iterations. .github/sigint/driver.py checks that:
+#  - the solve terminates within the shutdown timeout and Julia exits normally,
+#  - the status is USER_INTERRUPT, at most one outer iteration after the signal (+1 for a printing race),
+#  - the returned iterate is finite.
+# The child runs with Base.exit_on_sigint(false), i.e. like the REPL. If Julia instead delivers the
+# signal as an InterruptException in a callback, the child prints ESCAPED_INTERRUPT_EXCEPTION and
+# exits with code 3.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'uno/**'
+      - 'interfaces/C/**'
+      - 'interfaces/Julia/**'
+      - '.github/sigint/**'
+      - '.github/workflows/sigint-julia.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'uno/**'
+      - 'interfaces/C/**'
+      - 'interfaces/Julia/**'
+      - '.github/sigint/**'
+      - '.github/workflows/sigint-julia.yml'
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+# needed to allow julia-actions/cache to delete old caches that it has created
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  sigint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Julia 1.7 for BinaryBuilder
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.7"
+          arch: x64
+      - uses: julia-actions/cache@v2
+
+      - name: Set the environment variables for OpenMP
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
+      - name: Set the environment variables for BinaryBuilder
+        run: |
+          git fetch --tags
+          echo "UNO_RELEASE=$(git describe --tags $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "UNO_COMMIT=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+            echo "UNO_URL=${{ github.event.pull_request.head.repo.clone_url }}" >> $GITHUB_ENV
+          else
+            echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+            echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
+          fi
+
+      - name: Compile Uno_jll.jl
+        run: |
+          julia --color=yes -e 'using Pkg; Pkg.update(); Pkg.add("BinaryBuilder")'
+          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+
+      # Julia 1.10 (LTS) to run UnoSolver.jl
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.10"
+          arch: x64
+
+      # instantiate and precompile outside the timed test
+      - name: Set up the UnoSolver.jl environment
+        run: |
+          julia --color=yes --project=${{ runner.temp }}/sigint_env -e '
+            using Pkg
+            Pkg.develop(path=joinpath(first(DEPOT_PATH), "dev", "Uno_jll"))
+            Pkg.develop(path="interfaces/Julia")
+            Pkg.instantiate()
+            using UnoSolver
+            println("Uno ", uno_version())'
+
+      - name: Interrupt a UnoSolver.jl solve with Ctrl+C
+        run: |
+          python3 .github/sigint/driver.py --min-iterations 3 --startup-timeout 600 --shutdown-timeout 60 \
+            --expect FINITE_ITERATE \
+            -- julia --project=${{ runner.temp }}/sigint_env .github/sigint/unosolver_sigint.jl 200000

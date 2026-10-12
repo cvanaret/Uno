@@ -15,14 +15,14 @@ on:
     paths:
       - 'uno/**'
       - 'interfaces/AMPL/**'
-      - '.github/Mittelmann/arki0009.nl'
+      - '.github/sigint/arki0009.nl'
       - '.github/workflows/sigint-test.yml'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'uno/**'
       - 'interfaces/AMPL/**'
-      - '.github/Mittelmann/arki0009.nl'
+      - '.github/sigint/arki0009.nl'
       - '.github/workflows/sigint-test.yml'
   workflow_dispatch:
 
@@ -147,7 +147,7 @@ jobs:
         shell: bash
         env:
           UNO: build/uno_ampl
-          INSTANCE: .github/Mittelmann/arki0009.nl
+          INSTANCE: .github/sigint/arki0009.nl
           LOG: sigint.log
           MIN_ITERATIONS: 3      # outer iterations to complete before sending Ctrl+C
           STARTUP_TIMEOUT: 300   # seconds allowed to reach MIN_ITERATIONS
