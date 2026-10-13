@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 #include <utility>
 #include "EQPSolver.hpp"
@@ -26,8 +27,15 @@ namespace uno {
             options.get_double("iterative_refinement_residual_ratio_singular"),
             options.get_double("iterative_refinement_improvement_factor")
          };
-         if (parameters.max_steps < parameters.min_steps) {
+         // max_steps = 0 disables iterative refinement altogether (min_steps is then irrelevant)
+         if (0 < parameters.max_steps && parameters.max_steps < parameters.min_steps) {
             throw std::invalid_argument("The option iterative_refinement_max_steps must be larger than or equal to iterative_refinement_min_steps");
+         }
+         if (!(0. <= parameters.residual_ratio_max)) {
+            throw std::invalid_argument("The option iterative_refinement_residual_ratio_max must be nonnegative");
+         }
+         if (!(0. < parameters.improvement_factor && parameters.improvement_factor <= 1.)) {
+            throw std::invalid_argument("The option iterative_refinement_improvement_factor must be in (0, 1]");
          }
          if (parameters.residual_ratio_singular < parameters.residual_ratio_max) {
             throw std::invalid_argument("The option iterative_refinement_residual_ratio_singular must not be smaller than iterative_refinement_residual_ratio_max");
@@ -96,6 +104,7 @@ namespace uno {
 
       // factorize the matrix
       this->linear_solver->do_numerical_factorization(false);
+      this->pivoting_tolerance_increased_for_current_matrix = false;
 
       // assemble the RHS
       linear_system.rhs.fill(0.);
@@ -221,7 +230,8 @@ namespace uno {
       rhs_constraints = -this->constraints_SOC;
       DEBUG3 << "SOC RHS: " << linear_system.rhs << '\n';
 
-      // solve the linear system (the matrix is not modified: no singularity handling) and assemble the full primal-dual direction
+      // solve the linear system (the factorization is not modified: no pivoting tolerance increase, no singularity
+      // handling) and assemble the full primal-dual direction
       this->solve_with_iterative_refinement(nullptr, subproblem, current_iterate);
       this->correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, linear_system.solution, this->direction_SOC);
@@ -240,26 +250,35 @@ namespace uno {
    // solve the augmented system with the current factorization (RHS: linear_system.rhs, solution: linear_system.solution)
    // and refine the solution wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve:
    // - refinement stops when the residual ratio is small enough (after at least min_steps steps), when max_steps steps
-   //   were performed (max_steps = 0: no refinement step), or when the residual ratio stagnates;
-   // - upon failure, the linear solver is asked to increase its pivoting tolerance (once per matrix) and the system is
-   //   solved again;
+   //   were performed, or when the residual ratio stagnates. max_steps = 0 disables the whole mechanism (plain solve);
+   // - upon failure, the linear solver is asked to increase its pivoting tolerance (at most once per matrix; the increase
+   //   is permanent) and the matrix is refactorized. The inertia of the new factorization is checked again by the inertia
+   //   correction strategy, which may increase the regularization;
    // - if that is not possible and the residual ratio is above residual_ratio_singular, the matrix is deemed singular and
-   //   the inertia correction strategy increases the regularization (once per solve; requires statistics != nullptr).
-   //   Otherwise, the current solution is accepted
+   //   the inertia correction strategy increases the regularization (once per solve). Otherwise, the current solution is
+   //   accepted.
+   // statistics == nullptr: the factorization must not be modified (e.g. second-order corrections): the refined solution
+   // is accepted whatever its residual ratio
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::solve_with_iterative_refinement(Statistics* statistics, const Subproblem& subproblem,
          const Iterate& current_iterate) {
       auto& linear_system = this->linear_solver->get_linear_system();
       this->number_refinement_steps = 0;
-      // the residuals require the full Hessian in the augmented matrix
+      this->matrix_deemed_singular = false;
+      // the residuals require the full Hessian in the augmented matrix (not available with low-rank corrections)
+      bool refinement_enabled = (0 < this->iterative_refinement.max_steps);
       if constexpr (!LowRankCorrection::requires_hessian_matrix) {
+         refinement_enabled = false;
+      }
+      if (!refinement_enabled) {
+         this->residual_ratio = std::numeric_limits<double>::quiet_NaN(); // not computed
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
          return;
       }
       const OptimizationProblem& problem = subproblem.problem;
       problem.uncondense_rhs(current_iterate, linear_system.rhs, this->uncondensed_rhs);
+      const bool factorization_can_be_modified = (statistics != nullptr);
 
-      bool matrix_assumed_singular = false;
       while (true) {
          // solve the augmented system and recover the uncondensed solution
          this->linear_solver->solve_indefinite_system(linear_system.rhs.data(), linear_system.solution.data(), 1);
@@ -295,24 +314,34 @@ namespace uno {
             break;
          }
          DEBUG << "Iterative refinement failed with residual ratio " << this->residual_ratio << '\n';
-         // the matrix was already deemed singular: live with the current solution
-         if (matrix_assumed_singular) {
+         // the factorization cannot be modified, or the matrix was already deemed singular: live with the current solution
+         if (!factorization_can_be_modified || this->matrix_deemed_singular) {
             break;
          }
          // first try to improve the quality of the factorization (once per matrix)
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
+            ++this->number_pivoting_tolerance_increases;
             DEBUG << "Refactorizing the augmented matrix with an increased pivoting tolerance\n";
-            this->linear_solver->do_numerical_factorization(false);
+            // the new factorization may have a different (numerical) inertia or be singular: let the inertia correction
+            // strategy check it and increase the regularization if needed
+            subproblem.refactorize_augmented_matrix(*statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
+               subproblem.compute_block_augmented_matrix(linear_system));
+            if (this->linear_solver->matrix_is_singular()) {
+               // singular and not regularized: the caller handles the singularity
+               DEBUG << "The refactorized augmented matrix is singular\n";
+               this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+               return;
+            }
             continue;
          }
          // otherwise, deem the matrix singular if the residuals are bad enough
-         matrix_assumed_singular = true;
+         this->matrix_deemed_singular = true;
          if (this->residual_ratio < this->iterative_refinement.residual_ratio_singular) {
             DEBUG << "The current solution is accepted\n";
             break;
          }
-         if (statistics == nullptr || !subproblem.regularize_singular_augmented_matrix(*statistics, subproblem.dual_regularization_factor(),
+         if (!subproblem.regularize_singular_augmented_matrix(*statistics, subproblem.dual_regularization_factor(),
                *this->linear_solver, subproblem.compute_block_augmented_matrix(linear_system))) {
             DEBUG << "The matrix cannot be regularized further, the current solution is accepted\n";
             break;

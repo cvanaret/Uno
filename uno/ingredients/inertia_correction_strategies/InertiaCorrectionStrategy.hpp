@@ -6,13 +6,12 @@
 
 #include <string>
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/View.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
    // forward declarations
-   template <typename ElementType>
-   class DirectSymmetricIndefiniteLinearSolver;
    class Inertia;
    class Options;
    class Statistics;
@@ -43,6 +42,16 @@ namespace uno {
             DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/, BlockAugmentedMatrix /*block_augmented_matrix*/,
             Range<> /*primal_regularization_variables*/) {
          return false;
+      }
+
+      // the augmented matrix must be refactorized with the current regularization factors (e.g. after the pivoting
+      // tolerance of the linear solver was increased). Strategies that correct the inertia check it again and increase
+      // the regularization if needed; by default, the matrix is simply refactorized
+      virtual void refactorize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+            double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
+            DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix /*block_augmented_matrix*/,
+            Range<> /*primal_regularization_variables*/) {
+         linear_solver.do_numerical_factorization(false);
       }
 
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;

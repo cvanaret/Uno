@@ -34,6 +34,10 @@ namespace uno {
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
 
+      void refactorize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
+         double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
+
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
       [[nodiscard]] double get_primal_regularization_factor() const override;

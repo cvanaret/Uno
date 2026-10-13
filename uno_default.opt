@@ -284,7 +284,7 @@ regularize_all_variables true
 # Minimum number of iterative refinement steps per linear system solve (integer)
 iterative_refinement_min_steps 1
 
-# Maximum number of iterative refinement steps per linear system solve (0: no refinement) (integer)
+# Maximum number of iterative refinement steps per linear system solve (0: iterative refinement disabled) (integer)
 iterative_refinement_max_steps 10
 
 # Iterative refinement stops when the residual ratio is below this tolerance (double)
@@ -293,7 +293,7 @@ iterative_refinement_residual_ratio_max 1e-10
 # Residual ratio above which the matrix is deemed singular after failed iterative refinement (double)
 iterative_refinement_residual_ratio_singular 1e-5
 
-# Minimal required reduction of the residual ratio per iterative refinement step (double)
+# Refinement stagnates (and stops) when the residual ratio exceeds this factor times the previous ratio, in (0, 1] (double)
 iterative_refinement_improvement_factor 0.999999999
 
 # ---------------------

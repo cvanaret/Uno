@@ -19,7 +19,7 @@ namespace uno {
    // iterative refinement on the uncondensed Newton system (PDFullSpaceSolver::Solve in IPOPT)
    struct IterativeRefinementParameters {
       size_t min_steps; // minimum number of refinement steps
-      size_t max_steps; // maximum number of refinement steps (0: no refinement step)
+      size_t max_steps; // maximum number of refinement steps (0: iterative refinement disabled)
       double residual_ratio_max; // refinement stops below this residual ratio
       double residual_ratio_singular; // above this residual ratio after failed refinement, the matrix is deemed singular
       double improvement_factor; // minimal required reduction of the residual ratio per refinement step
@@ -50,9 +50,12 @@ namespace uno {
 
       [[nodiscard]] const SolverWorkspace& get_workspace() const override;
 
-      // residual ratio of the last solve (exposed for testing and diagnostics)
+      // diagnostics of the last solve (exposed for testing). The residual ratio is NaN when refinement is disabled
       [[nodiscard]] double get_residual_ratio() const { return this->residual_ratio; }
       [[nodiscard]] size_t get_number_refinement_steps() const { return this->number_refinement_steps; }
+      [[nodiscard]] bool is_matrix_deemed_singular() const { return this->matrix_deemed_singular; }
+      // number of pivoting tolerance increases since the creation of the solver
+      [[nodiscard]] size_t get_number_pivoting_tolerance_increases() const { return this->number_pivoting_tolerance_increases; }
 
    protected:
       Direction direction;
@@ -72,6 +75,8 @@ namespace uno {
       bool pivoting_tolerance_increased_for_current_matrix{false};
       double residual_ratio{0.};
       size_t number_refinement_steps{0};
+      bool matrix_deemed_singular{false};
+      size_t number_pivoting_tolerance_increases{0};
 
       void solve_with_iterative_refinement(Statistics* statistics, const Subproblem& subproblem, const Iterate& current_iterate);
       [[nodiscard]] double compute_uncondensed_residual_ratio(const Subproblem& subproblem, const Iterate& current_iterate);

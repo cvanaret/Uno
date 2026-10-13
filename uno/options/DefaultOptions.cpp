@@ -144,7 +144,8 @@ namespace uno {
       /** iterative refinement options (on the uncondensed Newton system) **/
       // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_min_refinement_steps
       options.set_integer("iterative_refinement_min_steps", 1);
-      // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_max_refinement_steps (unlike IPOPT, 0 means no refinement step)
+      // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_max_refinement_steps (unlike IPOPT, this is the exact maximum
+      // number of steps; 0 disables iterative refinement altogether)
       options.set_integer("iterative_refinement_max_steps", 10);
       options.set_double("iterative_refinement_residual_ratio_max", 1e-10);
       options.set_double("iterative_refinement_residual_ratio_singular", 1e-5);

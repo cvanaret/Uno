@@ -85,6 +85,15 @@ namespace uno {
       return true;
    }
 
+   // refactorize the matrix with the current regularization factors (e.g. after the pivoting tolerance of the linear solver
+   // was increased): the inertia of the new factorization is checked and the regularization increased if needed
+   void PrimalDualInertiaCorrection::refactorize_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
+         double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
+      this->factorize_with_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
+         block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ false);
+   }
+
    void PrimalDualInertiaCorrection::factorize_with_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular) {
@@ -112,6 +121,7 @@ namespace uno {
             block_augmented_matrix.dual_inertia_correction.fill(-this->dual_regularization);
             DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
             linear_solver.do_numerical_factorization(false);
+            ++number_attempts;
             const Inertia estimated_inertia = linear_solver.get_inertia();
             DEBUG << "Expected inertia  " << expected_inertia << '\n';
             DEBUG << "Estimated inertia " << estimated_inertia << '\n';
@@ -129,7 +139,6 @@ namespace uno {
             missing_negative = estimated_inertia.negative < expected_inertia.negative;
             missing_positive = estimated_inertia.positive < expected_inertia.positive;
          }
-         ++number_attempts;
          DEBUG << "Number of attempts: " << number_attempts << '\n';
 
          // missing negative eigenvalues (incl. zero ones or a surplus of positive ones): rank-deficient Jacobian -> dual regularization.
