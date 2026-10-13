@@ -52,7 +52,8 @@ inequality_handling_method	STRING	<unset>
 inertia_correction_strategy	STRING	"primal"
 iterative_refinement_improvement_factor	DOUBLE	0.999999999
 iterative_refinement_max_steps	INTEGER	10
-iterative_refinement_min_steps	INTEGER	1
+iterative_refinement_min_steps	INTEGER	0
+iterative_refinement_pivoting_tolerance_decrease_after	INTEGER	5
 iterative_refinement_residual_ratio_max	DOUBLE	1e-10
 iterative_refinement_residual_ratio_singular	DOUBLE	1e-5
 l1_constraint_violation_coefficient	DOUBLE	1

@@ -94,6 +94,7 @@ namespace uno {
       {"iterative_refinement_residual_ratio_max", OptionType::DOUBLE},
       {"iterative_refinement_residual_ratio_singular", OptionType::DOUBLE},
       {"iterative_refinement_improvement_factor", OptionType::DOUBLE},
+      {"iterative_refinement_pivoting_tolerance_decrease_after", OptionType::INTEGER},
       {"TR_radius", OptionType::DOUBLE},
       {"TR_increase_factor", OptionType::DOUBLE},
       {"TR_decrease_factor", OptionType::DOUBLE},

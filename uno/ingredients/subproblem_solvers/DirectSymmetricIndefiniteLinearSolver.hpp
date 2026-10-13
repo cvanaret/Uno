@@ -28,6 +28,8 @@ namespace uno {
       // Returns false if the tolerance cannot be increased (not supported or maximum value reached).
       // The new tolerance is used from the next numerical factorization on
       [[nodiscard]] virtual bool increase_pivoting_tolerance() { return false; }
+      // undo the last increase of the pivoting tolerance. Returns false if the tolerance was never increased
+      [[nodiscard]] virtual bool decrease_pivoting_tolerance() { return false; }
    };
 } // namespace
 

@@ -4,6 +4,7 @@
 // Iterative refinement on the uncondensed Newton system of the primal-dual interior-point method, and singularity
 // handling in the inertia correction strategy
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <string>
@@ -206,6 +207,17 @@ namespace {
 
    // iterative refinement is tested with every available direct linear solver
    class IterativeRefinement: public testing::TestWithParam<std::string> { };
+
+   // access to the linear solver and the refinement tolerance (to simulate failing, then accurate iterations)
+   class InspectableEQPSolver: public EQPSolver<NoLowRankCorrection> {
+   public:
+      using EQPSolver<NoLowRankCorrection>::EQPSolver;
+      DirectSymmetricIndefiniteLinearSolver<double>* linear_solver_pointer() { return this->linear_solver.get(); }
+      void set_residual_ratio_max(double value) {
+         this->iterative_refinement.residual_ratio_max = value;
+         this->iterative_refinement.residual_ratio_singular = std::max(value, this->iterative_refinement.residual_ratio_singular);
+      }
+   };
 } // namespace
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(IterativeRefinement);
@@ -297,8 +309,21 @@ TEST_P(IterativeRefinement, DirectionSolvesUncondensedSystem) {
    }
 }
 
-// default (IPOPT): at least one refinement step per solve
-TEST_P(IterativeRefinement, DefaultPerformsOneStep) {
+// default: no refinement step when the solution is already accurate
+TEST_P(IterativeRefinement, DefaultSkipsRefinementWhenAccurate) {
+   Options options;
+   DefaultOptions::load(options);
+   Presets::set(options, "ipopt");
+   options.set_string("linear_solver", GetParam());
+   BarrierSetting setting(options);
+   EQPSolver<NoLowRankCorrection> solver(setting.options);
+   (void)setting.solve(solver);
+   EXPECT_EQ(solver.get_number_refinement_steps(), 0);
+   EXPECT_LE(solver.get_residual_ratio(), 1e-10);
+}
+
+// IPOPT's default (min_steps = 1): one refinement step per solve
+TEST_P(IterativeRefinement, IpoptMinimumPerformsOneStep) {
    BarrierSetting setting(make_options(GetParam(), 1, 10));
    EQPSolver<NoLowRankCorrection> solver(setting.options);
    (void)setting.solve(solver);
@@ -373,6 +398,49 @@ TEST_P(IterativeRefinement, SecondOrderCorrectionDoesNotModifyFactorization) {
    for (size_t variable_index: Range(setting.barrier_problem.number_variables)) {
       EXPECT_TRUE(std::isfinite(direction.primals[variable_index]));
    }
+}
+
+// the pivoting tolerance increase is undone after pivoting_tolerance_decrease_after consecutive accurate iterations
+TEST_P(IterativeRefinement, PivotingToleranceIncreaseIsUndone) {
+   if (!supports_pivoting_tolerance_increase(GetParam())) {
+      GTEST_SKIP() << GetParam() << " has a fixed pivoting tolerance";
+   }
+   // 1st iteration: refinement fails, the tolerance is increased
+   Options options = make_failing_options(GetParam());
+   options.set_integer("iterative_refinement_pivoting_tolerance_decrease_after", 2);
+   BarrierSetting setting(options);
+   InspectableEQPSolver solver(setting.options);
+   (void)setting.solve(solver);
+   ASSERT_EQ(solver.get_number_pivoting_tolerance_increases(), 1);
+   // the next iterations are accurate (residual ratio target reachable)
+   solver.set_residual_ratio_max(1e-10);
+   for (size_t iteration: Range(2)) {
+      (void)setting.solve(solver);
+      EXPECT_LE(solver.get_residual_ratio(), 1e-10) << "iteration " << iteration;
+      EXPECT_EQ(solver.get_number_pivoting_tolerance_decreases(), 0);
+   }
+   // after 2 accurate iterations, the next factorization uses the default tolerance again
+   (void)setting.solve(solver);
+   EXPECT_EQ(solver.get_number_pivoting_tolerance_decreases(), 1);
+   EXPECT_FALSE(solver.linear_solver_pointer()->decrease_pivoting_tolerance());
+}
+
+// decrease_after = 0: the increase is permanent (IPOPT)
+TEST_P(IterativeRefinement, PivotingToleranceIncreaseIsPermanentWhenDecreaseDisabled) {
+   if (!supports_pivoting_tolerance_increase(GetParam())) {
+      GTEST_SKIP() << GetParam() << " has a fixed pivoting tolerance";
+   }
+   Options options = make_failing_options(GetParam());
+   options.set_integer("iterative_refinement_pivoting_tolerance_decrease_after", 0);
+   BarrierSetting setting(options);
+   InspectableEQPSolver solver(setting.options);
+   (void)setting.solve(solver);
+   solver.set_residual_ratio_max(1e-10);
+   for ([[maybe_unused]] size_t iteration: Range(5)) {
+      (void)setting.solve(solver);
+   }
+   EXPECT_EQ(solver.get_number_pivoting_tolerance_decreases(), 0);
+   EXPECT_TRUE(solver.linear_solver_pointer()->decrease_pivoting_tolerance());
 }
 
 // a matrix deemed singular is first given a dual regularization, then an increasing primal regularization

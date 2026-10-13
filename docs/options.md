@@ -167,11 +167,12 @@ Setting `iterative_refinement_max_steps` to 0 disables the whole mechanism (no r
 
 | Option                                       | Type    | Default | Description                                                                             |
 | :---                                         | :---    | :---    |:----------------------------------------------------------------------------------------|
-| `iterative_refinement_min_steps` | integer | 1 | Minimum number of iterative refinement steps per linear system solve |
+| `iterative_refinement_min_steps` | integer | 0 | Minimum number of iterative refinement steps per linear system solve |
 | `iterative_refinement_max_steps` | integer | 10 | Maximum number of iterative refinement steps per linear system solve (0: iterative refinement disabled) |
 | `iterative_refinement_residual_ratio_max` | double | 1e-10 | Iterative refinement stops when the residual ratio is below this tolerance |
 | `iterative_refinement_residual_ratio_singular` | double | 1e-5 | Residual ratio above which the matrix is deemed singular after failed iterative refinement |
 | `iterative_refinement_improvement_factor` | double | 0.999999999 | Refinement stagnates (and stops) when the residual ratio exceeds this factor times the previous ratio. In (0, 1] |
+| `iterative_refinement_pivoting_tolerance_decrease_after` | integer | 5 | Undo the last pivoting tolerance increase after this many consecutive accurate iterations (doubled after an oscillation; 0: never, the increase is permanent) |
 
 ## Quasi-Newton options
 

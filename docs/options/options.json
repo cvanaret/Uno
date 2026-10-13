@@ -267,7 +267,12 @@
   {
     "name": "iterative_refinement_min_steps",
     "type": "INTEGER",
-    "default": "1"
+    "default": "0"
+  },
+  {
+    "name": "iterative_refinement_pivoting_tolerance_decrease_after",
+    "type": "INTEGER",
+    "default": "5"
   },
   {
     "name": "iterative_refinement_residual_ratio_max",

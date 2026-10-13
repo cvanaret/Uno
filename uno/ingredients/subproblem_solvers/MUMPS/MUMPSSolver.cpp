@@ -151,11 +151,23 @@ namespace uno {
 
    bool MUMPSSolver::increase_pivoting_tolerance() {
       const double current_tolerance = MUMPS_CNTL(1);
-      if (MUMPSSettings::max_pivtol <= current_tolerance) {
+      const auto new_tolerance = this->pivoting_tolerance_schedule.increase(current_tolerance);
+      if (!new_tolerance.has_value()) {
          return false;
       }
-      MUMPS_CNTL(1) = std::min(MUMPSSettings::max_pivtol, std::pow(current_tolerance, MUMPSSettings::pivtol_increase_exponent));
+      MUMPS_CNTL(1) = *new_tolerance;
       DEBUG << "Increasing the MUMPS pivoting tolerance from " << current_tolerance << " to " << MUMPS_CNTL(1) << '\n';
+      return true;
+   }
+
+   bool MUMPSSolver::decrease_pivoting_tolerance() {
+      const double current_tolerance = MUMPS_CNTL(1);
+      const auto new_tolerance = this->pivoting_tolerance_schedule.decrease();
+      if (!new_tolerance.has_value()) {
+         return false;
+      }
+      MUMPS_CNTL(1) = *new_tolerance;
+      DEBUG << "Decreasing the MUMPS pivoting tolerance from " << current_tolerance << " to " << MUMPS_CNTL(1) << '\n';
       return true;
    }
 

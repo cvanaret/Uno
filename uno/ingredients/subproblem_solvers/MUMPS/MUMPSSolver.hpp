@@ -7,6 +7,7 @@
 #include <dmumps_c.h>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
+#include "../PivotingToleranceSchedule.hpp"
 #include "linear_algebra/Indexing.hpp"
 
 namespace uno {
@@ -43,6 +44,7 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
       [[nodiscard]] bool increase_pivoting_tolerance() override;
+      [[nodiscard]] bool decrease_pivoting_tolerance() override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
       [[nodiscard]] COOLinearSystem& get_coo_linear_system();
@@ -50,6 +52,7 @@ namespace uno {
    protected:
       DMUMPS_STRUC_C workspace{};
       COOLinearSystem linear_system{Indexing::Fortran_indexing};
+      PivotingToleranceSchedule pivoting_tolerance_schedule{MUMPSSettings::max_pivtol, MUMPSSettings::pivtol_increase_exponent};
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;

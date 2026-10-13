@@ -207,12 +207,23 @@ namespace uno {
 
    bool MA27Solver::increase_pivoting_tolerance() {
       const double current_tolerance = MA27_CNTL(1);
-      if (MA27Settings::max_pivoting_threshold <= current_tolerance) {
+      const auto new_tolerance = this->pivoting_tolerance_schedule.increase(current_tolerance);
+      if (!new_tolerance.has_value()) {
          return false;
       }
-      MA27_CNTL(1) = std::min(MA27Settings::max_pivoting_threshold, std::pow(current_tolerance,
-         MA27Settings::pivoting_threshold_increase_exponent));
+      MA27_CNTL(1) = *new_tolerance;
       DEBUG << "Increasing the MA27 pivoting tolerance from " << current_tolerance << " to " << MA27_CNTL(1) << '\n';
+      return true;
+   }
+
+   bool MA27Solver::decrease_pivoting_tolerance() {
+      const double current_tolerance = MA27_CNTL(1);
+      const auto new_tolerance = this->pivoting_tolerance_schedule.decrease();
+      if (!new_tolerance.has_value()) {
+         return false;
+      }
+      MA27_CNTL(1) = *new_tolerance;
+      DEBUG << "Decreasing the MA27 pivoting tolerance from " << current_tolerance << " to " << MA27_CNTL(1) << '\n';
       return true;
    }
 

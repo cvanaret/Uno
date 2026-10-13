@@ -158,6 +158,16 @@ TYPED_TEST_P(LinearSolverTest, PivotingToleranceIncrease) {
    }
    EXPECT_EQ(number_increases, number_pivoting_tolerance_increases<TypeParam>);
    EXPECT_FALSE(solver.increase_pivoting_tolerance());
+
+   // the increases can be undone, exactly as many times
+   size_t number_decreases = 0;
+   while (solver.decrease_pivoting_tolerance()) {
+      ++number_decreases;
+      ASSERT_LE(number_decreases, number_increases);
+   }
+   EXPECT_EQ(number_decreases, number_increases);
+   // back at the default tolerance: the schedule can be replayed
+   EXPECT_EQ(solver.increase_pivoting_tolerance(), 0 < number_increases);
 }
 
 REGISTER_TYPED_TEST_SUITE_P(LinearSolverTest,
