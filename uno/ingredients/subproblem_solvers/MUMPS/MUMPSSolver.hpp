@@ -17,6 +17,8 @@ namespace uno {
       static constexpr int permuting_scaling = 0;
       static constexpr int pivot_order = 0; // AMD
       static constexpr double pivtol = 1e-6; // relative threshold for numerical pivoting
+      static constexpr double max_pivtol = 1e-1; // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_mumps_pivtolmax
+      static constexpr double pivtol_increase_exponent = 0.5;
       static constexpr int scaling = 1; // diagonal scaling computed during the numerical factorization phase
       static constexpr size_t max_number_factorization_failures = 10;
       static constexpr int max_memory_increase_percent = 10000;
@@ -40,6 +42,7 @@ namespace uno {
       // [[nodiscard]] bool matrix_is_positive_definite() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
+      [[nodiscard]] bool increase_pivoting_tolerance() override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
       [[nodiscard]] COOLinearSystem& get_coo_linear_system();

@@ -196,6 +196,30 @@ namespace uno {
       return 1.;
    }
 
+   size_t OptimizationProblem::uncondensed_system_dimension() const {
+      return this->number_variables + this->number_constraints;
+   }
+
+   void OptimizationProblem::uncondense_rhs(const Iterate& /*current_iterate*/, const Vector<double>& augmented_rhs,
+         Vector<double>& uncondensed_rhs) const {
+      uncondensed_rhs = augmented_rhs;
+   }
+
+   void OptimizationProblem::condense_rhs(const Iterate& /*current_iterate*/, const Vector<double>& uncondensed_rhs,
+         Vector<double>& augmented_rhs) const {
+      augmented_rhs = uncondensed_rhs;
+   }
+
+   void OptimizationProblem::expand_solution(const Iterate& /*current_iterate*/, const Vector<double>& /*uncondensed_rhs*/,
+         const Vector<double>& augmented_solution, Vector<double>& uncondensed_solution) const {
+      uncondensed_solution = augmented_solution;
+   }
+
+   void OptimizationProblem::complete_uncondensed_matrix_vector_product(const Iterate& /*current_iterate*/,
+         const Vector<double>& /*uncondensed_solution*/, Vector<double>& /*product*/) const {
+      // the uncondensed matrix is the augmented matrix
+   }
+
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const {
       return this->model.complementarity_error(primals, constraints, multipliers, residual_norm);

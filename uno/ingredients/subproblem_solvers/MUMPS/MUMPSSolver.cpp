@@ -1,7 +1,9 @@
 // Copyright (c) 2024-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <stdexcept>
 #include "MUMPSSolver.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -145,6 +147,16 @@ namespace uno {
 
    size_t MUMPSSolver::rank() const {
       return static_cast<size_t>(this->workspace.n) - this->number_zero_eigenvalues();
+   }
+
+   bool MUMPSSolver::increase_pivoting_tolerance() {
+      const double current_tolerance = MUMPS_CNTL(1);
+      if (MUMPSSettings::max_pivtol <= current_tolerance) {
+         return false;
+      }
+      MUMPS_CNTL(1) = std::min(MUMPSSettings::max_pivtol, std::pow(current_tolerance, MUMPSSettings::pivtol_increase_exponent));
+      DEBUG << "Increasing the MUMPS pivoting tolerance from " << current_tolerance << " to " << MUMPS_CNTL(1) << '\n';
+      return true;
    }
 
    LinearSystem& MUMPSSolver::get_linear_system() {

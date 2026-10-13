@@ -52,6 +52,9 @@ namespace uno {
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
+      // the factorized augmented matrix is deemed singular: returns false if it cannot be regularized further
+      [[nodiscard]] bool regularize_singular_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
       void assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       [[nodiscard]] BlockAugmentedMatrix compute_block_augmented_matrix(LinearSystem& linear_system) const;

@@ -48,6 +48,8 @@ jobs:
           LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
           LIBHSL_PATH="$HOME/libhsl/builddir/libhsl.so"
           LIBAMPL_PATH="$HOME/ampl/amplsolver.a"
+          # end-to-end iterative refinement check on Mittelmann's NARX_CFy (skipped if the instance is not found)
+          NARX_CFY_NL=$(find /scratch/local/opt-008547/cvanaret/Mittelmann -name 'NARX_CFy.nl' 2>/dev/null | head -n 1)
 
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
@@ -63,6 +65,7 @@ jobs:
             -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
             -DHSL=${LIBHSL_PATH} \
             -DAMPLSOLVER=${LIBAMPL_PATH} \
+            -DUNO_NARX_CFY_NL="${NARX_CFY_NL}" \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
 

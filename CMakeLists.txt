@@ -238,7 +238,8 @@ if(MUMPS_LIBRARY)
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
    target_include_directories(uno_dependencies SYSTEM INTERFACE ${MUMPS_INCLUDE_DIR})
    if(ENABLE_TESTS)
-      target_sources(run_unotest PRIVATE unotest/functional_tests/MUMPSSolverTests.cpp)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/MUMPSSolverTests.cpp
+         unotest/functional_tests/IterativeRefinementTests.cpp)
    endif()
 
    if(NOT MUMPS_MPISEQ_LIBRARY) # parallel
@@ -462,6 +463,19 @@ if(ENABLE_TESTS)
 
    include(GoogleTest)
    gtest_discover_tests(run_unotest DISCOVERY_MODE PRE_TEST)
+
+   # end-to-end check of iterative refinement (pivoting tolerance increased at the first iteration) on Mittelmann's
+   # NARX_CFy instance. Requires the AMPL interface and the path to NARX_CFy.nl
+   set(UNO_NARX_CFY_NL "" CACHE FILEPATH "Path to Mittelmann's NARX_CFy.nl instance (optional end-to-end test)")
+   set(UNO_NARX_CFY_LINEAR_SOLVERS "MA57" CACHE STRING "Linear solvers tested on NARX_CFy")
+   if(AMPLSOLVER AND UNO_NARX_CFY_NL)
+      add_dependencies(run_unotest uno_ampl)
+      foreach(linear_solver ${UNO_NARX_CFY_LINEAR_SOLVERS})
+         add_test(NAME NARX_CFy_iterative_refinement_${linear_solver}
+            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/unotest/scripts/check_iterative_refinement_first_iteration.sh
+               $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver})
+      endforeach()
+   endif()
 endif()
 
 #########################################

@@ -5,5 +5,8 @@
 #include "LinearSolverTests.hpp"
 
 namespace uno {
+   template <>
+   constexpr size_t number_pivoting_tolerance_increases<MA27Solver> = 3;
+
    INSTANTIATE_TYPED_TEST_SUITE_P(MA27, LinearSolverTest, MA27Solver);
 }

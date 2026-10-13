@@ -18,6 +18,8 @@ namespace uno {
    // settings taken from IPOPT
    struct MA27Settings {
       static constexpr double pivoting_threshold = 1e-8;
+      static constexpr double max_pivoting_threshold = 1e-4; // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_ma27_pivtolmax
+      static constexpr double pivoting_threshold_increase_exponent = 0.75;
       static constexpr int liw_init_factor = 5;
       static constexpr int la_init_factor = 5;
    };
@@ -62,6 +64,7 @@ namespace uno {
       // [[nodiscard]] bool matrix_is_positive_definite() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
+      [[nodiscard]] bool increase_pivoting_tolerance() override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
       [[nodiscard]] COOLinearSystem& get_coo_linear_system();

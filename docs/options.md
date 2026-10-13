@@ -157,6 +157,18 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `threshold_unsuccessful_attempts`            | integer | 8       | Number of unsuccessful attempts until inertia correction becomes more aggressive        |
 | `regularize_all_variables`                   | bool | true       | Whether all variables or only the original variables are regularized        |
 
+## Iterative refinement options
+
+Iterative refinement is performed on the uncondensed (unsymmetric) Newton system. If it fails, the pivoting tolerance of the linear solver (MA27, MA57, MUMPS) is increased once per matrix; if it cannot be increased and the residual ratio is above `iterative_refinement_residual_ratio_singular`, the matrix is deemed singular and the inertia correction strategy increases the regularization.
+
+| Option                                       | Type    | Default | Description                                                                             |
+| :---                                         | :---    | :---    |:----------------------------------------------------------------------------------------|
+| `iterative_refinement_min_steps` | integer | 1 | Minimum number of iterative refinement steps per linear system solve |
+| `iterative_refinement_max_steps` | integer | 10 | Maximum number of iterative refinement steps per linear system solve (0: no refinement) |
+| `iterative_refinement_residual_ratio_max` | double | 1e-10 | Iterative refinement stops when the residual ratio is below this tolerance |
+| `iterative_refinement_residual_ratio_singular` | double | 1e-5 | Residual ratio above which the matrix is deemed singular after failed iterative refinement |
+| `iterative_refinement_improvement_factor` | double | 0.999999999 | Minimal required reduction of the residual ratio per iterative refinement step |
+
 ## Quasi-Newton options
 
 | Option                           | Type    | Default | Description                                                    |

@@ -35,6 +35,16 @@ namespace uno {
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) = 0;
 
+      // the augmented matrix factorized with the current regularization is deemed singular by the caller (e.g. iterative
+      // refinement failed): increase the regularization and refactorize the matrix until its inertia is correct.
+      // Returns false if the strategy cannot handle singular matrices
+      [[nodiscard]] virtual bool regularize_singular_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+            double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
+            DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/, BlockAugmentedMatrix /*block_augmented_matrix*/,
+            Range<> /*primal_regularization_variables*/) {
+         return false;
+      }
+
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;
       [[nodiscard]] virtual bool performs_dual_regularization() const = 0;
       [[nodiscard]] virtual double get_primal_regularization_factor() const = 0;

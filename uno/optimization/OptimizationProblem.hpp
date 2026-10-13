@@ -88,6 +88,26 @@ namespace uno {
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
+      // uncondensed (unsymmetric) primal-dual Newton system, i.e. before the elimination of the bound duals (if any).
+      // Uncondensed vectors are laid out as [primals | constraint duals | (problem-specific blocks, e.g. bound duals)],
+      // where the first number_variables + number_constraints entries follow the layout and sign conventions of the
+      // augmented (condensed) system. By default, the uncondensed system is the augmented system
+      [[nodiscard]] virtual size_t uncondensed_system_dimension() const;
+      // build the uncondensed RHS from the RHS of the augmented system (Newton system at the current iterate)
+      virtual void uncondense_rhs(const Iterate& current_iterate, const Vector<double>& augmented_rhs,
+         Vector<double>& uncondensed_rhs) const;
+      // eliminate the problem-specific blocks of an uncondensed RHS to obtain the RHS of the augmented system
+      virtual void condense_rhs(const Iterate& current_iterate, const Vector<double>& uncondensed_rhs,
+         Vector<double>& augmented_rhs) const;
+      // recover the solution of the uncondensed system from the solution of the augmented system
+      virtual void expand_solution(const Iterate& current_iterate, const Vector<double>& uncondensed_rhs,
+         const Vector<double>& augmented_solution, Vector<double>& uncondensed_solution) const;
+      // on entry, the first number_variables + number_constraints entries of product contain the product of the
+      // augmented matrix (as factorized) with the augmented part of uncondensed_solution. On exit, product contains the
+      // product of the uncondensed matrix with uncondensed_solution
+      virtual void complete_uncondensed_matrix_vector_product(const Iterate& current_iterate,
+         const Vector<double>& uncondensed_solution, Vector<double>& product) const;
+
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const;
       [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,

@@ -67,6 +67,17 @@ namespace uno {
       [[nodiscard]] static double push_variable_to_interior(double value, double lower_bound, double upper_bound,
          double absolute_factor, double relative_factor);
       [[nodiscard]] double dual_regularization_factor() const override;
+
+      // uncondensed Newton system: [primals | constraint duals | lower bound duals | upper bound duals]
+      [[nodiscard]] size_t uncondensed_system_dimension() const override;
+      void uncondense_rhs(const Iterate& current_iterate, const Vector<double>& augmented_rhs,
+         Vector<double>& uncondensed_rhs) const override;
+      void condense_rhs(const Iterate& current_iterate, const Vector<double>& uncondensed_rhs,
+         Vector<double>& augmented_rhs) const override;
+      void expand_solution(const Iterate& current_iterate, const Vector<double>& uncondensed_rhs,
+         const Vector<double>& augmented_solution, Vector<double>& uncondensed_solution) const override;
+      void complete_uncondensed_matrix_vector_product(const Iterate& current_iterate,
+         const Vector<double>& uncondensed_solution, Vector<double>& product) const override;
       void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,

@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <stdexcept>
 #include "MA27Solver.hpp"
 
@@ -202,6 +203,17 @@ namespace uno {
       return (MA27_INFO(1) == eIFLAG::RANK_DEFICIENT) ?
          static_cast<size_t>(this->workspace.info[1]) :
          static_cast<size_t>(this->workspace.n);
+   }
+
+   bool MA27Solver::increase_pivoting_tolerance() {
+      const double current_tolerance = MA27_CNTL(1);
+      if (MA27Settings::max_pivoting_threshold <= current_tolerance) {
+         return false;
+      }
+      MA27_CNTL(1) = std::min(MA27Settings::max_pivoting_threshold, std::pow(current_tolerance,
+         MA27Settings::pivoting_threshold_increase_exponent));
+      DEBUG << "Increasing the MA27 pivoting tolerance from " << current_tolerance << " to " << MA27_CNTL(1) << '\n';
+      return true;
    }
 
    LinearSystem& MA27Solver::get_linear_system() {

@@ -23,6 +23,11 @@ namespace uno {
       // [[nodiscard]] virtual bool matrix_is_positive_definite() const = 0;
       [[nodiscard]] virtual bool matrix_is_singular() const = 0;
       [[nodiscard]] virtual size_t rank() const = 0;
+
+      // increase the pivoting tolerance (to improve the accuracy of the next factorizations) if the solver supports it.
+      // Returns false if the tolerance cannot be increased (not supported or maximum value reached).
+      // The new tolerance is used from the next numerical factorization on
+      [[nodiscard]] virtual bool increase_pivoting_tolerance() { return false; }
    };
 } // namespace
 

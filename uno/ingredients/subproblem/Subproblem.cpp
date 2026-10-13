@@ -147,6 +147,17 @@ namespace uno {
       }
    }
 
+   bool Subproblem::regularize_singular_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const {
+      if ((!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) ||
+            this->inertia_correction_strategy.performs_dual_regularization()) {
+         return this->inertia_correction_strategy.regularize_singular_augmented_matrix(statistics, *this,
+            dual_regularization_parameter, this->problem.get_inertia(), linear_solver, block_augmented_matrix,
+            this->get_primal_regularization_variables());
+      }
+      return false;
+   }
+
    // (-(∇f(x_k) - ∇c(x_k) y_k), -c(x_k)) = (∇c(x_k) y_k - ∇f(x_k), -c(x_k))
    void Subproblem::assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const {
       rhs.fill(0.);

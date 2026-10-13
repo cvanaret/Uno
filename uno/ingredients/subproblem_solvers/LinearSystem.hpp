@@ -23,6 +23,9 @@ namespace uno {
 
       virtual void initialize_hessian(const Subproblem& subproblem) = 0;
       virtual void initialize_augmented_system(const Subproblem& subproblem) = 0;
+
+      // result = matrix * vector (symmetric matrix). Both arrays have (at least) `dimension` entries
+      virtual void compute_matrix_vector_product(const double* vector, double* result) const = 0;
    };
 } // namespace
 

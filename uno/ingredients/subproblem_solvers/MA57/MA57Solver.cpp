@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -243,6 +244,17 @@ namespace uno {
 
    size_t MA57Solver::rank() const {
       return static_cast<size_t>(MA57_INFO(25));
+   }
+
+   bool MA57Solver::increase_pivoting_tolerance() {
+      const double current_tolerance = MA57_CNTL(1);
+      if (MA57Settings::max_pivoting_threshold <= current_tolerance) {
+         return false;
+      }
+      MA57_CNTL(1) = std::min(MA57Settings::max_pivoting_threshold, std::pow(current_tolerance,
+         MA57Settings::pivoting_threshold_increase_exponent));
+      DEBUG << "Increasing the MA57 pivoting tolerance from " << current_tolerance << " to " << MA57_CNTL(1) << '\n';
+      return true;
    }
 
    LinearSystem& MA57Solver::get_linear_system() {
