@@ -150,6 +150,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
+          append: true
           header: mittelmann-benchmark
           number: ${{ inputs.pr_number }}
           path: benchmark-comment.md
