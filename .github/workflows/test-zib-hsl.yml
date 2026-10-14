@@ -73,18 +73,18 @@ jobs:
           TIMELIMIT=600
           OPTION_FILE="uno_mittelmann.opt"
 
-          mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
-          if [ "${#INSTANCES[@]}" -eq 0 ]; then
+          mapfile -t SORTED < <(printf '%s\n' "${INSTANCES[@]}" | sort -f)
+          if [ "${#SORTED[@]}" -eq 0 ]; then
             echo "::error::No .nl files found under '$DIR'"; exit 1
           fi
 
           mkdir -p logs
           solved=0
-          total=${#INSTANCES[@]}
+          total=${#SORTED[@]}
           declare -a CONSOLE
           rows=""
 
-          for nl in "${INSTANCES[@]}"; do
+          for nl in "${SORTED[@]}"; do
             name="$(basename "$nl" .nl)"
             log="logs/${name}.log"
 
