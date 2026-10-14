@@ -96,46 +96,51 @@ namespace uno {
       // bound constraints
       const auto& variables_lower_bounds = this->get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->get_variables_upper_bounds();
-      Vector<double> variable_complementarity(this->number_variables, 0.); // TODO preallocate
-      for (size_t variable_index: Range(this->number_variables)) {
-         double result = 0.;
+      const auto variable_lower_bound_complementarity = [&](size_t variable_index) {
          if (is_finite(variables_lower_bounds[variable_index])) {
-            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
-               (primals[variable_index] - variables_lower_bounds[variable_index])));
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]);
          }
+         return 0.;
+      };
+      const auto variable_upper_bound_complementarity = [&](size_t variable_index) {
          if (is_finite(variables_upper_bounds[variable_index])) {
-            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
-               (primals[variable_index] - variables_upper_bounds[variable_index])));
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]);
          }
-         variable_complementarity[variable_index] = result;
-      }
+         return 0.;
+      };
 
       // inequality constraints
       const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
-      Vector<double> constraint_complementarity(this->number_constraints, 0.); // TODO preallocate
-      for (size_t constraint_index: this->get_inequality_constraints()) {
+      const auto constraint_complementarity = [&](size_t constraint_index) {
          // free constraint: no complementarity pair, the multiplier must vanish
          if (is_infinite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
-            constraint_complementarity[constraint_index] = std::abs(multipliers.constraints[constraint_index]);
+            return multipliers.constraints[constraint_index];
          }
          // if constraint is one-sided, pick that bound
          else if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          else if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
          // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
          // complementarity pair
          else if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
-      }
-      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+         return 0.;
+      };
+      return norm(residual_norm,
+         // variable complementarity
+         Range(this->number_variables), variable_lower_bound_complementarity,
+         Range(this->number_variables), variable_upper_bound_complementarity,
+         //constraint complementarity
+         this->get_inequality_constraints(), constraint_complementarity
+      );
    }
 
    void Model::partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const {

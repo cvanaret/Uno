@@ -304,56 +304,58 @@ namespace uno {
       // bound constraints
       const auto& variables_lower_bounds = this->model.get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->model.get_variables_upper_bounds();
-      Vector<double> variable_complementarity(this->model.number_variables, 0.); // TODO preallocate
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         double result = 0.;
+      const auto variable_lower_bound_complementarity = [&](size_t variable_index) {
          if (is_finite(variables_lower_bounds[variable_index])) {
-            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
-               (primals[variable_index] - variables_lower_bounds[variable_index])));
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]);
          }
+         return 0.;
+      };
+      const auto variable_upper_bound_complementarity = [&](size_t variable_index) {
          if (is_finite(variables_upper_bounds[variable_index])) {
-            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
-               (primals[variable_index] - variables_upper_bounds[variable_index])));
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]);
          }
-         variable_complementarity[variable_index] = result;
-      }
+         return 0.;
+      };
 
       // constraints
       const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
-      Vector<double> constraint_complementarity(this->model.number_constraints, 0.); // TODO preallocate
-      for (size_t constraint_index: Range(this->model.number_constraints)) {
+      const auto constraint_complementarity = [&](size_t constraint_index) {
          // violated constraints
          if (constraints[constraint_index] < constraints_lower_bounds[constraint_index]) {
-            constraint_complementarity[constraint_index] = (multipliers.constraints[constraint_index] - this->constraint_violation_coefficient) *
+            return (multipliers.constraints[constraint_index] - this->constraint_violation_coefficient) *
                (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          else if (constraints_upper_bounds[constraint_index] < constraints[constraint_index]) {
-            constraint_complementarity[constraint_index] = (multipliers.constraints[constraint_index] + this->constraint_violation_coefficient) *
+            return (multipliers.constraints[constraint_index] + this->constraint_violation_coefficient) *
                (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
          // the constraint is satisfied
          // free constraint: no complementarity pair, the multiplier must vanish
          else if (is_infinite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index];
+            return multipliers.constraints[constraint_index];
          }
          // if constraint is one-sided, pick that bound
          else if (is_finite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          else if (is_finite(constraints_upper_bounds[constraint_index]) && is_infinite(constraints_lower_bounds[constraint_index])) {
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
          // otherwise, the constraint has both a lower and an upper bound. The sign of the multipliers determines the
          // complementarity pair
          else if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]);
          }
          else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            constraint_complementarity[constraint_index] = multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]);
          }
-      }
-      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+         return 0.;
+      };
+      return norm(residual_norm,
+         Range(this->model.number_variables), variable_lower_bound_complementarity,
+         Range(this->model.number_variables), variable_upper_bound_complementarity,
+         Range(this->model.number_constraints), constraint_complementarity);
    }
 
    SolutionStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
