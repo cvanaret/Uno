@@ -13,7 +13,7 @@
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   // norms of any array with elements of any type, or of non-materialized vectors given as (indices, component function)
+   // norms of any array with elements of any type, or of dematerialized vectors given as (indices, component function)
 
    enum class Norm {L1, L2, L2_SQUARED, INF};
 
@@ -69,7 +69,7 @@ namespace uno {
       return norm_1(x) + norm_1(other_arrays...);
    }
 
-   // l1 norm of several non-materialized vectors: (indices, component_function)...
+   // l1 norm of several dematerialized vectors: (indices, component_function)...
    template <typename Indices, typename ComponentFunction, typename... Rest>
    std::enable_if_t<is_component_function_v<ComponentFunction>, double> norm_1(const Indices& indices,
          const ComponentFunction& component_function, const Rest& ... rest) {
@@ -102,7 +102,7 @@ namespace uno {
       return norm_2_squared(x) + norm_2_squared(other_arrays...);
    }
 
-   // l2 squared norm of several non-materialized vectors: (indices, component_function)...
+   // l2 squared norm of several dematerialized vectors: (indices, component_function)...
    template <typename Indices, typename ComponentFunction, typename... Rest>
    std::enable_if_t<is_component_function_v<ComponentFunction>, double> norm_2_squared(const Indices& indices,
          const ComponentFunction& component_function, const Rest& ... rest) {
@@ -151,7 +151,7 @@ namespace uno {
       return nan_max(norm_inf(x), norm_inf(other_arrays...));
    }
 
-   // inf norm of several non-materialized vectors: (indices, component_function)...
+   // inf norm of several dematerialized vectors: (indices, component_function)...
    template <typename Indices, typename ComponentFunction, typename... Rest>
    std::enable_if_t<is_component_function_v<ComponentFunction>, double> norm_inf(const Indices& indices,
          const ComponentFunction& component_function, const Rest& ... rest) {

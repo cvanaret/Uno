@@ -548,21 +548,23 @@ namespace uno {
 
    double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
          const Multipliers& multipliers, Norm residual_norm) const {
-      Vector<double> variable_complementarity(this->number_variables, 0.); // TODO preallocate
-      for (size_t variable_index: Range(this->number_variables)) {
-         double result = 0.;
+      // dematerialized vectors
+      const auto variable_lower_bound_complementarity = [&](size_t variable_index) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
-            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
-               (primals[variable_index] - this->variables_lower_bounds[variable_index])));
-            // TODO: taking a max works for the inf norm only
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variables_lower_bounds[variable_index]);
          }
+         return 0.;
+      };
+      const auto variable_upper_bound_complementarity = [&](size_t variable_index) {
          if (is_finite(this->variables_upper_bounds[variable_index])) {
-            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
-               (primals[variable_index] - this->variables_upper_bounds[variable_index])));
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variables_upper_bounds[variable_index]);
          }
-         variable_complementarity[variable_index] = result;
-      }
-      return norm(residual_norm, variable_complementarity);
+         return 0.;
+      };
+      return norm(residual_norm,
+         Range(this->number_variables), variable_lower_bound_complementarity,
+         Range(this->number_variables), variable_upper_bound_complementarity
+      );
    }
 
    double PrimalDualInteriorPointProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {
@@ -694,20 +696,23 @@ namespace uno {
 
    double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const {
-      Vector<double> shifted_bound_complementarity(this->number_variables, 0.); // TODO preallocate
-      for (size_t variable_index: Range(this->number_variables)) {
-         double result = 0.;
+      const auto shifted_lower_bound_complementarity = [&](size_t variable_index) {
          if (is_finite(this->variables_lower_bounds[variable_index])) {
-            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
-               (primals[variable_index] - variables_lower_bounds[variable_index]) - shift));
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]) - shift;
          }
-         if (is_finite(this->variables_upper_bounds[variable_index])) { // upper bound
-            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
-               (primals[variable_index] - variables_upper_bounds[variable_index]) - shift));
+         return 0.;
+      };
+      const auto shifted_upper_bound_complementarity = [&](size_t variable_index) {
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]) - shift;
          }
-         shifted_bound_complementarity[variable_index] = result;
-      }
-      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
+         return 0.;
+      };
+      // TODO use a generic norm
+      return norm_inf(
+         Range(this->number_variables), shifted_lower_bound_complementarity,
+         Range(this->number_variables), shifted_upper_bound_complementarity
+      );
    }
 
    // protected member functions

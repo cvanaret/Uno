@@ -259,14 +259,14 @@ namespace uno {
 
    double ScaledModel::unscaled_primal_infeasibility(double /*scaled_primal_infeasibility*/,
          const Vector<double>& scaled_constraints, Norm residual_norm) const {
-      Vector<double> constraint_violation(scaled_constraints); // TODO preallocate
       const auto& constraint_scaling = this->scaling.get_constraint_scaling();
       const auto& lower_bounds = this->get_constraints_lower_bounds();
       const auto& upper_bounds = this->get_constraints_upper_bounds();
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         constraint_violation[constraint_index] = this->constraint_violation(scaled_constraints[constraint_index],
+      // dematerialized vector
+      const auto constraint_violation = [&](size_t constraint_index) {
+         return this->constraint_violation(scaled_constraints[constraint_index],
             lower_bounds[constraint_index], upper_bounds[constraint_index]) / constraint_scaling[constraint_index];
-      }
-      return norm(residual_norm, constraint_violation);
+      };
+      return norm(residual_norm, Range(this->number_constraints), constraint_violation);
    }
 } // namespace
