@@ -72,8 +72,8 @@ namespace uno {
    }
 
    void UnoSolverWrapper::set_logger_stream(py::object python_stream) {
-      this->stream = std::move(python_stream);  // keep Python object alive
       this->stream_buffer = std::make_unique<PythonStreamBuffer>(python_stream);
+      this->stream = std::move(python_stream);  // keep Python object alive
       this->ostream = std::make_unique<std::ostream>(this->stream_buffer.get());
       uno::Logger::set_stream(*this->ostream);
    }
