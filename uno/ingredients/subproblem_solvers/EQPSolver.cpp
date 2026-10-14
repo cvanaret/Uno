@@ -176,6 +176,7 @@ namespace uno {
             this->analysis_performed = true;
          }
 
+         /*
          // the previous iterations were accurate: try to undo the last increase of the pivoting tolerance
          if (this->current_iteration_accurate) {
             ++this->number_consecutive_accurate_iterations;
@@ -196,8 +197,9 @@ namespace uno {
             ++this->number_pivoting_tolerance_decreases;
             this->iteration_refinement_flags += 'd';
          }
+         */
 
-         // regularize the augmented matrix (this calls the analysis and the factorization)
+         // regularize the augmented matrix (this calls the analysis once and the factorization)
          subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
             block_augmented_matrix);
          this->pivoting_tolerance_increased_for_current_matrix = false;
