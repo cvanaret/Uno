@@ -296,9 +296,9 @@ namespace uno {
          if (position == std::string::npos) {
             throw std::runtime_error("The option " + argument + " does not contain the delimiter " + delimiter);
          }
-         const std::string option_name = argument.substr(0, position);
-         const std::string option_value = argument.substr(position + 1);
-         command_line_options.emplace_back(option_name, option_value);
+         std::string option_name = argument.substr(0, position);
+         std::string option_value = argument.substr(position + 1);
+         command_line_options.emplace_back(std::move(option_name), std::move(option_value));
       }
       return command_line_options;
    }
