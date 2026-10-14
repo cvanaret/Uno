@@ -27,7 +27,6 @@ namespace uno {
             options.get_double("iterative_refinement_residual_ratio_max"),
             options.get_double("iterative_refinement_residual_ratio_singular"),
             options.get_double("iterative_refinement_improvement_factor"),
-            options.get_unsigned_int("iterative_refinement_pivoting_tolerance_decrease_after")
          };
          // max_steps = 0 disables iterative refinement altogether (min_steps is then irrelevant)
          if (0 < parameters.max_steps && parameters.max_steps < parameters.min_steps) {
@@ -51,8 +50,7 @@ namespace uno {
          SubproblemSolver(),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
          correction(std::move(correction)),
-         iterative_refinement(read_iterative_refinement_parameters(options)),
-         pivoting_tolerance_decrease_after(this->iterative_refinement.pivoting_tolerance_decrease_after) {
+         iterative_refinement(read_iterative_refinement_parameters(options)) {
    }
 
    template <typename LowRankCorrection>
@@ -176,29 +174,6 @@ namespace uno {
             this->analysis_performed = true;
          }
 
-         /*
-         // the previous iterations were accurate: try to undo the last increase of the pivoting tolerance
-         if (this->current_iteration_accurate) {
-            ++this->number_consecutive_accurate_iterations;
-         }
-         else {
-            this->number_consecutive_accurate_iterations = 0;
-         }
-         this->current_iteration_accurate = true;
-         this->iteration_refinement_steps = 0;
-         this->iteration_refinement_flags.clear();
-         ++this->number_iterations_since_decrease;
-         if (0 < this->pivoting_tolerance_decrease_after &&
-               this->pivoting_tolerance_decrease_after <= this->number_consecutive_accurate_iterations &&
-               this->linear_solver->decrease_pivoting_tolerance()) {
-            this->number_consecutive_accurate_iterations = 0;
-            this->number_iterations_since_decrease = 0;
-            this->pivoting_tolerance_decreased = true;
-            ++this->number_pivoting_tolerance_decreases;
-            this->iteration_refinement_flags += 'd';
-         }
-         */
-
          // regularize the augmented matrix (this calls the analysis once and the factorization)
          subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
             block_augmented_matrix);
@@ -292,8 +267,8 @@ namespace uno {
    // and refine the solution wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve:
    // - refinement stops when the residual ratio is small enough (after at least min_steps steps), when max_steps steps
    //   were performed, or when the residual ratio stagnates. max_steps = 0 disables the whole mechanism (plain solve);
-   // - upon failure, the linear solver is asked to increase its pivoting tolerance (at most once per matrix; the increase
-   //   is undone after pivoting_tolerance_decrease_after consecutive accurate iterations) and the matrix is refactorized. The inertia of the new factorization is checked again by the inertia
+   // - upon failure, the linear solver is asked to increase its pivoting tolerance (at most once per matrix) and the matrix
+   //   is refactorized. The inertia of the new factorization is checked again by the inertia
    //   correction strategy, which may increase the regularization;
    // - if that is not possible and the residual ratio is above residual_ratio_singular, the matrix is deemed singular and
    //   the inertia correction strategy increases the regularization (once per solve). Otherwise, the current solution is
@@ -326,9 +301,6 @@ namespace uno {
          problem.expand_solution(current_iterate, this->uncondensed_rhs, linear_system.solution, this->uncondensed_solution);
          this->residual_ratio = this->compute_uncondensed_residual_ratio(subproblem, current_iterate);
          DEBUG2 << "Residual ratio: " << this->residual_ratio << '\n';
-         if (this->iterative_refinement.residual_ratio_max < this->residual_ratio) {
-            this->current_iteration_accurate = false;
-         }
 
          // iterative refinement
          size_t number_steps = 0;
@@ -366,14 +338,7 @@ namespace uno {
          // first try to improve the quality of the factorization (once per matrix)
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
-            ++this->number_pivoting_tolerance_increases;
             this->iteration_refinement_flags += 'q';
-            // the last decrease was premature: wait longer before the next one
-            if (this->pivoting_tolerance_decreased && this->number_iterations_since_decrease <= this->pivoting_tolerance_decrease_after) {
-               this->pivoting_tolerance_decrease_after *= 2;
-               DEBUG << "Pivoting tolerance decrease postponed to " << this->pivoting_tolerance_decrease_after << " accurate iterations\n";
-            }
-            this->pivoting_tolerance_decreased = false;
             DEBUG << "Refactorizing the augmented matrix with an increased pivoting tolerance\n";
             // the new factorization may have a different (numerical) inertia or be singular: let the inertia correction
             // strategy check it and increase the regularization if needed

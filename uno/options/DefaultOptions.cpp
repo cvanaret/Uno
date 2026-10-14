@@ -151,8 +151,6 @@ namespace uno {
       options.set_double("iterative_refinement_residual_ratio_max", 1e-10);
       options.set_double("iterative_refinement_residual_ratio_singular", 1e-5);
       options.set_double("iterative_refinement_improvement_factor", 0.999999999);
-      // undo a pivoting tolerance increase after this many consecutive accurate iterations (0: never, as in IPOPT)
-      options.set_integer("iterative_refinement_pivoting_tolerance_decrease_after", 5);
 
       /** trust region options **/
       // initial trust region radius
