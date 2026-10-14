@@ -904,12 +904,12 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
    Solver* uno_solver = static_cast<Solver*>(solver);
    try {
       const std::string name{option_name};
-      const std::string value{option_value};
+      std::string value{option_value};
       const bool is_preset = (name == "preset");
       if (is_preset) {
          validate_preset(value);
       }
-      uno_solver->user_options.set_string(name, value);
+      uno_solver->user_options.set_string(name, std::move(value));
       if (is_preset) {
          refresh_preset_options(*uno_solver);
       }
@@ -1030,9 +1030,9 @@ bool uno_set_solver_preset(void* solver, const char* preset_name) {
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    try {
-      const std::string preset{preset_name};
+      std::string preset{preset_name};
       validate_preset(preset);
-      uno_solver->user_options.set_string("preset", preset);
+      uno_solver->user_options.set_string("preset", std::move(preset));
       refresh_preset_options(*uno_solver);
       uno_solver->options_consistent_with_solve = false;
       return true;

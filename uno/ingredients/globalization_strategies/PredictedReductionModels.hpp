@@ -34,7 +34,7 @@ namespace uno {
          return {
             this->infeasibility_model(step_length),
             // predicted objective reduction left as a function of the objective multiplier
-            [objective = this->objective_model, step_length](double objective_multiplier) {
+            [&objective = this->objective_model, step_length](double objective_multiplier) {
                return objective(step_length, objective_multiplier, /* use_curvature_information = */ true);
             },
             this->auxiliary_model(step_length),

@@ -65,11 +65,11 @@ namespace uno {
          }
       }, py::arg("option_name"), py::arg("option_value"))
 
-      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, const std::string& option_value) {
+      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, std::string option_value) {
          const auto type = Options::option_types.find(option_name);
          if (type != Options::option_types.end()) { // key found
             if (type->second == OptionType::STRING) { // correct type
-               solver.user_options.set_string(option_name, option_value);
+               solver.user_options.set_string(option_name, std::move(option_value));
             }
             else { // incorrect type
                throw py::type_error(option_name + " is not of type string");
@@ -82,9 +82,9 @@ namespace uno {
 
       .def("set_logger_stream", &UnoSolverWrapper::set_logger_stream)
 
-      .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
+      .def("set_preset", [](UnoSolverWrapper& solver, std::string preset_name) {
          solver.validate_preset(preset_name);
-         solver.user_options.set_string("preset", preset_name);
+         solver.user_options.set_string("preset", std::move(preset_name));
          solver.refresh_preset_options();
       }, py::arg("preset_name"))
 

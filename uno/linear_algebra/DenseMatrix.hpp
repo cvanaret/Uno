@@ -51,7 +51,6 @@ namespace uno {
       };
 
       DenseMatrix(size_t number_rows, size_t number_columns);
-      ~DenseMatrix() override = default;
 
       // operators
       using BLASMatrix<T>::operator*=;
