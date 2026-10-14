@@ -38,8 +38,6 @@ namespace uno {
             number_variables(number_variables) {
       }
 
-      ~UserModel() = default;
-
       ProblemType problem_type; // non-const, may be overridden based on the number of Hessian nonzeros
       const uno_int base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
       std::string name{}; // model name (used e.g. in logs and KKT system dumps); empty falls back to the interface default
