@@ -10,7 +10,7 @@
 namespace uno {
    class PythonStreamBuffer : public std::streambuf {
    public:
-      explicit PythonStreamBuffer(pybind11::object stream);
+      explicit PythonStreamBuffer(const pybind11::object& stream);
 
    protected:
       std::streamsize xsputn(const char* s, std::streamsize n) override;

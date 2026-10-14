@@ -4,7 +4,7 @@
 #include "PythonStreamBuffer.hpp"
 
 namespace uno {
-   PythonStreamBuffer::PythonStreamBuffer(pybind11::object stream):
+   PythonStreamBuffer::PythonStreamBuffer(const pybind11::object& stream):
          write_function(stream.attr("write")),
          flush_function(stream.attr("flush")) {
    }
