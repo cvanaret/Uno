@@ -37,9 +37,9 @@ namespace uno {
       void set_integer(const std::string& option_name, uno_int option_value);
       void set_double(const std::string& option_name, double option_value);
       void set_bool(const std::string& option_name, bool option_value);
-      void set_string(const std::string& option_name, const std::string& option_value);
+      void set_string(const std::string& option_name, std::string option_value);
       // setter for option with unknown type
-      void set(const std::string& option_name, const std::string& option_value);
+      void set(const std::string& option_name, std::string option_value);
 
       void overwrite(const Options& options);
 

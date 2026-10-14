@@ -147,9 +147,9 @@ namespace uno {
       this->values[option_name] = option_value;
    }
 
-   void Options::set_string(const std::string& option_name, const std::string& option_value) {
+   void Options::set_string(const std::string& option_name, std::string option_value) {
       check_option_type(option_name, OptionType::STRING);
-      this->values[option_name] = option_value;
+      this->values[option_name] = std::move(option_value);
    }
 
    namespace {
@@ -195,7 +195,7 @@ namespace uno {
    }
 
    // setter for option with unknown type
-   void Options::set(const std::string& option_name, const std::string& option_value) {
+   void Options::set(const std::string& option_name, std::string option_value) {
       const auto type = option_types.find(option_name);
       if (type == option_types.end()) {
          throw std::out_of_range("The option with name " + option_name + " does not exist");
@@ -211,7 +211,7 @@ namespace uno {
             this->set_bool(option_name, parse_bool(option_name, option_value));
             break;
          case OptionType::STRING:
-            this->set_string(option_name, option_value);
+            this->set_string(option_name, std::move(option_value));
             break;
       }
    }
@@ -331,7 +331,7 @@ namespace uno {
          if (!(stream >> option_name >> option_value) || (stream >> extra_token)) {
             throw std::invalid_argument("Malformed line " + std::to_string(line_number) + " in option file " + file_name + ": " + line);
          }
-         options.set(option_name, option_value);
+         options.set(option_name, std::move(option_value));
       }
       file.close();
    }
