@@ -26,21 +26,35 @@ namespace uno {
    template<class T>
    using storage_t = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::decay_t<T> >;
 
-   #define UNO_FORWARD_ACCESSOR(name, member)                     \
-   constexpr decltype(auto) name() & noexcept {                   \
-      return (member);                                            \
-   }                                                              \
-   \
-   constexpr decltype(auto) name() const& noexcept {              \
-      return (member);                                            \
-   }                                                              \
-   \
-   constexpr decltype(auto) name() && noexcept {                  \
-      return std::move(member);                                   \
-   }                                                              \
-   \
-   constexpr decltype(auto) name() const&& noexcept {             \
-      return std::move(member);                                   \
+   namespace detail {
+      // forwards a member out of an rvalue expression: an owned member (Declared is not a reference) is moved,
+      // a reference member refers to an object the expression does not own, so it stays an lvalue
+      template <typename Declared, typename Member>
+      constexpr decltype(auto) forward_member(Member& member) noexcept {
+         if constexpr (std::is_lvalue_reference_v<Declared>) {
+            return static_cast<Declared>(member);
+         }
+         else {
+            return std::move(member);
+         }
+      }
+   } // namespace detail
+
+   #define UNO_FORWARD_ACCESSOR(name, member)                                 \
+   constexpr decltype(auto) name() & noexcept {                               \
+      return (member);                                                        \
+   }                                                                          \
+                                                                              \
+   constexpr decltype(auto) name() const& noexcept {                          \
+      return (member);                                                        \
+   }                                                                          \
+                                                                              \
+   constexpr decltype(auto) name() && noexcept {                              \
+      return ::uno::detail::forward_member<decltype(member)>(member);         \
+   }                                                                          \
+                                                                              \
+   constexpr decltype(auto) name() const&& noexcept {                         \
+      return ::uno::detail::forward_member<decltype(member)>(member);         \
    }
 } // namespace
 
