@@ -27,7 +27,7 @@ namespace uno {
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
          View<double> hessian_values) = 0;
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> hessian_values) = 0;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> primal_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix,
          Range<> primal_regularization_variables) = 0;

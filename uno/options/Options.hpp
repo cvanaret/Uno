@@ -41,7 +41,7 @@ namespace uno {
       // setter for option with unknown type
       void set(const std::string& option_name, std::string option_value);
 
-      void overwrite(const Options& options);
+      void overwrite(const Options& other);
 
       [[nodiscard]] uno_int get_int(const std::string& option_name) const;
       [[nodiscard]] size_t get_unsigned_int(const std::string& option_name) const;
