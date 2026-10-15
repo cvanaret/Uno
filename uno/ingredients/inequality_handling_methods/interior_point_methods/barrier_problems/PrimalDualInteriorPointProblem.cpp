@@ -32,11 +32,10 @@ namespace uno {
       const InteriorPointParameters& parameters, const double& barrier_parameter, double residual_scaling_threshold):
          OptimizationProblem(problem.model, problem.number_variables + problem.get_inequality_constraints().size(),
          // move the fixed variables to the set of general constraints
-            problem.number_constraints + count_fixed_variables(problem)),
+            problem.number_constraints + count_fixed_variables(problem), residual_scaling_threshold),
          unslacked_problem(problem),
          barrier_parameter(barrier_parameter),
          parameters(parameters),
-         residual_scaling_threshold(residual_scaling_threshold),
          equality_constraints(this->number_constraints),
          barrier_variables_lower_bounds(this->number_variables, -Inf),
          barrier_variables_upper_bounds(this->number_variables, Inf),

@@ -18,7 +18,7 @@
 namespace uno {
    NoRelaxation::NoRelaxation(const Model& model, const Options& options):
          ConstraintRelaxationStrategy(options),
-         original_problem(model),
+         original_problem(model, options.get_double("residual_scaling_threshold")),
          globalization_strategy(options) {
    }
 

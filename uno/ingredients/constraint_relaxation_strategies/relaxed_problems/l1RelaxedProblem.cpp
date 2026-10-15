@@ -13,16 +13,17 @@
 
 namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-         bool relax_linear_constraints, bool use_proximal_term):
+         bool relax_linear_constraints, bool use_proximal_term, double residual_scaling_threshold):
       // call delegating constructor
       l1RelaxedProblem(model, ElasticVariables::generate(model, relax_linear_constraints), objective_multiplier,
-         constraint_violation_coefficient, use_proximal_term) {
+         constraint_violation_coefficient, use_proximal_term, residual_scaling_threshold) {
    }
 
    // delegating constructor
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
-            double constraint_violation_coefficient, bool use_proximal_term):
-         OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints),
+            double constraint_violation_coefficient, bool use_proximal_term, double residual_scaling_threshold):
+         OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints,
+            residual_scaling_threshold),
          constraint_violation_coefficient(constraint_violation_coefficient),
          elastic_variables(std::move(elastic_variables)),
          number_elastic_variables(this->elastic_variables.size()),

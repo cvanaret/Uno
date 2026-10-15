@@ -29,8 +29,8 @@ namespace uno {
 
    class OptimizationProblem {
    public:
-      explicit OptimizationProblem(const Model& model);
-      OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
+      OptimizationProblem(const Model& model, double residual_scaling_threshold);
+      OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints, double residual_scaling_threshold);
       virtual ~OptimizationProblem() = default;
 
       const Model& model;
@@ -93,6 +93,9 @@ namespace uno {
       [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
+      [[nodiscard]] virtual double compute_stationarity_scaling(const Multipliers& multipliers) const;
+      [[nodiscard]] virtual double compute_complementarity_scaling(const Multipliers& multipliers) const;
+
       // progress measures
       virtual void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const;
       virtual void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const;
@@ -109,6 +112,7 @@ namespace uno {
          const Iterate& current_iterate, const Vector<double>& primal_direction) const;
 
    protected:
+      const double residual_scaling_threshold;
       mutable Vector<double> Jv_buffer;
    };
 } // namespace

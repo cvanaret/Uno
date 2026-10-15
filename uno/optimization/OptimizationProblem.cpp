@@ -13,14 +13,15 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   OptimizationProblem::OptimizationProblem(const Model& model):
+   OptimizationProblem::OptimizationProblem(const Model& model, double residual_scaling_threshold):
          model(model), number_variables(model.number_variables), number_constraints(model.number_constraints),
-         Jv_buffer(this->model.number_constraints) {
+         residual_scaling_threshold(residual_scaling_threshold), Jv_buffer(this->model.number_constraints) {
    }
 
-   OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
+   OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints,
+      double residual_scaling_threshold):
          model(model), number_variables(number_variables), number_constraints(number_constraints),
-         Jv_buffer(number_constraints) {
+         residual_scaling_threshold(residual_scaling_threshold), Jv_buffer(number_constraints) {
    }
 
    double OptimizationProblem::get_objective_multiplier() const {
@@ -217,6 +218,26 @@ namespace uno {
          return SolutionStatus::FEASIBLE_KKT_POINT;
       }
       return SolutionStatus::NOT_OPTIMAL;
+   }
+
+   double OptimizationProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {
+      const size_t total_size = this->get_number_bounded_variables() + this->number_constraints;
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double multiplier_norm = norm_1(multipliers.constraints, multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., multiplier_norm / scaling_factor);
+   }
+
+   double OptimizationProblem::compute_complementarity_scaling(const Multipliers& multipliers) const {
+      const size_t total_size = this->get_number_bounded_variables();
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double bound_multiplier_norm = norm_1(multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 
    // progress measures

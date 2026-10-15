@@ -28,10 +28,10 @@ namespace uno {
       std::vector<OptionOverride>& option_overrides) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         original_problem(model),
+         original_problem(model, options.get_double("residual_scaling_threshold")),
          // relax nonlinear constraints + linear constraints in the presence of a trust region
          feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region,
-            options.get_bool("use_proximal_term")),
+            options.get_bool("use_proximal_term"), options.get_double("residual_scaling_threshold")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),

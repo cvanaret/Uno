@@ -13,7 +13,7 @@ namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-         bool relax_linear_constraints, bool use_proximal_term);
+         bool relax_linear_constraints, bool use_proximal_term, double residual_scaling_threshold);
       ~l1RelaxedProblem() override = default;
 
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -99,7 +99,7 @@ namespace uno {
 
       // delegating constructor
       l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
-         double constraint_violation_coefficient, bool use_proximal_term);
+         double constraint_violation_coefficient, bool use_proximal_term, double residual_scaling_threshold);
    };
 } // namespace
 
