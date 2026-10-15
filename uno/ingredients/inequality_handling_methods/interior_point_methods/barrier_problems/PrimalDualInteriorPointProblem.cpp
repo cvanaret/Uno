@@ -29,10 +29,10 @@ namespace uno {
    }
 
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem,
-      const InteriorPointParameters& parameters, const double& barrier_parameter):
+      const InteriorPointParameters& parameters, const double& barrier_parameter, double residual_scaling_threshold):
          OptimizationProblem(problem.model, problem.number_variables + problem.get_inequality_constraints().size(),
          // move the fixed variables to the set of general constraints
-            problem.number_constraints + count_fixed_variables(problem)),
+            problem.number_constraints + count_fixed_variables(problem), residual_scaling_threshold),
          unslacked_problem(problem),
          barrier_parameter(barrier_parameter),
          parameters(parameters),
@@ -259,10 +259,6 @@ namespace uno {
    void PrimalDualInteriorPointProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient,
          Evaluations& evaluations) const {
       this->unslacked_problem.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
-
-      for (const auto [_, slack_index]: this->slacks) {
-         objective_gradient[slack_index] = 0.;
-      }
 
       // barrier terms
       for (size_t variable_index: Range(this->number_variables)) {
@@ -582,7 +578,7 @@ namespace uno {
       if (total_size == 0) {
          return 1.;
       }
-      const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double multiplier_norm = norm_1(multipliers.constraints, multipliers.lower_bounds, multipliers.upper_bounds);
       return std::max(1., multiplier_norm / scaling_factor);
    }
@@ -602,15 +598,14 @@ namespace uno {
       if (total_size == 0) {
          return 1.;
       }
-      const double scaling_factor = 100. /* TODO */ * static_cast<double>(total_size);
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double bound_multiplier_norm = norm_1(multipliers.lower_bounds, multipliers.upper_bounds);
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 
    void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const {
-      Vector<double> constraints(this->number_constraints); // TODO preallocate
-      this->evaluate_constraints(iterate, constraints.view(), evaluations);
-      iterate.progress.infeasibility = norm(progress_norm, constraints);
+      this->evaluate_constraints(iterate, this->constraints_buffer.view(), evaluations);
+      iterate.progress.infeasibility = norm(progress_norm, this->constraints_buffer);
    }
 
    void PrimalDualInteriorPointProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {

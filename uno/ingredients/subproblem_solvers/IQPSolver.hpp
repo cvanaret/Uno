@@ -40,7 +40,7 @@ namespace uno {
       void update_second_order_corrections(const Subproblem& subproblem, const Iterate& trial_iterate,
          Evaluations& trial_evaluations) override;
 
-      [[nodiscard]] SolverWorkspace& get_workspace() const override;
+      [[nodiscard]] const SolverWorkspace& get_workspace() const override;
 
    private:
       Direction direction;

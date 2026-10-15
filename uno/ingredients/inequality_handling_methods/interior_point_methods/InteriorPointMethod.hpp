@@ -105,7 +105,7 @@ namespace uno {
             std::pow(std::numeric_limits<double>::epsilon(), 0.75) // slack_move
          }),
          barrier_parameter_update_strategy(options),
-         barrier_problem(problem, this->parameters, this->barrier_parameter()),
+         barrier_problem(problem, this->parameters, this->barrier_parameter(), options.get_double("residual_scaling_threshold")),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =

@@ -13,14 +13,15 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   OptimizationProblem::OptimizationProblem(const Model& model):
+   OptimizationProblem::OptimizationProblem(const Model& model, double residual_scaling_threshold):
          model(model), number_variables(model.number_variables), number_constraints(model.number_constraints),
-         Jv_buffer(this->model.number_constraints) {
+         residual_scaling_threshold(residual_scaling_threshold), Jv_buffer(this->model.number_constraints) {
    }
 
-   OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
+   OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints,
+      double residual_scaling_threshold):
          model(model), number_variables(number_variables), number_constraints(number_constraints),
-         Jv_buffer(number_constraints) {
+         residual_scaling_threshold(residual_scaling_threshold), Jv_buffer(number_constraints) {
    }
 
    double OptimizationProblem::get_objective_multiplier() const {
@@ -75,26 +76,25 @@ namespace uno {
 
    void OptimizationProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
-      constraints.fill(0.);
-      for (size_t index: Range(this->number_constraints)) {
-         constraints[index] = evaluations.constraints[index];
-      }
+      // copy the constraints at the beginning of the "constraints" vector
+      view(constraints, 0, this->model.number_constraints) = evaluations.constraints;
+      view(constraints, this->model.number_constraints, constraints.size()).fill(0.);
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient,
+         Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
-      objective_gradient.fill(0.);
-      for (size_t index: Range(this->model.number_variables)) {
-         objective_gradient[index] += evaluations.objective_gradient[index];
-      }
+      // copy the objective gradient at the beginning of the "objective_gradient" vector
+      view(objective_gradient, 0, this->model.number_variables) = evaluations.objective_gradient;
+      view(objective_gradient, this->model.number_variables, objective_gradient.size()).fill(0.);
    }
 
    void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const {
       evaluations.evaluate_jacobian(this->model, primals);
-      jacobian_values.fill(0.);
-      for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
-         jacobian_values[nonzero_index] = evaluations.jacobian_values[nonzero_index];
-      }
+      // copy the Jacobian at the beginning of the "jacobian_values" vector
+      const size_t number_jacobian_nonzeros = this->model.number_jacobian_nonzeros();
+      view(jacobian_values, 0, number_jacobian_nonzeros) = evaluations.jacobian_values;
+      view(jacobian_values, number_jacobian_nonzeros, jacobian_values.size()).fill(0.);
    }
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
@@ -218,6 +218,26 @@ namespace uno {
          return SolutionStatus::FEASIBLE_KKT_POINT;
       }
       return SolutionStatus::NOT_OPTIMAL;
+   }
+
+   double OptimizationProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {
+      const size_t total_size = this->get_number_bounded_variables() + this->number_constraints;
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double multiplier_norm = norm_1(multipliers.constraints, multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., multiplier_norm / scaling_factor);
+   }
+
+   double OptimizationProblem::compute_complementarity_scaling(const Multipliers& multipliers) const {
+      const size_t total_size = this->get_number_bounded_variables();
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double bound_multiplier_norm = norm_1(multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 
    // progress measures

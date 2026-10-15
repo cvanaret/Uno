@@ -61,7 +61,7 @@ namespace uno {
       throw std::runtime_error("No SOC implemented in IQPSolver");
    }
 
-   SolverWorkspace& IQPSolver::get_workspace() const {
+   const SolverWorkspace& IQPSolver::get_workspace() const {
       return this->qp_solver->get_workspace();
    }
 

@@ -15,7 +15,7 @@ namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
-         const double& barrier_parameter);
+         const double& barrier_parameter, double residual_scaling_threshold);
       PrimalDualInteriorPointProblem(const OptimizationProblem&, const InteriorPointParameters&, const double&&) = delete;
 
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -72,8 +72,8 @@ namespace uno {
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
-      [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
-      [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
+      [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const override;
+      [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const override;
 
       // progress measures
       void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const override;

@@ -28,14 +28,15 @@ namespace uno {
       std::vector<OptionOverride>& option_overrides) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         original_problem(model),
+         original_problem(model, options.get_double("residual_scaling_threshold")),
          // relax nonlinear constraints + linear constraints in the presence of a trust region
          feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region,
-            options.get_bool("use_proximal_term")),
+            options.get_bool("use_proximal_term"), options.get_double("residual_scaling_threshold")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
+         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          bound_multiplier_max_norm(options.get_double("bound_multiplier_max_norm")),
          constraints_buffer(model.number_constraints) {
    }
@@ -58,7 +59,7 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
-         1000. /* TODO use option */);
+         this->least_square_multiplier_max_norm);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);

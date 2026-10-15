@@ -56,6 +56,7 @@ namespace uno {
       const OptimizationProblem original_problem;
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       MeritFunction globalization_strategy;
+      const double least_square_multiplier_max_norm;
       Vector<double> initial_point;
    };
 } // namespace

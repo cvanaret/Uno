@@ -45,7 +45,7 @@ namespace uno {
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         View<double> /*hessian_values*/) {
+         View<double> /*primal_regularization_values*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       // TODO fix
       throw std::runtime_error("PrimalDualInertiaCorrection::regularize_hessian not implemented yet");

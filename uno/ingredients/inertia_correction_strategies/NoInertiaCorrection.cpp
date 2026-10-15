@@ -16,7 +16,7 @@ namespace uno {
 
    void NoInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         View<double> /*hessian_values*/) {
+         View<double> /*primal_regularization_values*/) {
       // do nothing
    }
 
