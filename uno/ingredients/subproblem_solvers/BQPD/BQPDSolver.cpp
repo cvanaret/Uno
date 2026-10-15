@@ -34,29 +34,30 @@ extern "C" {
 }
 
 namespace uno {
-   // heuristics to select kmax (the maximum size of the nullspace)
+   namespace {
+      // heuristics to select kmax (the maximum size of the nullspace)
+      // approach implemented in filterSQP
+      int pick_kmax_filtersqp(size_t number_variables, size_t /*number_constraints*/) {
+         return std::min(static_cast<int>(number_variables), 500);
+      }
 
-   // approach implemented in filterSQP
-   int pick_kmax_filtersqp(size_t number_variables, size_t /*number_constraints*/) {
-      return std::min(static_cast<int>(number_variables), 500);
-   }
-
-   // approach implemented in Minotaur
-   // https://github.com/coin-or/minotaur/blob/51a8bb78241a0b2e9ae94802aa76af8319f99192/src/interfaces/UnoEngine.cpp#L277
-   int pick_kmax_minotaur(size_t number_variables, size_t /*number_constraints*/) {
-      size_t kmax = 0;
-      if (number_variables <= 1500) {
-         kmax = number_variables;
+      // approach implemented in Minotaur
+      // https://github.com/coin-or/minotaur/blob/51a8bb78241a0b2e9ae94802aa76af8319f99192/src/interfaces/UnoEngine.cpp#L277
+      int pick_kmax_minotaur(size_t number_variables, size_t /*number_constraints*/) {
+         size_t kmax = 0;
+         if (number_variables <= 1500) {
+            kmax = number_variables;
+         }
+         /*
+         else if (number_variables <= 5000) {
+            kmax = number_variables - number_constraints/5; // caution, this may underflow
+         }
+         */
+         else {
+            kmax = 5000;
+         }
+         return static_cast<int>(kmax);
       }
-      /*
-      else if (number_variables <= 5000) {
-         kmax = number_variables - number_constraints/5; // caution, this may underflow
-      }
-      */
-      else {
-         kmax = 5000;
-      }
-      return static_cast<int>(kmax);
    }
 
    // preallocate a bunch of stuff

@@ -15,7 +15,10 @@
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   #define BIG 1e30
+   namespace {
+      // BQPD has no notion of infinite bounds: infinite bounds are clamped to ±BQPD_infinite_bound
+      constexpr double BQPD_infinite_bound = 1e30;
+   } // namespace
 
    void BQPDQuadraticProgram::initialize_memory(const Subproblem& subproblem) {
       if (subproblem.has_curvature() && !subproblem.has_hessian_operator() && !subproblem.has_hessian_matrix()) {
@@ -86,8 +89,8 @@ namespace uno {
       }
       // replace INFs with large finite values (TODO: is that really useful?)
       for (size_t index: Range(this->number_variables + this->number_constraints)) {
-         this->lower_bounds[index] = std::max(-BIG, this->lower_bounds[index]);
-         this->upper_bounds[index] = std::min(BIG, this->upper_bounds[index]);
+         this->lower_bounds[index] = std::max(-BQPD_infinite_bound, this->lower_bounds[index]);
+         this->upper_bounds[index] = std::min(BQPD_infinite_bound, this->upper_bounds[index]);
       }
 
       // choose the Hessian representation for the gdotx callback. This mirrors the logic formerly in
@@ -135,12 +138,12 @@ namespace uno {
       this->lower_bounds.resize(this->number_variables + this->number_constraints);
       this->upper_bounds.resize(this->number_variables + this->number_constraints);
       for (size_t variable_index: Range(this->number_variables)) {
-         this->lower_bounds[variable_index] = std::max(-BIG, variables_lower_bounds[variable_index]);
-         this->upper_bounds[variable_index] = std::min(BIG, variables_upper_bounds[variable_index]);
+         this->lower_bounds[variable_index] = std::max(-BQPD_infinite_bound, variables_lower_bounds[variable_index]);
+         this->upper_bounds[variable_index] = std::min(BQPD_infinite_bound, variables_upper_bounds[variable_index]);
       }
       for (size_t constraint_index: Range(this->number_constraints)) {
-         this->lower_bounds[this->number_variables + constraint_index] = std::max(-BIG, constraints_lower_bounds[constraint_index]);
-         this->upper_bounds[this->number_variables + constraint_index] = std::min(BIG, constraints_upper_bounds[constraint_index]);
+         this->lower_bounds[this->number_variables + constraint_index] = std::max(-BQPD_infinite_bound, constraints_lower_bounds[constraint_index]);
+         this->upper_bounds[this->number_variables + constraint_index] = std::min(BQPD_infinite_bound, constraints_upper_bounds[constraint_index]);
       }
 
       // explicit Hessian (no operator) in the data-driven path; an empty Hessian means an LP
