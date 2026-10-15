@@ -224,17 +224,7 @@ namespace uno {
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (inequality_handling_method.update_parameterization(statistics, current_iterate, current_evaluations)) {
-         globalization_strategy.reset();
-         inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
-         // update the proximal term
-         if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
-            // refresh the proximal coefficient
-            const double proximal_coefficient = this->feasibility_inequality_handling_method->proximal_coefficient();
-            this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
-            DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
-            // re-center the proximal term at the current iterate
-            this->feasibility_problem.set_proximal_center(current_iterate.primals.view());
-         }
+         refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate, current_evaluations);
       }
 
       const Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius,
@@ -327,6 +317,19 @@ namespace uno {
       this->previous_objective.reset();
    }
 
+   void FeasibilityRestoration::refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Evaluations& current_evaluations) {
+      globalization_strategy.reset();
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
+         const double proximal_coefficient = inequality_handling_method.proximal_coefficient();
+         this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
+         DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
+         this->feasibility_problem.set_proximal_center(current_iterate.primals.view()); // or keep x_R (option)
+      }
+      // after the proximal update: the auxiliary measure must use the new coefficient and center
+      inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO only auxiliary
+   }
+
    PredictedReductionModels FeasibilityRestoration::build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const {
       if (this->current_phase == Phase::OPTIMALITY) {
@@ -383,7 +386,7 @@ namespace uno {
          *this->globalization_strategy : *this->feasibility_globalization_strategy;
       // update the parameterization first: the progress measures and the postprocessing of the trial iterate depend on it
       if (force_parameterization_update && inequality_handling_method.force_parameterization_update(statistics)) {
-         globalization_strategy.reset();
+         refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate, current_evaluations);
       }
       inequality_handling_method.accept_iterate_unconditionally(trial_iterate, trial_evaluations);
       inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,

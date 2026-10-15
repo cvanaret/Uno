@@ -91,13 +91,14 @@ namespace uno {
       const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
+      [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
+         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations);
       void switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations);
+      void refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Evaluations& current_evaluations);
       void finalize_accepted_iterate(const Model& model, Iterate& trial_iterate, const Direction& direction, double step_length,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks);
-
-      [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
-         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations);
    };
 } // namespace
 
