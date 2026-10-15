@@ -345,21 +345,19 @@ namespace cppasl::detail {
       this->collect_affine(right, 1., right_constant, scratch);
       const std::size_t right_end = scratch.size();
 
-      result.constant += scale * left_constant * right_constant;
-      if (right_constant != 0.) {
-         for (std::size_t p = left_begin; p < right_begin; ++p) {
-            result.linear_terms.push_back({scratch[p].variable, scale * right_constant * scratch[p].coefficient});
-         }
-      }
-      if (left_constant != 0.) {
-         for (std::size_t q = right_begin; q < right_end; ++q) {
-            result.linear_terms.push_back({scratch[q].variable, scale * left_constant * scratch[q].coefficient});
-         }
-      }
+      // kept in factored form for the values and gradients; the expanded terms only give its (constant) Hessian
+      DecomposedFunction::Product product{scale, left_constant, right_constant, result.product_terms.size(), 0, 0};
+      result.product_terms.insert(result.product_terms.end(), scratch.begin() + static_cast<std::ptrdiff_t>(left_begin),
+         scratch.begin() + static_cast<std::ptrdiff_t>(right_begin));
+      product.right_begin = result.product_terms.size();
+      result.product_terms.insert(result.product_terms.end(), scratch.begin() + static_cast<std::ptrdiff_t>(right_begin),
+         scratch.begin() + static_cast<std::ptrdiff_t>(right_end));
+      product.right_end = result.product_terms.size();
+      result.products.push_back(product);
       for (std::size_t p = left_begin; p < right_begin; ++p) {
          for (std::size_t q = right_begin; q < right_end; ++q) {
             const int i = scratch[p].variable, j = scratch[q].variable;
-            result.quadratic_terms.push_back({std::max(i, j), std::min(i, j), scale * scratch[p].coefficient * scratch[q].coefficient});
+            result.product_quadratic_terms.push_back({std::max(i, j), std::min(i, j), scale * scratch[p].coefficient * scratch[q].coefficient});
          }
       }
       scratch.resize(left_begin);

@@ -123,3 +123,36 @@ TEST_CASE(mixed_quadratic_and_nonlinear_terms) {
    CHECK_CLOSE(model.evaluate_objective(workspace, x.data()), x[0] * x[0] + x[0] * x[1] + std::exp(x[1]) + 3. * x[2], 1e-14);
    CHECK_DERIVATIVES(model, x, 1., std::vector<double>{2.}, 1e-6);
 }
+
+// Products of general affine forms are evaluated in factored form: expanded into x^T (a b^T) x, (x0 - x1)^2 at
+// x0 ~ x1 ~ 1e8 or (x0 - 1e8)^2 would lose all their digits (catastrophic cancellation), as in robot_c or henon120.
+TEST_CASE(products_of_affine_forms_are_evaluated_without_cancellation) {
+   const Expression expressions[] = {
+      pow(var(0) - var(1), num(2.)),                    // (x0 - x1)^2
+      pow(var(0) - num(1e8), num(2.)),                  // (x0 - c)^2
+      (var(0) - var(1)) * (var(0) + var(1) - num(2e8)), // general product
+      var(3) * var(3),                                  // product of linear defined variables
+   };
+   const double x0 = 1e8 + 1.5, x1 = 1e8 + 0.25;
+   const double values[] = {1.5625, 2.25, 1.25 * 1.75, (x0 + x1) * (x0 + x1)};
+   const double gradients[][2] = {{2.5, -2.5}, {3., 0.}, {1.75 + 1.25, -1.75 + 1.25}, {2. * (x0 + x1), 2. * (x0 + x1)}};
+   for (std::size_t k = 0; k < 4; ++k) {
+      const cppasl::NlModel model = testing::write_and_read(problem_with(expressions[k]), Format::Binary, "cancellation");
+      cppasl::EvaluationWorkspace workspace(model);
+      const std::vector<double> x{x0, x1, 0.};
+      CHECK_CLOSE(model.evaluate_objective(workspace, x.data()), values[k], 1e-15);
+      double constraint = 0.;
+      model.evaluate_constraints(workspace, x.data(), &constraint);
+      CHECK_CLOSE(constraint, values[k], 1e-15);
+      std::vector<double> gradient(3), jacobian(model.number_jacobian_nonzeros());
+      model.evaluate_objective_gradient(workspace, x.data(), gradient.data());
+      model.evaluate_jacobian(workspace, x.data(), jacobian.data());
+      for (int j = 0; j < 2; ++j) {
+         CHECK_CLOSE(gradient[static_cast<std::size_t>(j)], gradients[k][j], 1e-15);
+         for (std::size_t q = 0; q < jacobian.size(); ++q) {
+            if (model.jacobian_column_indices()[q] == j) CHECK_CLOSE(jacobian[q], gradients[k][j], 1e-15);
+         }
+      }
+      CHECK(model.objective_structure() == cppasl::FunctionStructure::Quadratic); // structure still detected
+   }
+}

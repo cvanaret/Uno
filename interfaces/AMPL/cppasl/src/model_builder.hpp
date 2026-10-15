@@ -63,6 +63,8 @@ namespace cppasl::detail {
       std::uint32_t stamp{0};
       std::vector<NodeIndex> dfs_stack;
       void append_quadratic_part(FunctionBlock& block);
+      void merge_quadratic_terms(std::vector<QuadraticTerm>& terms);
+      void append_merged_quadratic_terms(FunctionBlock& block, const std::vector<QuadraticTerm>& terms);
       void sort_local_variables(TapeStorage& storage, std::size_t instruction_begin, std::size_t instruction_count,
          std::size_t variable_begin, std::size_t variable_count);
       void prepare_shared_defined_variables();
