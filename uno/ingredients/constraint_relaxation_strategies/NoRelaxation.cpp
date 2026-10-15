@@ -19,7 +19,8 @@ namespace uno {
    NoRelaxation::NoRelaxation(const Model& model, const Options& options):
          ConstraintRelaxationStrategy(options),
          original_problem(model, options.get_double("residual_scaling_threshold")),
-         globalization_strategy(options) {
+         globalization_strategy(options),
+         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
    }
 
    NoRelaxation::~NoRelaxation() = default;
@@ -37,7 +38,7 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
-         1000. /* TODO use option */);
+         this->least_square_multiplier_max_norm);
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
       this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);

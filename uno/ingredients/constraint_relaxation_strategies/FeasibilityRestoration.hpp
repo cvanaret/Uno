@@ -83,6 +83,7 @@ namespace uno {
       Vector<double> pre_restoration_primals{};
       bool first_switch_to_feasibility{true};
       bool first_test_of_switch_back{true};
+      const double least_square_multiplier_max_norm;
       const double bound_multiplier_max_norm;
 
       mutable Vector<double> constraints_buffer;
