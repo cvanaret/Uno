@@ -604,9 +604,8 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const {
-      Vector<double> constraints(this->number_constraints); // TODO preallocate
-      this->evaluate_constraints(iterate, constraints.view(), evaluations);
-      iterate.progress.infeasibility = norm(progress_norm, constraints);
+      this->evaluate_constraints(iterate, this->constraints_buffer.view(), evaluations);
+      iterate.progress.infeasibility = norm(progress_norm, this->constraints_buffer);
    }
 
    void PrimalDualInteriorPointProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
