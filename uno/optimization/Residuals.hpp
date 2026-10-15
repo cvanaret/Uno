@@ -10,7 +10,7 @@
 namespace uno {
    class Residuals {
    public:
-      Residuals(size_t number_variables):
+      explicit Residuals(size_t number_variables):
          lagrangian_gradient(number_variables) {
       }
 
