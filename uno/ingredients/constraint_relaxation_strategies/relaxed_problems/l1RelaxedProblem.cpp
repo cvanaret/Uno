@@ -133,9 +133,9 @@ namespace uno {
 
    void l1RelaxedProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
-      for (size_t index: Range(this->number_constraints)) {
-         constraints[index] = evaluations.constraints[index];
-      }
+      // copy the constraints at the beginning of the "constraints" vector
+      view(constraints, 0, this->number_constraints) = evaluations.constraints;
+      view(constraints, this->number_constraints, constraints.size()).fill(0.);
 
       // add the contribution of the elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
@@ -150,14 +150,12 @@ namespace uno {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
          evaluations.evaluate_objective_gradient(this->model, iterate.primals);
-         for (size_t index: Range(this->model.number_variables)) {
-            objective_gradient[index] = this->objective_multiplier * evaluations.objective_gradient[index];
-         }
+         // copy the objective gradient at the beginning of the "objective_gradient" vector
+         view(objective_gradient, 0, this->model.number_variables) = this->objective_multiplier * evaluations.objective_gradient;
+         view(objective_gradient, this->model.number_variables, objective_gradient.size()).fill(0.);
       }
       else {
-         for (size_t index: Range(this->model.number_variables)) {
-            objective_gradient[index] = 0.;
-         }
+         objective_gradient.fill(0.);
       }
 
       // constraint violation (through elastic variables) contribution
@@ -177,20 +175,18 @@ namespace uno {
 
    void l1RelaxedProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const {
       evaluations.evaluate_jacobian(this->model, primals);
-      for (size_t nonzeros_index: Range(this->model.number_jacobian_nonzeros())) {
-         jacobian_values[nonzeros_index] = evaluations.jacobian_values[nonzeros_index];
-      }
+      // copy the Jacobian at the beginning of the "jacobian_values" vector
+      const size_t number_jacobian_nonzeros = this->model.number_jacobian_nonzeros();
+      view(jacobian_values, 0, number_jacobian_nonzeros) = evaluations.jacobian_values;
 
       // add the contribution of the elastic variables
-      size_t nonzero_index = this->model.number_jacobian_nonzeros();
-      for ([[maybe_unused]] const auto _: this->elastic_variables.positive) {
-         jacobian_values[nonzero_index] = -1.;
-         ++nonzero_index;
-      }
-      for ([[maybe_unused]] const auto _: this->elastic_variables.negative) {
-         jacobian_values[nonzero_index] = 1.;
-         ++nonzero_index;
-      }
+      const size_t end_positive = number_jacobian_nonzeros + this->elastic_variables.positive.size();
+      const size_t end_negative = end_positive + this->elastic_variables.negative.size();
+      view(jacobian_values, number_jacobian_nonzeros, end_positive).fill(-1.);
+      view(jacobian_values, end_positive, end_negative).fill(1.);
+
+      // zero out the rest
+      view(jacobian_values, end_negative, jacobian_values.size()).fill(0.);
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
