@@ -260,10 +260,6 @@ namespace uno {
          Evaluations& evaluations) const {
       this->unslacked_problem.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
-      for (const auto [_, slack_index]: this->slacks) {
-         objective_gradient[slack_index] = 0.;
-      }
-
       // barrier terms
       for (size_t variable_index: Range(this->number_variables)) {
          double barrier_term = 0.;
