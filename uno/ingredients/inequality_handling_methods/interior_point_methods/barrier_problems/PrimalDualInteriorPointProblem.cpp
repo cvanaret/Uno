@@ -463,6 +463,107 @@ namespace uno {
       return std::pow(this->barrier_parameter, this->parameters.dual_regularization_exponent);
    }
 
+   /* Uncondensed Newton system (the augmented system is obtained by eliminating the bound duals):
+    *  [W + δ_w I   J^T     -I     -I ] [ dx]   [r_x ]
+    *  [  J       -δ_c I     0      0 ] [ s ] = [r_c ]   (s = -dy: sign convention of the augmented system)
+    *  [ Z_L        0       S_L     0 ] [dzL]   [r_zL]   with S_L = X - L, S_U = X - U
+    *  [ Z_U        0        0     S_U] [dzU]   [r_zU]
+    * Newton RHS: r_x = -∇_x L(x, y, z) (incl. damping), r_c = -c(x), r_zL = μ - S_L z_L, r_zU = μ - S_U z_U.
+    * Condensed (1, 1) block: W + Σ + δ_w I with Σ = S_L^{-1} Z_L + S_U^{-1} Z_U; condensed RHS: r_x + S_L^{-1} r_zL + S_U^{-1} r_zU
+    */
+   size_t PrimalDualInteriorPointProblem::uncondensed_system_dimension() const {
+      return 3 * this->number_variables + this->number_constraints;
+   }
+
+   void PrimalDualInteriorPointProblem::uncondense_rhs(const Iterate& current_iterate, const Vector<double>& augmented_rhs,
+         Vector<double>& uncondensed_rhs) const {
+      const size_t lower_bound_offset = this->number_variables + this->number_constraints;
+      const size_t upper_bound_offset = lower_bound_offset + this->number_variables;
+      view(uncondensed_rhs, 0, lower_bound_offset) = view(augmented_rhs, 0, lower_bound_offset);
+      for (size_t variable_index: Range(this->number_variables)) {
+         double lower_bound_rhs = 0., upper_bound_rhs = 0.;
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
+            lower_bound_rhs = this->barrier_parameter - distance_to_bound * current_iterate.multipliers.lower_bounds[variable_index];
+            uncondensed_rhs[variable_index] -= lower_bound_rhs / distance_to_bound;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_upper_bounds[variable_index];
+            upper_bound_rhs = this->barrier_parameter - distance_to_bound * current_iterate.multipliers.upper_bounds[variable_index];
+            uncondensed_rhs[variable_index] -= upper_bound_rhs / distance_to_bound;
+         }
+         uncondensed_rhs[lower_bound_offset + variable_index] = lower_bound_rhs;
+         uncondensed_rhs[upper_bound_offset + variable_index] = upper_bound_rhs;
+      }
+   }
+
+   void PrimalDualInteriorPointProblem::condense_rhs(const Iterate& current_iterate, const Vector<double>& uncondensed_rhs,
+         Vector<double>& augmented_rhs) const {
+      const size_t lower_bound_offset = this->number_variables + this->number_constraints;
+      const size_t upper_bound_offset = lower_bound_offset + this->number_variables;
+      view(augmented_rhs, 0, lower_bound_offset) = view(uncondensed_rhs, 0, lower_bound_offset);
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
+            augmented_rhs[variable_index] += uncondensed_rhs[lower_bound_offset + variable_index] / distance_to_bound;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_upper_bounds[variable_index];
+            augmented_rhs[variable_index] += uncondensed_rhs[upper_bound_offset + variable_index] / distance_to_bound;
+         }
+      }
+   }
+
+   void PrimalDualInteriorPointProblem::expand_solution(const Iterate& current_iterate, const Vector<double>& uncondensed_rhs,
+         const Vector<double>& augmented_solution, Vector<double>& uncondensed_solution) const {
+      const size_t lower_bound_offset = this->number_variables + this->number_constraints;
+      const size_t upper_bound_offset = lower_bound_offset + this->number_variables;
+      view(uncondensed_solution, 0, lower_bound_offset) = view(augmented_solution, 0, lower_bound_offset);
+      for (size_t variable_index: Range(this->number_variables)) {
+         const double primal_direction = augmented_solution[variable_index];
+         double lower_bound_dual_direction = 0., upper_bound_dual_direction = 0.;
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
+            lower_bound_dual_direction = (uncondensed_rhs[lower_bound_offset + variable_index] -
+               current_iterate.multipliers.lower_bounds[variable_index] * primal_direction) / distance_to_bound;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_upper_bounds[variable_index];
+            upper_bound_dual_direction = (uncondensed_rhs[upper_bound_offset + variable_index] -
+               current_iterate.multipliers.upper_bounds[variable_index] * primal_direction) / distance_to_bound;
+         }
+         uncondensed_solution[lower_bound_offset + variable_index] = lower_bound_dual_direction;
+         uncondensed_solution[upper_bound_offset + variable_index] = upper_bound_dual_direction;
+      }
+   }
+
+   void PrimalDualInteriorPointProblem::complete_uncondensed_matrix_vector_product(const Iterate& current_iterate,
+         const Vector<double>& uncondensed_solution, Vector<double>& product) const {
+      const size_t lower_bound_offset = this->number_variables + this->number_constraints;
+      const size_t upper_bound_offset = lower_bound_offset + this->number_variables;
+      for (size_t variable_index: Range(this->number_variables)) {
+         const double primal_direction = uncondensed_solution[variable_index];
+         const double lower_bound_dual_direction = uncondensed_solution[lower_bound_offset + variable_index];
+         const double upper_bound_dual_direction = uncondensed_solution[upper_bound_offset + variable_index];
+         double lower_bound_product = 0., upper_bound_product = 0.;
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
+            const double multiplier = current_iterate.multipliers.lower_bounds[variable_index];
+            // remove the contribution of the condensed barrier term and add that of the bound dual
+            product[variable_index] -= (multiplier / distance_to_bound) * primal_direction + lower_bound_dual_direction;
+            lower_bound_product = multiplier * primal_direction + distance_to_bound * lower_bound_dual_direction;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - this->variables_upper_bounds[variable_index];
+            const double multiplier = current_iterate.multipliers.upper_bounds[variable_index];
+            product[variable_index] -= (multiplier / distance_to_bound) * primal_direction + upper_bound_dual_direction;
+            upper_bound_product = multiplier * primal_direction + distance_to_bound * upper_bound_dual_direction;
+         }
+         product[lower_bound_offset + variable_index] = lower_bound_product;
+         product[upper_bound_offset + variable_index] = upper_bound_product;
+      }
+   }
+
    // protected member functions
 
    double PrimalDualInteriorPointProblem::push_variable_to_interior(double value, double lower_bound, double upper_bound,

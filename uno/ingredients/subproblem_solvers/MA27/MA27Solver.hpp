@@ -8,6 +8,7 @@
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
+#include "../PivotingToleranceSchedule.hpp"
 #include "linear_algebra/Indexing.hpp"
 
 namespace uno {
@@ -18,6 +19,8 @@ namespace uno {
    // settings taken from IPOPT
    struct MA27Settings {
       static constexpr double pivoting_threshold = 1e-8;
+      static constexpr double max_pivoting_threshold = 1e-4; // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_ma27_pivtolmax
+      static constexpr double pivoting_threshold_increase_exponent = 0.75;
       static constexpr int liw_init_factor = 5;
       static constexpr int la_init_factor = 5;
    };
@@ -62,6 +65,8 @@ namespace uno {
       // [[nodiscard]] bool matrix_is_positive_definite() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
+      [[nodiscard]] bool increase_pivoting_tolerance() override;
+      [[nodiscard]] bool decrease_pivoting_tolerance() override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
       [[nodiscard]] COOLinearSystem& get_coo_linear_system();
@@ -69,6 +74,7 @@ namespace uno {
    private:
       MA27Workspace workspace{};
       COOLinearSystem linear_system{Indexing::Fortran_indexing};
+      PivotingToleranceSchedule pivoting_tolerance_schedule{MA27Settings::max_pivoting_threshold, MA27Settings::pivoting_threshold_increase_exponent};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

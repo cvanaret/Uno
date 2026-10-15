@@ -1,8 +1,10 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include "COOLinearSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
    COOLinearSystem::COOLinearSystem(int solver_indexing): solver_indexing(solver_indexing) {
@@ -41,6 +43,20 @@ namespace uno {
       this->matrix_values.resize(this->number_nonzeros);
       this->rhs.resize(this->dimension);
       this->solution.resize(this->dimension);
+   }
+
+   // the triangular COO representation stores each off-diagonal entry once; duplicate entries are summed
+   void COOLinearSystem::compute_matrix_vector_product(const double* vector, double* result) const {
+      std::fill(result, result + this->dimension, 0.);
+      for (size_t nonzero_index: Range(this->number_nonzeros)) {
+         const size_t row_index = static_cast<size_t>(this->matrix_row_indices[nonzero_index] - this->solver_indexing);
+         const size_t column_index = static_cast<size_t>(this->matrix_column_indices[nonzero_index] - this->solver_indexing);
+         const double entry = this->matrix_values[nonzero_index];
+         result[row_index] += entry * vector[column_index];
+         if (row_index != column_index) {
+            result[column_index] += entry * vector[row_index];
+         }
+      }
    }
 
    double COOLinearSystem::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,

@@ -157,6 +157,22 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `threshold_unsuccessful_attempts`            | integer | 8       | Number of unsuccessful attempts until inertia correction becomes more aggressive        |
 | `regularize_all_variables`                   | bool | true       | Whether all variables or only the original variables are regularized        |
 
+## Iterative refinement options
+
+Iterative refinement is performed after each solve with a direct linear solver. With the primal-dual interior-point method, the residuals are computed on the uncondensed (unsymmetric) Newton system, i.e. before the elimination of the bound duals; otherwise, they are computed on the augmented system. Iterative refinement is not performed with limited-memory quasi-Newton Hessians (L-BFGS, L-SR1), since the augmented matrix then does not contain the full Hessian.
+
+If refinement fails, the pivoting tolerance of the linear solver (MA27, MA57, MUMPS) is increased (at most once per matrix) and the matrix is refactorized; its inertia is checked again and the regularization increased if needed. The increase of the pivoting tolerance is permanent: all subsequent factorizations use the stricter tolerance, up to a solver-specific maximum (1e-4 for MA27 and MA57, 0.1 for MUMPS, as in IPOPT). If the tolerance cannot be increased and the residual ratio is above `iterative_refinement_residual_ratio_singular`, the matrix is deemed singular and the inertia correction strategy increases the regularization. Second-order corrections never modify the factorization: their refined solution is accepted as is.
+
+Setting `iterative_refinement_max_steps` to 0 disables the whole mechanism (no residual computation, no pivoting tolerance increase, no singularity heuristic). Unlike IPOPT's `max_refinement_steps` (which allows up to `max_refinement_steps` + 1 steps), `iterative_refinement_max_steps` is the exact maximum number of refinement steps.
+
+| Option                                       | Type    | Default | Description                                                                             |
+| :---                                         | :---    | :---    |:----------------------------------------------------------------------------------------|
+| `iterative_refinement_min_steps` | integer | 0 | Minimum number of iterative refinement steps per linear system solve |
+| `iterative_refinement_max_steps` | integer | 10 | Maximum number of iterative refinement steps per linear system solve (0: iterative refinement disabled) |
+| `iterative_refinement_residual_ratio_max` | double | 1e-10 | Iterative refinement stops when the residual ratio is below this tolerance |
+| `iterative_refinement_residual_ratio_singular` | double | 1e-5 | Residual ratio above which the matrix is deemed singular after failed iterative refinement |
+| `iterative_refinement_improvement_factor` | double | 0.999999999 | Refinement stagnates (and stops) when the residual ratio exceeds this factor times the previous ratio. In (0, 1] |
+
 ## Quasi-Newton options
 
 | Option                           | Type    | Default | Description                                                    |
