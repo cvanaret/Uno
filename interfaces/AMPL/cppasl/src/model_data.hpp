@@ -27,9 +27,17 @@ namespace cppasl::detail {
       std::size_t edge_begin{0}, edge_end{0};             ///< reverse program, in ModelData::reverse_edges
       std::size_t defined_occurrence_begin{0}, defined_occurrence_end{0}; ///< in ModelData::defined_occurrences
       std::size_t occurrence_begin{0}, occurrence_end{0}; ///< variable leaves, in ModelData::variable_occurrences
+      /// functions with products of general affine forms: their quadratic part is evaluated (value, gradient) from
+      /// the monomials [monomial_begin, monomial_end) and the factored products [product_begin, product_end); the
+      /// quadratic arrays then only serve the Hessian, the Hessian-vector products and the structure
+      std::size_t monomial_begin{0}, monomial_end{0};
+      std::size_t product_begin{0}, product_end{0};
 
       [[nodiscard]] bool has_quadratic_part() const { return this->quadratic_end > this->quadratic_begin; }
       [[nodiscard]] bool has_elements() const { return this->element_end > this->element_begin; }
+      [[nodiscard]] bool has_factored_products() const { return this->product_end > this->product_begin; }
+      /// the value/gradient of the function has a quadratic part (expanded or factored)
+      [[nodiscard]] bool has_quadratic_value() const { return this->has_quadratic_part() || this->has_factored_products(); }
    };
 
    /// A non-quadratic term scale * tape(x) of the top-level sum of a function
@@ -77,6 +85,12 @@ namespace cppasl::detail {
       std::size_t index_begin, index_end; ///< into nonlinear_constraint_indices
    };
 
+   /// scale * (left_constant + sum left terms) * (right_constant + sum right terms), terms in ModelData::product_*
+   struct AffineProduct {
+      double scale, left_constant, right_constant;
+      std::size_t left_begin, right_begin, right_end;
+   };
+
    struct ModelData {
       NlHeader header;
       int number_variables{0};
@@ -115,6 +129,14 @@ namespace cppasl::detail {
       /// the Jacobian nonzero index for constraints
       std::vector<std::uint32_t> quadratic_row_positions, quadratic_column_positions;
       std::vector<std::uint32_t> quadratic_hessian_slots;
+      // factored evaluation of the quadratic parts with products of general affine forms (see FunctionBlock)
+      std::vector<int> monomial_rows, monomial_columns;   ///< coefficient * x[row] * x[column] (merged)
+      std::vector<double> monomial_coefficients;
+      std::vector<std::uint32_t> monomial_row_positions, monomial_column_positions;
+      std::vector<AffineProduct> affine_products;
+      std::vector<int> product_variables;
+      std::vector<double> product_coefficients;
+      std::vector<std::uint32_t> product_positions;      ///< same convention as quadratic_row_positions
 
       // non-quadratic elements
       std::vector<NonlinearElement> elements;
