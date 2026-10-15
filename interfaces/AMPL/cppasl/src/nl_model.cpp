@@ -16,26 +16,84 @@ namespace cppasl {
    using detail::NonlinearElement;
 
    namespace {
-      /// 1/2 x^T H x for the quadratic part of a function
+      inline double affine_value(const ModelData& model, double constant, std::size_t begin, std::size_t end, const double* x) {
+         const int* variables = model.product_variables.data();
+         const double* coefficients = model.product_coefficients.data();
+         for (std::size_t k = begin; k < end; ++k) constant += coefficients[k] * x[variables[k]];
+         return constant;
+      }
+
+      /// quadratic part with factored products: monomials + sum scale * left(x) * right(x)
+      double factored_quadratic_value(const ModelData& model, const FunctionBlock& block, const double* x) {
+         double value = 0.;
+         for (std::size_t q = block.monomial_begin; q < block.monomial_end;) { // sorted by (column, row)
+            const int column = model.monomial_columns[q];
+            double inner = 0.;
+            for (; q < block.monomial_end && model.monomial_columns[q] == column; ++q) {
+               inner += model.monomial_coefficients[q] * x[model.monomial_rows[q]];
+            }
+            value += inner * x[column];
+         }
+         for (std::size_t p = block.product_begin; p < block.product_end; ++p) {
+            const detail::AffineProduct& product = model.affine_products[p];
+            value += product.scale * affine_value(model, product.left_constant, product.left_begin, product.right_begin, x) *
+               affine_value(model, product.right_constant, product.right_begin, product.right_end, x);
+         }
+         return value;
+      }
+
+      void add_factored_quadratic_gradient(const ModelData& model, const FunctionBlock& block, const double* x, double weight,
+            double* gradient) {
+         for (std::size_t q = block.monomial_begin; q < block.monomial_end; ++q) {
+            const double c = weight * model.monomial_coefficients[q];
+            const int i = model.monomial_rows[q], j = model.monomial_columns[q];
+            gradient[model.monomial_row_positions[q]] += c * x[j];
+            gradient[model.monomial_column_positions[q]] += c * x[i];
+         }
+         const double* coefficients = model.product_coefficients.data();
+         const std::uint32_t* positions = model.product_positions.data();
+         for (std::size_t p = block.product_begin; p < block.product_end; ++p) {
+            const detail::AffineProduct& product = model.affine_products[p];
+            const double left = weight * product.scale * affine_value(model, product.left_constant, product.left_begin, product.right_begin, x);
+            const double right = weight * product.scale * affine_value(model, product.right_constant, product.right_begin, product.right_end, x);
+            for (std::size_t k = product.left_begin; k < product.right_begin; ++k) gradient[positions[k]] += right * coefficients[k];
+            for (std::size_t k = product.right_begin; k < product.right_end; ++k) gradient[positions[k]] += left * coefficients[k];
+         }
+      }
+
+      /// 1/2 x^T H x for the quadratic part of a function, as sum_j x_j (1/2 H_jj x_j + sum_{i>j} H_ij x_i): the
+      /// columns are evaluated one at a time (the diagonal and the strictly lower entries are both sorted by column).
+      /// Summing all the diagonal terms and all the off-diagonal terms separately would cancel catastrophically for
+      /// forms like discretized Laplacians (|1/2 sum_i H_ii x_i^2| >> |1/2 x^T H x|).
       inline double quadratic_value(const ModelData& model, const FunctionBlock& block, const double* x) {
+         if (block.has_factored_products()) return factored_quadratic_value(model, block, x);
          const int* rows = model.quadratic_rows.data();
          const int* columns = model.quadratic_columns.data();
          const double* values = model.quadratic_values.data();
-         double diagonal_sum = 0., off_diagonal_sum = 0.;
-         for (std::size_t q = block.quadratic_begin; q < block.quadratic_off_diagonal_begin; ++q) {
-            const double xi = x[rows[q]];
-            diagonal_sum += values[q] * xi * xi;
+         std::size_t d = block.quadratic_begin, q = block.quadratic_off_diagonal_begin;
+         const std::size_t d_end = block.quadratic_off_diagonal_begin, q_end = block.quadratic_end;
+         double value = 0.;
+         while (d < d_end || q < q_end) {
+            const int column = (q == q_end || (d < d_end && rows[d] <= columns[q])) ? rows[d] : columns[q];
+            double inner = 0.;
+            if (d < d_end && rows[d] == column) {
+               inner = 0.5 * values[d] * x[column];
+               ++d;
+            }
+            for (; q < q_end && columns[q] == column; ++q) inner += values[q] * x[rows[q]];
+            value += inner * x[column];
          }
-         for (std::size_t q = block.quadratic_off_diagonal_begin; q < block.quadratic_end; ++q) {
-            off_diagonal_sum += values[q] * x[rows[q]] * x[columns[q]];
-         }
-         return 0.5 * diagonal_sum + off_diagonal_sum;
+         return value;
       }
 
       /// gradient[positions] += weight * H x for the quadratic part of a function (positions: variables for
       /// objectives, Jacobian nonzeros for constraints)
       inline void add_quadratic_gradient(const ModelData& model, const FunctionBlock& block, const double* x, double weight,
             double* gradient) {
+         if (block.has_factored_products()) {
+            add_factored_quadratic_gradient(model, block, x, weight, gradient);
+            return;
+         }
          const int* rows = model.quadratic_rows.data();
          const int* columns = model.quadratic_columns.data();
          const double* values = model.quadratic_values.data();
@@ -419,7 +477,7 @@ namespace cppasl {
       for (std::size_t k = block.linear_begin; k < block.linear_end; ++k) {
          value += model.objective_linear_coefficients[k] * x[model.objective_linear_variables[k]];
       }
-      if (block.has_quadratic_part()) value += quadratic_value(model, block, x);
+      if (block.has_quadratic_value()) value += quadratic_value(model, block, x);
       if (block.has_elements()) {
          EvaluationKernels::set_point(workspace, x);
          EvaluationKernels::evaluate_elements(model, workspace, static_cast<std::size_t>(objective_index), x);
@@ -436,7 +494,7 @@ namespace cppasl {
       for (std::size_t k = block.linear_begin; k < block.linear_end; ++k) {
          gradient[model.objective_linear_variables[k]] += model.objective_linear_coefficients[k];
       }
-      if (block.has_quadratic_part()) add_quadratic_gradient(model, block, x, 1., gradient);
+      if (block.has_quadratic_value()) add_quadratic_gradient(model, block, x, 1., gradient);
       if (block.has_elements()) {
          EvaluationKernels::set_point(workspace, x);
          EvaluationKernels::evaluate_elements(model, workspace, static_cast<std::size_t>(objective_index), x);

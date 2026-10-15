@@ -325,6 +325,38 @@ namespace cppasl::detail {
       ModelData& model = *this->data;
       std::vector<QuadraticTerm>& terms = this->decomposed.quadratic_terms;
       block.quadratic_begin = block.quadratic_off_diagonal_begin = block.quadratic_end = model.quadratic_values.size();
+      block.monomial_begin = block.monomial_end = model.monomial_coefficients.size();
+      block.product_begin = block.product_end = model.affine_products.size();
+      if (!this->decomposed.products.empty()) {
+         // values and gradients: the monomials (merged) and the factored products
+         this->merge_quadratic_terms(terms);
+         for (const QuadraticTerm& term: terms) {
+            model.monomial_rows.push_back(term.row);
+            model.monomial_columns.push_back(term.column);
+            model.monomial_coefficients.push_back(term.coefficient);
+         }
+         block.monomial_end = model.monomial_coefficients.size();
+         const std::size_t offset = model.product_variables.size();
+         for (const LinearTerm& term: this->decomposed.product_terms) {
+            model.product_variables.push_back(term.variable);
+            model.product_coefficients.push_back(term.coefficient);
+         }
+         for (const DecomposedFunction::Product& product: this->decomposed.products) {
+            model.affine_products.push_back({product.scale, product.left_constant, product.right_constant,
+               offset + product.left_begin, offset + product.right_begin, offset + product.right_end});
+         }
+         block.product_end = model.affine_products.size();
+         // Hessian and structure: all the terms
+         terms.insert(terms.end(), this->decomposed.product_quadratic_terms.begin(), this->decomposed.product_quadratic_terms.end());
+      }
+      if (terms.empty()) return;
+      this->merge_quadratic_terms(terms);
+      this->append_merged_quadratic_terms(block, terms);
+   }
+
+   /// sorts by (column, row) and merges the duplicates (exact zeros are dropped)
+   void ModelBuilder::merge_quadratic_terms(std::vector<QuadraticTerm>& terms) {
+      ModelData& model = *this->data;
       if (terms.empty()) return;
 
       // sort by (column, row): LSD radix (two stable counting sorts) for large functions, comparison sort otherwise
@@ -348,7 +380,10 @@ namespace cppasl::detail {
          if (merged.coefficient != 0.) terms[merged_count++] = merged;
       }
       terms.resize(merged_count);
+   }
 
+   void ModelBuilder::append_merged_quadratic_terms(FunctionBlock& block, const std::vector<QuadraticTerm>& terms) {
+      ModelData& model = *this->data;
       // H_ii = 2 c for c x_i^2, H_ij = c for c x_i x_j (i != j), so that the part equals 1/2 x^T H x
       for (const QuadraticTerm& term: terms) {
          if (term.row == term.column) {
@@ -376,6 +411,9 @@ namespace cppasl::detail {
       ModelData& model = *this->data;
       model.quadratic_row_positions.resize(model.quadratic_values.size());
       model.quadratic_column_positions.resize(model.quadratic_values.size());
+      model.monomial_row_positions.resize(model.monomial_coefficients.size());
+      model.monomial_column_positions.resize(model.monomial_coefficients.size());
+      model.product_positions.resize(model.product_variables.size());
       model.element_variable_positions.resize(model.tapes.element_variables.size());
 
       // group the linear entries by owner (stable: keeps the file order within an owner)
@@ -417,7 +455,7 @@ namespace cppasl::detail {
       }
       for (int constraint = 0; constraint < model.number_constraints; ++constraint) {
          const FunctionBlock& block = model.constraint_block(constraint);
-         if (block.has_quadratic_part()) model.quadratic_constraint_indices.push_back(constraint);
+         if (block.has_quadratic_value()) model.quadratic_constraint_indices.push_back(constraint);
          if (block.has_elements()) model.nonlinear_constraint_indices.push_back(constraint);
       }
       // runs of nonlinear constraints whose tapes are adjacent: swept in one loop by the constraint/Jacobian evaluations
@@ -481,6 +519,12 @@ namespace cppasl::detail {
             touch(model.quadratic_rows[q]);
             touch(model.quadratic_columns[q]);
          }
+         // factored products (their expanded Hessian may cancel, not their linear parts)
+         if (block.has_factored_products()) {
+            const std::size_t begin = model.affine_products[block.product_begin].left_begin;
+            const std::size_t end = model.affine_products[block.product_end - 1].right_end;
+            for (std::size_t k = begin; k < end; ++k) touch(model.product_variables[k]);
+         }
          for (std::size_t e = block.element_begin; e < block.element_end; ++e) {
             const NonlinearElement& element = model.elements[e];
             for (std::size_t v = 0; v < element.variable_count; ++v) touch(model.tapes.element_variables[element.variable_begin + v]);
@@ -511,6 +555,17 @@ namespace cppasl::detail {
          for (std::size_t q = block.quadratic_begin; q < block.quadratic_end; ++q) {
             model.quadratic_row_positions[q] = checked_position(position_of_variable[static_cast<std::size_t>(model.quadratic_rows[q])]);
             model.quadratic_column_positions[q] = checked_position(position_of_variable[static_cast<std::size_t>(model.quadratic_columns[q])]);
+         }
+         for (std::size_t q = block.monomial_begin; q < block.monomial_end; ++q) {
+            model.monomial_row_positions[q] = checked_position(position_of_variable[static_cast<std::size_t>(model.monomial_rows[q])]);
+            model.monomial_column_positions[q] = checked_position(position_of_variable[static_cast<std::size_t>(model.monomial_columns[q])]);
+         }
+         if (block.has_factored_products()) {
+            const std::size_t begin = model.affine_products[block.product_begin].left_begin;
+            const std::size_t end = model.affine_products[block.product_end - 1].right_end;
+            for (std::size_t k = begin; k < end; ++k) {
+               model.product_positions[k] = checked_position(position_of_variable[static_cast<std::size_t>(model.product_variables[k])]);
+            }
          }
          for (std::size_t e = block.element_begin; e < block.element_end; ++e) {
             const NonlinearElement& element = model.elements[e];
@@ -557,6 +612,15 @@ namespace cppasl::detail {
          for (std::size_t q = block.quadratic_begin; q < block.quadratic_end; ++q) {
             model.quadratic_row_positions[q] = static_cast<std::uint32_t>(model.quadratic_rows[q]);
             model.quadratic_column_positions[q] = static_cast<std::uint32_t>(model.quadratic_columns[q]);
+         }
+         for (std::size_t q = block.monomial_begin; q < block.monomial_end; ++q) {
+            model.monomial_row_positions[q] = static_cast<std::uint32_t>(model.monomial_rows[q]);
+            model.monomial_column_positions[q] = static_cast<std::uint32_t>(model.monomial_columns[q]);
+         }
+         if (block.has_factored_products()) {
+            const std::size_t begin = model.affine_products[block.product_begin].left_begin;
+            const std::size_t end = model.affine_products[block.product_end - 1].right_end;
+            for (std::size_t k = begin; k < end; ++k) model.product_positions[k] = static_cast<std::uint32_t>(model.product_variables[k]);
          }
          for (std::size_t e = block.element_begin; e < block.element_end; ++e) {
             const NonlinearElement& element = model.elements[e];

@@ -25,12 +25,25 @@ namespace cppasl::detail {
       std::vector<LinearTerm> linear_terms;       // may contain duplicates
       std::vector<QuadraticTerm> quadratic_terms; // may contain duplicates, any orientation
       std::vector<Element> elements;
+      /// products scale * (left_constant + sum left) * (right_constant + sum right) of general affine forms, kept in
+      /// factored form for the values and gradients (expanded, they cancel catastrophically); their constant and
+      /// linear parts are NOT in constant/linear_terms, their Hessians are in product_quadratic_terms
+      struct Product {
+         double scale, left_constant, right_constant;
+         std::size_t left_begin, right_begin, right_end; ///< in product_terms
+      };
+      std::vector<Product> products;
+      std::vector<LinearTerm> product_terms;
+      std::vector<QuadraticTerm> product_quadratic_terms;
 
       void clear() {
          this->constant = 0.;
          this->linear_terms.clear();
          this->quadratic_terms.clear();
          this->elements.clear();
+         this->products.clear();
+         this->product_terms.clear();
+         this->product_quadratic_terms.clear();
       }
    };
 
