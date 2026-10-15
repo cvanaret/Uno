@@ -15,7 +15,7 @@ namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
-         const double& barrier_parameter);
+         const double& barrier_parameter, double residual_scaling_threshold);
       PrimalDualInteriorPointProblem(const OptimizationProblem&, const InteriorPointParameters&, const double&&) = delete;
 
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -94,6 +94,7 @@ namespace uno {
       const OptimizationProblem& unslacked_problem;
       const double& barrier_parameter;
       const InteriorPointParameters& parameters;
+      const double residual_scaling_threshold;
       SparseVector<size_t> slacks;
       SparseVector<size_t> fixed_variables;
       std::vector<size_t> equality_constraints;
