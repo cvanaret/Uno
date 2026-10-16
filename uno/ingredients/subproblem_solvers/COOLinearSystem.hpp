@@ -16,6 +16,7 @@ namespace uno {
 
       void initialize_hessian(const Subproblem& subproblem) override;
       void initialize_augmented_system(const Subproblem& subproblem) override;
+      void initialize(const NewtonSystem& newton_system) override;
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
          const Vector<double>& vector) const override;

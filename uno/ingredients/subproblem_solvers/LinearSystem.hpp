@@ -9,6 +9,9 @@
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
+   // forward declaration
+   class NewtonSystem;
+
    class LinearSystem: public SolverWorkspace {
    public:
       LinearSystem() = default;
@@ -23,6 +26,7 @@ namespace uno {
 
       virtual void initialize_hessian(const Subproblem& subproblem) = 0;
       virtual void initialize_augmented_system(const Subproblem& subproblem) = 0;
+      virtual void initialize(const NewtonSystem& newton_system) = 0;
    };
 } // namespace
 

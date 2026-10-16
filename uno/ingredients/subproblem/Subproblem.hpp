@@ -4,6 +4,7 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
+#include <memory>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
@@ -19,6 +20,7 @@ namespace uno {
    class Iterate;
    class LinearSystem;
    class Model;
+   class NewtonSystem;
    class Statistics;
 
    struct BlockAugmentedMatrix {
@@ -55,6 +57,8 @@ namespace uno {
       void assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       [[nodiscard]] BlockAugmentedMatrix compute_block_augmented_matrix(LinearSystem& linear_system) const;
+      // symbolic Newton system of the problem, with the regularization blocks of the inertia correction strategy
+      [[nodiscard]] std::unique_ptr<NewtonSystem> create_newton_system() const;
 
       // variables bounds
       void set_variables_bounds(const Iterate& current_iterate, std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,

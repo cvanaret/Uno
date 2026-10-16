@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <utility>
 #include "EQPSolver.hpp"
+#include "ingredients/subproblem/NewtonSystem.hpp"
 #include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "LinearSystem.hpp"
@@ -33,9 +34,10 @@ namespace uno {
          }
       }
       this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
-      // access the linear system of the linear solver
+      // symbolic Newton system and the linear system of the linear solver
+      this->newton_system = subproblem.create_newton_system();
       auto& linear_system = this->linear_solver->get_linear_system();
-      linear_system.initialize_augmented_system(subproblem);
+      linear_system.initialize(*this->newton_system);
       this->linear_solver->initialize_memory();
    }
 
@@ -51,7 +53,8 @@ namespace uno {
       auto& linear_system = this->linear_solver->get_linear_system();
 
       // set up the linear system
-      auto [hessian, primal_inertia_correction, jacobian, dual_inertia_correction] = subproblem.compute_block_augmented_matrix(linear_system);
+      auto [hessian, primal_inertia_correction, jacobian, dual_inertia_correction] =
+         this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
       hessian.fill(0.); // no Hessian contribution
       primal_inertia_correction.fill(1.); // Identity block
       subproblem.evaluate_jacobian(iterate, jacobian, evaluations);
@@ -107,10 +110,9 @@ namespace uno {
 
       // set up the linear system by evaluating the functions at the current iterate
       if (warmstart_information.new_iterate) {
-         // assemble the augmented matrix
-         auto block_augmented_matrix = subproblem.compute_block_augmented_matrix(linear_system);
-         subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, block_augmented_matrix.hessian);
-         subproblem.evaluate_jacobian(current_iterate, block_augmented_matrix.jacobian, current_evaluations);
+         // evaluate the Newton system (all the blocks except the regularization)
+         auto block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+         this->newton_system->evaluate({statistics, current_iterate, current_evaluations}, linear_system.matrix_values.view());
 
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {

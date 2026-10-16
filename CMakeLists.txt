@@ -105,6 +105,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/InterruptTests.cpp
    unotest/functional_tests/PostprocessingEvaluationsTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
+   unotest/functional_tests/NewtonSystemTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
