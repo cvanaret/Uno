@@ -169,18 +169,23 @@ namespace uno {
       // uncondensed right-hand side: for each block row, constant - sum K(row, j) v_j
       void evaluate_rhs(const NewtonSystemContext& context, View<double> result) const {
          this->rhs.for_each_component([&](auto index, const auto& component) {
-            constexpr size_t row = decltype(index)::value;
-            View<double> slice(result.data() + this->matrix.block_offset(row), this->matrix.block_dimension(row));
-            rhs_constant(component).evaluate(context, slice);
-            for_each_linear_term(component, [&](const auto& term) {
-               subtract_linear_term<row>(this->matrix, term, context, slice);
-            });
+            this->template evaluate_rhs_row<decltype(index)::value>(component, context, result);
          });
       }
 
    protected:
       storage_t<Matrix> matrix;
       storage_t<RHS> rhs;
+
+      // note: the block row is a template parameter (not a constexpr variable of an enclosing lambda) for portability (MSVC)
+      template <size_t Row, typename Component>
+      void evaluate_rhs_row(const Component& component, const NewtonSystemContext& context, View<double> result) const {
+         View<double> slice(result.data() + this->matrix.block_offset(Row), this->matrix.block_dimension(Row));
+         rhs_constant(component).evaluate(context, slice);
+         for_each_linear_term(component, [&](const auto& term) {
+            subtract_linear_term<Row>(this->matrix, term, context, slice);
+         });
+      }
    };
 
    // free function
@@ -240,8 +245,8 @@ namespace uno {
          // linear terms declared in the right-hand side: declared_terms[row][column]
          std::vector<std::vector<bool>> declared_terms(number_blocks, std::vector<bool>(number_blocks, false));
          system.get_rhs().for_each_component([&](auto index, const auto& component) {
-            constexpr size_t row = decltype(index)::value;
-            for_each_linear_term(component, [&](const auto& term) {
+            const size_t row = decltype(index)::value;
+            for_each_linear_term(component, [&declared_terms, row](const auto& term) {
                declared_terms[row][std::decay_t<decltype(term)>::column] = true;
             });
          });
@@ -391,33 +396,7 @@ namespace uno {
       void evaluate_rhs(const KKTSystem<Matrix, RHS>& system, const NewtonSystemContext& context, View<double> rhs) {
          const auto& matrix = system.get_matrix();
          system.get_rhs().for_each_component([&](auto index, const auto& component) {
-            constexpr size_t row = decltype(index)::value;
-            const size_t dimension = matrix.block_dimension(row);
-            if (!this->condensed[row]) {
-               View<double> slice(rhs.data() + this->kept_offsets[row], dimension);
-               rhs_constant(component).evaluate(context, slice);
-               for_each_linear_term(component, [&](const auto& term) {
-                  constexpr size_t column = std::decay_t<decltype(term)>::column;
-                  if (!this->cancelled[column]) { // otherwise: cancelled symbolically
-                     subtract_linear_term<row>(matrix, term, context, slice);
-                  }
-               });
-            }
-            else {
-               View<double> slice(this->eliminated_rhs.data() + this->eliminated_offsets[row], dimension);
-               rhs_constant(component).evaluate(context, slice);
-               for_each_linear_term(component, [&](const auto& term) {
-                  constexpr size_t column = std::decay_t<decltype(term)>::column;
-                  if (column == row) { // own pivot: cancelled symbolically, but its value is needed by the back substitution
-                     for (size_t local_index: Range(dimension)) {
-                        this->current_values[this->eliminated_offsets[row] + local_index] = term.value(local_index);
-                     }
-                  }
-                  else {
-                     subtract_linear_term<row>(matrix, term, context, slice);
-                  }
-               });
-            }
+            this->template evaluate_rhs_row<decltype(index)::value>(matrix, component, context, rhs);
          });
          std::fill(this->rhs_corrections.begin(), this->rhs_corrections.end(), 0.);
          for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
@@ -464,6 +443,36 @@ namespace uno {
       std::vector<size_t> kept_indices{};
       std::vector<double> diagonal_values{};
       std::vector<double> rhs_corrections{};
+
+      // right-hand side of block row Row: kept rows into rhs, condensed rows into eliminated_rhs.
+      // note: the block row is a template parameter (not a constexpr variable of an enclosing lambda) for portability (MSVC)
+      template <size_t Row, typename Matrix, typename Component>
+      void evaluate_rhs_row(const Matrix& matrix, const Component& component, const NewtonSystemContext& context, View<double> rhs) {
+         const size_t dimension = matrix.block_dimension(Row);
+         if (!this->condensed[Row]) {
+            View<double> slice(rhs.data() + this->kept_offsets[Row], dimension);
+            rhs_constant(component).evaluate(context, slice);
+            for_each_linear_term(component, [&](const auto& term) {
+               if (!this->cancelled[std::decay_t<decltype(term)>::column]) { // otherwise: cancelled symbolically
+                  subtract_linear_term<Row>(matrix, term, context, slice);
+               }
+            });
+         }
+         else {
+            View<double> slice(this->eliminated_rhs.data() + this->eliminated_offsets[Row], dimension);
+            rhs_constant(component).evaluate(context, slice);
+            for_each_linear_term(component, [&](const auto& term) {
+               if (std::decay_t<decltype(term)>::column == Row) { // own pivot: cancelled symbolically, but its value is needed by the back substitution
+                  for (size_t local_index: Range(dimension)) {
+                     this->current_values[this->eliminated_offsets[Row] + local_index] = term.value(local_index);
+                  }
+               }
+               else {
+                  subtract_linear_term<Row>(matrix, term, context, slice);
+               }
+            });
+         }
+      }
    };
 
    // a block of eliminated unknowns, solved alone for a given kept vector u: v = D^{-1} (r - C u) (diagonal pivot D, coupling C

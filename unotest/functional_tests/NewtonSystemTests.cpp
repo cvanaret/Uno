@@ -366,8 +366,8 @@ TEST(NewtonSystemCondensation, CondensedSolutionSolvesUncondensedSystem) {
    const OptimizationProblem& barrier_problem = *setting.barrier_problem;
    const size_t n = barrier_problem.number_variables, m = barrier_problem.number_constraints;
    const size_t number_original_variables = setting.model.number_variables;
-   ASSERT_EQ(n, 7); // 5 variables + 2 slacks
-   ASSERT_EQ(m, 4); // 3 constraints + 1 fixed variable
+   ASSERT_EQ(n, size_t{7}); // 5 variables + 2 slacks
+   ASSERT_EQ(m, size_t{4}); // 3 constraints + 1 fixed variable
 
    // internal bounds of the barrier problem: original variables (x4 is fixed: moved to the constraints), then the slacks
    const std::vector<double> lower_bounds{0., -5., -INFINITY, -INFINITY, -INFINITY, -INFINITY, -1.};
@@ -503,9 +503,9 @@ TEST(NewtonSystemCondensation, SmallBlockSystem) {
       block_vector(component_vector(2, [](size_t i) { return 1. - static_cast<double>(i); }), component_vector(1, ConstantValue{0.25}),
          component_vector(2, [](size_t i) { return i == 0 ? 0.5 : 3.; }), component_vector(1, ConstantValue{-1.})));
    Condensation condensation(system, {2, 3});
-   ASSERT_EQ(condensation.number_kept(), 3);
-   ASSERT_EQ(condensation.number_eliminated(), 3);
-   ASSERT_EQ(condensation.number_diagonal_entries(), 2);
+   ASSERT_EQ(condensation.number_kept(), size_t{3});
+   ASSERT_EQ(condensation.number_eliminated(), size_t{3});
+   ASSERT_EQ(condensation.number_diagonal_entries(), size_t{2});
    condensation.evaluate_matrix(system);
    std::vector<double> rhs(3);
    condensation.evaluate_rhs(system, context, View<double>(rhs.data(), 3));
