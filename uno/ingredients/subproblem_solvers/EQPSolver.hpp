@@ -13,6 +13,7 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
+   class NewtonSystem;
    class Options;
 
    // LowRankCorrection = NoLowRankCorrection: explicit Hessian in the augmented matrix
@@ -40,8 +41,11 @@ namespace uno {
 
       [[nodiscard]] const SolverWorkspace& get_workspace() const override;
 
+      [[nodiscard]] const NewtonSystem& get_newton_system() const { return *this->newton_system; }
+
    protected:
       Direction direction;
+      std::unique_ptr<NewtonSystem> newton_system;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       LowRankCorrection correction;
       bool analysis_performed{false};

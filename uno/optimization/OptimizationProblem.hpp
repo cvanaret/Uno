@@ -5,6 +5,7 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <functional>
+#include <memory>
 #include <vector>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
@@ -25,6 +26,7 @@ namespace uno {
    class Iterate;
    class Model;
    class Multipliers;
+   class NewtonSystem;
    class Statistics;
 
    class OptimizationProblem {
@@ -83,6 +85,9 @@ namespace uno {
 
       [[nodiscard]] virtual Inertia get_inertia() const;
 
+      // symbolic Newton system of the equality-constrained subproblem: [H + δ_w I  *; J  -δ_c I]
+      [[nodiscard]] virtual std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
+         bool dual_regularization) const;
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const;

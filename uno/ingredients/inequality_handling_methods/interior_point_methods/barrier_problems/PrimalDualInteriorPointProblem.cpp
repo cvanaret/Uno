@@ -4,6 +4,7 @@
 #include <limits>
 #include <numeric>
 #include "PrimalDualInteriorPointProblem.hpp"
+#include "ingredients/subproblem/NewtonSystem.hpp"
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -78,6 +79,13 @@ namespace uno {
             this->fixed_variables.insert(fixed_variable_constraint_index, variable_index);
             ++fixed_variable_constraint_index;
             ++equality_constraint_index;
+         }
+      }
+
+      // variables with barrier terms
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index]) || is_finite(this->variables_upper_bounds[variable_index])) {
+            this->bounded_variables.push_back(variable_index);
          }
       }
 
@@ -440,6 +448,32 @@ namespace uno {
 
    Inertia PrimalDualInteriorPointProblem::get_inertia() const {
       return {this->number_variables, this->number_constraints, 0};
+   }
+
+   // Newton system with condensed bound multipliers:
+   // [∇²L + Σ + δ_w I      *   ]   with Σ = S_L^{-1} Z_L + S_U^{-1} Z_U on the bounded variables,
+   // [J                -δ_c I ]   ∇²L the Lagrangian Hessian of the unslacked problem and J the Jacobian of the slacked problem
+   std::unique_ptr<NewtonSystem> PrimalDualInteriorPointProblem::create_newton_system(HessianModel& hessian_model,
+         bool dual_regularization) const {
+      return make_newton_system([this, &hessian_model, dual_regularization](const Iterate& iterate) {
+         auto barrier_diagonal = [this, &iterate](size_t variable_index) {
+            double diagonal_barrier_term = 0.;
+            if (is_finite(this->variables_lower_bounds[variable_index])) {
+               const double distance_to_bound = iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
+               diagonal_barrier_term += iterate.multipliers.lower_bounds[variable_index] / distance_to_bound;
+            }
+            if (is_finite(this->variables_upper_bounds[variable_index])) {
+               const double distance_to_bound = iterate.primals[variable_index] - this->variables_upper_bounds[variable_index];
+               diagonal_barrier_term += iterate.multipliers.upper_bounds[variable_index] / distance_to_bound;
+            }
+            return diagonal_barrier_term;
+         };
+         return symmetric_block_matrix(
+            LagrangianHessian(this->unslacked_problem, hessian_model, this->number_variables) +
+               diagonal_matrix(this->number_variables, this->bounded_variables, std::move(barrier_diagonal)) + Regularization(this->number_variables),
+            ConstraintJacobian(*this),
+            Regularization(dual_regularization ? this->number_constraints : 0));
+      });
    }
 
    void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "COOLinearSystem.hpp"
+#include "ingredients/subproblem/NewtonSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 
 namespace uno {
@@ -38,6 +39,17 @@ namespace uno {
       // compute the COO sparse representation
       subproblem.compute_regularized_augmented_matrix_sparsity(view(this->matrix_row_indices), view(this->matrix_column_indices),
          this->solver_indexing);
+      this->matrix_values.resize(this->number_nonzeros);
+      this->rhs.resize(this->dimension);
+      this->solution.resize(this->dimension);
+   }
+
+   void COOLinearSystem::initialize(const NewtonSystem& newton_system) {
+      this->dimension = newton_system.dimension();
+      this->number_nonzeros = newton_system.number_nonzeros();
+      this->matrix_row_indices.resize(this->number_nonzeros);
+      this->matrix_column_indices.resize(this->number_nonzeros);
+      newton_system.compute_sparsity(view(this->matrix_row_indices), view(this->matrix_column_indices), this->solver_indexing);
       this->matrix_values.resize(this->number_nonzeros);
       this->rhs.resize(this->dimension);
       this->solution.resize(this->dimension);

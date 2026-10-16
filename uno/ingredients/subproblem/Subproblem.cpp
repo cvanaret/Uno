@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Subproblem.hpp"
+#include "NewtonSystem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -169,6 +170,10 @@ namespace uno {
 
    void Subproblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const {
       this->problem.assemble_primal_dual_direction(current_iterate, solution, direction);
+   }
+
+   std::unique_ptr<NewtonSystem> Subproblem::create_newton_system() const {
+      return this->problem.create_newton_system(this->hessian_model, this->inertia_correction_strategy.performs_dual_regularization());
    }
 
    BlockAugmentedMatrix Subproblem::compute_block_augmented_matrix(LinearSystem& linear_system) const {

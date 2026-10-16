@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "OptimizationProblem.hpp"
+#include "ingredients/subproblem/NewtonSystem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Direction.hpp"
@@ -174,6 +175,18 @@ namespace uno {
 
    Inertia OptimizationProblem::get_inertia() const {
       return {this->number_variables, this->number_constraints, 0};
+   }
+
+   // [∇²L + δ_w I      *   ]
+   // [J            -δ_c I ]
+   std::unique_ptr<NewtonSystem> OptimizationProblem::create_newton_system(HessianModel& hessian_model,
+         bool dual_regularization) const {
+      return make_newton_system([this, &hessian_model, dual_regularization](const Iterate& /*iterate*/) {
+         return symmetric_block_matrix(
+            LagrangianHessian(*this, hessian_model, this->number_variables) + Regularization(this->number_variables),
+            ConstraintJacobian(*this),
+            Regularization(dual_regularization ? this->number_constraints : 0));
+      });
    }
 
    void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
