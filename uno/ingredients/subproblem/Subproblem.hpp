@@ -54,8 +54,8 @@ namespace uno {
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
-      void assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const;
-      void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system, const Vector<double>& solution,
+         Direction& direction) const;
       [[nodiscard]] BlockAugmentedMatrix compute_block_augmented_matrix(LinearSystem& linear_system) const;
       // symbolic Newton system of the problem, with the regularization blocks of the inertia correction strategy
       [[nodiscard]] std::unique_ptr<NewtonSystem> create_newton_system() const;

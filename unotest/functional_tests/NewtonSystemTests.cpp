@@ -333,3 +333,287 @@ TEST(NewtonSystemSymbols, SymmetricBlockMatrixLayout) {
    EXPECT_EQ(rows[dual_start], static_cast<uno_int>(n) + 1);
    EXPECT_EQ(columns[dual_start], static_cast<uno_int>(n) + 1);
 }
+
+namespace {
+   // solve a dense linear system A x = b (Gaussian elimination with partial pivoting)
+   std::vector<double> dense_solve(std::vector<std::vector<double>> A, std::vector<double> b) {
+      const size_t n = b.size();
+      for (size_t k: Range(n)) {
+         size_t pivot = k;
+         for (size_t i = k + 1; i < n; ++i) if (std::abs(A[i][k]) > std::abs(A[pivot][k])) pivot = i;
+         std::swap(A[k], A[pivot]);
+         std::swap(b[k], b[pivot]);
+         for (size_t i = k + 1; i < n; ++i) {
+            const double factor = A[i][k] / A[k][k];
+            for (size_t j = k; j < n; ++j) A[i][j] -= factor * A[k][j];
+            b[i] -= factor * b[k];
+         }
+      }
+      std::vector<double> x(n);
+      for (size_t k = n; k-- > 0;) {
+         double sum = b[k];
+         for (size_t j = k + 1; j < n; ++j) sum -= A[k][j] * x[j];
+         x[k] = sum / A[k][k];
+      }
+      return x;
+   }
+} // namespace
+
+// condensation of the bound duals: the solution of the condensed system, completed by back substitution, solves the
+// uncondensed Newton system of the barrier problem (stationarity, linearized constraints and linearized complementarity)
+TEST(NewtonSystemCondensation, CondensedSolutionSolvesUncondensedSystem) {
+   Setting<PrimalDualInteriorPointProblem> setting;
+   const OptimizationProblem& barrier_problem = *setting.barrier_problem;
+   const size_t n = barrier_problem.number_variables, m = barrier_problem.number_constraints;
+   const size_t number_original_variables = setting.model.number_variables;
+   ASSERT_EQ(n, 7); // 5 variables + 2 slacks
+   ASSERT_EQ(m, 4); // 3 constraints + 1 fixed variable
+
+   // internal bounds of the barrier problem: original variables (x4 is fixed: moved to the constraints), then the slacks
+   const std::vector<double> lower_bounds{0., -5., -INFINITY, -INFINITY, -INFINITY, -INFINITY, -1.};
+   const std::vector<double> upper_bounds{10., INFINITY, 4., INFINITY, INFINITY, 3., 2.};
+   std::vector<size_t> lower_bounded, upper_bounded;
+   Iterate& iterate = setting.iterate;
+   for (size_t j: Range(n)) {
+      if (std::isfinite(lower_bounds[j])) lower_bounded.push_back(j);
+      if (std::isfinite(upper_bounds[j])) upper_bounded.push_back(j);
+      iterate.multipliers.lower_bounds[j] = std::isfinite(lower_bounds[j]) ? 0.7 + 0.1 * static_cast<double>(j) : 0.;
+      iterate.multipliers.upper_bounds[j] = std::isfinite(upper_bounds[j]) ? -0.4 - 0.2 * static_cast<double>(j) : 0.;
+   }
+   const size_t number_lower = lower_bounded.size(), number_upper = upper_bounded.size();
+
+   // condensed system
+   const std::unique_ptr<NewtonSystem> newton_system = setting.subproblem->create_newton_system();
+   ASSERT_EQ(newton_system->dimension(), n + m);
+   ASSERT_EQ(newton_system->number_eliminated(), number_lower + number_upper);
+   ASSERT_EQ(newton_system->uncondensed_dimension(), n + m + number_lower + number_upper);
+   const NewtonSystemContext context{setting.statistics, iterate, setting.evaluations};
+   const size_t number_nonzeros = newton_system->number_nonzeros();
+   std::vector<uno_int> rows(number_nonzeros), columns(number_nonzeros);
+   newton_system->compute_sparsity(view(rows), view(columns), Indexing::C_indexing);
+   Vector<double> values(number_nonzeros, 0.); // regularization blocks: 0
+   newton_system->evaluate(context, values.view());
+   std::vector<std::vector<double>> matrix(n + m, std::vector<double>(n + m, 0.));
+   for (size_t k: Range(number_nonzeros)) {
+      const size_t i = static_cast<size_t>(rows[k]), j = static_cast<size_t>(columns[k]);
+      matrix[i][j] += values[k];
+      if (i != j) matrix[j][i] += values[k];
+   }
+   Vector<double> rhs(n + m);
+   newton_system->assemble_rhs(context, rhs.view());
+   const std::vector<double> solution_vector = dense_solve(matrix, std::vector<double>(rhs.data(), rhs.data() + n + m));
+   Vector<double> solution(n + m);
+   for (size_t i: Range(n + m)) solution[i] = solution_vector[i];
+   Vector<double> eliminated(number_lower + number_upper, 0.);
+   newton_system->back_substitute(solution.view(), eliminated.view());
+
+   // direction: Δx, Δy (the solution contains -Δy), Δz_L, Δz_U (scattered to the variables)
+   const auto dx = view(solution.data(), n);
+   std::vector<double> minus_dy(solution.data() + n, solution.data() + n + m);
+   std::vector<double> dz_lower(n, 0.), dz_upper(n, 0.);
+   for (size_t k: Range(number_lower)) dz_lower[lower_bounded[k]] = eliminated[k];
+   for (size_t k: Range(number_upper)) dz_upper[upper_bounded[k]] = eliminated[number_lower + k];
+   const double mu = setting.barrier_parameter;
+
+   // the full direction solves the uncondensed system K d = r (symbolic product and right-hand side)
+   const size_t uncondensed_dimension = newton_system->uncondensed_dimension();
+   std::vector<double> full_direction(uncondensed_dimension), product(uncondensed_dimension, 0.), uncondensed_rhs(uncondensed_dimension);
+   for (size_t i: Range(n + m)) full_direction[i] = solution[i];
+   for (size_t k: Range(number_lower + number_upper)) full_direction[n + m + k] = eliminated[k];
+   setting.evaluations.evaluate_jacobian(setting.model, iterate.primals);
+   newton_system->add_uncondensed_product(context, View<const double>(full_direction.data(), uncondensed_dimension),
+      View<double>(product.data(), uncondensed_dimension));
+   newton_system->evaluate_uncondensed_rhs(context, View<double>(uncondensed_rhs.data(), uncondensed_dimension));
+   for (size_t i: Range(uncondensed_dimension)) {
+      EXPECT_NEAR(product[i], uncondensed_rhs[i], 1e-12 * (1. + std::abs(uncondensed_rhs[i]))) << "uncondensed row " << i;
+   }
+
+   // independent check of the equations
+   // ∇f + damping, recovered from the barrier gradient ∇f - μ/S_L - μ/S_U + damping
+   Vector<double> gradient(n);
+   barrier_problem.evaluate_objective_gradient(iterate, gradient.view(), setting.evaluations);
+   for (size_t j: Range(n)) {
+      if (std::isfinite(lower_bounds[j])) gradient[j] += mu / (iterate.primals[j] - lower_bounds[j]);
+      if (std::isfinite(upper_bounds[j])) gradient[j] += mu / (iterate.primals[j] - upper_bounds[j]);
+   }
+
+   // stationarity: ∇²L Δx + J^T (-Δy) - Δz_L - Δz_U = -(∇f + damping - J^T y - z_L - z_U)
+   Vector<double> hessian_product(number_original_variables, 0.);
+   setting.problem.compute_hessian_vector_product(setting.hessian_model, view(iterate.primals.data(), number_original_variables),
+      view(dx.data(), number_original_variables), iterate.multipliers, hessian_product.view());
+   std::vector<double> stationarity(n, 0.), jacobian_y(n, 0.);
+   barrier_problem.add_jacobian_transposed_vector_product(View<const double>(minus_dy.data(), m), View<double>(stationarity.data(), n),
+      setting.evaluations);
+   barrier_problem.add_jacobian_transposed_vector_product(iterate.multipliers.constraints.view(), View<double>(jacobian_y.data(), n),
+      setting.evaluations);
+   for (size_t j: Range(n)) {
+      if (j < number_original_variables) stationarity[j] += hessian_product[j];
+      stationarity[j] += -dz_lower[j] - dz_upper[j];
+      const double expected = -(gradient[j] - jacobian_y[j] - iterate.multipliers.lower_bounds[j] - iterate.multipliers.upper_bounds[j]);
+      EXPECT_NEAR(stationarity[j], expected, 1e-12 * (1. + std::abs(expected))) << "stationarity " << j;
+   }
+
+   // linearized constraints: J Δx = -(c(x) - c_L)
+   std::vector<double> constraints(m, 0.), jacobian_product(m, 0.);
+   barrier_problem.evaluate_constraints(iterate, View<double>(constraints.data(), m), setting.evaluations);
+   barrier_problem.add_jacobian_vector_product(View<const double>(dx.data(), n), View<double>(jacobian_product.data(), m), setting.evaluations);
+   for (size_t i: Range(m)) {
+      const double expected = -(constraints[i] - barrier_problem.get_constraints_lower_bounds()[i]);
+      EXPECT_NEAR(jacobian_product[i], expected, 1e-12 * (1. + std::abs(expected))) << "constraint " << i;
+   }
+
+   // linearized complementarity: z Δx + S Δz = μ - S z
+   for (const size_t j: lower_bounded) {
+      const double distance = iterate.primals[j] - lower_bounds[j], z = iterate.multipliers.lower_bounds[j];
+      EXPECT_NEAR(z * dx[j] + distance * dz_lower[j], mu - distance * z, 1e-12) << "lower complementarity " << j;
+   }
+   for (const size_t j: upper_bounded) {
+      const double distance = iterate.primals[j] - upper_bounds[j], z = iterate.multipliers.upper_bounds[j];
+      EXPECT_NEAR(z * dx[j] + distance * dz_upper[j], mu - distance * z, 1e-12) << "upper complementarity " << j;
+   }
+
+   // the problem recovers the same bound duals from the primal direction (linearized complementarity)
+   Multipliers direction_multipliers(n, m);
+   double step_length = 0.;
+   Vector<double> primal_direction(n);
+   for (size_t j: Range(n)) primal_direction[j] = dx[j];
+   barrier_problem.compute_bound_dual_direction(iterate.primals, iterate.multipliers, primal_direction, direction_multipliers, step_length);
+   for (size_t j: Range(n)) {
+      EXPECT_EQ(direction_multipliers.lower_bounds[j], dz_lower[j]);
+      EXPECT_EQ(direction_multipliers.upper_bounds[j], dz_upper[j]);
+   }
+}
+
+// generic condensation of a small block system: kept unknowns u (block 0, dimension 2) and w (block 1, dimension 1),
+// eliminated unknowns v (block 2, dimension 2) coupled with u0 and u1, and t (block 3, dimension 1) coupled with u1
+TEST(NewtonSystemCondensation, SmallBlockSystem) {
+   Setting<OptimizationProblem> setting;
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   const auto system = kkt_system(
+      block_matrix({2, 1, 2, 1},
+         block<0, 0>(diagonal(2, [](size_t i) { return 3. + static_cast<double>(i); })),
+         block<0, 1>(scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{2.})),
+         block<1, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{2.})),
+         block<0, 2>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? -1. : 0.5; })),
+         block<2, 0>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? 2. : -1.; })),
+         block<2, 2>(diagonal(2, [](size_t i) { return i == 0 ? 4. : -2.; })),
+         block<0, 3>(scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{-3.})),
+         block<3, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{1.5})),
+         block<3, 3>(diagonal(1, ConstantValue{5.}))),
+      block_vector(component_vector(2, [](size_t i) { return 1. - static_cast<double>(i); }), component_vector(1, ConstantValue{0.25}),
+         component_vector(2, [](size_t i) { return i == 0 ? 0.5 : 3.; }), component_vector(1, ConstantValue{-1.})));
+   Condensation condensation(system, {2, 3});
+   ASSERT_EQ(condensation.number_kept(), 3);
+   ASSERT_EQ(condensation.number_eliminated(), 3);
+   ASSERT_EQ(condensation.number_diagonal_entries(), 2);
+   condensation.evaluate_matrix(system);
+   std::vector<double> rhs(3);
+   condensation.evaluate_rhs(system, context, View<double>(rhs.data(), 3));
+
+   // condensed system (dense): kept blocks + diagonal Schur complement
+   std::vector<std::vector<double>> matrix{{3., 0., 0.}, {0., 4., 2.}, {0., 2., 0.}};
+   for (size_t position: Range(condensation.number_diagonal_entries())) {
+      const size_t index = condensation.diagonal_index(position);
+      matrix[index][index] += condensation.diagonal_value(position);
+   }
+   const std::vector<double> kept = dense_solve(matrix, rhs);
+   std::vector<double> eliminated(3);
+   condensation.back_substitute(View<const double>(kept.data(), 3), View<double>(eliminated.data(), 3));
+
+   // the full solution solves the uncondensed system
+   std::vector<double> full{kept[0], kept[1], kept[2], eliminated[0], eliminated[1], eliminated[2]}, product(6, 0.), full_rhs(6);
+   system.get_matrix().add_matrix_vector_product(context, View<const double>(full.data(), 6), View<double>(product.data(), 6));
+   system.evaluate_rhs(context, View<double>(full_rhs.data(), 6));
+   for (size_t i: Range(6)) {
+      EXPECT_NEAR(product[i], full_rhs[i], 1e-14) << "row " << i;
+   }
+}
+
+// blocks that cannot be condensed into a diagonal Schur complement are rejected
+TEST(NewtonSystemCondensation, RejectsNonDiagonalSchurComplement) {
+   // v0 coupled with u0 in the kept row, but with u1 in its own row
+   const auto system = kkt_system(
+      block_matrix({2, 0, 1},
+         block<0, 2>(scaled_selection(2, 1, 1, ConstantIndex{0}, IdentityIndex{}, ConstantValue{1.})),
+         block<2, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{1.})),
+         block<2, 2>(diagonal(1, ConstantValue{1.}))),
+      block_vector(component_vector(2, ConstantValue{0.}), component_vector(0, ConstantValue{0.}), component_vector(1, ConstantValue{0.})));
+   EXPECT_THROW(Condensation(system, {2}), std::invalid_argument);
+}
+
+// symbolic cancellation: the right-hand side in residual form (linear terms in the current values of the eliminated
+// unknowns) yields the same direction as the plain right-hand side, without evaluating the cancelled terms
+TEST(NewtonSystemCondensation, ResidualFormCancelsSymbolically) {
+   Setting<OptimizationProblem> setting;
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   // kept u (block 0, dimension 2), dual w (block 1, dimension 1), eliminated v (block 2, dimension 2) with current value v0
+   const auto v0 = [](size_t i) { return i == 0 ? 1e8 : -3.; }; // large current value: catastrophic cancellation if evaluated
+   const auto matrix = [] {
+      return block_matrix({2, 1, 2},
+         block<0, 0>(diagonal(2, [](size_t i) { return 3. + static_cast<double>(i); })),
+         block<0, 1>(scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{2.})),
+         block<1, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{2.})),
+         block<0, 2>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
+         block<2, 0>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? 2. : 0.5; })),
+         block<2, 2>(diagonal(2, [](size_t i) { return i == 0 ? 1e-3 : 4.; })));
+   };
+   // residual form: kept r = c_u - K(0,2) v0, eliminated r = q - K(2,2) v0
+   const auto c_u = [](size_t i) { return i == 0 ? 0.1 : -1.; };
+   const auto q = [](size_t i) { return i == 0 ? 0.3 : 2.; };
+   const auto residual_system = kkt_system(matrix(), block_vector(newton_rhs(component_vector(2, c_u), linear_term<2>(v0)),
+      component_vector(1, ConstantValue{0.75}), newton_rhs(component_vector(2, q), linear_term<2>(v0))));
+   // plain form: the same right-hand side, evaluated
+   const auto plain_system = kkt_system(matrix(), block_vector(
+      component_vector(2, [&](size_t i) { return c_u(i) + v0(i); }), component_vector(1, ConstantValue{0.75}),
+      component_vector(2, [&](size_t i) { return q(i) - (i == 0 ? 1e-3 : 4.) * v0(i); })));
+
+   const auto solve = [&](const auto& system, std::vector<double>& eliminated) {
+      Condensation condensation(system, {2});
+      condensation.evaluate_matrix(system);
+      std::vector<double> rhs(3);
+      condensation.evaluate_rhs(system, context, View<double>(rhs.data(), 3));
+      std::vector<std::vector<double>> dense{{3., 0., 0.}, {0., 4., 2.}, {0., 2., 0.}};
+      for (size_t position: Range(condensation.number_diagonal_entries())) {
+         const size_t index = condensation.diagonal_index(position);
+         dense[index][index] += condensation.diagonal_value(position);
+      }
+      const std::vector<double> kept = dense_solve(dense, rhs);
+      eliminated.resize(2);
+      condensation.back_substitute(View<const double>(kept.data(), 3), View<double>(eliminated.data(), 2));
+      return kept;
+   };
+   std::vector<double> residual_eliminated, plain_eliminated;
+   const std::vector<double> residual_kept = solve(residual_system, residual_eliminated);
+   const std::vector<double> plain_kept = solve(plain_system, plain_eliminated);
+
+   // exact solution: the cancelled terms do not appear. Kept rows: u0 (no coupling with w), u1 and w
+   // condensed: (3 + 2/1e-3) u0 = 0.1 + 0.3/1e-3
+   const double u0 = (0.1 + 0.3 / 1e-3) / (3. + 2. / 1e-3);
+   EXPECT_NEAR(residual_kept[0], u0, 1e-15 * std::abs(u0));
+   EXPECT_NEAR(residual_eliminated[0], (0.3 - 2. * u0) / 1e-3 - 1e8, 1e-7);
+   // the plain form loses accuracy in u0: the current value 1e8 is added in the kept row and subtracted by the correction
+   EXPECT_GT(std::abs(plain_kept[0] - u0), 1e3 * std::abs(residual_kept[0] - u0) + 1e-14);
+   // both forms agree on the well-scaled entries
+   EXPECT_NEAR(residual_kept[1], plain_kept[1], 1e-12);
+   EXPECT_NEAR(residual_kept[2], plain_kept[2], 1e-12);
+
+   // the uncondensed right-hand side of the residual form contains the linear terms
+   std::vector<double> full_rhs(5), plain_full_rhs(5);
+   residual_system.evaluate_rhs(context, View<double>(full_rhs.data(), 5));
+   plain_system.evaluate_rhs(context, View<double>(plain_full_rhs.data(), 5));
+   for (size_t i: Range(5)) {
+      EXPECT_DOUBLE_EQ(full_rhs[i], plain_full_rhs[i]) << "row " << i;
+   }
+}
+
+// a kept row coupled with a condensed block in residual form must declare the linear term of the coupling
+TEST(NewtonSystemCondensation, RejectsMissingLinearTerm) {
+   const auto system = kkt_system(
+      block_matrix({1, 0, 1},
+         block<0, 2>(scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
+         block<2, 0>(scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{1.})),
+         block<2, 2>(diagonal(1, ConstantValue{1.}))),
+      block_vector(component_vector(1, ConstantValue{0.}), component_vector(0, ConstantValue{0.}),
+         newton_rhs(component_vector(1, ConstantValue{0.}), linear_term<2>(ConstantValue{1.}))));
+   EXPECT_THROW(Condensation(system, {2}), std::invalid_argument);
+}

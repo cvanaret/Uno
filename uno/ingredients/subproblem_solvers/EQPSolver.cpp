@@ -129,7 +129,7 @@ namespace uno {
          }
 
          // assemble the RHS
-         subproblem.assemble_augmented_rhs(current_iterate, current_evaluations, linear_system.rhs);
+         this->newton_system->assemble_rhs({statistics, current_iterate, current_evaluations}, linear_system.rhs.view());
          DEBUG3 << "RHS: " << linear_system.rhs << '\n';
       }
 
@@ -142,7 +142,7 @@ namespace uno {
       else {
          this->correction.apply(linear_system.solution);
          // assemble the full primal-dual direction
-         subproblem.assemble_primal_dual_direction(current_iterate, linear_system.solution, this->direction);
+         subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction);
       }
       direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       return this->direction;
@@ -190,7 +190,7 @@ namespace uno {
       // solve the linear system and assemble the full primal-dual direction
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       this->correction.apply(linear_system.solution);
-      subproblem.assemble_primal_dual_direction(current_iterate, linear_system.solution, this->direction_SOC);
+      subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
    }
 

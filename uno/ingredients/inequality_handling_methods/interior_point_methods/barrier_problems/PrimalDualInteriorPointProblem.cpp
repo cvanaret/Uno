@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <numeric>
+#include <stdexcept>
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/subproblem/NewtonSystem.hpp"
 #include "../InteriorPointParameters.hpp"
@@ -88,6 +89,15 @@ namespace uno {
             this->bounded_variables.push_back(variable_index);
          }
       }
+      for (const size_t variable_index: this->bounded_variables) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            this->lower_bounded_variables.push_back(variable_index);
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            this->upper_bounded_variables.push_back(variable_index);
+         }
+      }
+      this->bound_dual_direction_buffer.resize(this->lower_bounded_variables.size() + this->upper_bounded_variables.size());
 
       // compute the Jacobian sparsity
       const size_t number_jacobian_nonzeros = this->unslacked_problem.number_jacobian_nonzeros();
@@ -450,43 +460,85 @@ namespace uno {
       return {this->number_variables, this->number_constraints, 0};
    }
 
-   // Newton system with condensed bound multipliers:
-   // [∇²L + Σ + δ_w I      *   ]   with Σ = S_L^{-1} Z_L + S_U^{-1} Z_U on the bounded variables,
-   // [J                -δ_c I ]   ∇²L the Lagrangian Hessian of the unslacked problem and J the Jacobian of the slacked problem
+   // linearized complementarity of the lower and upper bounds: Z Δx + S Δz = μe - S z with S = X - X_B, i.e. for each
+   // bound type the blocks Z and S in the rows of the bound duals, the constant μe of the right-hand side and the current
+   // values z (the right-hand side μe - S z is in residual form)
+   auto PrimalDualInteriorPointProblem::complementarity_blocks(const Vector<double>& primals, const Multipliers& multipliers) const {
+      const auto blocks = [&](const std::vector<size_t>& bounded_variables, const std::vector<double>& bounds,
+            const Vector<double>& bound_duals) {
+         const size_t number_bounds = bounded_variables.size();
+         const auto variable = [&bounded_variables](size_t index) { return bounded_variables[index]; };
+         const auto distance_to_bound = [&bounded_variables, &bounds, &primals](size_t index) {
+            const size_t variable_index = bounded_variables[index];
+            return primals[variable_index] - bounds[variable_index];
+         };
+         const auto bound_dual = [&bounded_variables, &bound_duals](size_t index) { return bound_duals[bounded_variables[index]]; };
+         return std::make_tuple(
+            scaled_selection(number_bounds, this->number_variables, number_bounds, IdentityIndex{}, variable, bound_dual), // Z
+            diagonal(number_bounds, distance_to_bound), // S
+            component_vector(number_bounds, [this](size_t /*index*/) { return this->barrier_parameter; }), // μe
+            bound_dual); // z
+      };
+      return std::make_tuple(blocks(this->lower_bounded_variables, this->variables_lower_bounds, multipliers.lower_bounds),
+         blocks(this->upper_bounded_variables, this->variables_upper_bounds, multipliers.upper_bounds));
+   }
+
+   // Newton system of the barrier problem in (Δx, -Δy, Δz_L, Δz_U):
+   //    [∇²L + δ_w I   J^T      -I_L    -I_U ] [  Δx ]   [ -(∇f + damping) + J^T y + z_L + z_U ]  (residual form:)
+   //    [J             -δ_c I                ] [ -Δy ] = [ -c                                  ]
+   //    [Z_L                     S_L         ] [ Δz_L]   [ μe - S_L z_L                        ]
+   //    [Z_U                             S_U ] [ Δz_U]   [ μe - S_U z_U                        ]
+   // with S_L = X - X_L, S_U = X - X_U, ∇²L the Lagrangian Hessian of the unslacked problem, J the Jacobian of the slacked
+   // problem and I_L, I_U the selections of the lower- and upper-bounded variables. The right-hand side is in residual form:
+   // the terms z_L, z_U (= -(-I_L) z_L - (-I_U) z_U) and -S_L z_L, -S_U z_U are linear terms of the blocks of the matrix.
+   // The bound duals are condensed: [∇²L + Σ + δ_w I  *; J  -δ_c I] with Σ = S_L^{-1} Z_L + S_U^{-1} Z_U, and the linear
+   // terms cancel symbolically: the condensed right-hand side is -(∇f + damping) + J^T y + μ S_L^{-1} e + μ S_U^{-1} e
    std::unique_ptr<NewtonSystem> PrimalDualInteriorPointProblem::create_newton_system(HessianModel& hessian_model,
          bool dual_regularization) const {
       return make_newton_system([this, &hessian_model, dual_regularization](const Iterate& iterate) {
-         auto barrier_diagonal = [this, &iterate](size_t variable_index) {
-            double diagonal_barrier_term = 0.;
-            if (is_finite(this->variables_lower_bounds[variable_index])) {
-               const double distance_to_bound = iterate.primals[variable_index] - this->variables_lower_bounds[variable_index];
-               diagonal_barrier_term += iterate.multipliers.lower_bounds[variable_index] / distance_to_bound;
-            }
-            if (is_finite(this->variables_upper_bounds[variable_index])) {
-               const double distance_to_bound = iterate.primals[variable_index] - this->variables_upper_bounds[variable_index];
-               diagonal_barrier_term += iterate.multipliers.upper_bounds[variable_index] / distance_to_bound;
-            }
-            return diagonal_barrier_term;
-         };
-         return symmetric_block_matrix(
-            LagrangianHessian(this->unslacked_problem, hessian_model, this->number_variables) +
-               diagonal_matrix(this->number_variables, this->bounded_variables, std::move(barrier_diagonal)) + Regularization(this->number_variables),
-            ConstraintJacobian(*this),
-            Regularization(dual_regularization ? this->number_constraints : 0));
-      });
+         const size_t n = this->number_variables, m = this->number_constraints;
+         const size_t number_lower_bounds = this->lower_bounded_variables.size();
+         const size_t number_upper_bounds = this->upper_bounded_variables.size();
+         auto [lower_complementarity, upper_complementarity] = this->complementarity_blocks(iterate.primals, iterate.multipliers);
+         auto& [Z_L, S_L, mu_L, z_L] = lower_complementarity;
+         auto& [Z_U, S_U, mu_U, z_U] = upper_complementarity;
+         const auto lower_variable = [this](size_t index) { return this->lower_bounded_variables[index]; };
+         const auto upper_variable = [this](size_t index) { return this->upper_bounded_variables[index]; };
+         return kkt_system(
+            block_matrix({n, m, number_lower_bounds, number_upper_bounds},
+               block<0, 0>(LagrangianHessian(this->unslacked_problem, hessian_model, n) + Regularization(n)),
+               block<0, 1>(transpose(ConstraintJacobian(*this))),
+               block<0, 2>(scaled_selection(n, number_lower_bounds, number_lower_bounds, lower_variable, IdentityIndex{}, ConstantValue{-1.})),
+               block<0, 3>(scaled_selection(n, number_upper_bounds, number_upper_bounds, upper_variable, IdentityIndex{}, ConstantValue{-1.})),
+               block<1, 0>(ConstraintJacobian(*this)),
+               block<1, 1>(Regularization(dual_regularization ? m : 0)),
+               block<2, 0>(std::move(Z_L)),
+               block<2, 2>(std::move(S_L)),
+               block<3, 0>(std::move(Z_U)),
+               block<3, 3>(std::move(S_U))),
+            block_vector(
+               newton_rhs(negative_lagrangian_gradient(*this, [this](const Iterate& current_iterate, View<double> objective_gradient,
+                     Evaluations& evaluations) {
+                  this->evaluate_damped_objective_gradient(current_iterate, objective_gradient, evaluations);
+               }), linear_term<2>(z_L), linear_term<3>(z_U)),
+               NegativeConstraintResidual(*this),
+               newton_rhs(std::move(mu_L), linear_term<2>(z_L)),
+               newton_rhs(std::move(mu_U), linear_term<3>(z_U))));
+      }, /* condensed blocks */ {2, 3});
    }
 
-   void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,
-         Direction& direction) const {
+   void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
+         const Vector<double>& solution, Direction& direction) const {
       // assemble the primal direction and the constraint dual solution
-      OptimizationProblem::assemble_primal_dual_direction(current_iterate, solution, direction);
+      OptimizationProblem::assemble_primal_dual_direction(current_iterate, newton_system, solution, direction);
       // "fraction-to-boundary" rule for primal variables and bound constraints multipliers
       const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
       direction.primal_dual_step_length = primal_fraction_to_boundary(current_iterate.primals, direction.primals, tau);
 
-      // compute the bound duals + fraction-to-boundary
-      compute_bound_dual_direction(current_iterate.primals, current_iterate.multipliers, direction.primals, direction.multipliers,
-         direction.bound_dual_step_length);
+      // recover the condensed bound duals + fraction-to-boundary
+      newton_system.back_substitute(solution.view(), this->bound_dual_direction_buffer.view());
+      this->set_bound_dual_direction(direction.multipliers);
+      direction.bound_dual_step_length = dual_fraction_to_boundary(current_iterate.multipliers, direction.multipliers, tau);
 
       DEBUG << "Fraction-to-boundary rules:\n";
       DEBUG << "primal step length = " << direction.primal_dual_step_length << '\n';
@@ -746,36 +798,63 @@ namespace uno {
 
    // protected member functions
 
+   // linearized complementarity: bound duals for a given primal direction (back substitution of the complementarity rows)
    void PrimalDualInteriorPointProblem::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const {
-      direction_multipliers.lower_bounds.fill(0.);
-      direction_multipliers.upper_bounds.fill(0.);
-      for (size_t variable_index: Range(this->number_variables)) {
-         if (is_finite(this->variables_lower_bounds[variable_index])) {
-            const double distance_to_bound = current_primals[variable_index] - this->variables_lower_bounds[variable_index];
-            direction_multipliers.lower_bounds[variable_index] = (this->barrier_parameter - direction_primals[variable_index] *
-               current_multipliers.lower_bounds[variable_index]) / distance_to_bound - current_multipliers.lower_bounds[variable_index];
-         }
-         if (is_finite(this->variables_upper_bounds[variable_index])) {
-            const double distance_to_bound = current_primals[variable_index] - this->variables_upper_bounds[variable_index];
-            direction_multipliers.upper_bounds[variable_index] = (this->barrier_parameter - direction_primals[variable_index] *
-               current_multipliers.upper_bounds[variable_index]) / distance_to_bound - current_multipliers.upper_bounds[variable_index];
-         }
-      }
-
-      // check finiteness
-      for (size_t variable_index: Range(this->number_variables)) {
-         if (is_finite(this->variables_lower_bounds[variable_index]) && is_infinite(direction_multipliers.lower_bounds[variable_index])) {
-            throw std::runtime_error("The lower bound dual is infinite");
-         }
-         if (is_finite(this->variables_upper_bounds[variable_index]) && is_infinite(direction_multipliers.upper_bounds[variable_index])) {
-            throw std::runtime_error("The upper bound dual is infinite");
-         }
-      }
-
+      const auto [lower_complementarity, upper_complementarity] = this->complementarity_blocks(current_primals, current_multipliers);
+      const size_t number_lower_bounds = this->lower_bounded_variables.size();
+      const auto& [Z_L, S_L, mu_L, z_L] = lower_complementarity;
+      const auto& [Z_U, S_U, mu_U, z_U] = upper_complementarity;
+      back_substitute_block(Z_L, S_L, newton_rhs(mu_L, linear_term<2>(z_L)), direction_primals.view(),
+         view(this->bound_dual_direction_buffer.data(), number_lower_bounds));
+      back_substitute_block(Z_U, S_U, newton_rhs(mu_U, linear_term<3>(z_U)), direction_primals.view(),
+         view(this->bound_dual_direction_buffer.data() + number_lower_bounds, this->upper_bounded_variables.size()));
+      this->set_bound_dual_direction(direction_multipliers);
       // fraction to boundary
       const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
       bound_dual_step_length = dual_fraction_to_boundary(current_multipliers, direction_multipliers, tau);
+   }
+
+   // copy the condensed bound duals (lower-bounded, then upper-bounded variables) into the direction and check their finiteness
+   void PrimalDualInteriorPointProblem::set_bound_dual_direction(Multipliers& direction_multipliers) const {
+      direction_multipliers.lower_bounds.fill(0.);
+      direction_multipliers.upper_bounds.fill(0.);
+      size_t index = 0;
+      for (const size_t variable_index: this->lower_bounded_variables) {
+         direction_multipliers.lower_bounds[variable_index] = this->bound_dual_direction_buffer[index++];
+         if (is_infinite(direction_multipliers.lower_bounds[variable_index])) {
+            throw std::runtime_error("The lower bound dual is infinite");
+         }
+      }
+      for (const size_t variable_index: this->upper_bounded_variables) {
+         direction_multipliers.upper_bounds[variable_index] = this->bound_dual_direction_buffer[index++];
+         if (is_infinite(direction_multipliers.upper_bounds[variable_index])) {
+            throw std::runtime_error("The upper bound dual is infinite");
+         }
+      }
+   }
+
+   // damping of the barrier terms of the variables with a single finite bound
+   double PrimalDualInteriorPointProblem::damping_term(size_t variable_index) const {
+      const bool finite_lower_bound = is_finite(this->variables_lower_bounds[variable_index]);
+      const bool finite_upper_bound = is_finite(this->variables_upper_bounds[variable_index]);
+      if (finite_lower_bound && !finite_upper_bound) {
+         return this->parameters.damping_factor * this->barrier_parameter;
+      }
+      else if (!finite_lower_bound && finite_upper_bound) {
+         return -this->parameters.damping_factor * this->barrier_parameter;
+      }
+      return 0.;
+   }
+
+   // gradient of the objective of the unslacked problem + damping terms (the logarithmic barrier terms are not included:
+   // they appear through the eliminated bound duals in the Newton system)
+   void PrimalDualInteriorPointProblem::evaluate_damped_objective_gradient(const Iterate& iterate, View<double> objective_gradient,
+         Evaluations& evaluations) const {
+      this->unslacked_problem.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
+      for (const size_t variable_index: this->bounded_variables) {
+         objective_gradient[variable_index] += this->damping_term(variable_index);
+      }
    }
 
    // TODO use a single function for primal and dual fraction-to-boundary rules
