@@ -181,14 +181,14 @@ namespace uno {
    //    [∇²L + δ_w I   J^T    ] [ Δx ]   [ -∇f + J^T y ]
    //    [J             -δ_c I ] [-Δy ] = [ -(c - c_L)  ]
    std::unique_ptr<NewtonSystem> OptimizationProblem::create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const {
-      return make_newton_system([this, &hessian_model, dual_regularization](const Iterate& /*iterate*/) {
+         bool use_dual_regularization) const {
+      return make_newton_system([this, &hessian_model, use_dual_regularization](const Iterate& /*iterate*/) {
          const size_t n = this->number_variables, m = this->number_constraints;
          return kkt_system(
             // clang-format off
             block_matrix({n, m},
                row(LagrangianHessian(*this, hessian_model, n) + Regularization(n), transpose(ConstraintJacobian(*this))),
-               row(ConstraintJacobian(*this),                                    Regularization(dual_regularization ? m : 0))),
+               row(ConstraintJacobian(*this),                                      Regularization(use_dual_regularization ? m : 0))),
             // clang-format on
             block_vector(
                negative_lagrangian_gradient(*this, [this](const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) {

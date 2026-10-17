@@ -87,7 +87,7 @@ namespace uno {
 
       // symbolic Newton system of the equality-constrained subproblem: [H + δ_w I  *; J  -δ_c I]
       [[nodiscard]] virtual std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const;
+         bool use_dual_regularization) const;
       // primal-dual direction from the solution of the (condensed) Newton system
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
          const Vector<double>& solution, Direction& direction) const;

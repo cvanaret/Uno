@@ -175,11 +175,11 @@ namespace uno {
    // [0, number_entries)) is (row_index(k), column_index(k), value(k)). Diagonal matrices and (scaled) selection matrices
    // are particular cases. Its entries are computed when the matrix is evaluated or applied
    template <typename RowIndex, typename ColumnIndex, typename Value>
-   class ScaledSelectionMatrix: public SymbolicExpression {
+   class ScaledPartialPermutation: public SymbolicExpression {
    public:
       using value_type = double;
 
-      ScaledSelectionMatrix(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex row_index,
+      ScaledPartialPermutation(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex row_index,
             ColumnIndex column_index, Value value): rows(number_rows), columns(number_columns), entries(number_entries),
             row_index_function(std::move(row_index)), column_index_function(std::move(column_index)), value_function(std::move(value)) { }
 
@@ -228,17 +228,17 @@ namespace uno {
    };
 
    template <typename T>
-   struct is_scaled_selection: std::false_type { };
+   struct is_scaled_partial_permutation: std::false_type { };
    template <typename RowIndex, typename ColumnIndex, typename Value>
-   struct is_scaled_selection<ScaledSelectionMatrix<RowIndex, ColumnIndex, Value>>: std::true_type { };
+   struct is_scaled_partial_permutation<ScaledPartialPermutation<RowIndex, ColumnIndex, Value>>: std::true_type { };
    template <typename T>
-   inline constexpr bool is_scaled_selection_v = is_scaled_selection<std::decay_t<T>>::value;
+   inline constexpr bool is_scaled_partial_permutation_v = is_scaled_partial_permutation<std::decay_t<T>>::value;
 
    // free functions
    template <typename RowIndex, typename ColumnIndex, typename Value>
-   auto scaled_selection(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex&& row_index,
+   auto partial_permutation(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex&& row_index,
          ColumnIndex&& column_index, Value&& value) {
-      return ScaledSelectionMatrix<std::decay_t<RowIndex>, std::decay_t<ColumnIndex>, std::decay_t<Value>>(number_rows,
+      return ScaledPartialPermutation<std::decay_t<RowIndex>, std::decay_t<ColumnIndex>, std::decay_t<Value>>(number_rows,
          number_columns, number_entries, std::forward<RowIndex>(row_index), std::forward<ColumnIndex>(column_index),
          std::forward<Value>(value));
    }
@@ -246,7 +246,7 @@ namespace uno {
    // square diagonal matrix with entries value(k)
    template <typename Value>
    auto diagonal(size_t dimension, Value&& value) {
-      return scaled_selection(dimension, dimension, dimension, IdentityIndex{}, IdentityIndex{}, std::forward<Value>(value));
+      return partial_permutation(dimension, dimension, dimension, IdentityIndex{}, IdentityIndex{}, std::forward<Value>(value));
    }
 
    // right-hand side components (vectors evaluated at the current iterate)
@@ -383,6 +383,7 @@ namespace uno {
    }
 
    // -(c(x) - c_L)
+   // note: for equality constraints, c_L == c_U
    class NegativeConstraintResidual {
    public:
       explicit NegativeConstraintResidual(const OptimizationProblem& problem): problem(problem) { }

@@ -479,13 +479,13 @@ TEST(NewtonSystemCondensation, SmallBlockSystem) {
    const auto system = kkt_system(
       block_matrix({2, 1, 2, 1},
          block<0, 0>(diagonal(2, [](size_t i) { return 3. + static_cast<double>(i); })),
-         block<0, 1>(scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{2.})),
-         block<1, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{2.})),
-         block<0, 2>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? -1. : 0.5; })),
-         block<2, 0>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? 2. : -1.; })),
+         block<0, 1>(partial_permutation(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{2.})),
+         block<1, 0>(partial_permutation(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{2.})),
+         block<0, 2>(partial_permutation(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? -1. : 0.5; })),
+         block<2, 0>(partial_permutation(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? 2. : -1.; })),
          block<2, 2>(diagonal(2, [](size_t i) { return i == 0 ? 4. : -2.; })),
-         block<0, 3>(scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{-3.})),
-         block<3, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{1.5})),
+         block<0, 3>(partial_permutation(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{-3.})),
+         block<3, 0>(partial_permutation(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{1.5})),
          block<3, 3>(diagonal(1, ConstantValue{5.}))),
       block_vector(component_vector(2, [](size_t i) { return 1. - static_cast<double>(i); }), component_vector(1, ConstantValue{0.25}),
          component_vector(2, [](size_t i) { return i == 0 ? 0.5 : 3.; }), component_vector(1, ConstantValue{-1.})));
@@ -521,8 +521,8 @@ TEST(NewtonSystemCondensation, RejectsNonDiagonalSchurComplement) {
    // v0 coupled with u0 in the kept row, but with u1 in its own row
    const auto system = kkt_system(
       block_matrix({2, 0, 1},
-         block<0, 2>(scaled_selection(2, 1, 1, ConstantIndex{0}, IdentityIndex{}, ConstantValue{1.})),
-         block<2, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{1.})),
+         block<0, 2>(partial_permutation(2, 1, 1, ConstantIndex{0}, IdentityIndex{}, ConstantValue{1.})),
+         block<2, 0>(partial_permutation(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{1.})),
          block<2, 2>(diagonal(1, ConstantValue{1.}))),
       block_vector(component_vector(2, ConstantValue{0.}), component_vector(0, ConstantValue{0.}), component_vector(1, ConstantValue{0.})));
    EXPECT_THROW(Condensation(system, {2}), std::invalid_argument);
@@ -538,10 +538,10 @@ TEST(NewtonSystemCondensation, ResidualFormCancelsSymbolically) {
    const auto matrix = [] {
       return block_matrix({2, 1, 2},
          block<0, 0>(diagonal(2, [](size_t i) { return 3. + static_cast<double>(i); })),
-         block<0, 1>(scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{2.})),
-         block<1, 0>(scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{2.})),
-         block<0, 2>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
-         block<2, 0>(scaled_selection(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? 2. : 0.5; })),
+         block<0, 1>(partial_permutation(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{2.})),
+         block<1, 0>(partial_permutation(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{2.})),
+         block<0, 2>(partial_permutation(2, 2, 2, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
+         block<2, 0>(partial_permutation(2, 2, 2, IdentityIndex{}, IdentityIndex{}, [](size_t i) { return i == 0 ? 2. : 0.5; })),
          block<2, 2>(diagonal(2, [](size_t i) { return i == 0 ? 1e-3 : 4.; })));
    };
    // residual form: kept r = c_u - K(0,2) v0, eliminated r = q - K(2,2) v0
@@ -597,8 +597,8 @@ TEST(NewtonSystemCondensation, ResidualFormCancelsSymbolically) {
 TEST(NewtonSystemCondensation, RejectsMissingLinearTerm) {
    const auto system = kkt_system(
       block_matrix({1, 0, 1},
-         block<0, 2>(scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
-         block<2, 0>(scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{1.})),
+         block<0, 2>(partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
+         block<2, 0>(partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{1.})),
          block<2, 2>(diagonal(1, ConstantValue{1.}))),
       block_vector(component_vector(1, ConstantValue{0.}), component_vector(0, ConstantValue{0.}),
          newton_rhs(component_vector(1, ConstantValue{0.}), linear_term<2>(ConstantValue{1.}))));
@@ -608,8 +608,8 @@ TEST(NewtonSystemCondensation, RejectsMissingLinearTerm) {
 // the dense declaration (rows with explicit zero blocks) is lowered to the sparse declaration: same block types, in row order
 TEST(BlockMatrixDeclaration, RowsLowerToSparseBlocks) {
    const auto D = [] { return diagonal(2, ConstantValue{2.}); };
-   const auto C = [] { return scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{3.}); };
-   const auto Ct = [] { return scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{3.}); };
+   const auto C = [] { return partial_permutation(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{3.}); };
+   const auto Ct = [] { return partial_permutation(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{3.}); };
    const auto E = [] { return diagonal(1, ConstantValue{-1.}); };
    // clang-format off
    auto dense = block_matrix({2, 1, 1},
@@ -665,9 +665,9 @@ TEST(NewtonSystemCondensation, DetectsInconsistentCancelledTerms) {
       // clang-format off
       return kkt_system(
          block_matrix({1, 0, 1},
-            row(diagonal(1, ConstantValue{1.}),                                               zero, scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
+            row(diagonal(1, ConstantValue{1.}),                                               zero, partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
             row(zero,                                                                         zero, zero),
-            row(scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{2.}), zero, diagonal(1, ConstantValue{4.}))),
+            row(partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{2.}), zero, diagonal(1, ConstantValue{4.}))),
          block_vector(newton_rhs(component_vector(1, ConstantValue{0.}), linear_term<2>(ConstantValue{kept_row_value})),
             component_vector(0, ConstantValue{0.}),
             newton_rhs(component_vector(1, ConstantValue{1.}), linear_term<2>(ConstantValue{0.5}))));

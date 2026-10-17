@@ -467,7 +467,7 @@ namespace uno {
          };
          const auto bound_dual = [&bounded_variables, &bound_duals](size_t index) { return bound_duals[bounded_variables[index]]; };
          return std::make_tuple(
-            scaled_selection(number_bounds, this->number_variables, number_bounds, IdentityIndex{}, variable, bound_dual), // Z
+            partial_permutation(number_bounds, this->number_variables, number_bounds, IdentityIndex{}, variable, bound_dual), // Z
             diagonal(number_bounds, distance_to_bound), // S
             component_vector(number_bounds, [this](size_t /*index*/) { return this->barrier_parameter; }), // μe
             bound_dual); // z
@@ -487,25 +487,27 @@ namespace uno {
    // The bound duals are condensed: [∇²L + Σ + δ_w I  *; J  -δ_c I] with Σ = S_L^{-1} Z_L + S_U^{-1} Z_U, and the linear
    // terms cancel symbolically: the condensed right-hand side is -(∇f + damping) + J^T y + μ S_L^{-1} e + μ S_U^{-1} e
    std::unique_ptr<NewtonSystem> PrimalDualInteriorPointProblem::create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const {
-      return make_newton_system([this, &hessian_model, dual_regularization](const Iterate& iterate) {
+         bool use_dual_regularization) const {
+      return make_newton_system([this, &hessian_model, use_dual_regularization](const Iterate& iterate) {
          const size_t n = this->number_variables, m = this->number_constraints;
          const size_t number_lower_bounds = this->lower_bounded_variables.size();
          const size_t number_upper_bounds = this->upper_bounded_variables.size();
+         // define the blocks
          auto [lower_complementarity, upper_complementarity] = this->complementarity_blocks(iterate.primals, iterate.multipliers);
          auto& [Z_L, S_L, mu_L, z_L] = lower_complementarity;
          auto& [Z_U, S_U, mu_U, z_U] = upper_complementarity;
          const auto lower_variable = [this](size_t index) { return this->lower_bounded_variables[index]; };
          const auto upper_variable = [this](size_t index) { return this->upper_bounded_variables[index]; };
          auto H = LagrangianHessian(this->unslacked_problem, hessian_model, n) + Regularization(n);
-         auto minus_I_L = scaled_selection(n, number_lower_bounds, number_lower_bounds, lower_variable, IdentityIndex{}, ConstantValue{-1.});
-         auto minus_I_U = scaled_selection(n, number_upper_bounds, number_upper_bounds, upper_variable, IdentityIndex{}, ConstantValue{-1.});
-         auto minus_delta_c = Regularization(dual_regularization ? m : 0);
+         auto minus_I_L = partial_permutation(n, number_lower_bounds, number_lower_bounds, lower_variable, IdentityIndex{}, ConstantValue{-1.});
+         auto minus_I_U = partial_permutation(n, number_upper_bounds, number_upper_bounds, upper_variable, IdentityIndex{}, ConstantValue{-1.});
+         auto dual_regularization = Regularization(use_dual_regularization ? m : 0);
+         // define the block Newton system: matrix and RHS
          return kkt_system(
             // clang-format off
             block_matrix({n, m, number_lower_bounds, number_upper_bounds},
                row(std::move(H),               transpose(ConstraintJacobian(*this)), std::move(minus_I_L), std::move(minus_I_U)),
-               row(ConstraintJacobian(*this),  std::move(minus_delta_c),             zero,                 zero),
+               row(ConstraintJacobian(*this),  std::move(dual_regularization),       zero,                 zero),
                row(std::move(Z_L),             zero,                                 std::move(S_L),       zero),
                row(std::move(Z_U),             zero,                                 zero,                 std::move(S_U))),
             // clang-format on

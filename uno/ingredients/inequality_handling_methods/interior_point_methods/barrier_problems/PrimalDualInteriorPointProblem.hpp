@@ -61,7 +61,7 @@ namespace uno {
       [[nodiscard]] Inertia get_inertia() const override;
 
       [[nodiscard]] std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const override;
+         bool use_dual_regularization) const override;
       void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
          const Vector<double>& solution, Direction& direction) const override;
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,

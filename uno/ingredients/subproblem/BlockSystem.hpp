@@ -355,7 +355,7 @@ namespace uno {
                return;
             }
             const auto& expression = block.get_expression();
-            if constexpr (!is_scaled_selection_v<decltype(expression)>) {
+            if constexpr (!is_scaled_partial_permutation_v<decltype(expression)>) {
                throw std::invalid_argument("Condensation: the blocks coupled with a condensed block must be selection or diagonal matrices");
             }
             else {
@@ -461,7 +461,7 @@ namespace uno {
                return;
             }
             const auto& expression = block.get_expression();
-            if constexpr (is_scaled_selection_v<decltype(expression)>) {
+            if constexpr (is_scaled_partial_permutation_v<decltype(expression)>) {
                for (size_t entry: Range(expression.number_nonzeros())) {
                   if (this->condensed[B::row] && this->condensed[B::column]) {
                      this->pivots[this->eliminated_offsets[B::row] + expression.row_index(entry)] = expression.value(entry);
@@ -613,7 +613,7 @@ namespace uno {
    template <size_t BlockIndex, typename Coupling, typename Pivot, typename RHS>
    void back_substitute_block(const Coupling& coupling, const Pivot& pivot, const RHS& rhs, View<const double> kept_solution,
          View<double> solution) {
-      static_assert(is_scaled_selection_v<Coupling> && is_scaled_selection_v<Pivot> && is_component_vector_v<decltype(rhs_constant(rhs))>);
+      static_assert(is_scaled_partial_permutation_v<Coupling> && is_scaled_partial_permutation_v<Pivot> && is_component_vector_v<decltype(rhs_constant(rhs))>);
       static_assert(has_only_own_pivot_term_v<BlockIndex, RHS>,
          "back_substitute_block: the only linear term of the right-hand side must be the own pivot term (r = r~ - D v)");
       const auto& constant = rhs_constant(rhs);
