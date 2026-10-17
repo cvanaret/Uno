@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include "PrimalDualInteriorPointProblem.hpp"
-#include "ingredients/subproblem/NewtonSystem.hpp"
+#include "ingredients/subproblem/SymbolicNewtonSystem.hpp"
 #include "../InteriorPointParameters.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -489,8 +489,9 @@ namespace uno {
    //    [Z_U                             S_U ] [ Δz_U]   [ μe - S_U z_U                        ]
    // with S_L = X - X_L, S_U = X - X_U, ∇²L the Lagrangian Hessian of the unslacked problem, J the Jacobian of the slacked
    // problem and I_L, I_U the selections of the lower- and upper-bounded variables. The right-hand side is in residual form:
-   // the terms z_L, z_U (= -(-I_L) z_L - (-I_U) z_U) and -S_L z_L, -S_U z_U are linear terms of the blocks of the matrix.
-   // The bound duals are condensed: [∇²L + Σ + δ_w I  *; J  -δ_c I] with Σ = S_L^{-1} Z_L + S_U^{-1} Z_U, and the linear
+   // the current values z_L, z_U of the bound duals are declared once, and the terms z_L, z_U (= -(-I_L) z_L - (-I_U) z_U)
+   // and -S_L z_L, -S_U z_U are generated from the blocks of the matrix.
+   // The bound duals are condensed: [∇²L + Σ + δ_w I  *; J  -δ_c I] with Σ = S_L^{-1} Z_L + S_U^{-1} Z_U, and the generated
    // terms cancel symbolically: the condensed right-hand side is -(∇f + damping) + J^T y + μ S_L^{-1} e + μ S_U^{-1} e
    std::unique_ptr<NewtonSystem> PrimalDualInteriorPointProblem::create_newton_system(HessianModel& hessian_model,
          bool use_dual_regularization) const {
@@ -504,11 +505,11 @@ namespace uno {
          auto& [Z_U, S_U, mu_U, z_U] = upper_complementarity;
          const auto lower_variable = [this](size_t index) { return this->lower_bounded_variables[index]; };
          const auto upper_variable = [this](size_t index) { return this->upper_bounded_variables[index]; };
-         auto H = LagrangianHessian(this->unslacked_problem, hessian_model, n) + Regularization(n);
+         auto H = LagrangianHessian(this->unslacked_problem, hessian_model, n) + PrimalRegularization(n);
          auto minus_I_L = partial_permutation(n, number_lower_bounds, number_lower_bounds, lower_variable, IdentityIndex{}, ConstantValue{-1.});
          auto minus_I_U = partial_permutation(n, number_upper_bounds, number_upper_bounds, upper_variable, IdentityIndex{}, ConstantValue{-1.});
-         auto dual_regularization = Regularization(use_dual_regularization ? m : 0);
-         // define the block Newton system: matrix and RHS
+         auto dual_regularization = DualRegularization(use_dual_regularization ? m : 0);
+         // define the block Newton system: matrix, RHS (constant part) and current values of the bound duals
          return kkt_system(
             // clang-format off
             block_matrix({n, m, number_lower_bounds, number_upper_bounds},
@@ -518,14 +519,15 @@ namespace uno {
                row(std::move(Z_U),             zero,                                 zero,                 std::move(S_U))),
             // clang-format on
             block_vector(
-               newton_rhs(negative_lagrangian_gradient(*this, [this](const Iterate& current_iterate, View<double> objective_gradient,
+               negative_lagrangian_gradient(*this, [this](const Iterate& current_iterate, View<double> objective_gradient,
                      Evaluations& evaluations) {
                   this->evaluate_damped_objective_gradient(current_iterate, objective_gradient, evaluations);
-               }), linear_term<2>(z_L), linear_term<3>(z_U)),
+               }),
                NegativeConstraintResidual(*this),
-               newton_rhs(std::move(mu_L), linear_term<2>(z_L)),
-               newton_rhs(std::move(mu_U), linear_term<3>(z_U))));
-      }, /* condensed blocks */ {2, 3});
+               std::move(mu_L),
+               std::move(mu_U)),
+            current_values(current_value<2>(z_L), current_value<3>(z_U)));
+      }, condense<2, 3>);
    }
 
    void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
@@ -806,10 +808,10 @@ namespace uno {
       const size_t number_lower_bounds = this->lower_bounded_variables.size();
       const auto& [Z_L, S_L, mu_L, z_L] = lower_complementarity;
       const auto& [Z_U, S_U, mu_U, z_U] = upper_complementarity;
-      back_substitute_block<2>(Z_L, S_L, newton_rhs(mu_L, linear_term<2>(z_L)), direction_primals.view(),
-         view(this->bound_dual_direction_buffer.data(), number_lower_bounds));
-      back_substitute_block<3>(Z_U, S_U, newton_rhs(mu_U, linear_term<3>(z_U)), direction_primals.view(),
-         view(this->bound_dual_direction_buffer.data() + number_lower_bounds, this->upper_bounded_variables.size()));
+      back_substitute_block(Z_L, S_L, mu_L, direction_primals.view(),
+         view(this->bound_dual_direction_buffer.data(), number_lower_bounds), z_L);
+      back_substitute_block(Z_U, S_U, mu_U, direction_primals.view(),
+         view(this->bound_dual_direction_buffer.data() + number_lower_bounds, this->upper_bounded_variables.size()), z_U);
       this->set_bound_dual_direction(direction_multipliers);
       // fraction to boundary
       const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);

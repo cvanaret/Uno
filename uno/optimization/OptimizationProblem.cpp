@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "OptimizationProblem.hpp"
-#include "ingredients/subproblem/NewtonSystem.hpp"
+#include "ingredients/subproblem/SymbolicNewtonSystem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Direction.hpp"
@@ -187,8 +187,8 @@ namespace uno {
          return kkt_system(
             // clang-format off
             block_matrix({n, m},
-               row(LagrangianHessian(*this, hessian_model, n) + Regularization(n), transpose(ConstraintJacobian(*this))),
-               row(ConstraintJacobian(*this),                                      Regularization(use_dual_regularization ? m : 0))),
+               row(LagrangianHessian(*this, hessian_model, n) + PrimalRegularization(n), transpose(ConstraintJacobian(*this))),
+               row(ConstraintJacobian(*this),                                            DualRegularization(use_dual_regularization ? m : 0))),
             // clang-format on
             block_vector(
                negative_lagrangian_gradient(*this, [this](const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) {

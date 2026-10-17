@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -13,6 +14,7 @@
 #include "linear_algebra/DiagonalMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
+#include "NewtonSystemContext.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
@@ -23,16 +25,7 @@
 
 namespace uno {
    // forward declarations
-   class Evaluations;
    class HessianModel;
-   class Statistics;
-
-   // what the symbols of a Newton system may use when they are evaluated at the current iterate
-   struct NewtonSystemContext {
-      Statistics& statistics;
-      const Iterate& iterate;
-      Evaluations& evaluations;
-   };
 
    // Symbols of the Newton system. A symbol is a sparse matrix whose entries are stored in a contiguous slice of a COO
    // array (in the order given by compute_sparsity). It exposes:
@@ -125,7 +118,12 @@ namespace uno {
       const OptimizationProblem& problem;
    };
 
-   // diagonal block whose values are set outside of the evaluation (by the inertia correction strategy)
+   // role of a regularization block in the Newton system
+   enum class RegularizationRole { primal, dual };
+
+   // diagonal block whose values are set outside of the evaluation (by the inertia correction strategy). The role (primal
+   // δ_w or dual -δ_c) is part of the type, so that the layout of the Newton system can be checked at compile time
+   template <RegularizationRole Role>
    class Regularization: public SymbolicExpression {
    public:
       using value_type = double;
@@ -148,13 +146,24 @@ namespace uno {
          // the values are set by the inertia correction strategy
       }
 
-      // the values are owned by the linear system (inertia correction): the operator is applied with δ = 0
-      void add_matrix_vector_product(const NewtonSystemContext& /*context*/, View<const double> /*x*/, View<double> /*y*/) const {
+      // y += R x with the values written by the inertia correction strategy (context.regularization), or R = 0 if they are
+      // not provided
+      void add_matrix_vector_product(const NewtonSystemContext& context, View<const double> x, View<double> y) const {
+         if (context.regularization != nullptr) {
+            const View<const double>& values = (Role == RegularizationRole::primal) ? context.regularization->primal :
+               context.regularization->dual;
+            for (size_t index: Range(this->dimension)) {
+               y[index] += values[index] * x[index];
+            }
+         }
       }
 
    protected:
       const size_t dimension;
    };
+
+   using PrimalRegularization = Regularization<RegularizationRole::primal>;
+   using DualRegularization = Regularization<RegularizationRole::dual>;
 
    // index map k -> k
    struct IdentityIndex {
@@ -313,7 +322,7 @@ namespace uno {
    }
 
    // -g(x) + J(x)^T y, where g is the gradient of the objective (given as a function). The terms of the bound duals in
-   // -∇_x L(x, y, z) are linear terms of the Newton right-hand side (see NewtonRHS)
+   // -∇_x L(x, y, z) are generated from their current values (see CurrentValue)
    template <typename ObjectiveGradient>
    class NegativeLagrangianGradient {
    public:
@@ -340,18 +349,15 @@ namespace uno {
       return {problem, std::forward<ObjectiveGradient>(objective_gradient)};
    }
 
-   // Newton right-hand side of a block row in residual form: the row residual is F = F0 + sum_j K(row, j) v_j, linear in
-   // the current values v_j of some blocks of unknowns, with the blocks K(row, j) of the Newton matrix as coefficients.
-   // The right-hand side is -F = constant - sum_j K(row, j) v_j with constant = -F0.
-   // Declaring the linear terms lets the condensation cancel them symbolically instead of numerically
-
-   // linear term K(row, Column) v_Column, where value(k) is the current value of the k-th unknown of block Column
-   template <size_t Column, typename Value>
-   class LinearTerm {
+   // current value v of a block of unknowns (value(k) is the k-th entry), declared once for the whole system: the
+   // right-hand side is then in residual form -F = -F0 - K v, where the terms -K(row, Block) v are generated for every block
+   // row coupled with the block (see KKTSystem). This lets the condensation cancel them symbolically
+   template <size_t Block, typename Value>
+   class CurrentValue {
    public:
-      static constexpr size_t column = Column;
+      static constexpr size_t block = Block;
 
-      explicit LinearTerm(Value value): value_function(std::move(value)) { }
+      explicit CurrentValue(Value value): value_function(std::move(value)) { }
 
       [[nodiscard]] double value(size_t index) const { return this->value_function(index); }
 
@@ -359,57 +365,43 @@ namespace uno {
       Value value_function;
    };
 
-   template <size_t Column, typename Value>
-   LinearTerm<Column, std::decay_t<Value>> linear_term(Value&& value) {
-      return LinearTerm<Column, std::decay_t<Value>>(std::forward<Value>(value));
+   template <size_t Block, typename Value>
+   CurrentValue<Block, std::decay_t<Value>> current_value(Value&& value) {
+      return CurrentValue<Block, std::decay_t<Value>>(std::forward<Value>(value));
    }
 
-   template <typename Constant, typename... Terms>
-   class NewtonRHS {
-   public:
-      explicit NewtonRHS(Constant constant, Terms... terms): constant(std::move(constant)), terms(std::move(terms)...) { }
+   // whether the values are pairwise distinct
+   constexpr bool all_distinct(std::initializer_list<size_t> values) {
+      for (const size_t* first = values.begin(); first != values.end(); ++first) {
+         for (const size_t* second = first + 1; second != values.end(); ++second) {
+            if (*first == *second) {
+               return false;
+            }
+         }
+      }
+      return true;
+   }
 
-      [[nodiscard]] size_t size() const { return this->constant.size(); }
-      [[nodiscard]] const Constant& get_constant() const { return this->constant; }
+   // current values of some blocks of unknowns (at most one per block)
+   template <typename... Values>
+   class CurrentValues {
+   public:
+      static_assert(all_distinct({Values::block...}), "CurrentValues: at most one current value per block");
+
+      explicit CurrentValues(Values... values): values(std::move(values)...) { }
 
       template <typename Function>
-      void for_each_term(Function&& function) const {
-         std::apply([&](const auto&... term) { (function(term), ...); }, this->terms);
+      void for_each(Function&& function) const {
+         std::apply([&](const auto&... value) { (function(value), ...); }, this->values);
       }
 
    protected:
-      Constant constant;
-      std::tuple<Terms...> terms;
+      std::tuple<Values...> values;
    };
 
-   template <typename Constant, typename... Terms>
-   NewtonRHS<std::decay_t<Constant>, std::decay_t<Terms>...> newton_rhs(Constant&& constant, Terms&&... terms) {
-      return NewtonRHS<std::decay_t<Constant>, std::decay_t<Terms>...>(std::forward<Constant>(constant), std::forward<Terms>(terms)...);
-   }
-
-   template <typename T>
-   struct is_newton_rhs: std::false_type { };
-   template <typename Constant, typename... Terms>
-   struct is_newton_rhs<NewtonRHS<Constant, Terms...>>: std::true_type { };
-   template <typename T>
-   inline constexpr bool is_newton_rhs_v = is_newton_rhs<std::decay_t<T>>::value;
-
-   // a plain right-hand side component (a vector) is a NewtonRHS without linear terms
-   template <typename Component>
-   const auto& rhs_constant(const Component& component) {
-      if constexpr (is_newton_rhs_v<Component>) {
-         return component.get_constant();
-      }
-      else {
-         return component;
-      }
-   }
-
-   template <typename Component, typename Function>
-   void for_each_linear_term(const Component& component, Function&& function) {
-      if constexpr (is_newton_rhs_v<Component>) {
-         component.for_each_term(std::forward<Function>(function));
-      }
+   template <typename... Values>
+   CurrentValues<std::decay_t<Values>...> current_values(Values&&... values) {
+      return CurrentValues<std::decay_t<Values>...>(std::forward<Values>(values)...);
    }
 
    // -(c(x) - c_L)

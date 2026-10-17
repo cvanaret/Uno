@@ -5,9 +5,12 @@
 // augmented matrices of the subproblem (unconstrained/equality-constrained problem and primal-dual interior-point problem),
 // and the operator products of the symbols coincide with the products with their assembled entries
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <random>
+#include <string>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
@@ -17,7 +20,7 @@
 #include "ingredients/inequality_handling_methods/interior_point_methods/barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/inertia_correction_strategies/PrimalDualInertiaCorrection.hpp"
 #include "ingredients/inertia_correction_strategies/PrimalInertiaCorrection.hpp"
-#include "ingredients/subproblem/NewtonSystem.hpp"
+#include "ingredients/subproblem/SymbolicNewtonSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/COOLinearSystem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -320,7 +323,7 @@ TEST(NewtonSystemSymbols, OperatorProductsMatchEntries) {
 TEST(NewtonSystemSymbols, SymmetricBlockMatrixLayout) {
    Setting<OptimizationProblem> setting;
    const size_t n = setting.problem.number_variables, m = setting.problem.number_constraints;
-   const auto matrix = symmetric_block_matrix(Regularization(n), ConstraintJacobian(setting.problem), Regularization(m));
+   const auto matrix = symmetric_block_matrix(PrimalRegularization(n), ConstraintJacobian(setting.problem), DualRegularization(m));
    EXPECT_EQ(number_rows(matrix), n + m);
    EXPECT_EQ(number_nonzeros(matrix), n + setting.problem.number_jacobian_nonzeros() + m);
    std::vector<uno_int> rows(number_nonzeros(matrix)), columns(number_nonzeros(matrix));
@@ -490,7 +493,7 @@ TEST(NewtonSystemCondensation, SmallBlockSystem) {
          block<3, 3>(diagonal(1, ConstantValue{5.}))),
       block_vector(component_vector(2, [](size_t i) { return 1. - static_cast<double>(i); }), component_vector(1, ConstantValue{0.25}),
          component_vector(2, [](size_t i) { return i == 0 ? 0.5 : 3.; }), component_vector(1, ConstantValue{-1.})));
-   Condensation condensation(system, {2, 3});
+   Condensation condensation(system, condense<2, 3>);
    ASSERT_EQ(condensation.number_kept(), size_t{3});
    ASSERT_EQ(condensation.number_eliminated(), size_t{3});
    ASSERT_EQ(condensation.number_diagonal_entries(), size_t{2});
@@ -526,7 +529,7 @@ TEST(NewtonSystemCondensation, RejectsNonDiagonalSchurComplement) {
          block<2, 0>(partial_permutation(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{1.})),
          block<2, 2>(diagonal(1, ConstantValue{1.}))),
       block_vector(component_vector(2, ConstantValue{0.}), component_vector(0, ConstantValue{0.}), component_vector(1, ConstantValue{0.})));
-   EXPECT_THROW(Condensation(system, {2}), std::invalid_argument);
+   EXPECT_THROW(Condensation(system, condense<2>), std::invalid_argument);
 }
 
 // symbolic cancellation: the right-hand side in residual form (linear terms in the current values of the eliminated
@@ -548,15 +551,15 @@ TEST(NewtonSystemCondensation, ResidualFormCancelsSymbolically) {
    // residual form: kept r = c_u - K(0,2) v0, eliminated r = q - K(2,2) v0
    const auto c_u = [](size_t i) { return i == 0 ? 0.1 : -1.; };
    const auto q = [](size_t i) { return i == 0 ? 0.3 : 2.; };
-   const auto residual_system = kkt_system(matrix(), block_vector(newton_rhs(component_vector(2, c_u), linear_term<2>(v0)),
-      component_vector(1, ConstantValue{0.75}), newton_rhs(component_vector(2, q), linear_term<2>(v0))));
+   const auto residual_system = kkt_system(matrix(), block_vector(component_vector(2, c_u), component_vector(1, ConstantValue{0.75}),
+      component_vector(2, q)), current_values(current_value<2>(v0)));
    // plain form: the same right-hand side, evaluated
    const auto plain_system = kkt_system(matrix(), block_vector(
       component_vector(2, [&](size_t i) { return c_u(i) + v0(i); }), component_vector(1, ConstantValue{0.75}),
       component_vector(2, [&](size_t i) { return q(i) - (i == 0 ? 1e-3 : 4.) * v0(i); })));
 
    const auto solve = [&](const auto& system, std::vector<double>& eliminated) {
-      Condensation condensation(system, {2});
+      Condensation condensation(system, condense<2>);
       condensation.evaluate_matrix(system);
       std::vector<double> rhs(3);
       condensation.evaluate_rhs(system, context, View<double>(rhs.data(), 3));
@@ -592,18 +595,6 @@ TEST(NewtonSystemCondensation, ResidualFormCancelsSymbolically) {
    for (size_t i: Range(5)) {
       EXPECT_DOUBLE_EQ(full_rhs[i], plain_full_rhs[i]) << "row " << i;
    }
-}
-
-// a kept row coupled with a condensed block in residual form must declare the linear term of the coupling
-TEST(NewtonSystemCondensation, RejectsMissingLinearTerm) {
-   const auto system = kkt_system(
-      block_matrix({1, 0, 1},
-         block<0, 2>(partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
-         block<2, 0>(partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{1.})),
-         block<2, 2>(diagonal(1, ConstantValue{1.}))),
-      block_vector(component_vector(1, ConstantValue{0.}), component_vector(0, ConstantValue{0.}),
-         newton_rhs(component_vector(1, ConstantValue{0.}), linear_term<2>(ConstantValue{1.}))));
-   EXPECT_THROW(Condensation(system, {2}), std::invalid_argument);
 }
 
 // the dense declaration (rows with explicit zero blocks) is lowered to the sparse declaration: same block types, in row order
@@ -647,53 +638,12 @@ TEST(BlockMatrixDeclaration, RejectsDimensionMismatch) {
       std::invalid_argument);
 }
 
-// back_substitute_block only accepts the own pivot term as linear term
-TEST(NewtonSystemCondensation, OwnPivotTermTrait) {
-   using Constant = ComponentVector<ConstantValue>;
-   static_assert(has_only_own_pivot_term_v<2, Constant>);
-   static_assert(has_only_own_pivot_term_v<2, NewtonRHS<Constant>>);
-   static_assert(has_only_own_pivot_term_v<2, NewtonRHS<Constant, LinearTerm<2, ConstantValue>>>);
-   static_assert(!has_only_own_pivot_term_v<2, NewtonRHS<Constant, LinearTerm<3, ConstantValue>>>);
-   static_assert(!has_only_own_pivot_term_v<2, NewtonRHS<Constant, LinearTerm<2, ConstantValue>, LinearTerm<2, ConstantValue>>>);
-}
-
-#ifndef NDEBUG
-// debug check: the linear term of a kept row cancelled symbolically must be the same vector as the own pivot term
-TEST(NewtonSystemCondensation, DetectsInconsistentCancelledTerms) {
-   Setting<OptimizationProblem> setting;
-   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
-   const auto make_system = [](double kept_row_value) {
-      // clang-format off
-      return kkt_system(
-         block_matrix({1, 0, 1},
-            row(diagonal(1, ConstantValue{1.}),                                               zero, partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
-            row(zero,                                                                         zero, zero),
-            row(partial_permutation(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{2.}), zero, diagonal(1, ConstantValue{4.}))),
-         block_vector(newton_rhs(component_vector(1, ConstantValue{0.}), linear_term<2>(ConstantValue{kept_row_value})),
-            component_vector(0, ConstantValue{0.}),
-            newton_rhs(component_vector(1, ConstantValue{1.}), linear_term<2>(ConstantValue{0.5}))));
-      // clang-format on
-   };
-   std::vector<double> rhs(1);
-   const auto consistent = make_system(0.5);
-   Condensation condensation(consistent, {2});
-   condensation.evaluate_matrix(consistent);
-   EXPECT_NO_THROW(condensation.evaluate_rhs(consistent, context, View<double>(rhs.data(), 1)));
-
-   const auto inconsistent = make_system(0.25);
-   Condensation inconsistent_condensation(inconsistent, {2});
-   inconsistent_condensation.evaluate_matrix(inconsistent);
-   EXPECT_THROW(inconsistent_condensation.evaluate_rhs(inconsistent, context, View<double>(rhs.data(), 1)), std::logic_error);
-}
-#endif
-
 namespace {
    // condenses a block system, solves the condensed system (dense), recovers the eliminated unknowns by back substitution
    // and checks that the full solution solves the uncondensed system K x = r. The dense uncondensed matrix is built
    // column by column from the products of the block matrix
-   template <typename System>
-   void expect_condensation_solves_system(const System& system, const std::vector<size_t>& condensed_blocks,
-         const NewtonSystemContext& context) {
+   template <typename System, typename Condensed>
+   void expect_condensation_solves_system(const System& system, Condensed condensed_blocks, const NewtonSystemContext& context) {
       const auto& matrix = system.get_matrix();
       const size_t dimension = matrix.number_rows();
       std::vector<std::vector<double>> K(dimension, std::vector<double>(dimension, 0.));
@@ -763,9 +713,9 @@ TEST(NewtonSystemCondensation, OneSidedAndUncoupledEliminatedUnknowns) {
       block_vector(component_vector(3, [](size_t i) { return 1. + static_cast<double>(i); }), component_vector(1, ConstantValue{-1.}),
          component_vector(1, ConstantValue{0.5}), component_vector(1, ConstantValue{2.}), component_vector(1, ConstantValue{-3.})));
    // clang-format on
-   const Condensation condensation(system, {2, 3, 4});
+   const Condensation condensation(system, condense<2, 3, 4>);
    EXPECT_EQ(condensation.number_diagonal_entries(), size_t{2}); // u0 (from a) and u1 (from b); c is uncoupled
-   expect_condensation_solves_system(system, {2, 3, 4}, context);
+   expect_condensation_solves_system(system, condense<2, 3, 4>, context);
 }
 
 // several eliminated unknowns coupled with the same kept unknown (from different blocks, with residual-form right-hand
@@ -784,15 +734,16 @@ TEST(NewtonSystemCondensation, SeveralEliminatedUnknownsCoupledWithSameKeptUnkno
          row(selection(1, 3, 0, 1, -1.),     zero,                       zero,                       diagonal<EntrySign::negative>(1, ConstantValue{-3.}), zero),
          row(partial_permutation(2, 3, 2, IdentityIndex{}, [](size_t k) { return 2 * k; }, ConstantValue{1.5}), zero, zero, zero, diagonal(2, [](size_t i) { return i == 0 ? 2. : 5.; }))),
       block_vector(
-         newton_rhs(component_vector(3, [](size_t i) { return 0.5 - static_cast<double>(i); }), linear_term<2>(t), linear_term<4>(v)),
+         component_vector(3, [](size_t i) { return 0.5 - static_cast<double>(i); }),
          component_vector(1, ConstantValue{1.}),
-         newton_rhs(component_vector(1, ConstantValue{0.25}), linear_term<2>(t)),
+         component_vector(1, ConstantValue{0.25}),
          component_vector(1, ConstantValue{-0.75}),
-         newton_rhs(component_vector(2, [](size_t i) { return i == 0 ? 1. : -2.; }), linear_term<4>(v))));
+         component_vector(2, [](size_t i) { return i == 0 ? 1. : -2.; })),
+      current_values(current_value<2>(t), current_value<4>(v)));
    // clang-format on
-   const Condensation condensation(system, {2, 3, 4});
+   const Condensation condensation(system, condense<2, 3, 4>);
    EXPECT_EQ(condensation.number_diagonal_entries(), size_t{3}); // u0 and u2 (block 4), u1 (blocks 2 and 3)
-   expect_condensation_solves_system(system, {2, 3, 4}, context);
+   expect_condensation_solves_system(system, condense<2, 3, 4>, context);
 }
 
 // the pivots of the condensation are divisors: a zero or non-finite pivot (unknown sign) is rejected at evaluation
@@ -810,16 +761,16 @@ TEST(NewtonSystemCondensation, RejectsSingularPivot) {
    const double infinity = std::numeric_limits<double>::infinity();
    for (const double pivot: {0., -0., infinity, -infinity, std::numeric_limits<double>::quiet_NaN()}) {
       const auto system = make_system(pivot);
-      Condensation condensation(system, {2});
+      Condensation condensation(system, condense<2>);
       EXPECT_THROW(condensation.evaluate_matrix(system), std::runtime_error) << "pivot " << pivot;
    }
    const auto regular_system = make_system(1e-300);
-   Condensation condensation(regular_system, {2});
+   Condensation condensation(regular_system, condense<2>);
    EXPECT_NO_THROW(condensation.evaluate_matrix(regular_system));
 
    // the block-wise back substitution checks its pivots too
    std::vector<double> kept{1.}, solution(1);
-   EXPECT_THROW(back_substitute_block<2>(selection(1, 1, 0, 0, 1.), diagonal(1, ConstantValue{0.}), component_vector(1, ConstantValue{1.}),
+   EXPECT_THROW(back_substitute_block(selection(1, 1, 0, 0, 1.), diagonal(1, ConstantValue{0.}), component_vector(1, ConstantValue{1.}),
       View<const double>(kept.data(), 1), View<double>(solution.data(), 1)), std::runtime_error);
 }
 
@@ -837,15 +788,227 @@ TEST(NewtonSystemCondensation, PivotSignPrecondition) {
    };
    static_assert(std::decay_t<decltype(make_system(1.).get_matrix().get_block<2, 2>())>::sign == EntrySign::positive);
    const auto valid = make_system(2.);
-   Condensation valid_condensation(valid, {2});
+   Condensation valid_condensation(valid, condense<2>);
    EXPECT_NO_THROW(valid_condensation.evaluate_matrix(valid));
    for (const double pivot: {-1., 0.}) {
       const auto violated = make_system(pivot);
-      Condensation condensation(violated, {2});
+      Condensation condensation(violated, condense<2>);
 #ifndef NDEBUG
       EXPECT_THROW(condensation.evaluate_matrix(violated), std::logic_error) << "pivot " << pivot;
 #else
       EXPECT_NO_THROW(condensation.evaluate_matrix(violated)) << "pivot " << pivot; // trusted precondition
 #endif
    }
+}
+
+// the structural requirements of a condensation are checked at compile time
+TEST(NewtonSystemCondensation, StructureIsCheckedAtCompileTime) {
+   using Diagonal = decltype(diagonal(1, ConstantValue{1.}));
+   using Selection = decltype(selection(1, 1, 0, 0, 1.));
+   using Valid = BlockMatrix<Block<0, 0, Diagonal>, Block<0, 2, Selection>, Block<2, 0, Selection>, Block<2, 2, Diagonal>>;
+   static_assert(CondensationStructure<Valid, CondensedBlocks<2>>::couplings_are_partial_permutations);
+   static_assert(CondensationStructure<Valid, CondensedBlocks<2>>::condensed_blocks_are_uncoupled);
+   static_assert(CondensationStructure<Valid, CondensedBlocks<2>>::pivots_are_present);
+   static_assert(CondensationStructure<Valid, CondensedBlocks<2>>::coupled_only_with<0>());
+   // a coupling that is not a scaled partial permutation
+   using NotPartialPermutation = BlockMatrix<Block<0, 2, ConstraintJacobian>, Block<2, 2, Diagonal>>;
+   static_assert(!CondensationStructure<NotPartialPermutation, CondensedBlocks<2>>::couplings_are_partial_permutations);
+   // two coupled condensed blocks
+   using Coupled = BlockMatrix<Block<2, 2, Diagonal>, Block<2, 3, Selection>, Block<3, 3, Diagonal>>;
+   static_assert(!CondensationStructure<Coupled, CondensedBlocks<2, 3>>::condensed_blocks_are_uncoupled);
+   // a condensed block without pivot
+   using NoPivot = BlockMatrix<Block<0, 2, Selection>>;
+   static_assert(!CondensationStructure<NoPivot, CondensedBlocks<2>>::pivots_are_present);
+   // a condensed block coupled with the dual unknowns (1)
+   using CoupledWithDuals = BlockMatrix<Block<1, 2, Selection>, Block<2, 2, Diagonal>>;
+   static_assert(!CondensationStructure<CoupledWithDuals, CondensedBlocks<2>>::coupled_only_with<0>());
+   // pairwise distinct blocks (condensed blocks, current values)
+   static_assert(all_distinct({}) && all_distinct({2, 3}) && !all_distinct({2, 3, 2}));
+}
+
+// the call protocol evaluate_matrix -> evaluate_rhs -> back_substitute is enforced
+TEST(NewtonSystemCondensation, CallProtocolIsEnforced) {
+   Setting<OptimizationProblem> setting;
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   // clang-format off
+   const auto system = kkt_system(
+      block_matrix({1, 0, 1},
+         row(diagonal(1, ConstantValue{1.}), zero, selection(1, 1, 0, 0, -1.)),
+         row(zero,                           zero, zero),
+         row(selection(1, 1, 0, 0, 1.),      zero, diagonal(1, ConstantValue{2.}))),
+      block_vector(component_vector(1, ConstantValue{1.}), component_vector(0, ConstantValue{0.}), component_vector(1, ConstantValue{1.})));
+   // clang-format on
+   Condensation condensation(system, condense<2>);
+   std::vector<double> rhs(1), kept{1.}, eliminated(1);
+   const auto back_substitute = [&] { condensation.back_substitute(View<const double>(kept.data(), 1), View<double>(eliminated.data(), 1)); };
+   EXPECT_THROW(condensation.evaluate_rhs(system, context, View<double>(rhs.data(), 1)), std::logic_error);
+   EXPECT_THROW(back_substitute(), std::logic_error);
+   condensation.evaluate_matrix(system);
+   EXPECT_THROW(back_substitute(), std::logic_error); // the right-hand side is missing
+   condensation.evaluate_rhs(system, context, View<double>(rhs.data(), 1));
+   EXPECT_NO_THROW(back_substitute());
+   EXPECT_NO_THROW(back_substitute()); // e.g. second-order corrections
+   condensation.evaluate_matrix(system); // new iterate: the right-hand side is stale
+   EXPECT_THROW(back_substitute(), std::logic_error);
+}
+
+#ifndef NDEBUG
+// debug check: the right-hand side of a Newton system is assembled at the iterate where its matrix was evaluated
+TEST(NewtonSystemCondensation, RightHandSideAtAnotherIterateIsDetected) {
+   Setting<PrimalDualInteriorPointProblem> setting;
+   const std::unique_ptr<NewtonSystem> newton_system = setting.subproblem->create_newton_system();
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   Vector<double> values(newton_system->number_nonzeros(), 0.), rhs(newton_system->dimension());
+   newton_system->evaluate(context, values.view());
+   EXPECT_NO_THROW(newton_system->assemble_rhs(context, rhs.view()));
+   setting.iterate.primals[0] += 1e-3;
+   EXPECT_THROW(newton_system->assemble_rhs(context, rhs.view()), std::logic_error);
+}
+#endif
+
+// the regularization blocks apply the values written by the inertia correction strategy (or δ = 0 if absent)
+TEST(NewtonSystemSymbols, RegularizationProductsUseWrittenValues) {
+   Setting<OptimizationProblem> setting;
+   const std::vector<double> primal_values{1e-4, 1e-4, 0.}, dual_values{-1e-8, -1e-8}, x{1., -2., 3.};
+   const RegularizationValues regularization{View<const double>(primal_values.data(), 3), View<const double>(dual_values.data(), 2)};
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations, &regularization};
+   const NewtonSystemContext context_without_values{setting.statistics, setting.iterate, setting.evaluations};
+   std::vector<double> y(3, 0.), y_dual(2, 0.);
+   PrimalRegularization(3).add_matrix_vector_product(context, View<const double>(x.data(), 3), View<double>(y.data(), 3));
+   EXPECT_EQ(y, (std::vector<double>{1e-4, -2e-4, 0.}));
+   DualRegularization(2).add_matrix_vector_product(context, View<const double>(x.data(), 2), View<double>(y_dual.data(), 2));
+   EXPECT_EQ(y_dual, (std::vector<double>{-1e-8, 2e-8}));
+   std::vector<double> y_zero(3, 0.);
+   PrimalRegularization(3).add_matrix_vector_product(context_without_values, View<const double>(x.data(), 3), View<double>(y_zero.data(), 3));
+   EXPECT_EQ(y_zero, (std::vector<double>(3, 0.)));
+}
+
+namespace {
+   // occurrences of the configurations generated by the random tests
+   struct RandomCoverage {
+      size_t both_sides{0}, kept_row_only{0}, own_row_only{0}, uncoupled{0}, empty_blocks{0}, shared_kept_unknowns{0};
+   };
+
+   // random block system: kept u (block 0) and w (block 1, coupled with u), eliminated blocks 2 and 3 coupled with u
+   // through random partial permutations (both sides, one side or uncoupled), random pivots of both signs, current values
+   // (residual form) for the eliminated blocks if WithCurrentValues
+   template <bool WithCurrentValues>
+   void random_block_system_trial(std::mt19937& generator, const NewtonSystemContext& context, RandomCoverage& coverage) {
+      std::uniform_real_distribution<double> unit(0., 1.);
+      const auto random_size = [&](size_t maximum) { return std::uniform_int_distribution<size_t>(0, maximum)(generator); };
+      const auto magnitude = [&] { return 0.5 + 1.5 * unit(generator); }; // in [0.5, 2]
+      const auto signed_magnitude = [&] { return (unit(generator) < 0.5 ? -1. : 1.) * magnitude(); };
+      const auto random_vector = [&](size_t size) {
+         std::vector<double> vector(size);
+         for (double& entry: vector) entry = 4. * unit(generator) - 2.;
+         return vector;
+      };
+      // k distinct indices among n
+      const auto sample = [&](size_t n, size_t k) {
+         std::vector<size_t> indices(n);
+         for (size_t i: Range(n)) indices[i] = i;
+         std::shuffle(indices.begin(), indices.end(), generator);
+         indices.resize(k);
+         return indices;
+      };
+
+      const size_t n0 = 1 + random_size(5);
+      const size_t n1 = random_size(std::min<size_t>(n0, 3));
+      const size_t n2 = random_size(n0), n3 = random_size(n0);
+      coverage.empty_blocks += (n1 == 0) + (n2 == 0) + (n3 == 0);
+
+      // kept blocks: diagonally dominant curvature, negative dual diagonal, coupling w_i <-> u_{p(i)}
+      std::vector<double> curvature(n0), dual_diagonal(n1), coupling_values(n1);
+      for (double& entry: curvature) entry = 20. + 5. * unit(generator);
+      for (double& entry: dual_diagonal) entry = -magnitude();
+      for (double& entry: coupling_values) entry = signed_magnitude();
+      const std::vector<size_t> coupled_primal = sample(n0, n1);
+
+      // eliminated block: kept unknown of each eliminated unknown (distinct within the block), coupling sides, coefficients
+      struct EliminatedBlock {
+         std::vector<size_t> b_rows, b_columns, c_rows, c_columns;
+         std::vector<double> b_values, c_values, pivots, constant, current;
+      };
+      std::vector<size_t> kept_usage(n0, 0);
+      const auto eliminated_block = [&](size_t dimension) {
+         EliminatedBlock block;
+         const std::vector<size_t> kept = sample(n0, dimension);
+         for (size_t j: Range(dimension)) {
+            const size_t side = random_size(3); // 0: both, 1: kept row only, 2: own row only, 3: uncoupled
+            if (side == 0 || side == 1) {
+               block.b_rows.push_back(kept[j]);
+               block.b_columns.push_back(j);
+               block.b_values.push_back(signed_magnitude());
+            }
+            if (side == 0 || side == 2) {
+               block.c_rows.push_back(j);
+               block.c_columns.push_back(kept[j]);
+               block.c_values.push_back(signed_magnitude());
+            }
+            if (side != 3) ++kept_usage[kept[j]];
+            (side == 0 ? coverage.both_sides : side == 1 ? coverage.kept_row_only : side == 2 ? coverage.own_row_only : coverage.uncoupled)++;
+            block.pivots.push_back(signed_magnitude());
+         }
+         block.constant = random_vector(dimension);
+         block.current = random_vector(dimension);
+         return block;
+      };
+      const EliminatedBlock block2 = eliminated_block(n2), block3 = eliminated_block(n3);
+      for (const size_t usage: kept_usage) coverage.shared_kept_unknowns += (1 < usage);
+
+      const auto from = [](std::vector<double> values) { return [values = std::move(values)](size_t index) { return values[index]; }; };
+      const auto index_from = [](std::vector<size_t> indices) { return [indices = std::move(indices)](size_t entry) { return indices[entry]; }; };
+      const auto kept_row_coupling = [&](size_t dimension, const EliminatedBlock& block) {
+         return partial_permutation(n0, dimension, block.b_values.size(), index_from(block.b_rows), index_from(block.b_columns), from(block.b_values));
+      };
+      const auto own_row_coupling = [&](size_t dimension, const EliminatedBlock& block) {
+         return partial_permutation(dimension, n0, block.c_values.size(), index_from(block.c_rows), index_from(block.c_columns), from(block.c_values));
+      };
+      // clang-format off
+      auto matrix = block_matrix({n0, n1, n2, n3},
+         row(diagonal(n0, from(curvature)),
+             partial_permutation(n0, n1, n1, index_from(coupled_primal), IdentityIndex{}, from(coupling_values)),
+             kept_row_coupling(n2, block2), kept_row_coupling(n3, block3)),
+         row(partial_permutation(n1, n0, n1, IdentityIndex{}, index_from(coupled_primal), from(coupling_values)),
+             diagonal(n1, from(dual_diagonal)), zero, zero),
+         row(own_row_coupling(n2, block2), zero, diagonal(n2, from(block2.pivots)), zero),
+         row(own_row_coupling(n3, block3), zero, zero, diagonal(n3, from(block3.pivots))));
+      // clang-format on
+      auto rhs = block_vector(component_vector(n0, from(random_vector(n0))), component_vector(n1, from(random_vector(n1))),
+         component_vector(n2, from(block2.constant)), component_vector(n3, from(block3.constant)));
+      if constexpr (WithCurrentValues) {
+         const auto system = kkt_system(std::move(matrix), std::move(rhs),
+            current_values(current_value<2>(from(block2.current)), current_value<3>(from(block3.current))));
+         expect_condensation_solves_system(system, condense<2, 3>, context);
+      }
+      else {
+         const auto system = kkt_system(std::move(matrix), std::move(rhs));
+         expect_condensation_solves_system(system, condense<2, 3>, context);
+      }
+   }
+} // namespace
+
+// property test: random block systems (dimensions, couplings, signs, residual form) are solved exactly by condensation
+// followed by back substitution
+TEST(NewtonSystemCondensation, RandomBlockSystems) {
+   Setting<OptimizationProblem> setting;
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   std::mt19937 generator(20261017); // fixed seed: reproducible
+   RandomCoverage coverage;
+   for (size_t trial: Range(200)) {
+      SCOPED_TRACE("trial " + std::to_string(trial));
+      if (trial % 2 == 0) {
+         random_block_system_trial<true>(generator, context, coverage);
+      }
+      else {
+         random_block_system_trial<false>(generator, context, coverage);
+      }
+   }
+   // the generated configurations cover the cases of interest
+   EXPECT_LT(0u, coverage.both_sides);
+   EXPECT_LT(0u, coverage.kept_row_only);
+   EXPECT_LT(0u, coverage.own_row_only);
+   EXPECT_LT(0u, coverage.uncoupled);
+   EXPECT_LT(0u, coverage.empty_blocks);
+   EXPECT_LT(0u, coverage.shared_kept_unknowns);
 }
