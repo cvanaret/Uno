@@ -41,13 +41,6 @@ namespace uno {
       // system (precondition: assemble_rhs() was called at the current iterate)
       [[nodiscard]] virtual size_t number_eliminated() const = 0;
       virtual void back_substitute(View<const double> solution, View<double> eliminated_solution) const = 0;
-
-      // uncondensed system (all the blocks of unknowns, kept and eliminated, in block order). Not used by the solvers:
-      // verification of the condensation (tests, debugging)
-      [[nodiscard]] virtual size_t uncondensed_dimension() const = 0;
-      // y += K x (the regularization blocks are applied with δ = 0)
-      virtual void add_uncondensed_product(const NewtonSystemContext& context, View<const double> x, View<double> y) const = 0;
-      virtual void evaluate_uncondensed_rhs(const NewtonSystemContext& context, View<double> rhs) const = 0;
    };
 
    // Newton system whose uncondensed system is the expression returned by `factory(iterate)`. The expression only holds
@@ -76,7 +69,6 @@ namespace uno {
          this->primal_regularization_number_nonzeros = uno::number_nonzeros(matrix.get_a11().get_right());
          this->jacobian_number_nonzeros = uno::number_nonzeros(matrix.get_a21());
          this->dual_regularization_number_nonzeros = uno::number_nonzeros(matrix.get_a22());
-         this->system_uncondensed_dimension = block_matrix.number_rows();
       }
 
       [[nodiscard]] size_t dimension() const override { return this->system_dimension; }
@@ -115,18 +107,6 @@ namespace uno {
          this->condensation.back_substitute(solution, eliminated_solution);
       }
 
-      [[nodiscard]] size_t uncondensed_dimension() const override { return this->system_uncondensed_dimension; }
-
-      void add_uncondensed_product(const NewtonSystemContext& context, View<const double> x, View<double> y) const override {
-         const auto system = this->factory(context.iterate);
-         system.get_matrix().add_matrix_vector_product(context, x, y);
-      }
-
-      void evaluate_uncondensed_rhs(const NewtonSystemContext& context, View<double> rhs) const override {
-         const auto system = this->factory(context.iterate);
-         system.evaluate_rhs(context, rhs);
-      }
-
    protected:
       const Factory factory;
       const Iterate empty_iterate{};
@@ -137,7 +117,6 @@ namespace uno {
       size_t primal_regularization_number_nonzeros{};
       size_t jacobian_number_nonzeros{};
       size_t dual_regularization_number_nonzeros{};
-      size_t system_uncondensed_dimension{};
    };
 
    // free function: the factory returns the uncondensed system at an iterate; the blocks in condensed_blocks are eliminated

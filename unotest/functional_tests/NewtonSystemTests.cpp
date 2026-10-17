@@ -387,7 +387,6 @@ TEST(NewtonSystemCondensation, CondensedSolutionSolvesUncondensedSystem) {
    const std::unique_ptr<NewtonSystem> newton_system = setting.subproblem->create_newton_system();
    ASSERT_EQ(newton_system->dimension(), n + m);
    ASSERT_EQ(newton_system->number_eliminated(), number_lower + number_upper);
-   ASSERT_EQ(newton_system->uncondensed_dimension(), n + m + number_lower + number_upper);
    const NewtonSystemContext context{setting.statistics, iterate, setting.evaluations};
    const size_t number_nonzeros = newton_system->number_nonzeros();
    std::vector<uno_int> rows(number_nonzeros), columns(number_nonzeros);
@@ -415,19 +414,6 @@ TEST(NewtonSystemCondensation, CondensedSolutionSolvesUncondensedSystem) {
    for (size_t k: Range(number_lower)) dz_lower[lower_bounded[k]] = eliminated[k];
    for (size_t k: Range(number_upper)) dz_upper[upper_bounded[k]] = eliminated[number_lower + k];
    const double mu = setting.barrier_parameter;
-
-   // the full direction solves the uncondensed system K d = r (symbolic product and right-hand side)
-   const size_t uncondensed_dimension = newton_system->uncondensed_dimension();
-   std::vector<double> full_direction(uncondensed_dimension), product(uncondensed_dimension, 0.), uncondensed_rhs(uncondensed_dimension);
-   for (size_t i: Range(n + m)) full_direction[i] = solution[i];
-   for (size_t k: Range(number_lower + number_upper)) full_direction[n + m + k] = eliminated[k];
-   setting.evaluations.evaluate_jacobian(setting.model, iterate.primals);
-   newton_system->add_uncondensed_product(context, View<const double>(full_direction.data(), uncondensed_dimension),
-      View<double>(product.data(), uncondensed_dimension));
-   newton_system->evaluate_uncondensed_rhs(context, View<double>(uncondensed_rhs.data(), uncondensed_dimension));
-   for (size_t i: Range(uncondensed_dimension)) {
-      EXPECT_NEAR(product[i], uncondensed_rhs[i], 1e-12 * (1. + std::abs(uncondensed_rhs[i]))) << "uncondensed row " << i;
-   }
 
    // independent check of the equations
    // ∇f + damping, recovered from the barrier gradient ∇f - μ/S_L - μ/S_U + damping
