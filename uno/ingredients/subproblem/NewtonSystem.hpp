@@ -42,7 +42,8 @@ namespace uno {
       [[nodiscard]] virtual size_t number_eliminated() const = 0;
       virtual void back_substitute(View<const double> solution, View<double> eliminated_solution) const = 0;
 
-      // uncondensed system (all the blocks of unknowns, kept and eliminated, in block order)
+      // uncondensed system (all the blocks of unknowns, kept and eliminated, in block order). Not used by the solvers:
+      // verification of the condensation (tests, debugging)
       [[nodiscard]] virtual size_t uncondensed_dimension() const = 0;
       // y += K x (the regularization blocks are applied with δ = 0)
       virtual void add_uncondensed_product(const NewtonSystemContext& context, View<const double> x, View<double> y) const = 0;

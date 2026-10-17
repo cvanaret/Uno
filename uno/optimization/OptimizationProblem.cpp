@@ -185,11 +185,11 @@ namespace uno {
       return make_newton_system([this, &hessian_model, dual_regularization](const Iterate& /*iterate*/) {
          const size_t n = this->number_variables, m = this->number_constraints;
          return kkt_system(
+            // clang-format off
             block_matrix({n, m},
-               block<0, 0>(LagrangianHessian(*this, hessian_model, n) + Regularization(n)),
-               block<0, 1>(transpose(ConstraintJacobian(*this))),
-               block<1, 0>(ConstraintJacobian(*this)),
-               block<1, 1>(Regularization(dual_regularization ? m : 0))),
+               row(LagrangianHessian(*this, hessian_model, n) + Regularization(n), transpose(ConstraintJacobian(*this))),
+               row(ConstraintJacobian(*this),                                    Regularization(dual_regularization ? m : 0))),
+            // clang-format on
             block_vector(
                negative_lagrangian_gradient(*this, [this](const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) {
                   this->evaluate_objective_gradient(iterate, objective_gradient, evaluations);

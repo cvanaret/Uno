@@ -8,6 +8,7 @@
 #include <cmath>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 #include <gtest/gtest.h>
 #include "ingredients/hessian_models/ExactHessian.hpp"
@@ -617,3 +618,84 @@ TEST(NewtonSystemCondensation, RejectsMissingLinearTerm) {
          newton_rhs(component_vector(1, ConstantValue{0.}), linear_term<2>(ConstantValue{1.}))));
    EXPECT_THROW(Condensation(system, {2}), std::invalid_argument);
 }
+
+// the dense declaration (rows with explicit zero blocks) is lowered to the sparse declaration: same block types, in row order
+TEST(BlockMatrixDeclaration, RowsLowerToSparseBlocks) {
+   const auto D = [] { return diagonal(2, ConstantValue{2.}); };
+   const auto C = [] { return scaled_selection(1, 2, 1, IdentityIndex{}, ConstantIndex{1}, ConstantValue{3.}); };
+   const auto Ct = [] { return scaled_selection(2, 1, 1, ConstantIndex{1}, IdentityIndex{}, ConstantValue{3.}); };
+   const auto E = [] { return diagonal(1, ConstantValue{-1.}); };
+   // clang-format off
+   auto dense = block_matrix({2, 1, 1},
+      row(D(),  Ct(),  zero),
+      row(C(),  zero,  zero),
+      row(zero, zero,  E()));
+   // clang-format on
+   auto sparse = block_matrix({2, 1, 1}, block<0, 0>(D()), block<0, 1>(Ct()), block<1, 0>(C()), block<2, 2>(E()));
+   static_assert(std::is_same_v<decltype(dense), decltype(sparse)>);
+
+   // same products
+   Setting<OptimizationProblem> setting;
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   const std::vector<double> x{1., -2., 0.5, 4.};
+   std::vector<double> y_dense(4, 0.), y_sparse(4, 0.);
+   dense.add_matrix_vector_product(context, View<const double>(x.data(), 4), View<double>(y_dense.data(), 4));
+   sparse.add_matrix_vector_product(context, View<const double>(x.data(), 4), View<double>(y_sparse.data(), 4));
+   EXPECT_EQ(y_dense, y_sparse);
+   const std::vector<double> expected{2., -4. + 1.5, -6., -4.};
+   EXPECT_EQ(y_dense, expected);
+
+   // an lvalue entry is stored by reference, an rvalue entry is owned
+   const auto lvalue_diagonal = D();
+   auto with_reference = block_matrix({2, 1}, row(lvalue_diagonal, zero), row(zero, E()));
+   static_assert(std::is_same_v<decltype(with_reference),
+      BlockMatrix<Block<0, 0, const std::decay_t<decltype(lvalue_diagonal)>&>, Block<1, 1, std::decay_t<decltype(E())>>>>);
+   const auto* stored_diagonal = &with_reference.get_block<0, 0>();
+   EXPECT_EQ(stored_diagonal, &lvalue_diagonal);
+}
+
+// the number of block dimensions must match the number of rows
+TEST(BlockMatrixDeclaration, RejectsDimensionMismatch) {
+   EXPECT_THROW(block_matrix({2, 1, 1}, row(diagonal(2, ConstantValue{1.}), zero), row(zero, diagonal(1, ConstantValue{1.}))),
+      std::invalid_argument);
+}
+
+// back_substitute_block only accepts the own pivot term as linear term
+TEST(NewtonSystemCondensation, OwnPivotTermTrait) {
+   using Constant = ComponentVector<ConstantValue>;
+   static_assert(has_only_own_pivot_term_v<2, Constant>);
+   static_assert(has_only_own_pivot_term_v<2, NewtonRHS<Constant>>);
+   static_assert(has_only_own_pivot_term_v<2, NewtonRHS<Constant, LinearTerm<2, ConstantValue>>>);
+   static_assert(!has_only_own_pivot_term_v<2, NewtonRHS<Constant, LinearTerm<3, ConstantValue>>>);
+   static_assert(!has_only_own_pivot_term_v<2, NewtonRHS<Constant, LinearTerm<2, ConstantValue>, LinearTerm<2, ConstantValue>>>);
+}
+
+#ifndef NDEBUG
+// debug check: the linear term of a kept row cancelled symbolically must be the same vector as the own pivot term
+TEST(NewtonSystemCondensation, DetectsInconsistentCancelledTerms) {
+   Setting<OptimizationProblem> setting;
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   const auto make_system = [](double kept_row_value) {
+      // clang-format off
+      return kkt_system(
+         block_matrix({1, 0, 1},
+            row(diagonal(1, ConstantValue{1.}),                                               zero, scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{-1.})),
+            row(zero,                                                                         zero, zero),
+            row(scaled_selection(1, 1, 1, IdentityIndex{}, IdentityIndex{}, ConstantValue{2.}), zero, diagonal(1, ConstantValue{4.}))),
+         block_vector(newton_rhs(component_vector(1, ConstantValue{0.}), linear_term<2>(ConstantValue{kept_row_value})),
+            component_vector(0, ConstantValue{0.}),
+            newton_rhs(component_vector(1, ConstantValue{1.}), linear_term<2>(ConstantValue{0.5}))));
+      // clang-format on
+   };
+   std::vector<double> rhs(1);
+   const auto consistent = make_system(0.5);
+   Condensation condensation(consistent, {2});
+   condensation.evaluate_matrix(consistent);
+   EXPECT_NO_THROW(condensation.evaluate_rhs(consistent, context, View<double>(rhs.data(), 1)));
+
+   const auto inconsistent = make_system(0.25);
+   Condensation inconsistent_condensation(inconsistent, {2});
+   inconsistent_condensation.evaluate_matrix(inconsistent);
+   EXPECT_THROW(inconsistent_condensation.evaluate_rhs(inconsistent, context, View<double>(rhs.data(), 1)), std::logic_error);
+}
+#endif

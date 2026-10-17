@@ -278,23 +278,16 @@ namespace uno {
          Evaluations& evaluations) const {
       this->unslacked_problem.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
-      // barrier terms
+      // barrier terms + damping
       for (size_t variable_index: Range(this->number_variables)) {
          double barrier_term = 0.;
          if (is_finite(this->variables_lower_bounds[variable_index])) { // lower bounded
             barrier_term -= this->barrier_parameter/(iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]);
-            // damping
-            if (is_infinite(this->variables_upper_bounds[variable_index])) {
-               barrier_term += this->parameters.damping_factor * this->barrier_parameter;
-            }
          }
          if (is_finite(this->variables_upper_bounds[variable_index])) { // upper bounded
             barrier_term -= this->barrier_parameter/(iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]);
-            // damping
-            if (is_infinite(this->variables_lower_bounds[variable_index])) {
-               barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
-            }
          }
+         barrier_term += this->damping_term(variable_index);
          objective_gradient[variable_index] += barrier_term;
       }
    }
@@ -485,7 +478,7 @@ namespace uno {
 
    // Newton system of the barrier problem in (Δx, -Δy, Δz_L, Δz_U):
    //    [∇²L + δ_w I   J^T      -I_L    -I_U ] [  Δx ]   [ -(∇f + damping) + J^T y + z_L + z_U ]  (residual form:)
-   //    [J             -δ_c I                ] [ -Δy ] = [ -c                                  ]
+   //    [J             -δ_c I                ] [ -Δy ] = [ -(c - c_L)                          ]
    //    [Z_L                     S_L         ] [ Δz_L]   [ μe - S_L z_L                        ]
    //    [Z_U                             S_U ] [ Δz_U]   [ μe - S_U z_U                        ]
    // with S_L = X - X_L, S_U = X - X_U, ∇²L the Lagrangian Hessian of the unslacked problem, J the Jacobian of the slacked
@@ -504,18 +497,18 @@ namespace uno {
          auto& [Z_U, S_U, mu_U, z_U] = upper_complementarity;
          const auto lower_variable = [this](size_t index) { return this->lower_bounded_variables[index]; };
          const auto upper_variable = [this](size_t index) { return this->upper_bounded_variables[index]; };
+         auto H = LagrangianHessian(this->unslacked_problem, hessian_model, n) + Regularization(n);
+         auto minus_I_L = scaled_selection(n, number_lower_bounds, number_lower_bounds, lower_variable, IdentityIndex{}, ConstantValue{-1.});
+         auto minus_I_U = scaled_selection(n, number_upper_bounds, number_upper_bounds, upper_variable, IdentityIndex{}, ConstantValue{-1.});
+         auto minus_delta_c = Regularization(dual_regularization ? m : 0);
          return kkt_system(
+            // clang-format off
             block_matrix({n, m, number_lower_bounds, number_upper_bounds},
-               block<0, 0>(LagrangianHessian(this->unslacked_problem, hessian_model, n) + Regularization(n)),
-               block<0, 1>(transpose(ConstraintJacobian(*this))),
-               block<0, 2>(scaled_selection(n, number_lower_bounds, number_lower_bounds, lower_variable, IdentityIndex{}, ConstantValue{-1.})),
-               block<0, 3>(scaled_selection(n, number_upper_bounds, number_upper_bounds, upper_variable, IdentityIndex{}, ConstantValue{-1.})),
-               block<1, 0>(ConstraintJacobian(*this)),
-               block<1, 1>(Regularization(dual_regularization ? m : 0)),
-               block<2, 0>(std::move(Z_L)),
-               block<2, 2>(std::move(S_L)),
-               block<3, 0>(std::move(Z_U)),
-               block<3, 3>(std::move(S_U))),
+               row(std::move(H),               transpose(ConstraintJacobian(*this)), std::move(minus_I_L), std::move(minus_I_U)),
+               row(ConstraintJacobian(*this),  std::move(minus_delta_c),             zero,                 zero),
+               row(std::move(Z_L),             zero,                                 std::move(S_L),       zero),
+               row(std::move(Z_U),             zero,                                 zero,                 std::move(S_U))),
+            // clang-format on
             block_vector(
                newton_rhs(negative_lagrangian_gradient(*this, [this](const Iterate& current_iterate, View<double> objective_gradient,
                      Evaluations& evaluations) {
@@ -805,9 +798,9 @@ namespace uno {
       const size_t number_lower_bounds = this->lower_bounded_variables.size();
       const auto& [Z_L, S_L, mu_L, z_L] = lower_complementarity;
       const auto& [Z_U, S_U, mu_U, z_U] = upper_complementarity;
-      back_substitute_block(Z_L, S_L, newton_rhs(mu_L, linear_term<2>(z_L)), direction_primals.view(),
+      back_substitute_block<2>(Z_L, S_L, newton_rhs(mu_L, linear_term<2>(z_L)), direction_primals.view(),
          view(this->bound_dual_direction_buffer.data(), number_lower_bounds));
-      back_substitute_block(Z_U, S_U, newton_rhs(mu_U, linear_term<3>(z_U)), direction_primals.view(),
+      back_substitute_block<3>(Z_U, S_U, newton_rhs(mu_U, linear_term<3>(z_U)), direction_primals.view(),
          view(this->bound_dual_direction_buffer.data() + number_lower_bounds, this->upper_bounded_variables.size()));
       this->set_bound_dual_direction(direction_multipliers);
       // fraction to boundary

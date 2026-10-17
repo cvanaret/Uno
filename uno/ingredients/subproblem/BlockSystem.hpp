@@ -107,10 +107,92 @@ namespace uno {
       }
    };
 
-   // free function
-   template <typename... Blocks>
-   BlockMatrix<Blocks...> block_matrix(std::vector<size_t> block_dimensions, Blocks&&... blocks) {
-      return BlockMatrix<Blocks...>(std::move(block_dimensions), std::forward<Blocks>(blocks)...);
+   // structurally zero block of a block matrix declared row by row
+   struct Zero { };
+   inline constexpr Zero zero{};
+
+   // row of a block matrix declared row by row: one entry (a symbol or zero) per block column
+   template <typename... Entries>
+   class BlockRow {
+   public:
+      static constexpr size_t number_entries = sizeof...(Entries);
+      // declared type of the I-th entry: a value type (owned) or an lvalue reference
+      template <size_t I>
+      using entry_type = std::tuple_element_t<I, std::tuple<Entries...>>;
+
+      explicit BlockRow(Entries&&... entries): entries(std::forward<Entries>(entries)...) { }
+
+      // the I-th entry, forwarded with its declared value category (lvalue references stay lvalue references)
+      template <size_t I>
+      decltype(auto) forward_entry() {
+         return std::forward<entry_type<I>>(std::get<I>(this->entries));
+      }
+
+   protected:
+      std::tuple<storage_t<Entries>...> entries;
+   };
+
+   template <typename... Entries>
+   BlockRow<Entries...> row(Entries&&... entries) {
+      return BlockRow<Entries...>(std::forward<Entries>(entries)...);
+   }
+
+   template <typename T>
+   struct is_block_row: std::false_type { };
+   template <typename... Entries>
+   struct is_block_row<BlockRow<Entries...>>: std::true_type { };
+   template <typename T>
+   inline constexpr bool is_block_row_v = is_block_row<std::decay_t<T>>::value;
+
+   namespace detail {
+      // entry (Row, Column) of a block row -> tuple with the block, or empty tuple if the entry is zero
+      template <size_t Row, size_t Column, typename BlockRowType>
+      auto lift_entry(BlockRowType& block_row) {
+         using Entry = typename BlockRowType::template entry_type<Column>;
+         if constexpr (std::is_same_v<std::decay_t<Entry>, Zero>) {
+            return std::tuple<>{};
+         }
+         else {
+            return std::tuple<Block<Row, Column, Entry>>(Block<Row, Column, Entry>(block_row.template forward_entry<Column>()));
+         }
+      }
+
+      template <size_t Row, typename BlockRowType, size_t... Columns>
+      auto lift_row(BlockRowType& block_row, std::index_sequence<Columns...>) {
+         return std::tuple_cat(lift_entry<Row, Columns>(block_row)...);
+      }
+
+      template <typename RowTuple, size_t... Rows>
+      auto lift_rows(RowTuple& rows, std::index_sequence<Rows...>) {
+         return std::tuple_cat(lift_row<Rows>(std::get<Rows>(rows),
+            std::make_index_sequence<std::tuple_element_t<Rows, RowTuple>::number_entries>{})...);
+      }
+   } // namespace detail
+
+   // free function. Two declarations:
+   // - sparse: block_matrix(dimensions, block<0, 0>(A), block<1, 0>(B), ...) with the nonzero blocks in any order;
+   // - dense, row by row: block_matrix(dimensions, row(A, B, zero), row(C, zero, D), ...) with explicit zero blocks.
+   //   It is lowered at compile time to the sparse declaration (the zero blocks are dropped, the blocks are ordered row by row)
+   template <typename... Arguments>
+   auto block_matrix(std::vector<size_t> block_dimensions, Arguments&&... arguments) {
+      if constexpr (0 < sizeof...(Arguments) && (is_block_row_v<Arguments> && ...)) {
+         constexpr size_t number_rows = sizeof...(Arguments);
+         static_assert(((std::decay_t<Arguments>::number_entries == number_rows) && ...),
+            "block_matrix: each row must have one entry per block row (the block matrix is square)");
+         if (block_dimensions.size() != number_rows) {
+            throw std::invalid_argument("block_matrix: the number of block dimensions differs from the number of rows");
+         }
+         std::tuple<std::decay_t<Arguments>...> rows(std::forward<Arguments>(arguments)...);
+         auto blocks = detail::lift_rows(rows, std::make_index_sequence<number_rows>{});
+         return std::apply([&](auto&&... lifted_blocks) {
+            return BlockMatrix<std::decay_t<decltype(lifted_blocks)>...>(std::move(block_dimensions),
+               std::move(lifted_blocks)...);
+         }, std::move(blocks));
+      }
+      else {
+         static_assert(!(is_block_row_v<Arguments> || ...), "block_matrix: rows and sparse blocks cannot be mixed");
+         return BlockMatrix<Arguments...>(std::move(block_dimensions), std::forward<Arguments>(arguments)...);
+      }
    }
 
    // block vector: one component per block of unknowns. A component is a vector symbol or a NewtonRHS (residual form)
@@ -140,21 +222,29 @@ namespace uno {
       return BlockVector<Components...>(std::forward<Components>(components)...);
    }
 
-   // result -= K(Row, Column) v for a linear term of the right-hand side of block row Row
+   // result += K(Row, Column) (-v) for a linear term of the right-hand side of block row Row. The buffer holds -v: its
+   // capacity is reused across calls (no allocation once it has reached the largest block dimension)
    template <size_t Row, typename Matrix, typename Term>
-   void subtract_linear_term(const Matrix& matrix, const Term& term, const NewtonSystemContext& context, View<double> result) {
+   void subtract_linear_term(const Matrix& matrix, const Term& term, const NewtonSystemContext& context, View<double> result,
+         std::vector<double>& buffer) {
       constexpr size_t column = std::decay_t<Term>::column;
       const size_t number_columns = matrix.block_dimension(column);
-      const size_t number_rows = matrix.block_dimension(Row);
-      std::vector<double> values(number_columns), product(number_rows, 0.);
+      buffer.resize(number_columns);
       for (size_t index: Range(number_columns)) {
-         values[index] = term.value(index);
+         buffer[index] = -term.value(index);
       }
-      add_matrix_vector_product(matrix.template get_block<Row, column>(), context, View<const double>(values.data(), number_columns),
-         View<double>(product.data(), number_rows));
-      for (size_t index: Range(number_rows)) {
-         result[index] -= product[index];
+      add_matrix_vector_product(matrix.template get_block<Row, column>(), context, View<const double>(buffer.data(), number_columns),
+         result);
+   }
+
+   // largest block dimension of a block matrix
+   template <typename Matrix>
+   size_t largest_block_dimension(const Matrix& matrix) {
+      size_t dimension = 0;
+      for (size_t block_index: Range(matrix.number_blocks())) {
+         dimension = std::max(dimension, matrix.block_dimension(block_index));
       }
+      return dimension;
    }
 
    // uncondensed Newton system: block matrix and right-hand side
@@ -168,8 +258,10 @@ namespace uno {
 
       // uncondensed right-hand side: for each block row, constant - sum K(row, j) v_j
       void evaluate_rhs(const NewtonSystemContext& context, View<double> result) const {
+         std::vector<double> buffer;
+         buffer.reserve(largest_block_dimension(this->matrix));
          this->rhs.for_each_component([&](auto index, const auto& component) {
-            this->template evaluate_rhs_row<decltype(index)::value>(component, context, result);
+            this->template evaluate_rhs_row<decltype(index)::value>(component, context, result, buffer);
          });
       }
 
@@ -179,11 +271,12 @@ namespace uno {
 
       // note: the block row is a template parameter (not a constexpr variable of an enclosing lambda) for portability (MSVC)
       template <size_t Row, typename Component>
-      void evaluate_rhs_row(const Component& component, const NewtonSystemContext& context, View<double> result) const {
+      void evaluate_rhs_row(const Component& component, const NewtonSystemContext& context, View<double> result,
+            std::vector<double>& buffer) const {
          View<double> slice(result.data() + this->matrix.block_offset(Row), this->matrix.block_dimension(Row));
          rhs_constant(component).evaluate(context, slice);
          for_each_linear_term(component, [&](const auto& term) {
-            subtract_linear_term<Row>(this->matrix, term, context, slice);
+            subtract_linear_term<Row>(this->matrix, term, context, slice, buffer);
          });
       }
    };
@@ -347,6 +440,7 @@ namespace uno {
          this->current_values.assign(number_eliminated, 0.);
          this->diagonal_values.assign(this->kept_indices.size(), 0.);
          this->rhs_corrections.assign(this->kept_indices.size(), 0.);
+         this->term_buffer.reserve(largest_block_dimension(matrix));
       }
 
       [[nodiscard]] bool is_condensed(size_t block_index) const { return this->condensed[block_index]; }
@@ -398,6 +492,9 @@ namespace uno {
          system.get_rhs().for_each_component([&](auto index, const auto& component) {
             this->template evaluate_rhs_row<decltype(index)::value>(matrix, component, context, rhs);
          });
+#ifndef NDEBUG
+         this->check_cancelled_terms(system);
+#endif
          std::fill(this->rhs_corrections.begin(), this->rhs_corrections.end(), 0.);
          for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
             if (this->position[eliminated_index] != none) {
@@ -443,6 +540,32 @@ namespace uno {
       std::vector<size_t> kept_indices{};
       std::vector<double> diagonal_values{};
       std::vector<double> rhs_corrections{};
+      std::vector<double> term_buffer{}; // linear terms evaluated numerically (not cancelled)
+
+      // the symbolic cancellation assumes that the linear term of a kept row coupled with a condensed block e and the
+      // linear term of the own pivot of e are the same vector v_e: only the latter is evaluated (current_values).
+      // Precondition: the right-hand side rows were evaluated
+      template <typename Matrix, typename RHS>
+      void check_cancelled_terms(const KKTSystem<Matrix, RHS>& system) const {
+         const auto& matrix = system.get_matrix();
+         system.get_rhs().for_each_component([&](auto index, const auto& component) {
+            const size_t row = decltype(index)::value;
+            if (this->condensed[row]) {
+               return;
+            }
+            for_each_linear_term(component, [&](const auto& term) {
+               const size_t column = std::decay_t<decltype(term)>::column;
+               if (this->cancelled[column]) {
+                  for (size_t local_index: Range(matrix.block_dimension(column))) {
+                     if (term.value(local_index) != this->current_values[this->eliminated_offsets[column] + local_index]) {
+                        throw std::logic_error("Condensation: the linear term of a kept row and the linear term of the own pivot "
+                           "of the condensed block it cancels differ");
+                     }
+                  }
+               }
+            });
+         });
+      }
 
       // right-hand side of block row Row: kept rows into rhs, condensed rows into eliminated_rhs.
       // note: the block row is a template parameter (not a constexpr variable of an enclosing lambda) for portability (MSVC)
@@ -454,7 +577,7 @@ namespace uno {
             rhs_constant(component).evaluate(context, slice);
             for_each_linear_term(component, [&](const auto& term) {
                if (!this->cancelled[std::decay_t<decltype(term)>::column]) { // otherwise: cancelled symbolically
-                  subtract_linear_term<Row>(matrix, term, context, slice);
+                  subtract_linear_term<Row>(matrix, term, context, slice, this->term_buffer);
                }
             });
          }
@@ -468,20 +591,31 @@ namespace uno {
                   }
                }
                else {
-                  subtract_linear_term<Row>(matrix, term, context, slice);
+                  subtract_linear_term<Row>(matrix, term, context, slice, this->term_buffer);
                }
             });
          }
       }
    };
 
-   // a block of eliminated unknowns, solved alone for a given kept vector u: v = D^{-1} (r - C u) (diagonal pivot D, coupling C
-   // with one nonzero per row). The right-hand side is a component vector, or a NewtonRHS whose linear term is the own pivot
-   // term (r = r~ - D v): then v = D^{-1} (r~ - C u) - v
-   template <typename Coupling, typename Pivot, typename RHS>
+   // a right-hand side whose only linear term (if any) is the own pivot term of block BlockIndex
+   template <size_t BlockIndex, typename RHS>
+   struct has_only_own_pivot_term: std::true_type { };
+   template <size_t BlockIndex, typename Constant, typename... Terms>
+   struct has_only_own_pivot_term<BlockIndex, NewtonRHS<Constant, Terms...>>:
+         std::bool_constant<(sizeof...(Terms) <= 1) && ((Terms::column == BlockIndex) && ...)> { };
+   template <size_t BlockIndex, typename RHS>
+   inline constexpr bool has_only_own_pivot_term_v = has_only_own_pivot_term<BlockIndex, std::decay_t<RHS>>::value;
+
+   // the block BlockIndex of eliminated unknowns, solved alone for a given kept vector u: v = D^{-1} (r - C u) (diagonal
+   // pivot D, coupling C with one nonzero per row). The right-hand side is a component vector, or a NewtonRHS whose only
+   // linear term is the own pivot term (r = r~ - D v): then v = D^{-1} (r~ - C u) - v
+   template <size_t BlockIndex, typename Coupling, typename Pivot, typename RHS>
    void back_substitute_block(const Coupling& coupling, const Pivot& pivot, const RHS& rhs, View<const double> kept_solution,
          View<double> solution) {
       static_assert(is_scaled_selection_v<Coupling> && is_scaled_selection_v<Pivot> && is_component_vector_v<decltype(rhs_constant(rhs))>);
+      static_assert(has_only_own_pivot_term_v<BlockIndex, RHS>,
+         "back_substitute_block: the only linear term of the right-hand side must be the own pivot term (r = r~ - D v)");
       const auto& constant = rhs_constant(rhs);
       std::vector<double> coupling_terms(constant.size(), 0.);
       for (size_t entry: Range(coupling.number_nonzeros())) {

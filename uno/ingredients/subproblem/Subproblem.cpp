@@ -148,7 +148,6 @@ namespace uno {
       }
    }
 
-   // (-(∇f(x_k) - ∇c(x_k) y_k), -c(x_k)) = (∇c(x_k) y_k - ∇f(x_k), -c(x_k))
    void Subproblem::assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
          const Vector<double>& solution, Direction& direction) const {
       this->problem.assemble_primal_dual_direction(current_iterate, newton_system, solution, direction);
