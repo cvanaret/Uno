@@ -4,6 +4,7 @@
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <type_traits>
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/subproblem/NewtonSystem.hpp"
 #include "../InteriorPointParameters.hpp"
@@ -457,7 +458,9 @@ namespace uno {
    // bound type the blocks Z and S in the rows of the bound duals, the constant μe of the right-hand side and the current
    // values z (the right-hand side μe - S z is in residual form)
    auto PrimalDualInteriorPointProblem::complementarity_blocks(const Vector<double>& primals, const Multipliers& multipliers) const {
-      const auto blocks = [&](const std::vector<size_t>& bounded_variables, const std::vector<double>& bounds,
+      // the iterates are strictly interior: the distances to the bounds S_L = X - X_L are positive and S_U = X - X_U negative
+      // (sign preconditions of the pivots of the condensation)
+      const auto blocks = [&](auto distance_sign, const std::vector<size_t>& bounded_variables, const std::vector<double>& bounds,
             const Vector<double>& bound_duals) {
          const size_t number_bounds = bounded_variables.size();
          const auto variable = [&bounded_variables](size_t index) { return bounded_variables[index]; };
@@ -468,12 +471,15 @@ namespace uno {
          const auto bound_dual = [&bounded_variables, &bound_duals](size_t index) { return bound_duals[bounded_variables[index]]; };
          return std::make_tuple(
             partial_permutation(number_bounds, this->number_variables, number_bounds, IdentityIndex{}, variable, bound_dual), // Z
-            diagonal(number_bounds, distance_to_bound), // S
+            diagonal<decltype(distance_sign)::value>(number_bounds, distance_to_bound), // S
             component_vector(number_bounds, [this](size_t /*index*/) { return this->barrier_parameter; }), // μe
             bound_dual); // z
       };
-      return std::make_tuple(blocks(this->lower_bounded_variables, this->variables_lower_bounds, multipliers.lower_bounds),
-         blocks(this->upper_bounded_variables, this->variables_upper_bounds, multipliers.upper_bounds));
+      return std::make_tuple(
+         blocks(std::integral_constant<EntrySign, EntrySign::positive>{}, this->lower_bounded_variables, this->variables_lower_bounds,
+            multipliers.lower_bounds),
+         blocks(std::integral_constant<EntrySign, EntrySign::negative>{}, this->upper_bounded_variables, this->variables_upper_bounds,
+            multipliers.upper_bounds));
    }
 
    // Newton system of the barrier problem in (Δx, -Δy, Δz_L, Δz_U):

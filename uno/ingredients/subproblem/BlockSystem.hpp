@@ -300,6 +300,9 @@ namespace uno {
    // coupling, r_k = r~_k - B v_e (e.g. +z in -∇L). The terms -B v_e and -b_j (-d_j v_j) / d_j = +B v_e cancel exactly
    // and are never evaluated: the condensed right-hand side is r~_k - B D^{-1} r~_e and Δv_j = (r~_j - c_j Δu_k) / d_j - v_j.
    // The eliminated unknowns are ordered by condensed block, then by index in the block.
+   // Numerical precondition: the pivots d_j are nonzero and finite. It is checked when the pivots are evaluated
+   // (evaluate_matrix), unless the pivot block carries a sign precondition (EntrySign::positive/negative, e.g. the slacks
+   // of an interior-point method), in which case the sign is only asserted in debug mode.
    class Condensation {
    public:
       static constexpr size_t none = static_cast<size_t>(-1);
@@ -464,7 +467,10 @@ namespace uno {
             if constexpr (is_scaled_partial_permutation_v<decltype(expression)>) {
                for (size_t entry: Range(expression.number_nonzeros())) {
                   if (this->condensed[B::row] && this->condensed[B::column]) {
-                     this->pivots[this->eliminated_offsets[B::row] + expression.row_index(entry)] = expression.value(entry);
+                     // the pivots are the only divisors of the condensation (Schur complement, RHS, back substitution)
+                     const double pivot = expression.value(entry);
+                     check_pivot<std::decay_t<decltype(expression)>::sign>(pivot);
+                     this->pivots[this->eliminated_offsets[B::row] + expression.row_index(entry)] = pivot;
                   }
                   else if (this->condensed[B::column]) {
                      this->kept_coefficients[this->eliminated_offsets[B::column] + expression.column_index(entry)] = expression.value(entry);
@@ -623,7 +629,9 @@ namespace uno {
       }
       for (size_t entry: Range(pivot.number_nonzeros())) {
          const size_t index = pivot.row_index(entry);
-         solution[index] = (constant.entry(index) - coupling_terms[index]) / pivot.value(entry);
+         const double pivot_value = pivot.value(entry);
+         check_pivot<std::decay_t<Pivot>::sign>(pivot_value);
+         solution[index] = (constant.entry(index) - coupling_terms[index]) / pivot_value;
       }
       for_each_linear_term(rhs, [&](const auto& term) {
          for (size_t index: Range(constant.size())) {

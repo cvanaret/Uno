@@ -4,7 +4,9 @@
 #ifndef UNO_NEWTONSYSTEMSYMBOLS_H
 #define UNO_NEWTONSYSTEMSYMBOLS_H
 
+#include <cmath>
 #include <cstddef>
+#include <stdexcept>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -171,13 +173,19 @@ namespace uno {
       [[nodiscard]] constexpr double operator()(size_t /*index*/) const noexcept { return this->value; }
    };
 
+   // sign of all the entries of a matrix, known by construction (e.g. the slacks of an interior-point method are strictly
+   // positive): a precondition that lets the condensation skip the numerical nonsingularity test of its pivots
+   enum class EntrySign { unknown, positive, negative };
+
    // sparse matrix with at most one nonzero per row and per column, given as dematerialized entries: entry k (in
    // [0, number_entries)) is (row_index(k), column_index(k), value(k)). Diagonal matrices and (scaled) selection matrices
-   // are particular cases. Its entries are computed when the matrix is evaluated or applied
-   template <typename RowIndex, typename ColumnIndex, typename Value>
+   // are particular cases. Its entries are computed when the matrix is evaluated or applied. Sign: precondition on the
+   // sign of the entries (unknown by default)
+   template <typename RowIndex, typename ColumnIndex, typename Value, EntrySign Sign = EntrySign::unknown>
    class ScaledPartialPermutation: public SymbolicExpression {
    public:
       using value_type = double;
+      static constexpr EntrySign sign = Sign;
 
       ScaledPartialPermutation(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex row_index,
             ColumnIndex column_index, Value value): rows(number_rows), columns(number_columns), entries(number_entries),
@@ -229,24 +237,46 @@ namespace uno {
 
    template <typename T>
    struct is_scaled_partial_permutation: std::false_type { };
-   template <typename RowIndex, typename ColumnIndex, typename Value>
-   struct is_scaled_partial_permutation<ScaledPartialPermutation<RowIndex, ColumnIndex, Value>>: std::true_type { };
+   template <typename RowIndex, typename ColumnIndex, typename Value, EntrySign Sign>
+   struct is_scaled_partial_permutation<ScaledPartialPermutation<RowIndex, ColumnIndex, Value, Sign>>: std::true_type { };
    template <typename T>
    inline constexpr bool is_scaled_partial_permutation_v = is_scaled_partial_permutation<std::decay_t<T>>::value;
 
-   // free functions
-   template <typename RowIndex, typename ColumnIndex, typename Value>
+   // free functions. The sign of the entries is an optional precondition: partial_permutation<EntrySign::positive>(...)
+   template <EntrySign Sign = EntrySign::unknown, typename RowIndex, typename ColumnIndex, typename Value>
    auto partial_permutation(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex&& row_index,
          ColumnIndex&& column_index, Value&& value) {
-      return ScaledPartialPermutation<std::decay_t<RowIndex>, std::decay_t<ColumnIndex>, std::decay_t<Value>>(number_rows,
+      return ScaledPartialPermutation<std::decay_t<RowIndex>, std::decay_t<ColumnIndex>, std::decay_t<Value>, Sign>(number_rows,
          number_columns, number_entries, std::forward<RowIndex>(row_index), std::forward<ColumnIndex>(column_index),
          std::forward<Value>(value));
    }
 
    // square diagonal matrix with entries value(k)
-   template <typename Value>
+   template <EntrySign Sign = EntrySign::unknown, typename Value>
    auto diagonal(size_t dimension, Value&& value) {
-      return partial_permutation(dimension, dimension, dimension, IdentityIndex{}, IdentityIndex{}, std::forward<Value>(value));
+      return partial_permutation<Sign>(dimension, dimension, dimension, IdentityIndex{}, IdentityIndex{}, std::forward<Value>(value));
+   }
+
+   // a pivot used as a divisor (the entries of a diagonal block eliminated by condensation):
+   // - sign unknown: it must be nonzero and finite (runtime check, always performed);
+   // - sign known by construction: the check is a debug assertion of the sign (skipped with NDEBUG)
+   template <EntrySign Sign>
+   void check_pivot(double pivot) {
+      if constexpr (Sign == EntrySign::unknown) {
+         if (pivot == 0. || !std::isfinite(pivot)) {
+            throw std::runtime_error("Condensation: a pivot of a condensed block is zero or not finite");
+         }
+      }
+      else {
+#ifndef NDEBUG
+         const bool valid_sign = (Sign == EntrySign::positive) ? (0. < pivot) : (pivot < 0.);
+         if (!valid_sign || !std::isfinite(pivot)) {
+            throw std::logic_error("Condensation: a pivot violates the sign precondition of its block");
+         }
+#else
+         (void) pivot;
+#endif
+      }
    }
 
    // right-hand side components (vectors evaluated at the current iterate)
