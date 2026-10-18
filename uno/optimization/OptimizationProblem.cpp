@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "OptimizationProblem.hpp"
-#include "ingredients/subproblem/NewtonSystem.hpp"
+#include "ingredients/subproblem/SymbolicNewtonSystem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Direction.hpp"
@@ -177,20 +177,29 @@ namespace uno {
       return {this->number_variables, this->number_constraints, 0};
    }
 
-   // [∇²L + δ_w I      *   ]
-   // [J            -δ_c I ]
+   // Newton system in (Δx, -Δy):
+   //    [∇²L + δ_w I   J^T    ] [ Δx ]   [ -∇f + J^T y ]
+   //    [J             -δ_c I ] [-Δy ] = [ -(c - c_L)  ]
    std::unique_ptr<NewtonSystem> OptimizationProblem::create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const {
-      return make_newton_system([this, &hessian_model, dual_regularization](const Iterate& /*iterate*/) {
-         return symmetric_block_matrix(
-            LagrangianHessian(*this, hessian_model, this->number_variables) + Regularization(this->number_variables),
-            ConstraintJacobian(*this),
-            Regularization(dual_regularization ? this->number_constraints : 0));
+         bool use_dual_regularization) const {
+      return make_newton_system([this, &hessian_model, use_dual_regularization](const Iterate& /*iterate*/) {
+         const size_t n = this->number_variables, m = this->number_constraints;
+         return kkt_system(
+            // clang-format off
+            block_matrix({n, m},
+               row(LagrangianHessian(*this, hessian_model, n) + PrimalRegularization(n), transpose(ConstraintJacobian(*this))),
+               row(ConstraintJacobian(*this),                                            DualRegularization(use_dual_regularization ? m : 0))),
+            // clang-format on
+            block_vector(
+               negative_lagrangian_gradient(*this, [this](const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) {
+                  this->evaluate_objective_gradient(iterate, objective_gradient, evaluations);
+               }),
+               NegativeConstraintResidual(*this)));
       });
    }
 
-   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
-         Direction& direction) const {
+   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const NewtonSystem& /*newton_system*/,
+         const Vector<double>& solution, Direction& direction) const {
       // form the primal-dual direction
       view(direction.primals, 0, this->number_variables) = view(solution, 0, this->number_variables);
       // retrieve the duals with correct signs (note the sign flip)

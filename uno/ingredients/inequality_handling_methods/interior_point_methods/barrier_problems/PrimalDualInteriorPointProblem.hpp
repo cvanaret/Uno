@@ -61,8 +61,9 @@ namespace uno {
       [[nodiscard]] Inertia get_inertia() const override;
 
       [[nodiscard]] std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const override;
-      void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
+         bool use_dual_regularization) const override;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
+         const Vector<double>& solution, Direction& direction) const override;
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
@@ -108,6 +109,10 @@ namespace uno {
       std::vector<double> variables_upper_bounds;
 
       std::vector<size_t> bounded_variables; // variables with a finite (internal) lower and/or upper bound
+      std::vector<size_t> lower_bounded_variables; // variables with a finite (internal) lower bound
+      std::vector<size_t> upper_bounded_variables; // variables with a finite (internal) upper bound
+      // directions of the bound duals of the lower-bounded, then of the upper-bounded variables
+      mutable Vector<double> bound_dual_direction_buffer;
       std::vector<double> constraints_lower_bounds;
       std::vector<double> constraints_upper_bounds;
 
@@ -123,6 +128,10 @@ namespace uno {
          double tau) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
+      [[nodiscard]] double damping_term(size_t variable_index) const;
+      void evaluate_damped_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const;
+      [[nodiscard]] auto complementarity_blocks(const Vector<double>& primals, const Multipliers& multipliers) const;
+      void set_bound_dual_direction(Multipliers& direction_multipliers) const;
    };
 } // namespace
 
