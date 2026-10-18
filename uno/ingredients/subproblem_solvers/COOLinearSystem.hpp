@@ -17,6 +17,9 @@ namespace uno {
       void initialize_hessian(const Subproblem& subproblem) override;
       void initialize_augmented_system(const Subproblem& subproblem) override;
       void initialize(const NewtonSystem& newton_system) override;
+      using LinearSystem::compute_matrix_vector_product;
+      void compute_matrix_vector_product(const double* vector, double* result, size_t excluded_begin,
+         size_t excluded_end) const override;
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
          const Vector<double>& vector) const override;

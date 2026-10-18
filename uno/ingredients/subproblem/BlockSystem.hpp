@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -384,7 +385,8 @@ namespace uno {
    // of an interior-point method), in which case the sign is only asserted in debug mode.
    // Call protocol (checked): evaluate_matrix() -> evaluate_rhs() -> back_substitute(), all at the same iterate. A new
    // evaluate_matrix() invalidates the right-hand side.
-   // The eliminated unknowns are ordered by condensed block, then by index in the block.
+   // The eliminated unknowns are ordered by condensed block, then by index in the block. Uncondensed vectors (iterative
+   // refinement on the uncondensed system) are laid out as [kept unknowns | eliminated unknowns].
    class Condensation {
    public:
       static constexpr size_t none = static_cast<size_t>(-1);
@@ -501,6 +503,7 @@ namespace uno {
       [[nodiscard]] bool is_condensed(size_t block_index) const { return this->condensed[block_index]; }
       [[nodiscard]] size_t number_kept() const { return this->number_kept_unknowns; }
       [[nodiscard]] size_t number_eliminated() const { return this->number_eliminated_unknowns; }
+      [[nodiscard]] size_t uncondensed_dimension() const { return this->number_kept_unknowns + this->number_eliminated_unknowns; }
       // diagonal Schur complement: one entry per kept unknown coupled with eliminated unknowns
       [[nodiscard]] size_t number_diagonal_entries() const { return this->kept_indices.size(); }
       [[nodiscard]] size_t diagonal_index(size_t position) const { return this->kept_indices[position]; }
@@ -548,20 +551,12 @@ namespace uno {
       // Precondition: evaluate_matrix() was called at the same iterate
       template <typename Matrix, typename RHS, typename Currents>
       void evaluate_rhs(const KKTSystem<Matrix, RHS, Currents>& system, const NewtonSystemContext& context, View<double> rhs) {
-         if (this->stage == Stage::structure) {
-            throw std::logic_error("Condensation::evaluate_rhs: the matrix was not evaluated (call evaluate_matrix first)");
-         }
+         this->require(Stage::matrix_evaluated, "evaluate_rhs");
          system.get_rhs().for_each_component([&](auto index, const auto& component) {
             this->template evaluate_rhs_row<decltype(index)::value>(system.get_matrix(), component, system.get_current_values(),
                context, rhs);
          });
-         std::fill(this->rhs_corrections.begin(), this->rhs_corrections.end(), 0.);
-         for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
-            if (this->position[eliminated_index] != none) {
-               this->rhs_corrections[this->position[eliminated_index]] += (-this->kept_coefficients[eliminated_index] *
-                  this->eliminated_rhs[eliminated_index]) / this->pivots[eliminated_index];
-            }
-         }
+         this->compute_corrections(this->eliminated_rhs.data(), this->rhs_corrections);
          for (size_t position: Range(this->kept_indices.size())) {
             rhs[this->kept_indices[position]] += this->rhs_corrections[position];
          }
@@ -572,15 +567,79 @@ namespace uno {
       // at the current iterate (the kept solution may be that of a modified right-hand side whose condensed rows are
       // unchanged, e.g. a second-order correction)
       void back_substitute(View<const double> kept_solution, View<double> eliminated_solution) const {
-         if (this->stage != Stage::rhs_evaluated) {
-            throw std::logic_error("Condensation::back_substitute: the right-hand side was not evaluated at the current matrix "
-               "(call evaluate_rhs first)");
+         this->require(Stage::rhs_evaluated, "back_substitute");
+         for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
+            eliminated_solution[eliminated_index] = this->substitute(eliminated_index, this->eliminated_rhs[eliminated_index],
+               kept_solution) - this->current_values[eliminated_index];
+         }
+      }
+
+      // operations on the uncondensed system (no residual form: the current-value terms are evaluated numerically)
+
+      // uncondensed right-hand side from a condensed right-hand side whose eliminated rows are those of the last
+      // evaluate_rhs() (e.g. the right-hand side of the system, or of a second-order correction):
+      // kept rows: condensed - corrections - b_j v_j, eliminated rows: r0_j - d_j v_j
+      void uncondense_rhs(View<const double> condensed_rhs, View<double> uncondensed_rhs) const {
+         this->require(Stage::rhs_evaluated, "uncondense_rhs");
+         const size_t number_kept = this->number_kept_unknowns;
+         for (size_t kept_index: Range(number_kept)) {
+            uncondensed_rhs[kept_index] = condensed_rhs[kept_index];
+         }
+         for (size_t position: Range(this->kept_indices.size())) {
+            uncondensed_rhs[this->kept_indices[position]] -= this->rhs_corrections[position];
          }
          for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
+            const double current_value = this->current_values[eliminated_index];
+            if (this->kept_unknown[eliminated_index] != none) {
+               uncondensed_rhs[this->kept_unknown[eliminated_index]] -= this->kept_coefficients[eliminated_index] * current_value;
+            }
+            uncondensed_rhs[number_kept + eliminated_index] = this->eliminated_rhs[eliminated_index] -
+               this->pivots[eliminated_index] * current_value;
+         }
+      }
+
+      // condensed right-hand side of an uncondensed right-hand side: kept rows + corrections -b_j ρ_j / d_j
+      void condense_rhs(View<const double> uncondensed_rhs, View<double> condensed_rhs) {
+         this->require(Stage::matrix_evaluated, "condense_rhs");
+         for (size_t kept_index: Range(this->number_kept_unknowns)) {
+            condensed_rhs[kept_index] = uncondensed_rhs[kept_index];
+         }
+         this->compute_corrections(uncondensed_rhs.data() + this->number_kept_unknowns, this->correction_buffer);
+         for (size_t position: Range(this->kept_indices.size())) {
+            condensed_rhs[this->kept_indices[position]] += this->correction_buffer[position];
+         }
+      }
+
+      // uncondensed solution of the system with an uncondensed right-hand side ρ, given the condensed solution:
+      // kept unknowns: condensed solution, eliminated unknowns: Δv_j = (ρ_j - c_j Δu_k) / d_j
+      void expand_solution(View<const double> uncondensed_rhs, View<const double> condensed_solution,
+            View<double> uncondensed_solution) const {
+         this->require(Stage::matrix_evaluated, "expand_solution");
+         const size_t number_kept = this->number_kept_unknowns;
+         for (size_t kept_index: Range(number_kept)) {
+            uncondensed_solution[kept_index] = condensed_solution[kept_index];
+         }
+         for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
+            uncondensed_solution[number_kept + eliminated_index] = this->substitute(eliminated_index,
+               uncondensed_rhs[number_kept + eliminated_index], condensed_solution);
+         }
+      }
+
+      // product with the uncondensed matrix. On entry, the kept entries of product contain the product of the kept block
+      // (as factorized, without the Schur complement) with the kept unknowns. On exit, product contains the uncondensed
+      // product: kept rows + b_j u_j, eliminated rows c_j u_k + d_j u_j
+      void complete_uncondensed_product(View<const double> vector, View<double> product) const {
+         this->require(Stage::matrix_evaluated, "complete_uncondensed_product");
+         const size_t number_kept = this->number_kept_unknowns;
+         for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
             const size_t kept_index = this->kept_unknown[eliminated_index];
-            const double coupling = (kept_index != none) ? this->own_coefficients[eliminated_index] * kept_solution[kept_index] : 0.;
-            eliminated_solution[eliminated_index] = (this->eliminated_rhs[eliminated_index] - coupling) / this->pivots[eliminated_index] -
-               this->current_values[eliminated_index];
+            const double eliminated_value = vector[number_kept + eliminated_index];
+            double& eliminated_row = product[number_kept + eliminated_index];
+            eliminated_row = this->pivots[eliminated_index] * eliminated_value;
+            if (kept_index != none) {
+               product[kept_index] += this->kept_coefficients[eliminated_index] * eliminated_value;
+               eliminated_row += this->own_coefficients[eliminated_index] * vector[kept_index];
+            }
          }
       }
 
@@ -607,6 +666,32 @@ namespace uno {
       std::vector<double> diagonal_values{};
       std::vector<double> rhs_corrections{};
       std::vector<double> term_buffer{}; // current-value terms evaluated numerically (not cancelled)
+      std::vector<double> correction_buffer{}; // corrections of condense_rhs()
+
+      void require(Stage minimum_stage, const char* function_name) const {
+         if (this->stage < minimum_stage) {
+            throw std::logic_error(std::string("Condensation::") + function_name + ": called before " +
+               (minimum_stage == Stage::matrix_evaluated ? "evaluate_matrix" : "evaluate_rhs") + " at the current matrix");
+         }
+      }
+
+      // corrections -b_j e_j / d_j of the eliminated values e_j, accumulated per position of the Schur complement
+      void compute_corrections(const double* eliminated_values, std::vector<double>& corrections) const {
+         corrections.assign(this->kept_indices.size(), 0.);
+         for (size_t eliminated_index: Range(this->number_eliminated_unknowns)) {
+            if (this->position[eliminated_index] != none) {
+               corrections[this->position[eliminated_index]] += (-this->kept_coefficients[eliminated_index] *
+                  eliminated_values[eliminated_index]) / this->pivots[eliminated_index];
+            }
+         }
+      }
+
+      // (e_j - c_j u_k) / d_j
+      [[nodiscard]] double substitute(size_t eliminated_index, double eliminated_value, View<const double> kept_solution) const {
+         const size_t kept_index = this->kept_unknown[eliminated_index];
+         const double coupling = (kept_index != none) ? this->own_coefficients[eliminated_index] * kept_solution[kept_index] : 0.;
+         return (eliminated_value - coupling) / this->pivots[eliminated_index];
+      }
 
       // right-hand side of block row Row (kept rows into rhs, condensed rows into eliminated_rhs): constant part, then the
       // current-value terms -K(Row, j) v_j: those of a cancelled block j are skipped (the own term of a condensed row is
