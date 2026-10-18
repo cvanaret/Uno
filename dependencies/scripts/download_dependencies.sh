@@ -112,7 +112,9 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DBLA_VENDOR=Generic \
 		-DBLAS_LIBRARIES="$BLAS_W" \
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
-		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
+		-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+		-DCMAKE_UNITY_BUILD=ON \
+		-DCMAKE_UNITY_BUILD_BATCH_SIZE=16
 
 	cmake --build "$BLD_W" --config Release --parallel
 	cmake --install "$BLD_W" --config Release
