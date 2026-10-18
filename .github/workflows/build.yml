@@ -93,6 +93,11 @@ jobs:
     # TOOLCHAIN SETUP
     # =========================================================
 
+    # ----- Ubuntu + GCC 14 (-Wtemplate-body, default on Fedora) -----
+    - name: Install GCC 14 (Linux)
+      if: startsWith(matrix.os, 'ubuntu') && matrix.toolchain == 'gcc'
+      run: sudo apt-get update && sudo apt-get install -y gcc-14 g++-14 gfortran-14
+
     # ----- Ubuntu + Intel compilers -----
 
     - name: Install compiler (Intel)
@@ -202,9 +207,10 @@ jobs:
       run: |
         cmake -B build \
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_FORTRAN_COMPILER=gfortran \
+          -DCMAKE_C_COMPILER=gcc-14 \
+          -DCMAKE_CXX_COMPILER=g++-14 \
+          -DCMAKE_FORTRAN_COMPILER=gfortran-14 \
+          -DCMAKE_CXX_FLAGS="-Werror=template-body" \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
@@ -287,6 +293,7 @@ jobs:
         cmake -G "MinGW Makefiles" ^
           -B build ^
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DCMAKE_CXX_FLAGS="-Werror=template-body" ^
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DHIGHS_INCLUDE_DIR=${{github.workspace}}\dependencies\include\highs ^
