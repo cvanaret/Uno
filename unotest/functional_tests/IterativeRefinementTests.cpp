@@ -456,3 +456,35 @@ TEST_P(IterativeRefinement, IterationSummaryIsResetAtEachIteration) {
    (void)setting.solve(solver);
    EXPECT_EQ(solver.iteration_summary(), "2");
 }
+
+// failed refinement with a residual ratio below residual_ratio_singular: after the pivoting tolerance increase (if
+// supported), the inaccurate solution is accepted and the matrix is not deemed singular (no regularization)
+TEST_P(IterativeRefinement, InaccurateSolutionIsAcceptedBelowSingularThreshold) {
+   Options options = make_options(GetParam(), 1, 10);
+   options.set_double("iterative_refinement_residual_ratio_max", 0.);
+   options.set_double("iterative_refinement_residual_ratio_singular", 1.);
+   BarrierSetting setting(options);
+   InspectableEQPSolver solver(setting.options);
+   const Direction& direction = setting.solve(solver);
+   ASSERT_GT(solver.get_residual_ratio(), 0.) << "the residual ratio is exactly zero: the failure path cannot be tested";
+   EXPECT_FALSE(solver.is_matrix_deemed_singular());
+   const std::string summary = solver.iteration_summary();
+   const std::string expected_flags = supports_pivoting_tolerance_increase(GetParam()) ? "qS" : "S";
+   EXPECT_EQ(summary.substr(summary.size() - expected_flags.size()), expected_flags);
+   EXPECT_EQ(setting.inertia_correction.get_primal_regularization_factor(), 0.);
+   EXPECT_TRUE(std::isfinite(direction.norm));
+}
+
+// stagnation: refinement stops after min_steps + 1 steps when the residual ratio does not improve enough (here, any
+// step stagnates), in each solve of the failure handling
+TEST_P(IterativeRefinement, StagnationStopsRefinement) {
+   Options options = make_options(GetParam(), 1, 10);
+   options.set_double("iterative_refinement_residual_ratio_max", 0.);
+   options.set_double("iterative_refinement_residual_ratio_singular", 1.);
+   options.set_double("iterative_refinement_improvement_factor", 1e-300);
+   BarrierSetting setting(options);
+   InspectableEQPSolver solver(setting.options);
+   (void)setting.solve(solver);
+   const size_t number_solves = supports_pivoting_tolerance_increase(GetParam()) ? 2 : 1; // + refactorization
+   EXPECT_EQ(solver.get_number_refinement_steps(), 2 * number_solves);
+}

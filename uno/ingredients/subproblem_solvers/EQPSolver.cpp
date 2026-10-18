@@ -85,14 +85,14 @@ namespace uno {
    void EQPSolver<LowRankCorrection>::initialize_statistics(Statistics& statistics) {
       if constexpr (LowRankCorrection::requires_hessian_matrix) {
          statistics.add_column("IR", Statistics::int_width, 0, /* is_extended = */ true);
-         this->statistics = &statistics;
+         this->iteration_statistics = &statistics;
       }
    }
 
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::report_iterative_refinement() {
-      if (this->statistics != nullptr) {
-         this->statistics->set("IR", std::to_string(this->iteration_refinement_steps) + this->iteration_refinement_flags);
+      if (this->iteration_statistics != nullptr) {
+         this->iteration_statistics->set("IR", std::to_string(this->iteration_refinement_steps) + this->iteration_refinement_flags);
       }
    }
 
@@ -198,7 +198,7 @@ namespace uno {
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       }
       else {
-         this->solve_with_iterative_refinement(&statistics, subproblem);
+         this->solve_with_iterative_refinement(subproblem, &statistics);
       }
       if (this->linear_solver->matrix_is_singular()) {
          this->direction.status = SubproblemStatus::INFEASIBLE;
@@ -253,7 +253,7 @@ namespace uno {
 
       // solve the linear system (the factorization is not modified: no pivoting tolerance increase, no singularity
       // handling) and assemble the full primal-dual direction
-      this->solve_with_iterative_refinement(nullptr, subproblem);
+      this->solve_with_iterative_refinement(subproblem, nullptr);
       this->correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
@@ -269,85 +269,53 @@ namespace uno {
    }
 
    // solve the condensed system with the current factorization (RHS: linear_system.rhs, solution: linear_system.solution)
-   // and refine the solution wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve:
-   // - refinement stops when the residual ratio is small enough (after at least min_steps steps), when max_steps steps
-   //   were performed, or when the residual ratio stagnates. max_steps = 0 disables the whole mechanism (plain solve);
-   // - upon failure, the linear solver is asked to increase its pivoting tolerance (at most once per matrix; the tolerance
-   //   is never decreased) and the matrix is refactorized. The inertia of the new factorization is checked again by the
-   //   inertia correction strategy, which may increase the regularization;
-   // - if that is not possible and the residual ratio is above residual_ratio_singular, the matrix is deemed singular and
-   //   the inertia correction strategy increases the regularization (once per solve). Otherwise, the current solution is
-   //   accepted.
-   // statistics == nullptr: the factorization must not be modified (e.g. second-order corrections): the refined solution
-   // is accepted whatever its residual ratio.
-   // Without a refinement step, the solution is that of the plain solve (bitwise)
+   // and refine the solution wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve. If the
+   // refined solution is not accurate:
+   // 1. the pivoting tolerance of the linear solver is increased (at most once per matrix; it is never decreased) and the
+   //    matrix is refactorized. The inertia correction strategy checks the inertia of the new factorization again and
+   //    may increase the regularization;
+   // 2. otherwise, if the residual ratio is below residual_ratio_singular, the solution is accepted;
+   // 3. otherwise, the matrix is deemed singular (at most once per solve): the inertia correction strategy increases the
+   //    regularization.
+   // factorization_statistics == nullptr: the factorization must not be modified (e.g. second-order corrections) and the
+   // refined solution is accepted whatever its residual ratio.
+   // max_steps = 0 (or a low-rank Hessian correction) disables the mechanism. Without refinement step, the solution is
+   // that of the plain solve (bitwise)
    template <typename LowRankCorrection>
-   void EQPSolver<LowRankCorrection>::solve_with_iterative_refinement(Statistics* statistics, const Subproblem& subproblem) {
+   void EQPSolver<LowRankCorrection>::solve_with_iterative_refinement(const Subproblem& subproblem, Statistics* factorization_statistics) {
       auto& linear_system = this->linear_solver->get_linear_system();
       this->number_refinement_steps = 0;
       this->matrix_deemed_singular = false;
       // the residuals require the full Hessian in the condensed matrix (not available with low-rank corrections)
-      bool refinement_enabled = (0 < this->iterative_refinement.max_steps);
-      if constexpr (!LowRankCorrection::requires_hessian_matrix) {
-         refinement_enabled = false;
-      }
-      if (!refinement_enabled) {
+      if (!LowRankCorrection::requires_hessian_matrix || this->iterative_refinement.max_steps == 0) {
          this->residual_ratio = std::numeric_limits<double>::quiet_NaN(); // not computed
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
          return;
       }
       this->newton_system->uncondense_rhs(linear_system.rhs.view(), this->uncondensed_rhs.view());
-      const bool factorization_can_be_modified = (statistics != nullptr);
 
       while (true) {
-         // solve the condensed system and recover the uncondensed solution
+         // solve the condensed system, recover the uncondensed solution and refine it
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
          this->newton_system->expand_solution(this->uncondensed_rhs.view(), linear_system.solution.view(), this->uncondensed_solution.view());
          this->residual_ratio = this->compute_uncondensed_residual_ratio();
          DEBUG2 << "Residual ratio: " << this->residual_ratio << '\n';
-
-         // iterative refinement
-         size_t number_steps = 0;
-         bool refinement_succeeded = false;
-         while (true) {
-            if (this->iterative_refinement.min_steps <= number_steps && this->residual_ratio <= this->iterative_refinement.residual_ratio_max) {
-               refinement_succeeded = true;
-               break;
-            }
-            if (this->iterative_refinement.max_steps <= number_steps) {
-               break;
-            }
-            this->compute_iterative_refinement_correction();
-            this->uncondensed_solution -= this->uncondensed_correction;
-            ++number_steps;
-            ++this->number_refinement_steps;
-            ++this->iteration_refinement_steps;
-            const double previous_residual_ratio = this->residual_ratio;
-            this->residual_ratio = this->compute_uncondensed_residual_ratio();
-            DEBUG2 << "Residual ratio after " << number_steps << " refinement step(s): " << this->residual_ratio << '\n';
-            // stagnation
-            if (this->iterative_refinement.min_steps < number_steps && this->iterative_refinement.residual_ratio_max < this->residual_ratio &&
-                  this->iterative_refinement.improvement_factor * previous_residual_ratio < this->residual_ratio) {
-               break;
-            }
-         }
-         if (refinement_succeeded) {
+         if (this->refine_uncondensed_solution()) {
             break;
          }
          DEBUG << "Iterative refinement failed with residual ratio " << this->residual_ratio << '\n';
          // the factorization cannot be modified, or the matrix was already deemed singular: live with the current solution
-         if (!factorization_can_be_modified || this->matrix_deemed_singular) {
+         if (factorization_statistics == nullptr || this->matrix_deemed_singular) {
             break;
          }
-         // first try to improve the quality of the factorization (once per matrix; the tolerance is never decreased)
+         const BlockAugmentedMatrix block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+         // 1. improve the quality of the factorization
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
             this->iteration_refinement_flags += 'q';
             DEBUG << "Refactorizing the augmented matrix with an increased pivoting tolerance\n";
-            // the new factorization may have a different (numerical) inertia or be singular: let the inertia correction
-            // strategy check it and increase the regularization if needed
-            subproblem.refactorize_augmented_matrix(*statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
-               this->newton_system->block_augmented_matrix(linear_system.matrix_values.view()));
+            subproblem.refactorize_augmented_matrix(*factorization_statistics, subproblem.dual_regularization_factor(),
+               *this->linear_solver, block_augmented_matrix);
             if (this->linear_solver->matrix_is_singular()) {
                // singular and not regularized: the caller handles the singularity
                DEBUG << "The refactorized augmented matrix is singular\n";
@@ -357,25 +325,51 @@ namespace uno {
             }
             continue;
          }
-         // otherwise, deem the matrix singular if the residuals are bad enough
-         this->matrix_deemed_singular = true;
+         // 2. inaccurate, but acceptable solution
          if (this->residual_ratio < this->iterative_refinement.residual_ratio_singular) {
             DEBUG << "The current solution is accepted\n";
             this->iteration_refinement_flags += 'S';
             break;
          }
-         if (!subproblem.regularize_singular_augmented_matrix(*statistics, subproblem.dual_regularization_factor(),
-               *this->linear_solver, this->newton_system->block_augmented_matrix(linear_system.matrix_values.view()))) {
+         // 3. deem the matrix singular and regularize it
+         this->matrix_deemed_singular = true;
+         if (!subproblem.regularize_singular_augmented_matrix(*factorization_statistics, subproblem.dual_regularization_factor(),
+               *this->linear_solver, block_augmented_matrix)) {
             DEBUG << "The matrix cannot be regularized further, the current solution is accepted\n";
             break;
          }
-         // new matrix
          this->iteration_refinement_flags += 's';
-         this->pivoting_tolerance_increased_for_current_matrix = false;
       }
       this->report_iterative_refinement();
       // write the refined solution of the condensed system (the eliminated unknowns are recovered by back substitution)
       view(linear_system.solution, 0, linear_system.dimension) = view(this->uncondensed_solution, 0, linear_system.dimension);
+   }
+
+   // refinement steps on the current uncondensed solution (with an up-to-date residual ratio), as in IPOPT: stop when the
+   // solution is accurate (after at least min_steps steps), after max_steps steps, or when the residual ratio stagnates
+   // (after more than min_steps steps). Returns whether the solution is accurate
+   template <typename LowRankCorrection>
+   bool EQPSolver<LowRankCorrection>::refine_uncondensed_solution() {
+      const IterativeRefinementParameters& parameters = this->iterative_refinement;
+      size_t number_steps = 0;
+      const auto accurate = [&] {
+         return parameters.min_steps <= number_steps && this->residual_ratio <= parameters.residual_ratio_max;
+      };
+      while (!accurate() && number_steps < parameters.max_steps) {
+         this->compute_iterative_refinement_correction();
+         this->uncondensed_solution -= this->uncondensed_correction;
+         ++number_steps;
+         ++this->number_refinement_steps;
+         ++this->iteration_refinement_steps;
+         const double previous_residual_ratio = this->residual_ratio;
+         this->residual_ratio = this->compute_uncondensed_residual_ratio();
+         DEBUG2 << "Residual ratio after " << number_steps << " refinement step(s): " << this->residual_ratio << '\n';
+         const bool stagnation = parameters.improvement_factor * previous_residual_ratio < this->residual_ratio;
+         if (!accurate() && parameters.min_steps < number_steps && stagnation) {
+            return false;
+         }
+      }
+      return accurate();
    }
 
    // ratio ||K u - r||_inf / (min(||u||_inf, 1e6 ||r||_inf) + ||r||_inf) of the uncondensed system K u = r (as in IPOPT).

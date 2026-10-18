@@ -80,14 +80,15 @@ namespace uno {
       bool pivoting_tolerance_increased_for_current_matrix{false};
       double residual_ratio{0.};
       size_t number_refinement_steps{0};
-      bool matrix_deemed_singular{false};
+      bool matrix_deemed_singular{false}; // in the last solve, the matrix was deemed singular (IPOPT's "pretend singular")
       // per-iteration summary (IPOPT-style): refinement steps, q: pivoting tolerance increased, s: matrix deemed singular,
       // S: inaccurate solution accepted. Shown in the extended "IR" statistics column
-      Statistics* statistics{nullptr};
+      Statistics* iteration_statistics{nullptr};
       size_t iteration_refinement_steps{0};
       std::string iteration_refinement_flags{};
 
-      void solve_with_iterative_refinement(Statistics* statistics, const Subproblem& subproblem);
+      void solve_with_iterative_refinement(const Subproblem& subproblem, Statistics* factorization_statistics);
+      [[nodiscard]] bool refine_uncondensed_solution();
       [[nodiscard]] double compute_uncondensed_residual_ratio();
       void compute_iterative_refinement_correction();
       void report_iterative_refinement();
