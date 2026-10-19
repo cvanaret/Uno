@@ -5,7 +5,7 @@ It can be installed via `pip`:
 ```bash
 pip install unopy
 ```
-An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
+An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/examples/example_hs015.py).
 
 unopy ships with:
 

@@ -21,8 +21,13 @@ namespace uno {
 
    // for OUTPUT buffers owned by C++: wrap the raw pointer in a numpy array
    // with an explicit no-op capsule so Python knows not to free it.
+   // note: an empty buffer (e.g. the constraint multipliers of an unconstrained problem) may have a null data pointer,
+   // which py::capsule rejects ("PyCapsule_New called with null pointer"): return an empty array instead
    template <typename T>
    py::array_t<T> to_array(T* ptr, size_t n) {
+      if (n == 0) {
+         return py::array_t<T>(0);
+      }
       return py::array_t<T>(
           {static_cast<py::ssize_t>(n)}, // shape
           {sizeof(T)}, // strides
@@ -33,6 +38,11 @@ namespace uno {
 
    template <typename T>
    py::array_t<T> to_const_array(const T* ptr, size_t n) {
+      if (n == 0) {
+         auto array = py::array_t<T>(0);
+         array.attr("flags").attr("writeable") = false;
+         return array;
+      }
       auto array = py::array_t<T>(
           {static_cast<py::ssize_t>(n)},
           {sizeof(T)},
