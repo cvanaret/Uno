@@ -86,6 +86,7 @@ namespace uno {
          options.set_double("filter_gamma", 1e-8);
          options.set_bool("filter_margin_uses_entry_infeasibility", true);
          options.set_double("switching_delta", 1);
+         options.set_integer("filter_capacity", 0); // unlimited
          options.set_double("filter_ubd", 1e4);
          options.set_double("filter_fact", 1e4);
          options.set_double("switching_merit_exponent", 2.3);
