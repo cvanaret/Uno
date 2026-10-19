@@ -17,7 +17,6 @@
 #include "model/Model.hpp"
 #include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -156,7 +155,7 @@ namespace uno {
       std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers, ", ") << '\n';
       std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers, ", ") << '\n';
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
-      std::cout << "- Presets: filtersqp, ipopt\n";
+      std::cout << "- Presets: auto, filtersqp, filterslp, funnelsqp, ipopt\n";
    }
 
    const std::string& Uno::get_method_description() const {
@@ -288,21 +287,6 @@ namespace uno {
          result.upper_bound_dual_solution.scale(-1.);
       }
       result.solution_objective *= model.optimization_sense;
-   }
-
-   void Uno::evaluate_final_functions(const Model& user_model, const Vector<double>& primals, Evaluations& evaluations) {
-      try {
-         evaluations.evaluate_objective(user_model, primals);
-      }
-      catch (const EvaluationError&) {
-         evaluations.objective = Inf;
-      }
-      try {
-         evaluations.evaluate_constraints(user_model, primals);
-      }
-      catch (const EvaluationError&) {
-         evaluations.constraints.fill(std::numeric_limits<double>::quiet_NaN());
-      }
    }
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {
