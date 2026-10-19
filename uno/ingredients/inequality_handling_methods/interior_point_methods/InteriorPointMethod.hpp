@@ -99,7 +99,6 @@ namespace uno {
             options.get_double("barrier_tau_min"),
             options.get_double("barrier_k_sigma"),
             options.get_double("barrier_regularization_exponent"),
-            options.get_double("barrier_small_direction_factor"),
             options.get_double("barrier_push_variable_to_interior_k1"),
             options.get_double("barrier_push_variable_to_interior_k2"),
             options.get_double("barrier_damping_factor"),

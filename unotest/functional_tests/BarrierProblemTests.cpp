@@ -23,7 +23,7 @@ namespace {
    struct BarrierFixture {
       const BoundActiveModel model{};
       const OptimizationProblem problem{model, 100.};
-      const InteriorPointParameters parameters{0.99, 1e10, 0.25, 10., 1e-2, 1e-2, 1e-5, 1.,
+      const InteriorPointParameters parameters{0.99, 1e10, 0.25, 1e-2, 1e-2, 1e-5, 1.,
          std::pow(std::numeric_limits<double>::epsilon(), 0.75)};
       double barrier_parameter{0.1};
       PrimalDualInteriorPointProblem barrier_problem{problem, parameters, barrier_parameter, 100.};

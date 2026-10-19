@@ -178,7 +178,7 @@ namespace {
       BoundedModel model{};
       Options options;
       OptimizationProblem problem{model, 100.};
-      InteriorPointParameters parameters{0.99, 1e10, 0.25, 10., 1e-2, 1e-2, 1e-5, 1., 1e-12};
+      InteriorPointParameters parameters{0.99, 1e10, 0.25, 1e-2, 1e-2, 1e-5, 1., 1e-12};
       double barrier_parameter{0.1};
       PrimalDualInteriorPointProblem barrier_problem{problem, parameters, barrier_parameter, 100.};
       ExactHessian hessian_model{model};

@@ -38,12 +38,15 @@ namespace uno {
       const double s_phi;
       // IPOPT hard-codes this absolute threshold in BacktrackingLineSearch::DetectTinyStep (independent of theta_min)
       static constexpr double tiny_step_infeasibility_threshold{1e-4};
-      // tiny directions
-      size_t number_consecutive_tiny_directions{0};
-      const size_t consecutive_tiny_directions_threshold{2}; // TODO add option
       // second-order corrections
       const size_t SOC_max_iterations;
       const double SOC_infeasibility_fraction;
+      // tiny directions (IPOPT): tolerance (multiple of the machine epsilon) on the primal direction, tolerance on the
+      // constraint dual direction, and whether the previous iteration was a tiny step with a small dual direction
+      const double tiny_step_factor;
+      static constexpr double tiny_step_dual_tolerance{1e-2}; // IPOPT's tiny_step_y_tol
+      const double primal_tolerance;
+      bool previous_tiny_step_with_small_dual_direction{false};
       const bool print_minor_iterations;
 
       void assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

@@ -161,7 +161,7 @@ namespace {
       BarrierTestModel model{};
       Options options;
       OptimizationProblem problem{model, residual_scaling_threshold};
-      InteriorPointParameters parameters{0.99, 1e10, 0.25, 10., 1e-2, 1e-2, 1e-5, 1., 1e-12};
+      InteriorPointParameters parameters{0.99, 1e10, 0.25, 1e-2, 1e-2, 1e-5, 1., 1e-12};
       double barrier_parameter{0.1};
       std::unique_ptr<OptimizationProblem> barrier_problem;
       ExactHessian hessian_model{model};

@@ -384,7 +384,7 @@ namespace uno {
       return accept_iterate;
    }
 
-   void FeasibilityRestoration::accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   bool FeasibilityRestoration::accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
@@ -393,7 +393,9 @@ namespace uno {
       GlobalizationStrategy& globalization_strategy = (this->current_phase == Phase::OPTIMALITY) ?
          *this->globalization_strategy : *this->feasibility_globalization_strategy;
       // update the parameterization first: the progress measures and the postprocessing of the trial iterate depend on it
-      if (force_parameterization_update && inequality_handling_method.force_parameterization_update(statistics)) {
+      const bool parameterization_updated = force_parameterization_update &&
+         inequality_handling_method.force_parameterization_update(statistics);
+      if (parameterization_updated) {
          refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate, current_evaluations);
       }
       inequality_handling_method.accept_iterate_unconditionally(trial_iterate, trial_evaluations);
@@ -401,6 +403,16 @@ namespace uno {
          trial_evaluations);
       this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,
          warmstart_information, user_callbacks);
+      return parameterization_updated;
+   }
+
+   bool FeasibilityRestoration::terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
+         const Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      if (this->current_phase != Phase::OPTIMALITY) {
+         return false;
+      }
+      return this->fall_back_after_line_search_failure(this->original_problem, current_iterate, trial_iterate,
+         current_evaluations, trial_evaluations);
    }
 
    // possibly switch back to the optimality phase, then compute the residuals and check termination

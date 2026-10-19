@@ -33,7 +33,7 @@ namespace {
    const double slack_move = std::pow(std::numeric_limits<double>::epsilon(), 0.75);
 
    InteriorPointParameters make_parameters() {
-      return {0.99, 1e10, 0.25, 10., 1e-2, 1e-2, 1e-5, 1., slack_move};
+      return {0.99, 1e10, 0.25, 1e-2, 1e-2, 1e-5, 1., slack_move};
    }
 
    // optimality-like fixture: PDIPM over the model, with variables (x0, x1, s0)
