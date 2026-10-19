@@ -287,6 +287,7 @@ jobs:
         cmake -G "MinGW Makefiles" ^
           -B build ^
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DCMAKE_CXX_FLAGS="-Werror=template-body" ^
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DHIGHS_INCLUDE_DIR=${{github.workspace}}\dependencies\include\highs ^
@@ -354,6 +355,52 @@ jobs:
     - name: Build (MSVC)
       if: matrix.toolchain == 'msvc'
       run: nmake
+
+  # Fedora ships a recent GCC (>= 15) where -Wtemplate-body is enabled by default:
+  # errors in uninstantiated template bodies are diagnosed.
+  fedora-gcc:
+    name: Build (Fedora + GCC, -Wtemplate-body)
+    runs-on: ubuntu-latest
+    container: fedora:latest
+
+    steps:
+      - name: Install build dependencies
+        run: dnf install -y git tar gzip curl-minimal findutils which cmake make gcc gcc-c++ gcc-gfortran
+
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure
+        run: |
+          g++ --version
+          DEPS=${GITHUB_WORKSPACE}/dependencies
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DCMAKE_CXX_FLAGS="-Werror=template-body" \
+            -DMUMPS_INCLUDE_DIR=${DEPS}/include \
+            -DMETIS_INCLUDE_DIR=${DEPS}/include \
+            -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
+            -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+            -DBQPD=${DEPS}/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+            -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DSPRAL=${DEPS}/lib/libspral.a \
+            -DBUILD_STATIC_LIBS=ON \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
 
   # Compile-check both HSL modes: linked (OFF) and IPOPT-style dlopen runtime loading (ON).
   # No HSL library is needed — OFF builds without HSL, ON compiles the loader + MA27/MA57.

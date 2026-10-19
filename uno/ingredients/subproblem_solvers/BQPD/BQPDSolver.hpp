@@ -4,7 +4,10 @@
 #ifndef UNO_BQPDSOLVER_H
 #define UNO_BQPDSOLVER_H
 
+#include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include "../QPSolver.hpp"
@@ -95,18 +98,18 @@ namespace uno {
    // hide a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)
    template <typename T>
    void hide_pointer(size_t position_in_lws, int lws[], const T& object) {
-      intptr_t pointer_to_object = reinterpret_cast<intptr_t>(&object);
+      std::intptr_t pointer_to_object = reinterpret_cast<std::intptr_t>(&object);
       std::copy(reinterpret_cast<const char *>(&pointer_to_object),
-         reinterpret_cast<const char *>(&pointer_to_object) + sizeof(intptr_t),
-         reinterpret_cast<char *>(lws) + position_in_lws*sizeof(intptr_t));
+         reinterpret_cast<const char *>(&pointer_to_object) + sizeof(std::intptr_t),
+         reinterpret_cast<char *>(lws) + position_in_lws*sizeof(std::intptr_t));
    }
 
    // retrieve a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)
    template <typename T>
    T* retrieve_pointer(size_t position_in_lws, const int lws[]) {
-      intptr_t pointer_to_object;
-      std::copy(reinterpret_cast<const char *>(lws) + position_in_lws*sizeof(intptr_t),
-         reinterpret_cast<const char *>(lws) + (position_in_lws+1)*sizeof(intptr_t),
+      std::intptr_t pointer_to_object;
+      std::copy(reinterpret_cast<const char *>(lws) + position_in_lws*sizeof(std::intptr_t),
+         reinterpret_cast<const char *>(lws) + (position_in_lws+1)*sizeof(std::intptr_t),
          reinterpret_cast<char *>(&pointer_to_object));
       T* object = reinterpret_cast<T*>(pointer_to_object);
       return object;
