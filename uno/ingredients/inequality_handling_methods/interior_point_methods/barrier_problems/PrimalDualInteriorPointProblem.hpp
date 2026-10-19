@@ -69,8 +69,17 @@ namespace uno {
 
       [[nodiscard]] static double push_variable_to_interior(double value, double lower_bound, double upper_bound,
          double absolute_factor, double relative_factor);
+      // IPOPT-style safeguard (CalculateSafeSlack): slack that replaces a slack smaller than eps*min(1, mu)
+      [[nodiscard]] static double compute_safe_slack(double slack, double bound_multiplier, double barrier_parameter,
+         double bound, double slack_move);
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+      // relax (IPOPT's AdjustVariableBounds) the bounds that are too close to (or violated by) the iterate.
+      // The primals are not modified. Returns the number of relaxed bounds
+      size_t relax_bounds_around(const Iterate& iterate) const;
+      [[nodiscard]] size_t get_number_bound_relaxations() const;
+      [[nodiscard]] const std::vector<double>& get_internal_variables_lower_bounds() const;
+      [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;
 
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
@@ -104,9 +113,10 @@ namespace uno {
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
-      // internal bounds
-      std::vector<double> variables_lower_bounds;
-      std::vector<double> variables_upper_bounds;
+      // internal bounds (mutable: dynamically relaxed when the iterate gets too close, see relax_bounds_around)
+      mutable std::vector<double> variables_lower_bounds;
+      mutable std::vector<double> variables_upper_bounds;
+      mutable size_t number_bound_relaxations{0};
 
       std::vector<size_t> bounded_variables; // variables with a finite (internal) lower and/or upper bound
       std::vector<size_t> lower_bounded_variables; // variables with a finite (internal) lower bound

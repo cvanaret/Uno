@@ -54,6 +54,9 @@ namespace uno {
 
       virtual void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual PhaseHandoff export_handoff() const = 0;
+      // upon a phase switch, the incoming iterate may lie outside the (dynamically relaxed) bounds of this phase:
+      // methods that maintain internal bounds relax them to strictly contain the iterate. No-op by default
+      virtual void relax_bounds_around(const Iterate& /*iterate*/) const { }
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
