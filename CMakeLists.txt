@@ -106,6 +106,8 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/PostprocessingEvaluationsTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
    unotest/functional_tests/NewtonSystemTests.cpp
+   # parameterized over the available linear solvers (no test instantiated if none is available)
+   unotest/functional_tests/IterativeRefinementTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
@@ -463,6 +465,25 @@ if(ENABLE_TESTS)
 
    include(GoogleTest)
    gtest_discover_tests(run_unotest DISCOVERY_MODE PRE_TEST)
+
+   # end-to-end check of iterative refinement (pivoting tolerance increased at the first iteration) on Mittelmann's
+   # NARX_CFy instance. Requires the AMPL interface and the path to NARX_CFy.nl
+   set(UNO_NARX_CFY_NL "" CACHE FILEPATH "Path to Mittelmann's NARX_CFy.nl instance (optional end-to-end test)")
+   set(UNO_NARX_CFY_LINEAR_SOLVERS "MA57" CACHE STRING "Linear solvers tested on NARX_CFy (among MA27, MA57, MUMPS)")
+   if(AMPLSOLVER AND UNO_NARX_CFY_NL)
+      foreach(linear_solver ${UNO_NARX_CFY_LINEAR_SOLVERS})
+         # only the solvers that are compiled and that support the pivoting tolerance increase
+         if((linear_solver STREQUAL "MA57" AND _compile_ma57) OR (linear_solver STREQUAL "MA27" AND _compile_ma27) OR
+               (linear_solver STREQUAL "MUMPS" AND MUMPS_LIBRARY))
+            add_dependencies(run_unotest uno_ampl)
+            add_test(NAME NARX_CFy_iterative_refinement_${linear_solver}
+               COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/unotest/scripts/check_iterative_refinement_first_iteration.sh
+                  $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver})
+         else()
+            message(STATUS "NARX_CFy iterative refinement test skipped for ${linear_solver} (solver not available)")
+         endif()
+      endforeach()
+   endif()
 endif()
 
 #########################################

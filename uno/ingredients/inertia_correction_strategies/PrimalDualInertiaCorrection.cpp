@@ -68,44 +68,81 @@ namespace uno {
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
-      const double dual_regularization_value = this->dual_regularization_fraction * dual_regularization_parameter;
       this->primal_regularization = 0.;
       this->dual_regularization = 0.;
+      this->factorize_with_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
+         block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ false);
+   }
+
+   // the matrix was factorized with the current regularization factors, but is deemed singular by the caller (IPOPT's
+   // "pretend singular" heuristic): resume the correction from the current factors as if the factorization were singular
+   bool PrimalDualInertiaCorrection::regularize_singular_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
+         double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
+      DEBUG << "The augmented matrix is assumed singular\n";
+      this->factorize_with_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
+         block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ true);
+      return true;
+   }
+
+   // refactorize the matrix with the current regularization factors (e.g. after the pivoting tolerance of the linear solver
+   // was increased): the inertia of the new factorization is checked and the regularization increased if needed
+   void PrimalDualInertiaCorrection::refactorize_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
+         double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
+      this->factorize_with_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
+         block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ false);
+   }
+
+   void PrimalDualInertiaCorrection::factorize_with_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular) {
+      const double dual_regularization_value = this->dual_regularization_fraction * dual_regularization_parameter;
       size_t number_attempts = 0;
 
       while (true) {
-         if (this->regularize_all_variables) {
-            block_augmented_matrix.primal_inertia_correction.fill(this->primal_regularization);
+         bool singular, missing_negative, missing_positive;
+         if (assume_singular) {
+            // the matrix was already factorized with the current factors: skip the factorization and treat it as singular
+            assume_singular = false;
+            singular = true;
+            missing_negative = missing_positive = false;
          }
          else {
-            block_augmented_matrix.primal_inertia_correction.fill(0.);
-            for (size_t variable_index: primal_regularization_variables) {
-               block_augmented_matrix.primal_inertia_correction[variable_index] = this->primal_regularization;
+            if (this->regularize_all_variables) {
+               block_augmented_matrix.primal_inertia_correction.fill(this->primal_regularization);
             }
-         }
-         block_augmented_matrix.dual_inertia_correction.fill(-this->dual_regularization);
-         DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
-         linear_solver.do_numerical_factorization(false);
-         ++number_attempts;
-         const Inertia estimated_inertia = linear_solver.get_inertia();
-         DEBUG << "Number of attempts: " << number_attempts << '\n';
-         DEBUG << "Expected inertia  " << expected_inertia << '\n';
-         DEBUG << "Estimated inertia " << estimated_inertia << '\n';
+            else {
+               block_augmented_matrix.primal_inertia_correction.fill(0.);
+               for (size_t variable_index: primal_regularization_variables) {
+                  block_augmented_matrix.primal_inertia_correction[variable_index] = this->primal_regularization;
+               }
+            }
+            block_augmented_matrix.dual_inertia_correction.fill(-this->dual_regularization);
+            DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
+            linear_solver.do_numerical_factorization(false);
+            ++number_attempts;
+            const Inertia estimated_inertia = linear_solver.get_inertia();
+            DEBUG << "Expected inertia  " << expected_inertia << '\n';
+            DEBUG << "Estimated inertia " << estimated_inertia << '\n';
 
-         if (estimated_inertia == expected_inertia) {
-            DEBUG << "The inertia is correct\n";
-            if (0. < this->primal_regularization) {
-               this->previous_primal_regularization = this->primal_regularization;
+            if (estimated_inertia == expected_inertia) {
+               DEBUG << "The inertia is correct\n";
+               if (0. < this->primal_regularization) {
+                  this->previous_primal_regularization = this->primal_regularization;
+               }
+               statistics.set("Prim reg", this->primal_regularization);
+               statistics.set("Dual reg", this->dual_regularization);
+               return;
             }
-            statistics.set("Prim reg", this->primal_regularization);
-            statistics.set("Dual reg", this->dual_regularization);
-            return;
+            singular = linear_solver.matrix_is_singular() || 0 < estimated_inertia.zero;
+            missing_negative = estimated_inertia.negative < expected_inertia.negative;
+            missing_positive = estimated_inertia.positive < expected_inertia.positive;
          }
+         DEBUG << "Number of attempts: " << number_attempts << '\n';
 
          // missing negative eigenvalues (incl. zero ones or a surplus of positive ones): rank-deficient Jacobian -> dual regularization.
          // Primal regularization only adds positive eigenvalues and cannot fix this
-         const bool singular = linear_solver.matrix_is_singular() || 0 < estimated_inertia.zero;
-         const bool missing_negative = estimated_inertia.negative < expected_inertia.negative;
          bool dual_regularization_added = false;
          if ((singular || missing_negative) && this->dual_regularization == 0. && 0. < dual_regularization_value) {
             DEBUG << "Adding dual regularization\n";
@@ -114,7 +151,6 @@ namespace uno {
          }
 
          // missing positive eigenvalues, or dual regularization is unavailable/exhausted -> increase the primal regularization
-         const bool missing_positive = estimated_inertia.positive < expected_inertia.positive;
          if (missing_positive || !dual_regularization_added) {
             if (this->primal_regularization == 0.) {
                this->primal_regularization = (this->previous_primal_regularization == 0.) ? this->primal_regularization_initial_factor :
@@ -149,5 +185,4 @@ namespace uno {
    std::string PrimalDualInertiaCorrection::get_name() const {
       return "primal-dual";
    }
-
 } // namespace

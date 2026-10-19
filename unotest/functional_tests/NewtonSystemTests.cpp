@@ -685,11 +685,56 @@ namespace {
       std::vector<double> x(dimension);
       for (size_t i: Range(number_kept)) x[kept_indices[i]] = kept[i];
       for (size_t i: Range(number_eliminated)) x[eliminated_indices[i]] = eliminated[i];
-      for (size_t i: Range(dimension)) {
-         double Kx = 0.;
-         for (size_t j: Range(dimension)) Kx += K[i][j] * x[j];
-         EXPECT_NEAR(Kx, r[i], 1e-12 * (1. + std::abs(r[i]))) << "row " << i;
+      const auto product = [&](const std::vector<double>& vector) { // K vector (uncondensed, block order)
+         std::vector<double> result(dimension, 0.);
+         for (size_t i: Range(dimension)) {
+            for (size_t j: Range(dimension)) result[i] += K[i][j] * vector[j];
+         }
+         return result;
+      };
+      const auto expect_near = [](double value, double reference, const char* what, size_t index) {
+         EXPECT_NEAR(value, reference, 1e-12 * (1. + std::abs(reference))) << what << ' ' << index;
+      };
+      const std::vector<double> Kx = product(x);
+      for (size_t i: Range(dimension)) expect_near(Kx[i], r[i], "row", i);
+
+      // operations on the uncondensed system, in the layout [kept | eliminated] (iterative refinement)
+      const auto to_layout = [&](const std::vector<double>& vector) { // block order -> [kept | eliminated]
+         std::vector<double> result(dimension);
+         for (size_t i: Range(number_kept)) result[i] = vector[kept_indices[i]];
+         for (size_t i: Range(number_eliminated)) result[number_kept + i] = vector[eliminated_indices[i]];
+         return result;
+      };
+      const auto from_layout = [&](const std::vector<double>& vector) { // [kept | eliminated] -> block order
+         std::vector<double> result(dimension);
+         for (size_t i: Range(number_kept)) result[kept_indices[i]] = vector[i];
+         for (size_t i: Range(number_eliminated)) result[eliminated_indices[i]] = vector[number_kept + i];
+         return result;
+      };
+      // the uncondensed right-hand side is recovered from the condensed one
+      std::vector<double> uncondensed_rhs(dimension);
+      condensation.uncondense_rhs(View<const double>(condensed_rhs.data(), number_kept), View<double>(uncondensed_rhs.data(), dimension));
+      const std::vector<double> r_layout = to_layout(r);
+      for (size_t i: Range(dimension)) expect_near(uncondensed_rhs[i], r_layout[i], "uncondensed rhs", i);
+      // the product with the kept block (without Schur complement), completed, is the uncondensed product
+      const std::vector<double> x_layout = to_layout(x);
+      std::vector<double> completed(dimension, 0.);
+      for (size_t i: Range(number_kept)) {
+         for (size_t j: Range(number_kept)) completed[i] += K[kept_indices[i]][kept_indices[j]] * x_layout[j];
       }
+      condensation.complete_uncondensed_product(View<const double>(x_layout.data(), dimension), View<double>(completed.data(), dimension));
+      const std::vector<double> Kx_layout = to_layout(Kx);
+      for (size_t i: Range(dimension)) expect_near(completed[i], Kx_layout[i], "uncondensed product", i);
+      // condense -> solve -> expand solves the uncondensed system for an arbitrary right-hand side ρ
+      std::vector<double> rho(dimension);
+      for (size_t i: Range(dimension)) rho[i] = 1. + 0.5 * static_cast<double>(i % 3) - static_cast<double>(i % 2);
+      std::vector<double> condensed_rho(number_kept), solution(dimension);
+      condensation.condense_rhs(View<const double>(rho.data(), dimension), View<double>(condensed_rho.data(), number_kept));
+      const std::vector<double> condensed_solution = dense_solve(condensed_matrix, condensed_rho);
+      condensation.expand_solution(View<const double>(rho.data(), dimension), View<const double>(condensed_solution.data(), number_kept),
+         View<double>(solution.data(), dimension));
+      const std::vector<double> K_solution = to_layout(product(from_layout(solution)));
+      for (size_t i: Range(dimension)) expect_near(K_solution[i], rho[i], "expanded solution", i);
    }
 
    auto selection(size_t number_rows, size_t number_columns, size_t row, size_t column, double value) {
@@ -1011,4 +1056,30 @@ TEST(NewtonSystemCondensation, RandomBlockSystems) {
    EXPECT_LT(0u, coverage.uncoupled);
    EXPECT_LT(0u, coverage.empty_blocks);
    EXPECT_LT(0u, coverage.shared_kept_unknowns);
+}
+
+// without condensed blocks, the uncondensed system is the condensed system (iterative refinement on the augmented system)
+TEST(NewtonSystemCondensation, UncondensedSystemWithoutCondensation) {
+   Setting<OptimizationProblem> setting;
+   const std::unique_ptr<NewtonSystem> newton_system = setting.subproblem->create_newton_system();
+   const size_t dimension = newton_system->dimension();
+   EXPECT_EQ(newton_system->uncondensed_dimension(), dimension);
+   const auto [schur_begin, schur_end] = newton_system->schur_complement_nonzeros();
+   EXPECT_EQ(schur_begin, schur_end);
+   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   Vector<double> values(newton_system->number_nonzeros(), 0.), rhs(dimension), uncondensed_rhs(dimension), condensed_rhs(dimension);
+   newton_system->evaluate(context, values.view());
+   newton_system->assemble_rhs(context, rhs.view());
+   newton_system->uncondense_rhs(rhs.view(), uncondensed_rhs.view());
+   newton_system->condense_rhs(uncondensed_rhs.view(), condensed_rhs.view());
+   std::vector<double> vector(dimension), product(dimension);
+   for (size_t index: Range(dimension)) {
+      EXPECT_EQ(uncondensed_rhs[index], rhs[index]);
+      EXPECT_EQ(condensed_rhs[index], rhs[index]);
+      vector[index] = 1. + static_cast<double>(index);
+      product[index] = -static_cast<double>(index);
+   }
+   const std::vector<double> kept_product = product;
+   newton_system->complete_uncondensed_product(View<const double>(vector.data(), dimension), View<double>(product.data(), dimension));
+   EXPECT_EQ(product, kept_product);
 }

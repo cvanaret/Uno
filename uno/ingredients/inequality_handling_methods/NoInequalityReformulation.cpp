@@ -30,6 +30,7 @@ namespace uno {
    void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
       this->hessian_model->initialize_statistics(statistics);
       this->inertia_correction_strategy->initialize_statistics(statistics);
+      this->subproblem_solver->initialize_statistics(statistics);
    }
 
    void NoInequalityReformulation::create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations,

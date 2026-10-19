@@ -123,6 +123,7 @@ namespace uno {
    void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics) {
       this->hessian_model->initialize_statistics(statistics);
       this->inertia_correction_strategy->initialize_statistics(statistics);
+      this->subproblem_solver->initialize_statistics(statistics);
       statistics.add_column("Barrier", Statistics::double_width, 2, /* is_extended = */ true);
    }
 

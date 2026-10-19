@@ -62,6 +62,7 @@ namespace uno {
          this->system_dimension = number_rows(matrix);
          this->system_number_nonzeros = uno::number_nonzeros(matrix);
          this->hessian_number_nonzeros = uno::number_nonzeros(matrix.get_a11().get_left());
+         this->curvature_number_nonzeros = uno::number_nonzeros(matrix.get_a11().get_left().get_left());
          this->primal_regularization_number_nonzeros = uno::number_nonzeros(matrix.get_a11().get_right());
          this->jacobian_number_nonzeros = uno::number_nonzeros(matrix.get_a21());
          this->dual_regularization_number_nonzeros = uno::number_nonzeros(matrix.get_a22());
@@ -111,6 +112,30 @@ namespace uno {
          this->condensation.back_substitute(solution, eliminated_solution);
       }
 
+      [[nodiscard]] size_t uncondensed_dimension() const override { return this->condensation.uncondensed_dimension(); }
+
+      // value layout: curvature, Schur complement, primal regularization, Jacobian, dual regularization
+      [[nodiscard]] std::pair<size_t, size_t> schur_complement_nonzeros() const override {
+         return {this->curvature_number_nonzeros, this->hessian_number_nonzeros};
+      }
+
+      void uncondense_rhs(View<const double> condensed_rhs, View<double> uncondensed_rhs) const override {
+         this->condensation.uncondense_rhs(condensed_rhs, uncondensed_rhs);
+      }
+
+      void condense_rhs(View<const double> uncondensed_rhs, View<double> condensed_rhs) const override {
+         this->condensation.condense_rhs(uncondensed_rhs, condensed_rhs);
+      }
+
+      void expand_solution(View<const double> uncondensed_rhs, View<const double> condensed_solution,
+            View<double> uncondensed_solution) const override {
+         this->condensation.expand_solution(uncondensed_rhs, condensed_solution, uncondensed_solution);
+      }
+
+      void complete_uncondensed_product(View<const double> vector, View<double> product) const override {
+         this->condensation.complete_uncondensed_product(vector, product);
+      }
+
    protected:
       const Factory factory;
       const Iterate empty_iterate{};
@@ -118,7 +143,8 @@ namespace uno {
       mutable Condensation condensation{};
       size_t system_dimension{};
       size_t system_number_nonzeros{};
-      size_t hessian_number_nonzeros{};
+      size_t hessian_number_nonzeros{}; // curvature + Schur complement
+      size_t curvature_number_nonzeros{};
       size_t primal_regularization_number_nonzeros{};
       size_t jacobian_number_nonzeros{};
       size_t dual_regularization_number_nonzeros{};
