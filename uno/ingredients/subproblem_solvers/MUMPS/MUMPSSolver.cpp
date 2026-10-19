@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 #include <cmath>
 #include <stdexcept>
 #include "MUMPSSolver.hpp"
@@ -75,6 +76,7 @@ namespace uno {
 
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
       this->workspace.a = this->linear_system.matrix_values.data();
+      this->factorization_aborted_singular = false;
       size_t number_factorization_failures = 0;
       while (true) {
          dmumps_c(&this->workspace);
@@ -89,8 +91,9 @@ namespace uno {
             ++number_factorization_failures;
          }
          else if (MUMPS_INFO(1) == -10) {
-            // singular matrix, should be caught by the calling code via the inertia
+            // singular matrix: reported via matrix_is_singular() and the inertia (all eigenvalues deemed zero)
             DEBUG << "MUMPS detected a numerically singular matrix\n";
+            this->factorization_aborted_singular = true;
             break;
          }
          else if (MUMPS_INFO(1) < 0) {
@@ -110,8 +113,13 @@ namespace uno {
    void MUMPSSolver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
-      // copy the rhs block into the solution block (overwritten by MUMPS); both are column-major with leading dimension n
       const size_t dimension = static_cast<size_t>(this->workspace.n);
+      if (this->factorization_aborted_singular) {
+         // no factors are available: the solution is undefined (the caller handles the singularity)
+         view(solution, number_of_rhs * dimension).fill(std::numeric_limits<double>::quiet_NaN());
+         return;
+      }
+      // copy the rhs block into the solution block (overwritten by MUMPS); both are column-major with leading dimension n
       view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
 
       this->workspace.nrhs = static_cast<int>(number_of_rhs);
@@ -134,10 +142,16 @@ namespace uno {
    }
 
    size_t MUMPSSolver::number_negative_eigenvalues() const {
+      if (this->factorization_aborted_singular) {
+         return 0;
+      }
       return static_cast<size_t>(MUMPS_INFOG(12));
    }
 
    size_t MUMPSSolver::number_zero_eigenvalues() const {
+      if (this->factorization_aborted_singular) {
+         return static_cast<size_t>(this->workspace.n);
+      }
       return static_cast<size_t>(MUMPS_INFOG(28));
    }
 

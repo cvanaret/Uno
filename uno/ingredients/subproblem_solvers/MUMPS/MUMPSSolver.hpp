@@ -63,6 +63,9 @@ namespace uno {
 
       bool analysis_performed{false};
       bool factorization_performed{false};
+      // the last factorization was aborted because the matrix is numerically singular (INFO(1) = -10): the inertia
+      // information of MUMPS is not available and no solve is possible
+      bool factorization_aborted_singular{false};
 
       [[nodiscard]] int& MUMPS_ICNTL(size_t index);
       [[nodiscard]] double& MUMPS_CNTL(size_t index);
