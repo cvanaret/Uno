@@ -188,8 +188,15 @@ namespace uno {
       this->model.initial_primal_point(x);
    }
    
+   // the multipliers of the scaled problem are y_s = y * objective_scaling / constraint_scaling (inverse of the unscaling
+   // in postprocess_solution)
    void ScaledModel::initial_dual_point(Vector<double>& multipliers) const {
       this->model.initial_dual_point(multipliers);
+      const double objective_scaling = this->scaling.get_objective_scaling();
+      const auto& constraints_scaling = this->scaling.get_constraint_scaling();
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         multipliers[constraint_index] *= objective_scaling / constraints_scaling[constraint_index];
+      }
    }
 
    void ScaledModel::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
