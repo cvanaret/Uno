@@ -163,6 +163,8 @@ namespace uno {
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
+      // the bounds of the two phases are relaxed independently: make the restoration bounds contain the incoming iterate
+      this->feasibility_inequality_handling_method->relax_bounds_around(current_iterate);
 
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
@@ -251,6 +253,9 @@ namespace uno {
       view(this->iterate_buffer.primals, this->original_problem.number_variables, number_optimality_variables) =
          view(trial_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables);
       trial_evaluations.evaluate_constraints(model, this->iterate_buffer.primals);
+      // the restoration bounds may have been relaxed beyond the optimality bounds: relax the latter (otherwise the
+      // barrier measure is infinite and restoration may never terminate when a variable sits at its relaxed bound)
+      this->inequality_handling_method->relax_bounds_around(this->iterate_buffer);
       this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
       this->iterate_buffer.scaled_residuals.primal_infeasibility = model.constraint_violation(trial_evaluations.constraints, this->residual_norm);
 
@@ -310,6 +315,7 @@ namespace uno {
          }
       }
       trial_iterate.objective_multiplier = 1.;
+      this->inequality_handling_method->relax_bounds_around(trial_iterate);
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
 
       this->initial_point.resize(this->original_problem.number_variables);

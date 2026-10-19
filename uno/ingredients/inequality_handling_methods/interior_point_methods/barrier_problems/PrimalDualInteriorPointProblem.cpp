@@ -1,6 +1,8 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <cmath>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
@@ -576,23 +578,76 @@ namespace uno {
       return value;
    }
 
-   void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const {
-      // 1. push the primals strictly inside the bounds: with tiny slacks (x - lb), x + alpha d may round onto (or past)
-      // a bound
-      bool iterate_changed = false;
-      for (size_t variable_index: Range(this->number_variables)) {
-         const double old_value = iterate.primals[variable_index];
-         iterate.primals[variable_index] = push_variable_to_interior(old_value, this->variables_lower_bounds[variable_index],
-            this->variables_upper_bounds[variable_index], this->parameters.slack_move, 0.5);
-         if (iterate.primals[variable_index] != old_value) {
-            iterate_changed = true;
-            DEBUG << "Slack too small: variable " << variable_index << " pushed from " << old_value << " to " <<
-               iterate.primals[variable_index] << '\n';
+   // IPOPT (IpoptCalculatedQuantities::CalculateSafeSlack): a slack below s_min = eps*min(1, mu) is replaced with
+   // min(max(mu/|z|, s_min), max(slack, 0) + slack_move*max(1, |bound|)). The result is always >= s_min > 0
+   double PrimalDualInteriorPointProblem::compute_safe_slack(double slack, double bound_multiplier, double barrier_parameter,
+         double bound, double slack_move) {
+      const double minimum_slack = std::numeric_limits<double>::epsilon() * std::min(1., barrier_parameter);
+      if (minimum_slack <= slack) {
+         return slack;
+      }
+      const double centered_slack = (bound_multiplier != 0.) ? barrier_parameter / std::abs(bound_multiplier) : Inf;
+      const double maximum_slack = std::max(slack, 0.) + slack_move * std::max(1., std::abs(bound));
+      return std::min(std::max(centered_slack, minimum_slack), maximum_slack);
+   }
+
+   // IPOPT (OrigIpoptNLP::AdjustVariableBounds): instead of moving the iterate, move the bound so that the slack becomes safe
+   size_t PrimalDualInteriorPointProblem::relax_bounds_around(const Iterate& iterate) const {
+      size_t number_relaxed_bounds = 0;
+      for (size_t variable_index: this->bounded_variables) {
+         const double primal = iterate.primals[variable_index];
+         double& lower_bound = this->variables_lower_bounds[variable_index];
+         if (is_finite(lower_bound)) {
+            const double slack = primal - lower_bound;
+            const double safe_slack = compute_safe_slack(slack, iterate.multipliers.lower_bounds[variable_index],
+               this->barrier_parameter, lower_bound, this->parameters.slack_move);
+            if (safe_slack != slack) {
+               // guard against rounding (|x| >> safe slack): the new bound must lie strictly below x
+               const double relaxed_bound = std::min(primal - safe_slack, std::nextafter(primal, -Inf));
+               if (relaxed_bound < lower_bound) {
+                  DEBUG << "Slack too small: lower bound of variable " << variable_index << " relaxed from " << lower_bound <<
+                     " to " << relaxed_bound << '\n';
+                  lower_bound = relaxed_bound;
+                  ++number_relaxed_bounds;
+               }
+            }
+         }
+         double& upper_bound = this->variables_upper_bounds[variable_index];
+         if (is_finite(upper_bound)) {
+            const double slack = upper_bound - primal;
+            const double safe_slack = compute_safe_slack(slack, iterate.multipliers.upper_bounds[variable_index],
+               this->barrier_parameter, upper_bound, this->parameters.slack_move);
+            if (safe_slack != slack) {
+               const double relaxed_bound = std::max(primal + safe_slack, std::nextafter(primal, Inf));
+               if (upper_bound < relaxed_bound) {
+                  DEBUG << "Slack too small: upper bound of variable " << variable_index << " relaxed from " << upper_bound <<
+                     " to " << relaxed_bound << '\n';
+                  upper_bound = relaxed_bound;
+                  ++number_relaxed_bounds;
+               }
+            }
          }
       }
-      if (iterate_changed) {
-         evaluations.reset();
-      }
+      this->number_bound_relaxations += number_relaxed_bounds;
+      return number_relaxed_bounds;
+   }
+
+   size_t PrimalDualInteriorPointProblem::get_number_bound_relaxations() const {
+      return this->number_bound_relaxations;
+   }
+
+   const std::vector<double>& PrimalDualInteriorPointProblem::get_internal_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
+   }
+
+   const std::vector<double>& PrimalDualInteriorPointProblem::get_internal_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
+   }
+
+   void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate, Evaluations& /*evaluations*/) const {
+      // 1. with tiny slacks (x - lb), x + alpha d may round onto (or past) a bound: relax the bound (the primals and
+      // therefore the evaluations are unchanged)
+      this->relax_bounds_around(iterate);
 
       // 2. κ_Σ reset of the bound multipliers (Eq. 16 in Ipopt paper)
       for (size_t variable_index: Range(this->number_variables)) {

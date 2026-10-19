@@ -108,6 +108,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/NewtonSystemTests.cpp
    # parameterized over the available linear solvers (no test instantiated if none is available)
    unotest/functional_tests/IterativeRefinementTests.cpp
+   unotest/functional_tests/BoundRelaxationTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
