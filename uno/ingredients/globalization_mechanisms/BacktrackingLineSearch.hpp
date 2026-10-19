@@ -52,7 +52,7 @@ namespace uno {
       void assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) const;
       [[nodiscard]] double compute_minimum_step_length(const PredictedReductionModels& predicted_reduction_models,
-         const Iterate& current_iterate, double objective_multiplier) const;
+         const Iterate& current_iterate) const;
       [[nodiscard]] bool backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const PredictedReductionModels& predicted_reduction_models, double minimum_step_length,

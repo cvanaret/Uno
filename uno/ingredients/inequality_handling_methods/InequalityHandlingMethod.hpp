@@ -66,7 +66,6 @@ namespace uno {
       [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
-      virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
       virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const = 0;
 

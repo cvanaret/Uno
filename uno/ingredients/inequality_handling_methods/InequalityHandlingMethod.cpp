@@ -61,7 +61,9 @@ namespace uno {
       trial_iterate.objective_multiplier = objective_multiplier;
 
       bool accept_iterate = false;
-      if (direction.norm == 0.) {
+      // zero step in all the primal variables (direction.norm only measures the original variables: slacks or elastic
+      // variables may still move)
+      if (norm_inf(direction.primals) == 0.) {
          DEBUG << "Zero step acceptable\n";
          trial_evaluations.evaluate_objective(this->problem.model, trial_iterate.primals);
          accept_iterate = true;

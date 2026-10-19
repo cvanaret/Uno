@@ -64,7 +64,7 @@ namespace uno {
             const PredictedReductionModels predicted_reduction_models =
                this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
                evaluation_cache.current_evaluations);
-            const double minimum_step_length = compute_minimum_step_length(predicted_reduction_models, current_iterate, 1.);
+            const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
             const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
                direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
                user_callbacks);
@@ -114,7 +114,7 @@ namespace uno {
       const PredictedReductionModels predicted_reduction_models =
          this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
          evaluation_cache.current_evaluations);
-      const double minimum_step_length = compute_minimum_step_length(predicted_reduction_models, current_iterate, 0.);
+      const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
          user_callbacks);
@@ -145,7 +145,7 @@ namespace uno {
    }
 
    double BacktrackingLineSearch::compute_minimum_step_length(const PredictedReductionModels& predicted_reduction_models,
-         const Iterate& current_iterate, double objective_multiplier) const {
+         const Iterate& current_iterate) const {
       /*
       pred        = -∇φᵀd
       curr_theta = θ(x)            (constraint violation)
@@ -157,6 +157,8 @@ namespace uno {
               alpha_min = min( alpha_min , δ · θ^{s_θ} / pred^{s_φ} )
       return γ_α · alpha_min
       */
+      // objective multiplier of the current phase
+      const double objective_multiplier = this->constraint_relaxation_strategy->solving_feasibility_problem() ? 0. : 1.;
       const double predicted_optimality_reduction = predicted_reduction_models.optimality_first_order_reduction(objective_multiplier);
       const double theta = current_iterate.progress.infeasibility;
       // same theta_min as the switching rule of the globalization strategy (of the current phase)
@@ -212,7 +214,6 @@ namespace uno {
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, total_step_length, false, evaluation_cache.current_evaluations,
                evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
-            set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
 
             // try second-order corrections if the full step was rejected
             if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
@@ -230,7 +231,13 @@ namespace uno {
 
          if (is_acceptable) {
             termination = true;
+            // statistics of the accepted iterate (possibly a second-order correction)
+            set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
             set_dual_residuals_statistics(statistics, trial_iterate);
+         }
+         else if (evaluation_cache.trial_evaluations.is_objective_computed) {
+            // the residuals of a rejected trial iterate are not computed
+            statistics.set("Objective", evaluation_cache.trial_evaluations.objective);
          }
          statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
          if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {

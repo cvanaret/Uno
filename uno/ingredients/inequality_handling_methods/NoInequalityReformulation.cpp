@@ -124,11 +124,6 @@ namespace uno {
       this->subproblem_solver->update_second_order_corrections(*this->subproblem, trial_iterate, trial_evaluations);
    }
 
-   void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
-      // no threshold on the multipliers
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, Inf);
-   }
-
    void NoInequalityReformulation::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const {
       this->problem.compute_bound_dual_direction(current_primals, current_multipliers, direction_primals, direction_multipliers,

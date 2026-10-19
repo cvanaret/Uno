@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <numeric>
@@ -657,9 +658,7 @@ namespace uno {
             if (is_finite(coefficient)) {
                const double lb = coefficient / this->parameters.k_sigma;
                const double ub = coefficient * this->parameters.k_sigma;
-               if (lb > ub) {
-                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
-               }
+               assert(lb <= ub && "The bounds of the multiplier reset are in the wrong order (the iterate is not interior)");
                const double current_value = iterate.multipliers.lower_bounds[variable_index];
                iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
                if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
@@ -673,9 +672,7 @@ namespace uno {
             if (is_finite(coefficient)) {
                const double lb = coefficient * this->parameters.k_sigma;
                const double ub = coefficient / this->parameters.k_sigma;
-               if (lb > ub) {
-                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
-               }
+               assert(lb <= ub && "The bounds of the multiplier reset are in the wrong order (the iterate is not interior)");
                const double current_value = iterate.multipliers.upper_bounds[variable_index];
                iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
                if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
@@ -950,9 +947,7 @@ namespace uno {
             }
          }
       }
-      if (step_length <= 0. || step_length > 1.) {
-         throw std::runtime_error("The primal fraction-to-boundary step length is not in (0, 1]");
-      }
+      assert(0. < step_length && step_length <= 1. && "The fraction-to-boundary step length should be in (0, 1]");
       return step_length;
    }
 
@@ -973,9 +968,7 @@ namespace uno {
             }
          }
       }
-      if (step_length <= 0. || step_length > 1.) {
-         throw std::runtime_error("The dual fraction-to-boundary step length is not in (0, 1]");
-      }
+      assert(0. < step_length && step_length <= 1. && "The fraction-to-boundary step length should be in (0, 1]");
       return step_length;
    }
    
