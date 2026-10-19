@@ -22,8 +22,10 @@ namespace uno {
       explicit Filter(const Options& options);
       ~Filter() = default;
 
+      // empty the filter and restore the upper bound set by set_infeasibility_upper_bound
       void reset();
       [[nodiscard]] double get_smallest_infeasibility() const;
+      // set the upper bound and the value restored upon reset
       void set_infeasibility_upper_bound(double new_upper_bound);
 
       [[nodiscard]] bool acceptable_wrt_infeasibility_upper_bound(double trial_infeasibility) const;
@@ -37,20 +39,21 @@ namespace uno {
       friend std::ostream& operator<<(std::ostream& stream, const Filter& filter);
 
    protected:
-      const size_t capacity; /*!< Max filter size */
+      // maximum number of entries. 0: unlimited capacity (the filter grows)
+      const size_t capacity;
       std::vector<double> infeasibility{}; // infeasibility increases
       std::vector<double> objective{}; // objective decreases
       double infeasibility_upper_bound{Inf}; /*!< Upper bound on infeasibility measure */
-      size_t number_entries{0};
+      // the upper bound is lowered when an entry is dropped from a full filter; this value is restored upon reset
+      double initial_infeasibility_upper_bound{Inf};
       const FilterParameters parameters; /*!< Set of parameters */
       const bool margin_uses_entry_infeasibility;
       static constexpr size_t fixed_length_column1 = 14;
       static constexpr size_t fixed_length_column2 = 10;
 
+      [[nodiscard]] size_t number_entries() const;
       [[nodiscard]] bool is_empty() const;
       [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
-      void left_shift(size_t start, size_t shift_size);
-      void right_shift(size_t start, size_t shift_size);
       static void print_line(std::string& table, const std::string& infeasibility, const std::string& objective);
       [[nodiscard]] bool is_sorted() const;
    };

@@ -89,7 +89,7 @@ namespace uno {
       options.set_double("filter_gamma", 0.001);
       options.set_double("filter_ubd", 1e2);
       options.set_double("filter_fact", 1.25);
-      options.set_integer("filter_capacity", 50);
+      options.set_integer("filter_capacity", 50); // 0: unlimited
       // used by Waechter filter method
       options.set_double("filter_sufficient_infeasibility_decrease_factor", 0.9);
       options.set_integer("filter_reset_iteration_threshold", 5); // >= 1

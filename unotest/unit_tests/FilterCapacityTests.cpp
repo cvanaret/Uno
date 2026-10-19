@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+// Fixed and unlimited filter capacities.
 // Regression test: when the filter is full, dropping an entry must not make acceptable the points it rejected.
 // Bug: the upper bound was set to beta * max(ub, h_last) = beta * ub, so the dropped entry's region was lost.
 
@@ -58,4 +59,40 @@ TEST(FilterCapacity, UpperBoundUnchangedWhenNotFull) {
    filter.add(1., 10.);
    filter.add(2., 5.);
    EXPECT_TRUE(is_acceptable(filter, 50., -1e6));
+}
+
+// reset empties the filter and restores the upper bound lowered by the dropped entries
+TEST(FilterCapacity, ResetRestoresUpperBound) {
+   Filter filter(filter_options(2));
+   filter.set_infeasibility_upper_bound(100.);
+   filter.add(1., 10.);
+   filter.add(2., 5.);
+   filter.add(0.5, 20.); // full: (2, 5) is dropped and the upper bound is lowered to 2
+   ASSERT_FALSE(is_acceptable(filter, 50., -1e6));
+
+   filter.reset();
+   EXPECT_TRUE(is_acceptable(filter, 50., -1e6));
+   EXPECT_FALSE(is_acceptable(filter, 101., -1e6));
+}
+
+// capacity 0: the filter grows, no entry is dropped and the upper bound is never lowered
+TEST(FilterCapacity, UnlimitedCapacity) {
+   constexpr size_t number_pairs = 200;
+   Filter unlimited_filter(filter_options(0));
+   Filter limited_filter(filter_options(2));
+   for (Filter* filter: {&unlimited_filter, &limited_filter}) {
+      filter->set_infeasibility_upper_bound(1000.);
+      for (size_t index = 1; index <= number_pairs; ++index) {
+         filter->add(static_cast<double>(index), static_cast<double>(number_pairs - index));
+      }
+   }
+   // every entry is kept: points slightly dominated by any entry are rejected
+   for (size_t index = 1; index < number_pairs; ++index) {
+      const double infeasibility = static_cast<double>(index) + 0.5;
+      const double objective = static_cast<double>(number_pairs - index) + 0.1;
+      EXPECT_FALSE(is_acceptable(unlimited_filter, infeasibility, objective));
+   }
+   EXPECT_TRUE(is_acceptable(unlimited_filter, 500., -1e6)); // upper bound untouched
+   EXPECT_FALSE(is_acceptable(limited_filter, 500., -1e6)); // upper bound lowered by the dropped entries
+   EXPECT_TRUE(is_acceptable(unlimited_filter, 0.5, 1e6)); // left of all entries
 }

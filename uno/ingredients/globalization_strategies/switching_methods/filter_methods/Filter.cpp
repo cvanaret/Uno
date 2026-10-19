@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
-#include <stdexcept>
+#include <cstddef>
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
@@ -16,17 +16,19 @@
 namespace uno {
    Filter::Filter(const Options& options) :
          capacity(options.get_unsigned_int("filter_capacity")),
-         infeasibility(this->capacity),
-         objective(this->capacity),
          parameters({options.get_double("filter_beta"), options.get_double("filter_gamma")}),
          margin_uses_entry_infeasibility(options.get_bool("filter_margin_uses_entry_infeasibility")) {
-      if (this->capacity == 0) {
-         throw std::runtime_error("The filter has capacity 0");
+      // fixed capacity: allocate once (one more slot to insert before dropping)
+      if (0 < this->capacity) {
+         this->infeasibility.reserve(this->capacity + 1);
+         this->objective.reserve(this->capacity + 1);
       }
    }
 
    void Filter::reset() {
-      this->number_entries = 0;
+      this->infeasibility.clear();
+      this->objective.clear();
+      this->infeasibility_upper_bound = this->initial_infeasibility_upper_bound;
    }
 
    double Filter::get_smallest_infeasibility() const {
@@ -41,6 +43,7 @@ namespace uno {
 
    void Filter::set_infeasibility_upper_bound(double new_upper_bound) {
       this->infeasibility_upper_bound = new_upper_bound;
+      this->initial_infeasibility_upper_bound = new_upper_bound;
    }
 
    bool Filter::acceptable_wrt_infeasibility_upper_bound(double trial_infeasibility) const {
@@ -50,12 +53,13 @@ namespace uno {
    // return true if (infeasibility, objective) acceptable, false otherwise
    // note: the infeasibility upper bound must be tested separately (see acceptable_wrt_infeasibility_upper_bound)
    bool Filter::filter_acceptable(double trial_infeasibility, double trial_objective) const {
-      // TODO: use binary search (use some form of https://en.cppreference.com/w/cpp/algorithm/binary_search.html)
-      size_t position = 0;
-      while (position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[position],
-            trial_infeasibility)) {
-         ++position;
-      }
+      // binary search: the infeasibility increases, so the entries that do not satisfy the infeasibility sufficient
+      // reduction condition form a prefix. position: first entry that satisfies it
+      const auto first_entry = this->infeasibility.cbegin();
+      const size_t position = static_cast<size_t>(std::partition_point(first_entry, this->infeasibility.cend(),
+         [&](double entry_infeasibility) {
+            return !this->infeasibility_sufficient_reduction(entry_infeasibility, trial_infeasibility);
+         }) - first_entry);
 
       // check acceptability
       if (position == 0) {
@@ -91,11 +95,12 @@ namespace uno {
    // add (infeasibility, objective) to the filter
    // invariant: infeasibility strictly increasing, objective strictly decreasing (raw values, no margins)
    void Filter::add(double current_infeasibility, double current_objective) {
+      assert(this->infeasibility.size() == this->objective.size());
       // first entry whose infeasibility is >= the new one (raw comparison, same as the removal below)
-      size_t position = 0;
-      while (position < this->number_entries && this->infeasibility[position] < current_infeasibility) {
-         ++position;
-      }
+      const auto infeasibility_begin = this->infeasibility.begin();
+      const auto objective_begin = this->objective.begin();
+      const size_t position = static_cast<size_t>(std::lower_bound(infeasibility_begin, this->infeasibility.end(),
+         current_infeasibility) - infeasibility_begin);
 
       // if an existing entry dominates the new pair, the filter is unchanged:
       // - entries before `position` have smaller infeasibility; the one with the smallest objective is position-1
@@ -103,45 +108,31 @@ namespace uno {
       if (0 < position && this->objective[position - 1] <= current_objective) {
          return;
       }
-      if (position < this->number_entries && this->infeasibility[position] == current_infeasibility &&
+      if (position < this->number_entries() && this->infeasibility[position] == current_infeasibility &&
             this->objective[position] <= current_objective) {
          return;
       }
 
       // remove the entries dominated by the new pair: from `position` on, infeasibility >= new one, and the
-      // objectives are decreasing, so the dominated entries form a contiguous block
-      size_t end_position = position;
-      while (end_position < this->number_entries && current_objective <= this->objective[end_position]) {
-         ++end_position;
-      }
-      const size_t number_dominated_entries = end_position - position;
-      if (0 < number_dominated_entries) {
-         this->left_shift(position, number_dominated_entries);
-         this->number_entries -= number_dominated_entries;
-      }
-
-      // make room if the filter is full: drop the pair (existing or new) with the largest infeasibility h_max and
-      // set the upper bound to h_max. Since the bound test is h <= beta*ub, every point with h > beta*h_max is
-      // rejected, which includes the whole region dominated by the dropped pair.
-      if (this->number_entries >= this->capacity) {
-         if (position == this->number_entries) {
-            // the new pair has the largest infeasibility: keep the filter and let the bound encode the new pair
-            this->set_infeasibility_upper_bound(std::min(this->infeasibility_upper_bound, current_infeasibility));
-            assert(this->is_sorted());
-            return;
-         }
-         const double largest_filter_infeasibility = this->infeasibility[this->number_entries - 1];
-         this->set_infeasibility_upper_bound(std::min(this->infeasibility_upper_bound, largest_filter_infeasibility));
-         --this->number_entries; // position < number_entries still holds (or equals it: insertion at the end)
-      }
+      // objectives are decreasing, so the dominated entries form a contiguous block [position, end_position)
+      const auto start = static_cast<std::ptrdiff_t>(position);
+      const auto end = std::partition_point(objective_begin + start, this->objective.end(),
+         [&](double entry_objective) { return current_objective <= entry_objective; }) - objective_begin;
+      this->infeasibility.erase(infeasibility_begin + start, infeasibility_begin + end);
+      this->objective.erase(objective_begin + start, objective_begin + end);
 
       // insert at `position` (no recomputation, no margin)
-      if (position < this->number_entries) {
-         this->right_shift(position, 1);
+      this->infeasibility.insert(this->infeasibility.begin() + start, current_infeasibility);
+      this->objective.insert(this->objective.begin() + start, current_objective);
+
+      // fixed capacity exceeded: drop the pair (existing or new) with the largest infeasibility h_max and lower the upper
+      // bound to h_max. Since the bound test is h <= beta*ub, every point with h > beta*h_max is rejected, which
+      // includes the whole region dominated by the dropped pair
+      if (0 < this->capacity && this->capacity < this->infeasibility.size()) {
+         this->infeasibility_upper_bound = std::min(this->infeasibility_upper_bound, this->infeasibility.back());
+         this->infeasibility.pop_back();
+         this->objective.pop_back();
       }
-      this->infeasibility[position] = current_infeasibility;
-      this->objective[position] = current_objective;
-      ++this->number_entries;
       assert(this->is_sorted());
    }
 
@@ -179,7 +170,7 @@ namespace uno {
       table.push_back('\n');
 
       // values
-      for (size_t position: Range(filter.number_entries)) {
+      for (size_t position: Range(filter.number_entries())) {
          Filter::print_line(table, to_string(filter.infeasibility[position]), to_string(filter.objective[position]));
       }
       // print upper bound
@@ -203,26 +194,17 @@ namespace uno {
 
    // protected member functions
 
-   bool Filter::is_empty() const {
-      return (this->number_entries == 0);
+   size_t Filter::number_entries() const {
+      return this->infeasibility.size();
    }
+
+   bool Filter::is_empty() const {
+      return this->infeasibility.empty();
+   }
+
 
    bool Filter::objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const {
       return (trial_objective <= current_objective - this->parameters.gamma * trial_infeasibility);
-   }
-
-   void Filter::left_shift(size_t start, size_t shift_size) {
-      for (size_t position: Range(start, this->number_entries - shift_size)) {
-         this->infeasibility[position] = this->infeasibility[position + shift_size];
-         this->objective[position] = this->objective[position + shift_size];
-      }
-   }
-
-   void Filter::right_shift(size_t start, size_t shift_size) {
-      for (size_t position: BackwardRange(this->number_entries, start)) {
-         this->infeasibility[position] = this->infeasibility[position - shift_size];
-         this->objective[position] = this->objective[position - shift_size];
-      }
    }
 
    void Filter::print_line(std::string& table, const std::string& infeasibility, const std::string& objective) {
@@ -250,7 +232,7 @@ namespace uno {
    }
 
    bool Filter::is_sorted() const {
-      for (size_t index = 1; index < this->number_entries; ++index) {
+      for (size_t index = 1; index < this->number_entries(); ++index) {
          if (!(this->infeasibility[index - 1] < this->infeasibility[index] &&
                this->objective[index - 1] > this->objective[index])) {
             return false;

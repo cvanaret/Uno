@@ -26,7 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
+  CIBW_TEST_COMMAND: >-
+    python {project}/interfaces/Python/examples/example_hs015.py &&
+    python {project}/interfaces/Python/examples/example_hs001.py
 
 jobs:
   build_wheels:
@@ -250,7 +252,7 @@ jobs:
         run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
 
       - name: Run example
-        working-directory: ${{github.workspace}}/interfaces/Python/example
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
         run: python example_hs015.py
 
   # test PyPI's unopy artifacts after upload to PyPI
@@ -276,5 +278,5 @@ jobs:
         run: pip install unopy
 
       - name: Run example
-        working-directory: ${{github.workspace}}/interfaces/Python/example
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
         run: python example_hs015.py

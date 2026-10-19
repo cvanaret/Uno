@@ -26,7 +26,7 @@ namespace {
 
       [[nodiscard]] std::vector<std::pair<double, double>> entries() const {
          std::vector<std::pair<double, double>> result;
-         for (size_t index = 0; index < this->number_entries; ++index) {
+         for (size_t index = 0; index < this->number_entries(); ++index) {
             result.emplace_back(this->infeasibility[index], this->objective[index]);
          }
          return result;
