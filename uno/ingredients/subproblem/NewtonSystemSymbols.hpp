@@ -4,30 +4,28 @@
 #ifndef UNO_NEWTONSYSTEMSYMBOLS_H
 #define UNO_NEWTONSYSTEMSYMBOLS_H
 
+#include <cmath>
 #include <cstddef>
+#include <initializer_list>
+#include <stdexcept>
+#include <tuple>
+#include <type_traits>
 #include <utility>
 #include "linear_algebra/DiagonalMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
+#include "NewtonSystemContext.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/Sum.hpp"
+#include "symbolic/Transpose.hpp"
 #include "symbolic/symbolic_traits.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
    // forward declarations
-   class Evaluations;
    class HessianModel;
-   class Statistics;
-
-   // what the symbols of a Newton system may use when they are evaluated at the current iterate
-   struct NewtonSystemContext {
-      Statistics& statistics;
-      const Iterate& iterate;
-      Evaluations& evaluations;
-   };
 
    // Symbols of the Newton system. A symbol is a sparse matrix whose entries are stored in a contiguous slice of a COO
    // array (in the order given by compute_sparsity). It exposes:
@@ -120,7 +118,12 @@ namespace uno {
       const OptimizationProblem& problem;
    };
 
-   // diagonal block whose values are set outside of the evaluation (by the inertia correction strategy)
+   // role of a regularization block in the Newton system
+   enum class RegularizationRole { primal, dual };
+
+   // diagonal block whose values are set outside of the evaluation (by the inertia correction strategy). The role (primal
+   // δ_w or dual -δ_c) is part of the type, so that the layout of the Newton system can be checked at compile time
+   template <RegularizationRole Role>
    class Regularization: public SymbolicExpression {
    public:
       using value_type = double;
@@ -143,8 +146,282 @@ namespace uno {
          // the values are set by the inertia correction strategy
       }
 
+      // y += R x with the values written by the inertia correction strategy (context.regularization), or R = 0 if they are
+      // not provided
+      void add_matrix_vector_product(const NewtonSystemContext& context, View<const double> x, View<double> y) const {
+         if (context.regularization != nullptr) {
+            const View<const double>& values = (Role == RegularizationRole::primal) ? context.regularization->primal :
+               context.regularization->dual;
+            for (size_t index: Range(this->dimension)) {
+               y[index] += values[index] * x[index];
+            }
+         }
+      }
+
    protected:
       const size_t dimension;
+   };
+
+   using PrimalRegularization = Regularization<RegularizationRole::primal>;
+   using DualRegularization = Regularization<RegularizationRole::dual>;
+
+   // index map k -> k
+   struct IdentityIndex {
+      [[nodiscard]] constexpr size_t operator()(size_t index) const noexcept { return index; }
+   };
+
+   // index map k -> constant index
+   struct ConstantIndex {
+      size_t index;
+      [[nodiscard]] constexpr size_t operator()(size_t /*entry*/) const noexcept { return this->index; }
+   };
+
+   // constant value
+   struct ConstantValue {
+      double value;
+      [[nodiscard]] constexpr double operator()(size_t /*index*/) const noexcept { return this->value; }
+   };
+
+   // sign of all the entries of a matrix, known by construction (e.g. the slacks of an interior-point method are strictly
+   // positive): a precondition that lets the condensation skip the numerical nonsingularity test of its pivots
+   enum class EntrySign { unknown, positive, negative };
+
+   // sparse matrix with at most one nonzero per row and per column, given as dematerialized entries: entry k (in
+   // [0, number_entries)) is (row_index(k), column_index(k), value(k)). Diagonal matrices and (scaled) selection matrices
+   // are particular cases. Its entries are computed when the matrix is evaluated or applied. Sign: precondition on the
+   // sign of the entries (unknown by default)
+   template <typename RowIndex, typename ColumnIndex, typename Value, EntrySign Sign = EntrySign::unknown>
+   class ScaledPartialPermutation: public SymbolicExpression {
+   public:
+      using value_type = double;
+      static constexpr EntrySign sign = Sign;
+
+      ScaledPartialPermutation(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex row_index,
+            ColumnIndex column_index, Value value): rows(number_rows), columns(number_columns), entries(number_entries),
+            row_index_function(std::move(row_index)), column_index_function(std::move(column_index)), value_function(std::move(value)) { }
+
+      [[nodiscard]] size_t number_rows() const { return this->rows; }
+      [[nodiscard]] size_t number_columns() const { return this->columns; }
+      [[nodiscard]] size_t number_nonzeros() const { return this->entries; }
+      [[nodiscard]] size_t row_index(size_t entry) const { return this->row_index_function(entry); }
+      [[nodiscard]] size_t column_index(size_t entry) const { return this->column_index_function(entry); }
+      [[nodiscard]] double value(size_t entry) const { return this->value_function(entry); }
+
+      void compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, size_t row_offset, size_t column_offset,
+            uno_int solver_indexing) const {
+         for (size_t entry: Range(this->entries)) {
+            row_indices[entry] = static_cast<uno_int>(row_offset + this->row_index(entry)) + solver_indexing;
+            column_indices[entry] = static_cast<uno_int>(column_offset + this->column_index(entry)) + solver_indexing;
+         }
+      }
+
+      void evaluate(const NewtonSystemContext& /*context*/, View<double> values) const {
+         for (size_t entry: Range(this->entries)) {
+            values[entry] = this->value(entry);
+         }
+      }
+
+      // y += A x
+      void add_matrix_vector_product(const NewtonSystemContext& /*context*/, View<const double> x, View<double> y) const {
+         for (size_t entry: Range(this->entries)) {
+            y[this->row_index(entry)] += this->value(entry) * x[this->column_index(entry)];
+         }
+      }
+
+      // y += A^T x
+      void add_transposed_matrix_vector_product(const NewtonSystemContext& /*context*/, View<const double> x, View<double> y) const {
+         for (size_t entry: Range(this->entries)) {
+            y[this->column_index(entry)] += this->value(entry) * x[this->row_index(entry)];
+         }
+      }
+
+   protected:
+      const size_t rows;
+      const size_t columns;
+      const size_t entries;
+      RowIndex row_index_function;
+      ColumnIndex column_index_function;
+      Value value_function;
+   };
+
+   template <typename T>
+   struct is_scaled_partial_permutation: std::false_type { };
+   template <typename RowIndex, typename ColumnIndex, typename Value, EntrySign Sign>
+   struct is_scaled_partial_permutation<ScaledPartialPermutation<RowIndex, ColumnIndex, Value, Sign>>: std::true_type { };
+   template <typename T>
+   inline constexpr bool is_scaled_partial_permutation_v = is_scaled_partial_permutation<std::decay_t<T>>::value;
+
+   // free functions. The sign of the entries is an optional precondition: partial_permutation<EntrySign::positive>(...)
+   template <EntrySign Sign = EntrySign::unknown, typename RowIndex, typename ColumnIndex, typename Value>
+   auto partial_permutation(size_t number_rows, size_t number_columns, size_t number_entries, RowIndex&& row_index,
+         ColumnIndex&& column_index, Value&& value) {
+      return ScaledPartialPermutation<std::decay_t<RowIndex>, std::decay_t<ColumnIndex>, std::decay_t<Value>, Sign>(number_rows,
+         number_columns, number_entries, std::forward<RowIndex>(row_index), std::forward<ColumnIndex>(column_index),
+         std::forward<Value>(value));
+   }
+
+   // square diagonal matrix with entries value(k)
+   template <EntrySign Sign = EntrySign::unknown, typename Value>
+   auto diagonal(size_t dimension, Value&& value) {
+      return partial_permutation<Sign>(dimension, dimension, dimension, IdentityIndex{}, IdentityIndex{}, std::forward<Value>(value));
+   }
+
+   // a pivot used as a divisor (the entries of a diagonal block eliminated by condensation):
+   // - sign unknown: it must be nonzero and finite (runtime check, always performed);
+   // - sign known by construction: the check is a debug assertion of the sign (skipped with NDEBUG)
+   template <EntrySign Sign>
+   void check_pivot(double pivot) {
+      if constexpr (Sign == EntrySign::unknown) {
+         if (pivot == 0. || !std::isfinite(pivot)) {
+            throw std::runtime_error("Condensation: a pivot of a condensed block is zero or not finite");
+         }
+      }
+      else {
+#ifndef NDEBUG
+         const bool valid_sign = (Sign == EntrySign::positive) ? (0. < pivot) : (pivot < 0.);
+         if (!valid_sign || !std::isfinite(pivot)) {
+            throw std::logic_error("Condensation: a pivot violates the sign precondition of its block");
+         }
+#else
+         (void) pivot;
+#endif
+      }
+   }
+
+   // right-hand side components (vectors evaluated at the current iterate)
+   // vector whose entry k is value(k)
+   template <typename Value>
+   class ComponentVector {
+   public:
+      ComponentVector(size_t dimension, Value value): dimension(dimension), value_function(std::move(value)) { }
+
+      [[nodiscard]] size_t size() const { return this->dimension; }
+      [[nodiscard]] double entry(size_t index) const { return this->value_function(index); }
+
+      void evaluate(const NewtonSystemContext& /*context*/, View<double> result) const {
+         for (size_t index: Range(this->dimension)) {
+            result[index] = this->entry(index);
+         }
+      }
+
+   protected:
+      const size_t dimension;
+      Value value_function;
+   };
+
+   template <typename T>
+   struct is_component_vector: std::false_type { };
+   template <typename Value>
+   struct is_component_vector<ComponentVector<Value>>: std::true_type { };
+   template <typename T>
+   inline constexpr bool is_component_vector_v = is_component_vector<std::decay_t<T>>::value;
+
+   template <typename Value>
+   ComponentVector<std::decay_t<Value>> component_vector(size_t dimension, Value&& value) {
+      return {dimension, std::forward<Value>(value)};
+   }
+
+   // -g(x) + J(x)^T y, where g is the gradient of the objective (given as a function). The terms of the bound duals in
+   // -∇_x L(x, y, z) are generated from their current values (see CurrentValue)
+   template <typename ObjectiveGradient>
+   class NegativeLagrangianGradient {
+   public:
+      NegativeLagrangianGradient(const OptimizationProblem& problem, ObjectiveGradient objective_gradient):
+            problem(problem), objective_gradient(std::move(objective_gradient)) { }
+
+      [[nodiscard]] size_t size() const { return this->problem.number_variables; }
+
+      void evaluate(const NewtonSystemContext& context, View<double> result) const {
+         const Iterate& iterate = context.iterate;
+         this->objective_gradient(iterate, result, context.evaluations);
+         result.scale(-1.);
+         this->problem.add_jacobian_transposed_vector_product(iterate.multipliers.constraints.view(), result, context.evaluations);
+      }
+
+   protected:
+      const OptimizationProblem& problem;
+      ObjectiveGradient objective_gradient;
+   };
+
+   template <typename ObjectiveGradient>
+   NegativeLagrangianGradient<std::decay_t<ObjectiveGradient>> negative_lagrangian_gradient(const OptimizationProblem& problem,
+         ObjectiveGradient&& objective_gradient) {
+      return {problem, std::forward<ObjectiveGradient>(objective_gradient)};
+   }
+
+   // current value v of a block of unknowns (value(k) is the k-th entry), declared once for the whole system: the
+   // right-hand side is then in residual form -F = -F0 - K v, where the terms -K(row, Block) v are generated for every block
+   // row coupled with the block (see KKTSystem). This lets the condensation cancel them symbolically
+   template <size_t Block, typename Value>
+   class CurrentValue {
+   public:
+      static constexpr size_t block = Block;
+
+      explicit CurrentValue(Value value): value_function(std::move(value)) { }
+
+      [[nodiscard]] double value(size_t index) const { return this->value_function(index); }
+
+   protected:
+      Value value_function;
+   };
+
+   template <size_t Block, typename Value>
+   CurrentValue<Block, std::decay_t<Value>> current_value(Value&& value) {
+      return CurrentValue<Block, std::decay_t<Value>>(std::forward<Value>(value));
+   }
+
+   // whether the values are pairwise distinct
+   constexpr bool all_distinct(std::initializer_list<size_t> values) {
+      for (const size_t* first = values.begin(); first != values.end(); ++first) {
+         for (const size_t* second = first + 1; second != values.end(); ++second) {
+            if (*first == *second) {
+               return false;
+            }
+         }
+      }
+      return true;
+   }
+
+   // current values of some blocks of unknowns (at most one per block)
+   template <typename... Values>
+   class CurrentValues {
+   public:
+      static_assert(all_distinct({Values::block...}), "CurrentValues: at most one current value per block");
+
+      explicit CurrentValues(Values... values): values(std::move(values)...) { }
+
+      template <typename Function>
+      void for_each(Function&& function) const {
+         std::apply([&](const auto&... value) { (function(value), ...); }, this->values);
+      }
+
+   protected:
+      std::tuple<Values...> values;
+   };
+
+   template <typename... Values>
+   CurrentValues<std::decay_t<Values>...> current_values(Values&&... values) {
+      return CurrentValues<std::decay_t<Values>...>(std::forward<Values>(values)...);
+   }
+
+   // -(c(x) - c_L)
+   // note: for equality constraints, c_L == c_U
+   class NegativeConstraintResidual {
+   public:
+      explicit NegativeConstraintResidual(const OptimizationProblem& problem): problem(problem) { }
+
+      [[nodiscard]] size_t size() const { return this->problem.number_constraints; }
+
+      void evaluate(const NewtonSystemContext& context, View<double> result) const {
+         this->problem.evaluate_constraints(context.iterate, result, context.evaluations);
+         const auto& constraints_lower_bounds = this->problem.get_constraints_lower_bounds();
+         for (size_t constraint_index: Range(this->problem.number_constraints)) {
+            result[constraint_index] = -(result[constraint_index] - constraints_lower_bounds[constraint_index]);
+         }
+      }
+
+   protected:
+      const OptimizationProblem& problem;
    };
 
    // symmetric 2x2 block matrix [A11 *; A21 A22]: the (1, 2) block is the transpose of A21 and is not stored
@@ -196,6 +473,19 @@ namespace uno {
    template <typename Symbol>
    void add_matrix_vector_product(const Symbol& symbol, const NewtonSystemContext& context, View<const double> x, View<double> y) {
       symbol.add_matrix_vector_product(context, x, y);
+   }
+
+   template <typename Symbol>
+   void add_transposed_matrix_vector_product(const Symbol& symbol, const NewtonSystemContext& context, View<const double> x,
+         View<double> y) {
+      symbol.add_transposed_matrix_vector_product(context, x, y);
+   }
+
+   // transpose: y += A^T x
+   template <typename Matrix>
+   void add_matrix_vector_product(const Transpose<Matrix>& transposed, const NewtonSystemContext& context,
+         View<const double> x, View<double> y) {
+      add_transposed_matrix_vector_product(transposed.get_matrix(), context, x, y);
    }
 
    // diagonal matrix: one entry per index

@@ -30,6 +30,14 @@ namespace uno {
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
 
+      [[nodiscard]] bool regularize_singular_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
+         double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
+
+      void refactorize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
+         double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
+
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
       [[nodiscard]] double get_primal_regularization_factor() const override;
@@ -50,6 +58,10 @@ namespace uno {
       const double primal_regularization_slow_increase_factor;
       const size_t threshold_unsuccessful_attempts;
       const bool regularize_all_variables;
+
+      void factorize_with_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular);
    };
 } // namespace
 

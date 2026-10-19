@@ -5,5 +5,8 @@
 #include "LinearSolverTests.hpp"
 
 namespace uno {
+   template <>
+   constexpr size_t number_pivoting_tolerance_increases<MUMPSSolver> = 3;
+
    INSTANTIATE_TYPED_TEST_SUITE_P(MUMPS, LinearSolverTest, MUMPSSolver);
 }
