@@ -32,6 +32,7 @@ namespace uno {
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
+      void update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold) override;
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
       void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
@@ -82,11 +83,26 @@ namespace uno {
       std::unique_ptr<Subproblem> subproblem;
 
       bool first_feasibility_iteration{false};
+      const bool is_square_problem;
 
       [[nodiscard]] const double& barrier_parameter() const;
    };
 
    // class template implementation
+
+   // IPOPT (IsSquareProblem): as many free variables as equality constraints
+   inline bool is_square(const OptimizationProblem& problem) {
+      const auto& lower_bounds = problem.get_variables_lower_bounds();
+      const auto& upper_bounds = problem.get_variables_upper_bounds();
+      size_t number_free_variables = 0;
+      for (size_t variable_index: Range(problem.number_variables)) {
+         if (lower_bounds[variable_index] != upper_bounds[variable_index]) {
+            ++number_free_variables;
+         }
+      }
+      return (0 < number_free_variables && number_free_variables == problem.get_equality_constraints().size());
+   }
+
 
    template <typename BarrierProblem>
    InteriorPointMethod<BarrierProblem>::InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region,
@@ -103,12 +119,22 @@ namespace uno {
             std::pow(std::numeric_limits<double>::epsilon(), 0.75) // slack_move
          }),
          barrier_parameter_update_strategy(options),
-         barrier_problem(problem, this->parameters, this->barrier_parameter(), options.get_double("residual_scaling_threshold")) {
+         barrier_problem(problem, this->parameters, this->barrier_parameter(), options.get_double("residual_scaling_threshold")),
+         is_square_problem(is_square(problem)) {
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier,
             options, option_overrides);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations,
+         double multipliers_threshold) {
+      if (this->is_square_problem) {
+         this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations,
+            multipliers_threshold);
+      }
    }
 
    template <typename BarrierProblem>

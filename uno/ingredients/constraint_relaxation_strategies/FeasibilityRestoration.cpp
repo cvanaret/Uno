@@ -432,6 +432,8 @@ namespace uno {
 
       // check termination
       if (this->current_phase == Phase::OPTIMALITY) {
+         this->inequality_handling_method->update_multipliers_of_square_problem(trial_iterate, trial_evaluations,
+            this->least_square_multiplier_max_norm);
          this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,

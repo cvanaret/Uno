@@ -81,6 +81,10 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
       virtual void compute_residuals(Iterate& iterate, Evaluations& evaluations) const = 0;
+      // square problem (as many free variables as equality constraints, IPOPT's IsSquareProblem): the constraint
+      // multipliers are recomputed as least-squares estimates at each accepted iterate (IPOPT's ComputeFeasibilityMultipliers)
+      virtual void update_multipliers_of_square_problem(Iterate& /*iterate*/, Evaluations& /*evaluations*/,
+         double /*multipliers_threshold*/) { }
       // primal infeasibility of the (reformulated) problem, as used in the termination tests
       [[nodiscard]] virtual double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
 
