@@ -75,6 +75,8 @@ namespace uno {
       }
    }
 
+   // the quadratic form is not computed (0): the curvature term of the predicted objective reduction is only used by the
+   // trust-region method, which does not support the direct linear solvers. The line search uses first-order models
    double COOLinearSystem::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,
          const Vector<double>& /*vector*/) const {
       return 0.;

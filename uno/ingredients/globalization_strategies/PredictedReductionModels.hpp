@@ -29,13 +29,14 @@ namespace uno {
          auxiliary_model(std::move(auxiliary)) {
       }
 
-      // assemble the predicted reductions for a given step length
-      [[nodiscard]] ProgressMeasures operator()(double step_length) const {
+      // assemble the predicted reductions for a given step length. The objective model is captured by value: the result
+      // remains valid after the PredictedReductionModels object is destroyed
+      [[nodiscard]] ProgressMeasures operator()(double step_length, bool use_curvature_information) const {
          return {
             this->infeasibility_model(step_length),
             // predicted objective reduction left as a function of the objective multiplier
-            [&objective = this->objective_model, step_length](double objective_multiplier) {
-               return objective(step_length, objective_multiplier, /* use_curvature_information = */ true);
+            [objective = this->objective_model, step_length, use_curvature_information](double objective_multiplier) {
+               return objective(step_length, objective_multiplier, use_curvature_information);
             },
             this->auxiliary_model(step_length),
             step_length

@@ -183,7 +183,9 @@ namespace uno {
          statistics.set("Steplength", step_length);
          // the total step length is the step length scaled by the direction's step length
          const double total_step_length = step_length * direction.primal_dual_step_length;
-         const ProgressMeasures predicted_reductions = predicted_reduction_models(total_step_length);
+         // the switching condition and the Armijo condition use the first-order models (IPOPT)
+         const ProgressMeasures predicted_reductions = predicted_reduction_models(total_step_length,
+            /* use_curvature_information = */ false);
 
          bool is_acceptable = false;
          try {

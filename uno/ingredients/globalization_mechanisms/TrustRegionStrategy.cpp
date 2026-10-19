@@ -184,7 +184,8 @@ namespace uno {
       const PredictedReductionModels predicted_reduction_models =
          this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
          evaluation_cache.current_evaluations);
-      const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.);
+      const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.,
+         /* use_curvature_information = */ true);
       return this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
          predicted_reductions, warmstart_information, user_callbacks);
