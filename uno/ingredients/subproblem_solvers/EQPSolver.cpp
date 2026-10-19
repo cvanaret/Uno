@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -96,6 +97,11 @@ namespace uno {
       }
    }
 
+   // least-squares multipliers: min ||∇L(x, y, z)|| wrt y, i.e. the solution of the system
+   //    [I  J^T] [w]   [∇L(x, 0, z)]
+   //    [J  0  ] [y] = [0          ]
+   // where ∇L(x, 0, z) is the Lagrangian gradient of the subproblem's problem with zero constraint multipliers (∇f - z for
+   // the barrier problem, whose barrier terms are represented by the bound multipliers z)
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) {
@@ -103,11 +109,10 @@ namespace uno {
          return;
       }
       DEBUG << "Computing least-squares multipliers\n";
-
-      // compute least-square multipliers
       auto& linear_system = this->linear_solver->get_linear_system();
 
-      // set up the linear system
+      // set up the linear system (this overwrites the augmented matrix and its factorization)
+      this->factorization_holds_least_squares_system = true;
       auto [hessian, primal_inertia_correction, jacobian, dual_inertia_correction] =
          this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
       hessian.fill(0.); // no Hessian contribution
@@ -122,25 +127,30 @@ namespace uno {
          this->analysis_performed = true;
       }
 
-      // factorize the matrix
+      // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
-
-      // assemble the RHS
-      linear_system.rhs.fill(0.);
-      evaluations.evaluate_objective_gradient(subproblem.problem.model, iterate.primals);
-      view(linear_system.rhs.data(), subproblem.problem.model.number_variables) = evaluations.objective_gradient;
-      for (size_t variable_index: Range(subproblem.problem.number_variables)) {
-         linear_system.rhs[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
-            iterate.multipliers.upper_bounds[variable_index]);
+      if (this->linear_solver->matrix_is_singular() && 0 < dual_inertia_correction.size()) {
+         DEBUG << "The least-squares system is singular, regularizing it\n";
+         dual_inertia_correction.fill(-EQPSolver::least_squares_dual_regularization);
+         this->linear_solver->do_numerical_factorization(false);
       }
+      // otherwise, the (consistent) singular system is solved anyway: a non-finite solution is rejected below
+
+      // assemble the RHS: ∇L(x, 0, z) = ∇L(x, y, z) + J^T y
+      this->least_squares_rhs_buffer.resize(subproblem.number_variables);
+      subproblem.problem.evaluate_lagrangian_gradient(iterate, evaluations, this->least_squares_rhs_buffer);
+      subproblem.problem.add_jacobian_transposed_vector_product(iterate.multipliers.constraints.view(),
+         this->least_squares_rhs_buffer.view(), evaluations);
+      linear_system.rhs.fill(0.);
+      view(linear_system.rhs, 0, subproblem.number_variables) = this->least_squares_rhs_buffer;
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n";
       DEBUG3 << "RHS: " << linear_system.rhs << "\n\n";
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
 
-      // set the constraint multipliers if their norm is reasonable
+      // set the constraint multipliers if their norm is reasonable (a NaN norm is rejected)
       const auto least_squares_multipliers = view(linear_system.solution.data(), subproblem.number_variables,
          subproblem.number_variables + subproblem.number_constraints);
       if (norm_inf(least_squares_multipliers) <= multipliers_threshold) {
@@ -167,7 +177,8 @@ namespace uno {
       auto& linear_system = this->linear_solver->get_linear_system();
 
       // set up the linear system by evaluating the functions at the current iterate
-      if (warmstart_information.new_iterate) {
+      if (warmstart_information.new_iterate || this->factorization_holds_least_squares_system) {
+         this->factorization_holds_least_squares_system = false;
          // evaluate the Newton system (all the blocks except the regularization)
          auto block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
          this->newton_system->evaluate({statistics, current_iterate, current_evaluations}, linear_system.matrix_values.view());
@@ -242,6 +253,7 @@ namespace uno {
    // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
    template <typename LowRankCorrection>
    const Direction& EQPSolver<LowRankCorrection>::compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate) {
+      assert(!this->factorization_holds_least_squares_system && "The factorization is that of the least-squares system");
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
 

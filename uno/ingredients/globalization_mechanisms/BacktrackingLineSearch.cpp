@@ -32,6 +32,8 @@ namespace uno {
          s_phi(options.get_double("switching_merit_exponent")),
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
+         tiny_step_factor(options.get_double("barrier_small_direction_factor")),
+         primal_tolerance(options.get_double("primal_tolerance")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
       if (this->backtracking_ratio <= 0. || this->backtracking_ratio >= 1.) {
          throw std::runtime_error("The LS backtracking ratio should be in (0, 1)");
@@ -62,7 +64,7 @@ namespace uno {
             const PredictedReductionModels predicted_reduction_models =
                this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
                evaluation_cache.current_evaluations);
-            const double minimum_step_length = compute_minimum_step_length(predicted_reduction_models, current_iterate, 1.);
+            const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
             const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
                direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
                user_callbacks);
@@ -83,7 +85,20 @@ namespace uno {
          // switch to the feasibility problem (below)
       }
 
-      // if the line search failed, switch to solving the feasibility problem (test first if we can)
+      // if the line search failed in the optimality phase, terminate at an acceptable iterate if possible
+      if (!this->constraint_relaxation_strategy->solving_feasibility_problem() &&
+            this->constraint_relaxation_strategy->terminate_at_line_search_failure(current_iterate, trial_iterate,
+               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations)) {
+         statistics.set("Status", "acceptable");
+         set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+         set_dual_residuals_statistics(statistics, trial_iterate);
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         if (Logger::level == INFO) {
+            statistics.print_current_line();
+         }
+         return;
+      }
+      // otherwise, switch to solving the feasibility problem (test first if we can)
       if (model.number_constraints == 0 || this->constraint_relaxation_strategy->solving_feasibility_problem()) {
          throw std::runtime_error("Line search failed");
       }
@@ -92,14 +107,14 @@ namespace uno {
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
-      this->number_consecutive_tiny_directions = 0;
+      this->previous_tiny_step_with_small_dual_direction = false;
       const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
          Inf, evaluation_cache.current_evaluations, warmstart_information);
       check_unboundedness(direction);
       const PredictedReductionModels predicted_reduction_models =
          this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
          evaluation_cache.current_evaluations);
-      const double minimum_step_length = compute_minimum_step_length(predicted_reduction_models, current_iterate, 0.);
+      const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
       const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
          user_callbacks);
@@ -130,7 +145,7 @@ namespace uno {
    }
 
    double BacktrackingLineSearch::compute_minimum_step_length(const PredictedReductionModels& predicted_reduction_models,
-         const Iterate& current_iterate, double objective_multiplier) const {
+         const Iterate& current_iterate) const {
       /*
       pred        = -∇φᵀd
       curr_theta = θ(x)            (constraint violation)
@@ -142,6 +157,8 @@ namespace uno {
               alpha_min = min( alpha_min , δ · θ^{s_θ} / pred^{s_φ} )
       return γ_α · alpha_min
       */
+      // objective multiplier of the current phase
+      const double objective_multiplier = this->constraint_relaxation_strategy->solving_feasibility_problem() ? 0. : 1.;
       const double predicted_optimality_reduction = predicted_reduction_models.optimality_first_order_reduction(objective_multiplier);
       const double theta = current_iterate.progress.infeasibility;
       // same theta_min as the switching rule of the globalization strategy (of the current phase)
@@ -183,7 +200,9 @@ namespace uno {
          statistics.set("Steplength", step_length);
          // the total step length is the step length scaled by the direction's step length
          const double total_step_length = step_length * direction.primal_dual_step_length;
-         const ProgressMeasures predicted_reductions = predicted_reduction_models(total_step_length);
+         // the switching condition and the Armijo condition use the first-order models (IPOPT)
+         const ProgressMeasures predicted_reductions = predicted_reduction_models(total_step_length,
+            /* use_curvature_information = */ false);
 
          bool is_acceptable = false;
          try {
@@ -195,7 +214,6 @@ namespace uno {
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, total_step_length, false, evaluation_cache.current_evaluations,
                evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
-            set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
 
             // try second-order corrections if the full step was rejected
             if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
@@ -213,7 +231,13 @@ namespace uno {
 
          if (is_acceptable) {
             termination = true;
+            // statistics of the accepted iterate (possibly a second-order correction)
+            set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
             set_dual_residuals_statistics(statistics, trial_iterate);
+         }
+         else if (evaluation_cache.trial_evaluations.is_objective_computed) {
+            // the residuals of a rejected trial iterate are not computed
+            statistics.set("Objective", evaluation_cache.trial_evaluations.objective);
          }
          statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
          if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
@@ -238,35 +262,51 @@ namespace uno {
    }
 
    // returns true if the direction is tiny and the full step was accepted
+   // IPOPT (BacktrackingLineSearch::FindAcceptableTrialPoint and MonotoneMuUpdate): a tiny step is accepted without
+   // globalization test. After two consecutive tiny steps whose constraint dual directions are small, the
+   // parameterization (e.g. the barrier parameter) is updated; if it cannot be updated anymore, the problem is solved to
+   // the best possible numerical accuracy (STOP_AT_TINY_STEP)
    bool BacktrackingLineSearch::try_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       if (!this->is_tiny_direction(current_iterate, direction)) {
-         this->number_consecutive_tiny_directions = 0;
+         this->previous_tiny_step_with_small_dual_direction = false;
          return false;
       }
-      ++this->number_consecutive_tiny_directions;
-      // consecutive tiny steps: force an update of the parameterization (e.g. barrier parameter decrease)
-      const bool force_parameterization_update =
-         (this->number_consecutive_tiny_directions >= this->consecutive_tiny_directions_threshold);
       DEBUG << "Tiny direction detected, accepting the full step unchecked\n";
+      const bool force_parameterization_update = this->previous_tiny_step_with_small_dual_direction;
+      bool parameterization_updated;
       try {
          // full step (the fraction-to-boundary rule is accounted for in the direction's step length)
          assemble_trial_iterate(current_iterate, trial_iterate, direction, 1.);
          evaluation_cache.trial_evaluations.reset();
-         this->constraint_relaxation_strategy->accept_tiny_step(statistics, model, current_iterate, trial_iterate, direction,
-            direction.primal_dual_step_length, force_parameterization_update, evaluation_cache.current_evaluations,
-            evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
+         parameterization_updated = this->constraint_relaxation_strategy->accept_tiny_step(statistics, model, current_iterate,
+            trial_iterate, direction, direction.primal_dual_step_length, force_parameterization_update,
+            evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
       }
       catch (const EvaluationError&) {
          DEBUG << "An evaluation error occurred at the tiny step, falling back to the line search\n";
-         this->number_consecutive_tiny_directions = 0;
+         this->previous_tiny_step_with_small_dual_direction = false;
          return false;
       }
+      this->previous_tiny_step_with_small_dual_direction =
+         (norm_inf(direction.multipliers.constraints) < BacktrackingLineSearch::tiny_step_dual_tolerance);
       statistics.set("Steplength", 1.);
       statistics.set("||Step||", direction.primal_dual_step_length * direction.norm);
       statistics.set("LS", 1);
       statistics.set("Status", std::string(symbols::check) + " (tiny)");
+
+      if (force_parameterization_update && !parameterization_updated && trial_iterate.status == SolutionStatus::NOT_OPTIMAL) {
+         DEBUG << "Tiny steps and the parameterization cannot be updated: terminating\n";
+         // an iterate that satisfies the acceptable conditions is reported as such (as with acceptable termination)
+         if (this->constraint_relaxation_strategy->is_last_iterate_acceptable()) {
+            trial_iterate.status = SolutionStatus::FEASIBLE_KKT_POINT;
+         }
+         else {
+            trial_iterate.status = (trial_iterate.scaled_residuals.primal_infeasibility <= this->primal_tolerance) ?
+               SolutionStatus::FEASIBLE_SMALL_STEP : SolutionStatus::INFEASIBLE_SMALL_STEP;
+         }
+      }
       set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
       set_dual_residuals_statistics(statistics, trial_iterate);
       statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
@@ -279,7 +319,8 @@ namespace uno {
    bool BacktrackingLineSearch::is_tiny_direction(const Iterate& current_iterate, const Direction& direction) const {
       constexpr double macheps = std::numeric_limits<double>::epsilon();
       for (size_t variable_index: Range(current_iterate.number_variables)) {
-         if (std::abs(direction.primals[variable_index]) / (1. + std::abs(current_iterate.primals[variable_index])) >= 10.*macheps) {
+         if (std::abs(direction.primals[variable_index]) / (1. + std::abs(current_iterate.primals[variable_index])) >=
+               this->tiny_step_factor * macheps) {
             return false;
          }
       }

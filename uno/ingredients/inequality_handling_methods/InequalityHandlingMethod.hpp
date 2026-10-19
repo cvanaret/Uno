@@ -66,7 +66,6 @@ namespace uno {
       [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
-      virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
       virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const = 0;
 
@@ -82,6 +81,12 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
       virtual void compute_residuals(Iterate& iterate, Evaluations& evaluations) const = 0;
+      // square problem (as many free variables as equality constraints, IPOPT's IsSquareProblem): the constraint
+      // multipliers are recomputed as least-squares estimates at each accepted iterate (IPOPT's ComputeFeasibilityMultipliers)
+      virtual void update_multipliers_of_square_problem(Iterate& /*iterate*/, Evaluations& /*evaluations*/,
+         double /*multipliers_threshold*/) { }
+      // primal infeasibility of the (reformulated) problem, as used in the termination tests
+      [[nodiscard]] virtual double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 

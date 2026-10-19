@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <numeric>
@@ -49,7 +50,8 @@ namespace uno {
          constraints_lower_bounds(this->number_constraints, 0.),
          constraints_upper_bounds(this->number_constraints, 0.),
          constraints_buffer(this->number_constraints),
-         constraints_buffer2(this->number_constraints) {
+         predicted_reduction_constraints(this->number_constraints),
+         predicted_reduction_jacobian_direction(this->number_constraints) {
       // copy the variables bounds
       const size_t dimension = this->unslacked_problem.number_variables;
       view(this->variables_lower_bounds, 0, dimension) = this->unslacked_problem.get_variables_lower_bounds();
@@ -656,9 +658,7 @@ namespace uno {
             if (is_finite(coefficient)) {
                const double lb = coefficient / this->parameters.k_sigma;
                const double ub = coefficient * this->parameters.k_sigma;
-               if (lb > ub) {
-                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
-               }
+               assert(lb <= ub && "The bounds of the multiplier reset are in the wrong order (the iterate is not interior)");
                const double current_value = iterate.multipliers.lower_bounds[variable_index];
                iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
                if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
@@ -672,9 +672,7 @@ namespace uno {
             if (is_finite(coefficient)) {
                const double lb = coefficient * this->parameters.k_sigma;
                const double ub = coefficient / this->parameters.k_sigma;
-               if (lb > ub) {
-                  throw std::runtime_error("Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
-               }
+               assert(lb <= ub && "The bounds of the multiplier reset are in the wrong order (the iterate is not interior)");
                const double current_value = iterate.multipliers.upper_bounds[variable_index];
                iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
                if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
@@ -684,6 +682,16 @@ namespace uno {
             }
          }
       }
+   }
+
+   // max of the constraint violation of the unslacked problem and of the residuals of the slacked constraints c(x) - s
+   // (IPOPT measures the latter): a point where c(x) is feasible but the slacks lag behind is not a KKT point, since the
+   // complementarity is measured with the slacks
+   double PrimalDualInteriorPointProblem::primal_infeasibility(const Iterate& iterate, Evaluations& evaluations,
+         Norm residual_norm) const {
+      const double unslacked_infeasibility = this->unslacked_problem.primal_infeasibility(iterate, evaluations, residual_norm);
+      this->evaluate_constraints(iterate, this->constraints_buffer.view(), evaluations);
+      return std::max(unslacked_infeasibility, norm(residual_norm, this->constraints_buffer));
    }
 
    double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
@@ -804,14 +812,18 @@ namespace uno {
    PredictedInfeasibilityReduction PrimalDualInteriorPointProblem::build_predicted_infeasibility_reduction(
          const Iterate& current_iterate, const Vector<double>& primal_direction, Norm progress_norm,
          Evaluations& current_evaluations) const {
-      this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
-      const double current_constraint_violation = norm(progress_norm, this->constraints_buffer);
+      // the model reads its own buffers when it is queried: the scratch buffer constraints_buffer is overwritten when the
+      // progress measures of the trial iterates are evaluated
+      this->evaluate_constraints(current_iterate, this->predicted_reduction_constraints.view(), current_evaluations);
+      const double current_constraint_violation = norm(progress_norm, this->predicted_reduction_constraints);
 
-      this->constraints_buffer2.fill(0.);
-      this->add_jacobian_vector_product(primal_direction.view(), this->constraints_buffer2.view(), current_evaluations);
+      this->predicted_reduction_jacobian_direction.fill(0.);
+      this->add_jacobian_vector_product(primal_direction.view(), this->predicted_reduction_jacobian_direction.view(),
+         current_evaluations);
 
       return [current_constraint_violation, progress_norm, this](double step_length) {
-         const auto linearized_constraints = this->constraints_buffer + step_length * this->constraints_buffer2;
+         const auto linearized_constraints = this->predicted_reduction_constraints + step_length *
+            this->predicted_reduction_jacobian_direction;
          const double trial_constraint_violation = norm(progress_norm, linearized_constraints);
          return current_constraint_violation - trial_constraint_violation;
       };
@@ -935,9 +947,7 @@ namespace uno {
             }
          }
       }
-      if (step_length <= 0. || step_length > 1.) {
-         throw std::runtime_error("The primal fraction-to-boundary step length is not in (0, 1]");
-      }
+      assert(0. < step_length && step_length <= 1. && "The fraction-to-boundary step length should be in (0, 1]");
       return step_length;
    }
 
@@ -958,9 +968,7 @@ namespace uno {
             }
          }
       }
-      if (step_length <= 0. || step_length > 1.) {
-         throw std::runtime_error("The dual fraction-to-boundary step length is not in (0, 1]");
-      }
+      assert(0. < step_length && step_length <= 1. && "The fraction-to-boundary step length should be in (0, 1]");
       return step_length;
    }
    

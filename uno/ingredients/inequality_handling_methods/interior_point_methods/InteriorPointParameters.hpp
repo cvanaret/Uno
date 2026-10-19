@@ -9,7 +9,6 @@ namespace uno {
       double tau_min;
       double k_sigma;
       double dual_regularization_exponent;
-      double small_direction_factor;
       double push_variable_to_interior_k1;
       double push_variable_to_interior_k2;
       double damping_factor; // (Section 3.7 in IPOPT paper)

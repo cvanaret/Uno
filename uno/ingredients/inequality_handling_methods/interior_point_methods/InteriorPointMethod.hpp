@@ -32,6 +32,7 @@ namespace uno {
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
+      void update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold) override;
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
       void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
@@ -53,7 +54,6 @@ namespace uno {
       [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate) override;
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
-      void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) override;
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
@@ -68,6 +68,7 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
+      [[nodiscard]] double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] std::string get_name() const override;
 
@@ -81,14 +82,27 @@ namespace uno {
       std::unique_ptr<SubproblemSolver> subproblem_solver;
       std::unique_ptr<Subproblem> subproblem;
 
-      const double least_square_multiplier_max_norm;
-
       bool first_feasibility_iteration{false};
+      const bool is_square_problem;
 
       [[nodiscard]] const double& barrier_parameter() const;
    };
 
    // class template implementation
+
+   // IPOPT (IsSquareProblem): as many free variables as equality constraints
+   inline bool is_square(const OptimizationProblem& problem) {
+      const auto& lower_bounds = problem.get_variables_lower_bounds();
+      const auto& upper_bounds = problem.get_variables_upper_bounds();
+      size_t number_free_variables = 0;
+      for (size_t variable_index: Range(problem.number_variables)) {
+         if (lower_bounds[variable_index] != upper_bounds[variable_index]) {
+            ++number_free_variables;
+         }
+      }
+      return (0 < number_free_variables && number_free_variables == problem.get_equality_constraints().size());
+   }
+
 
    template <typename BarrierProblem>
    InteriorPointMethod<BarrierProblem>::InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region,
@@ -98,7 +112,6 @@ namespace uno {
             options.get_double("barrier_tau_min"),
             options.get_double("barrier_k_sigma"),
             options.get_double("barrier_regularization_exponent"),
-            options.get_double("barrier_small_direction_factor"),
             options.get_double("barrier_push_variable_to_interior_k1"),
             options.get_double("barrier_push_variable_to_interior_k2"),
             options.get_double("barrier_damping_factor"),
@@ -107,12 +120,21 @@ namespace uno {
          }),
          barrier_parameter_update_strategy(options),
          barrier_problem(problem, this->parameters, this->barrier_parameter(), options.get_double("residual_scaling_threshold")),
-         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
+         is_square_problem(is_square(problem)) {
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier,
             options, option_overrides);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations,
+         double multipliers_threshold) {
+      if (this->is_square_problem) {
+         this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations,
+            multipliers_threshold);
+      }
    }
 
    template <typename BarrierProblem>
@@ -205,7 +227,7 @@ namespace uno {
          Iterate& iterate, Evaluations& evaluations) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
-      // cap the original variables to [-rho, +rho]
+      // cap the bound multipliers to [-rho, +rho] (IPOPT: z <- min(rho, z))
       for (size_t variable_index: Range(this->barrier_problem.number_variables)) {
          if (iterate.multipliers.lower_bounds[variable_index] > 0.) {
             iterate.multipliers.lower_bounds[variable_index] = std::min(iterate.multipliers.lower_bounds[variable_index],
@@ -281,12 +303,6 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
-      // no threshold on the multipliers
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, Inf);
-   }
-
-   template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::compute_bound_dual_direction(const Vector<double>& current_primals,
          const Multipliers& current_multipliers, const Vector<double>& direction_primals, Multipliers& direction_multipliers,
          double& bound_dual_step_length) const {
@@ -330,26 +346,17 @@ namespace uno {
       InequalityHandlingMethod::compute_residuals(this->barrier_problem, iterate, evaluations);
    }
 
+   template <typename BarrierProblem>
+   double InteriorPointMethod<BarrierProblem>::compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
+      return this->barrier_problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
+   }
+
    // protected member functions
 
    template <typename BarrierProblem>
    const double& InteriorPointMethod<BarrierProblem>::barrier_parameter() const {
       return this->barrier_parameter_update_strategy.get_barrier_parameter();
    }
-
-   /*
-   // determine if the direction is a "small direction" (Section 3.9 in IPOPT paper)
-   template <typename BarrierProblem>
-   bool InteriorPointMethod<BarrierProblem>::is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const {
-      const Range variables_range = Range(this->problem->number_variables);
-      const VectorExpression relative_direction_size{variables_range, [&](size_t variable_index) {
-         return direction_primals[variable_index] / (1 + std::abs(current_primals[variable_index]));
-      }};
-      static double machine_epsilon = std::numeric_limits<double>::epsilon();
-      return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
-      return false;
-   }
-   */
 
    template <typename BarrierProblem>
    std::string InteriorPointMethod<BarrierProblem>::get_name() const {

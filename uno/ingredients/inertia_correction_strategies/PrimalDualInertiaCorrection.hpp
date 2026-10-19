@@ -4,7 +4,6 @@
 #ifndef UNO_PRIMALDUALINERTIACORRECTION_H
 #define UNO_PRIMALDUALINERTIACORRECTION_H
 
-#include <memory>
 #include <string>
 #include "InertiaCorrectionStrategy.hpp"
 
@@ -23,9 +22,6 @@ namespace uno {
          View<double> hessian_values) override;
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> primal_regularization_values) override;
-      void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double dual_regularization_parameter, const Inertia& expected_inertia, BlockAugmentedMatrix block_augmented_matrix,
-         Range<> primal_regularization_variables) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
@@ -44,8 +40,6 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      const Options& options;
-      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double primal_regularization{0.};
       double dual_regularization{0.};
       double previous_primal_regularization{0.};

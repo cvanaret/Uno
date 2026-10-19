@@ -118,7 +118,7 @@ namespace uno {
    }
 
    bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const {
-      // use the infeasibility in the residual norm here (inf norm for IPOPT implementation)
+      // primal infeasibility (residual norm) of the optimality reformulation, the same measure as the reference infeasibility
       DEBUG << "Testing whether " << trial_iterate.scaled_residuals.primal_infeasibility << " <= " << this->sufficient_infeasibility_decrease_factor
          << "*" << reference_infeasibility << " = " << this->sufficient_infeasibility_decrease_factor * reference_infeasibility << '\n';
       return trial_iterate.scaled_residuals.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&

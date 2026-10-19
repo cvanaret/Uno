@@ -124,13 +124,16 @@ namespace uno {
       return accept_iterate;
    }
 
-   void NoRelaxation::accept_tiny_step(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
-      Iterate& trial_iterate, const Direction& /*direction*/, double /*step_length*/, bool force_parameterization_update,
-      Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
-      UserCallbacks& user_callbacks) {
+   bool NoRelaxation::accept_tiny_step(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& /*direction*/, double /*step_length*/, bool force_parameterization_update,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) {
       // update the parameterization first: the progress measures and the postprocessing of the trial iterate depend on it
-      if (force_parameterization_update && this->inequality_handling_method->force_parameterization_update(statistics)) {
+      const bool parameterization_updated = force_parameterization_update &&
+         this->inequality_handling_method->force_parameterization_update(statistics);
+      if (parameterization_updated) {
          this->globalization_strategy.reset();
+         this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       }
       this->inequality_handling_method->accept_iterate_unconditionally(trial_iterate, trial_evaluations);
       this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
@@ -141,6 +144,13 @@ namespace uno {
       this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
          trial_evaluations);
       warmstart_information.no_changes();
+      return parameterization_updated;
+   }
+
+   bool NoRelaxation::terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
+         const Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      return this->fall_back_after_line_search_failure(this->original_problem, current_iterate, trial_iterate,
+         current_evaluations, trial_evaluations);
    }
 
    double NoRelaxation::small_infeasibility_threshold() const {
