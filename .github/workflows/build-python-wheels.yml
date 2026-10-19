@@ -27,8 +27,8 @@ concurrency:
 
 env:
   CIBW_TEST_COMMAND: >-
-    python {project}/interfaces/Python/example/example_hs015.py &&
-    python {project}/interfaces/Python/example/example_hs001.py
+    python {project}/interfaces/Python/examples/example_hs015.py &&
+    python {project}/interfaces/Python/examples/example_hs001.py
 
 jobs:
   build_wheels:
