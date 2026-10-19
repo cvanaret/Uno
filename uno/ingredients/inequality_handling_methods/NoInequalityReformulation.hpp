@@ -63,6 +63,7 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
+      [[nodiscard]] double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] std::string get_name() const override;
 

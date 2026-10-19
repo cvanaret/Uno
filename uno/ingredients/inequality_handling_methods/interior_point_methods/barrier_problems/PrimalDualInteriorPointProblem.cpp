@@ -49,7 +49,8 @@ namespace uno {
          constraints_lower_bounds(this->number_constraints, 0.),
          constraints_upper_bounds(this->number_constraints, 0.),
          constraints_buffer(this->number_constraints),
-         constraints_buffer2(this->number_constraints) {
+         predicted_reduction_constraints(this->number_constraints),
+         predicted_reduction_jacobian_direction(this->number_constraints) {
       // copy the variables bounds
       const size_t dimension = this->unslacked_problem.number_variables;
       view(this->variables_lower_bounds, 0, dimension) = this->unslacked_problem.get_variables_lower_bounds();
@@ -686,6 +687,16 @@ namespace uno {
       }
    }
 
+   // max of the constraint violation of the unslacked problem and of the residuals of the slacked constraints c(x) - s
+   // (IPOPT measures the latter): a point where c(x) is feasible but the slacks lag behind is not a KKT point, since the
+   // complementarity is measured with the slacks
+   double PrimalDualInteriorPointProblem::primal_infeasibility(const Iterate& iterate, Evaluations& evaluations,
+         Norm residual_norm) const {
+      const double unslacked_infeasibility = this->unslacked_problem.primal_infeasibility(iterate, evaluations, residual_norm);
+      this->evaluate_constraints(iterate, this->constraints_buffer.view(), evaluations);
+      return std::max(unslacked_infeasibility, norm(residual_norm, this->constraints_buffer));
+   }
+
    double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
          const Multipliers& multipliers, Norm residual_norm) const {
       // dematerialized vectors
@@ -804,14 +815,18 @@ namespace uno {
    PredictedInfeasibilityReduction PrimalDualInteriorPointProblem::build_predicted_infeasibility_reduction(
          const Iterate& current_iterate, const Vector<double>& primal_direction, Norm progress_norm,
          Evaluations& current_evaluations) const {
-      this->evaluate_constraints(current_iterate, this->constraints_buffer.view(), current_evaluations);
-      const double current_constraint_violation = norm(progress_norm, this->constraints_buffer);
+      // the model reads its own buffers when it is queried: the scratch buffer constraints_buffer is overwritten when the
+      // progress measures of the trial iterates are evaluated
+      this->evaluate_constraints(current_iterate, this->predicted_reduction_constraints.view(), current_evaluations);
+      const double current_constraint_violation = norm(progress_norm, this->predicted_reduction_constraints);
 
-      this->constraints_buffer2.fill(0.);
-      this->add_jacobian_vector_product(primal_direction.view(), this->constraints_buffer2.view(), current_evaluations);
+      this->predicted_reduction_jacobian_direction.fill(0.);
+      this->add_jacobian_vector_product(primal_direction.view(), this->predicted_reduction_jacobian_direction.view(),
+         current_evaluations);
 
       return [current_constraint_violation, progress_norm, this](double step_length) {
-         const auto linearized_constraints = this->constraints_buffer + step_length * this->constraints_buffer2;
+         const auto linearized_constraints = this->predicted_reduction_constraints + step_length *
+            this->predicted_reduction_jacobian_direction;
          const double trial_constraint_violation = norm(progress_norm, linearized_constraints);
          return current_constraint_violation - trial_constraint_violation;
       };

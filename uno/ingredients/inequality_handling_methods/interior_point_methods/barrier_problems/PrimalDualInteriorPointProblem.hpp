@@ -81,6 +81,8 @@ namespace uno {
       [[nodiscard]] const std::vector<double>& get_internal_variables_lower_bounds() const;
       [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;
 
+      // the constraint violation of the unslacked problem and the residuals c(x) - s of the slacked constraints
+      [[nodiscard]] double primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
@@ -129,8 +131,10 @@ namespace uno {
       Vector<uno_int> jacobian_row_indices{};
 
       Vector<uno_int> jacobian_column_indices{};
-      mutable Vector<double> constraints_buffer;
-      mutable Vector<double> constraints_buffer2;
+      mutable Vector<double> constraints_buffer; // scratch buffer
+      // data of the predicted infeasibility reduction model (read lazily by the model: not to be used for anything else)
+      mutable Vector<double> predicted_reduction_constraints;
+      mutable Vector<double> predicted_reduction_jacobian_direction;
 
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
          double tau) const;

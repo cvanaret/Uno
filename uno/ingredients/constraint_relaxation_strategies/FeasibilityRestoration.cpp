@@ -257,7 +257,9 @@ namespace uno {
       // barrier measure is infinite and restoration may never terminate when a variable sits at its relaxed bound)
       this->inequality_handling_method->relax_bounds_around(this->iterate_buffer);
       this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
-      this->iterate_buffer.scaled_residuals.primal_infeasibility = model.constraint_violation(trial_evaluations.constraints, this->residual_norm);
+      // same measure as the reference infeasibility (primal infeasibility of the optimality reformulation)
+      this->iterate_buffer.scaled_residuals.primal_infeasibility =
+         this->inequality_handling_method->compute_primal_infeasibility(this->iterate_buffer, trial_evaluations);
 
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {

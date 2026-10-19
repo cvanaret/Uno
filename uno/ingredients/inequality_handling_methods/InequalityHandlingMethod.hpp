@@ -82,6 +82,8 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
       virtual void compute_residuals(Iterate& iterate, Evaluations& evaluations) const = 0;
+      // primal infeasibility of the (reformulated) problem, as used in the termination tests
+      [[nodiscard]] virtual double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 

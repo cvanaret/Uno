@@ -165,6 +165,10 @@ namespace uno {
       InequalityHandlingMethod::compute_residuals(this->problem, iterate, evaluations);
    }
 
+   double NoInequalityReformulation::compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
+      return this->problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
+   }
+
    std::string NoInequalityReformulation::get_name() const {
       return this->name + " with " + this->hessian_model->name + " Hessian and " + this->inertia_correction_strategy->get_name()
          + " inertia correction";
