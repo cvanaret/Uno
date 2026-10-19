@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Configure example for ${{matrix.HSL_SOLVER}}
-        working-directory: ${{github.workspace}}/interfaces/Python/example
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
         run: |
           # load the HSL library dynamically
           sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/${{matrix.LIBHSL}}")' example_hs015.py
@@ -78,7 +78,7 @@ jobs:
           sed -i 's/MUMPS/${{matrix.HSL_SOLVER}}/' example_hs015.py
 
       - name: Run example
-        working-directory: ${{github.workspace}}/interfaces/Python/example
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |

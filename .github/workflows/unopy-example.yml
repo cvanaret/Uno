@@ -54,5 +54,5 @@ jobs:
         run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v -C cmake.define.UNO_PYBIND11_DETAILED_ERRORS=ON
 
       - name: Run example
-        working-directory: ${{github.workspace}}/interfaces/Python/example
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
         run: python example_hs015.py

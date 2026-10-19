@@ -83,15 +83,16 @@ if __name__ == '__main__':
 
 	# solver creation
 	uno_solver = unopy.UnoSolver()
-	uno_solver.set_preset("filtersqp")
-	uno_solver.set_option("QP_solver", "BQPD")
 	uno_solver.set_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback)
 	uno_solver.set_termination_callback(termination_callback)
 	print("Solving with Uno", unopy.current_uno_version())
 
 	# run 1: solve with the filtersqp preset with no exact Hessian. Uno defaults to L-BFGS Hessian for NLPs
+	uno_solver.set_preset("filtersqp")
+	uno_solver.set_option("QP_solver", "BQPD")
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
+	assert abs(result.solution_objective - 306.5) <= 1e-4
 	print("Objective at solution:", result.solution_objective)
 
 	# run 2: solve with the filtersqp preset with exact Hessian
