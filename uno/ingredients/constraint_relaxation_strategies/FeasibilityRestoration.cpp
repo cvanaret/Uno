@@ -327,6 +327,7 @@ namespace uno {
 
    void FeasibilityRestoration::refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Evaluations& current_evaluations) {
+      ++this->number_parameterization_updates;
       globalization_strategy.reset();
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
          const double proximal_coefficient = inequality_handling_method.proximal_coefficient();

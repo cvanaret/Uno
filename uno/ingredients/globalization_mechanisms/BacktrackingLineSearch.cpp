@@ -34,7 +34,9 @@ namespace uno {
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
          tiny_step_factor(options.get_double("barrier_small_direction_factor")),
          primal_tolerance(options.get_double("primal_tolerance")),
-         print_minor_iterations(options.get_bool("print_minor_iterations")) {
+         print_minor_iterations(options.get_bool("print_minor_iterations")),
+         watchdog_shortened_iterations_trigger(options.get_unsigned_int("LS_watchdog_shortened_iterations_trigger")),
+         watchdog_max_trial_iterations(options.get_unsigned_int("LS_watchdog_max_trial_iterations")) {
       if (this->backtracking_ratio <= 0. || this->backtracking_ratio >= 1.) {
          throw std::runtime_error("The LS backtracking ratio should be in (0, 1)");
       }
@@ -61,14 +63,28 @@ namespace uno {
             Inf, evaluation_cache.current_evaluations, warmstart_information);
          if (direction.status != SubproblemStatus::INFEASIBLE) {
             check_unboundedness(direction);
+            this->update_watchdog_state(current_iterate, direction, evaluation_cache.current_evaluations);
+            bool skip_first_trial = false;
+            if (this->in_watchdog) {
+               if (this->take_watchdog_step(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
+                     warmstart_information, user_callbacks)) {
+                  return;
+               }
+               // the watchdog failed: the current iterate was reverted to the watchdog iterate. Backtrack along the
+               // watchdog direction, skipping the full step (already rejected)
+               skip_first_trial = true;
+            }
+            const Direction& line_search_direction = skip_first_trial ? this->watchdog_direction : direction;
             const PredictedReductionModels predicted_reduction_models =
-               this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,
+               this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, line_search_direction,
                evaluation_cache.current_evaluations);
             const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
             const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
-               direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
-               user_callbacks);
+               line_search_direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
+               user_callbacks, skip_first_trial);
             if (backtracking_success) {
+               // count the consecutive shortened steps (watchdog trigger)
+               this->number_shortened_iterations = this->last_step_was_shortened ? this->number_shortened_iterations + 1 : 0;
                return;
             }
             // if backtracking failed, switch to the feasibility problem (below)
@@ -104,6 +120,7 @@ namespace uno {
       }
 
       // switch to solving the feasibility problem
+      this->stop_watchdog();
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
@@ -179,14 +196,16 @@ namespace uno {
    bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const PredictedReductionModels& predicted_reduction_models, double minimum_step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks, bool skip_first_trial) {
       // tiny direction: accept the full step without globalization test (Section 3.9 in IPOPT paper)
-      if (this->try_tiny_step(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
+      if (!skip_first_trial && this->try_tiny_step(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
             warmstart_information, user_callbacks)) {
+         this->last_step_was_shortened = false;
          return true;
       }
 
-      double step_length = 1.;
+      // skip the first trial step (e.g. after the watchdog failed, the full step has already been rejected)
+      double step_length = skip_first_trial ? this->backtracking_ratio : 1.;
       bool termination = false;
       size_t number_iterations = 0;
       DEBUG << "\nLine search: minimum step length set to " << minimum_step_length << '\n';
@@ -216,7 +235,8 @@ namespace uno {
                evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
 
             // try second-order corrections if the full step was rejected
-            if (!is_acceptable && number_iterations == 1 && this->constraint_relaxation_strategy->has_second_order_corrections() &&
+            if (!is_acceptable && number_iterations == 1 && !skip_first_trial &&
+                  this->constraint_relaxation_strategy->has_second_order_corrections() &&
                   this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
                assert(step_length == 1.);
                is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
@@ -231,6 +251,7 @@ namespace uno {
 
          if (is_acceptable) {
             termination = true;
+            this->last_step_was_shortened = (step_length < 1.);
             // statistics of the accepted iterate (possibly a second-order correction)
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
             set_dual_residuals_statistics(statistics, trial_iterate);
@@ -329,6 +350,114 @@ namespace uno {
          return false;
       }
       return true;
+   }
+
+   // watchdog bookkeeping, performed once the direction at the current iterate is known
+   void BacktrackingLineSearch::update_watchdog_state(const Iterate& current_iterate, const Direction& direction,
+         const Evaluations& current_evaluations) {
+      if (this->watchdog_shortened_iterations_trigger == 0) {
+         return;
+      }
+      // the watchdog is active in the optimality phase only
+      if (this->constraint_relaxation_strategy->solving_feasibility_problem()) {
+         this->stop_watchdog();
+         return;
+      }
+      // if the parameterization (e.g. the barrier parameter) changed, the reference values are meaningless (IPOPT)
+      const size_t number_parameterization_updates = this->constraint_relaxation_strategy->get_number_parameterization_updates();
+      if (number_parameterization_updates != this->last_number_parameterization_updates) {
+         this->last_number_parameterization_updates = number_parameterization_updates;
+         this->stop_watchdog();
+      }
+      // start the watchdog: store the reference iterate, its evaluations and its direction
+      if (!this->in_watchdog && this->watchdog_shortened_iterations_trigger <= this->number_shortened_iterations) {
+         DEBUG << "Starting the watchdog after " << this->number_shortened_iterations << " shortened steps\n";
+         this->in_watchdog = true;
+         this->watchdog_trial_iterations = 0;
+         this->watchdog_iterate = current_iterate;
+         this->watchdog_evaluations = current_evaluations;
+         this->watchdog_direction = direction;
+      }
+   }
+
+   // in the watchdog: try the full step. Returns true if a trial iterate was produced: either it is acceptable wrt the
+   // watchdog iterate (the watchdog succeeded) or it is accepted without globalization test (within the watchdog trial
+   // budget). Returns false if the watchdog failed: the current iterate is then reverted to the watchdog iterate
+   bool BacktrackingLineSearch::take_watchdog_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      assert(this->in_watchdog && this->watchdog_iterate.has_value() && this->watchdog_evaluations.has_value());
+      // a tiny step in the watchdog: go back to the watchdog iterate (IPOPT)
+      if (!this->is_tiny_direction(current_iterate, direction)) {
+         try {
+            // full step (the fraction-to-boundary rule is accounted for in the direction's step length)
+            assemble_trial_iterate(current_iterate, trial_iterate, direction, 1.);
+            evaluation_cache.trial_evaluations.reset();
+            statistics.set("Steplength", 1.);
+            statistics.set("||Step||", direction.primal_dual_step_length * direction.norm);
+            statistics.set("LS", 1);
+
+            // acceptance wrt the watchdog iterate: reference progress measures and predicted reductions (IPOPT)
+            const PredictedReductionModels reference_models =
+               this->constraint_relaxation_strategy->build_predicted_reduction_models(*this->watchdog_iterate,
+                  this->watchdog_direction, *this->watchdog_evaluations);
+            const double reference_step_length = this->watchdog_direction.primal_dual_step_length;
+            const ProgressMeasures reference_predicted_reductions = reference_models(reference_step_length,
+               /* use_curvature_information = */ false);
+            const bool is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model,
+               *this->watchdog_iterate, trial_iterate, this->watchdog_direction, reference_step_length, false,
+               *this->watchdog_evaluations, evaluation_cache.trial_evaluations, reference_predicted_reductions,
+               warmstart_information, user_callbacks);
+            bool trial_iterate_accepted = true;
+            if (is_acceptable) {
+               DEBUG << "Watchdog: the trial iterate is acceptable wrt the watchdog iterate\n";
+               this->stop_watchdog();
+               this->last_step_was_shortened = false;
+            }
+            else if (++this->watchdog_trial_iterations <= this->watchdog_max_trial_iterations) {
+               // accept the full step without globalization test (the filter is not augmented)
+               DEBUG << "Watchdog: accepting the full step unchecked (trial " << this->watchdog_trial_iterations << ")\n";
+               (void) this->constraint_relaxation_strategy->accept_tiny_step(statistics, model, current_iterate,
+                  trial_iterate, direction, direction.primal_dual_step_length, /* force_parameterization_update = */ false,
+                  evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information,
+                  user_callbacks);
+               statistics.set("Status", "watchdog");
+            }
+            else {
+               // the watchdog trial budget is exhausted: revert (below)
+               trial_iterate_accepted = false;
+            }
+            if (trial_iterate_accepted) {
+               set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+               set_dual_residuals_statistics(statistics, trial_iterate);
+               statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+               if (Logger::level == INFO) {
+                  statistics.print_current_line();
+               }
+               return true;
+            }
+         }
+         catch (const EvaluationError&) {
+            DEBUG << "Watchdog: an evaluation error occurred\n";
+         }
+      }
+      // the watchdog failed: revert to the watchdog iterate
+      DEBUG << "Watchdog failed: reverting to the watchdog iterate\n";
+      if (this->print_minor_iterations && Logger::level == INFO) {
+         statistics.set("Status", "watchdog failed");
+         statistics.print_current_line();
+         statistics.start_new_line();
+      }
+      current_iterate = *this->watchdog_iterate;
+      evaluation_cache.current_evaluations = *this->watchdog_evaluations;
+      this->stop_watchdog();
+      return false;
+   }
+
+   void BacktrackingLineSearch::stop_watchdog() {
+      this->in_watchdog = false;
+      this->watchdog_trial_iterations = 0;
+      this->number_shortened_iterations = 0;
    }
 
    bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,

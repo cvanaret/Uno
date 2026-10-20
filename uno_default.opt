@@ -242,6 +242,12 @@ LS_scale_duals_with_step_length true
 # Safety factor for the minimum step length (double)
 gamma_alpha 0.05
 
+# Number of consecutive shortened steps that triggers the watchdog, 0 disables it (integer)
+LS_watchdog_shortened_iterations_trigger 10
+
+# Maximum number of watchdog iterations in which the full step is accepted without globalization test (integer)
+LS_watchdog_max_trial_iterations 3
+
 # --------------------------------------
 ## Second-order correction (SOC) options
 # --------------------------------------

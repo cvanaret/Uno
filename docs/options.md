@@ -137,6 +137,8 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `LS_backtracking_ratio`           | double  | 0.5     | Decrease ratio of the step length for backtracking line search   |
 | `LS_scale_duals_with_step_length` | bool    | `true`  | Whether the Lagrange multipliers are scaled with the step length |
 | `gamma_alpha`                     | double  | 0.05    | Safety factor for the minimum step length                        |
+| `LS_watchdog_shortened_iterations_trigger` | integer | 10 | Number of consecutive shortened steps that triggers the watchdog (0 disables it) |
+| `LS_watchdog_max_trial_iterations` | integer | 3 | Maximum number of watchdog iterations in which the full step is accepted unchecked |
 
 ## Second-Order Corrections (SOC) options
 

@@ -115,6 +115,10 @@ namespace uno {
       options.set_bool("LS_scale_duals_with_step_length", true);
       // safety factor for the minimum step length
       options.set_double("gamma_alpha", 0.05);
+      // watchdog: number of consecutive shortened steps that triggers the watchdog (0 disables it)
+      options.set_integer("LS_watchdog_shortened_iterations_trigger", 10);
+      // watchdog: maximum number of iterations in which the full step is accepted without globalization test
+      options.set_integer("LS_watchdog_max_trial_iterations", 3);
 
       /** Second-Order Corrections (SOC) options */
       // maximum number of SOC iterations

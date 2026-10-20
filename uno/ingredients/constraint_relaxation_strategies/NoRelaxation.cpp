@@ -58,6 +58,7 @@ namespace uno {
          current_iterate, current_evaluations);
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (parameterization_updated) {
+         ++this->number_parameterization_updates;
          this->globalization_strategy.reset();
          this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
       }
@@ -132,6 +133,7 @@ namespace uno {
       const bool parameterization_updated = force_parameterization_update &&
          this->inequality_handling_method->force_parameterization_update(statistics);
       if (parameterization_updated) {
+         ++this->number_parameterization_updates;
          this->globalization_strategy.reset();
          this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       }
