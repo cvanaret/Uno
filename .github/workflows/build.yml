@@ -38,7 +38,7 @@ jobs:
           build_type: Debug
           shell: bash
 
-        - os: ubuntu-latest
+        - os: ubuntu-24.04
           toolchain: intel
           build_type: Debug
           shell: bash
