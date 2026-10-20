@@ -646,6 +646,10 @@ namespace uno {
       return this->variables_upper_bounds;
    }
 
+   const SparseVector<size_t>& PrimalDualInteriorPointProblem::get_slacks() const {
+      return this->slacks;
+   }
+
    void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate, Evaluations& /*evaluations*/) const {
       // 1. with tiny slacks (x - lb), x + alpha d may round onto (or past) a bound: relax the bound (the primals and
       // therefore the evaluations are unchanged)
