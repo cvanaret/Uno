@@ -113,6 +113,9 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `filter_sufficient_infeasibility_decrease_factor` | double  | 0.9     | Infeasibility decrease factor in the infeasibility sufficient decrease condition       |
 | `filter_reset_iteration_threshold`                | integer | 5       | Number of consecutive filter rejections before the filter is reset                     |
 | `max_number_filter_resets`                        | integer | 5       | Maximum number of filter resets                                                        |
+| `filter_ubd_raise_trigger`                        | integer | 0       | Line searches limited by the infeasibility upper bound before it is raised (0: off) |
+| `filter_ubd_raise_factor`                         | double  | 100     | Factor by which the infeasibility upper bound is raised                                |
+| `filter_ubd_max_raises`                           | integer | 4       | Maximum number of raises of the infeasibility upper bound                              |
 | `filter_margin_uses_entry_infeasibility`          | bool    | false   | Whether the filter condition on the objective uses the entry (true) or the iterate (false) infeasibility |                                                        |
 
 ## Funnel method options

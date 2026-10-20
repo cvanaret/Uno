@@ -46,6 +46,10 @@ namespace uno {
       this->initial_infeasibility_upper_bound = new_upper_bound;
    }
 
+   double Filter::get_infeasibility_upper_bound() const {
+      return this->infeasibility_upper_bound;
+   }
+
    bool Filter::acceptable_wrt_infeasibility_upper_bound(double trial_infeasibility) const {
       return this->infeasibility_sufficient_reduction(this->infeasibility_upper_bound, trial_infeasibility);
    }

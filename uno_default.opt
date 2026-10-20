@@ -192,6 +192,15 @@ filter_reset_iteration_threshold 5
 # Maximum number of filter resets (integer)
 max_number_filter_resets 5
 
+# Number of consecutive line searches limited by the infeasibility upper bound before the bound is raised, 0 to disable (integer)
+filter_ubd_raise_trigger 0
+
+# Factor by which the infeasibility upper bound is raised (double)
+filter_ubd_raise_factor 100
+
+# Maximum number of raises of the infeasibility upper bound (integer)
+filter_ubd_max_raises 4
+
 # Whether the filter condition on the objective uses the entry (true) or the iterate (false) infeasibility (bool)
 filter_margin_uses_entry_infeasibility false
 
