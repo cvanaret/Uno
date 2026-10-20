@@ -5,7 +5,7 @@
 #define UNO_HIGHSSOLVER_H
 
 #include <memory>
-#include <Highs.h>
+#include <interfaces/highs_c_api.h>
 #include "../QPSolver.hpp"
 
 namespace uno {
@@ -31,7 +31,7 @@ namespace uno {
    protected:
       // HiGHS-native quadratic program (built by IQPSolver before each solve)
       std::unique_ptr<HiGHSQuadraticProgram> quadratic_program{};
-      Highs highs_solver;
+      void* highs_solver{nullptr}; // opaque HiGHS handle (Highs_create / Highs_destroy)
 
       const bool print_subproblem;
 
