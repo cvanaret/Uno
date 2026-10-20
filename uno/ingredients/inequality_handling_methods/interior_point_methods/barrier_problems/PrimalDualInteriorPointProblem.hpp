@@ -80,6 +80,8 @@ namespace uno {
       [[nodiscard]] size_t get_number_bound_relaxations() const;
       [[nodiscard]] const std::vector<double>& get_internal_variables_lower_bounds() const;
       [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;
+      // (constraint index, slack index) of the slacked inequality constraints
+      [[nodiscard]] const SparseVector<size_t>& get_slacks() const;
 
       // the constraint violation of the unslacked problem and the residuals c(x) - s of the slacked constraints
       [[nodiscard]] double primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
