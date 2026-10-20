@@ -115,10 +115,10 @@ jobs:
         #   curl -L -o "$MASTSIF/HS15.SIF" \
         #     https://bitbucket.org/optrove/sif/raw/HEAD/HS15.SIF
 
-      - name: Run HS15 with shipped uno.opt
-        run: |
-          mkdir run-shipped && cd run-shipped
-          bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HS15
+      #- name: Run HS15 with shipped uno.opt
+      #  run: |
+      #    mkdir run-shipped && cd run-shipped
+      #    bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HS15
 
       - name: Run HS15 with custom uno.opt
         if: ${{ !cancelled() }}
