@@ -81,6 +81,9 @@ namespace uno {
       [[nodiscard]] size_t get_number_subproblems_solved() const;
       // whether the last iterate tested for termination satisfies the acceptable conditions
       [[nodiscard]] bool is_last_iterate_acceptable() const { return this->last_iterate_acceptable; }
+      // number of updates of the parameterization (e.g. the barrier parameter) so far. Lets the globalization mechanism
+      // detect that the problem definition changed (e.g. to reset the watchdog, as IPOPT does when mu changes)
+      [[nodiscard]] size_t get_number_parameterization_updates() const { return this->number_parameterization_updates; }
 
    protected:
       const Norm residual_norm;
@@ -89,6 +92,7 @@ namespace uno {
       const double diverging_iterate_threshold;
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
+      size_t number_parameterization_updates{0};
 
       // tight unscaled tolerances
       const double tight_unscaled_stationarity_tolerance;
