@@ -46,6 +46,8 @@ namespace uno {
             return "unbounded subproblem";
          case SubproblemStatus::INFEASIBLE:
             return "infeasible subproblem";
+         case SubproblemStatus::ERROR:
+            return "subproblem solver error";
          default:
             return "unknown status, something went wrong";
       }
