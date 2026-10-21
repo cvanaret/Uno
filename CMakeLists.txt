@@ -224,7 +224,8 @@ if(HIGHS)
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp)
    if(ENABLE_TESTS)
-      target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp
+         unotest/functional_tests/HiGHSSQPTests.cpp)
    endif()
 
    message(STATUS "Found HIGHS")
