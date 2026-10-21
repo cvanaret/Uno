@@ -3,8 +3,6 @@
 
 #include <stdexcept>
 #include "BoxLPSolver.hpp"
-
-#include "IQPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
