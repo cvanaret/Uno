@@ -138,3 +138,33 @@ TEST(HiGHSSolver, StallingQPSolveReturns) {
    EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
 #endif
 }
+
+// Bug: HiGHS' QP solver may return a primal solution that is inconsistent with its basis: below (a QP subproblem of the
+// bound-constrained Rosenbrock problem near the solution), d0 is reported nonbasic at its upper bound 1.19e-5, with a
+// nonzero bound multiplier, but its value is 0. Uno used the values as is: the SQP iterates never reached the active
+// bound, the complementarity residual stalled at 1.2e-5 and Uno made null steps until the iteration limit.
+TEST(HiGHSSolver, NonbasicVariablesLieOnTheirActiveBound) {
+   Options options;
+   options.set_bool("print_subproblem", false);
+   HiGHSSolver solver(options);
+   const double upper_bound = 1.19048176042136e-05;
+   const Vector<double> linear_objective{-1.00002380963521, 5.55111512312578e-15};
+   const Vector<uno_int> jacobian_row_indices{};
+   const Vector<uno_int> jacobian_column_indices{};
+   const Vector<double> jacobian_values{};
+   const Vector<uno_int> hessian_row_indices{0, 1, 1};
+   const Vector<uno_int> hessian_column_indices{0, 0, 1};
+   const Vector<double> hessian_values{201.990476259296, -199.9952380729585, 200.};
+   solver.get_quadratic_program().fill(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,
+      hessian_row_indices, hessian_column_indices, hessian_values, {-0.316712890936696, -0.316712890936696},
+      {upper_bound, 0.316712890936696}, {}, {});
+   Direction direction(2, 0);
+   const WarmstartInformation warmstart_information{};
+   Statistics statistics;
+   solver.solve(statistics, Vector<double>(2), direction, warmstart_information);
+   ASSERT_EQ(direction.status, SubproblemStatus::OPTIMAL);
+
+   // the upper bound of d0 is active (the unconstrained minimizer is d0 = 0.5): complementarity must hold
+   EXPECT_NEAR(direction.multipliers.upper_bounds[0], -1., 1e-3);
+   EXPECT_DOUBLE_EQ(direction.primals[0], upper_bound);
+}

@@ -1,12 +1,14 @@
 // Copyright (c) 2024-2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <stdexcept>
 #include "HiGHSSolver.hpp"
 #include "HiGHSQuadraticProgram.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "options/Options.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -95,9 +97,25 @@ namespace uno {
 
       direction.status = SubproblemStatus::OPTIMAL;
       const HighsSolution& solution = this->highs_solver.getSolution();
+      const HighsBasis& basis = this->highs_solver.getBasis();
+      const auto& variables_lower_bounds = this->quadratic_program->model.lp_.col_lower_;
+      const auto& variables_upper_bounds = this->quadratic_program->model.lp_.col_upper_;
       // read the primal solution and bound dual solution
       for (size_t variable_index = 0; variable_index < this->quadratic_program->number_variables; variable_index++) {
-         direction.primals[variable_index] = solution.col_value[variable_index];
+         // HiGHS' QP solver may report a nonbasic variable at a bound with a value off that bound: place the nonbasic
+         // variables on their active bound (consistently with the bound multipliers), and project onto the bounds
+         double primal_value = solution.col_value[variable_index];
+         if (basis.valid) {
+            const HighsBasisStatus variable_status = basis.col_status[variable_index];
+            if (variable_status == HighsBasisStatus::kLower && is_finite(variables_lower_bounds[variable_index])) {
+               primal_value = variables_lower_bounds[variable_index];
+            }
+            else if (variable_status == HighsBasisStatus::kUpper && is_finite(variables_upper_bounds[variable_index])) {
+               primal_value = variables_upper_bounds[variable_index];
+            }
+         }
+         direction.primals[variable_index] = std::min(std::max(primal_value, variables_lower_bounds[variable_index]),
+            variables_upper_bounds[variable_index]);
          const double bound_multiplier = solution.col_dual[variable_index];
          if (0. < bound_multiplier) {
             direction.multipliers.lower_bounds[variable_index] = bound_multiplier;
