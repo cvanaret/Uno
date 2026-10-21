@@ -208,7 +208,8 @@ if(BQPD)
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
            uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
    if(ENABLE_TESTS)
-      target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp
+         unotest/functional_tests/BQPDQuadraticProgramTests.cpp)
    endif()
 endif()
 

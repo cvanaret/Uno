@@ -210,15 +210,8 @@ namespace uno {
 
    double BQPDQuadraticProgram::compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
          const Vector<double>& vector) const {
-      if (subproblem.has_hessian_operator()) { // linear operator
-         // TODO compute the quadratic form directly without temporary result
-         // compute Hv
-         subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.view(), vector.view(),
-            this->hessian_vector_product.view());
-         // compute the dot product <v, Hv>
-         return dot(view(vector, 0, subproblem.number_variables), this->hessian_vector_product);
-      }
-      else if (subproblem.has_hessian_matrix()) { // explicit matrix
+      // use the same Hessian representation as the QP that was solved (selected in fill())
+      if (this->use_explicit_hessian) { // explicit (possibly regularized) matrix
          double quadratic_product = 0.;
          const size_t number_hessian_nonzeros = this->hessian_values.size();
          for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -233,6 +226,14 @@ namespace uno {
             quadratic_product += factor * entry * vector[row_index] * vector[column_index];
          }
          return quadratic_product;
+      }
+      else if (subproblem.has_hessian_operator()) { // linear operator
+         // TODO compute the quadratic form directly without temporary result
+         // compute Hv
+         subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.view(), vector.view(),
+            this->hessian_vector_product.view());
+         // compute the dot product <v, Hv>
+         return dot(view(vector, 0, subproblem.number_variables), this->hessian_vector_product);
       }
       else {
          throw std::runtime_error("The Lagrangian Hessian has no appropriate representation");
