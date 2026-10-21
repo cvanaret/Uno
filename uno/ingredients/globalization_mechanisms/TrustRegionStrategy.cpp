@@ -38,6 +38,9 @@ namespace uno {
       if (this->decrease_factor <= 1.) {
          throw std::runtime_error("The trust-region decrease factor should be > 1");
       }
+      if (this->aggressive_decrease_factor <= 1.) {
+         throw std::runtime_error("The trust-region aggressive decrease factor should be > 1");
+      }
    }
 
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
