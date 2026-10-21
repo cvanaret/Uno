@@ -103,9 +103,9 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
    unotest/functional_tests/InterruptTests.cpp
+   unotest/functional_tests/NewtonSystemTests.cpp
    unotest/functional_tests/PostprocessingEvaluationsTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
-   unotest/functional_tests/NewtonSystemTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
@@ -208,7 +208,9 @@ if(BQPD)
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
            uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
    if(ENABLE_TESTS)
-      target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp
+         unotest/functional_tests/BQPDQuadraticProgramTests.cpp
+         unotest/functional_tests/SQPPathTests.cpp)
    endif()
 endif()
 
@@ -224,7 +226,8 @@ if(HIGHS)
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp)
    if(ENABLE_TESTS)
-      target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp
+         unotest/functional_tests/HiGHSSQPTests.cpp)
    endif()
 
    message(STATUS "Found HIGHS")

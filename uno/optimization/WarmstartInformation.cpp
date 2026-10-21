@@ -21,12 +21,12 @@ namespace uno {
       this->jacobian_sparsity_changed = false;
    }
 
+   // a new iterate does not change the structure of the problem. A pending structural change (e.g. requested by
+   // whole_problem_changed()) is kept until a subproblem has been solved (see no_changes())
    void WarmstartInformation::iterate_changed() {
       this->new_iterate = true;
       this->constraint_bounds_changed = true;
       this->trust_region_changed = true;
-      this->hessian_sparsity_changed = false;
-      this->jacobian_sparsity_changed = false;
    }
 
    void WarmstartInformation::whole_problem_changed() {

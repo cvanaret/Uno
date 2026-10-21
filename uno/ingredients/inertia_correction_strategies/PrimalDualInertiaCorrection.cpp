@@ -31,24 +31,60 @@ namespace uno {
       statistics.add_column("Dual reg", Statistics::double_width + 1, 2, /* is_extended = */ true);
    }
 
+   // regularization of the Hessian only (e.g. for inequality-constrained QP subproblems): there is no dual block, only
+   // the primal regularization is computed
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
          const Inertia& expected_inertia, View<double> hessian_values) {
-      // pick the member linear solver
+      // pick the member linear solver (system with the regularized Hessian only)
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
-         this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
-      this->regularize_hessian(statistics, subproblem, expected_inertia, *this->optional_linear_solver, hessian_values);
+      // copy the Hessian into the linear system
+      double* matrix = this->optional_linear_solver->get_linear_system().matrix_values.data();
+      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
+         matrix[nonzero_index] = hessian_values[nonzero_index];
+      }
+      // the regularization terms follow the Hessian terms in the linear system
+      const size_t number_regularization_nonzeros = subproblem.number_primal_inertia_correction_nonzeros();
+      View<double> primal_regularization_values(matrix + number_hessian_nonzeros, number_regularization_nonzeros);
+      this->regularize_hessian(statistics, subproblem, expected_inertia, *this->optional_linear_solver, primal_regularization_values);
+      // copy the regularization terms back into the Hessian
+      for (size_t index: Range(number_regularization_nonzeros)) {
+         hessian_values[number_hessian_nonzeros + index] = primal_regularization_values[index];
+      }
    }
 
-   void PrimalDualInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-         const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         View<double> /*primal_regularization_values*/) {
-      // to regularize the Hessian only, call the function for the augmented matrix with no dual part
-      // TODO fix
-      throw std::runtime_error("PrimalDualInertiaCorrection::regularize_hessian not implemented yet");
+   void PrimalDualInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         View<double> primal_regularization_values) {
+      this->primal_regularization = 0.;
+      this->dual_regularization = 0.;
+      size_t number_attempts = 0;
+
+      while (true) {
+         primal_regularization_values.fill(this->primal_regularization);
+         DEBUG << "Testing factorization with primal regularization factor " << this->primal_regularization << '\n';
+         linear_solver.do_numerical_factorization(subproblem.is_hessian_positive_definite());
+         ++number_attempts;
+         const Inertia estimated_inertia = linear_solver.get_inertia();
+         DEBUG << "Expected inertia  " << expected_inertia << '\n';
+         DEBUG << "Estimated inertia " << estimated_inertia << '\n';
+
+         if (estimated_inertia == expected_inertia) {
+            DEBUG << "The inertia is correct\n";
+            if (0. < this->primal_regularization) {
+               this->previous_primal_regularization = this->primal_regularization;
+            }
+            statistics.set("Prim reg", this->primal_regularization);
+            statistics.set("Dual reg", this->dual_regularization);
+            return;
+         }
+         this->increase_primal_regularization(number_attempts);
+      }
    }
 
    // the augmented matrix has been factorized prior to calling this function
@@ -116,21 +152,26 @@ namespace uno {
          // missing positive eigenvalues, or dual regularization is unavailable/exhausted -> increase the primal regularization
          const bool missing_positive = estimated_inertia.positive < expected_inertia.positive;
          if (missing_positive || !dual_regularization_added) {
-            if (this->primal_regularization == 0.) {
-               this->primal_regularization = (this->previous_primal_regularization == 0.) ? this->primal_regularization_initial_factor :
-                  std::max(this->primal_regularization_lb, this->previous_primal_regularization / this->primal_regularization_decrease_factor);
-            }
-            else if (this->previous_primal_regularization == 0. || this->threshold_unsuccessful_attempts < number_attempts) {
-               this->primal_regularization *= this->primal_regularization_fast_increase_factor;
-            }
-            else {
-               this->primal_regularization *= this->primal_regularization_slow_increase_factor;
-            }
-            if (this->regularization_failure_threshold < this->primal_regularization) {
-               DEBUG << "The inertia correction failed\n";
-               throw UnstableInertiaCorrection();
-            }
+            this->increase_primal_regularization(number_attempts);
          }
+      }
+   }
+
+   // IPOPT-like update of the primal regularization after an unsuccessful factorization
+   void PrimalDualInertiaCorrection::increase_primal_regularization(size_t number_attempts) {
+      if (this->primal_regularization == 0.) {
+         this->primal_regularization = (this->previous_primal_regularization == 0.) ? this->primal_regularization_initial_factor :
+            std::max(this->primal_regularization_lb, this->previous_primal_regularization / this->primal_regularization_decrease_factor);
+      }
+      else if (this->previous_primal_regularization == 0. || this->threshold_unsuccessful_attempts < number_attempts) {
+         this->primal_regularization *= this->primal_regularization_fast_increase_factor;
+      }
+      else {
+         this->primal_regularization *= this->primal_regularization_slow_increase_factor;
+      }
+      if (this->regularization_failure_threshold < this->primal_regularization) {
+         DEBUG << "The inertia correction failed\n";
+         throw UnstableInertiaCorrection();
       }
    }
 

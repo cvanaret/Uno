@@ -27,7 +27,7 @@ namespace uno {
             elastic_index++;
          }
          if (is_finite(constraints_lower_bounds[constraint_index])) {
-            // nonpositive variable n that captures the negative part of the constraint violation
+            // nonnegative variable n that captures the negative part of the constraint violation
             elastic_variables.negative.insert(constraint_index, elastic_index);
             elastic_index++;
          }

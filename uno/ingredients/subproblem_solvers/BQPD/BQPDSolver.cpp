@@ -117,8 +117,8 @@ namespace uno {
    }
 
    size_t BQPDSolver::compute_mxlws() const {
-      // 1 pointer hidden in lws (the quadratic program)
-      constexpr size_t hidden_pointers_size = 1 * sizeof(std::intptr_t);
+      // 1 pointer hidden in lws (the quadratic program), counted in entries of lws (int)
+      constexpr size_t hidden_pointers_size = 1 * hidden_pointer_size_in_lws;
       return hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
          9 * this->quadratic_program->number_variables + this->quadratic_program->number_constraints /* (required by sparseL.f) */;
    }
@@ -145,7 +145,7 @@ namespace uno {
 
       // hide a pointer to the quadratic program so that the gdotx callback can compute Hessian-vector products
       hide_pointer(0, this->lws.data(), *this->quadratic_program);
-      WSC.ll += sizeof(std::intptr_t);
+      WSC.ll += static_cast<int>(hidden_pointer_size_in_lws);
 
       if (this->print_subproblem) {
          this->display_subproblem(initial_point);

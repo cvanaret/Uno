@@ -179,10 +179,11 @@ namespace uno {
          subproblem.problem.evaluate_objective_gradient(current_iterate, view(this->model.lp_.col_cost_), current_evaluations);
          subproblem.problem.evaluate_constraints(current_iterate, this->constraints.view(), current_evaluations);
          this->evaluate_jacobian(subproblem.problem, current_iterate.primals, current_evaluations);
-         // evaluate the Hessian and regularize it
+         // evaluate the Hessian and regularize it. The regularization operates on the COO layout (Hessian values followed
+         // by the regularization slots): it must be performed before the values are permuted into HiGHS' CSC layout
          subproblem.evaluate_lagrangian_hessian(statistics, current_iterate, this->hessian_values.view());
+         subproblem.regularize_lagrangian_hessian(statistics, this->hessian_values.view());
          this->scatter_hessian_values(); // copy the Hessian with permutation into this->model.hessian_.value_
-         subproblem.regularize_lagrangian_hessian(statistics, view(this->model.hessian_.value_));
       }
    }
 

@@ -50,6 +50,8 @@ namespace uno {
       const double primal_regularization_slow_increase_factor;
       const size_t threshold_unsuccessful_attempts;
       const bool regularize_all_variables;
+
+      void increase_primal_regularization(size_t number_attempts);
    };
 } // namespace
 

@@ -1,12 +1,14 @@
 // Copyright (c) 2024-2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <stdexcept>
 #include "HiGHSSolver.hpp"
 #include "HiGHSQuadraticProgram.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "options/Options.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -61,6 +63,12 @@ namespace uno {
          throw std::runtime_error("HiGHS could not read the model.");
       }
 
+      // safeguard: HiGHS' active-set QP solver may stall on convex QPs with a semidefinite Hessian (e.g. the l1 feasibility
+      // subproblems, without curvature in the elastic variables). Bound the number of QP iterations generously, so that
+      // the solve fails (SubproblemStatus::ERROR) instead of never returning
+      const size_t dimension = this->quadratic_program->number_variables + this->quadratic_program->number_constraints;
+      this->highs_solver.setOptionValue("qp_iteration_limit", static_cast<HighsInt>(1000 + 10 * dimension));
+
       DEBUG2 << "Running HiGHS\n";
       return_status = this->highs_solver.run(); // solve
       DEBUG2 << "Ran HiGHS\n";
@@ -89,9 +97,25 @@ namespace uno {
 
       direction.status = SubproblemStatus::OPTIMAL;
       const HighsSolution& solution = this->highs_solver.getSolution();
+      const HighsBasis& basis = this->highs_solver.getBasis();
+      const auto& variables_lower_bounds = this->quadratic_program->model.lp_.col_lower_;
+      const auto& variables_upper_bounds = this->quadratic_program->model.lp_.col_upper_;
       // read the primal solution and bound dual solution
       for (size_t variable_index = 0; variable_index < this->quadratic_program->number_variables; variable_index++) {
-         direction.primals[variable_index] = solution.col_value[variable_index];
+         // HiGHS' QP solver may report a nonbasic variable at a bound with a value off that bound: place the nonbasic
+         // variables on their active bound (consistently with the bound multipliers), and project onto the bounds
+         double primal_value = solution.col_value[variable_index];
+         if (basis.valid) {
+            const HighsBasisStatus variable_status = basis.col_status[variable_index];
+            if (variable_status == HighsBasisStatus::kLower && is_finite(variables_lower_bounds[variable_index])) {
+               primal_value = variables_lower_bounds[variable_index];
+            }
+            else if (variable_status == HighsBasisStatus::kUpper && is_finite(variables_upper_bounds[variable_index])) {
+               primal_value = variables_upper_bounds[variable_index];
+            }
+         }
+         direction.primals[variable_index] = std::min(std::max(primal_value, variables_lower_bounds[variable_index]),
+            variables_upper_bounds[variable_index]);
          const double bound_multiplier = solution.col_dual[variable_index];
          if (0. < bound_multiplier) {
             direction.multipliers.lower_bounds[variable_index] = bound_multiplier;
