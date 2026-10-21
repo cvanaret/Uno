@@ -106,7 +106,6 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/NewtonSystemTests.cpp
    unotest/functional_tests/PostprocessingEvaluationsTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
-   unotest/functional_tests/SQPPathTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
@@ -210,7 +209,8 @@ if(BQPD)
            uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp
-         unotest/functional_tests/BQPDQuadraticProgramTests.cpp)
+         unotest/functional_tests/BQPDQuadraticProgramTests.cpp
+         unotest/functional_tests/SQPPathTests.cpp)
    endif()
 endif()
 
