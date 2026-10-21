@@ -333,7 +333,6 @@ namespace uno {
          const double proximal_coefficient = inequality_handling_method.proximal_coefficient();
          this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
          DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
-         this->feasibility_problem.set_proximal_center(current_iterate.primals.view()); // or keep x_R (option)
       }
       // after the proximal update: the auxiliary measure must use the new coefficient and center
       inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO only auxiliary
