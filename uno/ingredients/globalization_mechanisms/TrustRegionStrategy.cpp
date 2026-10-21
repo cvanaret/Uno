@@ -120,13 +120,18 @@ namespace uno {
                   set_dual_residuals_statistics(statistics, trial_iterate);
                   termination = true;
                }
-               else if (this->radius < this->minimum_radius) { // rejected, but small radius
-                  is_acceptable = this->check_termination_with_small_step(trial_iterate);
-                  termination = true;
-               }
-               if (!is_acceptable) {
+               else {
                   this->decrease_radius(direction.norm);
                   warmstart_information.trust_region_changed = true;
+                  // rejected step and small radius: try to terminate with a small step. The residuals of the rejected
+                  // trial iterate were not computed: test (and terminate at) the current iterate instead, from which the
+                  // trial iterate differs by a tiny step
+                  if (this->radius < this->minimum_radius && this->check_termination_with_small_step(current_iterate)) {
+                     trial_iterate = current_iterate;
+                     evaluation_cache.trial_evaluations = evaluation_cache.current_evaluations;
+                     is_acceptable = true;
+                     termination = true;
+                  }
                }
             }
          }
@@ -190,15 +195,16 @@ namespace uno {
          predicted_reductions, warmstart_information, user_callbacks);
    }
 
-   // check whether a rejected step with very small norm can be tolerated
-   bool TrustRegionStrategy::check_termination_with_small_step(Iterate& trial_iterate) const {
+   // check whether the algorithm can terminate at an iterate (with computed residuals) after a rejected step with very
+   // small norm
+   bool TrustRegionStrategy::check_termination_with_small_step(Iterate& iterate) const {
       // terminate with a feasible point
-      if (trial_iterate.scaled_residuals.primal_infeasibility <= this->primal_tolerance) {
-         trial_iterate.status = SolutionStatus::FEASIBLE_SMALL_STEP;
+      if (iterate.scaled_residuals.primal_infeasibility <= this->primal_tolerance) {
+         iterate.status = SolutionStatus::FEASIBLE_SMALL_STEP;
          return true;
       }
-      else if (trial_iterate.objective_multiplier == 0.) { // terminate with an infeasible point
-         trial_iterate.status = SolutionStatus::INFEASIBLE_SMALL_STEP;
+      else if (this->constraint_relaxation_strategy->solving_feasibility_problem()) { // terminate with an infeasible point
+         iterate.status = SolutionStatus::INFEASIBLE_SMALL_STEP;
          return true;
       }
       else { // do not terminate, infeasible non stationary

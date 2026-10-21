@@ -109,3 +109,36 @@ TEST(SQPPath, LineSearchRejectsInfeasibleRestorationSubproblem) {
       EXPECT_EQ(result.constraint_dual_solution[constraint_index], 0.);
    }
 }
+
+// Bug: the small-step termination of the trust-region method was unreachable. The test "radius < TR_min_radius" was
+// performed *before* the radius was decreased after a rejected step, and the decrease was immediately followed by
+// "throw Small radius": Uno aborted with an algorithmic error even at a feasible point. Moreover, the termination test
+// read the residuals of the *rejected* trial iterate, which are never computed (stale residuals of the Iterate object,
+// i.e. those of the iterate preceding the current one).
+// Uno should terminate with a feasible small step at x = 5. A large
+// TR_min_radius triggers the small-radius logic deterministically at the second iteration:
+// - iteration 1: the LP step to x = 10 is rejected (Armijo), the step to x = 5 is accepted
+// - iteration 2: the step to x = 1 is rejected (no decrease) and the radius becomes 2 < TR_min_radius = 3
+TEST(SQPPath, TrustRegionSmallStepTerminationUsesComputedResiduals) {
+   // min (x - 3)^2  s.t.  x >= 1, from x = 0
+   const DenseTestModel model("small_radius", 1, 1, ProblemType::NONLINEAR,
+      [](const Vector<double>& x) { return (x[0] - 3.)*(x[0] - 3.); },
+      [](const Vector<double>& x, Vector<double>& g) { g[0] = 2.*(x[0] - 3.); },
+      [](const Vector<double>& x, Vector<double>& c) { c[0] = x[0]; },
+      [](const Vector<double>&, double* J) { J[0] = 1.; },
+      [](const Vector<double>&, double rho, const Vector<double>&, double* H) { H[0] = 2.*rho; },
+      {-Inf}, {Inf}, {1.}, {Inf}, {0.});
+   Options options = sqp_options("filterslp", "TR");
+   options.set_double("TR_radius", 10.);
+   options.set_double("TR_min_radius", 3.);
+
+   Uno uno;
+   const Result result = uno.solve(model, options);
+   ASSERT_EQ(result.optimization_status, OptimizationStatus::SUCCESS);
+   EXPECT_EQ(result.solution_status, SolutionStatus::FEASIBLE_SMALL_STEP);
+   EXPECT_EQ(result.number_iterations, 2);
+   // the reported point is the last accepted iterate, and its reported residuals are its own
+   EXPECT_DOUBLE_EQ(result.primal_solution[0], 5.);
+   EXPECT_DOUBLE_EQ(result.solution_objective, 4.);
+   EXPECT_DOUBLE_EQ(result.solution_primal_feasibility, 0.);
+}
