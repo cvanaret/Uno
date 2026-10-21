@@ -118,11 +118,10 @@ namespace uno {
       // unregularized Hessian-vector product
       this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, current_iterate.multipliers, result);
 
-      // contribution of the regularization strategy
+      // contribution of the regularization strategy (same variables as the explicit regularized Hessian)
       const double regularization_factor = this->inertia_correction_strategy.get_primal_regularization_factor();
       if (0. < regularization_factor) {
-         // for (size_t variable_index: this->get_primal_regularization_variables()) { // TODO
-         for (size_t variable_index: Range(this->number_variables)) { // loop over all the variables for now
+         for (size_t variable_index: this->get_primal_regularization_variables()) {
             result[variable_index] += regularization_factor*vector[variable_index];
          }
       }

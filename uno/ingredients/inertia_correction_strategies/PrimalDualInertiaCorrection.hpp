@@ -40,6 +40,8 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
+      const Options& options;
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double primal_regularization{0.};
       double dual_regularization{0.};
       double previous_primal_regularization{0.};
@@ -56,6 +58,7 @@ namespace uno {
       void factorize_with_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular);
+      void increase_primal_regularization(size_t number_attempts);
    };
 } // namespace
 

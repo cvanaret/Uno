@@ -40,7 +40,7 @@ namespace uno {
       void decrease_radius_aggressively();
       void reset_radius();
       void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-      [[nodiscard]] bool check_termination_with_small_step(Iterate& trial_iterate) const;
+      [[nodiscard]] bool check_termination_with_small_step(Iterate& iterate) const;
       void set_TR_statistics(Statistics& statistics, size_t number_iterations) const;
    };
 } // namespace

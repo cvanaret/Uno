@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include "GlobalizationStrategy.hpp"
 #include "options/Options.hpp"
 
@@ -23,5 +25,15 @@ namespace uno {
 
    bool GlobalizationStrategy::armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const {
       return (actual_reduction >= this->armijo_decrease_fraction * std::max(0., predicted_reduction - this->armijo_tolerance));
+   }
+
+   // actual reduction of a progress measure, possibly protected against roundoff errors
+   double GlobalizationStrategy::compute_actual_reduction(double current_measure, double trial_measure) const {
+      double actual_reduction = current_measure - trial_measure;
+      if (this->protect_actual_reduction_against_roundoff) {
+         constexpr double machine_epsilon = std::numeric_limits<double>::epsilon();
+         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_measure);
+      }
+      return actual_reduction;
    }
 } // namespace

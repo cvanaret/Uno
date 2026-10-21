@@ -30,7 +30,7 @@ namespace uno {
       // compute current exact penalty
       const double current_merit_value = MeritFunction::constrained_merit_function(current_progress, objective_multiplier);
       const double trial_merit_value = MeritFunction::constrained_merit_function(trial_progress, objective_multiplier);
-      const double actual_reduction = this->compute_merit_actual_reduction(current_merit_value, trial_merit_value);
+      const double actual_reduction = this->compute_actual_reduction(current_merit_value, trial_merit_value);
       DEBUG << "Current merit: " << current_merit_value << '\n';
       DEBUG << "Trial merit:   " << trial_merit_value << '\n';
       DEBUG << "Actual reduction: " << current_merit_value << " - " << trial_merit_value << " = " << actual_reduction << '\n';
@@ -68,14 +68,5 @@ namespace uno {
 
    double MeritFunction::constrained_merit_function(const ProgressMeasures& progress, double objective_multiplier) {
       return progress.objective(objective_multiplier) + progress.auxiliary + progress.infeasibility;
-   }
-
-   double MeritFunction::compute_merit_actual_reduction(double current_merit_value, double trial_merit_value) const {
-      double actual_reduction = current_merit_value - trial_merit_value;
-      if (this->protect_actual_reduction_against_roundoff) {
-         static double machine_epsilon = std::numeric_limits<double>::epsilon();
-         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_merit_value);
-      }
-      return actual_reduction;
    }
 } // namespace

@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 # define the project
-project(Uno VERSION 2.9.1
+project(Uno VERSION 2.9.2
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -100,16 +100,16 @@ target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
 
 file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/unotest.cpp
+   unotest/functional_tests/BarrierProblemTests.cpp
    unotest/functional_tests/BLASTests.cpp
-   unotest/functional_tests/LAPACKTests.cpp
+   unotest/functional_tests/BoundRelaxationTests.cpp
    unotest/functional_tests/InterruptTests.cpp
-   unotest/functional_tests/PostprocessingEvaluationsTests.cpp
-   unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
-   unotest/functional_tests/NewtonSystemTests.cpp
    # parameterized over the available linear solvers (no test instantiated if none is available)
    unotest/functional_tests/IterativeRefinementTests.cpp
-   unotest/functional_tests/BoundRelaxationTests.cpp
-   unotest/functional_tests/BarrierProblemTests.cpp
+   unotest/functional_tests/LAPACKTests.cpp
+   unotest/functional_tests/NewtonSystemTests.cpp
+   unotest/functional_tests/PostprocessingEvaluationsTests.cpp
+   unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
@@ -212,7 +212,9 @@ if(BQPD)
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
            uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
    if(ENABLE_TESTS)
-      target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp
+         unotest/functional_tests/BQPDQuadraticProgramTests.cpp
+         unotest/functional_tests/SQPPathTests.cpp)
    endif()
 endif()
 
@@ -228,7 +230,8 @@ if(HIGHS)
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp)
    if(ENABLE_TESTS)
-      target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp
+         unotest/functional_tests/HiGHSSQPTests.cpp)
    endif()
 
    message(STATUS "Found HIGHS")

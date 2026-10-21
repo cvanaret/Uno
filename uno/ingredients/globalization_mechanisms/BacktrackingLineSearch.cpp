@@ -61,7 +61,17 @@ namespace uno {
       try {
          const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
             Inf, evaluation_cache.current_evaluations, warmstart_information);
-         if (direction.status != SubproblemStatus::INFEASIBLE) {
+         if (direction.status == SubproblemStatus::INFEASIBLE) {
+            statistics.set("Status", std::string("infeasible"));
+            DEBUG << "/!\\ The subproblem is infeasible\n";
+            // switch to the feasibility problem (below)
+         }
+         else if (direction.status == SubproblemStatus::ERROR) {
+            statistics.set("Status", std::string("solver error"));
+            DEBUG << "/!\\ The subproblem solver failed\n";
+            // switch to the feasibility problem (below)
+         }
+         else {
             check_unboundedness(direction);
             this->update_watchdog_state(current_iterate, direction, evaluation_cache.current_evaluations);
             bool skip_first_trial = false;
@@ -88,11 +98,6 @@ namespace uno {
                return;
             }
             // if backtracking failed, switch to the feasibility problem (below)
-         }
-         else { // infeasible
-            statistics.set("Status", std::string("infeasible"));
-            DEBUG << "/!\\ The subproblem is infeasible\n";
-            // switch to the feasibility problem (below)
          }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
@@ -127,6 +132,13 @@ namespace uno {
       this->previous_tiny_step_with_small_dual_direction = false;
       const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
          Inf, evaluation_cache.current_evaluations, warmstart_information);
+      // the feasibility subproblem cannot be relaxed further: any failure is fatal
+      if (direction.status == SubproblemStatus::INFEASIBLE) {
+         throw std::runtime_error("The feasibility subproblem is infeasible");
+      }
+      else if (direction.status == SubproblemStatus::ERROR) {
+         throw std::runtime_error("The subproblem solver failed on the feasibility subproblem");
+      }
       check_unboundedness(direction);
       const PredictedReductionModels predicted_reduction_models =
          this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, direction,

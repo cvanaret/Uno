@@ -58,7 +58,6 @@ namespace uno {
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
-      std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       // BQPD-native quadratic program (built by IQPSolver before each solve)
       std::unique_ptr<BQPDQuadraticProgram> quadratic_program{};
 
@@ -94,6 +93,9 @@ namespace uno {
       [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);
       [[nodiscard]] static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };
+
+   // number of entries of lws (BQPD integer workspace) occupied by a hidden pointer
+   constexpr size_t hidden_pointer_size_in_lws = (sizeof(std::intptr_t) + sizeof(int) - 1) / sizeof(int);
 
    // hide a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)
    template <typename T>
