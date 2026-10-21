@@ -42,7 +42,7 @@ namespace uno {
       }
       // now acceptable wrt infeasibility upper bound
 
-      const double actual_merit_reduction = this->compute_actual_merit_reduction(current_merit, trial_merit);
+      const double actual_merit_reduction = this->compute_actual_reduction(current_merit, trial_merit);
       DEBUG << "Unconstrained actual reduction = " << actual_merit_reduction << '\n';
 
       const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_threshold();

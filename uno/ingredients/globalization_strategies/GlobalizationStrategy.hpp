@@ -42,6 +42,7 @@ namespace uno {
       const double small_infeasibility_factor;
 
       [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
+      [[nodiscard]] double compute_actual_reduction(double current_measure, double trial_measure) const;
    };
 } // namespace
 
