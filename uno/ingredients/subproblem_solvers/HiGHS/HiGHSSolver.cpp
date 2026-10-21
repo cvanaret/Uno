@@ -61,6 +61,12 @@ namespace uno {
          throw std::runtime_error("HiGHS could not read the model.");
       }
 
+      // safeguard: HiGHS' active-set QP solver may stall on convex QPs with a semidefinite Hessian (e.g. the l1 feasibility
+      // subproblems, without curvature in the elastic variables). Bound the number of QP iterations generously, so that
+      // the solve fails (SubproblemStatus::ERROR) instead of never returning
+      const size_t dimension = this->quadratic_program->number_variables + this->quadratic_program->number_constraints;
+      this->highs_solver.setOptionValue("qp_iteration_limit", static_cast<HighsInt>(1000 + 10 * dimension));
+
       DEBUG2 << "Running HiGHS\n";
       return_status = this->highs_solver.run(); // solve
       DEBUG2 << "Ran HiGHS\n";
