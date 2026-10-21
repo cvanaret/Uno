@@ -63,3 +63,49 @@ TEST(SQPPath, PrimalDualInertiaCorrectionOfQPHessian) {
       EXPECT_NEAR(result.primal_solution[1], 1., 1e-6) << globalization_mechanism;
    }
 }
+
+// Bug: BacktrackingLineSearch only checked the INFEASIBLE and UNBOUNDED statuses of the optimality subproblem. A
+// subproblem solver ERROR was treated as an optimal direction: the line search went on with whatever the solver left in
+// the direction. Here (inconsistent variable bounds, a deterministic way to make BQPD fail) Uno accepted the bogus null
+// step at every iteration until the iteration limit, and reported it as a regular run.
+TEST(SQPPath, LineSearchHandlesSubproblemSolverError) {
+   // min (x0 - 3)^2 + x1^2  s.t.  x0^2 + x1 <= 4,  -10 <= x0 <= 10,  1 <= x1 <= 0 (inconsistent)
+   const DenseTestModel model("inconsistent_bounds", 2, 1, ProblemType::NONLINEAR,
+      [](const Vector<double>& x) { return (x[0] - 3.)*(x[0] - 3.) + x[1]*x[1]; },
+      [](const Vector<double>& x, Vector<double>& g) { g[0] = 2.*(x[0] - 3.); g[1] = 2.*x[1]; },
+      [](const Vector<double>& x, Vector<double>& c) { c[0] = x[0]*x[0] + x[1]; },
+      [](const Vector<double>& x, double* J) { J[0] = 2.*x[0]; J[1] = 1.; },
+      [](const Vector<double>&, double rho, const Vector<double>& y, double* H) { H[0] = 2.*rho - 2.*y[0]; H[1] = 0.; H[2] = 2.*rho; },
+      {-10., 1.}, {10., 0.}, {-Inf}, {4.}, {0.5, 0.5});
+   Options options = sqp_options("filtersqp", "LS");
+   options.set_integer("max_iterations", 50);
+
+   Uno uno;
+   const Result result = uno.solve(model, options);
+   EXPECT_EQ(result.optimization_status, OptimizationStatus::ALGORITHMIC_ERROR);
+   EXPECT_LE(result.number_iterations, 2);
+}
+
+// Bug: in the feasibility restoration phase, BacktrackingLineSearch did not check the status of the subproblem at all.
+// When the linear constraints (not relaxed by the line-search restoration) are inconsistent, the infeasible
+// restoration QP was used as a direction and accepted as a "0 primal step", with the multipliers of a failed QP solve.
+TEST(SQPPath, LineSearchRejectsInfeasibleRestorationSubproblem) {
+   // min x0^2 + x1^2  s.t.  x0 + x1 >= 3 (linear), x0 + x1 <= 1 (linear), x0^2 - x1 <= 0
+   const DenseTestModel model("inconsistent_linear_constraints", 2, 3, ProblemType::NONLINEAR,
+      [](const Vector<double>& x) { return x[0]*x[0] + x[1]*x[1]; },
+      [](const Vector<double>& x, Vector<double>& g) { g[0] = 2.*x[0]; g[1] = 2.*x[1]; },
+      [](const Vector<double>& x, Vector<double>& c) { c[0] = x[0] + x[1]; c[1] = x[0] + x[1]; c[2] = x[0]*x[0] - x[1]; },
+      [](const Vector<double>& x, double* J) { J[0] = 1.; J[1] = 1.; J[2] = 1.; J[3] = 1.; J[4] = 2.*x[0]; J[5] = -1.; },
+      [](const Vector<double>&, double rho, const Vector<double>& y, double* H) { H[0] = 2.*rho - 2.*y[2]; H[1] = 0.; H[2] = 2.*rho; },
+      {-10., -10.}, {10., 10.}, {3., -Inf, -Inf}, {Inf, 1., 0.}, {0.5, 0.5}, {0, 1});
+   const Options options = sqp_options("filtersqp", "LS");
+
+   Uno uno;
+   const Result result = uno.solve(model, options);
+   EXPECT_EQ(result.optimization_status, OptimizationStatus::ALGORITHMIC_ERROR);
+   // no iterate was accepted: the initial point is returned with its (zero) multipliers
+   EXPECT_EQ(result.number_iterations, 1);
+   for (size_t constraint_index = 0; constraint_index < 3; ++constraint_index) {
+      EXPECT_EQ(result.constraint_dual_solution[constraint_index], 0.);
+   }
+}
