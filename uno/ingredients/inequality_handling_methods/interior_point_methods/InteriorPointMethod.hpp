@@ -158,6 +158,32 @@ namespace uno {
       this->barrier_problem.create_initial_iterate(initial_iterate, evaluations);
       this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, initial_iterate, evaluations,
          multipliers_threshold);
+
+      // project the multipliers of inequality constraints onto the correct orthants
+      // lower bounded (resp. upper bounded) constraints should get a nonnegative (resp. nonpositive) multiplier
+      const auto& lb = this->problem.get_constraints_lower_bounds();
+      const auto& ub = this->problem.get_constraints_upper_bounds();
+      bool multipliers_updated = false;
+      for (size_t constraint_index: this->problem.get_inequality_constraints()) {
+         if (is_finite(lb[constraint_index]) && is_infinite(ub[constraint_index])) { // single lb
+            // multiplier should be >= 0
+            if (initial_iterate.multipliers.constraints[constraint_index] < 0.) {
+               initial_iterate.multipliers.constraints[constraint_index] = 0.;
+               multipliers_updated = true;
+            }
+         }
+         if (is_infinite(lb[constraint_index]) && is_finite(ub[constraint_index])) { // single ub
+            // multiplier should be <= 0
+            if (initial_iterate.multipliers.constraints[constraint_index] > 0.) {
+               initial_iterate.multipliers.constraints[constraint_index] = 0.;
+               multipliers_updated = true;
+            }
+         }
+      }
+      if (multipliers_updated) {
+         INFO << "Multipliers projected onto the correct signed orthants\n";
+         DEBUG2 << initial_iterate.multipliers.constraints << '\n';
+      }
    }
 
    template <typename BarrierProblem>
