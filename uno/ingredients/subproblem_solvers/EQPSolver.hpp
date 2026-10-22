@@ -6,6 +6,7 @@
 
 #include <memory>
 #include "LowRankCorrection.hpp"
+#include "KKTSystemDumper.hpp"
 #include "SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
 
@@ -48,8 +49,9 @@ namespace uno {
       std::unique_ptr<NewtonSystem> newton_system;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       LowRankCorrection correction;
+      const KKTSystemDumper kkt_dumper;
       bool analysis_performed{false};
-
+      
       bool SOC_initialized{false};
       Vector<double> constraints_SOC;
       Vector<double> constraints_buffer_SOC;
