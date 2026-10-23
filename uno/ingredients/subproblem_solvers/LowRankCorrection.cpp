@@ -36,7 +36,8 @@ namespace uno {
       }
       // solve A H = E with all correction columns as right-hand sides at once (column-major blocks)
       linear_solver.solve_indefinite_system(this->E->data(), this->H->data(), this->correction_rank);
-      // T = P⁻¹ + Eᵀ H, then factorize it in place
+      // with the correction E C Eᵀ (C = diag(c_i), c_i the coefficients of the rank-one terms): T = C⁻¹ + Eᵀ H, then
+      // factorize it in place
       this->T.emplace(this->correction_rank, this->correction_rank);
       for (size_t column_index: Range(this->correction_rank)) {
          this->T->entry(column_index, column_index) = 1./this->hessian_model.get_correction_column_scaling(column_index);

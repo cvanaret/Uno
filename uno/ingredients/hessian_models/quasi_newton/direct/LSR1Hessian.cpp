@@ -65,7 +65,7 @@ namespace uno {
       DEBUG3 << "U = " << this->U << '\n';
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         double U_coefficient = dot(current_U_column, view(vector.data(), this->model.number_variables)) /
+         double U_coefficient = dot(current_U_column, view(vector.data(), this->model.number_variables)) *
             this->get_correction_column_scaling(column_index);
          assert(!std::isnan(U_coefficient));
          // result += coefficient * column(P⁻¹) * current_column
@@ -81,8 +81,9 @@ namespace uno {
       return this->U.column(column_index);
    }
 
+   // B = δ I + U P⁻¹ Uᵀ: the coefficient of the rank-one term of column i is 1/p_i
    double LSR1Hessian::get_correction_column_scaling(size_t column_index) const {
-      return this->correction_scaling[column_index];
+      return 1. / this->correction_scaling[column_index];
    }
 
    // protected member functions
