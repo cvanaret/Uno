@@ -28,7 +28,7 @@ namespace uno {
       static Ingredients create(const OptimizationProblem& problem, bool uses_trust_region, double objective_multiplier,
          const Options& options, std::vector<OptionOverride>& option_overrides);
 
-      constexpr static std::array available_strategies{"exact", "LFBGS", "LSR1", "identity", "zero"};
+      constexpr static std::array available_strategies{"exact", "LBFGS", "LSR1", "identity", "zero"};
    };
 } // namespace
 
