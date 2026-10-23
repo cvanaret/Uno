@@ -1,6 +1,9 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <stdexcept>
+#include <string>
 #include "Funnel.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"

@@ -1,6 +1,9 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <cassert>
+#include <cmath>
 #include "Scaling.hpp"
 #include "model/Model.hpp"
 #include "linear_algebra/Norm.hpp"
