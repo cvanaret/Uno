@@ -90,6 +90,13 @@ namespace uno {
          return std::make_unique<SSIDSSolver>();
       }
 #endif
+#if defined(HAS_HSL) || defined(HAS_MA57) || defined(HAS_MA27) || defined(HAS_MA86)
+      // the HSL solver is supported by this build, but the HSL library is not functional
+      if (linear_solver == "MA57" || linear_solver == "MA27" || linear_solver == "MA86") {
+         throw std::invalid_argument("The linear solver " + linear_solver + " was requested, but the HSL library is not "
+            "functional (with runtime loading, check libhsl_path or the UNO_HSL_LIBRARY environment variable)");
+      }
+#endif
       std::string message = "The linear solver ";
       message.append(linear_solver).append(" is unknown").append("\n").append("The following values are available: ")
             .append(join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", "));
