@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include <string>
 #include "InequalityHandlingMethod.hpp"
 #include "InequalityHandlingMethodFactory.hpp"
@@ -40,6 +41,12 @@ namespace uno {
       }
       // interior-point method
       else if (inequality_handling_method == "interior_point") {
+         // the barrier subproblems are solved with a direct linear solver, which does not support a trust region. A QP
+         // fallback would bypass the fraction-to-boundary rule and the bound dual directions
+         if (uses_trust_region) {
+            throw std::invalid_argument("The interior-point method does not support the trust-region globalization "
+               "mechanism (globalization_mechanism = TR); use a line search (LS)");
+         }
          const std::string barrier_function = options.get_string("barrier_function");
          if (barrier_function == "log") {
             INFO << "picking a barrier method\n";

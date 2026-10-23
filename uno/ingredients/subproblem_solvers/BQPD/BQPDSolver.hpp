@@ -64,6 +64,7 @@ namespace uno {
       int kmax{0};
       int (*pick_kmax)(size_t number_variables, size_t number_constraints);
       int mlp{1000};
+      static constexpr size_t max_number_workspace_increases{20};
       size_t nprof{};
       std::array<int, 100> info{};
       std::vector<double> alp{};

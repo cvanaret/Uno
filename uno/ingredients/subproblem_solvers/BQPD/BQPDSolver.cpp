@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
 #include "BQPDSolver.hpp"
 #include "BQPDQuadraticProgram.hpp"
@@ -56,7 +57,8 @@ namespace uno {
          else {
             kmax = 5000;
          }
-         return static_cast<int>(kmax);
+         // BQPD requires kmax <= n
+         return static_cast<int>(std::min(kmax, number_variables));
       }
    }
 
@@ -182,10 +184,14 @@ namespace uno {
    // we use (x*4)/3 to increase by 33% TODO add an option
    bool BQPDSolver::check_sufficient_workspace_size(BQPDStatus bqpd_status) {
       switch (bqpd_status) {
-         case BQPDStatus::REDUCED_HESSIAN_INSUFFICIENT_SPACE:
+         case BQPDStatus::REDUCED_HESSIAN_INSUFFICIENT_SPACE: {
             assert(this->kmax > 0);
-            // increase kmax
-            this->kmax = std::min((this->kmax*4)/3, static_cast<int>(this->quadratic_program->number_variables)); // no need to go above n
+            // increase kmax (by at least 1), but no need to go above n
+            const int number_variables = static_cast<int>(this->quadratic_program->number_variables);
+            if (number_variables <= this->kmax) {
+               return true; // kmax cannot be increased: give up (reported as a solver error)
+            }
+            this->kmax = std::min(std::max(this->kmax + 1, (this->kmax*4)/3), number_variables);
             // reallocate the vectors ws and lws
             this->mxws = this->compute_mxws();
             this->mxlws = this->compute_mxlws();
@@ -194,6 +200,7 @@ namespace uno {
             WSC.mxws = static_cast<int>(this->mxws);
             WSC.mxlws = static_cast<int>(this->mxlws);
             return false;
+         }
 
          case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
             // allocate more size for (sparse) factors
@@ -222,6 +229,7 @@ namespace uno {
       BQPDMode mode = determine_mode(warmstart_information);
       // solve the LP/QP
       bool termination = false;
+      size_t number_workspace_increases = 0;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
          const int mode_integer = static_cast<int>(mode);
@@ -233,12 +241,16 @@ namespace uno {
             this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
          DEBUG2 << "Ran BQPD\n";
          const BQPDStatus bqpd_status = bqpd_status_from_int(this->ifail);
-         termination = this->check_sufficient_workspace_size(bqpd_status);
-         if (termination) {
-            direction.status = status_from_bqpd_status(bqpd_status);
+         // if the workspace was insufficient, enlarge it (a bounded number of times) and solve again from scratch
+         const bool workspace_enlarged = (number_workspace_increases < BQPDSolver::max_number_workspace_increases) &&
+            !this->check_sufficient_workspace_size(bqpd_status);
+         if (workspace_enlarged) {
+            ++number_workspace_increases;
+            mode = BQPDMode::COLD_START;
          }
          else {
-            mode = BQPDMode::COLD_START;
+            termination = true;
+            direction.status = status_from_bqpd_status(bqpd_status);
          }
       }
 
@@ -330,6 +342,12 @@ namespace uno {
             return SubproblemStatus::ERROR;
          case BQPDStatus::MAX_RESTARTS_REACHED:
             DEBUG << "BQPD max restarts reached\n";
+            return SubproblemStatus::ERROR;
+         case BQPDStatus::REDUCED_HESSIAN_INSUFFICIENT_SPACE:
+            DEBUG << "BQPD error: insufficient space for the reduced Hessian\n";
+            return SubproblemStatus::ERROR;
+         case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
+            DEBUG << "BQPD error: insufficient space for the sparse factors\n";
             return SubproblemStatus::ERROR;
          default:
             throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");

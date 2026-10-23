@@ -175,13 +175,20 @@ namespace uno {
    void PrimalDualInteriorPointProblem::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
       // fixed variables
       const auto& fixed_bounds = this->unslacked_problem.get_variables_lower_bounds();
+      bool iterate_changed = false;
       for (const auto [constraint_index, variable_index]: this->fixed_variables) {
          // fix the primal variable (protects against roundoff)
-         iterate.primals[variable_index] = fixed_bounds[variable_index];
+         if (iterate.primals[variable_index] != fixed_bounds[variable_index]) {
+            iterate.primals[variable_index] = fixed_bounds[variable_index];
+            iterate_changed = true;
+         }
          // set the bound dual
          const double multiplier = iterate.multipliers.constraints[constraint_index];
          iterate.multipliers.lower_bounds[variable_index] = std::max(multiplier, 0.);
          iterate.multipliers.upper_bounds[variable_index] = std::min(multiplier, 0.);
+      }
+      if (iterate_changed) {
+         evaluations.reset();
       }
       // remove the slacks and additional constraints
       iterate.set_dimensions(this->unslacked_problem.number_variables, this->unslacked_problem.number_constraints);
