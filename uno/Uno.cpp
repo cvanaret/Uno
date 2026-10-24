@@ -17,6 +17,7 @@
 #include "model/Model.hpp"
 #include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "optimization/WarmstartInformation.hpp"
