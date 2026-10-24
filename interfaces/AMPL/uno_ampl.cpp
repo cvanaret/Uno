@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <string>
-#include "AMPLModel.hpp"
+#include "NLModel.hpp"
 #include "optimization/Result.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
@@ -21,7 +21,7 @@ void* operator new(size_t size) {
 */
 
 namespace uno {
-   void run_uno_ampl(const AMPLModel& model, Options& options) {
+   void run_uno_ampl(const NLModel& model, Options& options) {
       Uno uno{};
       Result result = uno.solve(model, options);
       if (options.get_bool("write_solution_to_file")) {
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
          // create the model
          const char* model_name = argv[1];
-         const AMPLModel model(model_name);
+         const NLModel model(model_name);
 
          const std::string preset = user_options.get_string_optional("preset").value_or(options.get_string("preset"));
          Presets::set(model, options, preset);
