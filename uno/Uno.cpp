@@ -41,9 +41,10 @@ namespace uno {
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
       DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
-      // scale the functions
+      // compute the function scaling at the projected initial point
       Vector<double> initial_primals(model.number_variables);
       model.initial_primal_point(initial_primals);
+      model.project_onto_variable_bounds(initial_primals);
       const ScaledModel scaled_model(model, initial_primals, options);
 
       // reformulate the model if:
