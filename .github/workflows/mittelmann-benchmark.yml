@@ -6,6 +6,11 @@ name: Mittelmann benchmark
 #
 # Success/failure is read from each run's log: the optimization summary starts
 # with the line   Optimization status:            Success
+#
+# Each run uploads its results (results.tsv + meta.json) as the artifact
+# `mittelmann-results-pr-<pr_number>`. If `compare_pr` is given, the PR comment
+# is a before/after table against the latest results of that PR (from its
+# artifact or, for older runs, from its benchmark comment).
 
 on:
   # Manual trigger: re-run the benchmark at any time from the Actions tab
@@ -18,10 +23,16 @@ on:
         description: 'PR number to comment on'
         required: true
         type: string
+      compare_pr:
+        description: 'PR number to compare against (optional; uses its latest benchmark results)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
   pull-requests: write
+  actions: read  # to download the results artifact of the PR we compare against
 
 env:
   BUILD_TYPE: Release
@@ -74,6 +85,8 @@ jobs:
         run: cmake --build ${{ github.workspace }}/build --target uno_ampl --config ${{ env.BUILD_TYPE }} --parallel
 
       - name: Run Mittelmann instances and summarize
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
         run: |
           set -uo pipefail
           UNO="${{ github.workspace }}/build/uno_ampl"
@@ -87,7 +100,8 @@ jobs:
             echo "::error::No .nl files found under '$DIR'"; exit 1
           fi
 
-          mkdir -p logs
+          mkdir -p logs results
+          : > results/results.tsv
           solved=0
           total=${#INSTANCES[@]}
           declare -a CONSOLE
@@ -100,7 +114,7 @@ jobs:
             start=$(date +%s.%N)
             # Uno enforces time_limit=$TIMELIMIT itself; the outer `timeout` is only a
             # safety net in case a run gets stuck past its own limit.
-            echo "Solving ${name}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Solving ${name}"
             timeout $((TIMELIMIT + 30)) "$UNO" "$nl" option_file="$OPTION_FILE" time_limit="$TIMELIMIT" > "$log" 2>&1 || true
             end=$(date +%s.%N)
             secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
@@ -109,13 +123,21 @@ jobs:
               solved=$((solved + 1))
               CONSOLE+=("✓ instance ${name} was solved in ${secs} seconds")
               rows+="| ✅ | \`${name}\` | solved in ${secs}s |"$'\n'
+              printf '%s\tsolved\t%s\n' "$name" "$secs" >> results/results.tsv
               echo "solved in ${secs}s"
             else
               CONSOLE+=("✗ instance ${name} failed in ${secs} seconds")
               rows+="| ❌ | \`${name}\` | failed in ${secs}s |"$'\n'
+              printf '%s\tfailed\t%s\n' "$name" "$secs" >> results/results.tsv
               echo "failed in ${secs}s"
             fi
           done
+
+          # ---- machine-readable metadata, used by later comparisons ----
+          cat > results/meta.json <<EOF
+          {"sha": "${GITHUB_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT},
+           "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
+          EOF
 
           # ---- console summary (what you asked for) ----
           echo ""
@@ -142,6 +164,35 @@ jobs:
           cat benchmark-comment.md >> "$GITHUB_STEP_SUMMARY"
 
           echo "::notice title=Mittelmann benchmark::Solved ${solved}/${total} instances"
+
+      # Replaces the plain report with a before/after table against the latest
+      # results of `compare_pr`. If those cannot be found, a warning is emitted
+      # and the plain report is posted unchanged.
+      - name: Compare against another PR
+        if: inputs.compare_pr != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMPARE_PR: ${{ inputs.compare_pr }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$COMPARE_PR" =~ ^[0-9]+$ ]]; then
+            echo "::error::compare_pr must be a PR number, got '$COMPARE_PR'"; exit 1
+          fi
+          ${{ env.VENV }}/bin/python .github/scripts/mittelmann_compare.py \
+            --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
+            --results-dir results --output benchmark-comment.md
+          if grep -q 'before/after' benchmark-comment.md; then
+            { echo ""; cat benchmark-comment.md; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Results of this run, so that future runs can compare against this PR.
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: mittelmann-results-pr-${{ inputs.pr_number }}
+          path: results/
+          retention-days: 90
 
       # Posts the benchmark report as a comment on the PR. The `header` makes it a
       # "sticky" comment: subsequent runs on the same PR (i.e. new commits) update
