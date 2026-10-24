@@ -65,6 +65,9 @@ namespace uno {
    // relaxed bounds)
    Result Uno::uno_solve(const Model& user_model, const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       InterruptGuard interrupt_guard;
+      // drop the ingredients of a previous solve: they must not postprocess the iterate of this solve
+      this->globalization_mechanism.reset();
+      this->method_description = "strategy combination not initialized";
       Statistics statistics = create_statistics(model, options.get_bool("print_extended_statistics"));
       statistics.timers.wallclock.start();
 
@@ -86,11 +89,11 @@ namespace uno {
          optimization_status = OptimizationStatus::ITERATION_LIMIT;
       }
       else {
-         const bool initialization_success = this->initialize(statistics, model, current_iterate, evaluation_cache, options,
-            option_overrides);
-         if (!initialization_success) {
+         const std::optional<OptimizationStatus> initialization_failure = this->initialize(statistics, model,
+            current_iterate, evaluation_cache, options, option_overrides);
+         if (initialization_failure.has_value()) {
             termination = true;
-            optimization_status = OptimizationStatus::EVALUATION_ERROR;
+            optimization_status = *initialization_failure;
          }
       }
 
@@ -162,8 +165,8 @@ namespace uno {
       return this->method_description;
    }
 
-   bool Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, EvaluationCache& evaluation_cache,
-         const Options& options, std::vector<OptionOverride>& option_overrides) {
+   std::optional<OptimizationStatus> Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) {
       try {
          statistics.start_new_line();
          statistics.set("Iter", 0);
@@ -185,13 +188,34 @@ namespace uno {
             statistics.print_header();
             statistics.print_current_line();
          }
-         return true;
+         return std::nullopt;
       }
-      // catch errors at startup/initial iterate
+      // the functions could not be evaluated at the initial iterate
+      catch (const EvaluationError& e) {
+         DISCRETE << "An evaluation error occurred at the initial iterate: " << e.what() << '\n';
+         this->discard_ingredients(model, current_iterate, evaluation_cache);
+         return OptimizationStatus::EVALUATION_ERROR;
+      }
+      // the ingredients could not be created or initialized (invalid option, unavailable solver, ...)
       catch (const std::exception& e) {
-         DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
-         return false;
+         DISCRETE << "An error occurred during the initialization: " << e.what() << '\n';
+         this->discard_ingredients(model, current_iterate, evaluation_cache);
+         return OptimizationStatus::ALGORITHMIC_ERROR;
       }
+   }
+
+   // after a failed initialization, the ingredients may be partially constructed (e.g. a constraint relaxation strategy
+   // without inequality handling method) and the iterate may have been reformulated (slacks, fixed variables, ...):
+   // discard both, so that the result is the projected initial point of the model
+   void Uno::discard_ingredients(const Model& model, Iterate& current_iterate, EvaluationCache& evaluation_cache) {
+      this->globalization_mechanism.reset();
+      this->method_description = "strategy combination not initialized";
+      current_iterate = Iterate(model.number_variables, model.number_constraints);
+      model.initial_primal_point(current_iterate.primals);
+      model.project_onto_variable_bounds(current_iterate.primals);
+      model.initial_dual_point(current_iterate.multipliers.constraints);
+      evaluation_cache.current_evaluations.reset();
+      evaluation_cache.trial_evaluations.reset();
    }
 
    Statistics Uno::create_statistics(const Model& model, bool print_extended_statistics) {

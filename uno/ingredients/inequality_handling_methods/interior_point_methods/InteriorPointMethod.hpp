@@ -4,6 +4,7 @@
 #ifndef UNO_INTERIORPOINTMETHOD_H
 #define UNO_INTERIORPOINTMETHOD_H
 
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <stdexcept>

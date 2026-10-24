@@ -5,6 +5,7 @@
 #define UNO_H
 
 #include <memory>
+#include <optional>
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Result.hpp"
@@ -33,8 +34,11 @@ namespace uno {
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
       std::string method_description{"strategy combination not initialized"};
 
-      [[nodiscard]] bool initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides);
+      // returns std::nullopt upon success, the termination status otherwise
+      [[nodiscard]] std::optional<OptimizationStatus> initialize(Statistics& statistics, const Model& model,
+         Iterate& current_iterate, EvaluationCache& evaluation_cache, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
+      void discard_ingredients(const Model& model, Iterate& current_iterate, EvaluationCache& evaluation_cache);
       [[nodiscard]] static Statistics create_statistics(const Model& model, bool print_extended_statistics);
       [[nodiscard]] static bool check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, bool user_interruption, OptimizationStatus& optimization_status,

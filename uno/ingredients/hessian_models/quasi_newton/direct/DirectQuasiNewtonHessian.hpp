@@ -25,6 +25,8 @@ namespace uno {
       // functions that can be called by WoodburyEQPSolver
       [[nodiscard]] virtual size_t get_correction_rank() const = 0;
       [[nodiscard]] virtual View<const double> get_correction_column(size_t column_index) const = 0;
+      // coefficient c_i of the rank-one term c_i u_i u_iᵀ of column u_i: the Hessian approximation is
+      // B = δ I + sum_i c_i u_i u_iᵀ (WoodburyCorrection relies on this convention)
       [[nodiscard]] virtual double get_correction_column_scaling(size_t column_index) const = 0;
    };
 } // namespace
