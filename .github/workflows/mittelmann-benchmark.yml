@@ -179,7 +179,8 @@ jobs:
           if ! [[ "$COMPARE_PR" =~ ^[0-9]+$ ]]; then
             echo "::error::compare_pr must be a PR number, got '$COMPARE_PR'"; exit 1
           fi
-          ${{ env.VENV }}/bin/python .github/scripts/mittelmann_compare.py \
+          ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
+            --title "Mittelmann benchmark" --artifact-prefix mittelmann-results-pr- --comment-fallback \
             --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
             --results-dir results --output benchmark-comment.md
           if grep -q 'before/after' benchmark-comment.md; then

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Before/after comparison of two Mittelmann benchmark runs of uno_ampl.
+"""Before/after comparison of two benchmark runs of Uno (Mittelmann, CUTEst, ...).
 
 The "after" results are those of the current run (results/results.tsv and
 results/meta.json, written by the benchmark step). The "before" results are
 those of the latest benchmark run on another PR, looked up in this order:
-  1. the `mittelmann-results-pr-<N>` artifact uploaded by that run;
-  2. otherwise, the last report posted in that PR's benchmark comment (this
-     covers runs that predate the results artifact).
+  1. the `<artifact-prefix><N>` artifact uploaded by that run;
+  2. with --comment-fallback, the last report posted in that PR's benchmark
+     comment (this covers runs that predate the results artifact).
 
 The comparison is written as Markdown to --output. If the "before" results
 cannot be found, a warning is printed, --output is left untouched and the
@@ -27,7 +27,8 @@ import urllib.request
 import zipfile
 
 API_URL = os.environ.get("GITHUB_API_URL", "https://api.github.com")
-ARTIFACT_PREFIX = "mittelmann-results-pr-"
+# GitHub rejects comments longer than 65536 characters
+MAX_COMMENT_LENGTH = 60000
 # shift (in seconds) of the shifted geometric mean, as in Mittelmann's benchmarks
 SGM_SHIFT = 10.0
 # relative change in time (after/before) beyond which an instance is flagged
@@ -80,8 +81,8 @@ def parse_results_tsv(text):
     return results
 
 
-def fetch_from_artifact(repository, pr_number, token, current_run_id):
-    name = f"{ARTIFACT_PREFIX}{pr_number}"
+def fetch_from_artifact(repository, artifact_prefix, pr_number, token, current_run_id):
+    name = f"{artifact_prefix}{pr_number}"
     listing = github_request(f"/repos/{repository}/actions/artifacts?name={name}&per_page=100", token)
     artifacts = [artifact for artifact in listing.get("artifacts", [])
                  if not artifact.get("expired")
@@ -100,10 +101,10 @@ def fetch_from_artifact(repository, pr_number, token, current_run_id):
 
 # rows of the plain report: | ✅ | `name` | solved in 12.34s |
 ROW_PATTERN = re.compile(r"^\|\s*(✅|❌)\s*\|\s*`([^`]+)`\s*\|\s*(?:solved|failed) in ([0-9.]+)s\s*\|\s*$")
-REPORT_HEADER = "## Mittelmann benchmark"
 
 
-def fetch_from_comments(repository, pr_number, token):
+def fetch_from_comments(repository, pr_number, token, title):
+    report_header = f"## {title}"
     comments = []
     page = 1
     while True:
@@ -115,9 +116,9 @@ def fetch_from_comments(repository, pr_number, token):
     # most recent report first: last comment, last appended section
     for comment in reversed(comments):
         body = comment.get("body") or ""
-        if REPORT_HEADER not in body:
+        if report_header not in body:
             continue
-        for section in reversed(body.split(REPORT_HEADER)[1:]):
+        for section in reversed(body.split(report_header)[1:]):
             results = {}
             for line in section.splitlines():
                 match = ROW_PATTERN.match(line.strip())
@@ -163,7 +164,8 @@ def format_cell(result):
     return f"{'✅' if solved else '❌'} {seconds:.2f}s"
 
 
-def build_report(before, before_meta, before_pr, after, after_meta, after_pr):
+def build_report(title, before, before_meta, before_pr, after, after_meta, after_pr, changed_only=False,
+                 max_length=None):
     time_limit = after_meta.get("time_limit")
     all_names = sorted(set(before) | set(after))
     common = [name for name in all_names if name in before and name in after]
@@ -186,11 +188,11 @@ def build_report(before, before_meta, before_pr, after, after_meta, after_pr):
     def ratio(a, b):
         return f"{b / a:.2f}×" if a > 0 and not math.isnan(a) and not math.isnan(b) else "—"
 
-    title = "## Mittelmann benchmark — before/after"
+    heading = f"## {title} — before/after"
     if time_limit is not None:
-        title += f" (time_limit={time_limit}s)"
+        heading += f" (time_limit={time_limit}s)"
     lines = [
-        title,
+        heading,
         "",
         describe_run("Before", before_pr, before_meta) + "  ",
         describe_run("After", after_pr, after_meta),
@@ -198,6 +200,10 @@ def build_report(before, before_meta, before_pr, after, after_meta, after_pr):
     ]
     if before_meta.get("time_limit") not in (None, time_limit):
         lines += [f"> ⚠️ The before run used time_limit={before_meta['time_limit']}s.", ""]
+    for key, label in (("selection", "problem selection"), ("option_file", "option file")):
+        if before_meta.get(key) is not None and after_meta.get(key) is not None \
+                and before_meta[key] != after_meta[key]:
+            lines += [f"> ⚠️ Different {label}: before `{before_meta[key]}`, after `{after_meta[key]}`.", ""]
     lines += [
         f"| | before | after | after/before |",
         f"|:--|--:|--:|--:|",
@@ -223,12 +229,7 @@ def build_report(before, before_meta, before_pr, after, after_meta, after_pr):
     if only_after:
         lines += [f"Only in after run ({len(only_after)}): " + ", ".join(f"`{name}`" for name in only_after), ""]
 
-    lines += [
-        f"<details><summary>Per-instance results ({len(all_names)} instances)</summary>",
-        "",
-        "| | instance | before | after | after/before |",
-        "|:-:|:--|--:|--:|--:|",
-    ]
+    rows = []
     for name in all_names:
         b, a = before.get(name), after.get(name)
         flag, time_ratio = "", "—"
@@ -244,8 +245,21 @@ def build_report(before, before_meta, before_pr, after, after_meta, after_pr):
                         flag = "🐢"
                     elif b[1] / max(a[1], 1e-9) >= TIME_RATIO_THRESHOLD:
                         flag = "⚡"
-        lines.append(f"| {flag} | `{name}` | {format_cell(b)} | {format_cell(a)} | {time_ratio} |")
-    lines += [
+        if changed_only and not flag:
+            continue
+        rows.append(f"| {flag} | `{name}` | {format_cell(b)} | {format_cell(a)} | {time_ratio} |")
+
+    if changed_only:
+        summary = f"Instances whose status or time changed ({len(rows)} of {len(all_names)})"
+    else:
+        summary = f"Per-instance results ({len(all_names)} instances)"
+    header = [
+        f"<details><summary>{summary}</summary>",
+        "",
+        "| | instance | before | after | after/before |",
+        "|:-:|:--|--:|--:|--:|",
+    ]
+    footer = [
         "",
         f"<sub>🟢 newly solved · 🔴 newly failed · ⚡/🐢 at least {TIME_RATIO_THRESHOLD:g}× faster/slower "
         f"(both solved, ≥ {MIN_FLAGGED_TIME:g}s)</sub>",
@@ -253,7 +267,19 @@ def build_report(before, before_meta, before_pr, after, after_meta, after_pr):
         "</details>",
         "",
     ]
-    return "\n".join(lines)
+    if not rows:
+        return "\n".join(lines)
+    report = "\n".join(lines + header + rows + footer)
+    if max_length is not None and len(report) > max_length:
+        # keep the report postable: drop table rows until it fits
+        kept = list(rows)
+        truncation_note = ""
+        while kept and len("\n".join(lines + header + kept + [truncation_note] + footer)) > max_length:
+            kept = kept[:max(0, len(kept) - max(1, len(kept) // 10))]
+            truncation_note = (f"| | … {len(rows) - len(kept)} more rows, see the run summary or the results "
+                               f"artifact | | | |")
+        report = "\n".join(lines + header + kept + [truncation_note] + footer)
+    return report
 
 
 def main():
@@ -261,7 +287,17 @@ def main():
     parser.add_argument("--compare-pr", required=True, help="PR whose latest results are the 'before'")
     parser.add_argument("--current-pr", required=True, help="PR of the current run (the 'after')")
     parser.add_argument("--results-dir", default="results")
-    parser.add_argument("--output", default="benchmark-comment.md")
+    parser.add_argument("--output", default="benchmark-comment.md",
+                        help="comparison report posted as the PR comment")
+    parser.add_argument("--full-output", default=None,
+                        help="optional: full comparison report (all instances), e.g. for the run summary")
+    parser.add_argument("--title", default="Mittelmann benchmark", help="title of the benchmark reports")
+    parser.add_argument("--artifact-prefix", default="mittelmann-results-pr-",
+                        help="results artifacts are named <prefix><PR number>")
+    parser.add_argument("--comment-fallback", action="store_true",
+                        help="if the other PR has no results artifact, read its last benchmark comment")
+    parser.add_argument("--changed-only", action="store_true",
+                        help="in --output, only list the instances whose status or time changed")
     args = parser.parse_args()
 
     repository = os.environ["GITHUB_REPOSITORY"]
@@ -275,27 +311,33 @@ def main():
 
     fetched = None
     try:
-        fetched = fetch_from_artifact(repository, args.compare_pr, token, run_id)
+        fetched = fetch_from_artifact(repository, args.artifact_prefix, args.compare_pr, token, run_id)
         if fetched is None:
-            print(f"No results artifact found for PR #{args.compare_pr}; looking at its comments")
-    except Exception as error:  # noqa: BLE001 - fall back to the comments
-        print(f"Could not read the results artifact of PR #{args.compare_pr} ({error}); looking at its comments")
-    if fetched is None:
+            print(f"No results artifact found for PR #{args.compare_pr}")
+    except Exception as error:  # noqa: BLE001 - fall back to the comments, if enabled
+        print(f"Could not read the results artifact of PR #{args.compare_pr} ({error})")
+    if fetched is None and args.comment_fallback:
+        print(f"Looking at the comments of PR #{args.compare_pr}")
         try:
-            fetched = fetch_from_comments(repository, args.compare_pr, token)
+            fetched = fetch_from_comments(repository, args.compare_pr, token, args.title)
         except Exception as error:  # noqa: BLE001 - any failure falls back to the plain report
-            print(f"::warning title=Mittelmann comparison::Could not fetch results of PR #{args.compare_pr}: {error}")
+            print(f"::warning title={args.title} comparison::Could not fetch results of PR #{args.compare_pr}: {error}")
             return 0
     if fetched is None:
-        print(f"::warning title=Mittelmann comparison::No benchmark results found for PR #{args.compare_pr}; "
+        print(f"::warning title={args.title} comparison::No benchmark results found for PR #{args.compare_pr}; "
               "posting the plain report instead")
         return 0
 
     before, before_meta = fetched
     print(f"Comparing against PR #{args.compare_pr} ({len(before)} instances, from {before_meta['source']})")
-    report = build_report(before, before_meta, args.compare_pr, after, after_meta, args.current_pr)
+    report = build_report(args.title, before, before_meta, args.compare_pr, after, after_meta, args.current_pr,
+                          changed_only=args.changed_only, max_length=MAX_COMMENT_LENGTH)
     with open(args.output, "w") as file:
         file.write(report)
+    if args.full_output:
+        with open(args.full_output, "w") as file:
+            file.write(build_report(args.title, before, before_meta, args.compare_pr, after, after_meta,
+                                    args.current_pr))
     return 0
 
 
