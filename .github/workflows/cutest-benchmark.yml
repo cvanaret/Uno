@@ -1,0 +1,412 @@
+name: CUTEst benchmark
+
+# Builds Uno as a shared library (HSL, BQPD), compiles CUTEst (classic
+# ARCHDefs/make build, the one the `runcutest -p uno` interface relies on) and
+# solves test problems in their original SIF format, giving each one a given
+# `time_limit`. Prints a per-instance summary (tickmark = solved, cross =
+# failed) and the number of solved instances.
+#
+# The problems come from two collections:
+#  - nlp: the CUTEst nonlinear programs, i.e. the nlpsif directory of the
+#    MASTSIF mirror (gitlab.com/dpo/mastsif-mirror). Its entries are symbolic
+#    links to ../<problem>.SIF, hence the whole mirror is cloned;
+#  - qp: the Maros-Meszaros convex QPs (github.com/optimizers/maros-meszaros-mirror).
+# Variable-dimension problems use the default size of their SIF file.
+#
+# Success/failure is read from each run's log: the CUTEst driver prints
+#    Optimization status:             Success
+#
+# Each run uploads its results (results.tsv + meta.json) as the artifact
+# `cutest-results-pr-<pr_number>`. If `compare_pr` is given, the PR comment is a
+# before/after table against the latest results of that PR.
+
+on:
+  # Manual trigger: from the Actions tab ("Run workflow") or with
+  # `gh workflow run "CUTEst benchmark" -f pr_number=123 [-f compare_pr=118]`
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to comment on'
+        required: true
+        type: string
+      compare_pr:
+        description: 'PR number to compare against (optional; uses its latest CUTEst benchmark results)'
+        required: false
+        default: ''
+        type: string
+      subset:
+        description: 'Problems to solve: all, nlp (CUTEst nlpsif) or qp (Maros-Meszaros)'
+        required: false
+        default: 'all'
+        type: choice
+        options: [all, nlp, qp]
+      problems:
+        description: 'Explicit space-separated problem list (optional; overrides subset), e.g. "HS15 HS71"'
+        required: false
+        default: ''
+        type: string
+      time_limit:
+        description: 'Time limit per problem (seconds)'
+        required: false
+        default: '300'
+        type: string
+      jobs:
+        description: 'Number of problems solved in parallel'
+        required: false
+        default: '4'
+        type: string
+      option_file:
+        description: 'Uno option file (path in the repository)'
+        required: false
+        default: 'uno_mittelmann.opt'
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read  # to download the results artifact of the PR we compare against
+
+env:
+  BUILD_TYPE: Release
+  VENV: /home/optimi/cvanaret/myenv
+  HOME: /home/optimi/cvanaret
+  OPENBLAS_NUM_THREADS: 1
+  OMP_NUM_THREADS: 1
+  # CUTEst classic-install layout. The `runcutest -p uno` driver reads
+  # packages/$ARCH/$PRECISION and objects/$ARCH/$PRECISION, so it needs the
+  # ARCHDefs/make build (not the Meson build) plus SIFDecode + ARCHDefs.
+  ARCHDEFS:  ${{ github.workspace }}/cutest-tools/ARCHDefs
+  SIFDECODE: ${{ github.workspace }}/cutest-tools/SIFDecode
+  CUTEST:    ${{ github.workspace }}/cutest-tools/CUTEst
+  # The two problem collections. MASTSIF is only a fallback for sifdecoder:
+  # each problem's SIF file is copied into its own working directory.
+  MASTSIF:   ${{ github.workspace }}/cutest-tools/mastsif
+  MAROS_MESZAROS: ${{ github.workspace }}/cutest-tools/maros-meszaros
+  # Architecture key produced by the install answers below (Linux + gfortran).
+  MYARCH:    pc64.lnx.gfo
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: self-hosted
+    # The PR comment needs the job token, which expires after 24 hours: lower
+    # time_limit, raise jobs or pick a subset if a run does not fit.
+    timeout-minutes: 1380
+    steps:
+      # A cancelled run may have left CUTEst's objects read-only (see below),
+      # which would prevent the checkout from cleaning the workspace.
+      - name: Restore write permissions from a previous run
+        run: chmod -R u+w "${{ github.workspace }}/cutest-tools" 2>/dev/null || true
+
+      - uses: actions/checkout@v4
+
+      - name: Check inputs and toolchain
+        env:
+          TIME_LIMIT: ${{ inputs.time_limit }}
+          JOBS: ${{ inputs.jobs }}
+          COMPARE_PR: ${{ inputs.compare_pr }}
+          OPTION_FILE: ${{ inputs.option_file }}
+        run: |
+          set -euo pipefail
+          [[ "$TIME_LIMIT" =~ ^[0-9]+$ ]] || { echo "::error::time_limit must be a number of seconds"; exit 1; }
+          [[ "$JOBS" =~ ^[1-9][0-9]*$ ]] || { echo "::error::jobs must be a positive integer"; exit 1; }
+          [[ -z "$COMPARE_PR" || "$COMPARE_PR" =~ ^[0-9]+$ ]] || { echo "::error::compare_pr must be a PR number"; exit 1; }
+          [ -f "$OPTION_FILE" ] || { echo "::error::option file '$OPTION_FILE' not found"; exit 1; }
+          for tool in gcc gfortran make bunzip2; do
+            command -v "$tool" > /dev/null || { echo "::error::$tool is required by CUTEst"; exit 1; }
+          done
+          gfortran --version | head -1
+
+      # ----------------------------------------------------------------
+      # 1) Build Uno as a shared library (same configuration as the Mittelmann benchmark)
+      # ----------------------------------------------------------------
+      - name: Download Uno solver dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure Uno (libhsl, shared library)
+        run: |
+          set -euo pipefail
+          LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
+          LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
+          LIBHSL_PATH="$HOME/libhsl/builddir/libhsl.so"
+          DEPS="${{ github.workspace }}/dependencies"
+
+          cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                                             -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
+                                             -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
+                                             -DHSL=${LIBHSL_PATH} \
+                                             -DBQPD=${DEPS}/lib/libbqpd.a \
+                                             -DBUILD_SHARED_LIBS=ON \
+                                             -DBUILD_STATIC_LIBS=OFF
+
+      - name: Build libuno
+        run: cmake --build ${{ github.workspace }}/build --target uno_shared --config ${{ env.BUILD_TYPE }} --parallel
+
+      # ----------------------------------------------------------------
+      # 2) Compile CUTEst (with SIFDecode + ARCHDefs) and get the SIF problems
+      # ----------------------------------------------------------------
+      - name: Fetch ARCHDefs, SIFDecode, CUTEst and the problem collections
+        run: |
+          set -euo pipefail
+          mkdir -p cutest-tools
+          git clone --depth=1 https://github.com/ralna/ARCHDefs.git  "$ARCHDEFS"
+          git clone --depth=1 https://github.com/ralna/SIFDecode.git "$SIFDECODE"
+          git clone --depth=1 https://github.com/ralna/CUTEst.git    "$CUTEST"
+          git clone --depth=1 https://gitlab.com/dpo/mastsif-mirror.git "$MASTSIF"
+          git clone --depth=1 https://github.com/optimizers/maros-meszaros-mirror.git "$MAROS_MESZAROS"
+
+          # manifest: <problem> \t <nlp|qp> \t <SIF file>, the nlpsif links being resolved
+          manifest=cutest-tools/manifest.tsv
+          : > "$manifest"
+          shopt -s nullglob
+          for entry in "$MASTSIF"/nlpsif/*.SIF "$MASTSIF"/nlpsif/*.SIF.bz2; do
+            name=$(basename "$entry"); name=${name%.bz2}; name=${name%.SIF}
+            file=$(readlink -f "$entry")
+            [ -f "$file" ] || { echo "::error::nlpsif/$(basename "$entry") points to a missing file"; exit 1; }
+            printf '%s\tnlp\t%s\n' "$name" "$file" >> "$manifest"
+          done
+          for file in "$MAROS_MESZAROS"/*.SIF; do
+            name=$(basename "$file" .SIF)
+            printf '%s\tqp\t%s\n' "$name" "$file" >> "$manifest"
+          done
+          # results are keyed by problem name: the two collections must not share one
+          duplicates=$(cut -f1 "$manifest" | sort | uniq -d)
+          if [ -n "$duplicates" ]; then
+            echo "::error::Problems present in both collections: $(echo $duplicates)"; exit 1
+          fi
+          echo "nlp: $(grep -c $'\tnlp\t' "$manifest") problems (mastsif-mirror $(git -C "$MASTSIF" rev-parse --short HEAD))"
+          echo "qp:  $(grep -c $'\tqp\t' "$manifest") problems (maros-meszaros-mirror $(git -C "$MAROS_MESZAROS" rev-parse --short HEAD))"
+
+      - name: Install SIFDecode
+        run: |
+          export TERM=xterm
+          cd "$SIFDECODE"
+          # Answers: Linux / 64-bit / gfortran / no modifications.
+          printf '1\n1\nN1\nNyy' > install_sifdecode_config
+          ./install_sifdecode < install_sifdecode_config
+
+      - name: Compile CUTEst (double precision)
+        run: |
+          export TERM=xterm
+          cd "$CUTEST"
+          # Answers: Linux / 64-bit / gfortran / gcc / no modifications.
+          printf '1\n1\nN1\n2\n2\nNNyDyN' > install_config
+          ./install_cutest < install_config
+
+      # The default package definition links against /usr/local/lib/libuno.so;
+      # on this runner, link against the library built above instead.
+      - name: Link the CUTEst Uno interface against the built libuno
+        run: |
+          set -euo pipefail
+          LIBUNO=$(find "${{ github.workspace }}/build/" -name 'libuno.so' -print -quit)
+          [ -n "$LIBUNO" ] || { echo "::error::libuno.so not found in the build directory"; exit 1; }
+          LIBDIR=$(dirname "$LIBUNO")
+          PKG="$CUTEST/packages/$MYARCH/double"
+          mkdir -p "$PKG"
+          sed "s|^export PACKLIBS=.*|export PACKLIBS=\"-L${LIBDIR} -Wl,-rpath,${LIBDIR} -luno\"|" \
+            "$CUTEST/packages/defaults/uno" > "$PKG/uno"
+          chmod +x "$PKG/uno"
+          grep '^export PACKLIBS' "$PKG/uno"
+          # Build the CUTEst tools and the Uno driver once. runcutest otherwise
+          # re-runs `make` in $CUTEST/objects for every problem, and concurrent
+          # runs corrupt it; it skips that step when the directory is read-only.
+          cd "$CUTEST/src/uno"
+          TERM=xterm make -s -f "$CUTEST/makefiles/$MYARCH" PRECIS=double tools uno
+          chmod -R a-w "$CUTEST/objects"
+
+      # ----------------------------------------------------------------
+      # 3) Solve the problems and summarize
+      # ----------------------------------------------------------------
+      - name: Run CUTEst problems and summarize
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          SUBSET: ${{ inputs.subset }}
+          PROBLEMS: ${{ inputs.problems }}
+          TIMELIMIT: ${{ inputs.time_limit }}
+          JOBS: ${{ inputs.jobs }}
+          OPTION_FILE_INPUT: ${{ inputs.option_file }}
+        run: |
+          set -uo pipefail
+          export TIMELIMIT
+          export OPTION_FILE="${{ github.workspace }}/${OPTION_FILE_INPUT}"
+          export WORK_DIR="${{ github.workspace }}/cutest-runs"
+          export LOG_DIR="${{ github.workspace }}/logs"
+          export ROWS_DIR="${{ github.workspace }}/cutest-rows"
+          rm -rf "$WORK_DIR" "$LOG_DIR" "$ROWS_DIR"
+          mkdir -p "$WORK_DIR" "$LOG_DIR" "$ROWS_DIR" results
+
+          # ---- list of problems (from the manifest built when fetching the collections) ----
+          MANIFEST="${{ github.workspace }}/cutest-tools/manifest.tsv"
+          declare -A SET_OF FILE_OF
+          while IFS=$'\t' read -r name set file; do
+            SET_OF[$name]=$set; FILE_OF[$name]=$file
+          done < "$MANIFEST"
+          if [ -n "$PROBLEMS" ]; then
+            read -ra INSTANCES <<< "$PROBLEMS"
+            SELECTION="custom list"
+          elif [ "$SUBSET" = "all" ]; then
+            mapfile -t INSTANCES < <(cut -f1 "$MANIFEST" | sort)
+            SELECTION="all problems (nlp + qp)"
+          else
+            mapfile -t INSTANCES < <(awk -F'\t' -v set="$SUBSET" '$2 == set {print $1}' "$MANIFEST" | sort)
+            SELECTION="subset ${SUBSET}"
+          fi
+          total=${#INSTANCES[@]}
+          if [ "$total" -eq 0 ]; then
+            echo "::error::No problems selected"; exit 1
+          fi
+          for problem in "${INSTANCES[@]}"; do
+            [ -n "${FILE_OF[$problem]:-}" ] || { echo "::error::$problem is in neither collection"; exit 1; }
+          done
+          echo "Solving ${total} problems (${SELECTION}), time_limit=${TIMELIMIT}s, ${JOBS} in parallel"
+
+          # ---- solve ----
+          for problem in "${INSTANCES[@]}"; do
+            printf '%s\n%s\n' "$problem" "${FILE_OF[$problem]}"
+          done | tr '\n' '\0' | \
+            xargs -0 -n 2 -P "$JOBS" bash "${{ github.workspace }}/.github/CUTEst/benchmark_instance.sh"
+
+          # ---- collect ----
+          solved=0
+          declare -A SET_TOTAL SET_SOLVED
+          declare -a CONSOLE
+          rows=""
+          failed_list=""
+          : > results/results.tsv
+          for problem in "${INSTANCES[@]}"; do
+            row="$ROWS_DIR/$problem.tsv"
+            if [ -f "$row" ]; then
+              IFS=$'\t' read -r name result secs < "$row"
+            else
+              name=$problem; result=failed; secs=0.00
+            fi
+            printf '%s\t%s\t%s\n' "$name" "$result" "$secs" >> results/results.tsv
+            set=${SET_OF[$problem]}
+            SET_TOTAL[$set]=$(( ${SET_TOTAL[$set]:-0} + 1 ))
+            if [ "$result" = solved ]; then
+              solved=$((solved + 1))
+              SET_SOLVED[$set]=$(( ${SET_SOLVED[$set]:-0} + 1 ))
+              CONSOLE+=("✓ instance ${name} was solved in ${secs} seconds")
+              rows+="| ✅ | \`${name}\` | solved in ${secs}s |"$'\n'
+            else
+              CONSOLE+=("✗ instance ${name} failed in ${secs} seconds")
+              rows+="| ❌ | \`${name}\` | failed in ${secs}s |"$'\n'
+              failed_list+="\`${name}\` "
+            fi
+          done
+
+          # ---- machine-readable metadata, used by later comparisons ----
+          MASTSIF_COMMIT=$(git -C "$MASTSIF" rev-parse --short HEAD)
+          MM_COMMIT=$(git -C "$MAROS_MESZAROS" rev-parse --short HEAD)
+          cat > results/meta.json <<EOF
+          {"sha": "${GITHUB_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT},
+           "selection": "${SELECTION}", "option_file": "${OPTION_FILE_INPUT}",
+           "mastsif_commit": "${MASTSIF_COMMIT}", "maros_meszaros_commit": "${MM_COMMIT}",
+           "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
+          EOF
+
+          # ---- per-collection counts ----
+          per_set=""
+          for set in nlp qp; do
+            [ -n "${SET_TOTAL[$set]:-}" ] || continue
+            label=$([ "$set" = nlp ] && echo "CUTEst NLP" || echo "Maros-Meszaros QP")
+            per_set+="${label}: ${SET_SOLVED[$set]:-0} / ${SET_TOTAL[$set]} · "
+          done
+          per_set=${per_set% · }
+
+          # ---- console summary ----
+          echo ""
+          echo "================= SUMMARY ================="
+          for line in "${CONSOLE[@]}"; do echo "$line"; done
+          echo "------------------------------------------"
+          echo "Solved ${solved} / ${total} instances (${per_set})"
+          echo "=========================================="
+
+          header() {
+            echo "## CUTEst benchmark — Uno (time_limit=${TIMELIMIT}s)"
+            echo ""
+            echo "Commit \`${GITHUB_SHA:0:7}\` · ${SELECTION} · \`${OPTION_FILE_INPUT}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo ""
+            echo "Times are Uno's CPU time (wall-clock time of the whole run when Uno did not report it)."
+            echo ""
+          }
+
+          # ---- full report on the workflow run page ----
+          {
+            header
+            echo "| | instance | result |"
+            echo "|:-:|:--|:--|"
+            printf '%s' "$rows"
+            echo ""
+            echo "**Solved ${solved} / ${total} instances** (${per_set})"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # ---- compact report for the PR comment (the full table can exceed GitHub's comment size) ----
+          {
+            header
+            echo "**Solved ${solved} / ${total} instances** (${per_set})"
+            if [ -n "$failed_list" ]; then
+              echo ""
+              echo "<details><summary>Failed instances ($((total - solved)))</summary>"
+              echo ""
+              echo "$failed_list"
+              echo ""
+              echo "</details>"
+            fi
+            echo ""
+            echo "Per-instance results: run summary and \`cutest-results-pr-${PR_NUMBER}\` artifact."
+          } > benchmark-comment.md
+
+          echo "::notice title=CUTEst benchmark::Solved ${solved}/${total} instances"
+
+      # Replaces the report with a before/after table against the latest results
+      # of `compare_pr` (only the instances whose status or time changed; the full
+      # table goes to the run summary). If those results cannot be found, a
+      # warning is emitted and the plain report is posted unchanged.
+      - name: Compare against another PR
+        if: inputs.compare_pr != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMPARE_PR: ${{ inputs.compare_pr }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          set -euo pipefail
+          ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
+            --title "CUTEst benchmark" --artifact-prefix cutest-results-pr- --changed-only \
+            --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
+            --results-dir results --output benchmark-comment.md --full-output comparison-full.md
+          if [ -f comparison-full.md ]; then
+            { echo ""; cat comparison-full.md; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Results of this run, so that future runs can compare against this PR.
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: cutest-results-pr-${{ inputs.pr_number }}
+          path: results/
+          retention-days: 90
+
+      # Posts the report as a sticky comment on the PR. Unlike the Mittelmann
+      # benchmark, each run replaces the previous report (no `append`): reports
+      # of hundreds of problems would quickly exceed GitHub's comment size.
+      - name: Post benchmark results as a PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: cutest-benchmark
+          number: ${{ inputs.pr_number }}
+          path: benchmark-comment.md
+
+      - name: Upload run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cutest-logs
+          path: logs/
+
+      - name: Restore write permissions
+        if: always()
+        run: chmod -R u+w "${{ github.workspace }}/cutest-tools" 2>/dev/null || true
