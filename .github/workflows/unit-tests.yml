@@ -57,6 +57,25 @@ jobs:
             build_type: Release
             shell: bash
 
+          # ---------- LINUX (Clang) ----------
+          # Pinned to ubuntu-24.04 so that the clang-18, libomp-18 and libc++-18 packages exist.
+          - os: ubuntu-24.04
+            toolchain: clang
+            build_type: Debug
+            shell: bash
+
+          - os: ubuntu-24.04
+            toolchain: clang
+            build_type: Release
+            shell: bash
+
+          # Clang + libc++. HiGHS is disabled: the prebuilt libhighs.a is compiled against libstdc++
+          # and Uno calls its C++ API (std::vector members), which cannot cross into a libc++ build.
+          - os: ubuntu-24.04
+            toolchain: clang-libcxx
+            build_type: Debug
+            shell: bash
+
           # ---------- MACOS ----------
           - os: macos-15
             toolchain: gcc
@@ -93,7 +112,8 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
       # Debug only: enable libstdc++'s cheap precondition checks (bounds checks on std::vector::operator[],
       # front()/back() on empty containers, etc.). Unlike _GLIBCXX_DEBUG, this does not change the ABI.
-      # libstdc++-specific: it has no effect with libc++ (macOS), so it is only passed on Linux and MinGW.
+      # libstdc++-specific: it has no effect with libc++ (macOS, Linux clang-libcxx), so it is only passed
+      # on Linux and MinGW; the clang-libcxx row uses libc++'s debug hardening mode instead.
       UNO_CXX_FLAGS: ${{ matrix.build_type == 'Debug' && '-D_GLIBCXX_ASSERTIONS' || '' }}
 
     defaults:
@@ -115,6 +135,16 @@ jobs:
           LIBGFORTRAN_FOLDER=$(dirname "$(gfortran-15 -print-file-name=libgfortran.dylib)")
           echo "LIBGFORTRAN_FOLDER=$LIBGFORTRAN_FOLDER" >> $GITHUB_ENV
           echo "OPENMP_LIB=$(brew --prefix libomp)/lib/libomp.dylib" >> $GITHUB_ENV
+
+      # ----- Linux Clang -----
+      - name: Install Clang toolchain (Linux)
+        if: startsWith(matrix.toolchain, 'clang')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18 libomp-18-dev
+          if [ "${{ matrix.toolchain }}" = "clang-libcxx" ]; then
+            sudo apt-get install -y libc++-18-dev libc++abi-18-dev
+          fi
 
       # ----- MinGW -----
       - name: Setup MSYS2
@@ -144,16 +174,43 @@ jobs:
       - name: Configure (Linux)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          CC=gcc
+          CXX=g++
+          CXX_FLAGS="${UNO_CXX_FLAGS}"
+          EXTRA_ARGS=()
+          case "${{ matrix.toolchain }}" in
+            clang)
+              CC=clang-18
+              CXX=clang++-18
+              ;;
+            clang-libcxx)
+              CC=clang-18
+              CXX=clang++-18
+              CXX_FLAGS="-stdlib=libc++"
+              if [ "${BUILD_TYPE}" = "Debug" ]; then
+                CXX_FLAGS="${CXX_FLAGS} -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG"
+              fi
+              # libspral.a uses libstdc++ internally (behind its C API), so link libstdc++ explicitly.
+              # -l:libstdc++.so.6 rather than -lstdc++: under -stdlib=libc++, the clang driver
+              # rewrites -lstdc++ into -lc++.
+              EXTRA_ARGS+=("-DAUXILIARY_LIBRARIES=-l:libstdc++.so.6")
+              ;;
+          esac
+          if [ "${{ matrix.toolchain }}" != "clang-libcxx" ]; then
+            EXTRA_ARGS+=(
+              "-DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs"
+              "-DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a"
+            )
+          fi
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
             -DENABLE_TESTS=ON \
-            -DCMAKE_C_COMPILER=gcc \
-            -DCMAKE_CXX_COMPILER=g++ \
-            -DCMAKE_CXX_FLAGS="${{env.UNO_CXX_FLAGS}}" \
+            -DCMAKE_C_COMPILER=${CC} \
+            -DCMAKE_CXX_COMPILER=${CXX} \
+            -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
             -DCMAKE_Fortran_COMPILER=gfortran \
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
-            -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
             -DSPRAL_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
             -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
@@ -164,9 +221,9 @@ jobs:
             -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-            -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
             -DBUILD_STATIC_LIBS=OFF \
-            -DBUILD_SHARED_LIBS=ON
+            -DBUILD_SHARED_LIBS=ON \
+            "${EXTRA_ARGS[@]}"
 
       - name: Configure (Mac)
         if: startsWith(matrix.os, 'macos')
