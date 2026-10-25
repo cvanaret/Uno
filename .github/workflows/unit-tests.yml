@@ -26,10 +26,14 @@ concurrency:
 
 jobs:
   build:
+    name: ${{ matrix.os }} (${{ matrix.toolchain }}, ${{ matrix.build_type }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        # Each platform is tested in Debug (asserts enabled) and in Release (-O3 -DNDEBUG, the
+        # configuration users ship). Release catches side effects inside assert() and bugs that
+        # only appear with optimization (uninitialized reads, aliasing, FP reassociation).
         include:
 
           # ---------- LINUX ----------
@@ -38,9 +42,19 @@ jobs:
             build_type: Debug
             shell: bash
 
+          - os: ubuntu-latest
+            toolchain: gcc
+            build_type: Release
+            shell: bash
+
           - os: ubuntu-24.04-arm
             toolchain: gcc
             build_type: Debug
+            shell: bash
+
+          - os: ubuntu-24.04-arm
+            toolchain: gcc
+            build_type: Release
             shell: bash
 
           # ---------- MACOS ----------
@@ -49,15 +63,30 @@ jobs:
             build_type: Debug
             shell: bash
 
+          - os: macos-15
+            toolchain: gcc
+            build_type: Release
+            shell: bash
+
           - os: macos-15-intel
             toolchain: gcc
             build_type: Debug
+            shell: bash
+
+          - os: macos-15-intel
+            toolchain: gcc
+            build_type: Release
             shell: bash
 
           # ---------- WINDOWS MINGW ----------
           - os: windows-latest
             toolchain: mingw
             build_type: Debug
+            shell: msys2 {0}
+
+          - os: windows-latest
+            toolchain: mingw
+            build_type: Release
             shell: msys2 {0}
 
     env:
