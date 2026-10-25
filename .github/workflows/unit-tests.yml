@@ -91,6 +91,10 @@ jobs:
 
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
+      # Debug only: enable libstdc++'s cheap precondition checks (bounds checks on std::vector::operator[],
+      # front()/back() on empty containers, etc.). Unlike _GLIBCXX_DEBUG, this does not change the ABI.
+      # libstdc++-specific: it has no effect with libc++ (macOS), so it is only passed on Linux and MinGW.
+      UNO_CXX_FLAGS: ${{ matrix.build_type == 'Debug' && '-D_GLIBCXX_ASSERTIONS' || '' }}
 
     defaults:
       run:
@@ -145,6 +149,7 @@ jobs:
             -DENABLE_TESTS=ON \
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_CXX_FLAGS="${{env.UNO_CXX_FLAGS}}" \
             -DCMAKE_Fortran_COMPILER=gfortran \
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
             -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
@@ -206,6 +211,7 @@ jobs:
             -DENABLE_TESTS=ON \
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_CXX_FLAGS="${UNO_CXX_FLAGS}" \
             -DCMAKE_Fortran_COMPILER=gfortran \
             -DMUMPS_INCLUDE_DIR=${GITHUB_WORKSPACE}/dependencies/include \
             -DMETIS_INCLUDE_DIR=/mingw64/include \
