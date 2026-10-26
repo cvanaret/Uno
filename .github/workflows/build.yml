@@ -438,4 +438,5 @@ jobs:
         if: matrix.mode == 'ON'
         run: |
           x86_64-w64-mingw32-g++ -std=c++17 -DHSL_RUNTIME_LOADING -Iuno -fsyntax-only \
-            uno/ingredients/subproblem_solvers/HSL/HSLLoader.cpp
+            uno/ingredients/subproblem_solvers/HSL/HSLLoader.cpp \
+            uno/tools/DynamicLoader.cpp

@@ -14,6 +14,10 @@ namespace uno {
       return LoadLibraryA(name);
    }
 
+   void close_library(LibraryHandle handle) {
+      FreeLibrary(handle);
+   }
+
    void* raw_symbol(LibraryHandle handle, const char* symbol) {
       return reinterpret_cast<void*>(GetProcAddress(handle, symbol));
    }
@@ -21,6 +25,10 @@ namespace uno {
    // resolve now, do not export the HSL symbols globally
    LibraryHandle open_library(const char* name) {
       return dlopen(name, RTLD_NOW);
+   }
+
+   void close_library(LibraryHandle handle) {
+      dlclose(handle);
    }
 
    void* raw_symbol(LibraryHandle handle, const char* symbol) {

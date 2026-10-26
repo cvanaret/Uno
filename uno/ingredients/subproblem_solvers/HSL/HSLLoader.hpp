@@ -83,6 +83,9 @@ namespace uno {
    // dlopen the HSL library (default name per platform, overridable via the
    // UNO_HSL_LIBRARY environment variable) and resolve the symbols. Idempotent.
    bool load_hsl_library(const std::string& user_library_name = "");
+   // close the HSL library (if loaded) and reset the symbols, so that a later load starts afresh.
+   // Not thread-safe: no HSL solver may be alive.
+   void unload_hsl_library();
    bool ma57_symbols_available();
    bool ma27_symbols_available();
    bool ma86_symbols_available();
