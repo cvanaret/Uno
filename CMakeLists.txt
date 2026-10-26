@@ -18,6 +18,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(ENABLE_TESTS "Build unit tests" OFF)
 option(UNO_PYBIND11_DETAILED_ERRORS "Verbose pybind11 type-conversion error messages" OFF)
 option(USE_OPENMP "Build with OpenMP support" ON)
+option(UNO_WARNINGS_AS_ERRORS "Treat compiler warnings as errors in Uno's own code (not in third-party code)" OFF)
 
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
@@ -36,7 +37,7 @@ if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
    # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
 else()
-   add_compile_options(-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion)
+   add_compile_options(-Wall -Wextra "$<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>" -pedantic -Wunused-value -Wconversion)
    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
 endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -64,6 +65,15 @@ target_include_directories(uno_dependencies INTERFACE
 
 if(ENABLE_TESTS)
    add_executable(run_unotest EXCLUDE_FROM_ALL)
+endif()
+
+# warnings as errors, only for Uno's own code: third-party code (e.g. GoogleTest) is not affected
+if(UNO_WARNINGS_AS_ERRORS)
+   set(UNO_WERROR_FLAG $<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>)
+   target_compile_options(compiled_uno_files PRIVATE ${UNO_WERROR_FLAG})
+   if(ENABLE_TESTS)
+      target_compile_options(run_unotest PRIVATE ${UNO_WERROR_FLAG})
+   endif()
 endif()
 
 # ======================
@@ -159,6 +169,13 @@ if(HSL_RUNTIME_LOADING)
    set(_compile_ma57 ON)
    set(_compile_ma27 ON)
    set(_compile_ma86 ON)
+   if(ENABLE_TESTS)
+      # stub HSL library (MA27 only) to test the runtime loading without the real libhsl
+      add_library(uno_hsl_stub SHARED EXCLUDE_FROM_ALL unotest/hsl_stub/hsl_stub.c)
+      add_dependencies(run_unotest uno_hsl_stub)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/HSLRuntimeLoadingTests.cpp)
+      target_compile_definitions(run_unotest PRIVATE UNO_TEST_HSL_STUB_PATH="$<TARGET_FILE:uno_hsl_stub>")
+   endif()
 else()
    find_library(HSL hsl)
    if(HSL)
@@ -356,6 +373,12 @@ if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
 endif()
 target_link_libraries(uno_dependencies INTERFACE ${FORTRAN_LIBS})
+# the Fortran runtime libraries are linked by name, but Uno's libraries and executables are linked by the C++ compiler,
+# which may not search the Fortran compiler's directories. This is the case for flang (FortranRuntime and FortranDecimal
+# live in the LLVM installation, e.g. /usr/lib/llvm-20/lib, which clang++ does not search).
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "LLVMFlang" AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
+   target_link_directories(uno_dependencies INTERFACE ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
+endif()
 
 target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
 

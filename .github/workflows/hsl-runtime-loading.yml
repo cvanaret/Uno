@@ -1,0 +1,146 @@
+name: HSL runtime loading
+
+# Runtime behavior of -DHSL_RUNTIME_LOADING=ON (libhsl is dlopen'd instead of linked):
+# - hosted runner, no libhsl: the loader tests (missing library, partial stub library exporting MA27 only,
+#   libhsl_path/UNO_HSL_LIBRARY precedence) and the rest of the unit tests;
+# - self-hosted runner, real libhsl: the MA27/MA57/MA86 tests, through the dlopen'd library.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  without-libhsl:
+    name: Without libhsl (hosted)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DENABLE_TESTS=ON \
+            -DHSL_RUNTIME_LOADING=ON \
+            -DUNO_WARNINGS_AS_ERRORS=ON \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_CXX_FLAGS="-D_GLIBCXX_ASSERTIONS" \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DMUMPS_INCLUDE_DIR=${DEPS}/include \
+            -DMETIS_INCLUDE_DIR=${DEPS}/include \
+            -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
+            -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+            -DBQPD=${DEPS}/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a \
+            -DSPRAL=${DEPS}/lib/libspral.a \
+            -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+            -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --target run_unotest --parallel
+
+      - name: Run the HSL runtime-loading tests
+        working-directory: build
+        run: ctest --output-on-failure --no-tests=error -C ${BUILD_TYPE} -R '^HSLRuntimeLoading\.'
+
+      # the MA27/MA57/MA86 numerical tests need the real libhsl (see the self-hosted job)
+      - name: Run the other unit tests
+        working-directory: build
+        run: ctest --output-on-failure -C ${BUILD_TYPE} -E '^(HSLRuntimeLoading\.|MA(27|57|86)/)'
+
+  with-libhsl:
+    name: With libhsl (self-hosted)
+    runs-on: self-hosted
+    env:
+      HOME: /home/optimi/cvanaret
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      # same setup as the "Unit tests HSL" workflow, except that libhsl is not linked (-DHSL) but dlopen'd
+      - name: Configure (with ASan + UBSan)
+        run: |
+          SANITIZER_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all -O1 -g"
+
+          echo "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:detect_odr_violation=0" >> $GITHUB_ENV
+          echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1" >> $GITHUB_ENV
+          echo "LIBHSL_PATH=$HOME/libhsl/builddir/libhsl.so" >> $GITHUB_ENV
+
+          LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
+          LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
+          LIBAMPL_PATH="$HOME/ampl/amplsolver.a"
+
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DENABLE_TESTS=ON \
+            -DHSL_RUNTIME_LOADING=ON \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DCMAKE_C_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_CXX_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="${SANITIZER_FLAGS}" \
+            -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
+            -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
+            -DAMPLSOLVER=${LIBAMPL_PATH} \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --target run_unotest --parallel
+
+      - name: Check that libuno does not link libhsl
+        run: |
+          test -f build/libuno.so
+          if ldd build/libuno.so | grep -i hsl; then
+            echo "libuno.so links libhsl: the runtime loading is not in effect"
+            exit 1
+          fi
+
+      # the MA27/MA57/MA86 numerical tests, with libhsl dlopen'd through UNO_HSL_LIBRARY
+      - name: Run the HSL solver tests through the dlopen'd libhsl
+        working-directory: build
+        run: UNO_HSL_LIBRARY=${LIBHSL_PATH} ctest --output-on-failure --no-tests=error -C ${BUILD_TYPE} -R '^MA(27|57|86)/'
+
+      - name: Run all unit tests
+        working-directory: build
+        run: UNO_HSL_LIBRARY=${LIBHSL_PATH} ctest --output-on-failure -C ${BUILD_TYPE}

@@ -1,0 +1,187 @@
+name: LLVM toolchain
+
+# Build Uno with a pure LLVM toolchain (clang + flang) instead of gcc + gfortran:
+# - CMake's FortranCInterface name mangling is detected with flang;
+# - the unit tests are run;
+# - the Fortran interface (uno_c.f90, uno_fortran.f90) is compiled with flang and the Fortran example is run.
+#
+# The runtimes of different Fortran compilers must not be mixed, so the Fortran dependencies are built with flang
+# (reference BLAS/LAPACK, sequential MUMPS) and only flang's runtime is linked (CMake adds it automatically, from the
+# implicit link libraries of the Fortran compiler). The dependencies without Fortran (METIS, HiGHS) are the prebuilt
+# ones. BQPD (whose source is not public, and the binary is built with gfortran) and SPRAL are not used, so the
+# Fortran example runs with the ipopt preset (MUMPS) instead of filtersqp (BQPD).
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: clang-${{ matrix.llvm }} + flang-${{ matrix.llvm }} (${{ matrix.build_type }})
+    # pinned so that the versioned LLVM packages exist
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # LLVM >= 19 is required: flang 18 passes a garbage value for a character(c_char), value
+        # argument of a bind(C) interface (e.g. the Hessian triangle of uno_set_lagrangian_hessian).
+        llvm: [20]
+        build_type: [Debug, Release]
+
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      CC: clang-${{ matrix.llvm }}
+      CXX: clang++-${{ matrix.llvm }}
+      FC: flang-${{ matrix.llvm }}
+      LAPACK_VERSION: v3.12.1
+      MUMPS_CMAKE_VERSION: v5.9.1.2  # https://github.com/scivision/mumps (CMake build of MUMPS 5.9.1)
+      FLANG_DEPS: ${{ github.workspace }}/../flang-deps
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-${{ matrix.llvm }} flang-${{ matrix.llvm }} libomp-${{ matrix.llvm }}-dev
+          ${CC} --version
+          ${FC} --version
+
+      - name: Cache the Fortran dependencies built with flang
+        id: cache-flang-deps
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.FLANG_DEPS }}
+          key: flang-deps-llvm${{ matrix.llvm }}-lapack-${{ env.LAPACK_VERSION }}-mumps-${{ env.MUMPS_CMAKE_VERSION }}
+
+      - name: Build BLAS, CBLAS and LAPACK with flang
+        if: steps.cache-flang-deps.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch ${LAPACK_VERSION} https://github.com/Reference-LAPACK/lapack.git ${{ runner.temp }}/lapack
+          cmake -S ${{ runner.temp }}/lapack -B ${{ runner.temp }}/lapack-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=${CC} \
+            -DCMAKE_Fortran_COMPILER=${FC} \
+            -DCBLAS=ON \
+            -DLAPACKE=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_INSTALL_PREFIX=${FLANG_DEPS}
+          cmake --build ${{ runner.temp }}/lapack-build --parallel
+          cmake --install ${{ runner.temp }}/lapack-build
+
+      - name: Build sequential MUMPS with flang
+        if: steps.cache-flang-deps.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch ${MUMPS_CMAKE_VERSION} https://github.com/scivision/mumps.git ${{ runner.temp }}/mumps
+          cmake -S ${{ runner.temp }}/mumps -B ${{ runner.temp }}/mumps-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=${CC} \
+            -DCMAKE_Fortran_COMPILER=${FC} \
+            -DMUMPS_parallel=OFF \
+            -DMUMPS_scalapack=OFF \
+            -DMUMPS_metis=OFF \
+            -DMUMPS_openmp=OFF \
+            -DBUILD_SINGLE=OFF \
+            -DBUILD_DOUBLE=ON \
+            -DMUMPS_BUILD_TESTING=OFF \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DLAPACK_ROOT=${FLANG_DEPS} \
+            -DMUMPS_find_static=ON \
+            -DCMAKE_INSTALL_PREFIX=${FLANG_DEPS}
+          cmake --build ${{ runner.temp }}/mumps-build --parallel
+          cmake --install ${{ runner.temp }}/mumps-build
+
+      - name: Check that the Fortran dependencies do not use the gfortran runtime
+        run: |
+          ls ${FLANG_DEPS}/lib
+          for library in ${FLANG_DEPS}/lib/*.a; do
+            if nm ${library} 2>/dev/null | grep -q " U _gfortran_"; then
+              echo "${library} references the gfortran runtime"
+              exit 1
+            fi
+          done
+
+      # prebuilt METIS and HiGHS (no Fortran)
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DENABLE_TESTS=ON \
+            -DCMAKE_C_COMPILER=${CC} \
+            -DCMAKE_CXX_COMPILER=${CXX} \
+            -DCMAKE_Fortran_COMPILER=${FC} \
+            -DMUMPS_INCLUDE_DIR=${FLANG_DEPS}/include \
+            -DMUMPS_LIBRARY=${FLANG_DEPS}/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${FLANG_DEPS}/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${FLANG_DEPS}/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${FLANG_DEPS}/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${FLANG_DEPS}/lib/libcblas.a;${FLANG_DEPS}/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${FLANG_DEPS}/lib/liblapack.a \
+            -DMETIS_INCLUDE_DIR=${DEPS}/include \
+            -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+            -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
+            -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+          grep -E "CMAKE_Fortran_COMPILER_ID |CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES" build/CMakeFiles/*/CMakeFortranCompiler.cmake
+          grep -E "define FC_(GLOBAL|MODULE)\(" build/include/fortran_interface.h
+
+      - name: Build
+        run: |
+          cmake --build build --parallel
+          cmake --build build --target run_unotest --parallel
+
+      - name: Check that libuno does not use the gfortran runtime
+        run: |
+          ldd build/libuno.so
+          if ldd build/libuno.so | grep -q libgfortran; then
+            echo "libuno.so depends on the gfortran runtime"
+            exit 1
+          fi
+
+      - name: Run unit tests
+        working-directory: build
+        run: ctest --output-on-failure -C ${BUILD_TYPE}
+
+      - name: Compile Fortran example with flang
+        working-directory: interfaces/Fortran
+        run: |
+          ${FC} example_uno.f90 -o example_uno \
+            -L${{ github.workspace }}/build -luno \
+            -Wl,-rpath,${{ github.workspace }}/build
+          if ldd example_uno | grep -q libgfortran; then
+            echo "The Fortran example depends on the gfortran runtime"
+            exit 1
+          fi
+
+      # ipopt preset: the filtersqp preset requires BQPD
+      - name: Run Fortran example
+        working-directory: interfaces/Fortran
+        run: ./example_uno ipopt

@@ -18,6 +18,7 @@ namespace uno {
 #endif
 
    LibraryHandle open_library(const char* name);
+   void close_library(LibraryHandle handle);
    void* raw_symbol(LibraryHandle handle, const char* symbol);
    void* resolve_symbol(LibraryHandle handle, const std::string& base);
 

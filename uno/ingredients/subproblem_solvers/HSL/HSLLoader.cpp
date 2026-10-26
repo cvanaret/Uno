@@ -84,6 +84,32 @@ namespace uno {
       return true;
    }
 
+   void unload_hsl_library() {
+      if (hsl_handle != nullptr) {
+         close_library(hsl_handle);
+      }
+      hsl_handle = nullptr;
+      hsl_loaded_name.clear();
+      hsl_libhsl_version = nullptr;
+      hsl_ma57id = nullptr;
+      hsl_ma57ad = nullptr;
+      hsl_ma57bd = nullptr;
+      hsl_ma57cd = nullptr;
+      hsl_ma57dd = nullptr;
+      hsl_ma57ed = nullptr;
+      hsl_ma27id = nullptr;
+      hsl_ma27ad = nullptr;
+      hsl_ma27bd = nullptr;
+      hsl_ma27cd = nullptr;
+      hsl_ma86_default_control = nullptr;
+      hsl_ma86_analyse = nullptr;
+      hsl_ma86_factor = nullptr;
+      hsl_ma86_solve = nullptr;
+      hsl_ma86_finalise = nullptr;
+      hsl_mc68_default_control = nullptr;
+      hsl_mc68_order = nullptr;
+   }
+
    bool ma57_symbols_available() {
       load_hsl_library();
       return hsl_ma57id && hsl_ma57ad && hsl_ma57bd && hsl_ma57cd && hsl_ma57dd && hsl_ma57ed;
