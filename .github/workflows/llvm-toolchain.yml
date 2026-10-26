@@ -1,0 +1,113 @@
+name: LLVM toolchain
+
+# Build Uno with a pure LLVM toolchain (clang + flang) instead of gcc + gfortran:
+# - CMake's FortranCInterface name mangling is detected with flang;
+# - the unit tests are run;
+# - the Fortran interface (uno_c.f90, uno_fortran.f90) is compiled with flang and the Fortran example is run.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: clang-${{ matrix.llvm }} + flang-${{ matrix.llvm }} (${{ matrix.build_type }})
+    # pinned so that the versioned LLVM packages exist
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # LLVM >= 19 is required: flang 18 passes a garbage value for a character(c_char), value
+        # argument of a bind(C) interface (e.g. the Hessian triangle of uno_set_lagrangian_hessian).
+        llvm: [20]
+        build_type: [Debug, Release]
+
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      CC: clang-${{ matrix.llvm }}
+      CXX: clang++-${{ matrix.llvm }}
+      FC: flang-${{ matrix.llvm }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-${{ matrix.llvm }} flang-${{ matrix.llvm }} libomp-${{ matrix.llvm }}-dev libgfortran5
+          ${CC} --version
+          ${FC} --version
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      # The prebuilt dependencies (BQPD, MUMPS, SPRAL, LAPACK) are compiled with gfortran: their Fortran runtime
+      # (libgfortran) is not among flang's implicit link libraries, so it is linked explicitly.
+      - name: Configure
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DENABLE_TESTS=ON \
+            -DCMAKE_C_COMPILER=${CC} \
+            -DCMAKE_CXX_COMPILER=${CXX} \
+            -DCMAKE_Fortran_COMPILER=${FC} \
+            -DAUXILIARY_LIBRARIES="-l:libgfortran.so.5" \
+            -DMUMPS_INCLUDE_DIR=${DEPS}/include \
+            -DMETIS_INCLUDE_DIR=${DEPS}/include \
+            -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
+            -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+            -DBQPD=${DEPS}/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a \
+            -DSPRAL=${DEPS}/lib/libspral.a \
+            -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+            -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+          grep -E "CMAKE_Fortran_COMPILER_ID |CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES" build/CMakeFiles/*/CMakeFortranCompiler.cmake
+          grep -E "define FC_(GLOBAL|MODULE)\(" build/include/fortran_interface.h
+
+      - name: Build
+        run: |
+          cmake --build build --parallel
+          cmake --build build --target run_unotest --parallel
+
+      - name: Run unit tests
+        working-directory: build
+        run: ctest --output-on-failure -C ${BUILD_TYPE}
+
+      - name: Compile Fortran example with flang
+        working-directory: interfaces/Fortran
+        run: |
+          ${FC} example_uno.f90 -o example_uno \
+            -L${{ github.workspace }}/build -luno \
+            -Wl,-rpath,${{ github.workspace }}/build
+
+      - name: Run Fortran example
+        working-directory: interfaces/Fortran
+        run: ./example_uno
