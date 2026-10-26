@@ -95,25 +95,37 @@ program example_uno
     model = uno_create_model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 
     success = uno_set_model_name(model, "hs015")
+    call check_success(success, "uno_set_model_name")
     success = uno_set_objective(model, optimization_sense, objective, gradient)
+    call check_success(success, "uno_set_objective")
     success = uno_set_constraints(model, number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds, &
                                   number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
+    call check_success(success, "uno_set_constraints")
     success = uno_set_jacobian_operator(model, jacobian_operator)
+    call check_success(success, "uno_set_jacobian_operator")
     success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
+    call check_success(success, "uno_set_jacobian_transposed_operator")
     ! success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
     ! success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
     success = uno_set_initial_primal_iterate(model, x0)
+    call check_success(success, "uno_set_initial_primal_iterate")
     success = uno_set_initial_dual_iterate(model, y0)
+    call check_success(success, "uno_set_initial_dual_iterate")
 
     !---------------------------------------------------
     ! Solver creation
     !---------------------------------------------------
     solver = uno_create_solver()
     success = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
+    call check_success(success, "uno_set_solver_integer_option")
     success = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
+    call check_success(success, "uno_set_solver_double_option")
     success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
+    call check_success(success, "uno_set_solver_bool_option")
     success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
+    call check_success(success, "uno_set_solver_string_option")
     success = uno_set_solver_preset(solver, "filtersqp")
+    call check_success(success, "uno_set_solver_preset")
 
     !---------------------------------------------------
     ! Run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
@@ -127,7 +139,9 @@ program example_uno
     !---------------------------------------------------
     success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
                                          hessian_column_indices, lagrangian_hessian)
+    call check_success(success, "uno_set_lagrangian_hessian")
     success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
+    call check_success(success, "uno_set_lagrangian_sign_convention")
     call uno_optimize(solver, model)
 
     !---------------------------------------------------
@@ -135,6 +149,10 @@ program example_uno
     !---------------------------------------------------
     method_description = uno_get_method_description(solver)
     print *, 'method description = ', method_description
+    ! the second run must use the exact Hessian set above (not fall back to L-BFGS)
+    if (index(method_description, 'exact Hessian') == 0) then
+        error stop 'The exact Hessian was not used in run 2'
+    end if
 
     !---------------------------------------------------
     ! Get options
@@ -197,6 +215,13 @@ program example_uno
     print *, 'Complementarity at solution = ', solution_complementarity
 
     !---------------------------------------------------
+    ! Check the solution (hs015: f* = 306.5 at x* = (0.5, 2))
+    !---------------------------------------------------
+    if (optimization_status /= UNO_SUCCESS) error stop 'The optimization did not succeed'
+    if (abs(solution_objective - 306.5d0) > 1.0d-6) error stop 'Wrong solution objective'
+    if (any(abs(primal_solution - [0.5d0, 2.0d0]) > 1.0d-6)) error stop 'Wrong primal solution'
+
+    !---------------------------------------------------
     ! Cleanup
     !---------------------------------------------------
     deallocate(logger)
@@ -206,6 +231,16 @@ program example_uno
 
 contains
     include 'uno_fortran.f90'
+
+    ! Stop if a call to the Uno API was rejected
+    subroutine check_success(success, function_name)
+        logical(c_bool), intent(in) :: success
+        character(len=*), intent(in) :: function_name
+        if (.not. success) then
+            print *, 'Error: ', function_name, ' failed'
+            error stop 1
+        end if
+    end subroutine check_success
 
     ! Objective
     function objective_hs15(number_variables, x, objective_value, user_data) result(res) &
