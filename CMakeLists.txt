@@ -352,6 +352,12 @@ if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
 endif()
 target_link_libraries(uno_dependencies INTERFACE ${FORTRAN_LIBS})
+# the Fortran runtime libraries are linked by name, but Uno's libraries and executables are linked by the C++ compiler,
+# which may not search the Fortran compiler's directories. This is the case for flang (FortranRuntime and FortranDecimal
+# live in the LLVM installation, e.g. /usr/lib/llvm-20/lib, which clang++ does not search).
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "LLVMFlang" AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
+   target_link_directories(uno_dependencies INTERFACE ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
+endif()
 
 target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
 
