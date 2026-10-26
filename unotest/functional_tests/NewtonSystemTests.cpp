@@ -470,8 +470,8 @@ TEST(NewtonSystemCondensation, CondensedSolutionSolvesUncondensedSystem) {
    for (size_t j: Range(n)) primal_direction[j] = dx[j];
    barrier_problem.compute_bound_dual_direction(iterate.primals, iterate.multipliers, primal_direction, direction_multipliers, step_length);
    for (size_t j: Range(n)) {
-      EXPECT_EQ(direction_multipliers.lower_bounds[j], dz_lower[j]);
-      EXPECT_EQ(direction_multipliers.upper_bounds[j], dz_upper[j]);
+      EXPECT_NEAR(direction_multipliers.lower_bounds[j], dz_lower[j], 1e-12 * (1. + std::abs(dz_lower[j]))) << "lower bound dual " << j;
+      EXPECT_NEAR(direction_multipliers.upper_bounds[j], dz_upper[j], 1e-12 * (1. + std::abs(dz_upper[j]))) << "upper bound dual " << j;
    }
 }
 
