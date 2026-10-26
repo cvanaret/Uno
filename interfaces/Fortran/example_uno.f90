@@ -18,6 +18,7 @@ program example_uno
     real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
     character(:), allocatable :: logger
     character(:), allocatable :: method_description
+    character(len=32) :: preset = "filtersqp"  ! can be overridden by the first command-line argument
     character(len=*), parameter :: hessian_model = "exact"
     character(len=*), parameter :: problem_type = UNO_PROBLEM_NONLINEAR
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
@@ -124,7 +125,11 @@ program example_uno
     call check_success(success, "uno_set_solver_bool_option")
     success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
     call check_success(success, "uno_set_solver_string_option")
-    success = uno_set_solver_preset(solver, "filtersqp")
+    if (command_argument_count() >= 1) then
+        call get_command_argument(1, preset)
+    end if
+    print *, 'preset = ', trim(preset)
+    success = uno_set_solver_preset(solver, trim(preset))
     call check_success(success, "uno_set_solver_preset")
 
     !---------------------------------------------------
@@ -218,7 +223,8 @@ program example_uno
     ! Check the solution (hs015: f* = 306.5 at x* = (0.5, 2))
     !---------------------------------------------------
     if (optimization_status /= UNO_SUCCESS) error stop 'The optimization did not succeed'
-    if (abs(solution_objective - 306.5d0) > 1.0d-6) error stop 'Wrong solution objective'
+    ! relative tolerance on the objective: an interior-point method stops close to, not at, the optimum
+    if (abs(solution_objective - 306.5d0) > 1.0d-6 * 306.5d0) error stop 'Wrong solution objective'
     if (any(abs(primal_solution - [0.5d0, 2.0d0]) > 1.0d-6)) error stop 'Wrong primal solution'
 
     !---------------------------------------------------
