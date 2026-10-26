@@ -37,10 +37,12 @@ jobs:
         include:
 
           # ---------- LINUX ----------
+          # canonical job: compiler warnings in Uno's code (library and tests) are errors
           - os: ubuntu-latest
             toolchain: gcc
             build_type: Debug
             shell: bash
+            werror: true
 
           - os: ubuntu-latest
             toolchain: gcc
@@ -205,6 +207,7 @@ jobs:
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
             -DENABLE_TESTS=ON \
+            -DUNO_WARNINGS_AS_ERRORS=${{ matrix.werror && 'ON' || 'OFF' }} \
             -DCMAKE_C_COMPILER=${CC} \
             -DCMAKE_CXX_COMPILER=${CXX} \
             -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
