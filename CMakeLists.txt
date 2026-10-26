@@ -18,6 +18,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(ENABLE_TESTS "Build unit tests" OFF)
 option(UNO_PYBIND11_DETAILED_ERRORS "Verbose pybind11 type-conversion error messages" OFF)
 option(USE_OPENMP "Build with OpenMP support" ON)
+option(UNO_WARNINGS_AS_ERRORS "Treat compiler warnings as errors in Uno's own code (not in third-party code)" OFF)
 
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
@@ -64,6 +65,15 @@ target_include_directories(uno_dependencies INTERFACE
 
 if(ENABLE_TESTS)
    add_executable(run_unotest EXCLUDE_FROM_ALL)
+endif()
+
+# warnings as errors, only for Uno's own code: third-party code (e.g. GoogleTest) is not affected
+if(UNO_WARNINGS_AS_ERRORS)
+   set(UNO_WERROR_FLAG $<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>)
+   target_compile_options(compiled_uno_files PRIVATE ${UNO_WERROR_FLAG})
+   if(ENABLE_TESTS)
+      target_compile_options(run_unotest PRIVATE ${UNO_WERROR_FLAG})
+   endif()
 endif()
 
 # ======================
