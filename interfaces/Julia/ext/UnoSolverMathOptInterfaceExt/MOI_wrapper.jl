@@ -233,25 +233,10 @@ end
 
 ### MOI.ListOfConstraintTypesPresent
 
-function _add_scalar_nonlinear_constraints(ret, nlp_model::MOI.Nonlinear.Model)
-    for v in values(nlp_model.constraints)
-        F, S = MOI.ScalarNonlinearFunction, typeof(v.set)
-        if !((F, S) in ret)
-            push!(ret, (F, S))
-        end
-    end
-    return
-end
-
 function MOI.get(model::Optimizer, attr::MOI.ListOfConstraintTypesPresent)
-    ret = MOI.get(model.model.variables, attr)
-    append!(ret, MOI.get(model.model, attr))
-    _add_scalar_nonlinear_constraints(ret, model.model.inner)
+    ret = MOI.get(model.model, attr)
     if !isempty(model.vector_nonlinear_oracle_constraints)
         push!(ret, (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{Float64}))
-    end
-    if !isempty(model.model.qp.parameters)
-        push!(ret, (MOI.VariableIndex, MOI.Parameter{Float64}))
     end
     return ret
 end
@@ -986,7 +971,15 @@ MOI.supports(::Optimizer, ::MOI.NLPBlock) = true
 MOI.get(model::Optimizer, ::MOI.NLPBlock) = model.nlp_data
 
 function MOI.set(model::Optimizer, ::MOI.NLPBlock, nlp_data::MOI.NLPBlockData)
-    if !MOI.is_empty(model.model.inner)
+    # A quadratic objective sets the inner objective sense without adding
+    # nonlinear data, so ignore that sense when checking for a mixed API.
+    nlp = model.model.inner
+    if nlp.objective !== nothing ||
+       !isempty(nlp.expressions) ||
+       nlp.last_constraint_index != 0 ||
+       !isempty(nlp.parameters) ||
+       !isempty(nlp.operators.registered_univariate_operators) ||
+       !isempty(nlp.operators.registered_multivariate_operators)
         error("Cannot mix the new and legacy nonlinear APIs")
     end
     model.nlp_data = nlp_data
@@ -1134,14 +1127,24 @@ function MOI.eval_objective_gradient(d::_OracleNLPEvaluator, grad, x)
     return MOI.eval_objective_gradient(d.nlp, grad, x)
 end
 
-function MOI.Nonlinear._constraint_bounds(d::_OracleNLPEvaluator)
-    bounds = MOI.NLPBoundsPair[]
-    for (_, s) in d.oracles
-        for i in 1:s.set.output_dimension
-            push!(bounds, MOI.NLPBoundsPair(s.set.l[i], s.set.u[i]))
-        end
+function MOI.Utilities.constraint_bounds(model::Optimizer)
+    lower = copy(model.model.qp.g_L)
+    upper = copy(model.model.qp.g_U)
+    for (_, s) in model.vector_nonlinear_oracle_constraints
+        append!(lower, s.set.l)
+        append!(upper, s.set.u)
     end
-    return append!(bounds, d.nlp_bounds)
+    if model.uses_nlp_block
+        for bound in model.nlp_data.constraint_bounds
+            push!(lower, bound.lower)
+            push!(upper, bound.upper)
+        end
+    else
+        bounds = MOI.Utilities.constraint_bounds(model.model.inner)
+        append!(lower, bounds.lower)
+        append!(upper, bounds.upper)
+    end
+    return MOI.Utilities.Hyperrectangle(lower, upper)
 end
 
 MOI.Nonlinear._has_objective(d::_OracleNLPEvaluator) = d.has_objective
@@ -1437,9 +1440,8 @@ function _setup_inner(model::Optimizer)::UnoSolver.Model
     if !model.needs_new_inner
         return model.inner
     end
-    bounds = MOI.Nonlinear._constraint_bounds(model.evaluator)
-    g_L = Float64[b.lower for b in bounds]
-    g_U = Float64[b.upper for b in bounds]
+    bounds = MOI.Utilities.constraint_bounds(model)
+    g_L, g_U = bounds.lower, bounds.upper
     nvar = length(model.model.variables.lower)
     ncon = length(g_L)
     nnzj = length(model.jrows)
@@ -1659,9 +1661,8 @@ function _manually_evaluated_primal_status(model::Optimizer)
     MOI.eval_constraint(model, g, x)
 
     x_L, x_U = model.model.variables.lower, model.model.variables.upper
-    bounds = MOI.Nonlinear._constraint_bounds(model.evaluator)
-    g_L = Float64[b.lower for b in bounds]
-    g_U = Float64[b.upper for b in bounds]
+    bounds = MOI.Utilities.constraint_bounds(model)
+    g_L, g_U = bounds.lower, bounds.upper
     m, n = length(g_L), length(x)
     # 1e-8 is the default primal tolerance
     tol = get(model.options, "primal_tolerance", 1e-8)
