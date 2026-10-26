@@ -1,0 +1,118 @@
+name: CMake package
+
+# Install Uno to a non-default prefix (without sudo) and use it from another CMake project with find_package(Uno),
+# for the shared library, the static library, and both. The shared package is also moved after installation, to
+# check that it is relocatable.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: find_package(Uno) (${{ matrix.libraries }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - libraries: shared
+            static: 'OFF'
+            shared: 'ON'
+            targets: Uno::uno
+          - libraries: static
+            static: 'ON'
+            shared: 'OFF'
+            targets: Uno::uno
+          - libraries: static+shared
+            static: 'ON'
+            shared: 'ON'
+            targets: Uno::uno Uno::uno_static Uno::uno_shared
+
+    env:
+      PREFIX: ${{ github.workspace }}/../uno-install
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure Uno
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+            -DBUILD_STATIC_LIBS=${{ matrix.static }} \
+            -DBUILD_SHARED_LIBS=${{ matrix.shared }} \
+            -DMUMPS_INCLUDE_DIR=${DEPS}/include \
+            -DMETIS_INCLUDE_DIR=${DEPS}/include \
+            -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
+            -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+            -DBQPD=${DEPS}/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a \
+            -DSPRAL=${DEPS}/lib/libspral.a \
+            -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+            -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a"
+
+      - name: Build and install Uno
+        run: |
+          cmake --build build --parallel
+          cmake --install build
+          find ${PREFIX} -path '*cmake*' -type f
+
+      # the shared library is self-contained: its package must not refer to the source or build trees
+      - name: Check that the shared package does not refer to the source tree
+        if: matrix.static == 'OFF'
+        run: |
+          if grep -rn "${{ github.workspace }}" ${PREFIX}/lib*/cmake/Uno; then
+            echo "The installed CMake package refers to the source or build tree"
+            exit 1
+          fi
+
+      # Debug: the asserts of the test are enabled
+      - name: Build and run a find_package consumer
+        run: |
+          for target in ${{ matrix.targets }}; do
+            echo "::group::${target}"
+            build_dir=consumer-${target//::/-}
+            cmake -S .github/C/package -B ${build_dir} -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_PREFIX_PATH=${PREFIX} -DUNO_TARGET=${target}
+            cmake --build ${build_dir}
+            ./${build_dir}/tests_hs015
+            echo "::endgroup::"
+          done
+
+      - name: Move the shared package and use it again
+        if: matrix.static == 'OFF'
+        run: |
+          mv ${PREFIX} ${PREFIX}-moved
+          cmake -S .github/C/package -B consumer-relocated -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=${PREFIX}-moved
+          cmake --build consumer-relocated
+          ./consumer-relocated/tests_hs015

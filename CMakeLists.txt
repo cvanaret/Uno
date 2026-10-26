@@ -394,16 +394,42 @@ set(UNO_PUBLIC_HEADERS
    interfaces/Fortran/uno_fortran.f90
 )
 
+include(GNUInstallDirs)  # ensures CMAKE_INSTALL_INCLUDEDIR is set to "include"
+
+# uno_dependencies (Uno's own include directories, HAS_* definitions, dependency libraries) is only used to build Uno:
+# it is not part of the installed CMake package (see "CMake package" below). An installed library only exposes the
+# public headers, plus, for the static library, the libraries Uno depends on.
+get_target_property(UNO_DEPENDENCY_LIBRARIES uno_dependencies INTERFACE_LINK_LIBRARIES)
+if(NOT UNO_DEPENDENCY_LIBRARIES)
+   set(UNO_DEPENDENCY_LIBRARIES "")
+endif()
+get_target_property(UNO_DEPENDENCY_LINK_DIRECTORIES uno_dependencies INTERFACE_LINK_DIRECTORIES)
+if(NOT UNO_DEPENDENCY_LINK_DIRECTORIES)
+   set(UNO_DEPENDENCY_LINK_DIRECTORIES "")
+endif()
+
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
-   target_link_libraries(uno_static PUBLIC uno_dependencies)
+   target_link_libraries(uno_static PUBLIC $<BUILD_INTERFACE:uno_dependencies>)
+   # a consumer of the installed static library must also link the libraries Uno depends on
+   foreach(library IN LISTS UNO_DEPENDENCY_LIBRARIES)
+      target_link_libraries(uno_static INTERFACE $<INSTALL_INTERFACE:${library}>)
+   endforeach()
+   if(UNO_DEPENDENCY_LINK_DIRECTORIES)
+      foreach(directory IN LISTS UNO_DEPENDENCY_LINK_DIRECTORIES)
+         target_link_directories(uno_static INTERFACE $<INSTALL_INTERFACE:${directory}>)
+      endforeach()
+   endif()
+   target_include_directories(uno_static INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
    set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "${UNO_PUBLIC_HEADERS}")
 endif()
 
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:compiled_uno_files>)
-   target_link_libraries(uno_shared PUBLIC uno_dependencies)
+   # the dependencies are linked into the shared library: consumers do not need them
+   target_link_libraries(uno_shared PRIVATE uno_dependencies)
+   target_include_directories(uno_shared INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
    set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "${UNO_PUBLIC_HEADERS}")
    if (MSVC)
@@ -426,7 +452,7 @@ if(AMPLSOLVER)
    message(STATUS "Found amplsolver")
 
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
-   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
+   target_link_libraries(uno_ampl PRIVATE ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
    target_compile_definitions(uno_ampl PRIVATE HAS_AMPLSOLVER)
 
    # include the corresponding directory
@@ -528,7 +554,6 @@ endif()
 if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
 endif()
-include(GNUInstallDirs)  # ensures CMAKE_INSTALL_INCLUDEDIR is set to "include"
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
    EXPORT UnoTargets
@@ -536,4 +561,40 @@ install(TARGETS ${INSTALL_TARGETS}
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # static libraries
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # shared libraries
    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/uno # headers
+)
+
+#################
+# CMake package #
+#################
+# find_package(Uno) provides Uno::uno (the default library: static if built, shared otherwise), and
+# Uno::uno_static and/or Uno::uno_shared
+include(CMakePackageConfigHelpers)
+set(UNO_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/Uno)
+set(UNO_DEFAULT_LIBRARY ${DEFAULT_UNO_LIB})
+# packages that provide the imported targets (e.g. OpenMP::OpenMP_CXX) the static library depends on
+set(UNO_STATIC_PACKAGE_DEPENDENCIES "")
+if(BUILD_STATIC_LIBS)
+   foreach(library IN LISTS UNO_DEPENDENCY_LIBRARIES)
+      if(library MATCHES "^([A-Za-z0-9_]+)::")
+         list(APPEND UNO_STATIC_PACKAGE_DEPENDENCIES ${CMAKE_MATCH_1})
+      endif()
+   endforeach()
+   list(REMOVE_DUPLICATES UNO_STATIC_PACKAGE_DEPENDENCIES)
+endif()
+
+install(EXPORT UnoTargets
+   NAMESPACE Uno::
+   DESTINATION ${UNO_INSTALL_CMAKEDIR}
+   COMPONENT libuno
+)
+configure_package_config_file(cmake/UnoConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/UnoConfig.cmake
+   INSTALL_DESTINATION ${UNO_INSTALL_CMAKEDIR}
+)
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/UnoConfigVersion.cmake
+   VERSION ${PROJECT_VERSION}
+   COMPATIBILITY SameMajorVersion
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/UnoConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/UnoConfigVersion.cmake
+   DESTINATION ${UNO_INSTALL_CMAKEDIR}
+   COMPONENT libuno
 )
