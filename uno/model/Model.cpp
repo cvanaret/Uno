@@ -46,7 +46,8 @@ namespace uno {
    }
 
    // Lagrangian gradient ρ ∇f(x_k) - ∇c(x_k) y_k - z_k
-   void Model::evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+   void Model::evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, double objective_multiplier,
          Evaluations& evaluations, View<double> lagrangian_gradient) const {
       lagrangian_gradient.fill(0.);
 
@@ -60,15 +61,15 @@ namespace uno {
       if (0 < this->number_constraints) {
          // TODO test whether λ_k != 0
          evaluations.evaluate_jacobian(*this, primals);
-         evaluations.add_jacobian_transposed_vector_product(*this, multipliers.constraints.view(), lagrangian_gradient);
+         evaluations.add_jacobian_transposed_vector_product(*this, constraint_multipliers.view(), lagrangian_gradient);
       }
 
       // ∇f(x_k) - ∇c(x_k) λ_k
       lagrangian_gradient.scale(-1.);
 
       // z_k
-      view(lagrangian_gradient, 0, this->number_variables) -= view(multipliers.lower_bounds, 0, this->number_variables);
-      view(lagrangian_gradient, 0, this->number_variables) -= view(multipliers.upper_bounds, 0, this->number_variables);
+      view(lagrangian_gradient, 0, this->number_variables) -= view(lower_bound_multipliers, 0, this->number_variables);
+      view(lagrangian_gradient, 0, this->number_variables) -= view(upper_bound_multipliers, 0, this->number_variables);
    }
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {

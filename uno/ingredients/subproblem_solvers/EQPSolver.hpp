@@ -66,6 +66,7 @@ namespace uno {
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       LowRankCorrection correction;
       bool analysis_performed{false};
+      Vector<double> zero_multipliers{};
       // the least-squares system overwrote the augmented matrix and its factorization: the next direction computation
       // must assemble and factorize the augmented matrix again
       bool factorization_holds_least_squares_system{false};
