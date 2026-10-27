@@ -130,9 +130,9 @@ namespace uno {
       // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
-      if (this->linear_solver->matrix_is_singular() && 0 < dual_inertia_correction.size()) {
+      if (this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {
          DEBUG << "The least-squares system is singular, regularizing it\n";
-         dual_inertia_correction.fill(-EQPSolver::least_squares_dual_regularization);
+         dual_inertia_correction.fill(-least_squares_dual_regularization);
          this->linear_solver->do_numerical_factorization(false);
       }
       // otherwise, the (consistent) singular system is solved anyway: a non-finite solution is rejected below
