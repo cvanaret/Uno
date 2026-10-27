@@ -168,13 +168,15 @@ TEST_F(HSLRuntimeLoading, PartialLibraryOnlyProvidesItsSolvers) {
 
 TEST_F(HSLRuntimeLoading, SolverCallsIntoTheLoadedLibrary) {
    const ScopedEnvironmentVariable environment("UNO_HSL_LIBRARY", stub_library);
+   // the stub stays mapped once loaded (RTLD_NODELETE): its counter may include the calls of previous tests
+   const int previous_calls = stub_ma27id_calls().value_or(0);
    const auto solver = SymmetricIndefiniteLinearSolverFactory::create(make_options("MA27"));
    ASSERT_NE(solver, nullptr);
 #ifdef _WIN32
    GTEST_SKIP() << "the stub call counter is only read on POSIX systems";
 #else
    // the MA27 constructor calls ma27id once, through the function pointer resolved in the stub
-   EXPECT_EQ(stub_ma27id_calls(), std::optional<int>{1});
+   EXPECT_EQ(stub_ma27id_calls(), std::optional<int>{previous_calls + 1});
 #endif
 }
 
