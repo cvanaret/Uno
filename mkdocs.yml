@@ -15,6 +15,7 @@ nav:
   - 'Getting started': 'getting_started.md'
   - 'The Uno solver':
     - 'Architecture': 'architecture.md'
+    - 'Methods': 'methods.md'
     - 'Options': 'options.md'
     - 'Presets': 'presets.md'
   - 'Unification theory':
