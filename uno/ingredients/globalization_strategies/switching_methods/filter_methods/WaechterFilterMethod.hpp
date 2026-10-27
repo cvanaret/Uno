@@ -14,8 +14,9 @@ namespace uno {
       ~WaechterFilterMethod() override = default;
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
+      void notify_step_limited_by(RejectionReason sole_rejection_reason) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const override;
       [[nodiscard]] double small_infeasibility_threshold() const override;
@@ -32,24 +33,15 @@ namespace uno {
       size_t number_filter_resets{0};
       const size_t max_number_filter_resets; // >= 0
 
-      // adaptive infeasibility upper bound (POUNCE, pounce#546): after a streak of line searches whose step length was
-      // limited by the upper bound, the upper bound is raised
+      // adaptive infeasibility upper bound (POUNCE, pounce#546): after a streak of steps limited by the upper bound
+      // only, the upper bound is raised
       const size_t upper_bound_raise_trigger; // 0: disabled
       const double upper_bound_raise_factor; // > 1
       const size_t max_number_upper_bound_raises;
       size_t number_upper_bound_raises{0};
-      size_t upper_bound_limited_line_search_streak{0};
-      // bookkeeping of the current line search. A new line search is detected when the current progress measures change
-      bool line_search_started{false};
-      double line_search_current_infeasibility{0.};
-      double line_search_current_merit{0.};
-      size_t number_trials_this_line_search{0};
-      size_t number_rejected_trials_this_line_search{0};
-      size_t number_upper_bound_rejections_this_line_search{0};
-      bool first_trial_rejected_by_upper_bound{false};
+      size_t upper_bound_limited_step_streak{0};
 
-      void register_trial(double current_infeasibility, double current_merit);
-      void end_of_line_search();
+      void raise_infeasibility_upper_bound();
    };
 } // namespace
 

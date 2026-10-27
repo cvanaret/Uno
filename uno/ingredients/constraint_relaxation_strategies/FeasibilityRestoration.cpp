@@ -350,38 +350,37 @@ namespace uno {
       }
    }
 
-   bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   Decision FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
-      bool accept_iterate = false;
       // determine acceptability, depending on the current phase
-      if (this->current_phase == Phase::OPTIMALITY) {
-         accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, *this->globalization_strategy,
-            current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
-         if (uses_trust_region || accept_iterate) {
-            this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
-               trial_evaluations);
-         }
-      }
-      else {
-         accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
-            *this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, trial_evaluations,
-            predicted_reductions);
-         if (uses_trust_region || accept_iterate) {
-            this->feasibility_inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate,
-               current_evaluations, trial_evaluations);
-         }
+      InequalityHandlingMethod& inequality_handling_method = (this->current_phase == Phase::OPTIMALITY) ?
+         *this->inequality_handling_method : *this->feasibility_inequality_handling_method;
+      GlobalizationStrategy& globalization_strategy = (this->current_phase == Phase::OPTIMALITY) ?
+         *this->globalization_strategy : *this->feasibility_globalization_strategy;
+      this->trial_globalization_strategy = &globalization_strategy;
+      const Decision decision = inequality_handling_method.is_iterate_acceptable(statistics, globalization_strategy,
+         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+      if (uses_trust_region || decision.accepted) {
+         inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+            trial_evaluations);
       }
 
-      if (accept_iterate) {
+      if (decision.accepted) {
          this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,
             warmstart_information, user_callbacks);
       }
       else {
          warmstart_information.no_changes();
       }
-      return accept_iterate;
+      return decision;
+   }
+
+   void FeasibilityRestoration::notify_step_limited_by(RejectionReason sole_rejection_reason) {
+      if (this->trial_globalization_strategy != nullptr) {
+         this->trial_globalization_strategy->notify_step_limited_by(sole_rejection_reason);
+      }
    }
 
    bool FeasibilityRestoration::accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,

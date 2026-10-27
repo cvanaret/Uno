@@ -4,6 +4,7 @@
 #include <cassert>
 #include <stdexcept>
 #include "BacktrackingLineSearch.hpp"
+#include "RejectionHistory.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "ingredients/inertia_correction_strategies/UnstableInertiaCorrection.hpp"
@@ -219,7 +220,9 @@ namespace uno {
       // skip the first trial step (e.g. after the watchdog failed, the full step has already been rejected)
       double step_length = skip_first_trial ? this->backtracking_ratio : 1.;
       bool termination = false;
+      bool success = false;
       size_t number_iterations = 0;
+      RejectionHistory rejection_history;
       DEBUG << "\nLine search: minimum step length set to " << minimum_step_length << '\n';
 
       while (!termination) {
@@ -242,9 +245,11 @@ namespace uno {
             evaluation_cache.trial_evaluations.reset();
             statistics.set("||Step||", total_step_length * direction.norm);
 
-            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-               trial_iterate, direction, total_step_length, false, evaluation_cache.current_evaluations,
+            const Decision decision = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model,
+               current_iterate, trial_iterate, direction, total_step_length, false, evaluation_cache.current_evaluations,
                evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
+            rejection_history.record(decision);
+            is_acceptable = decision.accepted;
 
             // try second-order corrections if the full step was rejected
             if (!is_acceptable && number_iterations == 1 && !skip_first_trial &&
@@ -252,7 +257,7 @@ namespace uno {
                   this->SOC_max_iterations >= 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
                assert(step_length == 1.);
                is_acceptable = this->compute_second_order_directions(statistics, model, current_iterate, trial_iterate, direction,
-                  evaluation_cache, predicted_reductions, warmstart_information, user_callbacks);
+                  evaluation_cache, predicted_reductions, warmstart_information, user_callbacks, rejection_history);
             }
          }
          catch (const EvaluationError&) {
@@ -263,6 +268,7 @@ namespace uno {
 
          if (is_acceptable) {
             termination = true;
+            success = true;
             this->last_step_was_shortened = (step_length < 1.);
             // statistics of the accepted iterate (possibly a second-order correction)
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
@@ -286,12 +292,13 @@ namespace uno {
                DEBUG << "The line search failed with a step length <= " << minimum_step_length << '\n';
                // switch to solving the feasibility problem
                statistics.set("Status", "small step length");
-               return false;
+               termination = true;
             }
             // otherwise, keep going
          }
       } // end while loop
-      return true;
+      this->constraint_relaxation_strategy->notify_step_limited_by(rejection_history.sole_reason());
+      return success;
    }
 
    // returns true if the direction is tiny and the full step was accepted
@@ -419,7 +426,7 @@ namespace uno {
             const bool is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model,
                *this->watchdog_iterate, trial_iterate, this->watchdog_direction, reference_step_length, false,
                *this->watchdog_evaluations, evaluation_cache.trial_evaluations, reference_predicted_reductions,
-               warmstart_information, user_callbacks);
+               warmstart_information, user_callbacks).accepted;
             bool trial_iterate_accepted = true;
             if (is_acceptable) {
                DEBUG << "Watchdog: the trial iterate is acceptable wrt the watchdog iterate\n";
@@ -474,7 +481,8 @@ namespace uno {
 
    bool BacktrackingLineSearch::compute_second_order_directions(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
-         const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
+         const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks,
+         RejectionHistory& rejection_history) const {
       // enter second-order corrections
       DEBUG << "\nEntering second-order corrections\n";
 
@@ -493,10 +501,12 @@ namespace uno {
             assemble_trial_iterate(current_iterate, trial_iterate, direction_SOC, 1.);
             evaluation_cache.trial_evaluations.reset();
 
-            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-               trial_iterate, direction /* this is correct, see IPOPT paper */, direction.primal_dual_step_length, false,
-               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, predicted_reductions,
+            const Decision decision = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model,
+               current_iterate, trial_iterate, direction /* this is correct, see IPOPT paper */, direction.primal_dual_step_length,
+               false, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, predicted_reductions,
                warmstart_information, user_callbacks);
+            rejection_history.record(decision);
+            is_acceptable = decision.accepted;
 
             if (is_acceptable) {
                // terminate the SOCs and the backtracking

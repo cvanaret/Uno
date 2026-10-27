@@ -14,7 +14,7 @@ namespace uno {
       explicit MeritFunction(const Options& options);
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
             const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const override;
       void reset() override;

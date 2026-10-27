@@ -19,7 +19,7 @@ namespace uno {
       this->smallest_known_infeasibility = initial_iterate.progress.infeasibility;
    }
 
-   bool MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+   Decision MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) {
       // predicted reduction with all contributions. This quantity should be positive (= negative directional derivative)
       double constrained_predicted_reduction = MeritFunction::constrained_merit_function(predicted_reductions, objective_multiplier);
@@ -36,17 +36,15 @@ namespace uno {
       DEBUG << "Actual reduction: " << current_merit_value << " - " << trial_merit_value << " = " << actual_reduction << '\n';
 
       // Armijo sufficient decrease condition
-      const bool accept = this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction);
-      if (accept) {
+      if (this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction)) {
          DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
          this->smallest_known_infeasibility = std::min(this->smallest_known_infeasibility, trial_progress.infeasibility);
          statistics.set("Status", std::string(symbols::check) + " (Armijo)");
+         return Decision::accept();
       }
-      else {
-         DEBUG << "Trial iterate was rejected by Armijo condition\n";
-         statistics.set("Status", std::string(symbols::fail) + " (Armijo)");
-      }
-      return accept;
+      DEBUG << "Trial iterate was rejected by Armijo condition\n";
+      statistics.set("Status", std::string(symbols::fail) + " (Armijo)");
+      return Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
    }
 
    bool MeritFunction::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double /*reference_infeasibility*/) const {

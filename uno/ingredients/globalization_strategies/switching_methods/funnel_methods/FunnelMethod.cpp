@@ -31,7 +31,7 @@ namespace uno {
       statistics.set("Funnel", this->funnel.current_width());
    }
 
-   bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+   Decision FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
       statistics.set("Funnel", this->funnel.current_width());
       // in filter and funnel methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
@@ -43,7 +43,7 @@ namespace uno {
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
       std::string scenario;
-      bool accept = false;
+      Decision decision{};
       if (this->funnel.acceptable(trial_progress.infeasibility)) {
          // IF require_acceptance_wrt_current_iterate == false, then condition always fulfilled, we never check
          // If true, then first part is false, and we always check wrt current iterate
@@ -57,17 +57,18 @@ namespace uno {
                DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
                if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction)) {
                   DEBUG << "Trial iterate (f-type) was ACCEPTED by satisfying Armijo condition\n";
-                  accept = true;
+                  decision = Decision::accept();
                }
                else { // switching condition holds, but not Armijo condition
                   DEBUG << "Trial iterate (f-type) was REJECTED by violating the Armijo condition\n";
+                  decision = Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
                }
                scenario = "f-type";
             }
             // h-type step
             else if (this->funnel.sufficient_decrease_condition(trial_progress.infeasibility)) {
                DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
-               accept = true;
+               decision = Decision::accept();
 
                DEBUG << "\t\tEntering funnel reduction mechanism\n";
                this->funnel.update(current_progress.infeasibility, trial_progress.infeasibility);
@@ -77,23 +78,26 @@ namespace uno {
             else {
                DEBUG << "\t\tTrial iterate REJECTED by violating switching and funnel sufficient decrease condition\n";
                scenario = "funnel";
+               decision = Decision::reject(RejectionReason::FUNNEL);
             }
          }
          else {
             DEBUG << "Trial iterate not acceptable with respect to current point\n";
             scenario = "current";
+            decision = Decision::reject(RejectionReason::CURRENT_ITERATE);
          }
       }
       else {
          DEBUG << "\t\tTrial iterate REJECTED. Not in funnel\n";
          scenario = "funnel";
+         decision = Decision::reject(RejectionReason::FUNNEL);
       }
 
-      statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
-      if (accept) {
+      statistics.set("Status", std::string(decision.accepted ? symbols::check : symbols::fail) + " (" + scenario + ")");
+      if (decision.accepted) {
          this->funnel.print();
       }
-      return accept;
+      return decision;
    }
 
    bool FunnelMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const {

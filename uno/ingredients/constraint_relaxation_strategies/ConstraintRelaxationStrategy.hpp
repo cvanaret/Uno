@@ -11,6 +11,7 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
+#include "ingredients/globalization_strategies/Decision.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
@@ -59,10 +60,12 @@ namespace uno {
       // trial iterate acceptance
       [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const = 0;
-      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      [[nodiscard]] virtual Decision is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) = 0;
+      // forwarded to the globalization strategy that tested the trial iterates of the step
+      virtual void notify_step_limited_by(RejectionReason sole_rejection_reason) = 0;
       // accept a tiny trial step without globalization test (IPOPT, Section 3.9), possibly after forcing an update of the
       // parameterization (e.g. a decrease of the barrier parameter). Returns true if the parameterization was updated
       [[nodiscard]] virtual bool accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
