@@ -22,9 +22,12 @@ namespace uno {
       return reinterpret_cast<void*>(GetProcAddress(handle, symbol));
    }
 #else
-   // resolve now, do not export the HSL symbols globally
+   // resolve now, do not export the HSL symbols globally. RTLD_NODELETE: the library stays mapped after
+   // close_library. Unmapping it would orphan the memory that it (or its runtime, e.g. gfortran or OpenMP) allocated
+   // when it was loaded, and unloading such runtimes from a running process is unsafe. close_library only releases
+   // the handle, and a later open_library of the same library reuses the mapped image
    LibraryHandle open_library(const char* name) {
-      return dlopen(name, RTLD_NOW);
+      return dlopen(name, RTLD_NOW | RTLD_NODELETE);
    }
 
    void close_library(LibraryHandle handle) {
