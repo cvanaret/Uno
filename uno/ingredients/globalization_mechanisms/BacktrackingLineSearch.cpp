@@ -269,10 +269,10 @@ namespace uno {
          if (is_acceptable) {
             termination = true;
             success = true;
-            this->last_step_was_shortened = (step_length < 1.);
             // statistics of the accepted iterate (possibly a second-order correction)
             set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
             set_dual_residuals_statistics(statistics, trial_iterate);
+            this->last_step_was_shortened = (step_length < 1.);
          }
          else if (evaluation_cache.trial_evaluations.is_objective_computed) {
             // the residuals of a rejected trial iterate are not computed
@@ -320,7 +320,7 @@ namespace uno {
          // full step (the fraction-to-boundary rule is accounted for in the direction's step length)
          assemble_trial_iterate(current_iterate, trial_iterate, direction, 1.);
          evaluation_cache.trial_evaluations.reset();
-         parameterization_updated = this->constraint_relaxation_strategy->accept_tiny_step(statistics, model, current_iterate,
+         parameterization_updated = this->constraint_relaxation_strategy->accept_iterate_unconditionally(statistics, model, current_iterate,
             trial_iterate, direction, direction.primal_dual_step_length, force_parameterization_update,
             evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information, user_callbacks);
       }
@@ -435,8 +435,8 @@ namespace uno {
             }
             else if (++this->watchdog_trial_iterations <= this->watchdog_max_trial_iterations) {
                // accept the full step without globalization test (the filter is not augmented)
-               DEBUG << "Watchdog: accepting the full step unchecked (trial " << this->watchdog_trial_iterations << ")\n";
-               (void) this->constraint_relaxation_strategy->accept_tiny_step(statistics, model, current_iterate,
+               DEBUG << "Watchdog: accepting the full step unconditionally (trial " << this->watchdog_trial_iterations << ")\n";
+               (void) this->constraint_relaxation_strategy->accept_iterate_unconditionally(statistics, model, current_iterate,
                   trial_iterate, direction, direction.primal_dual_step_length, /* force_parameterization_update = */ false,
                   evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information,
                   user_callbacks);

@@ -383,7 +383,7 @@ namespace uno {
       }
    }
 
-   bool FeasibilityRestoration::accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   bool FeasibilityRestoration::accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
