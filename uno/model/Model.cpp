@@ -10,7 +10,6 @@
 #include "linear_algebra/View.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Collection.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -45,6 +44,12 @@ namespace uno {
       return false;
    }
 
+   static bool is_nonzero(const Vector<double>& vector) {
+      return std::any_of(vector.begin(), vector.end(), [](double x) {
+         return x != 0.;
+      });
+   }
+
    // Lagrangian gradient ρ ∇f(x_k) - ∇c(x_k) y_k - z_k
    void Model::evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
          const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, double objective_multiplier,
@@ -58,8 +63,7 @@ namespace uno {
       }
 
       // ∇c(x_k) λ_k
-      if (0 < this->number_constraints) {
-         // TODO test whether λ_k != 0
+      if (0 < this->number_constraints && is_nonzero(constraint_multipliers)) {
          evaluations.evaluate_jacobian(*this, primals);
          evaluations.add_jacobian_transposed_vector_product(*this, constraint_multipliers.view(), lagrangian_gradient);
       }
