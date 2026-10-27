@@ -34,7 +34,7 @@ namespace uno {
    void InequalityHandlingMethod::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
       // stationarity error (norm of the Lagrangian gradient)
-      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.scaled_residuals.lagrangian_gradient);
+      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.scaled_residuals.lagrangian_gradient.view());
       iterate.scaled_residuals.stationarity = norm(this->residual_norm, iterate.scaled_residuals.lagrangian_gradient);
 
       // primal infeasibility (constraint violation of the model, possibly with additional residuals of the reformulation)

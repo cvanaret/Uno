@@ -69,7 +69,6 @@ namespace uno {
       // the least-squares system overwrote the augmented matrix and its factorization: the next direction computation
       // must assemble and factorize the augmented matrix again
       bool factorization_holds_least_squares_system{false};
-      Vector<double> least_squares_rhs_buffer{};
       // regularization of the (2, 2) block of the least-squares system when the Jacobian is rank deficient
       static constexpr double least_squares_dual_regularization{1e-8};
 

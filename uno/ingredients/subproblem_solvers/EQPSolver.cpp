@@ -137,13 +137,12 @@ namespace uno {
       }
       // otherwise, the (consistent) singular system is solved anyway: a non-finite solution is rejected below
 
-      // assemble the RHS: ∇L(x, 0, z) = ∇L(x, y, z) + J^T y
-      this->least_squares_rhs_buffer.resize(subproblem.number_variables);
-      subproblem.problem.evaluate_lagrangian_gradient(iterate, evaluations, this->least_squares_rhs_buffer);
+      // assemble the RHS: (∇L(x, 0, z), 0) = (∇L(x, y, z) + J^T y, 0)
+      auto rhs_lagrangian = view(linear_system.rhs, 0, subproblem.number_variables);
+      subproblem.problem.evaluate_lagrangian_gradient(iterate, evaluations, rhs_lagrangian);
       subproblem.problem.add_jacobian_transposed_vector_product(iterate.multipliers.constraints.view(),
-         this->least_squares_rhs_buffer.view(), evaluations);
-      linear_system.rhs.fill(0.);
-      view(linear_system.rhs, 0, subproblem.number_variables) = this->least_squares_rhs_buffer;
+         rhs_lagrangian, evaluations);
+      view(linear_system.rhs, subproblem.number_variables, linear_system.rhs.size()).fill(0.);
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n";

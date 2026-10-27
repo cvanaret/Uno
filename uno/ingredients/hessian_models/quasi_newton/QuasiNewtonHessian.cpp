@@ -58,9 +58,9 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers trial_iterate.multipliers
       this->model.evaluate_lagrangian_gradient(current_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
-         current_evaluations, this->current_lagrangian_gradient);
+         current_evaluations, this->current_lagrangian_gradient.view());
       this->model.evaluate_lagrangian_gradient(trial_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
-         trial_evaluations, this->trial_lagrangian_gradient);
+         trial_evaluations, this->trial_lagrangian_gradient.view());
       this->latest_y = this->trial_lagrangian_gradient - this->current_lagrangian_gradient;
    }
 

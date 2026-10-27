@@ -100,7 +100,7 @@ namespace uno {
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    void OptimizationProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
-         Vector<double>& lagrangian_gradient) const {
+         View<double> lagrangian_gradient) const {
       this->model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, this->get_objective_multiplier(),
          evaluations, lagrangian_gradient);
    }

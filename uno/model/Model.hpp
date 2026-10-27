@@ -66,7 +66,7 @@ namespace uno {
 
       // numerical evaluations of Lagrangian gradient and Hessian
       void evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
-         Evaluations& evaluations, Vector<double>& lagrangian_gradient) const;
+         Evaluations& evaluations, View<double> lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          View<double> hessian_values) const = 0;
 

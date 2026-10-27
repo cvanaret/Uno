@@ -192,13 +192,13 @@ namespace uno {
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
    void l1RelaxedProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
-         Vector<double>& lagrangian_gradient) const {
+         View<double> lagrangian_gradient) const {
       lagrangian_gradient.fill(0.);
 
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
       evaluations.add_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.view(),
-         lagrangian_gradient.view());
+         lagrangian_gradient);
       lagrangian_gradient.scale(-1.);
 
       // z_k

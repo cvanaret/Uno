@@ -47,7 +47,7 @@ namespace uno {
 
    // Lagrangian gradient ρ ∇f(x_k) - ∇c(x_k) y_k - z_k
    void Model::evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
-         Evaluations& evaluations, Vector<double>& lagrangian_gradient) const {
+         Evaluations& evaluations, View<double> lagrangian_gradient) const {
       lagrangian_gradient.fill(0.);
 
       // -∇f(x_k)
@@ -60,7 +60,7 @@ namespace uno {
       if (0 < this->number_constraints) {
          // TODO test whether λ_k != 0
          evaluations.evaluate_jacobian(*this, primals);
-         evaluations.add_jacobian_transposed_vector_product(*this, multipliers.constraints.view(), lagrangian_gradient.view());
+         evaluations.add_jacobian_transposed_vector_product(*this, multipliers.constraints.view(), lagrangian_gradient);
       }
 
       // ∇f(x_k) - ∇c(x_k) λ_k

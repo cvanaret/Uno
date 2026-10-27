@@ -323,7 +323,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
-         Vector<double>& lagrangian_gradient) const {
+         View<double> lagrangian_gradient) const {
       this->unslacked_problem.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
       for (const auto [_, slack_index]: this->slacks) {
