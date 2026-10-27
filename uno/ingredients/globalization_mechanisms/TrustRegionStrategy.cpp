@@ -196,7 +196,7 @@ namespace uno {
          /* use_curvature_information = */ true);
       return this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
-         predicted_reductions, warmstart_information, user_callbacks);
+         predicted_reductions, warmstart_information, user_callbacks).accepted;
    }
 
    // check whether the algorithm can terminate at an iterate (with computed residuals) after a rejected step with very

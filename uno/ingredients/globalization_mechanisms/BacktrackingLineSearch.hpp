@@ -15,6 +15,7 @@ namespace uno {
    // forward declaration
    class PredictedReductionModels;
    class ProgressMeasures;
+   class RejectionHistory;
 
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:
@@ -87,7 +88,8 @@ namespace uno {
       [[nodiscard]] bool is_tiny_direction(const Iterate& current_iterate, const Direction& direction) const;
       [[nodiscard]] bool compute_second_order_directions(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
-         const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const;
+         const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks,
+         RejectionHistory& rejection_history) const;
       static void check_unboundedness(const Direction& direction);
    };
 } // namespace

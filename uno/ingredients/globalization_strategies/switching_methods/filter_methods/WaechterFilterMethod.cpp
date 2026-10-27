@@ -27,15 +27,10 @@ namespace uno {
       FilterMethod::initialize(statistics, initial_iterate);
       // the upper bound was (re)initialized: restart the adaptive mechanism
       this->number_upper_bound_raises = 0;
-      this->upper_bound_limited_line_search_streak = 0;
-      this->line_search_started = false;
-      this->number_trials_this_line_search = 0;
-      this->number_rejected_trials_this_line_search = 0;
-      this->number_upper_bound_rejections_this_line_search = 0;
-      this->first_trial_rejected_by_upper_bound = false;
+      this->upper_bound_limited_step_streak = 0;
    }
 
-   bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+   Decision WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double /*objective_multiplier*/) {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
       const double current_merit = unconstrained_merit_function(current_progress);
@@ -46,16 +41,10 @@ namespace uno {
       DEBUG << "Current filter:\n" << this->filter;
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
-      this->register_trial(current_progress.infeasibility, current_merit);
       if (!this->filter.acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
          DEBUG << "Trial iterate not acceptable wrt infeasibility upper bound\n";
          statistics.set("Status", std::string(symbols::fail) + " (upper bound)");
-         ++this->number_rejected_trials_this_line_search;
-         ++this->number_upper_bound_rejections_this_line_search;
-         if (this->number_trials_this_line_search == 1) {
-            this->first_trial_rejected_by_upper_bound = true;
-         }
-         return false;
+         return Decision::reject(RejectionReason::INFEASIBILITY_UPPER_BOUND);
       }
       // now acceptable wrt infeasibility upper bound
 
@@ -79,8 +68,7 @@ namespace uno {
             DEBUG << "Armijo condition not satisfied\n";
             statistics.set("Status", std::string(symbols::fail) + " (Armijo)");
             this->last_rejection_due_to_filter = false;
-            ++this->number_rejected_trials_this_line_search;
-            return false;
+            return Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
          }
       }
       else {
@@ -94,8 +82,7 @@ namespace uno {
             DEBUG << "Trial iterate (h-type) not acceptable with respect to current point\n";
             statistics.set("Status", std::string(symbols::fail) + " (current)");
             this->last_rejection_due_to_filter = false;
-            ++this->number_rejected_trials_this_line_search;
-            return false;
+            return Decision::reject(RejectionReason::CURRENT_ITERATE);
          }
       }
 
@@ -104,8 +91,7 @@ namespace uno {
          DEBUG << "Trial iterate not filter acceptable\n";
          statistics.set("Status", std::string(symbols::fail) + " (filter)");
          this->last_rejection_due_to_filter = true;
-         ++this->number_rejected_trials_this_line_search;
-         return false;
+         return Decision::reject(RejectionReason::FILTER);
       }
       // now filter acceptable
 
@@ -134,43 +120,24 @@ namespace uno {
          DEBUG << "Adding current iterate to the filter\n";
          this->filter.add(current_progress.infeasibility, current_merit);
       }
-      return true;
+      return Decision::accept();
    }
 
-   // a new line search starts when the current progress measures change (the trials of a line search, second-order
-   // corrections included, share the same current iterate)
-   void WaechterFilterMethod::register_trial(double current_infeasibility, double current_merit) {
-      if (!this->line_search_started || current_infeasibility != this->line_search_current_infeasibility ||
-            current_merit != this->line_search_current_merit) {
-         this->end_of_line_search();
-         this->line_search_started = true;
-         this->line_search_current_infeasibility = current_infeasibility;
-         this->line_search_current_merit = current_merit;
+   // a step limited by the upper bound only: its trial iterates were all rejected by the upper bound, except possibly
+   // the last one (the accepted step is shorter only because of the upper bound)
+   void WaechterFilterMethod::notify_step_limited_by(RejectionReason sole_rejection_reason) {
+      if (sole_rejection_reason != RejectionReason::INFEASIBILITY_UPPER_BOUND) {
+         this->upper_bound_limited_step_streak = 0;
+         return;
       }
-      ++this->number_trials_this_line_search;
+      ++this->upper_bound_limited_step_streak;
+      if (0 < this->upper_bound_raise_trigger && this->upper_bound_raise_trigger <= this->upper_bound_limited_step_streak) {
+         this->raise_infeasibility_upper_bound();
+      }
    }
 
-   // close the books on the previous line search and possibly raise the infeasibility upper bound. A line search is
-   // limited by the upper bound if its first trial and all its rejected trials were rejected by the upper bound: the
-   // accepted step (if any) is shorter only because of the upper bound
-   void WaechterFilterMethod::end_of_line_search() {
-      if (this->number_trials_this_line_search == 0) {
-         return;
-      }
-      const bool limited_by_upper_bound = this->first_trial_rejected_by_upper_bound &&
-         this->number_upper_bound_rejections_this_line_search == this->number_rejected_trials_this_line_search;
-      this->number_trials_this_line_search = 0;
-      this->number_rejected_trials_this_line_search = 0;
-      this->number_upper_bound_rejections_this_line_search = 0;
-      this->first_trial_rejected_by_upper_bound = false;
-
-      if (!limited_by_upper_bound) {
-         this->upper_bound_limited_line_search_streak = 0;
-         return;
-      }
-      ++this->upper_bound_limited_line_search_streak;
-      if (this->upper_bound_raise_trigger == 0 || this->upper_bound_limited_line_search_streak < this->upper_bound_raise_trigger ||
-            this->number_upper_bound_raises >= this->max_number_upper_bound_raises || this->upper_bound_raise_factor <= 1.) {
+   void WaechterFilterMethod::raise_infeasibility_upper_bound() {
+      if (this->max_number_upper_bound_raises <= this->number_upper_bound_raises || this->upper_bound_raise_factor <= 1.) {
          return;
       }
       const double old_upper_bound = this->filter.get_infeasibility_upper_bound();
@@ -181,10 +148,10 @@ namespace uno {
       // the raised value is also the one restored upon filter reset
       this->filter.set_infeasibility_upper_bound(new_upper_bound);
       ++this->number_upper_bound_raises;
-      this->upper_bound_limited_line_search_streak = 0;
+      this->upper_bound_limited_step_streak = 0;
       INFO << "Filter: infeasibility upper bound raised from " << old_upper_bound << " to " << new_upper_bound << " (raise " <<
          this->number_upper_bound_raises << " of " << this->max_number_upper_bound_raises << "): " << this->upper_bound_raise_trigger <<
-         " consecutive line searches limited by the upper bound\n";
+         " consecutive steps limited by the upper bound\n";
    }
 
    bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const {

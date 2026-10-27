@@ -16,7 +16,7 @@ namespace uno {
          sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")) {
    }
 
-   bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+   Decision FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double /*objective_multiplier*/) {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
       const double current_merit = unconstrained_merit_function(current_progress);
@@ -28,21 +28,24 @@ namespace uno {
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
       std::string scenario;
-      bool accept = false;
+      Decision decision{};
       if (!this->filter.acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
          DEBUG << "Trial iterate not acceptable wrt infeasibility upper bound\n";
          scenario = "upper bound";
+         decision = Decision::reject(RejectionReason::INFEASIBILITY_UPPER_BOUND);
       }
       // now acceptable wrt infeasibility upper bound
       else if (!this->filter.filter_acceptable(trial_progress.infeasibility, trial_merit)) {
          DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
+         decision = Decision::reject(RejectionReason::FILTER);
       }
       // now filter acceptable
       else if (!this->filter.acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
          trial_progress.infeasibility, trial_merit)) {
          DEBUG << "Trial iterate not acceptable with respect to current point\n";
          scenario = "current";
+         decision = Decision::reject(RejectionReason::CURRENT_ITERATE);
       }
       // now acceptable wrt current iterate
       // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
@@ -52,23 +55,24 @@ namespace uno {
          DEBUG << "Unconstrained actual reduction = " << actual_merit_reduction << '\n';
          if (this->armijo_sufficient_decrease(merit_predicted_reduction, actual_merit_reduction)) {
             DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
-            accept = true;
+            decision = Decision::accept();
          }
          else { // switching condition holds, but not Armijo condition
             DEBUG << "Trial iterate (f-type) was rejected by violating the Armijo condition\n";
+            decision = Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
          }
          scenario = "f-type";
       }
       // switching condition violated: predicted reduction is not promising (h-type)
       else {
          DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
-         accept = true;
+         decision = Decision::accept();
          this->filter.add(current_progress.infeasibility, current_merit);
          DEBUG << "Current iterate was added to the filter\n";
          scenario = "h-type";
       }
-      statistics.set("Status", std::string(accept ? symbols::check : symbols::fail) + " (" + scenario + ")");
-      return accept;
+      statistics.set("Status", std::string(decision.accepted ? symbols::check : symbols::fail) + " (" + scenario + ")");
+      return decision;
    }
 
    bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,

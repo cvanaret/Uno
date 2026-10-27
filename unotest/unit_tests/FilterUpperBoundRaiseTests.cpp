@@ -1,10 +1,13 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-// Adaptive infeasibility upper bound of the Waechter filter method: the upper bound is raised after a streak of line
-// searches whose step length was limited by the upper bound
+// Adaptive infeasibility upper bound of the Waechter filter method: the upper bound is raised after a streak of steps
+// limited by the upper bound only
 
 #include <gtest/gtest.h>
+#include <initializer_list>
+#include <utility>
+#include "ingredients/globalization_mechanisms/RejectionHistory.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/globalization_strategies/switching_methods/filter_methods/WaechterFilterMethod.hpp"
 #include "optimization/Iterate.hpp"
@@ -42,73 +45,123 @@ namespace {
          this->method.initialize(this->statistics, initial_iterate);
       }
 
-      bool test(const ProgressMeasures& current, double trial_infeasibility, double trial_objective) {
+      Decision test(double trial_infeasibility, double trial_objective) {
          // zero predicted reduction: the switching condition does not hold (h-type)
-         return this->method.is_iterate_acceptable(this->statistics, current, progress(trial_infeasibility, trial_objective),
-            progress(0., 0.), 1.);
+         return this->method.is_iterate_acceptable(this->statistics, progress(1., this->objective),
+            progress(trial_infeasibility, trial_objective), progress(0., 0.), 1.);
       }
 
-      // a line search whose full step is rejected by the upper bound and whose shorter step is accepted
-      void upper_bound_limited_line_search() {
-         const ProgressMeasures current = progress(1., this->objective);
-         ASSERT_FALSE(this->test(current, 2e4, this->objective - 1.));
-         ASSERT_TRUE(this->test(current, 0.5, this->objective - 1.));
-         this->objective -= 1.;
+      // emulates a backtracking line search: the trial iterates (infeasibility, objective decrease) are tested in turn
+      // until one is accepted, then the filter is notified. Returns whether a trial iterate was accepted
+      bool step(std::initializer_list<std::pair<double, double>> trials) {
+         RejectionHistory rejection_history;
+         bool accepted = false;
+         for (const auto& [trial_infeasibility, objective_decrease]: trials) {
+            const Decision decision = this->test(trial_infeasibility, this->objective - objective_decrease);
+            rejection_history.record(decision);
+            if (decision.accepted) {
+               this->objective -= objective_decrease;
+               accepted = true;
+               break;
+            }
+         }
+         this->method.notify_step_limited_by(rejection_history.sole_reason());
+         return accepted;
+      }
+
+      // the full step is rejected by the upper bound and a shorter step is accepted
+      void upper_bound_limited_step(double full_step_infeasibility = 2e4) {
+         ASSERT_TRUE(this->step({{full_step_infeasibility, 1.}, {0.5, 1.}}));
+      }
+
+      [[nodiscard]] bool full_step_acceptable(double infeasibility) {
+         return this->test(infeasibility, this->objective - 1e3).accepted;
       }
    };
 } // namespace
 
+TEST(RejectionHistory, SoleReason) {
+   RejectionHistory empty;
+   EXPECT_EQ(empty.sole_reason(), RejectionReason::NONE);
+
+   RejectionHistory accepted;
+   accepted.record(Decision::accept());
+   EXPECT_EQ(accepted.sole_reason(), RejectionReason::NONE);
+
+   RejectionHistory single;
+   single.record(Decision::reject(RejectionReason::INFEASIBILITY_UPPER_BOUND));
+   single.record(Decision::reject(RejectionReason::INFEASIBILITY_UPPER_BOUND));
+   single.record(Decision::accept());
+   EXPECT_EQ(single.sole_reason(), RejectionReason::INFEASIBILITY_UPPER_BOUND);
+
+   RejectionHistory mixed;
+   mixed.record(Decision::reject(RejectionReason::INFEASIBILITY_UPPER_BOUND));
+   mixed.record(Decision::reject(RejectionReason::FILTER));
+   mixed.record(Decision::reject(RejectionReason::INFEASIBILITY_UPPER_BOUND));
+   EXPECT_EQ(mixed.sole_reason(), RejectionReason::NONE);
+}
+
 TEST(FilterUpperBoundRaise, RaisedAfterStreak) {
    Fixture fixture(make_options(3));
-   for (size_t line_search = 0; line_search < 3; ++line_search) {
-      fixture.upper_bound_limited_line_search();
+   for (size_t step = 0; step < 3; ++step) {
+      fixture.upper_bound_limited_step();
    }
-   // the streak is closed when the next line search starts: its full step now passes the raised upper bound (1e6)
-   EXPECT_TRUE(fixture.test(progress(1., fixture.objective), 2e4, fixture.objective - 1e3));
+   // the full step now passes the raised upper bound (1e6)
+   EXPECT_TRUE(fixture.full_step_acceptable(2e4));
 }
 
 TEST(FilterUpperBoundRaise, NoRaiseBeforeStreak) {
    Fixture fixture(make_options(3));
-   for (size_t line_search = 0; line_search < 2; ++line_search) {
-      fixture.upper_bound_limited_line_search();
+   for (size_t step = 0; step < 2; ++step) {
+      fixture.upper_bound_limited_step();
    }
-   EXPECT_FALSE(fixture.test(progress(1., fixture.objective), 2e4, fixture.objective - 1e3));
+   EXPECT_FALSE(fixture.full_step_acceptable(2e4));
 }
 
 TEST(FilterUpperBoundRaise, Disabled) {
    Fixture fixture(make_options(0));
-   for (size_t line_search = 0; line_search < 10; ++line_search) {
-      fixture.upper_bound_limited_line_search();
+   for (size_t step = 0; step < 10; ++step) {
+      fixture.upper_bound_limited_step();
    }
-   EXPECT_FALSE(fixture.test(progress(1., fixture.objective), 2e4, fixture.objective - 1e3));
+   EXPECT_FALSE(fixture.full_step_acceptable(2e4));
 }
 
-// a line search with a rejection by another test (here: the current iterate) is not limited by the upper bound
+// a step with a rejection by another test (here: the current iterate) is not limited by the upper bound only
 TEST(FilterUpperBoundRaise, OtherRejectionBreaksStreak) {
    Fixture fixture(make_options(3));
-   fixture.upper_bound_limited_line_search();
-   fixture.upper_bound_limited_line_search();
-   {
-      const ProgressMeasures current = progress(1., fixture.objective);
-      ASSERT_FALSE(fixture.test(current, 2e4, fixture.objective - 1.)); // upper bound
-      ASSERT_FALSE(fixture.test(current, 1., fixture.objective + 1.)); // not acceptable wrt current iterate
-      ASSERT_TRUE(fixture.test(current, 0.5, fixture.objective - 1.));
-      fixture.objective -= 1.;
-   }
-   fixture.upper_bound_limited_line_search();
-   EXPECT_FALSE(fixture.test(progress(1., fixture.objective), 2e4, fixture.objective - 1e3));
+   fixture.upper_bound_limited_step();
+   fixture.upper_bound_limited_step();
+   // upper bound, then not acceptable wrt the current iterate, then accepted
+   ASSERT_TRUE(fixture.step({{2e4, 1.}, {1., -1.}, {0.5, 1.}}));
+   fixture.upper_bound_limited_step();
+   EXPECT_FALSE(fixture.full_step_acceptable(2e4));
+}
+
+// a full step accepted right away is not limited by the upper bound
+TEST(FilterUpperBoundRaise, FullStepBreaksStreak) {
+   Fixture fixture(make_options(3));
+   fixture.upper_bound_limited_step();
+   fixture.upper_bound_limited_step();
+   ASSERT_TRUE(fixture.step({{0.5, 1.}}));
+   fixture.upper_bound_limited_step();
+   EXPECT_FALSE(fixture.full_step_acceptable(2e4));
+}
+
+// a failed step whose trial iterates were all rejected by the upper bound is limited by the upper bound only
+TEST(FilterUpperBoundRaise, FailedStepCounts) {
+   Fixture fixture(make_options(2));
+   fixture.upper_bound_limited_step();
+   ASSERT_FALSE(fixture.step({{2e4, 1.}, {1.5e4, 1.}}));
+   EXPECT_TRUE(fixture.full_step_acceptable(2e4));
 }
 
 TEST(FilterUpperBoundRaise, MaximumNumberOfRaises) {
    Fixture fixture(make_options(1, 1));
-   fixture.upper_bound_limited_line_search(); // closed by the next line search: 1e4 -> 1e6
+   fixture.upper_bound_limited_step(); // 1e4 -> 1e6
    // full step 2e6 rejected even at 1e6, shorter step accepted: limited, but the maximum number of raises is reached
-   for (size_t line_search = 0; line_search < 3; ++line_search) {
-      const ProgressMeasures current = progress(1., fixture.objective);
-      ASSERT_FALSE(fixture.test(current, 2e6, fixture.objective - 1.));
-      ASSERT_TRUE(fixture.test(current, 0.5, fixture.objective - 1.));
-      fixture.objective -= 1.;
+   for (size_t step = 0; step < 3; ++step) {
+      fixture.upper_bound_limited_step(2e6);
    }
-   EXPECT_FALSE(fixture.test(progress(1., fixture.objective), 2e6, fixture.objective - 1e5));
-   EXPECT_TRUE(fixture.test(progress(1., fixture.objective), 2e4, fixture.objective - 1e3));
+   EXPECT_FALSE(fixture.full_step_acceptable(2e6));
+   EXPECT_TRUE(fixture.full_step_acceptable(2e4));
 }
