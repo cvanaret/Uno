@@ -92,7 +92,7 @@ namespace uno {
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
       this->primal_regularization = 0.;
       this->dual_regularization = 0.;
-      this->factorize_with_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
+      this->regularize_until_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
          block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ false);
    }
 
@@ -102,7 +102,7 @@ namespace uno {
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
       DEBUG << "The augmented matrix is assumed singular\n";
-      this->factorize_with_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
+      this->regularize_until_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
          block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ true);
       return true;
    }
@@ -112,11 +112,11 @@ namespace uno {
    void PrimalDualInertiaCorrection::refactorize_augmented_matrix(Statistics& statistics, const Subproblem& /*subproblem*/,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
-      this->factorize_with_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
+      this->regularize_until_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
          block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ false);
    }
 
-   void PrimalDualInertiaCorrection::factorize_with_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
+   void PrimalDualInertiaCorrection::regularize_until_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular) {
       const double dual_regularization_value = this->dual_regularization_fraction * dual_regularization_parameter;
