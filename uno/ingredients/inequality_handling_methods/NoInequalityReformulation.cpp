@@ -30,6 +30,7 @@ namespace uno {
    void NoInequalityReformulation::initialize_statistics(Statistics& statistics) {
       this->hessian_model->initialize_statistics(statistics);
       this->inertia_correction_strategy->initialize_statistics(statistics);
+      this->subproblem_solver->initialize_statistics(statistics);
    }
 
    void NoInequalityReformulation::create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations,
@@ -115,17 +116,12 @@ namespace uno {
          current_evaluations, trial_evaluations);
    }
 
-   const Direction& NoInequalityReformulation::compute_second_order_correction(const Iterate& current_iterate) {
-      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate);
+   const Direction& NoInequalityReformulation::compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) {
+      return this->subproblem_solver->compute_second_order_correction(statistics, *this->subproblem, current_iterate);
    }
 
    void NoInequalityReformulation::update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) {
       this->subproblem_solver->update_second_order_corrections(*this->subproblem, trial_iterate, trial_evaluations);
-   }
-
-   void NoInequalityReformulation::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
-      // no threshold on the multipliers
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, Inf);
    }
 
    void NoInequalityReformulation::compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
@@ -144,7 +140,7 @@ namespace uno {
          current_evaluations, this->subproblem_solver->get_workspace());
    }
 
-   bool NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+   Decision NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
          const ProgressMeasures& predicted_reductions) const {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
@@ -162,6 +158,10 @@ namespace uno {
 
    void NoInequalityReformulation::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
       InequalityHandlingMethod::compute_residuals(this->problem, iterate, evaluations);
+   }
+
+   double NoInequalityReformulation::compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
+      return this->problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
    }
 
    std::string NoInequalityReformulation::get_name() const {

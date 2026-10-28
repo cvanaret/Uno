@@ -16,6 +16,7 @@ namespace uno {
    class DirectSymmetricIndefiniteLinearSolver;
    class SolverWorkspace;
    class HessianModel;
+   class Inertia;
    class InertiaCorrectionStrategy;
    class Iterate;
    class LinearSystem;
@@ -54,8 +55,15 @@ namespace uno {
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
-      void assemble_augmented_rhs(const Iterate& current_iterate, Evaluations& evaluations, Vector<double>& rhs) const;
-      void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
+      // the factorized augmented matrix is deemed singular: returns false if it cannot be regularized further
+      [[nodiscard]] bool regularize_singular_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
+      // refactorize the augmented matrix with the current regularization (e.g. after the pivoting tolerance of the linear
+      // solver was increased); the inertia is checked again and the regularization increased if needed
+      void refactorize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system, const Vector<double>& solution,
+         Direction& direction) const;
       [[nodiscard]] BlockAugmentedMatrix compute_block_augmented_matrix(LinearSystem& linear_system) const;
       // symbolic Newton system of the problem, with the regularization blocks of the inertia correction strategy
       [[nodiscard]] std::unique_ptr<NewtonSystem> create_newton_system() const;
@@ -98,6 +106,9 @@ namespace uno {
    protected:
       HessianModel& hessian_model;
       InertiaCorrectionStrategy& inertia_correction_strategy;
+
+      [[nodiscard]] bool requires_augmented_matrix_regularization() const;
+      [[nodiscard]] Inertia expected_augmented_matrix_inertia() const;
    };
 
    template <typename Array>

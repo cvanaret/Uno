@@ -4,7 +4,7 @@ name: Tests of the C API on Linux
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
@@ -13,7 +13,7 @@ on:
       - '*.yaml'
       - 'docs/**'
   pull_request:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths-ignore:
       - '*.md'
       - 'LICENSE'

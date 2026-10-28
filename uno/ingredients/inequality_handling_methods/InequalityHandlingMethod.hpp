@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <string>
+#include "ingredients/globalization_strategies/Decision.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
 
@@ -54,23 +55,25 @@ namespace uno {
 
       virtual void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual PhaseHandoff export_handoff() const = 0;
+      // upon a phase switch, the incoming iterate may lie outside the (dynamically relaxed) bounds of this phase:
+      // methods that maintain internal bounds relax them to strictly contain the iterate. No-op by default
+      virtual void relax_bounds_around(const Iterate& /*iterate*/) const { }
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       virtual void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
-      [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual const Direction& compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
-      virtual void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) = 0;
       virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const = 0;
 
       virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
       [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const = 0;
-      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+      [[nodiscard]] virtual Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
          const ProgressMeasures& predicted_reductions) const = 0;
       // accept the trial iterate without globalization test (tiny steps)
@@ -79,6 +82,12 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
       virtual void compute_residuals(Iterate& iterate, Evaluations& evaluations) const = 0;
+      // square problem (as many free variables as equality constraints, IPOPT's IsSquareProblem): the constraint
+      // multipliers are recomputed as least-squares estimates at each accepted iterate (IPOPT's ComputeFeasibilityMultipliers)
+      virtual void update_multipliers_of_square_problem(Iterate& /*iterate*/, Evaluations& /*evaluations*/,
+         double /*multipliers_threshold*/) { }
+      // primal infeasibility of the (reformulated) problem, as used in the termination tests
+      [[nodiscard]] virtual double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 
@@ -89,7 +98,7 @@ namespace uno {
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
-      bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
       void accept_iterate_unconditionally(const Subproblem& subproblem, Iterate& trial_iterate, Evaluations& trial_evaluations) const;

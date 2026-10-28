@@ -192,6 +192,15 @@ filter_reset_iteration_threshold 5
 # Maximum number of filter resets (integer)
 max_number_filter_resets 5
 
+# Number of consecutive line searches limited by the infeasibility upper bound before the bound is raised, 0 to disable (integer)
+filter_ubd_raise_trigger 0
+
+# Factor by which the infeasibility upper bound is raised (double)
+filter_ubd_raise_factor 100
+
+# Maximum number of raises of the infeasibility upper bound (integer)
+filter_ubd_max_raises 4
+
 # Whether the filter condition on the objective uses the entry (true) or the iterate (false) infeasibility (bool)
 filter_margin_uses_entry_infeasibility false
 
@@ -232,6 +241,12 @@ LS_scale_duals_with_step_length true
 
 # Safety factor for the minimum step length (double)
 gamma_alpha 0.05
+
+# Number of consecutive shortened steps that triggers the watchdog, 0 disables it (integer)
+LS_watchdog_shortened_iterations_trigger 10
+
+# Maximum number of watchdog iterations in which the full step is accepted without globalization test (integer)
+LS_watchdog_max_trial_iterations 3
 
 # --------------------------------------
 ## Second-order correction (SOC) options
@@ -276,6 +291,25 @@ threshold_unsuccessful_attempts 8
 
 # Whether all variables or only the original variables are regularized
 regularize_all_variables true
+
+# -----------------------------
+## Iterative refinement options
+# -----------------------------
+
+# Minimum number of iterative refinement steps per linear system solve (integer)
+iterative_refinement_min_steps 0
+
+# Maximum number of iterative refinement steps per linear system solve (0: iterative refinement disabled) (integer)
+iterative_refinement_max_steps 10
+
+# Iterative refinement stops when the residual ratio is below this tolerance (double)
+iterative_refinement_residual_ratio_max 1e-10
+
+# Residual ratio above which the matrix is deemed singular after failed iterative refinement (double)
+iterative_refinement_residual_ratio_singular 1e-5
+
+# Refinement stagnates (and stops) when the residual ratio exceeds this factor times the previous ratio, in (0, 1] (double)
+iterative_refinement_improvement_factor 0.999999999
 
 # ---------------------
 ## Quasi-Newton options

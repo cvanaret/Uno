@@ -94,6 +94,9 @@ namespace uno {
       options.set_double("filter_sufficient_infeasibility_decrease_factor", 0.9);
       options.set_integer("filter_reset_iteration_threshold", 5); // >= 1
       options.set_integer("max_number_filter_resets", 5); // >= 0
+      options.set_integer("filter_ubd_raise_trigger", 0); // 0: disabled
+      options.set_double("filter_ubd_raise_factor", 100.); // > 1
+      options.set_integer("filter_ubd_max_raises", 4);
       options.set_bool("filter_margin_uses_entry_infeasibility", false);
 
       /** funnel options **/
@@ -112,6 +115,10 @@ namespace uno {
       options.set_bool("LS_scale_duals_with_step_length", true);
       // safety factor for the minimum step length
       options.set_double("gamma_alpha", 0.05);
+      // watchdog: number of consecutive shortened steps that triggers the watchdog (0 disables it)
+      options.set_integer("LS_watchdog_shortened_iterations_trigger", 10);
+      // watchdog: maximum number of iterations in which the full step is accepted without globalization test
+      options.set_integer("LS_watchdog_max_trial_iterations", 3);
 
       /** Second-Order Corrections (SOC) options */
       // maximum number of SOC iterations
@@ -140,6 +147,17 @@ namespace uno {
       options.set_double("primal_regularization_slow_increase_factor", 8.);
       options.set_integer("threshold_unsuccessful_attempts", 8);
       options.set_bool("regularize_all_variables", true);
+
+      /** iterative refinement options (on the uncondensed Newton system) **/
+      // IPOPT: 1 (https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_min_refinement_steps). 0: no refinement step when the
+      // solution is already accurate
+      options.set_integer("iterative_refinement_min_steps", 0);
+      // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_max_refinement_steps (unlike IPOPT, this is the exact maximum
+      // number of steps; 0 disables iterative refinement altogether)
+      options.set_integer("iterative_refinement_max_steps", 10);
+      options.set_double("iterative_refinement_residual_ratio_max", 1e-10);
+      options.set_double("iterative_refinement_residual_ratio_singular", 1e-5);
+      options.set_double("iterative_refinement_improvement_factor", 0.999999999);
 
       /** trust region options **/
       // initial trust region radius

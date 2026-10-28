@@ -65,8 +65,9 @@ namespace uno {
       virtual void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
 
       // numerical evaluations of Lagrangian gradient and Hessian
-      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
-         Evaluations& evaluations, Vector<double>& lagrangian_gradient) const;
+      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, double objective_multiplier,
+         Evaluations& evaluations, View<double> lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          View<double> hessian_values) const = 0;
 

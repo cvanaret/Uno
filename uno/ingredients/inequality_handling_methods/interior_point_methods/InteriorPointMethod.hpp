@@ -7,9 +7,11 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 #include "../InequalityHandlingMethod.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
+#include "ElasticInitialization.hpp"
 #include "InteriorPointParameters.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
@@ -33,6 +35,7 @@ namespace uno {
       void initialize_memory() override;
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
+      void update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold) override;
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
       void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
@@ -44,23 +47,23 @@ namespace uno {
 
       void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) override;
       [[nodiscard]] PhaseHandoff export_handoff() const override;
+      void relax_bounds_around(const Iterate& iterate) const override;
       void set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem, Iterate& iterate, Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
       [[nodiscard]] bool has_second_order_corrections() const override;
       void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
-      [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate) override;
+      [[nodiscard]] const Direction& compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) override;
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
-      void compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) override;
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
       void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const override;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
          const ProgressMeasures& predicted_reductions) const override;
       void accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const override;
@@ -68,6 +71,7 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
+      [[nodiscard]] double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] std::string get_name() const override;
 
@@ -81,14 +85,27 @@ namespace uno {
       std::unique_ptr<SubproblemSolver> subproblem_solver;
       std::unique_ptr<Subproblem> subproblem;
 
-      const double least_square_multiplier_max_norm;
-
       bool first_feasibility_iteration{false};
+      const bool is_square_problem;
 
       [[nodiscard]] const double& barrier_parameter() const;
    };
 
    // class template implementation
+
+   // IPOPT (IsSquareProblem): as many free variables as equality constraints
+   inline bool is_square(const OptimizationProblem& problem) {
+      const auto& lower_bounds = problem.get_variables_lower_bounds();
+      const auto& upper_bounds = problem.get_variables_upper_bounds();
+      size_t number_free_variables = 0;
+      for (size_t variable_index: Range(problem.number_variables)) {
+         if (lower_bounds[variable_index] != upper_bounds[variable_index]) {
+            ++number_free_variables;
+         }
+      }
+      return (0 < number_free_variables && number_free_variables == problem.get_equality_constraints().size());
+   }
+
 
    template <typename BarrierProblem>
    InteriorPointMethod<BarrierProblem>::InteriorPointMethod(const OptimizationProblem& problem, bool uses_trust_region,
@@ -98,7 +115,6 @@ namespace uno {
             options.get_double("barrier_tau_min"),
             options.get_double("barrier_k_sigma"),
             options.get_double("barrier_regularization_exponent"),
-            options.get_double("barrier_small_direction_factor"),
             options.get_double("barrier_push_variable_to_interior_k1"),
             options.get_double("barrier_push_variable_to_interior_k2"),
             options.get_double("barrier_damping_factor"),
@@ -107,12 +123,21 @@ namespace uno {
          }),
          barrier_parameter_update_strategy(options),
          barrier_problem(problem, this->parameters, this->barrier_parameter(), options.get_double("residual_scaling_threshold")),
-         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
+         is_square_problem(is_square(problem)) {
       // create the ingredients
       std::tie(this->inertia_correction_strategy, this->hessian_model, this->subproblem_solver) =
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier,
             options, option_overrides);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations,
+         double multipliers_threshold) {
+      if (this->is_square_problem) {
+         this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations,
+            multipliers_threshold);
+      }
    }
 
    template <typename BarrierProblem>
@@ -124,6 +149,7 @@ namespace uno {
    void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics) {
       this->hessian_model->initialize_statistics(statistics);
       this->inertia_correction_strategy->initialize_statistics(statistics);
+      this->subproblem_solver->initialize_statistics(statistics);
       statistics.add_column("Barrier", Statistics::double_width, 2, /* is_extended = */ true);
    }
 
@@ -194,56 +220,95 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::relax_bounds_around(const Iterate& iterate) const {
+      this->barrier_problem.relax_bounds_around(iterate);
+   }
+
+   template <typename BarrierProblem>
    // set the elastic variables of the current iterate
    void InteriorPointMethod<BarrierProblem>::set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem,
          Iterate& iterate, Evaluations& evaluations) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
+      const double rho = feasibility_problem.constraint_violation_coefficient;
+      const double mu = this->barrier_parameter();
 
-      // cap the original variables to [-rho, +rho]
+      // cap the bound multipliers to [-rho, +rho] (IPOPT: z <- min(rho, z))
       for (size_t variable_index: Range(this->barrier_problem.number_variables)) {
          if (iterate.multipliers.lower_bounds[variable_index] > 0.) {
-            iterate.multipliers.lower_bounds[variable_index] = std::min(iterate.multipliers.lower_bounds[variable_index],
-               feasibility_problem.constraint_violation_coefficient);
+            iterate.multipliers.lower_bounds[variable_index] = std::min(iterate.multipliers.lower_bounds[variable_index], rho);
          }
          if (iterate.multipliers.upper_bounds[variable_index] < 0.) {
-            iterate.multipliers.upper_bounds[variable_index] = std::max(iterate.multipliers.upper_bounds[variable_index],
-               -feasibility_problem.constraint_violation_coefficient);
+            iterate.multipliers.upper_bounds[variable_index] = std::max(iterate.multipliers.upper_bounds[variable_index], -rho);
          }
       }
 
-      // reset the elastics
-      const auto elastic_reset = [&](size_t /*constraint_index*/, size_t elastic_index, ElasticType /*elastic_type*/) {
+      // reset the elastics and register the positive (p) and negative (n) elastics of each constraint
+      static constexpr size_t no_variable = std::numeric_limits<size_t>::max();
+      const size_t number_constraints = this->barrier_problem.number_constraints;
+      std::vector<size_t> positive_elastic(number_constraints, no_variable);
+      std::vector<size_t> negative_elastic(number_constraints, no_variable);
+      feasibility_problem.set_elastic_variable_values([&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
          iterate.primals[elastic_index] = 0.;
-      };
-      feasibility_problem.set_elastic_variable_values(elastic_reset);
-
-      // c(x) - p + n = 0
-      // analytical expression for p and n:
-      // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
-      // where jacobian_coefficient = -1 for p, +1 for n
-      Vector<double> constraints(this->barrier_problem.number_constraints); // TODO preallocate
-      this->barrier_problem.evaluate_constraints(iterate, constraints.view(), evaluations);
-      const double mu = this->barrier_parameter();
-      const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, ElasticType elastic_type) {
-         // precomputations
-         const double constraint_j = constraints[constraint_index];
-         const double rho = feasibility_problem.constraint_violation_coefficient;
-         const double mu_over_rho = mu / rho;
-         const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
-         const double sqrt_radical = std::sqrt(radical);
-         const double jacobian_coefficient = (elastic_type == ElasticType::POSITIVE) ? -1. : 1.;
-
-         iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
-         iterate.multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
          iterate.multipliers.upper_bounds[elastic_index] = 0.;
-         if (iterate.primals[elastic_index] <= 0.) {
-            throw std::runtime_error("The elastic variable is not strictly positive.");
+         ((elastic_type == ElasticType::POSITIVE) ? positive_elastic : negative_elastic)[constraint_index] = elastic_index;
+      });
+      std::vector<size_t> slack_of_constraint(number_constraints, no_variable);
+      for (const auto [constraint_index, slack_index]: this->barrier_problem.get_slacks()) {
+         slack_of_constraint[constraint_index] = slack_index;
+      }
+
+      // residuals of the barrier constraints without elastics: r = c(x) - s (inequality) or r = c(x) - b (equality)
+      Vector<double> residuals(number_constraints);
+      this->barrier_problem.evaluate_constraints(iterate, residuals.view(), evaluations);
+
+      // the elastics p (Jacobian coefficient -1) and n (+1) of constraint j satisfy the restoration stationarity
+      // rho + y - z_p = 0 and rho - y - z_n = 0 with z_p p = z_n n = mu. The barrier constraint is
+      // - equality (b = l = u), p and n:                    c - b - p + n = 0
+      // - two-sided inequality (l < u finite), p and n:     c - s - p + n = 0,  l <= s <= u
+      // - upper-bounded inequality (u finite), p only:      c - s - p = 0,      s <= u
+      // - lower-bounded inequality (l finite), n only:      c - s + n = 0,      l <= s
+      // Linear constraints that are not relaxed have no elastics and are left untouched
+      const auto& slack_lower_bounds = this->barrier_problem.get_internal_variables_lower_bounds();
+      const auto& slack_upper_bounds = this->barrier_problem.get_internal_variables_upper_bounds();
+      for (size_t constraint_index: Range(number_constraints)) {
+         const size_t p_index = positive_elastic[constraint_index];
+         const size_t n_index = negative_elastic[constraint_index];
+         if (p_index != no_variable && n_index != no_variable) {
+            // the slack (if any) is fixed: p - n = r and z_p + z_n = 2 rho (eliminating y)
+            const auto [p, n] = solve_elastic_pair(residuals[constraint_index], mu / rho);
+            iterate.primals[p_index] = p;
+            iterate.primals[n_index] = n;
+            iterate.multipliers.lower_bounds[p_index] = mu / p;
+            iterate.multipliers.lower_bounds[n_index] = mu / n;
          }
-         if (iterate.multipliers.lower_bounds[elastic_index] <= 0.) {
-            throw std::runtime_error("The elastic dual is not strictly positive.");
+         else if (p_index != no_variable || n_index != no_variable) {
+            // single elastic: the constraint is an inequality and the slack must move with the elastic, otherwise the
+            // constraint cannot hold when the sign of r is wrong. The slack stationarity y + z_s = 0 (z_s: multiplier of
+            // its only bound) and z_s (distance of s to its bound) = mu give, with e the elastic and d the distance:
+            //    e - d = violation of the bound by c,   z_e + |z_s| = rho
+            const size_t slack_index = slack_of_constraint[constraint_index];
+            if (slack_index == no_variable) {
+               throw std::logic_error("IPM: a constraint with a single elastic variable has no slack");
+            }
+            const double constraint_value = residuals[constraint_index] + iterate.primals[slack_index];
+            if (p_index != no_variable) { // c - p = s <= u
+               const double upper_bound = slack_upper_bounds[slack_index];
+               const auto [p, distance] = solve_elastic_pair(constraint_value - upper_bound, 2. * mu / rho);
+               iterate.primals[p_index] = p;
+               iterate.multipliers.lower_bounds[p_index] = mu / p;
+               iterate.primals[slack_index] = upper_bound - distance;
+               iterate.multipliers.upper_bounds[slack_index] = -mu / distance;
+            }
+            else { // c + n = s >= l
+               const double lower_bound = slack_lower_bounds[slack_index];
+               const auto [n, distance] = solve_elastic_pair(lower_bound - constraint_value, 2. * mu / rho);
+               iterate.primals[n_index] = n;
+               iterate.multipliers.lower_bounds[n_index] = mu / n;
+               iterate.primals[slack_index] = lower_bound + distance;
+               iterate.multipliers.lower_bounds[slack_index] = mu / distance;
+            }
          }
-      };
-      feasibility_problem.set_elastic_variable_values(elastic_setting_function);
+      }
    }
 
    template <typename BarrierProblem>
@@ -264,20 +329,14 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   const Direction& InteriorPointMethod<BarrierProblem>::compute_second_order_correction(const Iterate& current_iterate) {
-      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate);
+   const Direction& InteriorPointMethod<BarrierProblem>::compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) {
+      return this->subproblem_solver->compute_second_order_correction(statistics, *this->subproblem, current_iterate);
    }
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::update_second_order_corrections(const Iterate& trial_iterate,
          Evaluations& trial_evaluations) {
       this->subproblem_solver->update_second_order_corrections(*this->subproblem, trial_iterate, trial_evaluations);
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::compute_least_squares_multipliers(Iterate& iterate, Evaluations& evaluations) {
-      // no threshold on the multipliers
-      this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations, Inf);
    }
 
    template <typename BarrierProblem>
@@ -301,7 +360,7 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+   Decision InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
          const ProgressMeasures& predicted_reductions) const {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
@@ -324,26 +383,17 @@ namespace uno {
       InequalityHandlingMethod::compute_residuals(this->barrier_problem, iterate, evaluations);
    }
 
+   template <typename BarrierProblem>
+   double InteriorPointMethod<BarrierProblem>::compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
+      return this->barrier_problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
+   }
+
    // protected member functions
 
    template <typename BarrierProblem>
    const double& InteriorPointMethod<BarrierProblem>::barrier_parameter() const {
       return this->barrier_parameter_update_strategy.get_barrier_parameter();
    }
-
-   /*
-   // determine if the direction is a "small direction" (Section 3.9 in IPOPT paper)
-   template <typename BarrierProblem>
-   bool InteriorPointMethod<BarrierProblem>::is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const {
-      const Range variables_range = Range(this->problem->number_variables);
-      const VectorExpression relative_direction_size{variables_range, [&](size_t variable_index) {
-         return direction_primals[variable_index] / (1 + std::abs(current_primals[variable_index]));
-      }};
-      static double machine_epsilon = std::numeric_limits<double>::epsilon();
-      return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
-      return false;
-   }
-   */
 
    template <typename BarrierProblem>
    std::string InteriorPointMethod<BarrierProblem>::get_name() const {

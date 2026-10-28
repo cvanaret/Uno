@@ -9,7 +9,9 @@
 #include <cmath>
 #include <cstddef>
 #include <optional>
+#include <stdexcept>
 #include <vector>
+#include "ingredients/globalization_strategies/Decision.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
@@ -17,6 +19,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/SolutionStatus.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    // forward declarations
@@ -51,26 +54,39 @@ namespace uno {
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       virtual void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
-      virtual const Direction& compute_second_order_correction(Iterate& current_iterate) = 0;
+      virtual const Direction& compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const = 0;
-      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      [[nodiscard]] virtual Decision is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) = 0;
-      // accept a tiny trial step without globalization test (IPOPT, Section 3.9)
-      virtual void accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, bool force_parameterization_update, Evaluations& current_evaluations,
-         Evaluations& trial_evaluations, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+      // forwarded to the globalization strategy that tested the trial iterates of the step
+      virtual void notify_step_limited_by(RejectionReason sole_rejection_reason) = 0;
+      // accept a trial step without globalization test (IPOPT, Section 3.9), possibly after forcing an update of the
+      // parameterization (e.g. a decrease of the barrier parameter). Returns true if the parameterization was updated
+      [[nodiscard]] virtual bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) = 0;
+      // the line search failed in the optimality phase. Returns true if the trial iterate was set to a terminal iterate
+      // (the current iterate or the last acceptable iterate) instead of switching to the feasibility problem
+      [[nodiscard]] virtual bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
+         const Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
       // threshold theta_min of the globalization strategy of the current phase
       [[nodiscard]] virtual double small_infeasibility_threshold() const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
+      // whether the last iterate tested for termination satisfies the acceptable conditions
+      [[nodiscard]] bool is_last_iterate_acceptable() const { return this->last_iterate_acceptable; }
+      // number of updates of the parameterization (e.g. the barrier parameter) so far. Lets the globalization mechanism
+      // detect that the problem definition changed (e.g. to reset the watchdog, as IPOPT does when mu changes)
+      [[nodiscard]] size_t get_number_parameterization_updates() const { return this->number_parameterization_updates; }
 
    protected:
       const Norm residual_norm;
@@ -79,6 +95,7 @@ namespace uno {
       const double diverging_iterate_threshold;
       const double unbounded_objective_threshold;
       size_t number_subproblems_solved{0};
+      size_t number_parameterization_updates{0};
 
       // tight unscaled tolerances
       const double tight_unscaled_stationarity_tolerance;
@@ -94,6 +111,9 @@ namespace uno {
       const size_t acceptable_iteration_threshold;          // [15], 0 disables the heuristic
       size_t acceptable_consecutive_iterations{0};
       std::optional<double> previous_objective{};
+      // last iterate that satisfied the acceptable conditions (fallback upon line-search failure, see IPOPT)
+      std::optional<Iterate> acceptable_iterate{};
+      bool last_iterate_acceptable{false};
 
       template <typename Problem>
       [[nodiscard]] static bool satisfies_unscaled_tolerances(const Problem& problem, const Iterate& iterate,
@@ -104,6 +124,9 @@ namespace uno {
       template <typename Problem>
       [[nodiscard]] SolutionStatus check_acceptable_termination(const Problem& problem, const Iterate& iterate,
          const Evaluations& evaluations) const;
+      template <typename Problem>
+      [[nodiscard]] bool fall_back_after_line_search_failure(const Problem& problem, const Iterate& current_iterate,
+         Iterate& trial_iterate, const Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
    };
 
    template <typename Problem>
@@ -155,10 +178,12 @@ namespace uno {
       if (evaluations.is_objective_computed) {
          this->previous_objective = evaluations.objective; // after the objective-change test
       }
+      this->last_iterate_acceptable = (status_acceptable != SolutionStatus::NOT_OPTIMAL);
       if (status_acceptable == SolutionStatus::NOT_OPTIMAL) {
          this->acceptable_consecutive_iterations = 0;
          return SolutionStatus::NOT_OPTIMAL;
       }
+      this->acceptable_iterate = iterate;
       ++this->acceptable_consecutive_iterations;
       if (this->acceptable_iteration_threshold <= this->acceptable_consecutive_iterations) {
          return status_acceptable;
@@ -193,6 +218,38 @@ namespace uno {
          }
       }
       return status;
+   }
+
+   // IPOPT (BacktrackingLineSearch::FindAcceptableTrialPoint), upon line-search failure in the optimality phase:
+   // - if the current iterate is acceptable, terminate there;
+   // - if the current iterate is almost feasible, the feasibility restoration cannot make progress: terminate at the last
+   //   acceptable iterate if any, otherwise fail.
+   // Returns true if the trial iterate was set to a terminal iterate
+   template <typename Problem>
+   bool ConstraintRelaxationStrategy::fall_back_after_line_search_failure(const Problem& problem, const Iterate& current_iterate,
+         Iterate& trial_iterate, const Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
+      if (0 < this->acceptable_iteration_threshold && this->check_acceptable_termination(problem, current_iterate,
+            current_evaluations) != SolutionStatus::NOT_OPTIMAL) {
+         WARNING << "The line search failed at an acceptable iterate\n";
+         trial_iterate = current_iterate;
+         trial_evaluations = current_evaluations;
+         trial_iterate.status = SolutionStatus::FEASIBLE_KKT_POINT;
+         return true;
+      }
+      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(
+         current_iterate.scaled_residuals.primal_infeasibility, current_evaluations.constraints, Norm::INF);
+      if (current_iterate.progress.infeasibility <= 1e-2 * this->primal_tolerance &&
+            unscaled_primal_infeasibility <= 1e-1 * this->tight_unscaled_primal_infeasibility_tolerance) {
+         if (this->acceptable_iterate.has_value()) {
+            WARNING << "The line search failed at an almost feasible point, the last acceptable iterate is restored\n";
+            trial_iterate = *this->acceptable_iterate;
+            trial_evaluations.reset(); // the functions are evaluated again at the restored iterate upon postprocessing
+            trial_iterate.status = SolutionStatus::FEASIBLE_KKT_POINT;
+            return true;
+         }
+         throw std::runtime_error("The line search failed at an almost feasible point and no acceptable iterate is available");
+      }
+      return false;
    }
 } // namespace
 

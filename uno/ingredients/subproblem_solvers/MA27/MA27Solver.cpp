@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <stdexcept>
 #include "MA27Solver.hpp"
 
@@ -207,6 +208,18 @@ namespace uno {
          static_cast<size_t>(this->workspace.info[1]) :
          static_cast<size_t>(this->workspace.n);
    }
+
+   bool MA27Solver::increase_pivoting_tolerance() {
+      const double current_tolerance = MA27_CNTL(1);
+      const auto new_tolerance = this->pivoting_tolerance_schedule.increase(current_tolerance);
+      if (!new_tolerance.has_value()) {
+         return false;
+      }
+      MA27_CNTL(1) = *new_tolerance;
+      DEBUG << "Increasing the MA27 pivoting tolerance from " << current_tolerance << " to " << MA27_CNTL(1) << '\n';
+      return true;
+   }
+
 
    LinearSystem& MA27Solver::get_linear_system() {
       return this->linear_system;

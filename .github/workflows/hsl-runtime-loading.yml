@@ -7,7 +7,7 @@ name: HSL runtime loading
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
@@ -16,7 +16,7 @@ on:
       - '*.yaml'
       - 'docs/**'
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'

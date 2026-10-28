@@ -34,20 +34,23 @@ namespace uno {
       [[nodiscard]] bool has_second_order_corrections() const override;
       void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
-      const Direction& compute_second_order_correction(Iterate& current_iterate) override;
+      const Direction& compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) override;
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       // trial iterate acceptance
       [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const override;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) override;
-      // accept a tiny trial step without globalization test (IPOPT, Section 3.9)
-      void accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, bool force_parameterization_update, Evaluations& current_evaluations,
-         Evaluations& trial_evaluations, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      void notify_step_limited_by(RejectionReason sole_rejection_reason) override;
+      [[nodiscard]] bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
+      [[nodiscard]] bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
+         const Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       [[nodiscard]] double small_infeasibility_threshold() const override;
       [[nodiscard]] std::string get_name() const override;

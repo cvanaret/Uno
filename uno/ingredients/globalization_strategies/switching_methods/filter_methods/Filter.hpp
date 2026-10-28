@@ -27,6 +27,7 @@ namespace uno {
       [[nodiscard]] double get_smallest_infeasibility() const;
       // set the upper bound and the value restored upon reset
       void set_infeasibility_upper_bound(double new_upper_bound);
+      [[nodiscard]] double get_infeasibility_upper_bound() const;
 
       [[nodiscard]] bool acceptable_wrt_infeasibility_upper_bound(double trial_infeasibility) const;
       [[nodiscard]] bool filter_acceptable(double trial_infeasibility, double trial_objective) const;

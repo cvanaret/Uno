@@ -163,6 +163,8 @@ namespace uno {
       DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
+      // the bounds of the two phases are relaxed independently: make the restoration bounds contain the incoming iterate
+      this->feasibility_inequality_handling_method->relax_bounds_around(current_iterate);
 
       // re-evaluate the progress measures at the current iterate
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
@@ -201,12 +203,12 @@ namespace uno {
       }
    }
 
-   const Direction& FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate) {
+   const Direction& FeasibilityRestoration::compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) {
       if (this->current_phase == Phase::OPTIMALITY) {
-         return this->inequality_handling_method->compute_second_order_correction(current_iterate);
+         return this->inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
       }
       else {
-         return this->feasibility_inequality_handling_method->compute_second_order_correction(current_iterate);
+         return this->feasibility_inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
       }
    }
 
@@ -251,8 +253,13 @@ namespace uno {
       view(this->iterate_buffer.primals, this->original_problem.number_variables, number_optimality_variables) =
          view(trial_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables);
       trial_evaluations.evaluate_constraints(model, this->iterate_buffer.primals);
+      // the restoration bounds may have been relaxed beyond the optimality bounds: relax the latter (otherwise the
+      // barrier measure is infinite and restoration may never terminate when a variable sits at its relaxed bound)
+      this->inequality_handling_method->relax_bounds_around(this->iterate_buffer);
       this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
-      this->iterate_buffer.scaled_residuals.primal_infeasibility = model.constraint_violation(trial_evaluations.constraints, this->residual_norm);
+      // same measure as the reference infeasibility (primal infeasibility of the optimality reformulation)
+      this->iterate_buffer.scaled_residuals.primal_infeasibility =
+         this->inequality_handling_method->compute_primal_infeasibility(this->iterate_buffer, trial_evaluations);
 
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
@@ -310,6 +317,7 @@ namespace uno {
          }
       }
       trial_iterate.objective_multiplier = 1.;
+      this->inequality_handling_method->relax_bounds_around(trial_iterate);
       this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
 
       this->initial_point.resize(this->original_problem.number_variables);
@@ -319,12 +327,12 @@ namespace uno {
 
    void FeasibilityRestoration::refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Evaluations& current_evaluations) {
+      ++this->number_parameterization_updates;
       globalization_strategy.reset();
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
          const double proximal_coefficient = inequality_handling_method.proximal_coefficient();
          this->feasibility_problem.set_proximal_coefficient(proximal_coefficient);
          DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
-         this->feasibility_problem.set_proximal_center(current_iterate.primals.view()); // or keep x_R (option)
       }
       // after the proximal update: the auxiliary measure must use the new coefficient and center
       inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO only auxiliary
@@ -342,41 +350,40 @@ namespace uno {
       }
    }
 
-   bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   Decision FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
-      bool accept_iterate = false;
       // determine acceptability, depending on the current phase
-      if (this->current_phase == Phase::OPTIMALITY) {
-         accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, *this->globalization_strategy,
-            current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
-         if (uses_trust_region || accept_iterate) {
-            this->inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
-               trial_evaluations);
-         }
-      }
-      else {
-         accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
-            *this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, trial_evaluations,
-            predicted_reductions);
-         if (uses_trust_region || accept_iterate) {
-            this->feasibility_inequality_handling_method->notify_trial_iterate(statistics, current_iterate, trial_iterate,
-               current_evaluations, trial_evaluations);
-         }
+      InequalityHandlingMethod& inequality_handling_method = (this->current_phase == Phase::OPTIMALITY) ?
+         *this->inequality_handling_method : *this->feasibility_inequality_handling_method;
+      GlobalizationStrategy& globalization_strategy = (this->current_phase == Phase::OPTIMALITY) ?
+         *this->globalization_strategy : *this->feasibility_globalization_strategy;
+      this->trial_globalization_strategy = &globalization_strategy;
+      const Decision decision = inequality_handling_method.is_iterate_acceptable(statistics, globalization_strategy,
+         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+      if (uses_trust_region || decision.accepted) {
+         inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+            trial_evaluations);
       }
 
-      if (accept_iterate) {
+      if (decision.accepted) {
          this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,
             warmstart_information, user_callbacks);
       }
       else {
          warmstart_information.no_changes();
       }
-      return accept_iterate;
+      return decision;
    }
 
-   void FeasibilityRestoration::accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   void FeasibilityRestoration::notify_step_limited_by(RejectionReason sole_rejection_reason) {
+      if (this->trial_globalization_strategy != nullptr) {
+         this->trial_globalization_strategy->notify_step_limited_by(sole_rejection_reason);
+      }
+   }
+
+   bool FeasibilityRestoration::accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
@@ -385,7 +392,9 @@ namespace uno {
       GlobalizationStrategy& globalization_strategy = (this->current_phase == Phase::OPTIMALITY) ?
          *this->globalization_strategy : *this->feasibility_globalization_strategy;
       // update the parameterization first: the progress measures and the postprocessing of the trial iterate depend on it
-      if (force_parameterization_update && inequality_handling_method.force_parameterization_update(statistics)) {
+      const bool parameterization_updated = force_parameterization_update &&
+         inequality_handling_method.force_parameterization_update(statistics);
+      if (parameterization_updated) {
          refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate, current_evaluations);
       }
       inequality_handling_method.accept_iterate_unconditionally(trial_iterate, trial_evaluations);
@@ -393,6 +402,16 @@ namespace uno {
          trial_evaluations);
       this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,
          warmstart_information, user_callbacks);
+      return parameterization_updated;
+   }
+
+   bool FeasibilityRestoration::terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
+         const Evaluations& current_evaluations, Evaluations& trial_evaluations) {
+      if (this->current_phase != Phase::OPTIMALITY) {
+         return false;
+      }
+      return this->fall_back_after_line_search_failure(this->original_problem, current_iterate, trial_iterate,
+         current_evaluations, trial_evaluations);
    }
 
    // possibly switch back to the optimality phase, then compute the residuals and check termination
@@ -412,6 +431,8 @@ namespace uno {
 
       // check termination
       if (this->current_phase == Phase::OPTIMALITY) {
+         this->inequality_handling_method->update_multipliers_of_square_problem(trial_iterate, trial_evaluations,
+            this->least_square_multiplier_max_norm);
          this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,

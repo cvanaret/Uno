@@ -255,6 +255,36 @@
     "default": "\"primal\""
   },
   {
+    "name": "iterative_refinement_improvement_factor",
+    "type": "DOUBLE",
+    "default": "0.999999999"
+  },
+  {
+    "name": "iterative_refinement_max_steps",
+    "type": "INTEGER",
+    "default": "10"
+  },
+  {
+    "name": "iterative_refinement_min_steps",
+    "type": "INTEGER",
+    "default": "0"
+  },
+  {
+    "name": "iterative_refinement_pivoting_tolerance_decrease_after",
+    "type": "INTEGER",
+    "default": "5"
+  },
+  {
+    "name": "iterative_refinement_residual_ratio_max",
+    "type": "DOUBLE",
+    "default": "1e-10"
+  },
+  {
+    "name": "iterative_refinement_residual_ratio_singular",
+    "type": "DOUBLE",
+    "default": "1e-5"
+  },
+  {
     "name": "l1_constraint_violation_coefficient",
     "type": "DOUBLE",
     "default": "1"

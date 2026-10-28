@@ -2,14 +2,14 @@ name: Read the option files
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/options/**'
       - 'interfaces/AMPL/**'
       - 'uno_default.opt'
       - '.github/workflows/ampl-option-file.yml'
   pull_request:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/options/**'
       - 'interfaces/AMPL/**'

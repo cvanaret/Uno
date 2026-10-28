@@ -34,12 +34,13 @@ namespace uno {
    void InequalityHandlingMethod::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
       // stationarity error (norm of the Lagrangian gradient)
-      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.scaled_residuals.lagrangian_gradient);
+      problem.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
+         iterate.multipliers.upper_bounds, evaluations, iterate.scaled_residuals.lagrangian_gradient.view());
       iterate.scaled_residuals.stationarity = norm(this->residual_norm, iterate.scaled_residuals.lagrangian_gradient);
 
-      // primal feasibility/constraint violation of the model
-      evaluations.evaluate_constraints(problem.model, iterate.primals);
-      iterate.scaled_residuals.primal_infeasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
+      // primal infeasibility (constraint violation of the model, possibly with additional residuals of the reformulation)
+      iterate.scaled_residuals.primal_infeasibility = problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
+      assert(evaluations.are_constraints_computed);
 
       // complementarity error
       iterate.scaled_residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,
@@ -50,7 +51,7 @@ namespace uno {
       iterate.scaled_residuals.complementarity_scaling = problem.compute_complementarity_scaling(iterate.multipliers);
    }
 
-   bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+   Decision InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const {
       subproblem.problem.postprocess_iterate(trial_iterate, trial_evaluations);
@@ -60,29 +61,28 @@ namespace uno {
       evaluate_progress_measures(subproblem.problem, trial_iterate, trial_evaluations);
       trial_iterate.objective_multiplier = objective_multiplier;
 
-      bool accept_iterate = false;
-      if (direction.norm == 0.) {
+      // zero step in all the primal variables (direction.norm only measures the original variables: slacks or elastic
+      // variables may still move)
+      if (norm_inf(direction.primals) == 0.) {
          DEBUG << "Zero step acceptable\n";
          trial_evaluations.evaluate_objective(this->problem.model, trial_iterate.primals);
-         accept_iterate = true;
          statistics.set("Status", "0 primal step");
+         return Decision::accept();
       }
-      else if (is_infinite(trial_iterate.progress.auxiliary)) {
+      if (is_infinite(trial_iterate.progress.auxiliary)) {
          DEBUG << "The auxiliary measure is infinite (iterate too close to the bounds), rejecting the trial iterate\n";
-         accept_iterate = false;
          statistics.set("Status", "inf auxiliary");
+         return Decision::reject(RejectionReason::INVALID_TRIAL_ITERATE);
       }
-      else {
-         // determine acceptance wrt the globalization strategy
-         accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
-            predicted_reductions, objective_multiplier);
-         if (accept_iterate) {
-            // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
-            trial_evaluations.evaluate_objective_gradient(this->problem.model, trial_iterate.primals);
-            trial_evaluations.evaluate_jacobian(this->problem.model, trial_iterate.primals);
-         }
+      // determine acceptance wrt the globalization strategy
+      const Decision decision = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress,
+         trial_iterate.progress, predicted_reductions, objective_multiplier);
+      if (decision.accepted) {
+         // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
+         trial_evaluations.evaluate_objective_gradient(this->problem.model, trial_iterate.primals);
+         trial_evaluations.evaluate_jacobian(this->problem.model, trial_iterate.primals);
       }
-      return accept_iterate;
+      return decision;
    }
 
    void InequalityHandlingMethod::accept_iterate_unconditionally(const Subproblem& subproblem, Iterate& trial_iterate,

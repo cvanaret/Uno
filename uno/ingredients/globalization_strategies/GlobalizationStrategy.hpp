@@ -5,6 +5,7 @@
 #define UNO_GLOBALIZATIONSTRATEGY_H
 
 #include <string>
+#include "Decision.hpp"
 
 namespace uno {
    // forward declarations
@@ -19,8 +20,11 @@ namespace uno {
       virtual ~GlobalizationStrategy();
 
       virtual void initialize(Statistics& statistics, const Iterate& initial_iterate) = 0;
-      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+      [[nodiscard]] virtual Decision is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) = 0;
+      // called by the globalization mechanism once a step is complete: sole_rejection_reason is the reason shared by all
+      // the rejected trial iterates of the step (NONE if no trial iterate was rejected or if the reasons differ)
+      virtual void notify_step_limited_by(RejectionReason /*sole_rejection_reason*/) { }
       [[nodiscard]] virtual bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const = 0;
 

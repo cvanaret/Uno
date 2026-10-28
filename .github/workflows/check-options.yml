@@ -2,7 +2,7 @@ name: Check options consistency
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/options/Options.cpp'
       - 'uno/options/DefaultOptions.cpp'
@@ -11,7 +11,7 @@ on:
       - '.github/julia/check_options.jl'
       - '.github/workflows/check-options.yml'
   pull_request:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/options/Options.cpp'
       - 'uno/options/DefaultOptions.cpp'

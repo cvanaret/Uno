@@ -38,8 +38,9 @@ namespace uno {
       void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const override;
       void evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const override;
       void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const override;
-      void evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
-         Vector<double>& lagrangian_gradient) const override;
+      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, View<double> hessian_values) const override;
 
@@ -61,16 +62,30 @@ namespace uno {
       [[nodiscard]] Inertia get_inertia() const override;
 
       [[nodiscard]] std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const override;
-      void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
+         bool use_dual_regularization) const override;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
+         const Vector<double>& solution, Direction& direction) const override;
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
       [[nodiscard]] static double push_variable_to_interior(double value, double lower_bound, double upper_bound,
          double absolute_factor, double relative_factor);
+      // IPOPT-style safeguard (CalculateSafeSlack): slack that replaces a slack smaller than eps*min(1, mu)
+      [[nodiscard]] static double compute_safe_slack(double slack, double bound_multiplier, double barrier_parameter,
+         double bound, double slack_move);
       [[nodiscard]] double dual_regularization_factor() const override;
       void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+      // relax (IPOPT's AdjustVariableBounds) the bounds that are too close to (or violated by) the iterate.
+      // The primals are not modified. Returns the number of relaxed bounds
+      size_t relax_bounds_around(const Iterate& iterate) const;
+      [[nodiscard]] size_t get_number_bound_relaxations() const;
+      [[nodiscard]] const std::vector<double>& get_internal_variables_lower_bounds() const;
+      [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;
+      // (constraint index, slack index) of the slacked inequality constraints
+      [[nodiscard]] const SparseVector<size_t>& get_slacks() const;
 
+      // the constraint violation of the unslacked problem and the residuals c(x) - s of the slacked constraints
+      [[nodiscard]] double primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
@@ -103,19 +118,26 @@ namespace uno {
 
       std::vector<double> barrier_variables_lower_bounds;
       std::vector<double> barrier_variables_upper_bounds;
-      // internal bounds
-      std::vector<double> variables_lower_bounds;
-      std::vector<double> variables_upper_bounds;
+      // internal bounds (mutable: dynamically relaxed when the iterate gets too close, see relax_bounds_around)
+      mutable std::vector<double> variables_lower_bounds;
+      mutable std::vector<double> variables_upper_bounds;
+      mutable size_t number_bound_relaxations{0};
 
       std::vector<size_t> bounded_variables; // variables with a finite (internal) lower and/or upper bound
+      std::vector<size_t> lower_bounded_variables; // variables with a finite (internal) lower bound
+      std::vector<size_t> upper_bounded_variables; // variables with a finite (internal) upper bound
+      // directions of the bound duals of the lower-bounded, then of the upper-bounded variables
+      mutable Vector<double> bound_dual_direction_buffer;
       std::vector<double> constraints_lower_bounds;
       std::vector<double> constraints_upper_bounds;
 
       Vector<uno_int> jacobian_row_indices{};
 
       Vector<uno_int> jacobian_column_indices{};
-      mutable Vector<double> constraints_buffer;
-      mutable Vector<double> constraints_buffer2;
+      mutable Vector<double> constraints_buffer; // scratch buffer
+      // data of the predicted infeasibility reduction model (read lazily by the model: not to be used for anything else)
+      mutable Vector<double> predicted_reduction_constraints;
+      mutable Vector<double> predicted_reduction_jacobian_direction;
 
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
          double tau) const;
@@ -123,6 +145,10 @@ namespace uno {
          double tau) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
+      [[nodiscard]] double damping_term(size_t variable_index) const;
+      void evaluate_damped_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const;
+      [[nodiscard]] auto complementarity_blocks(const Vector<double>& primals, const Multipliers& multipliers) const;
+      void set_bound_dual_direction(Multipliers& direction_multipliers) const;
    };
 } // namespace
 

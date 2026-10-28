@@ -11,14 +11,14 @@ name: Ctrl+C (SIGINT) end-to-end
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/**'
       - 'interfaces/AMPL/**'
       - '.github/sigint/arki0009.nl'
       - '.github/workflows/sigint-test.yml'
   pull_request:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/**'
       - 'interfaces/AMPL/**'

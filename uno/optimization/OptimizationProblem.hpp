@@ -60,8 +60,9 @@ namespace uno {
       virtual void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const;
       virtual void evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const;
       virtual void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const;
-      virtual void evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
-         Vector<double>& lagrangian_gradient) const;
+      virtual void evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, View<double> hessian_values) const;
 
@@ -87,12 +88,16 @@ namespace uno {
 
       // symbolic Newton system of the equality-constrained subproblem: [H + δ_w I  *; J  -δ_c I]
       [[nodiscard]] virtual std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
-         bool dual_regularization) const;
-      virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
+         bool use_dual_regularization) const;
+      // primal-dual direction from the solution of the (condensed) Newton system
+      virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
+         const Vector<double>& solution, Direction& direction) const;
       virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
+      // primal infeasibility used in the termination tests: constraint violation of the model by default
+      [[nodiscard]] virtual double primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const;
       [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,

@@ -11,7 +11,7 @@ name: Ctrl+C (SIGINT) through unopy
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/**'
       - 'interfaces/C/**'
@@ -19,7 +19,7 @@ on:
       - '.github/sigint/**'
       - '.github/workflows/sigint-python.yml'
   pull_request:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
       - 'uno/**'
       - 'interfaces/C/**'

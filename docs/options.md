@@ -113,6 +113,9 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `filter_sufficient_infeasibility_decrease_factor` | double  | 0.9     | Infeasibility decrease factor in the infeasibility sufficient decrease condition       |
 | `filter_reset_iteration_threshold`                | integer | 5       | Number of consecutive filter rejections before the filter is reset                     |
 | `max_number_filter_resets`                        | integer | 5       | Maximum number of filter resets                                                        |
+| `filter_ubd_raise_trigger`                        | integer | 0       | Line searches limited by the infeasibility upper bound before it is raised (0: off) |
+| `filter_ubd_raise_factor`                         | double  | 100     | Factor by which the infeasibility upper bound is raised                                |
+| `filter_ubd_max_raises`                           | integer | 4       | Maximum number of raises of the infeasibility upper bound                              |
 | `filter_margin_uses_entry_infeasibility`          | bool    | false   | Whether the filter condition on the objective uses the entry (true) or the iterate (false) infeasibility |                                                        |
 
 ## Funnel method options
@@ -134,6 +137,8 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `LS_backtracking_ratio`           | double  | 0.5     | Decrease ratio of the step length for backtracking line search   |
 | `LS_scale_duals_with_step_length` | bool    | `true`  | Whether the Lagrange multipliers are scaled with the step length |
 | `gamma_alpha`                     | double  | 0.05    | Safety factor for the minimum step length                        |
+| `LS_watchdog_shortened_iterations_trigger` | integer | 10 | Number of consecutive shortened steps that triggers the watchdog (0 disables it) |
+| `LS_watchdog_max_trial_iterations` | integer | 3 | Maximum number of watchdog iterations in which the full step is accepted unchecked |
 
 ## Second-Order Corrections (SOC) options
 
@@ -156,6 +161,16 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `primal_regularization_slow_increase_factor` | double  | 8.0     | Slow increase factor for the primal inertia correction coefficient                      |
 | `threshold_unsuccessful_attempts`            | integer | 8       | Number of unsuccessful attempts until inertia correction becomes more aggressive        |
 | `regularize_all_variables`                   | bool | true       | Whether all variables or only the original variables are regularized        |
+
+## Iterative refinement options
+
+| Option                                       | Type    | Default | Description                                                                             |
+| :---                                         | :---    | :---    |:----------------------------------------------------------------------------------------|
+| `iterative_refinement_min_steps` | integer | 0 | Minimum number of iterative refinement steps per linear system solve |
+| `iterative_refinement_max_steps` | integer | 10 | Maximum number of iterative refinement steps per linear system solve (0: iterative refinement disabled) |
+| `iterative_refinement_residual_ratio_max` | double | 1e-10 | Iterative refinement stops when the residual ratio is below this tolerance |
+| `iterative_refinement_residual_ratio_singular` | double | 1e-5 | Residual ratio above which the matrix is deemed singular after failed iterative refinement |
+| `iterative_refinement_improvement_factor` | double | 0.999999999 | Refinement stagnates (and stops) when the residual ratio exceeds this factor times the previous ratio. In (0, 1] |
 
 ## Quasi-Newton options
 
