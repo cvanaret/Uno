@@ -91,8 +91,8 @@ namespace uno {
          trial_evaluations);
    }
 
-   const Direction& NoRelaxation::compute_second_order_correction(Iterate& current_iterate) {
-      return this->inequality_handling_method->compute_second_order_correction(current_iterate);
+   const Direction& NoRelaxation::compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) {
+      return this->inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
    }
 
    void NoRelaxation::update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) {

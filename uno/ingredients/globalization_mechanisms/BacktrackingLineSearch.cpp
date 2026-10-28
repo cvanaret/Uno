@@ -497,7 +497,8 @@ namespace uno {
          while (!SOC_termination) {
             DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
 
-            const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(current_iterate);
+            const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(statistics,
+               current_iterate);
             assemble_trial_iterate(current_iterate, trial_iterate, direction_SOC, 1.);
             evaluation_cache.trial_evaluations.reset();
 

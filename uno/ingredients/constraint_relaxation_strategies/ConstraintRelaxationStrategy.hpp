@@ -54,7 +54,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       virtual void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
-      virtual const Direction& compute_second_order_correction(Iterate& current_iterate) = 0;
+      virtual const Direction& compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       // trial iterate acceptance

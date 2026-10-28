@@ -45,7 +45,7 @@ namespace uno {
       [[nodiscard]] bool has_second_order_corrections() const override;
       void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
-      [[nodiscard]] const Direction& compute_second_order_correction(const Iterate& current_iterate) override;
+      [[nodiscard]] const Direction& compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) override;
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,

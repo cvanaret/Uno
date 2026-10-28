@@ -203,12 +203,12 @@ namespace uno {
       }
    }
 
-   const Direction& FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate) {
+   const Direction& FeasibilityRestoration::compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) {
       if (this->current_phase == Phase::OPTIMALITY) {
-         return this->inequality_handling_method->compute_second_order_correction(current_iterate);
+         return this->inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
       }
       else {
-         return this->feasibility_inequality_handling_method->compute_second_order_correction(current_iterate);
+         return this->feasibility_inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
       }
    }
 

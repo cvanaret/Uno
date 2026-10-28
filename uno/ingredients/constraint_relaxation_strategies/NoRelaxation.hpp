@@ -34,7 +34,7 @@ namespace uno {
       [[nodiscard]] bool has_second_order_corrections() const override;
       void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
-      const Direction& compute_second_order_correction(Iterate& current_iterate) override;
+      const Direction& compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) override;
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       // trial iterate acceptance
