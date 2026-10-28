@@ -217,7 +217,7 @@ namespace {
       DirectSymmetricIndefiniteLinearSolver<double>* linear_solver_pointer() { return this->linear_solver.get(); }
       // per-iteration summary shown in the IR statistics column
       [[nodiscard]] std::string iteration_summary() const {
-         return std::to_string(this->iteration_refinement_steps) + this->iteration_refinement_flags;
+         return std::to_string(this->iteration_refinement_steps) + join(this->iteration_refinement_flags, ",");
       }
       void set_residual_ratio_max(double value) {
          this->iterative_refinement.residual_ratio_max = value;
@@ -471,7 +471,7 @@ TEST_P(IterativeRefinement, InaccurateSolutionIsAcceptedBelowSingularThreshold) 
    ASSERT_GT(solver.get_residual_ratio(), 0.) << "the residual ratio is exactly zero: the failure path cannot be tested";
    EXPECT_FALSE(solver.is_matrix_deemed_singular());
    const std::string summary = solver.iteration_summary();
-   const std::string expected_flags = supports_pivoting_tolerance_increase(GetParam()) ? "qS" : "S";
+   const std::string expected_flags = supports_pivoting_tolerance_increase(GetParam()) ? "piv,inac" : "inac";
    EXPECT_EQ(summary.substr(summary.size() - expected_flags.size()), expected_flags);
    EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
    EXPECT_TRUE(std::isfinite(direction.norm));
