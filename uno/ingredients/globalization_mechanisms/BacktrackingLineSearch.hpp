@@ -76,7 +76,7 @@ namespace uno {
       [[nodiscard]] bool backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          const PredictedReductionModels& predicted_reduction_models, double minimum_step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks, bool skip_first_trial = false);
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks, bool skip_full_step = false);
       void update_watchdog_state(const Iterate& current_iterate, const Direction& direction, const Evaluations& current_evaluations);
       [[nodiscard]] bool take_watchdog_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,

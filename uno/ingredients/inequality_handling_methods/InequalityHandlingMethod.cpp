@@ -34,12 +34,13 @@ namespace uno {
    void InequalityHandlingMethod::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
       // stationarity error (norm of the Lagrangian gradient)
-      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.scaled_residuals.lagrangian_gradient);
+      problem.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
+         iterate.multipliers.upper_bounds, evaluations, iterate.scaled_residuals.lagrangian_gradient.view());
       iterate.scaled_residuals.stationarity = norm(this->residual_norm, iterate.scaled_residuals.lagrangian_gradient);
 
       // primal infeasibility (constraint violation of the model, possibly with additional residuals of the reformulation)
       iterate.scaled_residuals.primal_infeasibility = problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
-      evaluations.evaluate_constraints(problem.model, iterate.primals); // no-op if cached
+      assert(evaluations.are_constraints_computed);
 
       // complementarity error
       iterate.scaled_residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,

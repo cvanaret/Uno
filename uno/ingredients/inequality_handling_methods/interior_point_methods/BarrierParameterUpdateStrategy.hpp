@@ -67,7 +67,8 @@ namespace uno {
          const Iterate& current_iterate, Evaluations& evaluations) {
       // primal-dual errors
       Vector<double> lag(barrier_problem.number_variables);
-      barrier_problem.evaluate_lagrangian_gradient(current_iterate, evaluations, lag);
+      barrier_problem.evaluate_lagrangian_gradient(current_iterate.primals, current_iterate.multipliers.constraints,
+         current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds, evaluations, lag.view());
       const double stationarity_error = norm_inf(lag);
       const double scaled_stationarity = stationarity_error / barrier_problem.compute_stationarity_scaling(current_iterate.multipliers);
       Vector<double> constraints(barrier_problem.number_constraints);

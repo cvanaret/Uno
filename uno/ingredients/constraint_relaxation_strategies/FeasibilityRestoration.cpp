@@ -203,12 +203,12 @@ namespace uno {
       }
    }
 
-   const Direction& FeasibilityRestoration::compute_second_order_correction(Iterate& current_iterate) {
+   const Direction& FeasibilityRestoration::compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) {
       if (this->current_phase == Phase::OPTIMALITY) {
-         return this->inequality_handling_method->compute_second_order_correction(current_iterate);
+         return this->inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
       }
       else {
-         return this->feasibility_inequality_handling_method->compute_second_order_correction(current_iterate);
+         return this->feasibility_inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
       }
    }
 
@@ -383,7 +383,7 @@ namespace uno {
       }
    }
 
-   bool FeasibilityRestoration::accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   bool FeasibilityRestoration::accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {

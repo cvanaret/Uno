@@ -79,7 +79,8 @@ namespace uno {
       throw std::runtime_error("No SOC implemented in BoxLPSolver");
    }
 
-   const Direction& BoxLPSolver::compute_second_order_correction(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/) {
+   const Direction& BoxLPSolver::compute_second_order_correction(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+         const Iterate& /*current_iterate*/) {
       throw std::runtime_error("No SOC implemented in BoxLPSolver");
    }
 

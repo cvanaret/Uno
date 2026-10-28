@@ -116,8 +116,8 @@ namespace uno {
          current_evaluations, trial_evaluations);
    }
 
-   const Direction& NoInequalityReformulation::compute_second_order_correction(const Iterate& current_iterate) {
-      return this->subproblem_solver->compute_second_order_correction(*this->subproblem, current_iterate);
+   const Direction& NoInequalityReformulation::compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) {
+      return this->subproblem_solver->compute_second_order_correction(statistics, *this->subproblem, current_iterate);
    }
 
    void NoInequalityReformulation::update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) {

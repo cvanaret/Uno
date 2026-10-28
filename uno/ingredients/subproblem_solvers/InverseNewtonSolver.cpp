@@ -51,7 +51,7 @@ namespace uno {
       throw std::runtime_error("No SOC implemented in InverseNewtonSolver");
    }
 
-   const Direction& InverseNewtonSolver::compute_second_order_correction(const Subproblem& /*subproblem*/,
+   const Direction& InverseNewtonSolver::compute_second_order_correction(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Iterate& /*current_iterate*/) {
       throw std::runtime_error("No SOC implemented in InverseNewtonSolver");
    }

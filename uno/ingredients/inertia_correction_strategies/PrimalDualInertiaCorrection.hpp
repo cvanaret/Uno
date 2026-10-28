@@ -55,7 +55,7 @@ namespace uno {
       const size_t threshold_unsuccessful_attempts;
       const bool regularize_all_variables;
 
-      void factorize_with_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
+      void regularize_until_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular);
       void increase_primal_regularization(size_t number_attempts);

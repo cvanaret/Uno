@@ -54,7 +54,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       virtual void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
-      virtual const Direction& compute_second_order_correction(Iterate& current_iterate) = 0;
+      virtual const Direction& compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       // trial iterate acceptance
@@ -66,12 +66,12 @@ namespace uno {
          UserCallbacks& user_callbacks) = 0;
       // forwarded to the globalization strategy that tested the trial iterates of the step
       virtual void notify_step_limited_by(RejectionReason sole_rejection_reason) = 0;
-      // accept a tiny trial step without globalization test (IPOPT, Section 3.9), possibly after forcing an update of the
+      // accept a trial step without globalization test (IPOPT, Section 3.9), possibly after forcing an update of the
       // parameterization (e.g. a decrease of the barrier parameter). Returns true if the parameterization was updated
-      [[nodiscard]] virtual bool accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      [[nodiscard]] virtual bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
-         Evaluations& current_evaluations,
-         Evaluations& trial_evaluations, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) = 0;
       // the line search failed in the optimality phase. Returns true if the trial iterate was set to a terminal iterate
       // (the current iterate or the last acceptable iterate) instead of switching to the feasibility problem
       [[nodiscard]] virtual bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,

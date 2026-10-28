@@ -60,8 +60,9 @@ namespace uno {
       virtual void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const;
       virtual void evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const;
       virtual void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const;
-      virtual void evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
-         Vector<double>& lagrangian_gradient) const;
+      virtual void evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, View<double> hessian_values) const;
 

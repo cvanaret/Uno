@@ -44,7 +44,7 @@ namespace uno {
       [[nodiscard]] bool has_second_order_corrections() const override;
       void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
-      const Direction& compute_second_order_correction(Iterate& current_iterate) override;
+      const Direction& compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) override;
       void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       // trial iterate acceptance
@@ -55,7 +55,7 @@ namespace uno {
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) override;
       void notify_step_limited_by(RejectionReason sole_rejection_reason) override;
-      [[nodiscard]] bool accept_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      [[nodiscard]] bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) override;

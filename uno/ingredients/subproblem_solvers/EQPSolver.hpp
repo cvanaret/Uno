@@ -47,7 +47,8 @@ namespace uno {
       [[nodiscard]] bool has_second_order_corrections() const override;
       void initialize_second_order_corrections(const Subproblem& subproblem, const Iterate& current_iterate,
          const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
-      const Direction& compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate) override;
+      const Direction& compute_second_order_correction(Statistics& statistics, const Subproblem& subproblem,
+         const Iterate& current_iterate) override;
       void update_second_order_corrections(const Subproblem& subproblem, const Iterate& trial_iterate,
          Evaluations& trial_evaluations) override;
 
@@ -64,12 +65,12 @@ namespace uno {
       Direction direction;
       std::unique_ptr<NewtonSystem> newton_system;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
-      LowRankCorrection correction;
+      LowRankCorrection low_rank_correction;
       bool analysis_performed{false};
+      Vector<double> zero_multipliers{};
       // the least-squares system overwrote the augmented matrix and its factorization: the next direction computation
       // must assemble and factorize the augmented matrix again
       bool factorization_holds_least_squares_system{false};
-      Vector<double> least_squares_rhs_buffer{};
       // regularization of the (2, 2) block of the least-squares system when the Jacobian is rank deficient
       static constexpr double least_squares_dual_regularization{1e-8};
 
@@ -89,15 +90,15 @@ namespace uno {
       bool matrix_deemed_singular{false}; // in the last solve, the matrix was deemed singular (IPOPT's "pretend singular")
       // per-iteration summary (IPOPT-style): refinement steps, q: pivoting tolerance increased, s: matrix deemed singular,
       // S: inaccurate solution accepted. Shown in the extended "IR" statistics column
-      Statistics* iteration_statistics{nullptr};
       size_t iteration_refinement_steps{0};
-      std::string iteration_refinement_flags{};
+      std::vector<std::string_view> iteration_refinement_flags{};
 
-      void solve_with_iterative_refinement(const Subproblem& subproblem, Statistics* factorization_statistics);
+      void solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
+         bool allow_refactorization);
       [[nodiscard]] bool refine_uncondensed_solution();
       [[nodiscard]] double compute_uncondensed_residual_ratio();
       void compute_iterative_refinement_correction();
-      void report_iterative_refinement();
+      void report_iterative_refinement(Statistics& statistics);
 
       bool SOC_initialized{false};
       Vector<double> constraints_SOC;

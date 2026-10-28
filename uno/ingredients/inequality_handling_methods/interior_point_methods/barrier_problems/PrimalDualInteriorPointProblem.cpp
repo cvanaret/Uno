@@ -322,9 +322,11 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
-         Vector<double>& lagrangian_gradient) const {
-      this->unslacked_problem.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const {
+      this->unslacked_problem.evaluate_lagrangian_gradient(primals, constraint_multipliers, lower_bound_multipliers,
+         upper_bound_multipliers, evaluations, lagrangian_gradient);
 
       for (const auto [_, slack_index]: this->slacks) {
          lagrangian_gradient[slack_index] = 0.;
@@ -333,14 +335,14 @@ namespace uno {
       // slacks
       for (const auto [constraint_index, slack_index]: this->slacks) {
          // bound multipliers
-         lagrangian_gradient[slack_index] -= (iterate.multipliers.lower_bounds[slack_index] + iterate.multipliers.upper_bounds[slack_index]);
+         lagrangian_gradient[slack_index] -= (lower_bound_multipliers[slack_index] + upper_bound_multipliers[slack_index]);
          // Jacobian block
-         lagrangian_gradient[slack_index] += iterate.multipliers.constraints[constraint_index];
+         lagrangian_gradient[slack_index] += constraint_multipliers[constraint_index];
       }
 
       // fixed variables
       for (const auto [constraint_index, variable_index]: this->fixed_variables) {
-         lagrangian_gradient[variable_index] -= iterate.multipliers.constraints[constraint_index];
+         lagrangian_gradient[variable_index] -= constraint_multipliers[constraint_index];
       }
    }
 

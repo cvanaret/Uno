@@ -20,7 +20,7 @@ using uno::test::BoundActiveModel;
 
 namespace {
    // PDIPM over min (x0 + 1)^2 + (x1 - 2)^2  s.t.  x0 + x1 >= 1,  x0 >= 0,  -1 <= x1 <= 1, with variables (x0, x1, s0)
-   struct BarrierFixture {
+   struct BarrierScenario {
       const BoundActiveModel model{};
       const OptimizationProblem problem{model, 100.};
       const InteriorPointParameters parameters{0.99, 1e10, 0.25, 1e-2, 1e-2, 1e-5, 1.,
@@ -41,37 +41,37 @@ namespace {
 // c(x) = x0 + x1 = 1 satisfies the constraint c(x) >= 1, but the slack s0 = 3 lags behind: the point is not primal
 // feasible for the slacked problem and its primal infeasibility must not vanish
 TEST(BarrierProblem, PrimalInfeasibilityIncludesSlackResiduals) {
-   BarrierFixture fixture;
-   const Iterate iterate = fixture.make_iterate(0.5, 0.5, 3.);
-   Evaluations evaluations(fixture.model);
-   EXPECT_EQ(fixture.problem.primal_infeasibility(iterate, evaluations, Norm::INF), 0.);
-   EXPECT_DOUBLE_EQ(fixture.barrier_problem.primal_infeasibility(iterate, evaluations, Norm::INF), 2.);
+   BarrierScenario scenario;
+   const Iterate iterate = scenario.make_iterate(0.5, 0.5, 3.);
+   Evaluations evaluations(scenario.model);
+   EXPECT_EQ(scenario.problem.primal_infeasibility(iterate, evaluations, Norm::INF), 0.);
+   EXPECT_DOUBLE_EQ(scenario.barrier_problem.primal_infeasibility(iterate, evaluations, Norm::INF), 2.);
 }
 
 // consistent slack: the primal infeasibility is the constraint violation of the original problem
 TEST(BarrierProblem, PrimalInfeasibilityWithConsistentSlack) {
-   BarrierFixture fixture;
-   const Iterate iterate = fixture.make_iterate(0.25, 0.25, 0.5); // c(x) = 0.5 < 1
-   Evaluations evaluations(fixture.model);
-   EXPECT_DOUBLE_EQ(fixture.barrier_problem.primal_infeasibility(iterate, evaluations, Norm::INF), 0.5);
+   BarrierScenario scenario;
+   const Iterate iterate = scenario.make_iterate(0.25, 0.25, 0.5); // c(x) = 0.5 < 1
+   Evaluations evaluations(scenario.model);
+   EXPECT_DOUBLE_EQ(scenario.barrier_problem.primal_infeasibility(iterate, evaluations, Norm::INF), 0.5);
 }
 
 // the predicted infeasibility reduction built at the current iterate must not change when the progress measures of a
 // trial iterate are evaluated (the backtracking line search queries the model after evaluating trial iterates)
 TEST(BarrierProblem, PredictedInfeasibilityReductionIsNotOverwritten) {
-   BarrierFixture fixture;
-   const Iterate current_iterate = fixture.make_iterate(0.5, 0.5, 3.);
-   Evaluations current_evaluations(fixture.model);
-   current_evaluations.evaluate_jacobian(fixture.model, current_iterate.primals);
+   BarrierScenario scenario;
+   const Iterate current_iterate = scenario.make_iterate(0.5, 0.5, 3.);
+   Evaluations current_evaluations(scenario.model);
+   current_evaluations.evaluate_jacobian(scenario.model, current_iterate.primals);
    const Vector<double> direction{0.1, 0.2, -1.};
-   const PredictedInfeasibilityReduction model = fixture.barrier_problem.build_predicted_infeasibility_reduction(
+   const PredictedInfeasibilityReduction infeasibility_pred = scenario.barrier_problem.build_predicted_infeasibility_reduction(
       current_iterate, direction, Norm::L1, current_evaluations);
-   const double reduction = model(0.5);
+   const double reduction = infeasibility_pred(0.5);
 
-   Iterate trial_iterate = fixture.make_iterate(10., -0.5, 1.5);
-   Evaluations trial_evaluations(fixture.model);
-   fixture.barrier_problem.set_infeasibility_measure(trial_iterate, trial_evaluations, Norm::L1);
-   EXPECT_DOUBLE_EQ(model(0.5), reduction);
+   Iterate trial_iterate = scenario.make_iterate(10., -0.5, 1.5);
+   Evaluations trial_evaluations(scenario.model);
+   scenario.barrier_problem.set_infeasibility_measure(trial_iterate, trial_evaluations, Norm::L1);
+   EXPECT_DOUBLE_EQ(infeasibility_pred(0.5), reduction);
    // c - s = -2 and J d = 0.1 + 0.2 + 1 (slack column -1): |-2 + 0.5 * 1.3| = 1.35
    EXPECT_DOUBLE_EQ(reduction, 2. - 1.35);
 }

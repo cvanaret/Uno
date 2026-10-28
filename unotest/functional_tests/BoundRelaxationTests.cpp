@@ -36,9 +36,9 @@ namespace {
       return {0.99, 1e10, 0.25, 1e-2, 1e-2, 1e-5, 1., slack_move};
    }
 
-   // optimality-like fixture: PDIPM over the model, with variables (x0, x1, s0)
-   struct BarrierFixture {
-      explicit BarrierFixture(double mu): barrier_parameter(mu) { }
+   // optimality-like scenario: PDIPM over the model, with variables (x0, x1, s0)
+   struct BarrierScenario {
+      explicit BarrierScenario(double mu): barrier_parameter(mu) { }
 
       const BoundActiveModel model{};
       const OptimizationProblem problem{model, 100.};
@@ -66,107 +66,107 @@ namespace {
 } // namespace
 
 TEST(BoundRelaxation, NoRelaxationAwayFromBounds) {
-   BarrierFixture fixture(0.1);
-   Iterate iterate = fixture.make_iterate(0.5, 0.5, 1.5);
-   Evaluations evaluations(fixture.model);
-   fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
-   EXPECT_EQ(fixture.barrier_problem.get_number_bound_relaxations(), 0u);
-   EXPECT_EQ(fixture.barrier_problem.get_internal_variables_lower_bounds()[0], 0.);
-   EXPECT_EQ(fixture.barrier_problem.get_internal_variables_upper_bounds()[1], 1.);
-   EXPECT_EQ(fixture.barrier_problem.get_internal_variables_lower_bounds()[2], 1.);
+   BarrierScenario scenario(0.1);
+   Iterate iterate = scenario.make_iterate(0.5, 0.5, 1.5);
+   Evaluations evaluations(scenario.model);
+   scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
+   EXPECT_EQ(scenario.barrier_problem.get_number_bound_relaxations(), 0u);
+   EXPECT_EQ(scenario.barrier_problem.get_internal_variables_lower_bounds()[0], 0.);
+   EXPECT_EQ(scenario.barrier_problem.get_internal_variables_upper_bounds()[1], 1.);
+   EXPECT_EQ(scenario.barrier_problem.get_internal_variables_lower_bounds()[2], 1.);
 }
 
 TEST(BoundRelaxation, IterateOnLowerBoundRelaxesBoundNotIterate) {
-   BarrierFixture fixture(0.1);
-   Iterate iterate = fixture.make_iterate(0., 0.5, 1.5); // x0 exactly on its bound
-   Evaluations evaluations(fixture.model);
-   EXPECT_TRUE(std::isinf(fixture.barrier_measure(iterate)));
+   BarrierScenario scenario(0.1);
+   Iterate iterate = scenario.make_iterate(0., 0.5, 1.5); // x0 exactly on its bound
+   Evaluations evaluations(scenario.model);
+   EXPECT_TRUE(std::isinf(scenario.barrier_measure(iterate)));
 
-   fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
+   scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
    EXPECT_EQ(iterate.primals[0], 0.); // the iterate is not moved
-   EXPECT_EQ(fixture.barrier_problem.get_number_bound_relaxations(), 1u);
+   EXPECT_EQ(scenario.barrier_problem.get_number_bound_relaxations(), 1u);
    // mu/z = 0.1 > cap: the new slack is slack_move*max(1, |0|)
-   EXPECT_DOUBLE_EQ(fixture.barrier_problem.get_internal_variables_lower_bounds()[0], -slack_move);
-   EXPECT_TRUE(std::isfinite(fixture.barrier_measure(iterate)));
+   EXPECT_DOUBLE_EQ(scenario.barrier_problem.get_internal_variables_lower_bounds()[0], -slack_move);
+   EXPECT_TRUE(std::isfinite(scenario.barrier_measure(iterate)));
    // the user-facing bounds of the problem (seen by the subproblem solver) are unchanged
-   EXPECT_TRUE(std::isinf(fixture.barrier_problem.get_variables_lower_bounds()[0]));
-   EXPECT_EQ(fixture.problem.get_variables_lower_bounds()[0], 0.);
+   EXPECT_TRUE(std::isinf(scenario.barrier_problem.get_variables_lower_bounds()[0]));
+   EXPECT_EQ(scenario.problem.get_variables_lower_bounds()[0], 0.);
 }
 
 TEST(BoundRelaxation, CenteredSlackFromMultiplier) {
    const double mu = 1e-2, z = 1e12; // mu/z = 1e-14 < cap
-   BarrierFixture fixture(mu);
-   Iterate iterate = fixture.make_iterate(0., 0.5, 1.5, z);
-   Evaluations evaluations(fixture.model);
-   fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
-   EXPECT_DOUBLE_EQ(fixture.barrier_problem.get_internal_variables_lower_bounds()[0], -mu / z);
+   BarrierScenario scenario(mu);
+   Iterate iterate = scenario.make_iterate(0., 0.5, 1.5, z);
+   Evaluations evaluations(scenario.model);
+   scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
+   EXPECT_DOUBLE_EQ(scenario.barrier_problem.get_internal_variables_lower_bounds()[0], -mu / z);
 }
 
 TEST(BoundRelaxation, UpperBoundAndSlackVariable) {
-   BarrierFixture fixture(0.1);
+   BarrierScenario scenario(0.1);
    // x1 slightly past its upper bound, s0 exactly on its lower bound (constraint bound 1)
-   Iterate iterate = fixture.make_iterate(0.5, 1. + 1e-14, 1.);
-   Evaluations evaluations(fixture.model);
-   fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
-   EXPECT_EQ(fixture.barrier_problem.get_number_bound_relaxations(), 2u);
+   Iterate iterate = scenario.make_iterate(0.5, 1. + 1e-14, 1.);
+   Evaluations evaluations(scenario.model);
+   scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
+   EXPECT_EQ(scenario.barrier_problem.get_number_bound_relaxations(), 2u);
    EXPECT_EQ(iterate.primals[1], 1. + 1e-14);
    EXPECT_EQ(iterate.primals[2], 1.);
-   EXPECT_GT(fixture.barrier_problem.get_internal_variables_upper_bounds()[1], iterate.primals[1]);
-   EXPECT_LT(fixture.barrier_problem.get_internal_variables_lower_bounds()[2], 1.);
-   EXPECT_TRUE(std::isfinite(fixture.barrier_measure(iterate)));
+   EXPECT_GT(scenario.barrier_problem.get_internal_variables_upper_bounds()[1], iterate.primals[1]);
+   EXPECT_LT(scenario.barrier_problem.get_internal_variables_lower_bounds()[2], 1.);
+   EXPECT_TRUE(std::isfinite(scenario.barrier_measure(iterate)));
 }
 
 TEST(BoundRelaxation, RelaxationIsCumulativeAndMonotone) {
-   BarrierFixture fixture(0.1);
-   Evaluations evaluations(fixture.model);
+   BarrierScenario scenario(0.1);
+   Evaluations evaluations(scenario.model);
    double previous_bound = 0.;
    for (size_t iteration = 0; iteration < 5; ++iteration) {
       // the iterate keeps landing on the current (relaxed) bound
-      Iterate iterate = fixture.make_iterate(previous_bound, 0.5, 1.5);
-      fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
-      const double bound = fixture.barrier_problem.get_internal_variables_lower_bounds()[0];
+      Iterate iterate = scenario.make_iterate(previous_bound, 0.5, 1.5);
+      scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
+      const double bound = scenario.barrier_problem.get_internal_variables_lower_bounds()[0];
       EXPECT_LT(bound, previous_bound);
       EXPECT_GT(iterate.primals[0] - bound, 0.);
       previous_bound = bound;
    }
-   EXPECT_EQ(fixture.barrier_problem.get_number_bound_relaxations(), 5u);
+   EXPECT_EQ(scenario.barrier_problem.get_number_bound_relaxations(), 5u);
    // idempotent once the slack is safe
-   Iterate iterate = fixture.make_iterate(previous_bound + slack_move, 0.5, 1.5);
-   fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
-   EXPECT_EQ(fixture.barrier_problem.get_internal_variables_lower_bounds()[0], previous_bound);
+   Iterate iterate = scenario.make_iterate(previous_bound + slack_move, 0.5, 1.5);
+   scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
+   EXPECT_EQ(scenario.barrier_problem.get_internal_variables_lower_bounds()[0], previous_bound);
 }
 
 TEST(BoundRelaxation, RelaxedBoundRemainsStrictlyBelowIterateDespiteRounding) {
-   BarrierFixture fixture(1e-9);
+   BarrierScenario scenario(1e-9);
    // s_min = eps*mu is below half an ulp of x = 1: x - s_min rounds to x without the nextafter safeguard
-   Iterate iterate = fixture.make_iterate(0.5, 0.5, 1.);
+   Iterate iterate = scenario.make_iterate(0.5, 0.5, 1.);
    iterate.primals[2] = 1.; // on bound 1
    iterate.multipliers.lower_bounds[2] = 1e300;
-   Evaluations evaluations(fixture.model);
-   fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
-   EXPECT_LT(fixture.barrier_problem.get_internal_variables_lower_bounds()[2], iterate.primals[2]);
-   EXPECT_TRUE(std::isfinite(fixture.barrier_measure(iterate)));
+   Evaluations evaluations(scenario.model);
+   scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
+   EXPECT_LT(scenario.barrier_problem.get_internal_variables_lower_bounds()[2], iterate.primals[2]);
+   EXPECT_TRUE(std::isfinite(scenario.barrier_measure(iterate)));
 }
 
 TEST(BoundRelaxation, PostprocessingDoesNotTriggerReevaluation) {
-   BarrierFixture fixture(0.1);
-   Iterate iterate = fixture.make_iterate(0., 0.5, 1.5);
-   Evaluations evaluations(fixture.model);
-   evaluations.evaluate_objective(fixture.model, iterate.primals);
-   evaluations.evaluate_constraints(fixture.model, iterate.primals);
-   const size_t objective_evaluations = fixture.model.number_objective_evaluations;
-   const size_t constraint_evaluations = fixture.model.number_constraint_evaluations;
-   fixture.barrier_problem.postprocess_iterate(iterate, evaluations);
+   BarrierScenario scenario(0.1);
+   Iterate iterate = scenario.make_iterate(0., 0.5, 1.5);
+   Evaluations evaluations(scenario.model);
+   evaluations.evaluate_objective(scenario.model, iterate.primals);
+   evaluations.evaluate_constraints(scenario.model, iterate.primals);
+   const size_t objective_evaluations = scenario.model.number_objective_evaluations;
+   const size_t constraint_evaluations = scenario.model.number_constraint_evaluations;
+   scenario.barrier_problem.postprocess_iterate(iterate, evaluations);
    // the primals are unchanged: the cached evaluations remain valid
-   evaluations.evaluate_objective(fixture.model, iterate.primals);
-   evaluations.evaluate_constraints(fixture.model, iterate.primals);
-   EXPECT_EQ(fixture.model.number_objective_evaluations, objective_evaluations);
-   EXPECT_EQ(fixture.model.number_constraint_evaluations, constraint_evaluations);
+   evaluations.evaluate_objective(scenario.model, iterate.primals);
+   evaluations.evaluate_constraints(scenario.model, iterate.primals);
+   EXPECT_EQ(scenario.model.number_objective_evaluations, objective_evaluations);
+   EXPECT_EQ(scenario.model.number_constraint_evaluations, constraint_evaluations);
 }
 
 TEST(BoundRelaxation, PhasesRelaxIndependently) {
    // two barrier problems over the same model, as in the two phases of FeasibilityRestoration
-   BarrierFixture phase_a(0.1);
+   BarrierScenario phase_a(0.1);
    const PrimalDualInteriorPointProblem phase_b(phase_a.problem, phase_a.parameters, phase_a.barrier_parameter, 100.);
    Evaluations evaluations(phase_a.model);
 

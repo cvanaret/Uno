@@ -64,7 +64,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
       virtual void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
-      [[nodiscard]] virtual const Direction& compute_second_order_correction(const Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual const Direction& compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) = 0;
       virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,

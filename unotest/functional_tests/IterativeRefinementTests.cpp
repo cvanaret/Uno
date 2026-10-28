@@ -174,7 +174,7 @@ namespace {
    };
 
    // the primal-dual IPM ingredients at the initial iterate, with a strictly positive barrier parameter
-   struct BarrierSetting {
+   struct BarrierScenario {
       BoundedModel model{};
       Options options;
       OptimizationProblem problem{model, 100.};
@@ -188,7 +188,7 @@ namespace {
       Evaluations evaluations{model};
       Iterate iterate{};
 
-      explicit BarrierSetting(const Options& options): options(options), inertia_correction(this->options) {
+      explicit BarrierScenario(const Options& options): options(options), inertia_correction(this->options) {
          this->hessian_model.initialize_statistics(this->statistics);
          this->inertia_correction.initialize_statistics(this->statistics);
          this->iterate = Iterate(this->model.number_variables, this->model.number_constraints);
@@ -198,6 +198,7 @@ namespace {
       }
 
       const Direction& solve(EQPSolver<NoLowRankCorrection>& solver) {
+         solver.initialize_statistics(this->statistics);
          solver.initialize_memory(this->subproblem);
          const WarmstartInformation warmstart_information{};
          const Vector<double> initial_point(this->barrier_problem.number_variables);
@@ -216,7 +217,7 @@ namespace {
       DirectSymmetricIndefiniteLinearSolver<double>* linear_solver_pointer() { return this->linear_solver.get(); }
       // per-iteration summary shown in the IR statistics column
       [[nodiscard]] std::string iteration_summary() const {
-         return std::to_string(this->iteration_refinement_steps) + this->iteration_refinement_flags;
+         return std::to_string(this->iteration_refinement_steps) + join(this->iteration_refinement_flags, ",");
       }
       void set_residual_ratio_max(double value) {
          this->iterative_refinement.residual_ratio_max = value;
@@ -232,11 +233,11 @@ INSTANTIATE_TEST_SUITE_P(LinearSolvers, IterativeRefinement,
 
 // condensing the uncondensed Newton RHS gives back the condensed RHS
 TEST_P(IterativeRefinement, CondensedNewtonRHS) {
-   BarrierSetting setting(make_options(GetParam(), 1, 10));
-   const std::unique_ptr<NewtonSystem> newton_system = setting.subproblem.create_newton_system();
-   ASSERT_EQ(newton_system->uncondensed_dimension(), 3 * setting.barrier_problem.number_variables +
-      setting.barrier_problem.number_constraints - 2); // one bound per variable is infinite: x1 (upper), s (lower)
-   const NewtonSystemContext context{setting.statistics, setting.iterate, setting.evaluations};
+   BarrierScenario scenario(make_options(GetParam(), 1, 10));
+   const std::unique_ptr<NewtonSystem> newton_system = scenario.subproblem.create_newton_system();
+   ASSERT_EQ(newton_system->uncondensed_dimension(), 3 * scenario.barrier_problem.number_variables +
+      scenario.barrier_problem.number_constraints - 2); // one bound per variable is infinite: x1 (upper), s (lower)
+   const NewtonSystemContext context{scenario.statistics, scenario.iterate, scenario.evaluations};
    Vector<double> values(newton_system->number_nonzeros()), condensed_rhs(newton_system->dimension()),
       uncondensed_rhs(newton_system->uncondensed_dimension()), recondensed_rhs(newton_system->dimension());
    newton_system->evaluate(context, values.view());
@@ -254,24 +255,24 @@ TEST_P(IterativeRefinement, CondensedNewtonRHS) {
 //  constraints:     J dx = -c(x)
 //  complementarity: z_L dx + (x - l) dz_L = mu - (x - l) z_L   (idem for the upper bounds)
 TEST_P(IterativeRefinement, DirectionSolvesUncondensedSystem) {
-   BarrierSetting setting(make_options(GetParam(), 1, 10));
-   EQPSolver<NoLowRankCorrection> solver(setting.options);
-   const Direction& direction = setting.solve(solver);
+   BarrierScenario scenario(make_options(GetParam(), 1, 10));
+   EQPSolver<NoLowRankCorrection> solver(scenario.options);
+   const Direction& direction = scenario.solve(solver);
    EXPECT_LE(solver.get_residual_ratio(), 1e-10);
    // the matrix is not regularized at this iterate (the residuals below assume it)
-   ASSERT_EQ(setting.inertia_correction.get_primal_regularization_factor(), 0.);
+   ASSERT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
 
    // barrier problem: variables (x0, x1, s), constraints c0 = x0 + x1^2 - 1 = 0 and c1 = x0 - x1 - s = 0
-   const auto& x = setting.iterate.primals;
-   const auto& y = setting.iterate.multipliers.constraints;
-   const auto& z_L = setting.iterate.multipliers.lower_bounds;
-   const auto& z_U = setting.iterate.multipliers.upper_bounds;
+   const auto& x = scenario.iterate.primals;
+   const auto& y = scenario.iterate.multipliers.constraints;
+   const auto& z_L = scenario.iterate.multipliers.lower_bounds;
+   const auto& z_U = scenario.iterate.multipliers.upper_bounds;
    const auto& dx = direction.primals;
    const auto& dy = direction.multipliers.constraints;
    const auto& dz_L = direction.multipliers.lower_bounds;
    const auto& dz_U = direction.multipliers.upper_bounds;
-   const double mu = setting.barrier_parameter;
-   const double damping = setting.parameters.damping_factor * mu;
+   const double mu = scenario.barrier_parameter;
+   const double damping = scenario.parameters.damping_factor * mu;
    ASSERT_EQ(x.size(), 3);
 
    const double lower_bounds[3] = {0., -5., -INFINITY};
@@ -323,26 +324,26 @@ TEST_P(IterativeRefinement, DefaultSkipsRefinementWhenAccurate) {
    DefaultOptions::load(options);
    Presets::set(options, "ipopt");
    options.set_string("linear_solver", GetParam());
-   BarrierSetting setting(options);
-   EQPSolver<NoLowRankCorrection> solver(setting.options);
-   (void)setting.solve(solver);
+   BarrierScenario scenario(options);
+   EQPSolver<NoLowRankCorrection> solver(scenario.options);
+   (void)scenario.solve(solver);
    EXPECT_EQ(solver.get_number_refinement_steps(), 0);
    EXPECT_LE(solver.get_residual_ratio(), 1e-10);
 }
 
 // IPOPT's default (min_steps = 1): one refinement step per solve
 TEST_P(IterativeRefinement, IpoptMinimumPerformsOneStep) {
-   BarrierSetting setting(make_options(GetParam(), 1, 10));
-   EQPSolver<NoLowRankCorrection> solver(setting.options);
-   (void)setting.solve(solver);
+   BarrierScenario scenario(make_options(GetParam(), 1, 10));
+   EQPSolver<NoLowRankCorrection> solver(scenario.options);
+   (void)scenario.solve(solver);
    EXPECT_EQ(solver.get_number_refinement_steps(), 1);
 }
 
 // max_steps = 0 disables iterative refinement altogether (min_steps is then irrelevant)
 TEST_P(IterativeRefinement, DisabledWhenMaxIsZero) {
-   BarrierSetting setting(make_options(GetParam(), 1, 0));
-   EQPSolver<NoLowRankCorrection> solver(setting.options);
-   const Direction& direction = setting.solve(solver);
+   BarrierScenario scenario(make_options(GetParam(), 1, 0));
+   EQPSolver<NoLowRankCorrection> solver(scenario.options);
+   const Direction& direction = scenario.solve(solver);
    EXPECT_EQ(solver.get_number_refinement_steps(), 0);
    EXPECT_TRUE(std::isnan(solver.get_residual_ratio()));
    EXPECT_FALSE(solver.is_matrix_deemed_singular());
@@ -350,9 +351,9 @@ TEST_P(IterativeRefinement, DisabledWhenMaxIsZero) {
 }
 
 TEST_P(IterativeRefinement, MinimumNumberOfSteps) {
-   BarrierSetting setting(make_options(GetParam(), 3, 3));
-   EQPSolver<NoLowRankCorrection> solver(setting.options);
-   (void)setting.solve(solver);
+   BarrierScenario scenario(make_options(GetParam(), 3, 3));
+   EQPSolver<NoLowRankCorrection> solver(scenario.options);
+   (void)scenario.solve(solver);
    EXPECT_EQ(solver.get_number_refinement_steps(), 3);
 }
 
@@ -371,13 +372,13 @@ TEST_P(IterativeRefinement, InconsistentOptions) {
 // failure path inside the solver: the pivoting tolerance is increased (if supported) and the matrix refactorized with an
 // inertia check, then the matrix is deemed singular and regularized. The direction is still computed
 TEST_P(IterativeRefinement, FailureIncreasesPivotingToleranceThenRegularizes) {
-   BarrierSetting setting(make_failing_options(GetParam()));
-   EQPSolver<NoLowRankCorrection> solver(setting.options);
-   const Direction& direction = setting.solve(solver);
+   BarrierScenario scenario(make_failing_options(GetParam()));
+   EQPSolver<NoLowRankCorrection> solver(scenario.options);
+   const Direction& direction = scenario.solve(solver);
    ASSERT_GT(solver.get_residual_ratio(), 0.) << "the residual ratio is exactly zero: the failure path cannot be tested";
    const size_t expected_increases = supports_pivoting_tolerance_increase(GetParam()) ? 1 : 0;
    // the refactorization with the increased pivoting tolerance goes through the inertia correction strategy
-   EXPECT_EQ(setting.inertia_correction.number_refactorizations, expected_increases);
+   EXPECT_EQ(scenario.inertia_correction.number_refactorizations, expected_increases);
    EXPECT_TRUE(solver.is_matrix_deemed_singular());
    // pretend singular: the dual regularization is added first. The dual regularization block ends the matrix values
    const auto& linear_system = static_cast<const LinearSystem&>(solver.get_workspace());
@@ -388,72 +389,73 @@ TEST_P(IterativeRefinement, FailureIncreasesPivotingToleranceThenRegularizes) {
 
 // second-order corrections never modify the factorization, even when refinement fails
 TEST_P(IterativeRefinement, SecondOrderCorrectionDoesNotModifyFactorization) {
-   BarrierSetting setting(make_failing_options(GetParam()));
-   EQPSolver<NoLowRankCorrection> solver(setting.options);
-   (void)setting.solve(solver);
-   const double primal_regularization = setting.inertia_correction.get_primal_regularization_factor();
+   BarrierScenario scenario(make_failing_options(GetParam()));
+   EQPSolver<NoLowRankCorrection> solver(scenario.options);
+   (void)scenario.solve(solver);
+   const double primal_regularization = scenario.inertia_correction.get_primal_regularization_factor();
 
-   Iterate trial_iterate = setting.iterate;
-   Evaluations trial_evaluations{setting.model};
-   solver.initialize_second_order_corrections(setting.subproblem, setting.iterate, trial_iterate, setting.evaluations,
+   Iterate trial_iterate = scenario.iterate;
+   Evaluations trial_evaluations{scenario.model};
+   solver.initialize_statistics(scenario.statistics);
+   solver.initialize_second_order_corrections(scenario.subproblem, scenario.iterate, trial_iterate, scenario.evaluations,
       trial_evaluations);
-   const Direction& direction = solver.compute_second_order_correction(setting.subproblem, setting.iterate);
+   const Direction& direction = solver.compute_second_order_correction(scenario.statistics, scenario.subproblem, scenario.iterate);
    EXPECT_FALSE(solver.is_matrix_deemed_singular());
-   EXPECT_EQ(setting.inertia_correction.get_primal_regularization_factor(), primal_regularization);
-   for (size_t variable_index: Range(setting.barrier_problem.number_variables)) {
+   EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), primal_regularization);
+   for (size_t variable_index: Range(scenario.barrier_problem.number_variables)) {
       EXPECT_TRUE(std::isfinite(direction.primals[variable_index]));
    }
 }
 
 // a matrix deemed singular is first given a dual regularization, then an increasing primal regularization
 TEST_P(IterativeRefinement, SingularMatrixIsRegularized) {
-   BarrierSetting setting(make_options(GetParam(), 1, 10));
-   const auto linear_solver = SymmetricIndefiniteLinearSolverFactory::create(setting.options);
+   BarrierScenario scenario(make_options(GetParam(), 1, 10));
+   const auto linear_solver = SymmetricIndefiniteLinearSolverFactory::create(scenario.options);
    auto& linear_system = linear_solver->get_linear_system();
-   linear_system.initialize_augmented_system(setting.subproblem);
+   linear_system.initialize_augmented_system(scenario.subproblem);
    linear_solver->initialize_memory();
-   auto block_augmented_matrix = setting.subproblem.compute_block_augmented_matrix(linear_system);
-   setting.subproblem.evaluate_lagrangian_hessian(setting.statistics, setting.iterate, block_augmented_matrix.hessian);
-   setting.subproblem.evaluate_jacobian(setting.iterate, block_augmented_matrix.jacobian, setting.evaluations);
+   auto block_augmented_matrix = scenario.subproblem.compute_block_augmented_matrix(linear_system);
+   scenario.subproblem.evaluate_lagrangian_hessian(scenario.statistics, scenario.iterate, block_augmented_matrix.hessian);
+   scenario.subproblem.evaluate_jacobian(scenario.iterate, block_augmented_matrix.jacobian, scenario.evaluations);
    linear_solver->do_symbolic_analysis();
-   const double dual_regularization_parameter = setting.subproblem.dual_regularization_factor();
-   setting.subproblem.regularize_augmented_matrix(setting.statistics, dual_regularization_parameter, *linear_solver,
+   const double dual_regularization_parameter = scenario.subproblem.dual_regularization_factor();
+   scenario.subproblem.regularize_augmented_matrix(scenario.statistics, dual_regularization_parameter, *linear_solver,
       block_augmented_matrix);
    // the inertia is correct without regularization
-   EXPECT_EQ(setting.inertia_correction.get_primal_regularization_factor(), 0.);
+   EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
    EXPECT_EQ(block_augmented_matrix.dual_inertia_correction[0], 0.);
 
    // 1st singularity: dual regularization
-   ASSERT_TRUE(setting.subproblem.regularize_singular_augmented_matrix(setting.statistics, dual_regularization_parameter,
+   ASSERT_TRUE(scenario.subproblem.regularize_singular_augmented_matrix(scenario.statistics, dual_regularization_parameter,
       *linear_solver, block_augmented_matrix));
-   const double expected_dual_regularization = setting.options.get_double("dual_regularization_fraction") * dual_regularization_parameter;
-   EXPECT_EQ(setting.inertia_correction.get_primal_regularization_factor(), 0.);
+   const double expected_dual_regularization = scenario.options.get_double("dual_regularization_fraction") * dual_regularization_parameter;
+   EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
    EXPECT_DOUBLE_EQ(block_augmented_matrix.dual_inertia_correction[0], -expected_dual_regularization);
    EXPECT_FALSE(linear_solver->matrix_is_singular());
 
    // 2nd singularity: primal regularization
-   ASSERT_TRUE(setting.subproblem.regularize_singular_augmented_matrix(setting.statistics, dual_regularization_parameter,
+   ASSERT_TRUE(scenario.subproblem.regularize_singular_augmented_matrix(scenario.statistics, dual_regularization_parameter,
       *linear_solver, block_augmented_matrix));
-   EXPECT_DOUBLE_EQ(setting.inertia_correction.get_primal_regularization_factor(),
-      setting.options.get_double("primal_regularization_initial_factor"));
-   EXPECT_DOUBLE_EQ(block_augmented_matrix.primal_inertia_correction[0], setting.options.get_double("primal_regularization_initial_factor"));
+   EXPECT_DOUBLE_EQ(scenario.inertia_correction.get_primal_regularization_factor(),
+      scenario.options.get_double("primal_regularization_initial_factor"));
+   EXPECT_DOUBLE_EQ(block_augmented_matrix.primal_inertia_correction[0], scenario.options.get_double("primal_regularization_initial_factor"));
 
    // refactorization (e.g. after a pivoting tolerance increase) keeps the current regularization if the inertia is correct
-   setting.subproblem.refactorize_augmented_matrix(setting.statistics, dual_regularization_parameter, *linear_solver,
+   scenario.subproblem.refactorize_augmented_matrix(scenario.statistics, dual_regularization_parameter, *linear_solver,
       block_augmented_matrix);
-   EXPECT_DOUBLE_EQ(setting.inertia_correction.get_primal_regularization_factor(),
-      setting.options.get_double("primal_regularization_initial_factor"));
+   EXPECT_DOUBLE_EQ(scenario.inertia_correction.get_primal_regularization_factor(),
+      scenario.options.get_double("primal_regularization_initial_factor"));
    EXPECT_DOUBLE_EQ(block_augmented_matrix.dual_inertia_correction[0], -expected_dual_regularization);
    EXPECT_FALSE(linear_solver->matrix_is_singular());
 }
 
 // the per-iteration summary (IR statistics column) is reset at each iteration, not accumulated over the iterations
 TEST_P(IterativeRefinement, IterationSummaryIsResetAtEachIteration) {
-   BarrierSetting setting(make_options(GetParam(), 2, 2)); // exactly 2 refinement steps per solve
-   InspectableEQPSolver solver(setting.options);
-   (void)setting.solve(solver);
+   BarrierScenario scenario(make_options(GetParam(), 2, 2)); // exactly 2 refinement steps per solve
+   InspectableEQPSolver solver(scenario.options);
+   (void)scenario.solve(solver);
    EXPECT_EQ(solver.iteration_summary(), "2");
-   (void)setting.solve(solver);
+   (void)scenario.solve(solver);
    EXPECT_EQ(solver.iteration_summary(), "2");
 }
 
@@ -463,15 +465,15 @@ TEST_P(IterativeRefinement, InaccurateSolutionIsAcceptedBelowSingularThreshold) 
    Options options = make_options(GetParam(), 1, 10);
    options.set_double("iterative_refinement_residual_ratio_max", 0.);
    options.set_double("iterative_refinement_residual_ratio_singular", 1.);
-   BarrierSetting setting(options);
-   InspectableEQPSolver solver(setting.options);
-   const Direction& direction = setting.solve(solver);
+   BarrierScenario scenario(options);
+   InspectableEQPSolver solver(scenario.options);
+   const Direction& direction = scenario.solve(solver);
    ASSERT_GT(solver.get_residual_ratio(), 0.) << "the residual ratio is exactly zero: the failure path cannot be tested";
    EXPECT_FALSE(solver.is_matrix_deemed_singular());
    const std::string summary = solver.iteration_summary();
-   const std::string expected_flags = supports_pivoting_tolerance_increase(GetParam()) ? "qS" : "S";
+   const std::string expected_flags = supports_pivoting_tolerance_increase(GetParam()) ? "piv,inac" : "inac";
    EXPECT_EQ(summary.substr(summary.size() - expected_flags.size()), expected_flags);
-   EXPECT_EQ(setting.inertia_correction.get_primal_regularization_factor(), 0.);
+   EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
    EXPECT_TRUE(std::isfinite(direction.norm));
 }
 
@@ -482,9 +484,9 @@ TEST_P(IterativeRefinement, StagnationStopsRefinement) {
    options.set_double("iterative_refinement_residual_ratio_max", 0.);
    options.set_double("iterative_refinement_residual_ratio_singular", 1.);
    options.set_double("iterative_refinement_improvement_factor", 1e-300);
-   BarrierSetting setting(options);
-   InspectableEQPSolver solver(setting.options);
-   (void)setting.solve(solver);
+   BarrierScenario scenario(options);
+   InspectableEQPSolver solver(scenario.options);
+   (void)scenario.solve(solver);
    const size_t number_solves = supports_pivoting_tolerance_increase(GetParam()) ? 2 : 1; // + refactorization
    EXPECT_EQ(solver.get_number_refinement_steps(), 2 * number_solves);
 }

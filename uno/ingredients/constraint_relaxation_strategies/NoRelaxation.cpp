@@ -91,8 +91,8 @@ namespace uno {
          trial_evaluations);
    }
 
-   const Direction& NoRelaxation::compute_second_order_correction(Iterate& current_iterate) {
-      return this->inequality_handling_method->compute_second_order_correction(current_iterate);
+   const Direction& NoRelaxation::compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) {
+      return this->inequality_handling_method->compute_second_order_correction(statistics, current_iterate);
    }
 
    void NoRelaxation::update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) {
@@ -129,7 +129,7 @@ namespace uno {
       this->globalization_strategy.notify_step_limited_by(sole_rejection_reason);
    }
 
-   bool NoRelaxation::accept_tiny_step(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
+   bool NoRelaxation::accept_iterate_unconditionally(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& /*direction*/, double /*step_length*/, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {

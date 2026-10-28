@@ -52,7 +52,7 @@ namespace uno {
    EQPSolver<LowRankCorrection>::EQPSolver(const Options& options, LowRankCorrection correction):
          SubproblemSolver(),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
-         correction(std::move(correction)),
+         low_rank_correction(std::move(correction)),
          iterative_refinement(read_iterative_refinement_parameters(options)) {
    }
 
@@ -67,6 +67,7 @@ namespace uno {
          }
       }
       this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
+      this->zero_multipliers = Vector(subproblem.number_constraints, 0.);
       // symbolic Newton system and the linear system of the linear solver
       this->newton_system = subproblem.create_newton_system();
       auto& linear_system = this->linear_solver->get_linear_system();
@@ -86,15 +87,12 @@ namespace uno {
    void EQPSolver<LowRankCorrection>::initialize_statistics(Statistics& statistics) {
       if constexpr (LowRankCorrection::requires_hessian_matrix) {
          statistics.add_column("IR", Statistics::int_width, 0, /* is_extended = */ true);
-         this->iteration_statistics = &statistics;
       }
    }
 
    template <typename LowRankCorrection>
-   void EQPSolver<LowRankCorrection>::report_iterative_refinement() {
-      if (this->iteration_statistics != nullptr) {
-         this->iteration_statistics->set("IR", std::to_string(this->iteration_refinement_steps) + this->iteration_refinement_flags);
-      }
+   void EQPSolver<LowRankCorrection>::report_iterative_refinement(Statistics& statistics) {
+      statistics.set("IR", std::to_string(this->iteration_refinement_steps) + join(this->iteration_refinement_flags, ","));
    }
 
    // least-squares multipliers: min ||∇L(x, y, z)|| wrt y, i.e. the solution of the system
@@ -130,20 +128,18 @@ namespace uno {
       // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
-      if (this->linear_solver->matrix_is_singular() && 0 < dual_inertia_correction.size()) {
+      if (this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {
          DEBUG << "The least-squares system is singular, regularizing it\n";
-         dual_inertia_correction.fill(-EQPSolver::least_squares_dual_regularization);
+         dual_inertia_correction.fill(-least_squares_dual_regularization);
          this->linear_solver->do_numerical_factorization(false);
       }
       // otherwise, the (consistent) singular system is solved anyway: a non-finite solution is rejected below
 
-      // assemble the RHS: ∇L(x, 0, z) = ∇L(x, y, z) + J^T y
-      this->least_squares_rhs_buffer.resize(subproblem.number_variables);
-      subproblem.problem.evaluate_lagrangian_gradient(iterate, evaluations, this->least_squares_rhs_buffer);
-      subproblem.problem.add_jacobian_transposed_vector_product(iterate.multipliers.constraints.view(),
-         this->least_squares_rhs_buffer.view(), evaluations);
-      linear_system.rhs.fill(0.);
-      view(linear_system.rhs, 0, subproblem.number_variables) = this->least_squares_rhs_buffer;
+      // assemble the RHS: (∇L(x, 0, z), 0)
+      auto rhs_lagrangian = view(linear_system.rhs, 0, subproblem.number_variables);
+      subproblem.problem.evaluate_lagrangian_gradient(iterate.primals, this->zero_multipliers, iterate.multipliers.lower_bounds,
+         iterate.multipliers.upper_bounds, evaluations, rhs_lagrangian);
+      view(linear_system.rhs, subproblem.number_variables, linear_system.rhs.size()).fill(0.);
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n";
@@ -195,7 +191,7 @@ namespace uno {
             block_augmented_matrix);
          this->pivoting_tolerance_increased_for_current_matrix = false;
          if (!this->linear_solver->matrix_is_singular()) {
-            this->correction.update(subproblem, *this->linear_solver);
+            this->low_rank_correction.update(subproblem, *this->linear_solver);
          }
 
          // assemble the RHS
@@ -205,17 +201,18 @@ namespace uno {
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";
+      // solve with iterative refinement only if the matrix is not deemed singular
       if (this->linear_solver->matrix_is_singular()) {
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       }
       else {
-         this->solve_with_iterative_refinement(subproblem, &statistics);
+         this->solve_with_iterative_refinement(statistics, subproblem, /* allow_refactorization = */ true);
       }
       if (this->linear_solver->matrix_is_singular()) {
          this->direction.status = SubproblemStatus::INFEASIBLE;
       }
       else {
-         this->correction.apply(linear_system.solution);
+         this->low_rank_correction.apply(linear_system.solution);
          // assemble the full primal-dual direction
          subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction);
       }
@@ -252,7 +249,8 @@ namespace uno {
 
    // precondition: the constraints have been evaluated at the trial iterate in trial_evaluations
    template <typename LowRankCorrection>
-   const Direction& EQPSolver<LowRankCorrection>::compute_second_order_correction(const Subproblem& subproblem, const Iterate& current_iterate) {
+   const Direction& EQPSolver<LowRankCorrection>::compute_second_order_correction(Statistics& statistics, const Subproblem& subproblem,
+         const Iterate& current_iterate) {
       assert(!this->factorization_holds_least_squares_system && "The factorization is that of the least-squares system");
       // access the linear system
       auto& linear_system = this->linear_solver->get_linear_system();
@@ -265,8 +263,8 @@ namespace uno {
 
       // solve the linear system (the factorization is not modified: no pivoting tolerance increase, no singularity
       // handling) and assemble the full primal-dual direction
-      this->solve_with_iterative_refinement(subproblem, nullptr);
-      this->correction.apply(linear_system.solution);
+      this->solve_with_iterative_refinement(statistics, subproblem, /* allow_refactorization = */ false);
+      this->low_rank_correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
    }
@@ -281,20 +279,21 @@ namespace uno {
    }
 
    // solve the condensed system with the current factorization (RHS: linear_system.rhs, solution: linear_system.solution)
-   // and refine the solution wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve. If the
-   // refined solution is not accurate:
+   // and refine the solution iteratively wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve.
+   // If the refined solution is not accurate:
    // 1. the pivoting tolerance of the linear solver is increased (at most once per matrix; it is never decreased) and the
    //    matrix is refactorized. The inertia correction strategy checks the inertia of the new factorization again and
    //    may increase the regularization;
    // 2. otherwise, if the residual ratio is below residual_ratio_singular, the solution is accepted;
    // 3. otherwise, the matrix is deemed singular (at most once per solve): the inertia correction strategy increases the
    //    regularization.
-   // factorization_statistics == nullptr: the factorization must not be modified (e.g. second-order corrections) and the
+   // allow_refactorization == false: the factorization must not be modified (e.g. second-order corrections) and the
    // refined solution is accepted whatever its residual ratio.
    // max_steps = 0 (or a low-rank Hessian correction) disables the mechanism. Without refinement step, the solution is
    // that of the plain solve (bitwise)
    template <typename LowRankCorrection>
-   void EQPSolver<LowRankCorrection>::solve_with_iterative_refinement(const Subproblem& subproblem, Statistics* factorization_statistics) {
+   void EQPSolver<LowRankCorrection>::solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
+         bool allow_refactorization) {
       auto& linear_system = this->linear_solver->get_linear_system();
       this->number_refinement_steps = 0;
       this->matrix_deemed_singular = false;
@@ -312,47 +311,49 @@ namespace uno {
          this->newton_system->expand_solution(this->uncondensed_rhs.view(), linear_system.solution.view(), this->uncondensed_solution.view());
          this->residual_ratio = this->compute_uncondensed_residual_ratio();
          DEBUG2 << "Residual ratio: " << this->residual_ratio << '\n';
-         if (this->refine_uncondensed_solution()) {
+         // 1. refinement reduced the residual below the threshold
+         const bool refinement_success = this->refine_uncondensed_solution();
+         if (refinement_success) {
             break;
          }
          DEBUG << "Iterative refinement failed with residual ratio " << this->residual_ratio << '\n';
          // the factorization cannot be modified, or the matrix was already deemed singular: live with the current solution
-         if (factorization_statistics == nullptr || this->matrix_deemed_singular) {
+         if (!allow_refactorization || this->matrix_deemed_singular) {
             break;
          }
          const BlockAugmentedMatrix block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
-         // 1. improve the quality of the factorization
+         // 2. improve the quality of the factorization
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
-            this->iteration_refinement_flags += 'q';
+            this->iteration_refinement_flags.emplace_back("piv");
             DEBUG << "Refactorizing the augmented matrix with an increased pivoting tolerance\n";
-            subproblem.refactorize_augmented_matrix(*factorization_statistics, subproblem.dual_regularization_factor(),
+            subproblem.refactorize_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
                *this->linear_solver, block_augmented_matrix);
             if (this->linear_solver->matrix_is_singular()) {
                // singular and not regularized: the caller handles the singularity
                DEBUG << "The refactorized augmented matrix is singular\n";
                this->linear_solver->solve_indefinite_system(linear_system.solution.data());
-               this->report_iterative_refinement();
+               this->report_iterative_refinement(statistics);
                return;
             }
             continue;
          }
-         // 2. inaccurate, but acceptable solution
+         // 3. inaccurate, but acceptable solution
          if (this->residual_ratio < this->iterative_refinement.residual_ratio_singular) {
             DEBUG << "The current solution is accepted\n";
-            this->iteration_refinement_flags += 'S';
+            this->iteration_refinement_flags.emplace_back("inac");
             break;
          }
-         // 3. deem the matrix singular and regularize it
+         // 4. deem the matrix singular and regularize it
          this->matrix_deemed_singular = true;
-         if (!subproblem.regularize_singular_augmented_matrix(*factorization_statistics, subproblem.dual_regularization_factor(),
+         if (!subproblem.regularize_singular_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
                *this->linear_solver, block_augmented_matrix)) {
             DEBUG << "The matrix cannot be regularized further, the current solution is accepted\n";
             break;
          }
-         this->iteration_refinement_flags += 's';
+         this->iteration_refinement_flags.emplace_back("sing");
       }
-      this->report_iterative_refinement();
+      this->report_iterative_refinement(statistics);
       // write the refined solution of the condensed system (the eliminated unknowns are recovered by back substitution)
       view(linear_system.solution, 0, linear_system.dimension) = view(this->uncondensed_solution, 0, linear_system.dimension);
    }
