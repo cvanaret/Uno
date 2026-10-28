@@ -91,7 +91,7 @@ namespace uno {
       // per-iteration summary (IPOPT-style): refinement steps, q: pivoting tolerance increased, s: matrix deemed singular,
       // S: inaccurate solution accepted. Shown in the extended "IR" statistics column
       size_t iteration_refinement_steps{0};
-      std::string iteration_refinement_flags{};
+      std::vector<std::string_view> iteration_refinement_flags{};
 
       void solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
          bool allow_refactorization);

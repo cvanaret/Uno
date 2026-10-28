@@ -92,7 +92,7 @@ namespace uno {
 
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::report_iterative_refinement(Statistics& statistics) {
-      statistics.set("IR", std::to_string(this->iteration_refinement_steps) + this->iteration_refinement_flags);
+      statistics.set("IR", std::to_string(this->iteration_refinement_steps) + join(this->iteration_refinement_flags, ","));
    }
 
    // least-squares multipliers: min ||∇L(x, y, z)|| wrt y, i.e. the solution of the system
@@ -311,7 +311,9 @@ namespace uno {
          this->newton_system->expand_solution(this->uncondensed_rhs.view(), linear_system.solution.view(), this->uncondensed_solution.view());
          this->residual_ratio = this->compute_uncondensed_residual_ratio();
          DEBUG2 << "Residual ratio: " << this->residual_ratio << '\n';
-         if (this->refine_uncondensed_solution()) {
+         // 1. refinement reduced the residual below the threshold
+         const bool refinement_success = this->refine_uncondensed_solution();
+         if (refinement_success) {
             break;
          }
          DEBUG << "Iterative refinement failed with residual ratio " << this->residual_ratio << '\n';
@@ -320,10 +322,10 @@ namespace uno {
             break;
          }
          const BlockAugmentedMatrix block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
-         // 1. improve the quality of the factorization
+         // 2. improve the quality of the factorization
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
-            this->iteration_refinement_flags += 'q';
+            this->iteration_refinement_flags.emplace_back("piv");
             DEBUG << "Refactorizing the augmented matrix with an increased pivoting tolerance\n";
             subproblem.refactorize_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
                *this->linear_solver, block_augmented_matrix);
@@ -336,20 +338,20 @@ namespace uno {
             }
             continue;
          }
-         // 2. inaccurate, but acceptable solution
+         // 3. inaccurate, but acceptable solution
          if (this->residual_ratio < this->iterative_refinement.residual_ratio_singular) {
             DEBUG << "The current solution is accepted\n";
-            this->iteration_refinement_flags += 'S';
+            this->iteration_refinement_flags.emplace_back("inac");
             break;
          }
-         // 3. deem the matrix singular and regularize it
+         // 4. deem the matrix singular and regularize it
          this->matrix_deemed_singular = true;
          if (!subproblem.regularize_singular_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
                *this->linear_solver, block_augmented_matrix)) {
             DEBUG << "The matrix cannot be regularized further, the current solution is accepted\n";
             break;
          }
-         this->iteration_refinement_flags += 's';
+         this->iteration_refinement_flags.emplace_back("sing");
       }
       this->report_iterative_refinement(statistics);
       // write the refined solution of the condensed system (the eliminated unknowns are recovered by back substitution)
