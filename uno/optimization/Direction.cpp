@@ -1,6 +1,8 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <cmath>
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Symbols.hpp"
@@ -24,6 +26,14 @@ namespace uno {
       this->primals.fill(0.);
       this->multipliers.reset();
       this->status = SubproblemStatus::OPTIMAL;
+   }
+
+   bool Direction::is_finite() const {
+      const auto finite = [](const Vector<double>& vector) {
+         return std::all_of(vector.begin(), vector.end(), [](double value) { return std::isfinite(value); });
+      };
+      return finite(this->primals) && finite(this->multipliers.constraints) && finite(this->multipliers.lower_bounds) &&
+         finite(this->multipliers.upper_bounds);
    }
 
    std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
