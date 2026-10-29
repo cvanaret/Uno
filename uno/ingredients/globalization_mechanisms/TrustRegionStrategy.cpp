@@ -61,6 +61,7 @@ namespace uno {
       this->reset_radius();
 
       size_t number_iterations = 0;
+      size_t number_consecutive_solver_errors = 0;
       bool termination = false;
       while (!termination) {
          bool is_acceptable = false;
@@ -88,6 +89,20 @@ namespace uno {
                // solve the feasibility problem at the next TR iteration with the same radius
                this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
                   evaluation_cache.current_evaluations, warmstart_information);
+               continue;
+            }
+            // the subproblem solver failed repeatedly on the optimality subproblem at an infeasible iterate: the failure
+            // does not depend on the radius. Solve the feasibility problem (a different subproblem) at the next TR
+            // iteration with the same radius, as the line search does
+            number_consecutive_solver_errors = (direction.status == SubproblemStatus::ERROR) ? number_consecutive_solver_errors + 1 : 0;
+            if (TrustRegionStrategy::max_consecutive_solver_errors <= number_consecutive_solver_errors &&
+                  0 < model.number_constraints && !this->constraint_relaxation_strategy->solving_feasibility_problem() &&
+                  this->primal_tolerance < current_iterate.scaled_residuals.primal_infeasibility) {
+               statistics.set("Status", "solver error");
+               DEBUG << "/!\\ The subproblem solver failed repeatedly, switching to the feasibility problem\n";
+               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+                  evaluation_cache.current_evaluations, warmstart_information);
+               number_consecutive_solver_errors = 0;
                continue;
             }
             assert(direction.status != SubproblemStatus::INFEASIBLE);
