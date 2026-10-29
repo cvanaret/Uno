@@ -42,23 +42,23 @@ namespace uno {
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
       DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
-      // scale the functions
+      // the functions are scaled at the initial point
       Vector<double> initial_primals(model.number_variables);
       model.initial_primal_point(initial_primals);
-      const ScaledModel scaled_model(model, initial_primals, options);
 
       // reformulate the model if:
       // - the user wants an interior-point method with log barrier function
       // - the model has bound constraints or inequality constraints
       if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
             (model.has_bound_constraints() || model.has_inequality_constraints())) {
-         // slightly relax the bound constraints
-         const BoundRelaxedModel bound_relaxed_model(scaled_model, options);
-         return uno_solve(model, bound_relaxed_model, options, user_callbacks);
-      }
-      else {
+         // slightly relax the bound constraints. As in IPOPT, the original (unscaled) bounds are relaxed: relaxing the
+         // scaled bounds would allow violations of the original constraints of up to relaxation/constraint scaling
+         const BoundRelaxedModel bound_relaxed_model(model, options);
+         const ScaledModel scaled_model(bound_relaxed_model, initial_primals, options);
          return uno_solve(model, scaled_model, options, user_callbacks);
       }
+      const ScaledModel scaled_model(model, initial_primals, options);
+      return uno_solve(model, scaled_model, options, user_callbacks);
    }
 
    // protected solve function
