@@ -2,9 +2,9 @@ name: CUTEst benchmark
 
 # Builds Uno as a shared library (HSL, BQPD), compiles CUTEst (classic
 # ARCHDefs/make build, the one the `runcutest -p uno` interface relies on) and
-# solves test problems in their original SIF format, giving each one a given
-# `time_limit`. Prints a per-instance summary (tickmark = solved, cross =
-# failed) and the number of solved instances.
+# solves test problems in their original SIF format with a given Uno `preset`,
+# giving each one a given `time_limit`. Prints a per-instance summary
+# (tickmark = solved, cross = failed) and the number of solved instances.
 #
 # The problems come from two collections:
 #  - nlp: the CUTEst nonlinear programs, i.e. the nlpsif directory of the
@@ -22,12 +22,17 @@ name: CUTEst benchmark
 
 on:
   # Manual trigger: from the Actions tab ("Run workflow") or with
-  # `gh workflow run "CUTEst benchmark" -f pr_number=123 [-f compare_pr=118]`
+  # `gh workflow run "CUTEst benchmark" -f pr_number=123 [-f preset=ipopt] [-f compare_pr=118]`
   workflow_dispatch:
     inputs:
       pr_number:
         description: 'PR number to comment on'
         required: true
+        type: string
+      preset:
+        description: 'Uno preset (e.g. filtersqp, ipopt, byrd, funnelsqp)'
+        required: false
+        default: 'filtersqp'
         type: string
       compare_pr:
         description: 'PR number to compare against (optional; uses its latest CUTEst benchmark results)'
@@ -54,11 +59,6 @@ on:
         description: 'Number of problems solved in parallel'
         required: false
         default: '4'
-        type: string
-      option_file:
-        description: 'Uno option file (path in the repository)'
-        required: false
-        default: 'uno_mittelmann.opt'
         type: string
 
 permissions:
@@ -108,13 +108,13 @@ jobs:
           TIME_LIMIT: ${{ inputs.time_limit }}
           JOBS: ${{ inputs.jobs }}
           COMPARE_PR: ${{ inputs.compare_pr }}
-          OPTION_FILE: ${{ inputs.option_file }}
+          PRESET: ${{ inputs.preset }}
         run: |
           set -euo pipefail
           [[ "$TIME_LIMIT" =~ ^[0-9]+$ ]] || { echo "::error::time_limit must be a number of seconds"; exit 1; }
           [[ "$JOBS" =~ ^[1-9][0-9]*$ ]] || { echo "::error::jobs must be a positive integer"; exit 1; }
           [[ -z "$COMPARE_PR" || "$COMPARE_PR" =~ ^[0-9]+$ ]] || { echo "::error::compare_pr must be a PR number"; exit 1; }
-          [ -f "$OPTION_FILE" ] || { echo "::error::option file '$OPTION_FILE' not found"; exit 1; }
+          [[ "$PRESET" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "::error::preset must be a preset name (e.g. filtersqp)"; exit 1; }
           for tool in gcc gfortran make bunzip2; do
             command -v "$tool" > /dev/null || { echo "::error::$tool is required by CUTEst"; exit 1; }
           done
@@ -223,20 +223,23 @@ jobs:
       - name: Run CUTEst problems and summarize
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
+          PRESET: ${{ inputs.preset }}
           SUBSET: ${{ inputs.subset }}
           PROBLEMS: ${{ inputs.problems }}
           TIMELIMIT: ${{ inputs.time_limit }}
           JOBS: ${{ inputs.jobs }}
-          OPTION_FILE_INPUT: ${{ inputs.option_file }}
         run: |
           set -uo pipefail
           export TIMELIMIT
-          export OPTION_FILE="${{ github.workspace }}/${OPTION_FILE_INPUT}"
           export WORK_DIR="${{ github.workspace }}/cutest-runs"
           export LOG_DIR="${{ github.workspace }}/logs"
           export ROWS_DIR="${{ github.workspace }}/cutest-rows"
           rm -rf "$WORK_DIR" "$LOG_DIR" "$ROWS_DIR"
           mkdir -p "$WORK_DIR" "$LOG_DIR" "$ROWS_DIR" results
+
+          # ---- Uno options: the preset only ----
+          export OPTION_FILE="${{ github.workspace }}/cutest-preset.opt"
+          printf 'preset %s\n' "$PRESET" > "$OPTION_FILE"
 
           # ---- list of problems (from the manifest built when fetching the collections) ----
           MANIFEST="${{ github.workspace }}/cutest-tools/manifest.tsv"
@@ -261,7 +264,7 @@ jobs:
           for problem in "${INSTANCES[@]}"; do
             [ -n "${FILE_OF[$problem]:-}" ] || { echo "::error::$problem is in neither collection"; exit 1; }
           done
-          echo "Solving ${total} problems (${SELECTION}), time_limit=${TIMELIMIT}s, ${JOBS} in parallel"
+          echo "Solving ${total} problems (${SELECTION}), preset=${PRESET}, time_limit=${TIMELIMIT}s, ${JOBS} in parallel"
 
           # ---- solve ----
           for problem in "${INSTANCES[@]}"; do
@@ -303,7 +306,7 @@ jobs:
           MM_COMMIT=$(git -C "$MAROS_MESZAROS" rev-parse --short HEAD)
           cat > results/meta.json <<EOF
           {"sha": "${GITHUB_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT},
-           "selection": "${SELECTION}", "option_file": "${OPTION_FILE_INPUT}",
+           "selection": "${SELECTION}", "preset": "${PRESET}",
            "mastsif_commit": "${MASTSIF_COMMIT}", "maros_meszaros_commit": "${MM_COMMIT}",
            "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
           EOF
@@ -326,9 +329,9 @@ jobs:
           echo "=========================================="
 
           header() {
-            echo "## CUTEst benchmark — Uno (time_limit=${TIMELIMIT}s)"
+            echo "## CUTEst benchmark — Uno (preset=${PRESET}, time_limit=${TIMELIMIT}s)"
             echo ""
-            echo "Commit \`${GITHUB_SHA:0:7}\` · ${SELECTION} · \`${OPTION_FILE_INPUT}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo "Commit \`${GITHUB_SHA:0:7}\` · ${SELECTION} · preset \`${PRESET}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
             echo ""
             echo "Times are Uno's CPU time (wall-clock time of the whole run when Uno did not report it)."
             echo ""
@@ -360,7 +363,7 @@ jobs:
             echo "Per-instance results: run summary and \`cutest-results-pr-${PR_NUMBER}\` artifact."
           } > benchmark-comment.md
 
-          echo "::notice title=CUTEst benchmark::Solved ${solved}/${total} instances"
+          echo "::notice title=CUTEst benchmark::Solved ${solved}/${total} instances (preset ${PRESET})"
 
       # Replaces the report with a before/after table against the latest results
       # of `compare_pr` (only the instances whose status or time changed; the full
@@ -372,10 +375,11 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           COMPARE_PR: ${{ inputs.compare_pr }}
           PR_NUMBER: ${{ inputs.pr_number }}
+          PRESET: ${{ inputs.preset }}
         run: |
           set -euo pipefail
           ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
-            --title "CUTEst benchmark" --artifact-prefix cutest-results-pr- --changed-only \
+            --title "CUTEst benchmark (preset ${PRESET})" --artifact-prefix cutest-results-pr- --changed-only \
             --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
             --results-dir results --output benchmark-comment.md --full-output comparison-full.md
           if [ -f comparison-full.md ]; then
