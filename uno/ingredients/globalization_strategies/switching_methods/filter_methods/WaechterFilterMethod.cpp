@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cmath>
 #include "WaechterFilterMethod.hpp"
 #include "Filter.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
@@ -18,6 +19,7 @@ namespace uno {
          filter_reset_iteration_threshold(options.get_unsigned_int("filter_reset_iteration_threshold")),
          max_number_filter_resets(options.get_unsigned_int("max_number_filter_resets")),
          upper_bound_raise_trigger(options.get_unsigned_int("filter_ubd_raise_trigger")),
+         merit_max_increase(options.get_double("filter_merit_max_increase")),
          upper_bound_raise_factor(options.get_double("filter_ubd_raise_factor")),
          max_number_upper_bound_raises(options.get_unsigned_int("filter_ubd_max_raises")) {
    }
@@ -73,6 +75,17 @@ namespace uno {
       }
       else {
          DEBUG << "Switching condition violated\n";
+         // IPOPT (obj_max_inc): reject a merit that increases by too many orders of magnitude, otherwise a reduction of
+         // the infeasibility can be traded for an astronomical increase of the objective
+         if (current_merit < trial_merit) {
+            const double magnitude = (10. < std::abs(current_merit)) ? std::log10(std::abs(current_merit)) : 1.;
+            if (this->merit_max_increase + magnitude < std::log10(trial_merit - current_merit)) {
+               DEBUG << "Trial iterate (h-type) rejected: the merit increases too rapidly\n";
+               statistics.set("Status", std::string(symbols::fail) + " (merit increase)");
+               this->last_rejection_due_to_filter = false;
+               return Decision::reject(RejectionReason::CURRENT_ITERATE);
+            }
+         }
          if (this->filter.acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
                trial_progress.infeasibility, trial_merit)) {
             DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";

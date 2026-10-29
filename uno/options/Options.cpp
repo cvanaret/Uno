@@ -66,6 +66,7 @@ namespace uno {
       {"filter_ubd_raise_trigger", OptionType::INTEGER},
       {"filter_ubd_raise_factor", OptionType::DOUBLE},
       {"filter_ubd_max_raises", OptionType::INTEGER},
+      {"filter_merit_max_increase", OptionType::DOUBLE},
       {"filter_margin_uses_entry_infeasibility", OptionType::BOOL},
       {"funnel_kappa", OptionType::DOUBLE},
       {"funnel_beta", OptionType::DOUBLE},

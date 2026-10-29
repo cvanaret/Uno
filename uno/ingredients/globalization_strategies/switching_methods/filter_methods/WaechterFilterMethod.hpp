@@ -36,6 +36,7 @@ namespace uno {
       // adaptive infeasibility upper bound (POUNCE, pounce#546): after a streak of steps limited by the upper bound
       // only, the upper bound is raised
       const size_t upper_bound_raise_trigger; // 0: disabled
+      const double merit_max_increase; // orders of magnitude
       const double upper_bound_raise_factor; // > 1
       const size_t max_number_upper_bound_raises;
       size_t number_upper_bound_raises{0};
