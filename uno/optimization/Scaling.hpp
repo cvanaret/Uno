@@ -19,6 +19,8 @@ namespace uno {
       Scaling(size_t number_constraints, double gradient_threshold, double lower_bound);
 
       void compute(const Model& model, const Vector<double>& objective_gradient, const Vector<double>& jacobian_values);
+      // (re)compute the constraint scaling only
+      void compute_constraint_scaling(const Model& model, const Vector<double>& jacobian_values);
 
       [[nodiscard]] bool is_objective_scaled() const;
       [[nodiscard]] bool are_constraints_scaled() const;

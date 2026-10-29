@@ -125,6 +125,9 @@ function_scaling_threshold 100.
 # Lower bound on the function scaling coefficients
 function_scaling_lower_bound 1e-8
 
+# With function scaling: whether the constraints of the feasibility problem are rescaled where the restoration starts (bool)
+restoration_function_scaling true
+
 # Whether minor iterations (line search and trust-region method) are printed in the statistics table (bool)
 print_minor_iterations false
 

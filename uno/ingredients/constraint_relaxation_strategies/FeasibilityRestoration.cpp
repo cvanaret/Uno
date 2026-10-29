@@ -29,9 +29,13 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model, options.get_double("residual_scaling_threshold")),
+         rescale_feasibility_problem(options.get_bool("use_function_scaling") &&
+            options.get_bool("restoration_function_scaling")),
+         feasibility_model(model, options),
          // relax nonlinear constraints + linear constraints in the presence of a trust region
-         feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region,
+         feasibility_problem(this->feasibility_model, 0., this->constraint_violation_coefficient, use_trust_region,
             options.get_bool("use_proximal_term"), options.get_double("residual_scaling_threshold")),
+         switch_evaluations(model),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
@@ -154,6 +158,9 @@ namespace uno {
       view(restoration_multipliers.upper_bounds, first_restoration_slack, number_feasibility_variables) =
          view(optimality_multipliers.upper_bounds, this->original_problem.number_variables, number_optimality_variables);
       current_iterate.multipliers.constraints.fill(0.);
+      if (this->rescale_feasibility_problem) {
+         this->rescale_feasibility_problem_at(current_iterate, current_evaluations);
+      }
 
       // initialize the feasibility inequality handling method
       const PhaseHandoff handoff = this->inequality_handling_method->export_handoff();
@@ -221,6 +228,34 @@ namespace uno {
       }
    }
 
+   // rescale the constraints of the feasibility problem at the current iterate (restoration layout, values in the units
+   // of the original problem)
+   void FeasibilityRestoration::rescale_feasibility_problem_at(Iterate& current_iterate, Evaluations& current_evaluations) {
+      current_evaluations.evaluate_jacobian(this->original_problem.model, current_iterate.primals); // cached
+      this->feasibility_model.rescale_constraints(current_evaluations.jacobian_values);
+      this->feasibility_inequality_handling_method->reset_internal_bounds();
+      this->scale_slacks(current_iterate, /* to_feasibility_units = */ true);
+      // the evaluations are in the units of the original problem
+      current_evaluations.reset();
+   }
+
+   // the slacks (restoration layout (x, p/n, s)) of the inequality constraints are multiplied (or divided) by the
+   // scaling of their constraints, and their bound multipliers are divided (or multiplied)
+   void FeasibilityRestoration::scale_slacks(Iterate& iterate, bool to_feasibility_units) const {
+      const auto& constraint_scaling = this->feasibility_model.get_constraint_scaling();
+      const auto& inequality_constraints = this->original_problem.get_inequality_constraints();
+      const auto [number_optimality_variables, _] = this->inequality_handling_method->get_dimensions();
+      const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables;
+      for (size_t slack_number: Range(number_slacks)) {
+         const size_t slack_index = this->feasibility_problem.number_variables + slack_number;
+         const double scaling = constraint_scaling[inequality_constraints[slack_number]];
+         const double factor = to_feasibility_units ? scaling : 1. / scaling;
+         iterate.primals[slack_index] *= factor;
+         iterate.multipliers.lower_bounds[slack_index] /= factor;
+         iterate.multipliers.upper_bounds[slack_index] /= factor;
+      }
+   }
+
    const Direction& FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
@@ -252,14 +287,25 @@ namespace uno {
       view(this->iterate_buffer.primals, 0, this->original_problem.number_variables) = view(trial_iterate.primals, 0, this->original_problem.number_variables);
       view(this->iterate_buffer.primals, this->original_problem.number_variables, number_optimality_variables) =
          view(trial_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables);
-      trial_evaluations.evaluate_constraints(model, this->iterate_buffer.primals);
+      // the trial evaluations are in the units of the feasibility problem
+      Evaluations& original_evaluations = this->rescale_feasibility_problem ? this->switch_evaluations : trial_evaluations;
+      if (this->rescale_feasibility_problem) {
+         const auto& constraint_scaling = this->feasibility_model.get_constraint_scaling();
+         const auto& inequality_constraints = this->original_problem.get_inequality_constraints();
+         for (size_t slack_index: Range(this->original_problem.number_variables, number_optimality_variables)) {
+            this->iterate_buffer.primals[slack_index] /=
+               constraint_scaling[inequality_constraints[slack_index - this->original_problem.number_variables]];
+         }
+         original_evaluations.reset();
+      }
+      original_evaluations.evaluate_constraints(model, this->iterate_buffer.primals);
       // the restoration bounds may have been relaxed beyond the optimality bounds: relax the latter (otherwise the
       // barrier measure is infinite and restoration may never terminate when a variable sits at its relaxed bound)
       this->inequality_handling_method->relax_bounds_around(this->iterate_buffer);
-      this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
+      this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, original_evaluations);
       // same measure as the reference infeasibility (primal infeasibility of the optimality reformulation)
       this->iterate_buffer.scaled_residuals.primal_infeasibility =
-         this->inequality_handling_method->compute_primal_infeasibility(this->iterate_buffer, trial_evaluations);
+         this->inequality_handling_method->compute_primal_infeasibility(this->iterate_buffer, original_evaluations);
 
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
@@ -269,8 +315,14 @@ namespace uno {
          this->constraints_buffer.fill(0.);
          current_evaluations.add_jacobian_vector_product(model, view(direction.primals, 0, model.number_variables),
             this->constraints_buffer.view());
-         const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
-            step_length * this->constraints_buffer, this->residual_norm);
+         // linearized constraints, in the units of the original problem
+         const auto& constraint_scaling = this->feasibility_model.get_constraint_scaling();
+         for (size_t constraint_index: Range(model.number_constraints)) {
+            this->constraints_buffer[constraint_index] = (current_evaluations.constraints[constraint_index] +
+               step_length * this->constraints_buffer[constraint_index]) / constraint_scaling[constraint_index];
+         }
+         const double trial_linearized_constraint_violation = model.constraint_violation(this->constraints_buffer,
+            this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
       }
       return false;
@@ -284,6 +336,11 @@ namespace uno {
       const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
       const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables;
 
+      if (this->rescale_feasibility_problem) {
+         this->scale_slacks(trial_iterate, /* to_feasibility_units = */ false);
+         // the evaluations of the original problem at the trial iterate (see can_switch_to_optimality_phase)
+         trial_evaluations = this->switch_evaluations;
+      }
       // move the slacks [n + e, n + e + s) -> [n, n + s) BEFORE shrinking. The destination lies before
       // the source: a forward copy is correct even if the ranges overlap
       for (size_t index = 0; index < number_slacks; ++index) {
