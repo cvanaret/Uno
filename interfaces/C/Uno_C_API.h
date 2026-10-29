@@ -155,6 +155,7 @@ extern "C" {
    // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
    // number of variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing
    // (0 for C-style indexing, 1 for Fortran-style indexing).
+   // bounds (of variables and constraints) whose magnitude is at least 1e20 are infinite.
    void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing);
 

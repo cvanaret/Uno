@@ -80,6 +80,11 @@ namespace uno {
       const IntegerRange nonlinear_constraints;
       std::vector<size_t> equality_constraints;
       std::vector<size_t> inequality_constraints;
+      // user bounds with infinite values made explicit
+      const std::vector<double> variables_lower_bounds;
+      const std::vector<double> variables_upper_bounds;
+      const std::vector<double> constraints_lower_bounds;
+      const std::vector<double> constraints_upper_bounds;
    };
 } // namespace
 
