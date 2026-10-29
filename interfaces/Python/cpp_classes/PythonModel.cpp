@@ -9,6 +9,7 @@
 #include "optimization/EvaluationErrors.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    PythonModel::PythonModel(const PythonUserModel& user_model):
@@ -16,7 +17,11 @@ namespace uno {
          static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
          static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention), 0),
          user_model(user_model),
-         nonlinear_constraints(this->number_constraints) {
+         nonlinear_constraints(this->number_constraints),
+         variables_lower_bounds(normalize_infinite_bounds(user_model.variables_lower_bounds)),
+         variables_upper_bounds(normalize_infinite_bounds(user_model.variables_upper_bounds)),
+         constraints_lower_bounds(normalize_infinite_bounds(user_model.constraints_lower_bounds)),
+         constraints_upper_bounds(normalize_infinite_bounds(user_model.constraints_upper_bounds)) {
       // partition equality/inequality constraints
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
@@ -235,19 +240,19 @@ namespace uno {
    }
 
    const std::vector<double>& PythonModel::get_variables_lower_bounds() const {
-      return this->user_model.variables_lower_bounds;
+      return this->variables_lower_bounds;
    }
 
    const std::vector<double>& PythonModel::get_variables_upper_bounds() const {
-      return this->user_model.variables_upper_bounds;
+      return this->variables_upper_bounds;
    }
 
    const std::vector<double>& PythonModel::get_constraints_lower_bounds() const {
-      return this->user_model.constraints_lower_bounds;
+      return this->constraints_lower_bounds;
    }
 
    const std::vector<double>& PythonModel::get_constraints_upper_bounds() const {
-      return this->user_model.constraints_upper_bounds;
+      return this->constraints_upper_bounds;
    }
 
    const std::vector<size_t>& PythonModel::get_equality_constraints() const {

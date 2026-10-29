@@ -39,7 +39,11 @@ public:
             static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention),
             user_model.base_indexing),
          user_model(user_model),
-         nonlinear_constraints(this->number_constraints) {
+         nonlinear_constraints(this->number_constraints),
+         variables_lower_bounds(normalize_infinite_bounds(user_model.variables_lower_bounds)),
+         variables_upper_bounds(normalize_infinite_bounds(user_model.variables_upper_bounds)),
+         constraints_lower_bounds(normalize_infinite_bounds(user_model.constraints_lower_bounds)),
+         constraints_upper_bounds(normalize_infinite_bounds(user_model.constraints_upper_bounds)) {
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
@@ -221,19 +225,19 @@ public:
    }
 
    [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override {
-      return this->user_model.variables_lower_bounds;
+      return this->variables_lower_bounds;
    }
 
    [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override {
-      return this->user_model.variables_upper_bounds;
+      return this->variables_upper_bounds;
    }
 
    [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override {
-      return this->user_model.constraints_lower_bounds;
+      return this->constraints_lower_bounds;
    }
 
    [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override {
-      return this->user_model.constraints_upper_bounds;
+      return this->constraints_upper_bounds;
    }
 
    [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override {
@@ -317,6 +321,11 @@ protected:
    const IntegerRange nonlinear_constraints;
    std::vector<size_t> equality_constraints;
    std::vector<size_t> inequality_constraints;
+   // user bounds with infinite values made explicit
+   const std::vector<double> variables_lower_bounds;
+   const std::vector<double> variables_upper_bounds;
+   const std::vector<double> constraints_lower_bounds;
+   const std::vector<double> constraints_upper_bounds;
 };
 
 class CUserCallbacks: public UserCallbacks {

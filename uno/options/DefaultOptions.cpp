@@ -97,6 +97,7 @@ namespace uno {
       options.set_integer("filter_ubd_raise_trigger", 0); // 0: disabled
       options.set_double("filter_ubd_raise_factor", 100.); // > 1
       options.set_integer("filter_ubd_max_raises", 4);
+      options.set_double("filter_merit_max_increase", 5.); // orders of magnitude (IPOPT obj_max_inc)
       options.set_bool("filter_margin_uses_entry_infeasibility", false);
 
       /** funnel options **/

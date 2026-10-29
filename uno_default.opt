@@ -201,6 +201,9 @@ filter_ubd_raise_factor 100
 # Maximum number of raises of the infeasibility upper bound (integer)
 filter_ubd_max_raises 4
 
+# Waechter filter: h-type trial iterates whose merit increases by more than this number of orders of magnitude are rejected (double)
+filter_merit_max_increase 5
+
 # Whether the filter condition on the objective uses the entry (true) or the iterate (false) infeasibility (bool)
 filter_margin_uses_entry_infeasibility false
 

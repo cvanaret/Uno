@@ -36,6 +36,11 @@ namespace uno {
 
       // solve the QP
       this->qp_solver->solve(statistics, initial_point, this->direction, warmstart_information);
+      // a solution with non-finite components (e.g. after a breakdown of the QP solver) cannot be used
+      if (this->direction.status != SubproblemStatus::ERROR && !this->direction.is_finite()) {
+         DEBUG << "The subproblem solution has non-finite components\n";
+         this->direction.status = SubproblemStatus::ERROR;
+      }
 
       // compute the dual direction
       compute_dual_direction(subproblem, current_iterate, this->direction.multipliers);

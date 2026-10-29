@@ -30,6 +30,8 @@ namespace uno {
 
       void set_dimensions(size_t new_number_variables, size_t new_number_constraints);
       void reset();
+      // whether all the primal and dual components are finite numbers
+      [[nodiscard]] bool is_finite() const;
 
       friend std::ostream& operator<<(std::ostream& stream, const Direction& direction);
 

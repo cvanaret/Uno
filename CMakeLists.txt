@@ -113,6 +113,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/BarrierProblemTests.cpp
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/BoundRelaxationTests.cpp
+   unotest/functional_tests/BoundRelaxationScalingTests.cpp
    unotest/functional_tests/InterruptTests.cpp
    # parameterized over the available linear solvers (no test instantiated if none is available)
    unotest/functional_tests/IterativeRefinementTests.cpp

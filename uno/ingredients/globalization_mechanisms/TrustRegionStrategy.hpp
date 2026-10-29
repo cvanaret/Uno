@@ -21,6 +21,8 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    private:
+      // number of consecutive subproblem solver failures (with decreasing radii) before switching to the feasibility problem
+      static constexpr size_t max_consecutive_solver_errors{3};
       double radius; /*!< Current trust region radius */
       const double increase_factor;
       const double decrease_factor;
