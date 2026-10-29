@@ -500,11 +500,6 @@
     "default": "2"
   },
   {
-    "name": "threshold_unsuccessful_attempts",
-    "type": "INTEGER",
-    "default": "8"
-  },
-  {
     "name": "time_limit",
     "type": "DOUBLE",
     "default": "inf"
