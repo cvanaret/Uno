@@ -181,7 +181,7 @@ See [Linear system scaling](methods.md#linear-system-scaling) for how and when t
 | :---                                             | :---   | :---       |:--------------------------------------------------------------------------------------------------|
 | `linear_system_scaling`                          | string | `none`     | Symmetric scaling of the matrices of the direct linear solver (`none`, `ruiz`). Any value other than `none` disables `MA57_use_scaling` and `MUMPS_use_scaling` |
 | `linear_system_scaling_on_demand`                | bool   | `true`     | Scale only when the factorizations seem inaccurate (then until the end). `false`: scale all the matrices |
-| `linear_system_scaling_delayed_pivots_threshold` | double | 0.05       | Fraction of delayed pivots above which the scaling is switched on (>= 1: never)                  |
+| `linear_system_scaling_delayed_pivots_threshold` | double | 1.0        | Fraction of delayed pivots above which the scaling is switched on (>= 1: never)                  |
 
 ## Quasi-Newton options
 

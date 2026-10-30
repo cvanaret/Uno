@@ -5,6 +5,7 @@
 #define UNO_MA57SOLVER_H
 
 #include <array>
+#include <cstddef>
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
@@ -18,6 +19,8 @@ namespace uno {
       static constexpr double max_pivoting_threshold = 1e-4; // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_ma57_pivtolmax
       static constexpr double pivoting_threshold_increase_exponent = 0.75;
       static constexpr double allocation_safety_factor = 1.05;
+      // the workspace grows by at least 20% per enlargement (the factorization continues where it stopped, ICNTL(8) = 1)
+      static constexpr size_t max_number_workspace_enlargements = 50;
    };
 
    // forward declarations
