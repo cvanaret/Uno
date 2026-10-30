@@ -44,6 +44,8 @@ namespace uno {
       {"protect_actual_reduction_against_roundoff", OptionType::BOOL},
       {"protected_actual_reduction_macheps_coefficient", OptionType::DOUBLE},
       {"print_subproblem", OptionType::BOOL},
+      {"detect_bound_constraints", OptionType::BOOL},
+      {"detect_linear_constraints", OptionType::BOOL},
       {"use_function_scaling", OptionType::BOOL},
       {"function_scaling_threshold", OptionType::DOUBLE},
       {"function_scaling_lower_bound", OptionType::DOUBLE},
