@@ -17,8 +17,9 @@ name: CUTEst benchmark
 #    Optimization status:             Success
 #
 # Each run uploads its results (results.tsv + meta.json) as the artifact
-# `cutest-results-pr-<pr_number>`. If `compare_pr` is given, the PR comment is a
-# before/after table against the latest results of that PR.
+# `cutest-results-<preset>-pr-<pr_number>`. If `compare_pr` is given, the PR
+# comment is a before/after table against the latest results of that PR
+# obtained with the same preset.
 
 on:
   # Manual trigger: from the Actions tab ("Run workflow") or with
@@ -35,7 +36,7 @@ on:
         default: 'filtersqp'
         type: string
       compare_pr:
-        description: 'PR number to compare against (optional; uses its latest CUTEst benchmark results)'
+        description: 'PR number to compare against (optional; uses its latest CUTEst benchmark results with the same preset)'
         required: false
         default: ''
         type: string
@@ -360,15 +361,15 @@ jobs:
               echo "</details>"
             fi
             echo ""
-            echo "Per-instance results: run summary and \`cutest-results-pr-${PR_NUMBER}\` artifact."
+            echo "Per-instance results: run summary and \`cutest-results-${PRESET}-pr-${PR_NUMBER}\` artifact."
           } > benchmark-comment.md
 
           echo "::notice title=CUTEst benchmark::Solved ${solved}/${total} instances (preset ${PRESET})"
 
       # Replaces the report with a before/after table against the latest results
-      # of `compare_pr` (only the instances whose status or time changed; the full
-      # table goes to the run summary). If those results cannot be found, a
-      # warning is emitted and the plain report is posted unchanged.
+      # of `compare_pr` with the same preset (only the instances whose status or
+      # time changed; the full table goes to the run summary). If those results
+      # cannot be found, a warning is emitted and the plain report is posted unchanged.
       - name: Compare against another PR
         if: inputs.compare_pr != ''
         env:
@@ -379,7 +380,7 @@ jobs:
         run: |
           set -euo pipefail
           ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
-            --title "CUTEst benchmark (preset ${PRESET})" --artifact-prefix cutest-results-pr- --changed-only \
+            --title "CUTEst benchmark (preset ${PRESET})" --artifact-prefix "cutest-results-${PRESET}-pr-" --changed-only \
             --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
             --results-dir results --output benchmark-comment.md --full-output comparison-full.md
           if [ -f comparison-full.md ]; then
@@ -390,7 +391,7 @@ jobs:
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
-          name: cutest-results-pr-${{ inputs.pr_number }}
+          name: cutest-results-${{ inputs.preset }}-pr-${{ inputs.pr_number }}
           path: results/
           retention-days: 90
 
