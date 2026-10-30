@@ -210,8 +210,24 @@ namespace uno {
       /** BQPD options **/
       options.set_string("BQPD_kmax_heuristic", "filtersqp");
 
+      /** linear system scaling (applied by the direct linear solvers, see ScalingStrategy) **/
+      // symmetric diagonal scaling of the matrices of the direct linear solver (none|ruiz). Any value other than
+      // none disables the solvers' own scalings (MA57_use_scaling, MUMPS_use_scaling)
+      options.set_string("linear_system_scaling", "ruiz");
+      // scale only when the factorizations seem inaccurate (failed iterative refinement, many delayed pivots), then until
+      // the end (IPOPT's linear_scaling_on_demand). false: scale all the matrices
+      options.set_bool("linear_system_scaling_on_demand", true);
+      // fraction of delayed pivots in the first factorization of a matrix above which the scaling is switched on (>= 1:
+      // never)
+      options.set_double("linear_system_scaling_delayed_pivots_threshold", 0.05);
+
       /** MA57 options **/
+      // MC64 scaling inside MA57, at every factorization (ignored if linear_system_scaling is not none)
       options.set_bool("MA57_use_scaling", false);
+
+      /** MUMPS options **/
+      // MUMPS's own scaling (ICNTL(8)), at every factorization (ignored if linear_system_scaling is not none)
+      options.set_bool("MUMPS_use_scaling", true);
    }
 
    // determine default subproblem solvers, based on the available external dependencies

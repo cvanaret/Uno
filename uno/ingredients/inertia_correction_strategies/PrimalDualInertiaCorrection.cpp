@@ -37,7 +37,7 @@ namespace uno {
          const Inertia& expected_inertia, View<double> hessian_values) {
       // pick the member linear solver (system with the regularized Hessian only)
       if (this->optional_linear_solver == nullptr) {
-         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
+         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options, /* allow_scaling = */ false); // inertia only
          this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
@@ -83,7 +83,9 @@ namespace uno {
             statistics.set("Dual reg", this->dual_regularization);
             return;
          }
-         this->increase_primal_regularization(number_attempts);
+         if (!this->increase_primal_regularization(number_attempts)) {
+            this->rescue_with_scaling(linear_solver, number_attempts);
+         }
       }
    }
 
@@ -174,13 +176,16 @@ namespace uno {
 
          // missing positive eigenvalues, or dual regularization is unavailable/exhausted -> increase the primal regularization
          if (missing_positive || !dual_regularization_added) {
-            this->increase_primal_regularization(number_attempts);
+            if (!this->increase_primal_regularization(number_attempts)) {
+               this->rescue_with_scaling(linear_solver, number_attempts);
+            }
          }
       }
    }
 
    // IPOPT-like update of the primal regularization after an unsuccessful factorization
-   void PrimalDualInertiaCorrection::increase_primal_regularization(size_t number_attempts) {
+   // returns false if the regularization exceeds its failure threshold
+   bool PrimalDualInertiaCorrection::increase_primal_regularization(size_t number_attempts) {
       if (this->primal_regularization == 0.) {
          this->primal_regularization = (this->previous_primal_regularization == 0.) ? this->primal_regularization_initial_factor :
             std::max(this->primal_regularization_lb, this->previous_primal_regularization / this->primal_regularization_decrease_factor);
@@ -191,10 +196,23 @@ namespace uno {
       else {
          this->primal_regularization *= this->primal_regularization_slow_increase_factor;
       }
-      if (this->regularization_failure_threshold < this->primal_regularization) {
-         DEBUG << "The inertia correction failed\n";
-         throw UnstableInertiaCorrection();
+      return this->primal_regularization <= this->regularization_failure_threshold;
+   }
+
+   // last resort when the regularization exceeds its failure threshold: the inertia may be unreliable because the matrix is
+   // badly scaled. Switch on the linear system scaling (once: it is then kept until the end) and restart the correction from
+   // zero regularization. Otherwise, the inertia correction failed
+   void PrimalDualInertiaCorrection::rescue_with_scaling(DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         size_t& number_attempts) {
+      if (linear_solver.activate_scaling()) {
+         DEBUG << "The inertia correction failed: retrying with the linear system scaling\n";
+         this->primal_regularization = 0.;
+         this->dual_regularization = 0.;
+         number_attempts = 0;
+         return;
       }
+      DEBUG << "The inertia correction failed\n";
+      throw UnstableInertiaCorrection();
    }
 
    bool PrimalDualInertiaCorrection::performs_primal_regularization() const {

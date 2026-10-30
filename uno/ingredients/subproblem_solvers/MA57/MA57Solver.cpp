@@ -153,7 +153,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA57Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
+   void MA57Solver::factorize(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       bool factorization_done = false;
@@ -197,11 +197,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(double* solution) {
-      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
-   }
-
-   void MA57Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+   void MA57Solver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
       const int nrhs = static_cast<int>(number_of_rhs);
@@ -222,6 +218,11 @@ namespace uno {
          this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
          this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
          this->workspace.info.data());
+   }
+
+   std::optional<size_t> MA57Solver::number_delayed_pivots() const {
+      // total number of fully-summed variables passed to the father node because of numerical pivoting
+      return static_cast<size_t>(MA57_INFO(23));
    }
 
    Inertia MA57Solver::get_inertia() const {

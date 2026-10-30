@@ -121,7 +121,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA27Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
+   void MA27Solver::factorize(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       // numerical factorization
@@ -167,21 +167,24 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA27Solver::solve_indefinite_system(double* solution) {
+   // MA27 solves one right-hand side at a time, in place
+   void MA27Solver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
-      // copy rhs into solution (overwritten by MA27)
+      // copy the rhs block into the solution block (overwritten by MA27); both are column-major with leading dimension n
       const size_t dimension = static_cast<size_t>(this->workspace.n);
-      view(solution, dimension) = this->linear_system.rhs.view();
+      view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
 
-      MA27_linear_solve(&this->workspace.n, this->workspace.factor.data(), &this->workspace.la, this->workspace.iw.data(),
-         &this->workspace.liw, this->workspace.w.data(), &this->workspace.maxfrt, solution, this->workspace.iw1.data(),
-         &this->workspace.nsteps, this->workspace.icntl.data(), this->workspace.info.data());
+      for (size_t column_index = 0; column_index < number_of_rhs; ++column_index) {
+         MA27_linear_solve(&this->workspace.n, this->workspace.factor.data(), &this->workspace.la, this->workspace.iw.data(),
+            &this->workspace.liw, this->workspace.w.data(), &this->workspace.maxfrt, solution + column_index * dimension,
+            this->workspace.iw1.data(), &this->workspace.nsteps, this->workspace.icntl.data(), this->workspace.info.data());
 
-      assert(MA27_INFO(1) == 0 && "MA27: the linear solve failed");
-      if (MA27_INFO(1) != 0) {
-         WARNING << "MA27 has issued a warning: IFLAG = " << MA27_INFO(1) << " additional info, IERROR = "
-            << this->workspace.info[1] << '\n';
+         assert(MA27_INFO(1) == 0 && "MA27: the linear solve failed");
+         if (MA27_INFO(1) != 0) {
+            WARNING << "MA27 has issued a warning: IFLAG = " << MA27_INFO(1) << " additional info, IERROR = "
+               << this->workspace.info[1] << '\n';
+         }
       }
    }
 
