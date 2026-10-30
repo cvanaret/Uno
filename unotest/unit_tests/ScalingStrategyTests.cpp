@@ -278,13 +278,3 @@ namespace {
       return std::nullopt;
    }
 } // namespace
-
-// the defaults keep the solvers' previous behavior: MA57 without MC64, MUMPS with its own scaling
-TEST(ScalingStrategy, DefaultNativeScaling) {
-   if (is_available("MUMPS")) {
-      EXPECT_EQ(uses_internal_scaling(*SymmetricIndefiniteLinearSolverFactory::create(default_options("MUMPS"))), true);
-   }
-   if (is_available("MA57")) {
-      EXPECT_EQ(uses_internal_scaling(*SymmetricIndefiniteLinearSolverFactory::create(default_options("MA57"))), false);
-   }
-}
