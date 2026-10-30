@@ -61,6 +61,11 @@ namespace uno {
       options.set_bool("protect_actual_reduction_against_roundoff", false);
       options.set_double("protected_actual_reduction_macheps_coefficient", 10.);
       options.set_bool("print_subproblem", false);
+      // turn the linear constraints with a single non-fixed variable into variable bounds (true|false)
+      options.set_bool("detect_bound_constraints", true);
+      // consider linear the nonlinear constraints whose Jacobian is constant at random points (true|false). Heuristic:
+      // off by default
+      options.set_bool("detect_linear_constraints", false);
       // use function scaling based on the initial gradients (true|false)
       options.set_bool("use_function_scaling", false);
       // threshold on the magnitudes of the functions' gradients

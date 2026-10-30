@@ -7,6 +7,7 @@
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/subproblem/SymbolicNewtonSystem.hpp"
@@ -22,23 +23,10 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   static size_t count_fixed_variables(const OptimizationProblem& problem) {
-      size_t number_fixed_variables = 0;
-      const auto& lower_bounds = problem.get_variables_lower_bounds();
-      const auto& upper_bounds = problem.get_variables_upper_bounds();
-      for (size_t variable_index: Range(problem.number_variables)) {
-         if (lower_bounds[variable_index] == upper_bounds[variable_index]) {
-            ++number_fixed_variables;
-         }
-      }
-      return number_fixed_variables;
-   }
-
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem,
       const InteriorPointParameters& parameters, const double& barrier_parameter, double residual_scaling_threshold):
          OptimizationProblem(problem.model, problem.number_variables + problem.get_inequality_constraints().size(),
-         // move the fixed variables to the set of general constraints
-            problem.number_constraints + count_fixed_variables(problem), residual_scaling_threshold),
+            problem.number_constraints, residual_scaling_threshold),
          unslacked_problem(problem),
          barrier_parameter(barrier_parameter),
          parameters(parameters),
@@ -52,6 +40,16 @@ namespace uno {
          constraints_buffer(this->number_constraints),
          predicted_reduction_constraints(this->number_constraints),
          predicted_reduction_jacobian_direction(this->number_constraints) {
+      // the fixed variables are eliminated by the preprocessing (ReducedModel): a barrier term cannot handle them
+      const auto& lower_bounds = problem.get_variables_lower_bounds();
+      const auto& upper_bounds = problem.get_variables_upper_bounds();
+      for (size_t variable_index: Range(problem.number_variables)) {
+         if (lower_bounds[variable_index] == upper_bounds[variable_index]) {
+            throw std::invalid_argument("PrimalDualInteriorPointProblem: variable " + std::to_string(variable_index) +
+               " is fixed. Fixed variables should be eliminated beforehand");
+         }
+      }
+
       // copy the variables bounds
       const size_t dimension = this->unslacked_problem.number_variables;
       view(this->variables_lower_bounds, 0, dimension) = this->unslacked_problem.get_variables_lower_bounds();
@@ -66,27 +64,8 @@ namespace uno {
          this->variables_upper_bounds[slack_index] = this->unslacked_problem.get_constraints_upper_bounds()[constraint_index];
          ++inequality_index;
       }
-      // construct the list of equality constraints (first the original equality constraints)
-      std::iota(this->equality_constraints.begin(), this->equality_constraints.begin() +
-         static_cast<std::vector<size_t>::difference_type>(problem.number_constraints), /* start */ 0);
-
-      // handle the fixed variables
-      size_t fixed_variable_constraint_index = problem.number_constraints;
-      size_t equality_constraint_index = problem.number_constraints;
-      const auto& lower_bounds = problem.get_variables_lower_bounds();
-      const auto& upper_bounds = problem.get_variables_upper_bounds();
-      this->fixed_variables.reserve(count_fixed_variables(problem));
-      for (size_t variable_index: Range(problem.number_variables)) {
-         if (lower_bounds[variable_index] == upper_bounds[variable_index]) { // fixed variable
-            // relax the bounds of the fixed variables
-            this->variables_lower_bounds[variable_index] = -Inf;
-            this->variables_upper_bounds[variable_index] = Inf;
-            this->equality_constraints[equality_constraint_index] = fixed_variable_constraint_index;
-            this->fixed_variables.insert(fixed_variable_constraint_index, variable_index);
-            ++fixed_variable_constraint_index;
-            ++equality_constraint_index;
-         }
-      }
+      // all the constraints are equality constraints
+      std::iota(this->equality_constraints.begin(), this->equality_constraints.end(), /* start */ 0);
 
       // variables with barrier terms
       for (size_t variable_index: Range(this->number_variables)) {
@@ -106,8 +85,8 @@ namespace uno {
 
       // compute the Jacobian sparsity
       const size_t number_jacobian_nonzeros = this->unslacked_problem.number_jacobian_nonzeros();
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros + this->slacks.size() + this->fixed_variables.size());
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros + this->slacks.size() + this->fixed_variables.size());
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros + this->slacks.size());
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros + this->slacks.size());
       // first copy the Jacobian of the unslacked problem
       view(this->jacobian_row_indices, 0, number_jacobian_nonzeros) = this->unslacked_problem.get_jacobian_row_indices();
       view(this->jacobian_column_indices, 0, number_jacobian_nonzeros) = this->unslacked_problem.get_jacobian_column_indices();
@@ -116,12 +95,6 @@ namespace uno {
       for (const auto [constraint_index, slack_index]: this->slacks) {
          this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index);
          this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(slack_index);
-         ++nonzero_index;
-      }
-      // then the fixed variables
-      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
-         this->jacobian_row_indices[nonzero_index] = static_cast<uno_int>(constraint_index); // constraint
-         this->jacobian_column_indices[nonzero_index] = static_cast<uno_int>(variable_index); // variable
          ++nonzero_index;
       }
    }
@@ -148,15 +121,6 @@ namespace uno {
          iterate.primals[variable_index] = push_variable_to_interior(iterate.primals[variable_index],
             this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index],
             this->parameters.push_variable_to_interior_k1, this->parameters.push_variable_to_interior_k2);
-         if (iterate.primals[variable_index] != old_value) {
-            iterate_changed = true;
-         }
-      }
-      // fixed variables
-      const auto& fixed_values = this->unslacked_problem.get_variables_lower_bounds();
-      for (const auto [_, variable_index]: this->fixed_variables) {
-         const double old_value = iterate.primals[variable_index];
-         iterate.primals[variable_index] = fixed_values[variable_index];
          if (iterate.primals[variable_index] != old_value) {
             iterate_changed = true;
          }
@@ -188,31 +152,14 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      // fixed variables
-      const auto& fixed_bounds = this->unslacked_problem.get_variables_lower_bounds();
-      bool iterate_changed = false;
-      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
-         // fix the primal variable (protects against roundoff)
-         if (iterate.primals[variable_index] != fixed_bounds[variable_index]) {
-            iterate.primals[variable_index] = fixed_bounds[variable_index];
-            iterate_changed = true;
-         }
-         // set the bound dual
-         const double multiplier = iterate.multipliers.constraints[constraint_index];
-         iterate.multipliers.lower_bounds[variable_index] = std::max(multiplier, 0.);
-         iterate.multipliers.upper_bounds[variable_index] = std::min(multiplier, 0.);
-      }
-      if (iterate_changed) {
-         evaluations.reset();
-      }
-      // remove the slacks and additional constraints
+      // remove the slacks
       iterate.set_dimensions(this->unslacked_problem.number_variables, this->unslacked_problem.number_constraints);
 
       this->unslacked_problem.postprocess_solution(iterate, evaluations);
    }
 
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
-      return this->unslacked_problem.number_jacobian_nonzeros() + this->slacks.size() + this->fixed_variables.size();
+      return this->unslacked_problem.number_jacobian_nonzeros() + this->slacks.size();
    }
 
    bool PrimalDualInteriorPointProblem::has_curvature(const HessianModel& hessian_model) const {
@@ -278,12 +225,6 @@ namespace uno {
          const double fixed_bound = this->unslacked_problem.get_constraints_lower_bounds()[constraint_index];
          constraints[constraint_index] -= fixed_bound;
       }
-
-      // add the fixed variables
-      const auto& fixed_bounds = this->unslacked_problem.get_variables_lower_bounds();
-      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
-         constraints[constraint_index] = iterate.primals[variable_index] - fixed_bounds[variable_index];
-      }
    }
 
    void PrimalDualInteriorPointProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient,
@@ -314,12 +255,6 @@ namespace uno {
          jacobian_values[nonzero_index] = -1.;
          ++nonzero_index;
       }
-
-      // add the contributions of the fixed variables
-      for ([[maybe_unused]] const auto _: this->fixed_variables) {
-         jacobian_values[nonzero_index] = 1.;
-         ++nonzero_index;
-      }
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
@@ -338,11 +273,6 @@ namespace uno {
          lagrangian_gradient[slack_index] -= (lower_bound_multipliers[slack_index] + upper_bound_multipliers[slack_index]);
          // Jacobian block
          lagrangian_gradient[slack_index] += constraint_multipliers[constraint_index];
-      }
-
-      // fixed variables
-      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
-         lagrangian_gradient[variable_index] -= constraint_multipliers[constraint_index];
       }
    }
 
@@ -380,11 +310,6 @@ namespace uno {
       for (const auto [constraint_index, slack_index]: this->slacks) {
          result[constraint_index] -= vector[slack_index];
       }
-
-      // add the contributions of the fixed variables
-      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
-         result[constraint_index] += vector[variable_index];
-      }
    }
 
    void PrimalDualInteriorPointProblem::add_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
@@ -394,11 +319,6 @@ namespace uno {
       // add the slack contributions
       for (const auto [constraint_index, slack_index]: this->slacks) {
          result[slack_index] -= vector[constraint_index];
-      }
-
-      // add the contributions of the fixed variables
-      for (const auto [constraint_index, variable_index]: this->fixed_variables) {
-         result[variable_index] += vector[constraint_index];
       }
    }
 

@@ -42,7 +42,7 @@ namespace {
    // s.t. x0 + x1^2 + x2 = 1            (equality)
    //      x0 - x1 <= 3                   (inequality: slack with an upper bound)
    //      -1 <= x2 + x3 <= 2             (range: slack with two bounds)
-   //      0 <= x0 <= 10, x1 >= -5, x2 <= 4, x3 free, x4 = 0.5 (fixed)
+   //      0 <= x0 <= 10, x1 >= -5, x2 <= 4, x3 free, 0.5 <= x4 <= 1.5
    class BarrierTestModel: public Model {
    public:
       BarrierTestModel(): Model("barrier_test", 5, 3, 1., -1., 0) { }
@@ -146,7 +146,7 @@ namespace {
       const std::vector<uno_int> jacobian_rows{0, 0, 0, 1, 1, 2, 2};
       const std::vector<uno_int> jacobian_columns{0, 1, 2, 0, 1, 2, 3};
       const std::vector<double> variables_lower_bounds{0., -5., -INFINITY, -INFINITY, 0.5};
-      const std::vector<double> variables_upper_bounds{10., INFINITY, 4., INFINITY, 0.5};
+      const std::vector<double> variables_upper_bounds{10., INFINITY, 4., INFINITY, 1.5};
       const std::vector<double> constraints_lower_bounds{1., -INFINITY, -1.};
       const std::vector<double> constraints_upper_bounds{1., 3., 2.};
       const std::vector<size_t> equality_constraints{0};
@@ -372,11 +372,11 @@ TEST(NewtonSystemCondensation, CondensedSolutionSolvesUncondensedSystem) {
    const size_t n = barrier_problem.number_variables, m = barrier_problem.number_constraints;
    const size_t number_original_variables = setting.model.number_variables;
    ASSERT_EQ(n, size_t{7}); // 5 variables + 2 slacks
-   ASSERT_EQ(m, size_t{4}); // 3 constraints + 1 fixed variable
+   ASSERT_EQ(m, size_t{3}); // 3 constraints
 
-   // internal bounds of the barrier problem: original variables (x4 is fixed: moved to the constraints), then the slacks
-   const std::vector<double> lower_bounds{0., -5., -INFINITY, -INFINITY, -INFINITY, -INFINITY, -1.};
-   const std::vector<double> upper_bounds{10., INFINITY, 4., INFINITY, INFINITY, 3., 2.};
+   // internal bounds of the barrier problem: original variables, then the slacks
+   const std::vector<double> lower_bounds{0., -5., -INFINITY, -INFINITY, 0.5, -INFINITY, -1.};
+   const std::vector<double> upper_bounds{10., INFINITY, 4., INFINITY, 1.5, 3., 2.};
    std::vector<size_t> lower_bounded, upper_bounded;
    Iterate& iterate = setting.iterate;
    for (size_t j: Range(n)) {

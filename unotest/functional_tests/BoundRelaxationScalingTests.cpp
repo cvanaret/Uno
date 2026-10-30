@@ -39,6 +39,8 @@ TEST(BoundRelaxationScaling, OriginalConstraintsAreSatisfiedWithSmallConstraintS
    DefaultOptions::load(options);
    Presets::set(options, "ipopt");
    options.set_integer("max_iterations", 200);
+   // keep the constraint general: this test targets the relaxation of its bounds (cf. PreprocessingTests for the bound)
+   options.set_bool("detect_bound_constraints", false);
    Logger::level = SILENT;
 
    Uno uno;
