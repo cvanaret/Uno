@@ -140,6 +140,10 @@ namespace uno {
       {"SOC_infeasibility_fraction", OptionType::DOUBLE},
       {"libhsl_path", OptionType::STRING},
       {"MA57_use_scaling", OptionType::BOOL},
+      {"MUMPS_use_scaling", OptionType::BOOL},
+      {"linear_system_scaling", OptionType::STRING},
+      {"linear_system_scaling_on_demand", OptionType::BOOL},
+      {"linear_system_scaling_delayed_pivots_threshold", OptionType::DOUBLE},
    };
 
    // setters
