@@ -19,8 +19,8 @@ namespace uno {
       // then kept until the end. false: all the matrices are scaled
       bool on_demand{true};
       // the scaling is switched on (from the next matrix on) when the first factorization of a matrix delays more than
-      // this fraction of the pivots. >= 1: disabled
-      double delayed_pivots_threshold{0.05};
+      // this fraction of the pivots. >= 1: disabled (default: the delayed pivots of KKT matrices are mostly structural)
+      double delayed_pivots_threshold{1.};
    };
 
    // symmetric diagonal scaling S K S of the matrix K of a direct linear solver (DirectSymmetricIndefiniteLinearSolver

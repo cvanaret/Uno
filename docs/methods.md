@@ -10,7 +10,7 @@ Setting `iterative_refinement_max_steps` to 0 disables the whole mechanism (no r
 
 The matrices of the direct linear solver can be scaled symmetrically (S K S, S a positive diagonal matrix: the inertia is preserved), independently of the linear solver, with `linear_system_scaling` (`none` by default). It replaces the solvers' own scalings: `MA57_use_scaling` and `MUMPS_use_scaling` are then ignored. Computing a scaling at every factorization is expensive, so by default the scaling is switched on only when the factorizations seem inaccurate (as IPOPT's `linear_scaling_on_demand`), then kept until the end:
 - iterative refinement failed (before the pivoting tolerance is increased);
-- the first factorization of a matrix delayed more than `linear_system_scaling_delayed_pivots_threshold` × dimension pivots (MA57, MA86, MUMPS, SSIDS); the scaling then starts at the next matrix;
+- optionally, the first factorization of a matrix delayed more than `linear_system_scaling_delayed_pivots_threshold` × dimension pivots (MA57, MA86, MUMPS, SSIDS); the scaling then starts at the next matrix. This trigger is disabled by default: the delayed pivots of KKT matrices are mostly structural (2×2 pivots around the zero (2, 2) block) and do not indicate inaccurate factorizations;
 - the inertia correction failed (last resort, before the inertia correction gives up): the inertia correction restarts once with scaling.
 
 The scaling factors are computed at most once per matrix: the refactorizations of the same matrix (inertia correction retries, pivoting tolerance increase) and the solves with an existing factorization (second-order corrections, iterative refinement) reuse them. Well-behaved problems never trigger the scaling and pay nothing.
