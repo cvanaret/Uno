@@ -20,10 +20,10 @@ namespace uno {
    void UnopyUserCallbacks::notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers,
          double objective_multiplier, double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) {
       if (this->notify_acceptable_iterate_callback.has_value()) {
-         const auto primals_py = to_const_array(primals.data(), primals.size());
-         const auto lower_bound_multipliers_py = to_const_array(multipliers.lower_bounds.data(), multipliers.lower_bounds.size());
-         const auto upper_bound_multipliers_py = to_const_array(multipliers.upper_bounds.data(), multipliers.upper_bounds.size());
-         const auto constraint_multipliers_py = to_const_array(multipliers.constraints.data(), multipliers.constraints.size());
+         const auto primals_py = input_view(primals.data(), primals.size());
+         const auto lower_bound_multipliers_py = input_view(multipliers.lower_bounds.data(), multipliers.lower_bounds.size());
+         const auto upper_bound_multipliers_py = input_view(multipliers.upper_bounds.data(), multipliers.upper_bounds.size());
+         const auto constraint_multipliers_py = input_view(multipliers.constraints.data(), multipliers.constraints.size());
          (*this->notify_acceptable_iterate_callback)(primals_py, lower_bound_multipliers_py, upper_bound_multipliers_py,
             constraint_multipliers_py, objective_multiplier, primal_feasibility_residual, stationarity_residual,
             complementarity_residual);
@@ -34,10 +34,10 @@ namespace uno {
          double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
          double complementarity_residual) {
       if (this->termination_callback.has_value()) {
-         const auto primals_py = to_const_array(primals.data(), primals.size());
-         const auto lower_bound_multipliers_py = to_const_array(multipliers.lower_bounds.data(), multipliers.lower_bounds.size());
-         const auto upper_bound_multipliers_py = to_const_array(multipliers.upper_bounds.data(), multipliers.upper_bounds.size());
-         const auto constraint_multipliers_py = to_const_array(multipliers.constraints.data(), multipliers.constraints.size());
+         const auto primals_py = input_view(primals.data(), primals.size());
+         const auto lower_bound_multipliers_py = input_view(multipliers.lower_bounds.data(), multipliers.lower_bounds.size());
+         const auto upper_bound_multipliers_py = input_view(multipliers.upper_bounds.data(), multipliers.upper_bounds.size());
+         const auto constraint_multipliers_py = input_view(multipliers.constraints.data(), multipliers.constraints.size());
          return (*this->termination_callback)(primals_py, lower_bound_multipliers_py, upper_bound_multipliers_py,
             constraint_multipliers_py, objective_multiplier, primal_feasibility_residual, stationarity_residual,
             complementarity_residual);
@@ -106,7 +106,9 @@ namespace uno {
 
       // solve the model
       UnopyUserCallbacks callbacks{this->notify_acceptable_iterate_callback, this->termination_callback};
-      return this->uno_solver.solve(model, full_options, callbacks);
+      Result result = this->uno_solver.solve(model, full_options, callbacks);
+      Logger::flush(); // push a partial line (if any) to the Python stream
+      return result;
    }
 
    const std::string& UnoSolverWrapper::get_method_description() const {
