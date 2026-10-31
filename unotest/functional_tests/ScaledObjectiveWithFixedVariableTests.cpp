@@ -6,6 +6,7 @@
 // Bug: with function scaling + interior-point method + a fixed variable, PrimalDualInteriorPointProblem::postprocess_solution
 // snaps the fixed variable and resets the evaluations; ScaledModel::postprocess_solution then skips the unscaling of
 // the (already evaluated) objective, so Result::solution_objective is the *scaled* objective sigma_f * f(x*).
+// The fixed variables are now eliminated by the preprocessing (ReducedModel): the invariant must still hold.
 
 #include <cmath>
 #include <vector>

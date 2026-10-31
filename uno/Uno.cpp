@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <utility>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
@@ -12,9 +13,12 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "../interfaces/C/Uno_C_API.h"
+#include "linear_algebra/Norm.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/BoundRelaxedModel.hpp"
 #include "model/Model.hpp"
+#include "model/ModelReduction.hpp"
+#include "model/ReducedModel.hpp"
 #include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -42,6 +46,21 @@ namespace uno {
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
       DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
+      // eliminate the fixed variables, turn the bound constraints into variable bounds and detect the linear constraints
+      ModelReduction reduction = ModelReduction::detect(model, options);
+      if (!reduction.is_trivial()) {
+         const ReducedModel reduced_model(model, std::move(reduction));
+         if (reduced_model.number_variables == 0) {
+            return this->evaluate_single_point(model, reduced_model, options);
+         }
+         return this->reformulate_and_solve(model, reduced_model, options, user_callbacks);
+      }
+      return this->reformulate_and_solve(model, model, options, user_callbacks);
+   }
+
+   // user_model is the original model provided by the user, model is the possibly preprocessed model
+   Result Uno::reformulate_and_solve(const Model& user_model, const Model& model, const Options& options,
+         UserCallbacks& user_callbacks) {
       // the functions are scaled at the initial point
       Vector<double> initial_primals(model.number_variables);
       model.initial_primal_point(initial_primals);
@@ -55,15 +74,49 @@ namespace uno {
          // scaled bounds would allow violations of the original constraints of up to relaxation/constraint scaling
          const BoundRelaxedModel bound_relaxed_model(model, options);
          const ScaledModel scaled_model(bound_relaxed_model, initial_primals, options);
-         return uno_solve(model, scaled_model, options, user_callbacks);
+         return uno_solve(user_model, scaled_model, options, user_callbacks);
       }
       const ScaledModel scaled_model(model, initial_primals, options);
-      return uno_solve(model, scaled_model, options, user_callbacks);
+      return uno_solve(user_model, scaled_model, options, user_callbacks);
+   }
+
+   // all the variables were eliminated: the only point is a KKT point iff the remaining constraints are satisfied (their
+   // multipliers are 0, and the bound multipliers of the eliminated variables absorb the stationarity)
+   Result Uno::evaluate_single_point(const Model& user_model, const Model& model, const Options& options) {
+      this->globalization_mechanism.reset();
+      this->method_description = "preprocessing (all variables eliminated)";
+      Timers timers;
+      timers.wallclock.start();
+      Iterate iterate(0, model.number_constraints);
+      // as in uno_solve, the evaluations of the preprocessing are not counted
+      model.reset_number_evaluations();
+      Evaluations evaluations(model);
+      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
+      try {
+         evaluations.evaluate_objective(model, iterate.primals);
+         evaluations.evaluate_constraints(model, iterate.primals);
+         iterate.scaled_residuals.primal_infeasibility = model.constraint_violation(evaluations.constraints,
+            norm_from_string(options.get_string("residual_norm")));
+         iterate.scaled_residuals.stationarity = iterate.scaled_residuals.complementarity = 0.;
+         iterate.status = (iterate.scaled_residuals.primal_infeasibility <= options.get_double("primal_tolerance")) ?
+            SolutionStatus::FEASIBLE_KKT_POINT : SolutionStatus::INFEASIBLE_STATIONARY_POINT;
+      }
+      catch (const EvaluationError& error) {
+         DISCRETE << error.what() << '\n';
+         optimization_status = OptimizationStatus::EVALUATION_ERROR;
+      }
+      this->postprocess_solution(user_model, model, iterate, evaluations);
+      timers.wallclock.stop();
+      Result result = this->create_result(user_model, optimization_status, std::move(iterate), std::move(evaluations), 0,
+         timers, {});
+      postprocess_multipliers_signs(user_model, result);
+      this->print_optimization_summary(result, options.get_bool("print_solution"));
+      return result;
    }
 
    // protected solve function
-   // user_model is the original model provided by the user, model is the possibly reformulated model (function scaling,
-   // relaxed bounds)
+   // user_model is the original model provided by the user, model is the possibly reformulated model (preprocessing,
+   // function scaling, relaxed bounds). The solution is postprocessed into the space of user_model
    Result Uno::uno_solve(const Model& user_model, const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       InterruptGuard interrupt_guard;
       // drop the ingredients of a previous solve: they must not postprocess the iterate of this solve
@@ -135,11 +188,11 @@ namespace uno {
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
 
-      this->postprocess_solution(user_model, current_iterate, evaluation_cache.current_evaluations);
+      this->postprocess_solution(user_model, model, current_iterate, evaluation_cache.current_evaluations);
       statistics.timers.wallclock.stop();
-      Result result = this->create_result(model, optimization_status, std::move(current_iterate),
+      Result result = this->create_result(user_model, optimization_status, std::move(current_iterate),
          std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
-      postprocess_multipliers_signs(model, result);
+      postprocess_multipliers_signs(user_model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
@@ -260,10 +313,14 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_solution(const Model& user_model, Iterate& iterate, Evaluations& evaluations) const {
-      // 1. primal-dual postprocessing only (unscaling of the multipliers, removal of slacks, fixed variables, ...)
+   void Uno::postprocess_solution(const Model& user_model, const Model& model, Iterate& iterate, Evaluations& evaluations) const {
+      // 1. primal-dual postprocessing only (unscaling of the multipliers, removal of slacks, expansion of the reduced
+      // model, ...). Without ingredients (e.g. max_iterations = 0), the iterate lives in the space of the model
       if (this->globalization_mechanism != nullptr) {
          this->globalization_mechanism->postprocess_solution(iterate, evaluations);
+      }
+      else {
+         model.postprocess_solution(iterate, evaluations);
       }
       // 2. function values of the original model at the final primals. The postprocessing chain has either converted
       // the cached values to the units of the original model (ScaledModel) or invalidated them (e.g. snapped fixed

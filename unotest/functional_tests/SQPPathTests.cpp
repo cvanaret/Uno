@@ -131,6 +131,8 @@ TEST(SQPPath, TrustRegionSmallStepTerminationUsesComputedResiduals) {
    Options options = sqp_options("filterslp", "TR");
    options.set_double("TR_radius", 10.);
    options.set_double("TR_min_radius", 3.);
+   // keep the constraint general: the trust-region path with a general constraint is tested
+   options.set_bool("detect_bound_constraints", false);
 
    Uno uno;
    const Result result = uno.solve(model, options);
