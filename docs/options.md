@@ -73,7 +73,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `protect_actual_reduction_against_roundoff`      | bool   | `false` | Whether the actual reduction is slightly modified to account for roundoff |
 | `protected_actual_reduction_macheps_coefficient` | double | 10      | Coefficient of the machine epsilon in the protected actual reduction      |
 | `print_subproblem`                               | bool   | `false` | Whether the subproblem is printed in `DEBUG` mode                         |
-| `detect_bound_constraints`                       | bool   | `true`  | Turn linear constraints with one non-fixed variable into variable bounds  |
+| `detect_bound_constraints`                       | bool   | `false` | Turn linear constraints with one non-fixed variable into variable bounds  |
 | `detect_linear_constraints`                      | bool   | `false` | Treat nonlinear constraints with constant Jacobian as linear (heuristic)  |
 | `use_function_scaling`                           | bool   | false   | Use function scaling based on the initial gradients                       |    
 | `function_scaling_threshold`                     | double | 100.    | Threshold on the magnitudes of the functions' gradients                   |    

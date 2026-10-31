@@ -240,6 +240,12 @@ TEST(ModelReduction, RemovesSatisfiedConstantConstraints) {
    EXPECT_EQ(reduction.kept_constraints, (std::vector<size_t>{1}));
    ASSERT_EQ(reduction.bound_constraints.size(), size_t{1});
    EXPECT_EQ(reduction.variables_lower_bounds[2], -1.);
+
+   // with the default options (no detection of the bound constraints), the constant constraints are still removed
+   const ModelReduction reduction_without_bounds = ModelReduction::detect(model, default_options(false, false));
+   EXPECT_EQ(reduction_without_bounds.redundant_constraints, (std::vector<size_t>{0}));
+   EXPECT_EQ(reduction_without_bounds.kept_constraints, (std::vector<size_t>{1, 2}));
+   EXPECT_TRUE(reduction_without_bounds.bound_constraints.empty());
 }
 
 // 3 x0 >= 0.3 induces x0 >= 0.3/3, which differs from the bound x0 <= 0.1 by roundoff only: x0 is fixed at 0.1
