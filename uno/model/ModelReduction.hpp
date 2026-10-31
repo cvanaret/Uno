@@ -24,9 +24,10 @@ namespace uno {
    // Jacobian (sparsity pattern and values), and is therefore independent of the modeling language:
    // - nonlinear constraints whose Jacobian is constant at a few random points are considered linear (optional);
    // - linear constraints with a single non-fixed variable are turned into bounds on that variable, and satisfied linear
-   //   constraints without non-fixed variables are removed (optional);
+   //   constraints without non-fixed variables are removed (optional). Bounds that almost coincide are snapped;
    // - fixed variables (equal bounds, possibly after bound tightening) are eliminated. Since a fixed variable may turn
-   //   other constraints into bound constraints, the last two steps are repeated in rounds until no variable gets fixed
+   //   other constraints into bound constraints, the last two steps are repeated in rounds until no variable gets fixed;
+   // - satisfied constraints (linear or not) that depend on fixed variables only are removed
    class ModelReduction {
    public:
       [[nodiscard]] static ModelReduction detect(const Model& model, const Options& options);
@@ -36,7 +37,7 @@ namespace uno {
       std::vector<size_t> free_variables{}; // reduced index -> original index
       std::vector<size_t> kept_constraints{}; // reduced index -> original index
       std::vector<BoundConstraint> bound_constraints{};
-      std::vector<size_t> redundant_constraints{}; // satisfied linear constraints without non-fixed variables
+      std::vector<size_t> redundant_constraints{}; // satisfied constraints without non-fixed variables
       std::vector<size_t> detected_linear_constraints{}; // declared nonlinear by the model, but most likely linear
       // variable bounds (original space), tightened by the bound constraints. The fixed values are the lower bounds
       std::vector<double> variables_lower_bounds{};

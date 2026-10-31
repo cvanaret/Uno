@@ -24,6 +24,11 @@ namespace uno {
       };
       using LinearRows = std::vector<std::vector<LinearTerm>>;
 
+      // roundoff tolerance of the reduction (bound tightening, satisfaction of constant constraints)
+      double reduction_tolerance(double value) {
+         return 1e-12 * std::max(1., std::abs(value));
+      }
+
       bool are_close(double value1, double value2) {
          return std::abs(value1 - value2) <= 1e-12 * std::max(1., std::abs(value1));
       }
@@ -48,8 +53,10 @@ namespace uno {
          for ([[maybe_unused]] size_t point_index: Range(number_random_points)) {
             for (size_t variable_index: Range(model.number_variables)) {
                const double value = base_point[variable_index];
-               point[variable_index] = is_fixed[variable_index] ? value : std::clamp(value + 0.1 * std::max(1., std::abs(value)) *
-                  distribution(generator), lower_bounds[variable_index], upper_bounds[variable_index]);
+               const double perturbed_value = value + 0.1 * std::max(1., std::abs(value)) * distribution(generator);
+               // std::max/std::min rather than std::clamp: inconsistent bounds (lb > ub) must not be undefined behavior
+               point[variable_index] = is_fixed[variable_index] ? value :
+                  std::max(lower_bounds[variable_index], std::min(perturbed_value, upper_bounds[variable_index]));
             }
             try {
                model.evaluate_jacobian(point, jacobian.data());
@@ -89,7 +96,7 @@ namespace uno {
       }
 
       bool is_satisfied(double value, double lower_bound, double upper_bound) {
-         const double tolerance = 1e-12 * std::max(1., std::abs(value));
+         const double tolerance = reduction_tolerance(value);
          return lower_bound - tolerance <= value && value <= upper_bound + tolerance;
       }
 
@@ -152,21 +159,37 @@ namespace uno {
                if (coefficient < 0.) {
                   std::swap(induced_lower_bound, induced_upper_bound);
                }
+               const bool tighter_lower_bound = lower_bounds[variable_index] < induced_lower_bound;
+               const bool tighter_upper_bound = induced_upper_bound < upper_bounds[variable_index];
+               const double new_lower_bound = tighter_lower_bound ? induced_lower_bound : lower_bounds[variable_index];
+               const double new_upper_bound = tighter_upper_bound ? induced_upper_bound : upper_bounds[variable_index];
+               // bounds that cross or almost coincide because of roundoff (e.g. 3 x >= 0.3 and x <= 0.1): the variable is
+               // fixed. Otherwise, an (almost) empty interior would break the interior-point method
+               const bool almost_fixed = is_finite(new_lower_bound) && is_finite(new_upper_bound) &&
+                  std::abs(new_upper_bound - new_lower_bound) <= reduction_tolerance(new_lower_bound);
                // inconsistent bounds: leave the constraint to the solver, which will report the infeasibility
-               if (std::min(induced_upper_bound, upper_bounds[variable_index]) <
-                     std::max(induced_lower_bound, lower_bounds[variable_index])) {
+               if (new_upper_bound < new_lower_bound && !almost_fixed) {
                   continue;
                }
                const size_t bound_constraint_index = reduction.bound_constraints.size();
                reduction.bound_constraints.push_back({constraint_index, variable_index, coefficient});
                is_removed[constraint_index] = true;
-               if (lower_bounds[variable_index] < induced_lower_bound) {
+               if (tighter_lower_bound) {
                   lower_bounds[variable_index] = induced_lower_bound;
                   reduction.lower_bound_origins[variable_index] = bound_constraint_index;
                }
-               if (induced_upper_bound < upper_bounds[variable_index]) {
+               if (tighter_upper_bound) {
                   upper_bounds[variable_index] = induced_upper_bound;
                   reduction.upper_bound_origins[variable_index] = bound_constraint_index;
+               }
+               // snap onto a single value: the pre-existing bound if only one bound was tightened, the lower one otherwise
+               if (almost_fixed) {
+                  if (tighter_lower_bound && !tighter_upper_bound) {
+                     lower_bounds[variable_index] = upper_bounds[variable_index];
+                  }
+                  else {
+                     upper_bounds[variable_index] = lower_bounds[variable_index];
+                  }
                }
             }
             // the variables fixed in this round are eliminated in the next one
@@ -184,6 +207,53 @@ namespace uno {
          }
       }
    } // namespace
+
+   // remove the satisfied constraints that do not depend on any non-fixed variable (e.g. a nonlinear constraint of the
+   // fixed variables only): in the reduced model, they would have an empty Jacobian row (rank-deficient Jacobian)
+   static void remove_constant_constraints(const Model& model, const std::vector<bool>& is_fixed, std::vector<bool>& is_removed,
+         ModelReduction& reduction) {
+      std::vector<bool> depends_on_free_variables(model.number_constraints, false);
+      const auto row_indices = model.get_jacobian_row_indices();
+      const auto column_indices = model.get_jacobian_column_indices();
+      for (size_t nonzero_index: Range(model.number_jacobian_nonzeros())) {
+         if (!is_fixed[static_cast<size_t>(column_indices[nonzero_index])]) {
+            depends_on_free_variables[static_cast<size_t>(row_indices[nonzero_index])] = true;
+         }
+      }
+      std::vector<size_t> constant_constraints;
+      for (size_t constraint_index: Range(model.number_constraints)) {
+         if (!is_removed[constraint_index] && !depends_on_free_variables[constraint_index]) {
+            constant_constraints.push_back(constraint_index);
+         }
+      }
+      if (constant_constraints.empty()) {
+         return;
+      }
+      // the free variables are irrelevant: evaluate at the initial point with the fixed variables at their values
+      Vector<double> point(model.number_variables);
+      model.initial_primal_point(point);
+      for (size_t variable_index: reduction.fixed_variables) {
+         point[variable_index] = reduction.variables_lower_bounds[variable_index];
+      }
+      Vector<double> constraints(model.number_constraints);
+      try {
+         model.evaluate_constraints(point, constraints);
+      }
+      catch (const std::exception& exception) {
+         WARNING << "Preprocessing: the constant constraints could not be evaluated (" << exception.what() << ")\n";
+         return;
+      }
+      const auto& constraints_lower_bounds = model.get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = model.get_constraints_upper_bounds();
+      for (size_t constraint_index: constant_constraints) {
+         // a violated constant constraint is left to the solver, which will report the infeasibility
+         if (std::isfinite(constraints[constraint_index]) && is_satisfied(constraints[constraint_index],
+               constraints_lower_bounds[constraint_index], constraints_upper_bounds[constraint_index])) {
+            is_removed[constraint_index] = true;
+            reduction.redundant_constraints.push_back(constraint_index);
+         }
+      }
+   }
 
    ModelReduction ModelReduction::detect(const Model& model, const Options& options) {
       ModelReduction reduction;
@@ -232,6 +302,10 @@ namespace uno {
             const LinearRows rows = linear_rows(model, reduction.linear_constraints(model), jacobian);
             eliminate_bound_constraints(model, rows, base_point, constraints, is_fixed, is_removed, reduction);
          }
+      }
+
+      if (!reduction.fixed_variables.empty() && 0 < model.number_constraints) {
+         remove_constant_constraints(model, is_fixed, is_removed, reduction);
       }
 
       for (size_t variable_index: Range(model.number_variables)) {

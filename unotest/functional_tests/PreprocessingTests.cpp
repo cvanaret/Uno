@@ -96,7 +96,27 @@ TEST_P(Preprocessing, SolvesModelWithUndeclaredLinearConstraints) {
    expect_solution(solve(model, GetParam(), true, false), expected);
 }
 
+TEST_P(Preprocessing, SolvesModelWithConstraintOfFixedVariablesOnly) {
+   const SparseTestModel model(fixed_only_constraint_problem());
+   expect_solution(solve(model, GetParam()), {{2., 2.}, {0., 0.}, {2., 0.}, {0., 0.}, 1.});
+}
+
 INSTANTIATE_TEST_SUITE_P(Presets, Preprocessing, ::testing::Values("filtersqp", "ipopt"));
+
+// without bound relaxation, almost equal induced bounds would leave the interior-point method with an empty interior
+TEST(PreprocessingBoundRelaxation, AlmostEqualInducedBoundsWithoutRelaxation) {
+   if (!is_preset_available("ipopt")) {
+      GTEST_SKIP() << "no linear solver available";
+   }
+   const SparseTestModel model(almost_fixed_problem());
+   Options options;
+   DefaultOptions::load(options);
+   Presets::set(options, "ipopt");
+   options.set_double("bound_relaxation_factor", 0.);
+   Logger::level = SILENT;
+   Uno uno;
+   expect_solution(uno.solve(model, options), {{0.1, 2.}, {0.}, {0., 0.}, {-1.8, 0.}, 0.81});
+}
 
 // the interior-point method relaxes the bound x <= 1 induced by the badly scaled constraint 1e10 x <= 1e10: the solution
 // is projected onto the induced bound, otherwise the original constraint would be violated by up to 1e10 x relaxation
