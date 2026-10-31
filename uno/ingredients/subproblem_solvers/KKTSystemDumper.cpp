@@ -37,9 +37,15 @@ namespace uno {
       }
 
       // filesystem-friendly base name for the model: drop Uno's reformulation suffix
-      // (e.g. " -> bounds relaxed") and any file extension (e.g. ".nl"), then sanitize
+      // (e.g. " -> bounds relaxed"), the directory (the AMPL model name is the path of the .nl file)
+      // and any file extension (e.g. ".nl"), then sanitize
       std::string base_name(const std::string& name) {
          std::string base = name.substr(0, name.find(" -> "));
+         const size_t separator = base.find_last_of("/\\");
+         if (separator != std::string::npos) {
+            base.erase(0, separator + 1);
+         }
+         // search the extension after the directory was removed (directories may contain dots)
          const size_t dot = base.find_last_of('.');
          if (dot != std::string::npos) {
             base.resize(dot);
