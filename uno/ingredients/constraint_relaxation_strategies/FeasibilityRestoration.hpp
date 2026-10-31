@@ -11,6 +11,8 @@
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "model/ScaledModel.hpp"
+#include "optimization/Evaluations.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
@@ -69,7 +71,14 @@ namespace uno {
       Phase current_phase{Phase::OPTIMALITY};
       const double constraint_violation_coefficient;
       const OptimizationProblem original_problem;
+      // the constraints of the feasibility problem are rescaled at each point where the restoration starts: the function
+      // scaling computed at the initial point may be inadequate there (e.g. CUTEst GLIDER). The values of the slacks and
+      // the evaluations are converted between the units of the two problems upon switching phases
+      const bool rescale_feasibility_problem;
+      ScaledModel feasibility_model;
       l1RelaxedProblem feasibility_problem;
+      // evaluations of the original problem at the trial iterates of the restoration phase
+      Evaluations switch_evaluations;
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<GlobalizationStrategy> globalization_strategy;
@@ -94,6 +103,8 @@ namespace uno {
 
       mutable Vector<double> constraints_buffer;
 
+      void rescale_feasibility_problem_at(Iterate& current_iterate, Evaluations& current_evaluations);
+      void scale_slacks(Iterate& iterate, bool to_feasibility_units) const;
       const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);

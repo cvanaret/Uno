@@ -17,7 +17,8 @@ namespace uno {
          scaling(this->model.number_constraints, options.get_double("function_scaling_threshold"),
             options.get_double("function_scaling_lower_bound")),
          constraints_lower_bounds(this->model.get_constraints_lower_bounds()),
-         constraints_upper_bounds(this->model.get_constraints_upper_bounds()) {
+         constraints_upper_bounds(this->model.get_constraints_upper_bounds()),
+         unscaled_constraints(this->model.number_constraints) {
       if (options.get_bool("use_function_scaling")) {
          // evaluate the gradients at the current point
          Vector<double> objective_gradient(this->model.number_variables);
@@ -32,14 +33,39 @@ namespace uno {
          }
       }
 
-      // compute the lower and upper bounds of the constraints
+      this->scale_constraint_bounds();
+   }
+
+   ScaledModel::ScaledModel(const Model& original_model, const Options& options):
+         Model(original_model.name + " -> scaled", original_model.number_variables, original_model.number_constraints,
+               original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
+         model(original_model),
+         scaling(this->model.number_constraints, options.get_double("function_scaling_threshold"),
+            options.get_double("function_scaling_lower_bound")),
+         constraints_lower_bounds(this->model.get_constraints_lower_bounds()),
+         constraints_upper_bounds(this->model.get_constraints_upper_bounds()),
+         unscaled_constraints(this->model.number_constraints) {
+   }
+
+   void ScaledModel::rescale_constraints(const Vector<double>& original_jacobian_values) {
+      this->scaling.compute_constraint_scaling(this->model, original_jacobian_values);
+      this->scale_constraint_bounds();
+   }
+
+   const std::vector<double>& ScaledModel::get_constraint_scaling() const {
+      return this->scaling.get_constraint_scaling();
+   }
+
+   // compute the lower and upper bounds of the scaled constraints
+   void ScaledModel::scale_constraint_bounds() {
+      this->constraints_lower_bounds = this->model.get_constraints_lower_bounds();
+      this->constraints_upper_bounds = this->model.get_constraints_upper_bounds();
       if (this->scaling.are_constraints_scaled()) {
          const auto& constraints_scaling = this->scaling.get_constraint_scaling();
          for (size_t constraint_index: Range(this->number_constraints)) {
             this->constraints_lower_bounds[constraint_index] *= constraints_scaling[constraint_index];
             this->constraints_upper_bounds[constraint_index] *= constraints_scaling[constraint_index];
          }
-
          // preallocate the temporary multipliers
          this->scaled_multipliers.resize(this->number_constraints);
       }
@@ -253,15 +279,15 @@ namespace uno {
    }
 
    double ScaledModel::unscaled_objective(double objective_value) const {
-      return objective_value / this->scaling.get_objective_scaling();
+      return this->model.unscaled_objective(objective_value / this->scaling.get_objective_scaling());
    }
 
    double ScaledModel::unscaled_stationarity(double scaled_stationarity) const {
-      return scaled_stationarity / this->scaling.get_objective_scaling();
+      return this->model.unscaled_stationarity(scaled_stationarity / this->scaling.get_objective_scaling());
    }
 
    double ScaledModel::unscaled_complementarity(double scaled_complementarity) const {
-      return scaled_complementarity / this->scaling.get_objective_scaling();
+      return this->model.unscaled_complementarity(scaled_complementarity / this->scaling.get_objective_scaling());
    }
 
    double ScaledModel::unscaled_primal_infeasibility(double /*scaled_primal_infeasibility*/,
@@ -274,6 +300,11 @@ namespace uno {
          return this->constraint_violation(scaled_constraints[constraint_index],
             lower_bounds[constraint_index], upper_bounds[constraint_index]) / constraint_scaling[constraint_index];
       };
-      return norm(residual_norm, Range(this->number_constraints), constraint_violation);
+      const double violation = norm(residual_norm, Range(this->number_constraints), constraint_violation);
+      // the original model may itself be scaled
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         this->unscaled_constraints[constraint_index] = scaled_constraints[constraint_index] / constraint_scaling[constraint_index];
+      }
+      return this->model.unscaled_primal_infeasibility(violation, this->unscaled_constraints, residual_norm);
    }
 } // namespace
