@@ -8,6 +8,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -73,6 +74,13 @@ namespace pybind11::detail {
          if (isinstance<array>(source)) {
             if (!convert && !uno::ndarray<T>::check_(source)) {
                return false;
+            }
+            // like the conversion of Python sequences, reject non-integer values (e.g. floats) for integer arrays
+            if constexpr (std::is_integral_v<T>) {
+               const char kind = reinterpret_borrow<array>(source).dtype().kind();
+               if (kind != 'i' && kind != 'u') {
+                  return false;
+               }
             }
             const auto array = uno::ndarray<T>::ensure(source);
             if (!array || array.ndim() != 1) {
