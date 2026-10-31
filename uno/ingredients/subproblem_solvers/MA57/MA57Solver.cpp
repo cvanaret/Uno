@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cmath>
 #include <optional>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 #include "MA57Solver.hpp"
@@ -112,6 +114,10 @@ namespace uno {
       MA57_ICNTL(5) = 0; // suppress warning messages
       MA57_ICNTL(6) = 5; // pivot order (auto between METIS and MC47)
       MA57_ICNTL(7) = 1; // numerical pivoting (uses threshold in CNTL(1))
+      // out of space during the factorization: return INFO(1) = 10/11 and keep the partial factors, so that the factorization
+      // continues where it stopped after MA57ED enlarges the workspace. With the default (0), the factors are discarded and
+      // every enlargement redoes the whole factorization, which stalls when many pivots are delayed
+      MA57_ICNTL(8) = 1;
       MA57_ICNTL(11) = 16; // block size used by the Level 3 BLAS
       MA57_ICNTL(12) = 16; // assembly tree
       MA57_ICNTL(15) = use_scaling ? 1 : 0; // MC64 scaling
@@ -153,9 +159,10 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA57Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
+   void MA57Solver::factorize(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
+      size_t number_enlargements = 0;
       bool factorization_done = false;
       while (!factorization_done) {
          // numerical factorization
@@ -165,6 +172,11 @@ namespace uno {
             this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
          if (is_error_code_insufficient_real_workspace(MA57_INFO(1)) || is_error_code_insufficient_integer_workspace(MA57_INFO(1))) {
+            if (MA57Settings::max_number_workspace_enlargements <= number_enlargements) {
+               throw std::runtime_error("MA57: the factorization failed (workspace too small after " +
+                  std::to_string(number_enlargements) + " enlargements)");
+            }
+            ++number_enlargements;
             const bool is_real_workspace = is_error_code_insufficient_real_workspace(this->workspace.info[0]);
 
             const int lnewfact = !is_real_workspace ? 0 : get_larger_real_workspace_size(this->workspace);
@@ -197,11 +209,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(double* solution) {
-      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
-   }
-
-   void MA57Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+   void MA57Solver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
       const int nrhs = static_cast<int>(number_of_rhs);
@@ -222,6 +230,11 @@ namespace uno {
          this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
          this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
          this->workspace.info.data());
+   }
+
+   std::optional<size_t> MA57Solver::number_delayed_pivots() const {
+      // total number of fully-summed variables passed to the father node because of numerical pivoting
+      return static_cast<size_t>(MA57_INFO(23));
    }
 
    Inertia MA57Solver::get_inertia() const {

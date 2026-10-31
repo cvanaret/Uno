@@ -209,7 +209,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA86Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
+   void MA86Solver::factorize(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       // scatter the COO values into the CSC values, summing duplicate entries
@@ -226,11 +226,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA86Solver::solve_indefinite_system(double* solution) {
-      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
-   }
-
-   void MA86Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+   void MA86Solver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
       // copy the rhs block into the solution block (overwritten by MA86); both are column-major with
@@ -243,6 +239,10 @@ namespace uno {
       if (this->info.flag < 0) {
          throw std::runtime_error("MA86 could not solve the linear system (flag = " + std::to_string(this->info.flag) + ")");
       }
+   }
+
+   std::optional<size_t> MA86Solver::number_delayed_pivots() const {
+      return static_cast<size_t>(this->info.num_delay);
    }
 
    Inertia MA86Solver::get_inertia() const {

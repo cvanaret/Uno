@@ -28,19 +28,20 @@ namespace uno {
       void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(double* solution) override;
-      void solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
+      [[nodiscard]] std::optional<size_t> number_delayed_pivots() const override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
-      [[nodiscard]] COOLinearSystem& get_coo_linear_system();
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;
 
    protected:
+      void factorize(bool is_matrix_positive_definite) override;
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override;
+
       Workspace workspace{};
       COOLinearSystem linear_system{Indexing::Fortran_indexing};
 

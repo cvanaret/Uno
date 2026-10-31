@@ -126,6 +126,7 @@ namespace uno {
       }
 
       // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
+      this->linear_solver->begin_new_matrix();
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
       if (this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {
@@ -186,7 +187,9 @@ namespace uno {
             this->analysis_performed = true;
          }
 
-         // regularize the augmented matrix (this calls the factorization)
+         // regularize the augmented matrix (this calls the factorization). The inertia correction retries are
+         // refactorizations of the same matrix (the linear system scaling, if any, is computed once)
+         this->linear_solver->begin_new_matrix();
          subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
             block_augmented_matrix);
          this->pivoting_tolerance_increased_for_current_matrix = false;
@@ -281,7 +284,8 @@ namespace uno {
    // solve the condensed system with the current factorization (RHS: linear_system.rhs, solution: linear_system.solution)
    // and refine the solution iteratively wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve.
    // If the refined solution is not accurate:
-   // 1. the pivoting tolerance of the linear solver is increased (at most once per matrix; it is never decreased) and the
+   // 1. the linear system scaling is switched on (if available and not yet on; it is then kept until the end), otherwise the
+   //    pivoting tolerance of the linear solver is increased (at most once per matrix; it is never decreased), and the
    //    matrix is refactorized. The inertia correction strategy checks the inertia of the new factorization again and
    //    may increase the regularization;
    // 2. otherwise, if the residual ratio is below residual_ratio_singular, the solution is accepted;
@@ -322,7 +326,22 @@ namespace uno {
             break;
          }
          const BlockAugmentedMatrix block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
-         // 2. improve the quality of the factorization
+         // 2a. improve the quality of the factorization: switch on the linear system scaling (on demand, kept until the end)
+         if (this->linear_solver->activate_scaling()) {
+            this->iteration_refinement_flags.emplace_back("scal");
+            DEBUG << "Refactorizing the augmented matrix with scaling\n";
+            subproblem.refactorize_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
+               *this->linear_solver, block_augmented_matrix);
+            if (this->linear_solver->matrix_is_singular()) {
+               // singular and not regularized: the caller handles the singularity
+               DEBUG << "The refactorized augmented matrix is singular\n";
+               this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+               this->report_iterative_refinement(statistics);
+               return;
+            }
+            continue;
+         }
+         // 2b. improve the quality of the factorization: increase the pivoting tolerance
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
             this->iteration_refinement_flags.emplace_back("piv");
