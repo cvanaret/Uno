@@ -40,11 +40,22 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
+      // structural degeneracy of the Hessian and the Jacobian, detected as in IPOPT (PDPerturbationHandler)
+      enum class Degeneracy {NOT_YET_DETERMINED, NOT_DEGENERATE, DEGENERATE};
+      // regularization tested on the current matrix to determine the degeneracy
+      enum class DegeneracyTest {NONE, NO_REGULARIZATION, DUAL_ONLY, PRIMAL_ONLY, PRIMAL_AND_DUAL};
+
       const Options& options;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double primal_regularization{0.};
       double dual_regularization{0.};
       double previous_primal_regularization{0.};
+      Degeneracy hessian_degeneracy{Degeneracy::NOT_YET_DETERMINED};
+      Degeneracy jacobian_degeneracy{Degeneracy::NOT_YET_DETERMINED};
+      DegeneracyTest degeneracy_test{DegeneracyTest::NONE};
+      size_t number_degenerate_matrices{0};
+      static constexpr size_t degeneracy_threshold{3}; // number of degenerate matrices before the degeneracy is assumed
+      bool quality_improved_for_current_matrix{false};
       const double regularization_failure_threshold;
       const double primal_regularization_initial_factor;
       const double dual_regularization_fraction;
@@ -52,13 +63,15 @@ namespace uno {
       const double primal_regularization_decrease_factor;
       const double primal_regularization_fast_increase_factor;
       const double primal_regularization_slow_increase_factor;
-      const size_t threshold_unsuccessful_attempts;
       const bool regularize_all_variables;
 
-      void regularize_until_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
+      void regularize_until_correct_inertia(Statistics& statistics, double dual_regularization_value,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular);
-      void increase_primal_regularization(size_t number_attempts);
+      void regularize_for_singularity(double dual_regularization_value);
+      void regularize_for_wrong_inertia(double dual_regularization_value);
+      [[nodiscard]] bool increase_primal_regularization();
+      void finalize_degeneracy_test();
    };
 } // namespace
 
