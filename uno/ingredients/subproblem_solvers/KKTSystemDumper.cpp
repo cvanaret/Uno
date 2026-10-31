@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "KKTSystemDumper.hpp"
-#include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <fstream>
@@ -18,8 +17,11 @@
 namespace uno {
    KKTSystemDumper::KKTSystemDumper(const Options& options):
          path(options.get_string_optional("dump_kkt_path").value_or("")),
-         // a frequency of 0 would divide by zero; clamp it to "every iteration"
-         frequency(std::max<size_t>(1, options.get_unsigned_int("dump_kkt_frequency"))) {
+         frequency(options.get_unsigned_int("dump_kkt_frequency")) {
+      // a frequency of 0 would divide by zero
+      if (this->frequency == 0) {
+         throw std::runtime_error("dump_kkt_frequency should be positive");
+      }
    }
 
    namespace {
