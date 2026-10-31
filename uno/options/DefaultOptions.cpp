@@ -71,7 +71,7 @@ namespace uno {
       options.set_bool("print_minor_iterations", false);
       // whether the statistics table is printed in extended form
       options.set_bool("print_extended_statistics", false);
-      // dump KKT systems
+      // dump KKT systems (only supported without low-rank corrections)
       //options.set_string("dump_kkt_path", "");
       options.set_integer("dump_kkt_frequency", 1);
 

@@ -58,8 +58,7 @@ namespace uno {
       // if KKT dumper is enabled but the EQP solver does not use the explicit Hessian matrix, print a warning
       if constexpr (!LowRankCorrection::uses_explicit_hessian_matrix) {
          if (!options.get_string_optional("dump_kkt_path").value_or("").empty()) {
-            WARNING << "'dump_kkt_path' is set, but KKT system dumping is only supported with an exact Hessian; "
-               "no systems will be dumped with the quasi-Newton Hessian\n";
+            WARNING << "'dump_kkt_path' is set, but KKT system dumping is only supported without low-rank corrections\n";
          }
       }
    }
