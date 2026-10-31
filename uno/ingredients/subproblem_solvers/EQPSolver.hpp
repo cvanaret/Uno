@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include "LowRankCorrection.hpp"
+#include "KKTSystemDumper.hpp"
 #include "SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
 
@@ -32,7 +33,7 @@ namespace uno {
    template <typename LowRankCorrection>
    class EQPSolver: public SubproblemSolver {
    public:
-      explicit EQPSolver(const Options& options, LowRankCorrection correction = {});
+      explicit EQPSolver(const Options& options, LowRankCorrection low_rank_correction = {});
       ~EQPSolver() override; // defined in EQPSolver.cpp (incomplete linear solver type)
 
       void initialize_memory(const Subproblem& subproblem) override;
@@ -66,6 +67,7 @@ namespace uno {
       std::unique_ptr<NewtonSystem> newton_system;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       LowRankCorrection low_rank_correction;
+      const KKTSystemDumper kkt_dumper;
       bool analysis_performed{false};
       Vector<double> zero_multipliers{};
       // the least-squares system overwrote the augmented matrix and its factorization: the next direction computation
