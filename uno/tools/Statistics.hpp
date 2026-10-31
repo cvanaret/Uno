@@ -4,6 +4,7 @@
 #ifndef UNO_STATISTICS_H
 #define UNO_STATISTICS_H
 
+#include <cstddef>
 #include <map>
 #include <string>
 #include <string_view>
@@ -35,6 +36,8 @@ namespace uno {
       void print_header();
       void print_current_line();
 
+      // current major iteration (used by the KKT system dumper for filenames and dump frequency)
+      size_t iteration{0};
       Timers timers;
 
    protected:

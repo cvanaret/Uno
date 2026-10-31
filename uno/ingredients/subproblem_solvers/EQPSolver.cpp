@@ -49,10 +49,11 @@ namespace uno {
    } // namespace
 
    template <typename LowRankCorrection>
-   EQPSolver<LowRankCorrection>::EQPSolver(const Options& options, LowRankCorrection correction):
+   EQPSolver<LowRankCorrection>::EQPSolver(const Options& options, LowRankCorrection low_rank_correction):
          SubproblemSolver(),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
-         low_rank_correction(std::move(correction)),
+         low_rank_correction(std::move(low_rank_correction)),
+         kkt_dumper(options),
          iterative_refinement(read_iterative_refinement_parameters(options)) {
    }
 
@@ -61,7 +62,7 @@ namespace uno {
 
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::initialize_memory(const Subproblem& subproblem) {
-      if constexpr (LowRankCorrection::requires_hessian_matrix) {
+      if constexpr (LowRankCorrection::uses_explicit_hessian_matrix) {
          if (!subproblem.has_hessian_matrix()) {
             throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
          }
@@ -85,7 +86,7 @@ namespace uno {
 
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::initialize_statistics(Statistics& statistics) {
-      if constexpr (LowRankCorrection::requires_hessian_matrix) {
+      if constexpr (LowRankCorrection::uses_explicit_hessian_matrix) {
          statistics.add_column("IR", Statistics::int_width, 0, /* is_extended = */ true);
       }
    }
@@ -197,6 +198,12 @@ namespace uno {
          // assemble the RHS
          this->newton_system->assemble_rhs({statistics, current_iterate, current_evaluations}, linear_system.rhs.view());
          DEBUG3 << "RHS: " << linear_system.rhs << '\n';
+
+         // optionally dump the regularized KKT system to disk
+         if constexpr (LowRankCorrection::uses_explicit_hessian_matrix) {
+            this->kkt_dumper.dump(linear_system, subproblem.problem.model.name,
+               subproblem.problem.get_objective_multiplier() == 0., statistics.iteration);
+         }
       }
 
       // solve the linear system
@@ -298,7 +305,7 @@ namespace uno {
       this->number_refinement_steps = 0;
       this->matrix_deemed_singular = false;
       // the residuals require the full Hessian in the condensed matrix (not available with low-rank corrections)
-      if (!LowRankCorrection::requires_hessian_matrix || this->iterative_refinement.max_steps == 0) {
+      if (!LowRankCorrection::uses_explicit_hessian_matrix || this->iterative_refinement.max_steps == 0) {
          this->residual_ratio = std::numeric_limits<double>::quiet_NaN(); // not computed
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
          return;
