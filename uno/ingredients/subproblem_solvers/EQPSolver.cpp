@@ -206,8 +206,10 @@ namespace uno {
          DEBUG3 << "RHS: " << linear_system.rhs << '\n';
 
          // optionally dump the regularized KKT system to disk
-         this->kkt_dumper.dump(linear_system, subproblem.problem.model.name,
-            subproblem.problem.get_objective_multiplier() == 0., warmstart_information.iteration);
+         if constexpr (LowRankCorrection::uses_explicit_hessian_matrix) {
+            this->kkt_dumper.dump(linear_system, subproblem.problem.model.name,
+               subproblem.problem.get_objective_multiplier() == 0., warmstart_information.iteration);
+         }
       }
 
       // solve the linear system
