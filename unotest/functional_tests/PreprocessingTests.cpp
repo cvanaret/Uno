@@ -112,6 +112,7 @@ TEST(PreprocessingBoundRelaxation, AlmostEqualInducedBoundsWithoutRelaxation) {
    Options options;
    DefaultOptions::load(options);
    Presets::set(options, "ipopt");
+   options.set_bool("detect_bound_constraints", true); // the almost equal bounds are induced by a bound constraint
    options.set_double("bound_relaxation_factor", 0.);
    Logger::level = SILENT;
    Uno uno;
