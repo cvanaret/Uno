@@ -17,13 +17,13 @@ namespace uno {
    class Subproblem;
 
    // Policies for EQPSolver. Interface:
-   // - requires_hessian_matrix: whether the augmented matrix contains the full Hessian
+   // - uses_explicit_hessian_matrix: whether the augmented matrix contains the full Hessian
    // - update(): called once per numerical factorization of the augmented matrix A
    // - apply(b): turns b = A⁻¹ r into the solution of the system with the full matrix
 
    // the augmented matrix contains the full Hessian: nothing to do
    struct NoLowRankCorrection {
-      static constexpr bool requires_hessian_matrix = true;
+      static constexpr bool uses_explicit_hessian_matrix = true;
       void update(const Subproblem& /*subproblem*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/) { }
       void apply(Vector<double>& /*b*/) const { }
    };
@@ -38,7 +38,7 @@ namespace uno {
    // for every right-hand side (direction, SOC)
    class WoodburyCorrection {
    public:
-      static constexpr bool requires_hessian_matrix = false;
+      static constexpr bool uses_explicit_hessian_matrix = false;
 
       explicit WoodburyCorrection(const DirectQuasiNewtonHessian& hessian_model);
       void update(const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver);

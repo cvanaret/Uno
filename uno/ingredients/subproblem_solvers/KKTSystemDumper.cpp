@@ -103,7 +103,7 @@ namespace uno {
       // options may be added later). An empty path disables the dump.
       // The frequency samples the first optimality iteration and every `frequency`-th one after it
       // (iteration is >= 1 here, so the subtraction does not underflow).
-      if (feasibility_phase || this->path.empty() || (iteration - 1) % this->frequency != 0) {
+      if (this->path.empty() || feasibility_phase || (iteration - 1) % this->frequency != 0) {
          return;
       }
       // the augmented matrix is only available in COO form
