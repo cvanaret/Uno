@@ -8,7 +8,7 @@ const ROOT = normpath(joinpath(@__DIR__, "..", ".."))
 # Options intentionally absent from a given file.
 const ALLOW_NO_DEFAULT = Set(["constraint_relaxation_strategy", "globalization_mechanism",
     "globalization_strategy", "inequality_handling_method", "hessian_model", "inertia_correction_strategy", "option_file",
-    "libhsl_path", "dump_kkt_path"])  # set by presets
+    "libhsl_path", "dump_kkt_path"])
 const ALLOW_NO_OPTFILE = Set(["option_file", "preset"])  # command-line-only meta option
 
 extract(path, re) = Set(m.captures[1] for line in eachline(path) for m in eachmatch(re, line))
