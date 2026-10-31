@@ -208,7 +208,7 @@ namespace uno {
          // optionally dump the regularized KKT system to disk
          if constexpr (LowRankCorrection::uses_explicit_hessian_matrix) {
             this->kkt_dumper.dump(linear_system, subproblem.problem.model.name,
-               subproblem.problem.get_objective_multiplier() == 0., warmstart_information.iteration);
+               subproblem.problem.get_objective_multiplier() == 0., statistics.iteration);
          }
       }
 
