@@ -83,12 +83,13 @@ If not provided, the solver is chosen automatically from the available solvers (
 ## KKT system dump
 
 Uno can dump the KKT systems to disk in [MatrixMarket](https://math.nist.gov/MatrixMarket/formats.html) format.
-The dump is only supported with an **exact Hessian**, where the whole KKT matrix is factorized directly.
+The dump is only supported in the absence of low-rank corrections, where the whole KKT matrix is factorized directly.
+Two runs on the same instance overwrite each other.
 
 | Option               | Type    | Default | Description                                                                                       |
 |:---------------------|:--------|:--------|:--------------------------------------------------------------------------------------------------|
-| `dump_kkt_path`      | string  | `""`    | Output directory for the dumped KKT systems (created if needed). An empty path disables the dump. |
-| `dump_kkt_frequency` | integer | 1       | Dump the first optimality iteration and every `frequency` one after it (`1` = every iteration).   |
+| `dump_kkt_path`      | string  | `""`    | Output directory for the dumped KKT systems (created if needed). An empty path disables the dump |
+| `dump_kkt_frequency` | integer | 1       | Dump the first optimality iteration and every `frequency` one after it (`1` = every iteration)   |
 
 For each dumped iteration, two files are written to `dump_kkt_path`:
 
