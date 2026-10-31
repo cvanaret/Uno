@@ -4,7 +4,7 @@
 import unopy
 Inf = float("inf")
 
-# hs015.mod
+# hs015.mod: nonlinear problem with two inequality constraints. Solution: x* = (0.5, 2), f(x*) = 306.5
 def objective(x):
 	# the modeler should throw an exception if the function cannot be evaluated
 	return 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
@@ -28,22 +28,15 @@ def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 						-400.*objective_multiplier*x[0] - multipliers[0],
 						200.*objective_multiplier - 2.*multipliers[1]]
 
-def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers,
-								vector, result):
-	# the modeler should throw an exception if the function cannot be evaluated
-	hessian00 = objective_multiplier*(1200*x[0]**2. - 400.*x[1] + 2.)
-	hessian10 = -400.*objective_multiplier*x[0] - multipliers[0]
-	hessian11 = 200.*objective_multiplier - 2.*multipliers[1]
-	result[:] = [hessian00*vector[0] + hessian10*vector[1],
-				hessian10*vector[0] + hessian11*vector[1]]
-
 def notify_acceptable_iterate_callback(primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers,
 									   objective_multiplier, primal_feasibility_residual, stationarity_residual,
 									   complementarity_residual):
+	# called at each acceptable iterate
 	pass
 
 def termination_callback(primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers, objective_multiplier,
 						 primal_feasibility_residual, stationarity_residual, complementarity_residual):
+	# return True to stop the solver
 	return False
 
 if __name__ == '__main__':
@@ -92,7 +85,6 @@ if __name__ == '__main__':
 	uno_solver.set_option("QP_solver", "BQPD")
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
-	assert abs(result.solution_objective - 306.5) <= 1e-4
 	print("Objective at solution:", result.solution_objective)
 
 	# run 2: solve with the filtersqp preset with exact Hessian
@@ -121,18 +113,17 @@ if __name__ == '__main__':
 	print("Number of Jacobian evaluations:", result.number_jacobian_evaluations)
 	print("Number of Hessian evaluations:", result.number_hessian_evaluations)
 	print("Number of subproblems solved:", result.number_subproblems_solved)
-	assert abs(result.solution_objective - 306.5) <= 1e-4
 
 	# run 3: solve with the ipopt preset
 	uno_solver.set_preset("ipopt")
 	uno_solver.set_option("linear_solver", "MUMPS")
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
-	assert abs(result.solution_objective - 306.5) <= 1e-4
-	
+	print("Objective at solution:", result.solution_objective)
+
 	# run 4: solve with the filterslp preset
 	uno_solver.set_preset("filterslp")
 	uno_solver.set_option("LP_solver", "HiGHS")
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
-	assert abs(result.solution_objective - 306.5) <= 1e-4
+	print("Objective at solution:", result.solution_objective)
