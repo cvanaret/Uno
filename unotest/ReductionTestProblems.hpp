@@ -116,6 +116,58 @@ namespace uno {
       problem.initial_point = {0., 0., 2.};
       return problem;
    }
+   // min (x0 - 1)^2 + (x1 - 2)^2 s.t. c0: 3 x0 >= 0.3 (linear), x0 <= 0.1. The induced bound x0 >= 0.3/3 = 0.1 - 1.4e-17
+   // almost coincides with x0 <= 0.1: x0 must be fixed rather than left with an empty interior
+   // solution x = (0.1, 2), f = 0.81, y = 0, z_L = 0, z_U = (-1.8, 0)
+   inline SparseTestProblem almost_fixed_problem() {
+      SparseTestProblem problem;
+      problem.name = "almost_fixed";
+      problem.number_variables = 2;
+      problem.number_constraints = 1;
+      problem.objective = [](const Vector<double>& x) { return (x[0] - 1.)*(x[0] - 1.) + (x[1] - 2.)*(x[1] - 2.); };
+      problem.gradient = [](const Vector<double>& x, Vector<double>& g) { g[0] = 2.*(x[0] - 1.); g[1] = 2.*(x[1] - 2.); };
+      problem.constraints = [](const Vector<double>& x, Vector<double>& c) { c[0] = 3.*x[0]; };
+      problem.jacobian_rows = {0};
+      problem.jacobian_columns = {0};
+      problem.jacobian = [](const Vector<double>&, double* J) { J[0] = 3.; };
+      problem.hessian_rows = {0, 1};
+      problem.hessian_columns = {0, 1};
+      problem.hessian = [](const Vector<double>&, double rho, const Vector<double>&, double* H) { H[0] = 2.*rho; H[1] = 2.*rho; };
+      problem.variables_lower_bounds = {-Inf, -Inf};
+      problem.variables_upper_bounds = {0.1, Inf};
+      problem.constraints_lower_bounds = {0.3};
+      problem.constraints_upper_bounds = {Inf};
+      problem.initial_point = {0., 0.};
+      problem.linear_constraints = {0};
+      return problem;
+   }
+
+   // min (x0 - 1)^2 + (x1 - 2)^2 s.t. c0: x0^2 = 4 (nonlinear, depends on the fixed variable only: removed),
+   // c1: x0 x1 <= 10, x0 = 2 (fixed)
+   // solution x = (2, 2), f = 1, y = 0, z_L = (2, 0), z_U = 0
+   inline SparseTestProblem fixed_only_constraint_problem() {
+      SparseTestProblem problem;
+      problem.name = "fixed_only_constraint";
+      problem.number_variables = 2;
+      problem.number_constraints = 2;
+      problem.objective = [](const Vector<double>& x) { return (x[0] - 1.)*(x[0] - 1.) + (x[1] - 2.)*(x[1] - 2.); };
+      problem.gradient = [](const Vector<double>& x, Vector<double>& g) { g[0] = 2.*(x[0] - 1.); g[1] = 2.*(x[1] - 2.); };
+      problem.constraints = [](const Vector<double>& x, Vector<double>& c) { c[0] = x[0]*x[0]; c[1] = x[0]*x[1]; };
+      problem.jacobian_rows = {0, 1, 1};
+      problem.jacobian_columns = {0, 0, 1};
+      problem.jacobian = [](const Vector<double>& x, double* J) { J[0] = 2.*x[0]; J[1] = x[1]; J[2] = x[0]; };
+      problem.hessian_rows = {0, 1, 1};
+      problem.hessian_columns = {0, 0, 1};
+      problem.hessian = [](const Vector<double>&, double rho, const Vector<double>& y, double* H) {
+         H[0] = 2.*rho - 2.*y[0]; H[1] = -y[1]; H[2] = 2.*rho;
+      };
+      problem.variables_lower_bounds = {2., -Inf};
+      problem.variables_upper_bounds = {2., Inf};
+      problem.constraints_lower_bounds = {4., -Inf};
+      problem.constraints_upper_bounds = {4., 10.};
+      problem.initial_point = {0., 0.};
+      return problem;
+   }
 } // namespace
 
 #endif // UNO_REDUCTIONTESTPROBLEMS_H

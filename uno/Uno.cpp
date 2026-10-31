@@ -88,6 +88,8 @@ namespace uno {
       Timers timers;
       timers.wallclock.start();
       Iterate iterate(0, model.number_constraints);
+      // as in uno_solve, the evaluations of the preprocessing are not counted
+      model.reset_number_evaluations();
       Evaluations evaluations(model);
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       try {

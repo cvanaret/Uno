@@ -241,3 +241,21 @@ TEST(ModelReduction, RemovesSatisfiedConstantConstraints) {
    ASSERT_EQ(reduction.bound_constraints.size(), size_t{1});
    EXPECT_EQ(reduction.variables_lower_bounds[2], -1.);
 }
+
+// 3 x0 >= 0.3 induces x0 >= 0.3/3, which differs from the bound x0 <= 0.1 by roundoff only: x0 is fixed at 0.1
+TEST(ModelReduction, FixesVariableWithAlmostEqualInducedBounds) {
+   const SparseTestModel model(almost_fixed_problem());
+   const ModelReduction reduction = ModelReduction::detect(model, default_options());
+   EXPECT_EQ(reduction.fixed_variables, (std::vector<size_t>{0}));
+   EXPECT_EQ(reduction.variables_lower_bounds[0], 0.1);
+   EXPECT_EQ(reduction.variables_upper_bounds[0], 0.1);
+   EXPECT_TRUE(reduction.kept_constraints.empty());
+}
+
+// a satisfied nonlinear constraint of the fixed variables only would have an empty Jacobian row: it is removed
+TEST(ModelReduction, RemovesSatisfiedConstraintsOfFixedVariablesOnly) {
+   const SparseTestModel model(fixed_only_constraint_problem());
+   const ModelReduction reduction = ModelReduction::detect(model, default_options(false, false));
+   EXPECT_EQ(reduction.redundant_constraints, (std::vector<size_t>{0}));
+   EXPECT_EQ(reduction.kept_constraints, (std::vector<size_t>{1}));
+}
