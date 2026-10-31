@@ -24,6 +24,12 @@ namespace uno {
       }
    }
 
+   NoKKTSystemDumper::NoKKTSystemDumper(const Options& options) {
+      if (!options.get_string_optional("dump_kkt_path").value_or("").empty()) {
+         WARNING << "'dump_kkt_path' is set, but KKT system dumping is only supported without low-rank corrections\n";
+      }
+   }
+
    namespace {
       // replace filesystem-unfriendly characters (e.g. path separators in a model name) with '_'
       std::string sanitize(const std::string& name) {

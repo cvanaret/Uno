@@ -28,6 +28,13 @@ namespace uno {
       const std::string path;
       const size_t frequency;
    };
+
+   // Stand-in for KKTSystemDumper when the augmented matrix does not contain the full Hessian (low-rank
+   // corrections): no system is dumped, and setting dump_kkt_path only triggers a warning
+   class NoKKTSystemDumper {
+   public:
+      explicit NoKKTSystemDumper(const Options& options);
+   };
 } // namespace
 
 #endif // UNO_KKTSYSTEMDUMPER_H

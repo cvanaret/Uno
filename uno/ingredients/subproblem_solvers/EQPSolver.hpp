@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <type_traits>
 #include "LowRankCorrection.hpp"
 #include "KKTSystemDumper.hpp"
 #include "SubproblemSolver.hpp"
@@ -67,7 +68,10 @@ namespace uno {
       std::unique_ptr<NewtonSystem> newton_system;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       LowRankCorrection low_rank_correction;
-      const KKTSystemDumper kkt_dumper;
+      // the KKT system can only be dumped when the augmented matrix contains the explicit Hessian
+      using KKTSystemDumperType = std::conditional_t<LowRankCorrection::uses_explicit_hessian_matrix,
+         KKTSystemDumper, NoKKTSystemDumper>;
+      const KKTSystemDumperType kkt_dumper;
       bool analysis_performed{false};
       Vector<double> zero_multipliers{};
       // the least-squares system overwrote the augmented matrix and its factorization: the next direction computation
