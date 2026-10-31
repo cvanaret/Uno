@@ -23,9 +23,15 @@ dependencies = [
     "numpy",
 ]
 
+[project.optional-dependencies]
+test = ["pytest"]
+
 [project.urls]
 Repository = "https://github.com/cvanaret/Uno"
 Issues = "https://github.com/cvanaret/Uno/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["interfaces/Python/tests"]
 
 [tool.scikit-build]
 cmake.source-dir = "."

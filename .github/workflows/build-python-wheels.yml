@@ -26,7 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  CIBW_TEST_EXTRAS: test
   CIBW_TEST_COMMAND: >-
+    python -m pytest {project}/interfaces/Python/tests &&
     python {project}/interfaces/Python/examples/example_hs015.py &&
     python {project}/interfaces/Python/examples/example_hs001.py
 
