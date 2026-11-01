@@ -147,8 +147,8 @@ namespace uno {
          stream.precision(16);
          for (size_t nonzero_index: Range(system.number_nonzeros)) {
             // convert from the solver's index base to MatrixMarket's 1-based indexing
-            const auto row = system.matrix_row_indices[nonzero_index] - system.solver_indexing + 1;
-            const auto column = system.matrix_column_indices[nonzero_index] - system.solver_indexing + 1;
+            const auto row = system.matrix_row_indices[nonzero_index] - system.get_solver_indexing() + 1;
+            const auto column = system.matrix_column_indices[nonzero_index] - system.get_solver_indexing() + 1;
             stream << row << ' ' << column << ' ' << system.matrix_values[nonzero_index] << '\n';
          }
          // close explicitly: buffered data is only flushed (and write errors detected) here

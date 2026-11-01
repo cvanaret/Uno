@@ -189,6 +189,16 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 | `iterative_refinement_residual_ratio_singular` | double | 1e-5 | Residual ratio above which the matrix is deemed singular after failed iterative refinement |
 | `iterative_refinement_improvement_factor` | double | 0.999999999 | Refinement stagnates (and stops) when the residual ratio exceeds this factor times the previous ratio. In (0, 1] |
 
+## Linear system scaling options
+
+See [Linear system scaling](methods.md#linear-system-scaling) for how and when the scaling is applied.
+
+| Option                                           | Type   | Default    | Description                                                                                       |
+| :---                                             | :---   | :---       |:--------------------------------------------------------------------------------------------------|
+| `linear_system_scaling`                          | string | `none`     | Symmetric scaling of the matrices of the direct linear solver (`none`, `ruiz`). `MA57_use_scaling` and `MUMPS_use_scaling` are applied on top |
+| `linear_system_scaling_on_demand`                | bool   | `true`     | Scale only when the factorizations seem inaccurate (then until the end). `false`: scale all the matrices |
+| `linear_system_scaling_delayed_pivots_threshold` | double | 1.0        | Fraction of delayed pivots above which the scaling is switched on (>= 1: never)                  |
+
 ## Quasi-Newton options
 
 | Option                           | Type    | Default | Description                                                    |
@@ -260,4 +270,10 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 
 | Option             | Type   | Default  | Description                                |
 | :---               | :---   | :---     |:-------------------------------------------|
-| `MA57_use_scaling` | `bool` | `false`  | Whether the MA57 scaling (MC64) is enabled |
+| `MA57_use_scaling` | `bool` | `false`  | Whether the MA57 scaling (MC64, at every factorization) is enabled, on top of `linear_system_scaling` |
+
+## MUMPS options
+
+| Option              | Type   | Default | Description                                                              |
+| :---                | :---   | :---    |:-------------------------------------------------------------------------|
+| `MUMPS_use_scaling` | `bool` | `true`  | Whether the MUMPS scaling (ICNTL(8), at every factorization) is enabled, on top of `linear_system_scaling` |
