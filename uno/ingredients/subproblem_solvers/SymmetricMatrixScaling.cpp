@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <functional>
 #include <numeric>
 #include <stdexcept>
 #include <utility>
@@ -57,14 +56,6 @@ namespace uno {
       const size_t number_entries = this->entry_rows.size();
       this->entry_values.resize(number_entries);
 
-      // full (both triangles) column-wise adjacency
-      std::vector<size_t> column_count(dimension, 0);
-      for (size_t entry_index = 0; entry_index < number_entries; ++entry_index) {
-         ++column_count[this->entry_columns[entry_index]];
-         if (this->entry_rows[entry_index] != this->entry_columns[entry_index]) {
-            ++column_count[this->entry_rows[entry_index]];
-         }
-      }
       this->initialized = true;
    }
 
@@ -101,25 +92,47 @@ namespace uno {
       }
    }
 
-   // symmetric Ruiz equilibration: s_i <- s_i / sqrt(||row_i(S A S)||_inf) until all the row norms are close to 1
+   // symmetric Ruiz equilibration in the infinity norm, as in MC77 (JOB = 0, symmetric case): an initial pass, then at most
+   // ruiz_max_iterations passes s_i <- s_i / sqrt(||row_i(S A S)||_inf). A pair of rows whose largest entries are the same
+   // entry (i, j) is frozen: that entry is 1 after the pass, and so are both row norms from then on. Zero rows are left
+   // unscaled. After each iteration (not the initial pass), stop if the row norms of the active rows before the pass are
+   // all strictly within 1 +/- ruiz_tolerance
    void SymmetricMatrixScaling::compute_ruiz_scaling(std::vector<double>& scaling) const {
       std::vector<double> row_norms(this->dimension);
-      for (size_t iteration = 0; iteration < ruiz_max_iterations; ++iteration) {
+      std::vector<size_t> argmax(this->dimension); // column of the largest entry of each row
+      std::vector<bool> active(this->dimension, true);
+      for (size_t iteration = 0; iteration <= ruiz_max_iterations; ++iteration) {
          std::fill(row_norms.begin(), row_norms.end(), 0.);
+         const auto update_row = [&](size_t row, size_t column, double value) {
+            if (active[row] && row_norms[row] < value) {
+               row_norms[row] = value;
+               argmax[row] = column;
+            }
+         };
          for (size_t entry_index = 0; entry_index < this->entry_values.size(); ++entry_index) {
             const size_t row = this->entry_rows[entry_index], column = this->entry_columns[entry_index];
             const double value = std::abs(scaling[row] * this->entry_values[entry_index] * scaling[column]);
-            row_norms[row] = std::max(row_norms[row], value);
-            row_norms[column] = std::max(row_norms[column], value);
+            update_row(column, row, value);
+            update_row(row, column, value);
          }
-         bool converged = true;
          for (size_t index = 0; index < this->dimension; ++index) {
-            if (0. < row_norms[index]) {
-               converged = converged && std::abs(1. - row_norms[index]) <= ruiz_tolerance;
+            if (active[index] && row_norms[index] == 0.) {
+               active[index] = false; // zero row
+            }
+            else if (active[index]) {
                scaling[index] /= std::sqrt(row_norms[index]);
             }
          }
-         if (converged) {
+         double error = 0.;
+         for (size_t index = 0; index < this->dimension; ++index) {
+            if (active[index] && active[argmax[index]] && argmax[argmax[index]] == index) {
+               active[index] = active[argmax[index]] = false;
+            }
+            else if (active[index]) {
+               error = std::max(error, std::abs(1. - row_norms[index]));
+            }
+         }
+         if (0 < iteration && error < ruiz_tolerance) {
             return;
          }
       }
