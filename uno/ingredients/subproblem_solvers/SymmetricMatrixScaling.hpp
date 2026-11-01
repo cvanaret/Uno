@@ -37,9 +37,10 @@ namespace uno {
       // scaling factors of the COO entries: s_row * s_column
       void compute_entry_factors(const std::vector<double>& scaling, std::vector<double>& entry_factors) const;
 
-      // parameters
+      // parameters of MC77 (ICNTL(7) and CNTL(1)): iterations after the initial pass, and the convergence tolerance on the
+      // row norms of the scaled matrix (1 +/- tolerance)
       static constexpr size_t ruiz_max_iterations{10};
-      static constexpr double ruiz_tolerance{1e-2}; // stop when all the row norms are in [1 - tol, 1 + tol]
+      static constexpr double ruiz_tolerance{1e-2};
       static constexpr double min_scaling{1e-100};
       static constexpr double max_scaling{1e100};
 

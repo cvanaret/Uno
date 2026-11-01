@@ -178,3 +178,31 @@ TEST(SymmetricMatrixScaling, NonFiniteValuesLeaveMatrixUnscaled) {
    matrix.values[2] = std::numeric_limits<double>::quiet_NaN();
    EXPECT_EQ(compute_scaling(matrix, LinearSystemScalingMethod::RUIZ), unit_scaling(matrix.dimension));
 }
+// reference scaling computed by MC77AD (JOB = 0, ICNTL(6) = 1, ICNTL(7) = 10, CNTL(1) = 1e-2): s = 1/D
+TEST(SymmetricMatrixScaling, RuizMatchesMC77) {
+   const std::vector<double> expected{1e-4, 99.327684743635388, 0.011952286093343936, 0.99551286091585034, 0.011952286093343936};
+   const std::vector<double> scaling = compute_scaling(badly_scaled_kkt(), LinearSystemScalingMethod::RUIZ);
+   for (size_t index = 0; index < expected.size(); ++index) {
+      EXPECT_NEAR(scaling[index] / expected[index], 1., 1e-14);
+   }
+}
+
+// example of the MC77 documentation (Section 5, JOB = 0, default controls). The unsymmetric matrix A is scaled through
+// the symmetric matrix [0 A; A^T 0], whose Ruiz scaling is [Dr^-1; Dc^-1]
+TEST(SymmetricMatrixScaling, MC77DocumentationExample) {
+   const double A[3][3] = {{100., 10., 0.}, {4., -1000., 5.}, {0., 23., 0.01}};
+   COOMatrix matrix{6};
+   for (size_t i = 0; i < 3; ++i) {
+      for (size_t j = 0; j < 3; ++j) {
+         if (A[i][j] != 0.) {
+            matrix.add(3 + j, i, A[i][j]);
+         }
+      }
+   }
+   // DW(1:M) and DW(M+1:M+N) as printed by MC77AD (3 decimals)
+   const std::vector<double> expected{10., 31.623, 0.729, 10., 31.623, 0.159};
+   const std::vector<double> scaling = compute_scaling(matrix, LinearSystemScalingMethod::RUIZ);
+   for (size_t index = 0; index < expected.size(); ++index) {
+      EXPECT_NEAR(1. / scaling[index], expected[index], 5e-4);
+   }
+}
