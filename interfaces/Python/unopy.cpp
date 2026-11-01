@@ -5,6 +5,9 @@
 #include <pybind11/stl.h>
 #include "unopy.hpp"
 #include "Uno.hpp"
+#ifdef HAS_KRYLOV
+#include "ingredients/subproblem_solvers/Krylov/KrylovSolvers.hpp"
+#endif
 
 namespace py = pybind11;
 
@@ -22,6 +25,9 @@ namespace uno {
       module.doc() = description;
 
       module.def("current_uno_version", &Uno::current_version);
+#ifdef HAS_KRYLOV
+      module.def("test_libkrylov", &test_krylov_solvers);
+#endif
 
       define_Model(module);
       define_Result(module);
