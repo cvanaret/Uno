@@ -433,20 +433,57 @@ TEST_P(IterativeRefinement, SingularMatrixIsRegularized) {
    EXPECT_DOUBLE_EQ(block_augmented_matrix.dual_inertia_correction[0], -expected_dual_regularization);
    EXPECT_FALSE(linear_solver->matrix_is_singular());
 
-   // 2nd singularity: primal regularization
+   // 2nd singularity: as in IPOPT's degeneracy test, primal regularization alone
    ASSERT_TRUE(scenario.subproblem.regularize_singular_augmented_matrix(scenario.statistics, dual_regularization_parameter,
       *linear_solver, block_augmented_matrix));
    EXPECT_DOUBLE_EQ(scenario.inertia_correction.get_primal_regularization_factor(),
       scenario.options.get_double("primal_regularization_initial_factor"));
    EXPECT_DOUBLE_EQ(block_augmented_matrix.primal_inertia_correction[0], scenario.options.get_double("primal_regularization_initial_factor"));
+   EXPECT_EQ(block_augmented_matrix.dual_inertia_correction[0], 0.);
+
+   // 3rd singularity: primal and dual regularization
+   ASSERT_TRUE(scenario.subproblem.regularize_singular_augmented_matrix(scenario.statistics, dual_regularization_parameter,
+      *linear_solver, block_augmented_matrix));
+   EXPECT_DOUBLE_EQ(block_augmented_matrix.dual_inertia_correction[0], -expected_dual_regularization);
 
    // refactorization (e.g. after a pivoting tolerance increase) keeps the current regularization if the inertia is correct
+   const double primal_regularization = scenario.inertia_correction.get_primal_regularization_factor();
    scenario.subproblem.refactorize_augmented_matrix(scenario.statistics, dual_regularization_parameter, *linear_solver,
       block_augmented_matrix);
-   EXPECT_DOUBLE_EQ(scenario.inertia_correction.get_primal_regularization_factor(),
-      scenario.options.get_double("primal_regularization_initial_factor"));
+   EXPECT_DOUBLE_EQ(scenario.inertia_correction.get_primal_regularization_factor(), primal_regularization);
    EXPECT_DOUBLE_EQ(block_augmented_matrix.dual_inertia_correction[0], -expected_dual_regularization);
    EXPECT_FALSE(linear_solver->matrix_is_singular());
+}
+
+// as in IPOPT, the Jacobian is deemed degenerate after 3 matrices made nonsingular by the dual regularization alone:
+// the subsequent matrices are regularized from the start
+TEST_P(IterativeRefinement, DegenerateJacobianIsRegularizedFromTheStart) {
+   BarrierScenario scenario(make_options(GetParam(), 1, 10));
+   const auto linear_solver = SymmetricIndefiniteLinearSolverFactory::create(scenario.options);
+   auto& linear_system = linear_solver->get_linear_system();
+   linear_system.initialize_augmented_system(scenario.subproblem);
+   linear_solver->initialize_memory();
+   auto block_augmented_matrix = scenario.subproblem.compute_block_augmented_matrix(linear_system);
+   scenario.subproblem.evaluate_lagrangian_hessian(scenario.statistics, scenario.iterate, block_augmented_matrix.hessian);
+   scenario.subproblem.evaluate_jacobian(scenario.iterate, block_augmented_matrix.jacobian, scenario.evaluations);
+   linear_solver->do_symbolic_analysis();
+   const double dual_regularization_parameter = scenario.subproblem.dual_regularization_factor();
+   const double expected_dual_regularization = scenario.options.get_double("dual_regularization_fraction") * dual_regularization_parameter;
+   for (size_t matrix_index = 0; matrix_index < 3; ++matrix_index) {
+      // new matrix: no regularization
+      scenario.subproblem.regularize_augmented_matrix(scenario.statistics, dual_regularization_parameter, *linear_solver,
+         block_augmented_matrix);
+      EXPECT_EQ(block_augmented_matrix.dual_inertia_correction[0], 0.);
+      // deemed singular: dual regularization alone
+      ASSERT_TRUE(scenario.subproblem.regularize_singular_augmented_matrix(scenario.statistics, dual_regularization_parameter,
+         *linear_solver, block_augmented_matrix));
+      EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
+   }
+   // the Jacobian is now degenerate
+   scenario.subproblem.regularize_augmented_matrix(scenario.statistics, dual_regularization_parameter, *linear_solver,
+      block_augmented_matrix);
+   EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
+   EXPECT_DOUBLE_EQ(block_augmented_matrix.dual_inertia_correction[0], -expected_dual_regularization);
 }
 
 // the per-iteration summary (IR statistics column) is reset at each iteration, not accumulated over the iterations

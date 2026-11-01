@@ -99,6 +99,5 @@ statistics_step_norm_column_order	INTEGER	31
 switch_to_optimality_requires_linearized_feasibility	BOOL	true
 switching_delta	DOUBLE	0.999
 switching_infeasibility_exponent	DOUBLE	2
-threshold_unsuccessful_attempts	INTEGER	8
 time_limit	DOUBLE	inf
 unbounded_objective_threshold	DOUBLE	-1e20
