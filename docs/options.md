@@ -76,6 +76,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `use_function_scaling`                           | bool   | false   | Use function scaling based on the initial gradients                       |    
 | `function_scaling_threshold`                     | double | 100.    | Threshold on the magnitudes of the functions' gradients                   |    
 | `function_scaling_lower_bound`                   | double | 1e-8    | Lower bound on the function scaling coefficients                          |    
+| `restoration_function_scaling`                   | bool   | true    | With function scaling: rescale the constraints of the feasibility problem where the restoration starts |
 | `print_minor_iterations`                         | bool   | false   | Whether minor iterations are printed in the statistics table              |    
 | `print_extended_statistics`                      | bool   | false   | Whether the statistics table is printed in extended form                  |    
 | `write_solution_to_file`                         | bool   | `false` | Whether the solution is printed to a file (used by AMPL and CUTEst)       |

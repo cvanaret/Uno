@@ -603,6 +603,13 @@ namespace uno {
    }
 
    // IPOPT (OrigIpoptNLP::AdjustVariableBounds): instead of moving the iterate, move the bound so that the slack becomes safe
+   void PrimalDualInteriorPointProblem::reset_slack_bounds() const {
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         this->variables_lower_bounds[slack_index] = this->unslacked_problem.get_constraints_lower_bounds()[constraint_index];
+         this->variables_upper_bounds[slack_index] = this->unslacked_problem.get_constraints_upper_bounds()[constraint_index];
+      }
+   }
+
    size_t PrimalDualInteriorPointProblem::relax_bounds_around(const Iterate& iterate) const {
       size_t number_relaxed_bounds = 0;
       for (size_t variable_index: this->bounded_variables) {
