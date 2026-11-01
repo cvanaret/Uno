@@ -195,7 +195,7 @@ See [Linear system scaling](methods.md#linear-system-scaling) for how and when t
 
 | Option                                           | Type   | Default    | Description                                                                                       |
 | :---                                             | :---   | :---       |:--------------------------------------------------------------------------------------------------|
-| `linear_system_scaling`                          | string | `none`     | Symmetric scaling of the matrices of the direct linear solver (`none`, `ruiz`). Any value other than `none` disables `MA57_use_scaling` and `MUMPS_use_scaling` |
+| `linear_system_scaling`                          | string | `none`     | Symmetric scaling of the matrices of the direct linear solver (`none`, `ruiz`). `MA57_use_scaling` and `MUMPS_use_scaling` are applied on top |
 | `linear_system_scaling_on_demand`                | bool   | `true`     | Scale only when the factorizations seem inaccurate (then until the end). `false`: scale all the matrices |
 | `linear_system_scaling_delayed_pivots_threshold` | double | 1.0        | Fraction of delayed pivots above which the scaling is switched on (>= 1: never)                  |
 
@@ -270,10 +270,10 @@ See [Linear system scaling](methods.md#linear-system-scaling) for how and when t
 
 | Option             | Type   | Default  | Description                                |
 | :---               | :---   | :---     |:-------------------------------------------|
-| `MA57_use_scaling` | `bool` | `false`  | Whether the MA57 scaling (MC64, at every factorization) is enabled. Ignored if `linear_system_scaling` is not `none` |
+| `MA57_use_scaling` | `bool` | `false`  | Whether the MA57 scaling (MC64, at every factorization) is enabled, on top of `linear_system_scaling` |
 
 ## MUMPS options
 
 | Option              | Type   | Default | Description                                                              |
 | :---                | :---   | :---    |:-------------------------------------------------------------------------|
-| `MUMPS_use_scaling` | `bool` | `true`  | Whether the MUMPS scaling (ICNTL(8), at every factorization) is enabled. Ignored if `linear_system_scaling` is not `none` |
+| `MUMPS_use_scaling` | `bool` | `true`  | Whether the MUMPS scaling (ICNTL(8), at every factorization) is enabled, on top of `linear_system_scaling` |

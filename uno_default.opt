@@ -453,7 +453,7 @@ BQPD_kmax_heuristic filtersqp
 ## linear system scaling
 # -------------
 
-# Symmetric diagonal scaling of the matrices of the direct linear solver (none|ruiz|matching). Any value other than none disables MA57_use_scaling and MUMPS_use_scaling
+# Symmetric diagonal scaling of the matrices of the direct linear solver (none|ruiz). MA57_use_scaling and MUMPS_use_scaling are applied on top
 linear_system_scaling none
 
 # Scale only when the factorizations seem inaccurate (failed iterative refinement or inertia correction), then until the end. false: scale all the matrices (bool)
@@ -466,12 +466,12 @@ linear_system_scaling_delayed_pivots_threshold 1.0
 ## MA57 options
 # -------------
 
-# Whether the MA57 scaling (MC64) is enabled; ignored if linear_system_scaling is not none (bool)
+# Whether the MA57 scaling (MC64) is enabled, on top of linear_system_scaling (bool)
 MA57_use_scaling false
 
 # -------------
 ## MUMPS options
 # -------------
 
-# Whether the MUMPS scaling (ICNTL(8)) is enabled; ignored if linear_system_scaling is not none (bool)
+# Whether the MUMPS scaling (ICNTL(8)) is enabled, on top of linear_system_scaling (bool)
 MUMPS_use_scaling true

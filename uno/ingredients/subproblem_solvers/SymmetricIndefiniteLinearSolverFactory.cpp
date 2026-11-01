@@ -43,7 +43,7 @@ namespace uno {
 
 namespace uno {
    namespace {
-      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create_solver(const Options& options, bool native_scaling_allowed);
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create_solver(const Options& options);
 
       // options without the defaults (e.g. a standalone linear solver): no scaling
       LinearSystemScalingParameters read_scaling_parameters(const Options& options) {
@@ -59,17 +59,16 @@ namespace uno {
    std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(
          const Options& options, bool allow_scaling) {
       const LinearSystemScalingParameters parameters = read_scaling_parameters(options);
-      const bool linear_system_scaling = (parameters.method != LinearSystemScalingMethod::NONE);
-      // the solvers' own scalings (MA57_use_scaling, MUMPS_use_scaling) are disabled when Uno scales the linear systems
-      auto linear_solver = create_solver(options, /* native_scaling_allowed = */ !linear_system_scaling);
-      if (allow_scaling && linear_system_scaling) {
+      // the solvers' own scalings (MA57_use_scaling, MUMPS_use_scaling) are independent of Uno's scaling
+      auto linear_solver = create_solver(options);
+      if (allow_scaling && parameters.method != LinearSystemScalingMethod::NONE) {
          linear_solver->set_scaling_strategy(std::make_unique<ScalingStrategy>(parameters));
       }
       return linear_solver;
    }
 
    namespace {
-   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create_solver(const Options& options, bool native_scaling_allowed) {
+   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create_solver(const Options& options) {
       const auto& linear_solver = options.get_string("linear_solver");
 #ifdef HSL_RUNTIME_LOADING
       // honor the requested HSL library name before LIBHSL_isfunctional() triggers the (cached) load
@@ -83,7 +82,7 @@ namespace uno {
          && LIBHSL_isfunctional()
    #endif
             ) {
-         return std::make_unique<MA57Solver>(native_scaling_allowed && options.get_bool_optional("MA57_use_scaling").value_or(false));
+         return std::make_unique<MA57Solver>(options.get_bool_optional("MA57_use_scaling").value_or(false));
       }
 #endif
 
@@ -113,7 +112,7 @@ namespace uno {
 
 #ifdef HAS_MUMPS
       if (linear_solver == "MUMPS") {
-         return std::make_unique<MUMPSSolver>(native_scaling_allowed && options.get_bool_optional("MUMPS_use_scaling").value_or(true));
+         return std::make_unique<MUMPSSolver>(options.get_bool_optional("MUMPS_use_scaling").value_or(true));
       }
 #endif
 #ifdef HAS_SPRAL
