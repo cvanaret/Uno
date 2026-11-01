@@ -279,15 +279,15 @@ namespace {
    }
 } // namespace
 
-// with the default options, the solvers' own scalings (MA57: MC64, MUMPS: ICNTL(8)) follow MA57_use_scaling and
-// MUMPS_use_scaling when linear_system_scaling is none, and are disabled otherwise
+// the solvers' own scalings (MA57: MC64, MUMPS: ICNTL(8)) follow MA57_use_scaling and MUMPS_use_scaling,
+// independently of linear_system_scaling
 TEST(ScalingStrategy, DefaultNativeScaling) {
    for (const std::string& linear_solver: {std::string("MA57"), std::string("MUMPS")}) {
       if (!is_available(linear_solver)) {
          continue;
       }
       const Options options = default_options(linear_solver);
-      const bool expected = options.get_string("linear_system_scaling") == "none" && options.get_bool(linear_solver + "_use_scaling");
+      const bool expected = options.get_bool(linear_solver + "_use_scaling");
       EXPECT_EQ(uses_internal_scaling(*SymmetricIndefiniteLinearSolverFactory::create(options)), expected) << linear_solver;
    }
 }
