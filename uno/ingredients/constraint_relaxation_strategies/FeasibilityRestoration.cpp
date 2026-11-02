@@ -123,7 +123,8 @@ namespace uno {
       const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables; // s
 
       // save the current point (infeasibility and primals) upon switching
-      this->reference_infeasibility = current_iterate.scaled_residuals.primal_infeasibility;
+      this->reference_infeasibility = this->inequality_handling_method->compute_reformulation_infeasibility(current_iterate,
+         current_evaluations);
       this->pre_restoration_primals = view(current_iterate.primals, 0, number_optimality_variables);
       this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.view());
 
@@ -259,7 +260,7 @@ namespace uno {
       this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
       // same measure as the reference infeasibility (primal infeasibility of the optimality reformulation)
       this->iterate_buffer.scaled_residuals.primal_infeasibility =
-         this->inequality_handling_method->compute_primal_infeasibility(this->iterate_buffer, trial_evaluations);
+         this->inequality_handling_method->compute_reformulation_infeasibility(this->iterate_buffer, trial_evaluations);
 
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {

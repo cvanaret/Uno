@@ -698,9 +698,10 @@ namespace uno {
    }
 
    // max of the constraint violation of the unslacked problem and of the residuals of the slacked constraints c(x) - s
-   // (IPOPT measures the latter): a point where c(x) is feasible but the slacks lag behind is not a KKT point, since the
-   // complementarity is measured with the slacks
-   double PrimalDualInteriorPointProblem::primal_infeasibility(const Iterate& iterate, Evaluations& evaluations,
+   // (IPOPT's restoration measures the latter). Used in the restoration switching test only: the termination tests use
+   // the constraint violation of the unslacked problem (IPOPT's curr_nlp_constraint_violation), otherwise slacks that
+   // lag behind c(x) on inactive inequality constraints delay termination at a KKT point of the original problem
+   double PrimalDualInteriorPointProblem::reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations,
          Norm residual_norm) const {
       const double unslacked_infeasibility = this->unslacked_problem.primal_infeasibility(iterate, evaluations, residual_norm);
       this->evaluate_constraints(iterate, this->constraints_buffer.view(), evaluations);

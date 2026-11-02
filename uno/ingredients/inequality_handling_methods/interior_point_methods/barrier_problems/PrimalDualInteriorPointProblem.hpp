@@ -84,8 +84,10 @@ namespace uno {
       // (constraint index, slack index) of the slacked inequality constraints
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const;
 
-      // the constraint violation of the unslacked problem and the residuals c(x) - s of the slacked constraints
-      [[nodiscard]] double primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
+      // primal_infeasibility (termination) is not overridden: constraint violation of the unslacked problem (IPOPT)
+      // reformulation_infeasibility (restoration switching test): max of the constraint violation of the unslacked problem
+      // and of the residuals c(x) - s of the slacked constraints
+      [[nodiscard]] double reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 

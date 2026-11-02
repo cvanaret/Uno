@@ -392,8 +392,9 @@ namespace uno {
             return false;
          }
       }
-      // large infeasibility: the starting point may be a local minimizer of the infeasibility
-      if (current_iterate.scaled_residuals.primal_infeasibility > BacktrackingLineSearch::tiny_step_infeasibility_threshold) {
+      // large infeasibility: the starting point may be a local minimizer of the infeasibility.
+      // IPOPT (DetectTinyStep) tests the constraint violation of the reformulation (theta), not the termination residual
+      if (current_iterate.progress.infeasibility > BacktrackingLineSearch::tiny_step_infeasibility_threshold) {
          return false;
       }
       return true;

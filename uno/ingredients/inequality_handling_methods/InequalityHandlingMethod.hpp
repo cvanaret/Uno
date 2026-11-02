@@ -86,8 +86,8 @@ namespace uno {
       // multipliers are recomputed as least-squares estimates at each accepted iterate (IPOPT's ComputeFeasibilityMultipliers)
       virtual void update_multipliers_of_square_problem(Iterate& /*iterate*/, Evaluations& /*evaluations*/,
          double /*multipliers_threshold*/) { }
-      // primal infeasibility of the (reformulated) problem, as used in the termination tests
-      [[nodiscard]] virtual double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
+      // primal infeasibility of the reformulated problem, as used in the restoration switching test
+      [[nodiscard]] virtual double compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 
