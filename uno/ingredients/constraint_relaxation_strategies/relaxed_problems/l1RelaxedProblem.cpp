@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/View.hpp"
@@ -34,6 +35,11 @@ namespace uno {
          jacobian_row_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),
          jacobian_column_indices(this->model.number_jacobian_nonzeros() + this->elastic_variables.size()),
          constraints_buffer(this->number_constraints) {
+      // check that at least some constraints were relaxed
+      if (this->elastic_variables.size() == 0) {
+         throw std::runtime_error("No constraints relaxed in l1RelaxedProblem");
+      }
+
       // copy the original variables. The elastic variables have bounds [0, inf)
       view(this->variables_lower_bounds, 0, model.number_variables) = model.get_variables_lower_bounds();
       view(this->variables_upper_bounds, 0, model.number_variables) = model.get_variables_upper_bounds();
