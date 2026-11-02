@@ -31,9 +31,9 @@ on:
         required: true
         type: string
       preset:
-        description: 'Uno preset (e.g. filtersqp, ipopt, byrd, funnelsqp)'
+        description: 'Uno preset (e.g. filtersqp, ipopt)'
         required: false
-        default: 'filtersqp'
+        default: 'ipopt'
         type: string
       compare_pr:
         description: 'PR number to compare against (optional; uses its latest CUTEst benchmark results with the same preset)'
