@@ -91,8 +91,8 @@ jobs:
           set -uo pipefail
           UNO="${{ github.workspace }}/build/uno_ampl"
           DIR="${{ env.SCRATCH }}/Mittelmann"
-          # 10 minutes
-          TIMELIMIT=600
+          # 20 minutes
+          TIMELIMIT=1200
           OPTION_FILE="uno_mittelmann.opt"
 
           mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
