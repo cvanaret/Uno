@@ -26,8 +26,13 @@ namespace uno {
          this->is_objective_scaled_flag = (this->objective_scaling < 1.);
       }
       assert(this->objective_scaling > 0.);
+      DEBUG2 << "Objective scaling: " << this->objective_scaling << '\n';
+      this->compute_constraint_scaling(model, jacobian_values);
+   }
 
-      // constraints
+   void Scaling::compute_constraint_scaling(const Model& model, const Vector<double>& jacobian_values) {
+      std::fill(this->constraint_scaling.begin(), this->constraint_scaling.end(), 1.);
+      this->are_constraints_scaled_flag = false;
       // compute the inf norm of each row of the Jacobian
       Vector<double> norm_inf_constraints(model.number_constraints, 0.);
       const auto& jacobian_row_indices = model.get_jacobian_row_indices();
@@ -44,9 +49,7 @@ namespace uno {
             }
          }
          assert(this->constraint_scaling[constraint_index] > 0.);
-
       }
-      DEBUG2 << "Objective scaling: " << this->objective_scaling << '\n';
       DEBUG2 << "Constraint scaling: " << view(this->constraint_scaling) << '\n';
    }
 

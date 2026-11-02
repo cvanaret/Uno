@@ -47,6 +47,7 @@ namespace uno {
       {"use_function_scaling", OptionType::BOOL},
       {"function_scaling_threshold", OptionType::DOUBLE},
       {"function_scaling_lower_bound", OptionType::DOUBLE},
+      {"restoration_function_scaling", OptionType::BOOL},
       {"print_minor_iterations", OptionType::BOOL},
       {"print_extended_statistics", OptionType::BOOL},
       {"armijo_decrease_fraction", OptionType::DOUBLE},

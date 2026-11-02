@@ -16,6 +16,12 @@ namespace uno {
    class ScaledModel: public Model {
    public:
       ScaledModel(const Model& original_model, const Vector<double>& initial_primals, const Options& options);
+      // identity scaling, until the constraints are rescaled
+      ScaledModel(const Model& original_model, const Options& options);
+
+      // recompute the scaling of the constraints from the Jacobian of the original model at a given point
+      void rescale_constraints(const Vector<double>& original_jacobian_values);
+      [[nodiscard]] const std::vector<double>& get_constraint_scaling() const;
 
       [[nodiscard]] ProblemType get_problem_type() const override;
 
@@ -85,6 +91,9 @@ namespace uno {
       mutable Vector<double> scaled_multipliers{};
       std::vector<double> constraints_lower_bounds{};
       std::vector<double> constraints_upper_bounds{};
+      mutable Vector<double> unscaled_constraints;
+
+      void scale_constraint_bounds();
    };
 } // namespace
 

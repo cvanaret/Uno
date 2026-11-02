@@ -78,6 +78,8 @@ namespace uno {
       // relax (IPOPT's AdjustVariableBounds) the bounds that are too close to (or violated by) the iterate.
       // The primals are not modified. Returns the number of relaxed bounds
       size_t relax_bounds_around(const Iterate& iterate) const;
+      // the bounds of the constraints of the problem changed (e.g. rescaling): reset the bounds of the slacks
+      void reset_slack_bounds() const;
       [[nodiscard]] size_t get_number_bound_relaxations() const;
       [[nodiscard]] const std::vector<double>& get_internal_variables_lower_bounds() const;
       [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;

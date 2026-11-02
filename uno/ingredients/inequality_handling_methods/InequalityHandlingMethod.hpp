@@ -58,6 +58,9 @@ namespace uno {
       // upon a phase switch, the incoming iterate may lie outside the (dynamically relaxed) bounds of this phase:
       // methods that maintain internal bounds relax them to strictly contain the iterate. No-op by default
       virtual void relax_bounds_around(const Iterate& /*iterate*/) const { }
+      // the bounds of the constraints of the problem changed (e.g. rescaling): methods that maintain internal bounds
+      // reset them. No-op by default
+      virtual void reset_internal_bounds() const { }
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 

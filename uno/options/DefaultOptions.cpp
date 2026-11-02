@@ -67,6 +67,8 @@ namespace uno {
       options.set_double("function_scaling_threshold", 100.);
       // lower bound on the function scaling coefficients
       options.set_double("function_scaling_lower_bound", 1e-8);
+      // whether the constraints of the feasibility problem are rescaled where the restoration starts (with function scaling)
+      options.set_bool("restoration_function_scaling", true);
       // whether minor iterations (line search and trust-region method) are printed in the statistics table
       options.set_bool("print_minor_iterations", false);
       // whether the statistics table is printed in extended form

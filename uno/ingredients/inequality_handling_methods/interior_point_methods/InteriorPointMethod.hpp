@@ -48,6 +48,7 @@ namespace uno {
       void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) override;
       [[nodiscard]] PhaseHandoff export_handoff() const override;
       void relax_bounds_around(const Iterate& iterate) const override;
+      void reset_internal_bounds() const override;
       void set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem, Iterate& iterate, Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
@@ -222,6 +223,11 @@ namespace uno {
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::relax_bounds_around(const Iterate& iterate) const {
       this->barrier_problem.relax_bounds_around(iterate);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::reset_internal_bounds() const {
+      this->barrier_problem.reset_slack_bounds();
    }
 
    template <typename BarrierProblem>
