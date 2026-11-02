@@ -56,6 +56,13 @@ namespace uno {
       Logger::set_stream(std::cout);
    }
 
+   // single entry point for the preset, used by both set_preset and set_option("preset", ...)
+   void UnoSolverWrapper::set_preset(std::string preset) {
+      this->validate_preset(preset);
+      this->user_options.set_string("preset", std::move(preset));
+      this->refresh_preset_options();
+   }
+
    void UnoSolverWrapper::validate_preset(const std::string& preset) {
       if (preset != "auto") {
          Presets::from_string(preset); // throws on an unknown preset
