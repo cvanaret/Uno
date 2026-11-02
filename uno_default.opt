@@ -436,6 +436,9 @@ least_square_multiplier_max_norm 1e3
 # Maximum accepted norm of the bound duals when switching from restoration to optimality (double)
 bound_multiplier_max_norm 1e3
 
+# Switch once to restoration if the constraint multipliers exceed this value at an infeasible iterate (double)
+infeasibility_detection_multiplier_threshold 1e8
+
 # Constraint violation tolerance (double)
 constraint_violation_tolerance 1e-4
 

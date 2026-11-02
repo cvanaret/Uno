@@ -19,5 +19,5 @@ end
 end
 
 @testset "Interface for JuMP.jl" begin
-  include("check_auto_preset.jl")
+  include("JuMP_tests.jl")
 end

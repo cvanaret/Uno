@@ -247,6 +247,7 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 | `barrier_small_infeasibility_factor`   | double | 1e-4    | Factor in the small infeasibility test                                     |
 | `least_square_multiplier_max_norm`     | double | 1e3     | Maximum accepted norm of the least-square multipliers                      |
 | `bound_multiplier_max_norm`            | double | 1e3     | Maximum accepted norm of the bound duals when switching from restoration to optimality |
+| `infeasibility_detection_multiplier_threshold` | double | 1e8     | Switch once to restoration if the constraint multipliers exceed this value at an infeasible iterate |
 | `constraint_violation_tolerance`       | double | 1e-4    | Constraint violation tolerance                                             |
 | `bound_relaxation_factor`              | double | 1e-8    | Bound relaxation factor                                                    |
 

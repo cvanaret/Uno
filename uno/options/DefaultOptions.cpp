@@ -204,6 +204,8 @@ namespace uno {
       options.set_double("barrier_small_infeasibility_factor", 1e-4);
       options.set_double("least_square_multiplier_max_norm", 1e3);
       options.set_double("bound_multiplier_max_norm", 1e3);
+      // switch once to restoration if the constraint multipliers exceed this value at an infeasible iterate (IPOPT's expect_infeasible_problem_ytol)
+      options.set_double("infeasibility_detection_multiplier_threshold", 1e8);
       options.set_double("constraint_violation_tolerance", 1e-4);
       options.set_double("bound_relaxation_factor", 1e-8);
 
