@@ -265,3 +265,31 @@ TEST(ModelReduction, RemovesSatisfiedConstraintsOfFixedVariablesOnly) {
    EXPECT_EQ(reduction.redundant_constraints, (std::vector<size_t>{0}));
    EXPECT_EQ(reduction.kept_constraints, (std::vector<size_t>{1}));
 }
+
+// x0 = 1 fixed: c0 = 1e6 x0 <= 1e6 - 1e-7 is violated by 1e-7, within the relative roundoff tolerance 1e-12 * 1e6 but beyond
+// the primal tolerance: it must not be removed (the solver reports the infeasibility)
+TEST(ModelReduction, KeepsConstantConstraintsViolatedBeyondPrimalTolerance) {
+   SparseTestProblem problem;
+   problem.name = "large_constant_constraint";
+   problem.number_variables = 2;
+   problem.number_constraints = 1;
+   problem.objective = [](const Vector<double>& x) { return x[1]*x[1]; };
+   problem.gradient = [](const Vector<double>& x, Vector<double>& g) { g[0] = 0.; g[1] = 2.*x[1]; };
+   problem.constraints = [](const Vector<double>& x, Vector<double>& c) { c[0] = 1e6*x[0]; };
+   problem.jacobian_rows = {0};
+   problem.jacobian_columns = {0};
+   problem.jacobian = [](const Vector<double>&, double* J) { J[0] = 1e6; };
+   problem.hessian_rows = {1};
+   problem.hessian_columns = {1};
+   problem.hessian = [](const Vector<double>&, double rho, const Vector<double>&, double* H) { H[0] = 2.*rho; };
+   problem.variables_lower_bounds = {1., -Inf};
+   problem.variables_upper_bounds = {1., Inf};
+   problem.constraints_lower_bounds = {-Inf};
+   problem.constraints_upper_bounds = {1e6 - 1e-7};
+   problem.initial_point = {1., 0.};
+   problem.linear_constraints = {0};
+   const SparseTestModel model(std::move(problem));
+   const ModelReduction reduction = ModelReduction::detect(model, default_options(false, false));
+   EXPECT_TRUE(reduction.redundant_constraints.empty());
+   EXPECT_EQ(reduction.kept_constraints, (std::vector<size_t>{0}));
+}

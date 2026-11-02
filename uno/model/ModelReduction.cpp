@@ -95,15 +95,17 @@ namespace uno {
          return rows;
       }
 
-      bool is_satisfied(double value, double lower_bound, double upper_bound) {
-         const double tolerance = reduction_tolerance(value);
+      // a removed constraint must not hide a violation that the solver would reject: the roundoff tolerance is capped by
+      // the absolute tolerance max_violation (the function scaling only shrinks the constraints)
+      bool is_satisfied(double value, double lower_bound, double upper_bound, double max_violation) {
+         const double tolerance = std::min(reduction_tolerance(value), max_violation);
          return lower_bound - tolerance <= value && value <= upper_bound + tolerance;
       }
 
       // turn the linear constraints with a single non-fixed variable into bounds, remove the satisfied linear constraints
       // without non-fixed variables, and fix the variables whose bounds become equal. Repeat until no variable gets fixed
       void eliminate_bound_constraints(const Model& model, const LinearRows& rows, const Vector<double>& base_point,
-            const Vector<double>& constraints, std::vector<bool>& is_fixed, std::vector<bool>& is_removed,
+            const Vector<double>& constraints, double max_violation, std::vector<bool>& is_fixed, std::vector<bool>& is_removed,
             ModelReduction& reduction) {
          auto& lower_bounds = reduction.variables_lower_bounds;
          auto& upper_bounds = reduction.variables_upper_bounds;
@@ -146,7 +148,8 @@ namespace uno {
                }
                // constant constraint: removed if satisfied, otherwise left to the solver, which will report the infeasibility
                if (coefficient == 0.) {
-                  if (is_satisfied(constant, constraints_lower_bounds[constraint_index], constraints_upper_bounds[constraint_index])) {
+                  if (is_satisfied(constant, constraints_lower_bounds[constraint_index], constraints_upper_bounds[constraint_index],
+                        max_violation)) {
                      is_removed[constraint_index] = true;
                      reduction.redundant_constraints.push_back(constraint_index);
                   }
@@ -210,8 +213,8 @@ namespace uno {
 
    // remove the satisfied constraints that do not depend on any non-fixed variable (e.g. a nonlinear constraint of the
    // fixed variables only): in the reduced model, they would have an empty Jacobian row (rank-deficient Jacobian)
-   static void remove_constant_constraints(const Model& model, const std::vector<bool>& is_fixed, std::vector<bool>& is_removed,
-         ModelReduction& reduction) {
+   static void remove_constant_constraints(const Model& model, double max_violation, const std::vector<bool>& is_fixed,
+         std::vector<bool>& is_removed, ModelReduction& reduction) {
       std::vector<bool> depends_on_free_variables(model.number_constraints, false);
       const auto row_indices = model.get_jacobian_row_indices();
       const auto column_indices = model.get_jacobian_column_indices();
@@ -248,7 +251,7 @@ namespace uno {
       for (size_t constraint_index: constant_constraints) {
          // a violated constant constraint is left to the solver, which will report the infeasibility
          if (std::isfinite(constraints[constraint_index]) && is_satisfied(constraints[constraint_index],
-               constraints_lower_bounds[constraint_index], constraints_upper_bounds[constraint_index])) {
+               constraints_lower_bounds[constraint_index], constraints_upper_bounds[constraint_index], max_violation)) {
             is_removed[constraint_index] = true;
             reduction.redundant_constraints.push_back(constraint_index);
          }
@@ -274,6 +277,7 @@ namespace uno {
       }
 
       std::vector<bool> is_removed(model.number_constraints, false);
+      const double max_violation = 0.1 * options.get_double("primal_tolerance");
       const bool bound_detection = options.get_bool("detect_bound_constraints");
       const bool linearity_detection = options.get_bool("detect_linear_constraints") &&
          !model.get_nonlinear_constraints().empty();
@@ -300,12 +304,12 @@ namespace uno {
          }
          if (evaluated && bound_detection) {
             const LinearRows rows = linear_rows(model, reduction.linear_constraints(model), jacobian);
-            eliminate_bound_constraints(model, rows, base_point, constraints, is_fixed, is_removed, reduction);
+            eliminate_bound_constraints(model, rows, base_point, constraints, max_violation, is_fixed, is_removed, reduction);
          }
       }
 
       if (!reduction.fixed_variables.empty() && 0 < model.number_constraints) {
-         remove_constant_constraints(model, is_fixed, is_removed, reduction);
+         remove_constant_constraints(model, max_violation, is_fixed, is_removed, reduction);
       }
 
       for (size_t variable_index: Range(model.number_variables)) {

@@ -101,6 +101,46 @@ TEST_P(Preprocessing, SolvesModelWithConstraintOfFixedVariablesOnly) {
    expect_solution(solve(model, GetParam()), {{2., 2.}, {0., 0.}, {2., 0.}, {0., 0.}, 1.});
 }
 
+// the reported residuals describe the original problem: its KKT residuals, recomputed from the returned primal-dual
+// solution (fixed variables included), are within the tolerances
+TEST_P(Preprocessing, ResultSatisfiesKKTConditionsOfOriginalProblem) {
+   const SparseTestProblem problem = mixed_problem();
+   const SparseTestModel model(mixed_problem());
+   const Result result = solve(model, GetParam());
+   ASSERT_EQ(result.solution_status, SolutionStatus::FEASIBLE_KKT_POINT);
+   const size_t n = problem.number_variables, m = problem.number_constraints;
+   Vector<double> gradient(n), constraints(m), jacobian(problem.jacobian_rows.size());
+   problem.gradient(result.primal_solution, gradient);
+   problem.constraints(result.primal_solution, constraints);
+   problem.jacobian(result.primal_solution, jacobian.data());
+   // stationarity: ∇f - J^T y - z_L - z_U
+   std::vector<double> stationarity(n);
+   for (size_t i = 0; i < n; ++i) {
+      stationarity[i] = gradient[i] - result.lower_bound_dual_solution[i] - result.upper_bound_dual_solution[i];
+   }
+   for (size_t k = 0; k < jacobian.size(); ++k) {
+      stationarity[static_cast<size_t>(problem.jacobian_columns[k])] -=
+         jacobian[k] * result.constraint_dual_solution[static_cast<size_t>(problem.jacobian_rows[k])];
+   }
+   for (size_t i = 0; i < n; ++i) {
+      EXPECT_NEAR(stationarity[i], 0., 1e-6) << "stationarity of variable " << i;
+      const double x = result.primal_solution[i];
+      EXPECT_GE(x, problem.variables_lower_bounds[i] - 1e-8);
+      EXPECT_LE(x, problem.variables_upper_bounds[i] + 1e-8);
+      if (is_finite(problem.variables_lower_bounds[i])) {
+         EXPECT_NEAR(result.lower_bound_dual_solution[i] * (x - problem.variables_lower_bounds[i]), 0., 1e-6);
+      }
+      if (is_finite(problem.variables_upper_bounds[i])) {
+         EXPECT_NEAR(result.upper_bound_dual_solution[i] * (x - problem.variables_upper_bounds[i]), 0., 1e-6);
+      }
+   }
+   for (size_t j = 0; j < m; ++j) {
+      EXPECT_GE(constraints[j], problem.constraints_lower_bounds[j] - 1e-8);
+      EXPECT_LE(constraints[j], problem.constraints_upper_bounds[j] + 1e-8);
+   }
+   EXPECT_LE(result.solution_primal_feasibility, 1e-8);
+}
+
 INSTANTIATE_TEST_SUITE_P(Presets, Preprocessing, ::testing::Values("filtersqp", "ipopt"));
 
 // without bound relaxation, almost equal induced bounds would leave the interior-point method with an empty interior

@@ -62,7 +62,7 @@ namespace uno {
       options.set_double("protected_actual_reduction_macheps_coefficient", 10.);
       options.set_bool("print_subproblem", false);
       // turn the linear constraints with a single non-fixed variable into variable bounds (true|false)
-      options.set_bool("detect_bound_constraints", true);
+      options.set_bool("detect_bound_constraints", false);
       // consider linear the nonlinear constraints whose Jacobian is constant at random points (true|false). Heuristic:
       // off by default
       options.set_bool("detect_linear_constraints", false);
