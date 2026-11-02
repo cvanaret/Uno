@@ -10,7 +10,11 @@ name: CUTEst benchmark
 #  - nlp: the CUTEst nonlinear programs, i.e. the nlpsif directory of the
 #    MASTSIF mirror (gitlab.com/dpo/mastsif-mirror). Its entries are symbolic
 #    links to ../<problem>.SIF, hence the whole mirror is cloned;
-#  - qp: the Maros-Meszaros convex QPs (github.com/optimizers/maros-meszaros-mirror).
+#  - qp: the Maros-Meszaros convex QPs (github.com/optimizers/maros-meszaros-mirror);
+#  - the other problems of the MASTSIF mirror, by type of constraints (CLASSF.DB):
+#    bc (no general constraints: U, X, B), lc (linear constraints: L, N) and
+#    nlc (nonlinear constraints, but not in nlpsif: Q, O).
+# `all` is everything.
 # Variable-dimension problems use the default size of their SIF file.
 #
 # Success/failure is read from each run's log: the CUTEst driver prints
@@ -41,11 +45,11 @@ on:
         default: ''
         type: string
       subset:
-        description: 'Problems to solve: all, nlp (CUTEst nlpsif) or qp (Maros-Meszaros)'
+        description: 'Problems to solve: nlp (CUTEst nlpsif), qp (Maros-Meszaros), bc (no general constraints), lc (linear constraints), nlc (nonlinear constraints, not in nlpsif) or all'
         required: false
         default: 'all'
         type: choice
-        options: [all, nlp, qp]
+        options: [all, nlp, qp, bc, lc, nlc]
       problems:
         description: 'Explicit space-separated problem list (optional; overrides subset), e.g. "HS15 HS71"'
         required: false
@@ -159,7 +163,7 @@ jobs:
           git clone --depth=1 https://gitlab.com/dpo/mastsif-mirror.git "$MASTSIF"
           git clone --depth=1 https://github.com/optimizers/maros-meszaros-mirror.git "$MAROS_MESZAROS"
 
-          # manifest: <problem> \t <nlp|qp> \t <SIF file>, the nlpsif links being resolved
+          # manifest: <problem> \t <nlp|qp|bc|lc|nlc> \t <SIF file>, the nlpsif links being resolved
           manifest=cutest-tools/manifest.tsv
           : > "$manifest"
           shopt -s nullglob
@@ -178,7 +182,28 @@ jobs:
           if [ -n "$duplicates" ]; then
             echo "::error::Problems present in both collections: $(echo $duplicates)"; exit 1
           fi
-          echo "nlp: $(grep -c $'\tnlp\t' "$manifest") problems (mastsif-mirror $(git -C "$MASTSIF" rev-parse --short HEAD))"
+          # the other problems of the mirror, by type of constraints: 2nd letter of the CUTEst classification
+          if [ -f "$MASTSIF/CLASSF.DB" ]; then
+            declare -A IN_MANIFEST
+            while IFS=$'\t' read -r name _ _; do IN_MANIFEST[$name]=1; done < "$manifest"
+            while read -r name classification _; do
+              [ -z "${IN_MANIFEST[$name]:-}" ] || continue
+              file="$MASTSIF/$name.SIF"
+              [ -f "$file" ] || file="$file.bz2"
+              [ -f "$file" ] || continue
+              case "${classification:1:1}" in
+                U|X|B) set=bc ;;
+                L|N)   set=lc ;;
+                *)     set=nlc ;;
+              esac
+              printf '%s\t%s\t%s\n' "$name" "$set" "$file" >> "$manifest"
+            done < "$MASTSIF/CLASSF.DB"
+          else
+            echo "::warning::$MASTSIF/CLASSF.DB not found: only the nlp and qp collections are available"
+          fi
+          for set in nlp bc lc nlc; do
+            echo "${set}: $(grep -c $'\t'"$set"$'\t' "$manifest") problems (mastsif-mirror $(git -C "$MASTSIF" rev-parse --short HEAD))"
+          done
           echo "qp:  $(grep -c $'\tqp\t' "$manifest") problems (maros-meszaros-mirror $(git -C "$MAROS_MESZAROS" rev-parse --short HEAD))"
 
       - name: Install SIFDecode
@@ -253,7 +278,7 @@ jobs:
             SELECTION="custom list"
           elif [ "$SUBSET" = "all" ]; then
             mapfile -t INSTANCES < <(cut -f1 "$MANIFEST" | sort)
-            SELECTION="all problems (nlp + qp)"
+            SELECTION="all (nlp + qp + bc + lc + nlc)"
           else
             mapfile -t INSTANCES < <(awk -F'\t' -v set="$SUBSET" '$2 == set {print $1}' "$MANIFEST" | sort)
             SELECTION="subset ${SUBSET}"
@@ -302,6 +327,11 @@ jobs:
             fi
           done
 
+          # ---- collection of each solved instance (to reproduce the exact selection) ----
+          for problem in "${INSTANCES[@]}"; do
+            printf '%s\t%s\n' "$problem" "${SET_OF[$problem]}"
+          done > results/collections.tsv
+
           # ---- machine-readable metadata, used by later comparisons ----
           MASTSIF_COMMIT=$(git -C "$MASTSIF" rev-parse --short HEAD)
           MM_COMMIT=$(git -C "$MAROS_MESZAROS" rev-parse --short HEAD)
@@ -314,9 +344,11 @@ jobs:
 
           # ---- per-collection counts ----
           per_set=""
-          for set in nlp qp; do
+          declare -A SET_LABEL=([nlp]="CUTEst NLP" [qp]="Maros-Meszaros QP" [bc]="CUTEst bound-constrained"
+                                [lc]="CUTEst linearly constrained" [nlc]="CUTEst other nonlinearly constrained")
+          for set in nlp qp bc lc nlc; do
             [ -n "${SET_TOTAL[$set]:-}" ] || continue
-            label=$([ "$set" = nlp ] && echo "CUTEst NLP" || echo "Maros-Meszaros QP")
+            label=${SET_LABEL[$set]}
             per_set+="${label}: ${SET_SOLVED[$set]:-0} / ${SET_TOTAL[$set]} · "
           done
           per_set=${per_set% · }
@@ -382,9 +414,9 @@ jobs:
           ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
             --title "CUTEst benchmark (preset ${PRESET})" --artifact-prefix "cutest-results-${PRESET}-pr-" --changed-only \
             --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
-            --results-dir results --output benchmark-comment.md --full-output comparison-full.md
-          if [ -f comparison-full.md ]; then
-            { echo ""; cat comparison-full.md; } >> "$GITHUB_STEP_SUMMARY"
+            --results-dir results --output benchmark-comment.md --full-output comparison-all.md
+          if [ -f comparison-all.md ]; then
+            { echo ""; cat comparison-all.md; } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # Results of this run, so that future runs can compare against this PR.
