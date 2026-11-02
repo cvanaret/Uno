@@ -17,6 +17,7 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Collection.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
 #include "tools/Logger.hpp"
@@ -29,8 +30,10 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model, options.get_double("residual_scaling_threshold")),
-         // relax nonlinear constraints + linear constraints in the presence of a trust region
-         feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region,
+         // relax nonlinear constraints + linear constraints in the presence of a trust region or if all constraints are
+         // linear (otherwise, the feasibility problem would have no elastic variables and could not reduce the violation)
+         feasibility_problem(model, 0., this->constraint_violation_coefficient,
+            use_trust_region || model.get_nonlinear_constraints().empty(),
             options.get_bool("use_proximal_term"), options.get_double("residual_scaling_threshold")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
@@ -38,6 +41,7 @@ namespace uno {
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          bound_multiplier_max_norm(options.get_double("bound_multiplier_max_norm")),
+         infeasibility_detection_multiplier_threshold(options.get_double("infeasibility_detection_multiplier_threshold")),
          constraints_buffer(model.number_constraints) {
    }
 
@@ -86,6 +90,18 @@ namespace uno {
 
    const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+      // infeasibility detection (IPOPT's expect_infeasible_problem): diverging constraint multipliers at an infeasible
+      // iterate indicate a Fritz-John point with zero objective multiplier, i.e. a stationary point of the constraint
+      // violation. Switch (once) to the feasibility problem to certify it
+      if (this->current_phase == Phase::OPTIMALITY && this->may_trigger_infeasibility_detection &&
+            0 < this->original_problem.model.number_constraints &&
+            this->infeasibility_detection_multiplier_threshold < norm_inf(current_iterate.multipliers.constraints) &&
+            this->tight_unscaled_primal_infeasibility_tolerance < current_iterate.scaled_residuals.primal_infeasibility) {
+         DEBUG << "Large constraint multipliers at an infeasible iterate: switching to the feasibility problem\n";
+         this->may_trigger_infeasibility_detection = false;
+         statistics.set("Status", std::string("large duals"));
+         this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
+      }
 
       // solve the current problem (OPTIMALITY or FEASIBILITY_RESTORATION)
       if (this->current_phase == Phase::OPTIMALITY) {
