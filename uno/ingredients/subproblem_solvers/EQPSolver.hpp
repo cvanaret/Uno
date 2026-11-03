@@ -94,8 +94,8 @@ namespace uno {
       double residual_ratio{0.};
       size_t number_refinement_steps{0};
       bool matrix_deemed_singular{false}; // in the last solve, the matrix was deemed singular (IPOPT's "pretend singular")
-      // per-iteration summary (IPOPT-style): refinement steps, q: pivoting tolerance increased, s: matrix deemed singular,
-      // S: inaccurate solution accepted. Shown in the extended "IR" statistics column
+      // per-iteration summary (IPOPT-style): refinement steps and flags (scal: scaling switched on, piv: pivoting tolerance
+      // increased, sing: matrix deemed singular, inac: inaccurate solution accepted). Shown in the extended "IR" column
       size_t iteration_refinement_steps{0};
       std::vector<std::string_view> iteration_refinement_flags{};
 
