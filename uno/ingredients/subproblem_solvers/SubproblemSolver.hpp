@@ -4,6 +4,8 @@
 #ifndef UNO_SUBPROBLEMSOLVER_H
 #define UNO_SUBPROBLEMSOLVER_H
 
+#include <stdexcept>
+
 namespace uno {
    // forward declarations
    class Direction;
@@ -40,6 +42,11 @@ namespace uno {
          Evaluations& trial_evaluations) = 0;
 
       [[nodiscard]] virtual const SolverWorkspace& get_workspace() const = 0;
+      // solve the system again with the current factorization and a new right-hand side (e.g. for a new barrier parameter)
+      [[nodiscard]] virtual const Direction& resolve(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+            const Iterate& /*current_iterate*/, Evaluations& /*current_evaluations*/) {
+         throw std::runtime_error("The subproblem solver cannot reuse its factorization");
+      }
    };
 } // namespace
 

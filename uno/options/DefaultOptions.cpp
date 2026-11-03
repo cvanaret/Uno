@@ -188,6 +188,7 @@ namespace uno {
 
       /** barrier subproblem options **/
       options.set_string("barrier_function", "log");
+      options.set_string("barrier_update_strategy", "monotone");
       options.set_double("barrier_initial_parameter", 0.1);
       options.set_double("barrier_default_multiplier", 1);
       // Ipopt parameters
@@ -203,6 +204,13 @@ namespace uno {
       options.set_double("barrier_push_variable_to_interior_k2", 1e-2);
       options.set_double("barrier_damping_factor", 1e-5);
       options.set_double("barrier_small_infeasibility_factor", 1e-4);
+      options.set_double("adaptive_mu_sigma_min", 1e-6);
+      options.set_double("adaptive_mu_sigma_max", 1e2);
+      options.set_double("adaptive_mu_min", 1e-11);
+      options.set_double("adaptive_mu_max_factor", 1e3);
+      options.set_double("adaptive_mu_monotone_init_factor", 0.8);
+      options.set_double("adaptive_mu_filter_margin_factor", 1e-5);
+      options.set_double("adaptive_mu_filter_max_margin", 1);
       options.set_double("least_square_multiplier_max_norm", 1e3);
       options.set_double("bound_multiplier_max_norm", 1e3);
       options.set_double("constraint_violation_tolerance", 1e-4);

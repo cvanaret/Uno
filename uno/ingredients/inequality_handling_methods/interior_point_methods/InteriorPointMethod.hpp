@@ -4,12 +4,15 @@
 #ifndef UNO_INTERIORPOINTMETHOD_H
 #define UNO_INTERIORPOINTMETHOD_H
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 #include "../InequalityHandlingMethod.hpp"
+#include "AdaptiveBarrierParameter.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 #include "ElasticInitialization.hpp"
 #include "InteriorPointParameters.hpp"
@@ -18,6 +21,10 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
+#include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -88,7 +95,17 @@ namespace uno {
       bool first_feasibility_iteration{false};
       const bool is_square_problem;
 
+      // adaptive barrier parameter (barrier_update_strategy = adaptive): mode logic, and affine and centering directions of
+      // the quality-function oracle, computed with the factorization at the current iterate
+      std::optional<AdaptiveBarrierParameter> adaptive_barrier_parameter{};
+      Direction affine_direction{}, centering_direction{};
+      bool factorization_at_current_iterate{false};
+
       [[nodiscard]] const double& barrier_parameter() const;
+      [[nodiscard]] bool update_barrier_parameter_adaptively(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations);
+      [[nodiscard]] double quality_function_oracle(Statistics& statistics, const Iterate& current_iterate, Evaluations& evaluations,
+         double average_complementarity, double error);
    };
 
    // class template implementation
@@ -129,6 +146,16 @@ namespace uno {
          HessianSubproblemSolverJointFactory::create(this->barrier_problem, uses_trust_region, objective_multiplier,
             options, option_overrides);
       this->subproblem = std::make_unique<Subproblem>(this->barrier_problem, *this->hessian_model, *this->inertia_correction_strategy);
+      // the feasibility problem (objective multiplier 0) keeps the monotone update
+      const std::string barrier_update_strategy = options.get_string("barrier_update_strategy");
+      if (barrier_update_strategy == "adaptive") {
+         if (0. < objective_multiplier) {
+            this->adaptive_barrier_parameter.emplace(options);
+         }
+      }
+      else if (barrier_update_strategy != "monotone") {
+         throw std::invalid_argument("The barrier update strategy " + barrier_update_strategy + " does not exist");
+      }
    }
 
    template <typename BarrierProblem>
@@ -175,10 +202,12 @@ namespace uno {
    bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const Iterate& current_iterate,
          Evaluations& evaluations) {
       bool update = false;
+      this->factorization_at_current_iterate = false;
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         update = this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate,
-            evaluations);
+         update = this->adaptive_barrier_parameter ?
+            this->update_barrier_parameter_adaptively(statistics, current_iterate, evaluations) :
+            this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate, evaluations);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -189,6 +218,9 @@ namespace uno {
 
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::force_parameterization_update(Statistics& statistics) {
+      if (this->adaptive_barrier_parameter) {
+         this->adaptive_barrier_parameter->leave_free_mode();
+      }
       const bool update = this->barrier_parameter_update_strategy.force_barrier_parameter_decrease();
       statistics.set("Barrier", this->barrier_parameter());
       return update;
@@ -199,13 +231,95 @@ namespace uno {
          double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       DEBUG << "Barrier parameter = " << this->barrier_parameter() << '\n';
+      // the oracle factorized the matrix at the current iterate: only the right-hand side depends on the barrier parameter
+      if (this->factorization_at_current_iterate && warmstart_information.new_iterate) {
+         this->factorization_at_current_iterate = false;
+         return this->subproblem_solver->resolve(statistics, *this->subproblem, current_iterate, current_evaluations);
+      }
+      this->factorization_at_current_iterate = false;
       return this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, trust_region_radius,
          initial_point, current_evaluations, warmstart_information);
+   }
+
+   // IPOPT's AdaptiveMuUpdate::UpdateBarrierParameter
+   template <typename BarrierProblem>
+   bool InteriorPointMethod<BarrierProblem>::update_barrier_parameter_adaptively(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations) {
+      const double average_complementarity = this->barrier_problem.average_complementarity(current_iterate);
+      if (!(0. < average_complementarity)) { // no bounds
+         return this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate, evaluations);
+      }
+      const auto& residuals = current_iterate.scaled_residuals;
+      const double error = std::max({residuals.primal_infeasibility, residuals.stationarity / residuals.stationarity_scaling,
+         residuals.complementarity / residuals.complementarity_scaling});
+      evaluations.evaluate_objective(this->barrier_problem.model, current_iterate.primals);
+      AdaptiveBarrierParameter& adaptive = *this->adaptive_barrier_parameter;
+      switch (adaptive.update_mode(current_iterate.progress.infeasibility, evaluations.objective, error, average_complementarity)) {
+         case BarrierUpdate::MONOTONE:
+            return this->barrier_parameter_update_strategy.update_barrier_parameter(this->barrier_problem, current_iterate, evaluations);
+         case BarrierUpdate::RESET_FIXED:
+            DEBUG << "Adaptive barrier parameter: switching to the fixed mode\n";
+            this->barrier_parameter_update_strategy.set_barrier_parameter(adaptive.fixed_mode_barrier_parameter(average_complementarity));
+            return true;
+         case BarrierUpdate::ORACLE:
+            this->barrier_parameter_update_strategy.set_barrier_parameter(adaptive.clamp(this->quality_function_oracle(statistics,
+               current_iterate, evaluations, average_complementarity, error)));
+            // the line search is reset at every free-mode iteration
+            return true;
+      }
+      return false;
+   }
+
+   // IPOPT's QualityFunctionMuOracle: affine (mu = 0) and centering (mu = average complementarity) directions with a single
+   // factorization, then mu = sigma * average complementarity with sigma the global minimizer of the quality function
+   template <typename BarrierProblem>
+   double InteriorPointMethod<BarrierProblem>::quality_function_oracle(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations, double average_complementarity, double error) {
+      const double current_barrier_parameter = this->barrier_parameter();
+      // factorization at the current iterate (the matrix does not depend on mu, apart from the dual regularization)
+      const Direction& direction = this->subproblem_solver->solve(statistics, *this->subproblem, current_iterate, Inf, Vector<double>{},
+         evaluations, WarmstartInformation{});
+      if (direction.status != SubproblemStatus::OPTIMAL) {
+         return current_barrier_parameter;
+      }
+      this->factorization_at_current_iterate = true;
+      // directions for the barrier parameters 0 (affine, approximated by the smallest positive double) and average_complementarity
+      const auto direction_for = [&](double barrier_parameter, Direction& result) {
+         this->barrier_parameter_update_strategy.set_barrier_parameter(barrier_parameter);
+         result = this->subproblem_solver->resolve(statistics, *this->subproblem, current_iterate, evaluations);
+         this->barrier_parameter_update_strategy.set_barrier_parameter(current_barrier_parameter);
+         return result.status == SubproblemStatus::OPTIMAL;
+      };
+      if (!direction_for(std::numeric_limits<double>::min(), this->affine_direction) ||
+            !direction_for(average_complementarity, this->centering_direction)) {
+         return current_barrier_parameter;
+      }
+      // centering direction: d(average_complementarity) - d(0)
+      this->centering_direction.primals -= this->affine_direction.primals;
+      this->centering_direction.multipliers.lower_bounds -= this->affine_direction.multipliers.lower_bounds;
+      this->centering_direction.multipliers.upper_bounds -= this->affine_direction.multipliers.upper_bounds;
+
+      // squared 2-norms of the dual and primal infeasibilities
+      const double dual_aggregate = dot(current_iterate.scaled_residuals.lagrangian_gradient, current_iterate.scaled_residuals.lagrangian_gradient);
+      Vector<double> constraints(this->barrier_problem.number_constraints);
+      this->barrier_problem.evaluate_constraints(current_iterate, constraints.view(), evaluations);
+      const double primal_aggregate = dot(constraints, constraints);
+      const double tau = std::max(this->parameters.tau_min, 1. - error);
+      const auto quality_function = this->barrier_problem.quality_function(current_iterate, this->affine_direction,
+         this->centering_direction, tau, dual_aggregate, primal_aggregate);
+      const auto [sigma_lo, sigma_up] = this->adaptive_barrier_parameter->sigma_interval(average_complementarity);
+      const double sigma = quality_function.minimize(sigma_lo, sigma_up).sigma;
+      DEBUG << "Quality-function oracle: sigma = " << sigma << ", mu = " << sigma * average_complementarity << '\n';
+      return sigma * average_complementarity;
    }
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) {
       this->first_feasibility_iteration = true;
+      // after the restoration phase: back to the free mode with an empty filter
+      if (this->adaptive_barrier_parameter) {
+         this->adaptive_barrier_parameter->reset();
+      }
 
       // update the barrier parameter
       const double new_barrier_parameter = std::max(handoff.barrier_parameter.value_or(this->barrier_parameter()),

@@ -941,6 +941,47 @@ namespace uno {
       }
    }
 
+   size_t PrimalDualInteriorPointProblem::number_complementarity_pairs() const {
+      return this->lower_bounded_variables.size() + this->upper_bounded_variables.size();
+   }
+
+   double PrimalDualInteriorPointProblem::average_complementarity(const Iterate& iterate) const {
+      const size_t number_pairs = this->number_complementarity_pairs();
+      if (number_pairs == 0) {
+         return 0.;
+      }
+      double sum = 0.;
+      for (const size_t variable_index: this->lower_bounded_variables) {
+         sum += (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]) * iterate.multipliers.lower_bounds[variable_index];
+      }
+      for (const size_t variable_index: this->upper_bounded_variables) {
+         sum += (iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]) * iterate.multipliers.upper_bounds[variable_index];
+      }
+      return sum / static_cast<double>(number_pairs);
+   }
+
+   // IPOPT's QualityFunctionMuOracle (2-norm squared, no centrality term), with averaged dual, primal and complementarity
+   // terms
+   quality_function::QualityFunction PrimalDualInteriorPointProblem::quality_function(const Iterate& iterate, const Direction& affine,
+         const Direction& centering, double tau, double dual_aggregate, double primal_aggregate) const {
+      std::vector<quality_function::ComplementarityPair> pairs;
+      pairs.reserve(this->number_complementarity_pairs());
+      for (const size_t variable_index: this->lower_bounded_variables) {
+         pairs.push_back({iterate.primals[variable_index] - this->variables_lower_bounds[variable_index], affine.primals[variable_index],
+            centering.primals[variable_index], iterate.multipliers.lower_bounds[variable_index],
+            affine.multipliers.lower_bounds[variable_index], centering.multipliers.lower_bounds[variable_index]});
+      }
+      for (const size_t variable_index: this->upper_bounded_variables) {
+         pairs.push_back({iterate.primals[variable_index] - this->variables_upper_bounds[variable_index], affine.primals[variable_index],
+            centering.primals[variable_index], iterate.multipliers.upper_bounds[variable_index],
+            affine.multipliers.upper_bounds[variable_index], centering.multipliers.upper_bounds[variable_index]});
+      }
+      const double dual_weight = dual_aggregate / static_cast<double>(std::max<size_t>(1, this->number_variables));
+      const double primal_weight = (0 < this->number_constraints) ? primal_aggregate / static_cast<double>(this->number_constraints) : 0.;
+      const double complementarity_weight = 1. / static_cast<double>(std::max<size_t>(1, pairs.size()));
+      return {std::move(pairs), tau, dual_weight, primal_weight, complementarity_weight};
+   }
+
    // TODO use a single function for primal and dual fraction-to-boundary rules
    double PrimalDualInteriorPointProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
          const Vector<double>& primal_direction, double tau) const {

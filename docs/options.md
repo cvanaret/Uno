@@ -224,9 +224,10 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 
 ### String options
 
-| Option             | Possible values | Default    | Description                  |
-| :---               | :---            | :---       |:-----------------------------|
-| `barrier_function` | `log`           | `log`      | Type of the barrier function |
+| Option                    | Possible values        | Default    | Description                                                                                       |
+| :---                      | :---                   | :---       |:--------------------------------------------------------------------------------------------------|
+| `barrier_function`        | `log`                  | `log`      | Type of the barrier function                                                                      |
+| `barrier_update_strategy` | `monotone`, `adaptive` | `monotone` | Barrier parameter update: monotone (Fiacco-McCormick) or adaptive (quality function, exact minimizer) |
 
 ### Numerical options
 
@@ -246,6 +247,13 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 | `barrier_push_variable_to_interior_k2` | double | 1e-2    | Coefficient for the perturbation of the initial bounds                     |
 | `barrier_damping_factor`               | double | 1e-5    | Damping coefficient for single bounds                                      |
 | `barrier_small_infeasibility_factor`   | double | 1e-4    | Factor in the small infeasibility test                                     |
+| `adaptive_mu_sigma_min` | double | 1e-6 | Lower bound of the centering parameter in the adaptive barrier update |
+| `adaptive_mu_sigma_max` | double | 1e2 | Upper bound of the centering parameter in the adaptive barrier update |
+| `adaptive_mu_min` | double | 1e-11 | Lower bound of the barrier parameter in the adaptive barrier update |
+| `adaptive_mu_max_factor` | double | 1e3 | Upper bound of the adaptive barrier parameter, relative to the initial average complementarity |
+| `adaptive_mu_monotone_init_factor` | double | 0.8 | Barrier parameter (relative to the average complementarity) when switching to the fixed mode |
+| `adaptive_mu_filter_margin_factor` | double | 1e-5 | Margin factor of the filter that decides the free mode of the adaptive barrier update |
+| `adaptive_mu_filter_max_margin` | double | 1 | Maximum margin of the filter that decides the free mode of the adaptive barrier update |
 | `least_square_multiplier_max_norm`     | double | 1e3     | Maximum accepted norm of the least-square multipliers                      |
 | `bound_multiplier_max_norm`            | double | 1e3     | Maximum accepted norm of the bound duals when switching from restoration to optimality |
 | `constraint_violation_tolerance`       | double | 1e-4    | Constraint violation tolerance                                             |
