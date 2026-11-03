@@ -39,21 +39,30 @@ namespace {
 } // namespace
 
 // c(x) = x0 + x1 = 1 satisfies the constraint c(x) >= 1, but the slack s0 = 3 lags behind: the point is not primal
-// feasible for the slacked problem and its primal infeasibility must not vanish
-TEST(BarrierProblem, PrimalInfeasibilityIncludesSlackResiduals) {
+// feasible for the slacked problem and its reformulation infeasibility (restoration switching test) must not vanish
+TEST(BarrierProblem, ReformulationInfeasibilityIncludesSlackResiduals) {
    BarrierScenario scenario;
    const Iterate iterate = scenario.make_iterate(0.5, 0.5, 3.);
    Evaluations evaluations(scenario.model);
    EXPECT_EQ(scenario.problem.primal_infeasibility(iterate, evaluations, Norm::INF), 0.);
-   EXPECT_DOUBLE_EQ(scenario.barrier_problem.primal_infeasibility(iterate, evaluations, Norm::INF), 2.);
+   EXPECT_DOUBLE_EQ(scenario.barrier_problem.reformulation_infeasibility(iterate, evaluations, Norm::INF), 2.);
 }
 
-// consistent slack: the primal infeasibility is the constraint violation of the original problem
+// same point: the termination tests use the constraint violation of the unslacked problem (IPOPT)
+TEST(BarrierProblem, PrimalInfeasibilityIgnoresSlackResiduals) {
+   BarrierScenario scenario;
+   const Iterate iterate = scenario.make_iterate(0.5, 0.5, 3.);
+   Evaluations evaluations(scenario.model);
+   EXPECT_EQ(scenario.barrier_problem.primal_infeasibility(iterate, evaluations, Norm::INF), 0.);
+}
+
+// consistent slack: both measures are the constraint violation of the original problem
 TEST(BarrierProblem, PrimalInfeasibilityWithConsistentSlack) {
    BarrierScenario scenario;
    const Iterate iterate = scenario.make_iterate(0.25, 0.25, 0.5); // c(x) = 0.5 < 1
    Evaluations evaluations(scenario.model);
    EXPECT_DOUBLE_EQ(scenario.barrier_problem.primal_infeasibility(iterate, evaluations, Norm::INF), 0.5);
+   EXPECT_DOUBLE_EQ(scenario.barrier_problem.reformulation_infeasibility(iterate, evaluations, Norm::INF), 0.5);
 }
 
 // the predicted infeasibility reduction built at the current iterate must not change when the progress measures of a

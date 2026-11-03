@@ -224,6 +224,11 @@ namespace uno {
       return this->model.constraint_violation(evaluations.constraints, residual_norm);
    }
 
+   double OptimizationProblem::reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations,
+         Norm residual_norm) const {
+      return this->primal_infeasibility(iterate, evaluations, residual_norm);
+   }
+
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const {
       return this->model.complementarity_error(primals, constraints, multipliers, residual_norm);

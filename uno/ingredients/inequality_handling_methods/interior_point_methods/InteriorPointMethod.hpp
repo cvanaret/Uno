@@ -71,7 +71,7 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
-      [[nodiscard]] double compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const override;
+      [[nodiscard]] double compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] std::string get_name() const override;
 
@@ -384,8 +384,8 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   double InteriorPointMethod<BarrierProblem>::compute_primal_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
-      return this->barrier_problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
+   double InteriorPointMethod<BarrierProblem>::compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
+      return this->barrier_problem.reformulation_infeasibility(iterate, evaluations, this->residual_norm);
    }
 
    // protected member functions

@@ -98,6 +98,9 @@ namespace uno {
 
       // primal infeasibility used in the termination tests: constraint violation of the model by default
       [[nodiscard]] virtual double primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const;
+      // primal infeasibility of the reformulation (e.g. including the slack residuals c(x) - s), used in the switching test of
+      // the feasibility restoration. Defaults to the primal infeasibility
+      [[nodiscard]] virtual double reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const;
       [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
