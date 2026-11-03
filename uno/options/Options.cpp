@@ -129,6 +129,8 @@ namespace uno {
       {"least_square_multiplier_max_norm", OptionType::DOUBLE},
       {"bound_multiplier_max_norm", OptionType::DOUBLE},
       {"infeasibility_detection_multiplier_threshold", OptionType::DOUBLE},
+      {"infeasibility_detection_stagnation_iterations", OptionType::INTEGER},
+      {"infeasibility_detection_disable_tolerance", OptionType::DOUBLE},
       {"constraint_violation_tolerance", OptionType::DOUBLE},
       {"bound_relaxation_factor", OptionType::DOUBLE},
       {"BQPD_kmax_heuristic", OptionType::STRING},

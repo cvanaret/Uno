@@ -442,6 +442,12 @@ bound_multiplier_max_norm 1e3
 # Switch once to restoration if the constraint multipliers exceed this value at an infeasible iterate (double)
 infeasibility_detection_multiplier_threshold 1e8
 
+# Number of iterations without a 10% decrease of the infeasibility required to trigger infeasibility detection (integer)
+infeasibility_detection_stagnation_iterations 5
+
+# Disable infeasibility detection once the infeasibility falls below this value (double)
+infeasibility_detection_disable_tolerance 1e-3
+
 # Constraint violation tolerance (double)
 constraint_violation_tolerance 1e-4
 

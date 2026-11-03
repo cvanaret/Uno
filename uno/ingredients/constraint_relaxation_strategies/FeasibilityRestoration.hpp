@@ -12,6 +12,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    // forward declaration
@@ -92,7 +93,12 @@ namespace uno {
       const double least_square_multiplier_max_norm;
       const double bound_multiplier_max_norm;
       const double infeasibility_detection_multiplier_threshold;
+      const size_t infeasibility_detection_stagnation_iterations;
+      const double infeasibility_detection_disable_tolerance;
+      const double infeasibility_detection_sufficient_decrease{0.1};
       bool may_trigger_infeasibility_detection{true};
+      double infeasibility_detection_reference{Inf};
+      size_t infeasibility_detection_stagnation_counter{0};
 
       mutable Vector<double> constraints_buffer;
 

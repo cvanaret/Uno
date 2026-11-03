@@ -12,6 +12,7 @@
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
+      [[nodiscard]] size_t get_number_elastic_variables() const { return this->number_elastic_variables; }
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
          bool relax_linear_constraints, bool use_proximal_term, double residual_scaling_threshold);
       ~l1RelaxedProblem() override = default;
