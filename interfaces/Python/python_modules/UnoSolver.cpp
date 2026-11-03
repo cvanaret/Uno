@@ -69,7 +69,12 @@ namespace uno {
          const auto type = Options::option_types.find(option_name);
          if (type != Options::option_types.end()) { // key found
             if (type->second == OptionType::STRING) { // correct type
-               solver.user_options.set_string(option_name, std::move(option_value));
+               if (option_name == "preset") { // setting a preset sets the corresponding options
+                  solver.set_preset(std::move(option_value));
+               }
+               else {
+                  solver.user_options.set_string(option_name, std::move(option_value));
+               }
             }
             else { // incorrect type
                throw py::type_error(option_name + " is not of type string");
@@ -82,11 +87,7 @@ namespace uno {
 
       .def("set_logger_stream", &UnoSolverWrapper::set_logger_stream)
 
-      .def("set_preset", [](UnoSolverWrapper& solver, std::string preset_name) {
-         solver.validate_preset(preset_name);
-         solver.user_options.set_string("preset", std::move(preset_name));
-         solver.refresh_preset_options();
-      }, py::arg("preset_name"))
+      .def("set_preset", &UnoSolverWrapper::set_preset, py::arg("preset_name"))
 
       .def("set_notify_acceptable_iterate_callback", [](UnoSolverWrapper& solver, NotifyAcceptableIterateCallback callback) {
          solver.set_notify_acceptable_iterate_callback(std::move(callback));

@@ -73,3 +73,44 @@ def test_hs001_without_constraints(solver, preset, option, subproblem_solver):
 	assert len(result.constraint_dual_solution) == 0
 	assert log.counts["hessian"] > 0 and log.counts["notify"] > 0
 	assert log.multiplier_sizes and all(size == 0 for size in log.multiplier_sizes)
+
+
+PRESETS = ["filtersqp", "ipopt", "auto"]
+
+
+@pytest.mark.parametrize("preset", PRESETS)
+def test_preset_as_option(preset):
+	"""Setting the preset with set_option("preset", ...) selects the same method and solution as set_preset"""
+	results = {}
+	descriptions = {}
+	for setter in ("set_option", "set_preset"):
+		solver = unopy.UnoSolver()
+		solver.set_option("logger", "SILENT")
+		if setter == "set_option":
+			solver.set_option("preset", preset)
+		else:
+			solver.set_preset(preset)
+		results[setter] = solver.optimize(hs015())
+		descriptions[setter] = solver.get_method_description()
+	assert descriptions["set_option"] == descriptions["set_preset"]
+	assert results["set_option"].optimization_status == results["set_preset"].optimization_status
+	assert results["set_option"].number_iterations == results["set_preset"].number_iterations
+	assert np.array_equal(results["set_option"].primal_solution, results["set_preset"].primal_solution)
+
+
+def test_preset_option_overrides_previous_preset(solver):
+	"""A preset set with set_option replaces a preset previously set with set_preset"""
+	solver.set_preset("filtersqp")
+	solver.set_option("preset", "ipopt")
+	solver.optimize(hs015())
+	assert "interior-point" in solver.get_method_description()
+
+
+@pytest.mark.parametrize("setter", ["set_option", "set_preset"])
+def test_unknown_preset_raises(solver, setter):
+	"""An unknown preset name is rejected when it is set, whether through set_option or set_preset"""
+	with pytest.raises(RuntimeError, match="Unknown preset"):
+		if setter == "set_option":
+			solver.set_option("preset", "not_a_preset")
+		else:
+			solver.set_preset("not_a_preset")

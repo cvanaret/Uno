@@ -39,6 +39,7 @@ namespace uno {
       UnoSolverWrapper();
       ~UnoSolverWrapper();
 
+      void set_preset(std::string preset);
       void validate_preset(const std::string& preset);
       void refresh_preset_options();
 
