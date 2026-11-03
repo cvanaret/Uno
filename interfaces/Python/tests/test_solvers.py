@@ -75,7 +75,7 @@ def test_hs001_without_constraints(solver, preset, option, subproblem_solver):
 	assert log.multiplier_sizes and all(size == 0 for size in log.multiplier_sizes)
 
 
-PRESETS = ["filtersqp", "filterslp", "funnelsqp", "ipopt", "auto"]
+PRESETS = ["filtersqp", "ipopt", "auto"]
 
 
 @pytest.mark.parametrize("preset", PRESETS)

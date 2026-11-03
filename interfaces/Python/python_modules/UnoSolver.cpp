@@ -69,7 +69,7 @@ namespace uno {
          const auto type = Options::option_types.find(option_name);
          if (type != Options::option_types.end()) { // key found
             if (type->second == OptionType::STRING) { // correct type
-               if (option_name == "preset") { // the preset also determines the preset options
+               if (option_name == "preset") { // setting a preset sets the corresponding options
                   solver.set_preset(std::move(option_value));
                }
                else {
