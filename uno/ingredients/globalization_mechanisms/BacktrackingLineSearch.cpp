@@ -12,6 +12,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "tools/Logger.hpp"
@@ -59,17 +60,20 @@ namespace uno {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       // compute a feasible direction
+      bool direction_failed = false;
       try {
          const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
             Inf, evaluation_cache.current_evaluations, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
+            direction_failed = true;
             // switch to the feasibility problem (below)
          }
          else if (direction.status == SubproblemStatus::ERROR) {
             statistics.set("Status", std::string("solver error"));
             DEBUG << "/!\\ The subproblem solver failed\n";
+            direction_failed = true;
             // switch to the feasibility problem (below)
          }
          else {
@@ -104,7 +108,31 @@ namespace uno {
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
          statistics.set("Status", "inertia correction");
+         direction_failed = true;
          // switch to the feasibility problem (below)
+      }
+
+      // the direction could not be computed at a watchdog trial iterate (accepted without globalization test): do not
+      // switch to the feasibility problem from there. Instead, revert to the watchdog iterate and backtrack along the
+      // watchdog direction, skipping the full step (already rejected) (IPOPT)
+      if (direction_failed && this->in_watchdog) {
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         if (Logger::level == INFO) {
+            statistics.print_current_line();
+         }
+         this->revert_to_watchdog_iterate(current_iterate, evaluation_cache);
+         warmstart_information.iterate_changed();
+         const PredictedReductionModels predicted_reduction_models =
+            this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, this->watchdog_direction,
+            evaluation_cache.current_evaluations);
+         const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
+         if (this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, this->watchdog_direction,
+               evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information, user_callbacks,
+               /* skip_full_step = */ true)) {
+            this->number_shortened_iterations = this->last_step_was_shortened ? this->number_shortened_iterations + 1 : 0;
+            return;
+         }
+         // if backtracking failed, switch to the feasibility problem from the watchdog iterate (below)
       }
 
       // if the line search failed in the optimality phase, terminate at an acceptable iterate if possible
@@ -467,10 +495,15 @@ namespace uno {
          statistics.print_current_line();
          statistics.start_new_line();
       }
+      this->revert_to_watchdog_iterate(current_iterate, evaluation_cache);
+      return false;
+   }
+
+   void BacktrackingLineSearch::revert_to_watchdog_iterate(Iterate& current_iterate, EvaluationCache& evaluation_cache) {
+      assert(this->in_watchdog && this->watchdog_iterate.has_value() && this->watchdog_evaluations.has_value());
       current_iterate = *this->watchdog_iterate;
       evaluation_cache.current_evaluations = *this->watchdog_evaluations;
       this->stop_watchdog();
-      return false;
    }
 
    void BacktrackingLineSearch::stop_watchdog() {

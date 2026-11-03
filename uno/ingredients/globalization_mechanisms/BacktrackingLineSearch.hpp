@@ -81,6 +81,7 @@ namespace uno {
       [[nodiscard]] bool take_watchdog_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+      void revert_to_watchdog_iterate(Iterate& current_iterate, EvaluationCache& evaluation_cache);
       void stop_watchdog();
       [[nodiscard]] bool try_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
