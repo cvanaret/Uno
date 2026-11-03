@@ -100,13 +100,13 @@ namespace uno {
          if (path.size() >= 2 && is_separator(path[0]) && is_separator(path[1])) {
             // UNC path: skip "\\\\server\\share"
             index = 2;
-            for (size_t component = 0; component < 2; component) {
+            for (size_t component = 0; component < 2; ++component) {
                while (index < path.size() && !is_separator(path[index])) {
-                  index;
+                  ++index;
                }
                if (component == 0) {
                   while (index < path.size() && is_separator(path[index])) {
-                     index;
+                     ++index;
                   }
                }
             }
