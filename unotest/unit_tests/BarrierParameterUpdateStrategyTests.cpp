@@ -21,7 +21,7 @@ namespace {
    constexpr double k_epsilon = 10.;
    constexpr double update_fraction = 10.;
    constexpr double complementarity_tolerance = 1e-4;
-   constexpr double minimal_parameter = dual_tolerance / update_fraction;
+   constexpr double barrier_parameter_threshold = dual_tolerance / update_fraction;
 
    Options make_barrier_options() {
       Options options;
@@ -86,9 +86,9 @@ TEST(BarrierParameterUpdateStrategy, ForcedDecreaseSaturatesAtLowerBound) {
 // a parameter set below the lower bound is pulled back up by a forced "decrease", which reports no decrease
 TEST(BarrierParameterUpdateStrategy, ForcedDecreaseBelowLowerBound) {
    Strategy strategy(make_barrier_options());
-   strategy.set_barrier_parameter(minimal_parameter / 100.);
+   strategy.set_barrier_parameter(barrier_parameter_threshold / 100.);
    EXPECT_FALSE(strategy.force_barrier_parameter_decrease());
-   EXPECT_EQ(strategy.get_barrier_parameter(), minimal_parameter);
+   EXPECT_EQ(strategy.get_barrier_parameter(), barrier_parameter_threshold);
 }
 
 // with a dual tolerance looser than the complementarity tolerance of the termination test, the lower bound follows the

@@ -31,7 +31,7 @@ namespace uno {
 
    protected:
       double barrier_parameter;
-      const double dual_tolerance;
+      const double minimal_barrier_parameter;
       const UpdateParameters parameters;
    };
 
@@ -41,7 +41,7 @@ namespace uno {
    BarrierParameterUpdateStrategy<BarrierProblem>::BarrierParameterUpdateStrategy(const Options& options):
       barrier_parameter(options.get_double("barrier_initial_parameter")),
       // the floor of the barrier parameter also respects the unscaled complementarity tolerance of the termination test
-      dual_tolerance(std::min(options.get_double("dual_tolerance"), options.get_double("tight_unscaled_complementarity_tolerance"))),
+      minimal_barrier_parameter(std::min(options.get_double("dual_tolerance"), options.get_double("tight_unscaled_complementarity_tolerance"))),
       parameters({
          options.get_double("barrier_k_mu"),
          options.get_double("barrier_theta_mu"),
@@ -87,7 +87,7 @@ namespace uno {
          primal_feasibility << ", " << scaled_complementarity_error << "} = " << primal_dual_error << '\n';
 
       // update the barrier parameter (Eq. 7 in IPOPT paper)
-      const double tolerance_fraction = this->dual_tolerance / this->parameters.update_fraction;
+      const double barrier_parameter_threshold = this->minimal_barrier_parameter / this->parameters.update_fraction;
 
       bool parameter_updated = false;
       while (primal_dual_error <= this->parameters.k_epsilon * this->barrier_parameter) {
@@ -116,7 +116,7 @@ namespace uno {
    // unconditional decrease (Eq. 7 in IPOPT paper), e.g. after consecutive tiny steps. Returns false if mu is already minimal
    template <typename BarrierProblem>
    bool BarrierParameterUpdateStrategy<BarrierProblem>::force_barrier_parameter_decrease() {
-      const double tolerance_fraction = this->dual_tolerance / this->parameters.update_fraction;
+      const double barrier_parameter_threshold = this->minimal_barrier_parameter / this->parameters.update_fraction;
       const double old_barrier_parameter = this->barrier_parameter;
       this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
          std::pow(this->barrier_parameter, this->parameters.theta_mu)));
