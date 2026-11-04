@@ -2,9 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 #include "MA57Solver.hpp"
@@ -218,10 +220,19 @@ namespace uno {
          this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
       }
 
+      // MA57CD overwrites INFO: use a copy, so that the diagnostics of the factorization (inertia, rank) are kept
+      std::array<int, 40> solve_info = this->workspace.info;
       MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
          this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
          this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
-         this->workspace.info.data());
+         solve_info.data());
+      // INFO(1) < 0: error (the solution is meaningless); INFO(1) > 0: warning
+      if (solve_info[0] < 0) {
+         throw std::runtime_error("MA57: the linear solve failed (INFO(1) = " + std::to_string(solve_info[0]) + ")");
+      }
+      if (0 < solve_info[0]) {
+         DEBUG << "MA57 has issued a warning during the linear solve: INFO(1) = " << solve_info[0] << '\n';
+      }
    }
 
    Inertia MA57Solver::get_inertia() const {
