@@ -92,7 +92,7 @@ namespace uno {
       bool parameter_updated = false;
       while (primal_dual_error <= this->parameters.k_epsilon * this->barrier_parameter) {
          const double old_barrier_parameter = this->barrier_parameter;
-         this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
+         this->barrier_parameter = std::max(barrier_parameter_threshold, std::min(this->parameters.k_mu * this->barrier_parameter,
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
          if (old_barrier_parameter <= this->barrier_parameter) {
             break;
