@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <limits>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
@@ -136,7 +137,12 @@ namespace uno {
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
 
-      this->postprocess_solution(user_model, current_iterate, evaluation_cache.current_evaluations);
+      const bool valid_final_evaluations = this->postprocess_solution(user_model, current_iterate,
+         evaluation_cache.current_evaluations);
+      // a successful solve whose function values could not be evaluated at the final iterate is not a success
+      if (!valid_final_evaluations && optimization_status == OptimizationStatus::SUCCESS) {
+         optimization_status = OptimizationStatus::EVALUATION_ERROR;
+      }
       statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, std::move(current_iterate),
          std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
@@ -261,7 +267,9 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_solution(const Model& user_model, Iterate& iterate, Evaluations& evaluations) const {
+   // returns false if the objective or the constraints could not be evaluated at the final iterate. In that case, the
+   // corresponding values are set to NaN, so that stale or partially written values are never returned
+   bool Uno::postprocess_solution(const Model& user_model, Iterate& iterate, Evaluations& evaluations) const {
       // 1. primal-dual postprocessing only (unscaling of the multipliers, removal of slacks, fixed variables, ...)
       if (this->globalization_mechanism != nullptr) {
          this->globalization_mechanism->postprocess_solution(iterate, evaluations);
@@ -269,20 +277,28 @@ namespace uno {
       // 2. function values of the original model at the final primals. The postprocessing chain has either converted
       // the cached values to the units of the original model (ScaledModel) or invalidated them (e.g. snapped fixed
       // variables): only the invalidated values are evaluated, so that the user functions are not called again needlessly
+      bool valid_evaluations = true;
       try {
          evaluations.evaluate_objective(user_model, iterate.primals);
       }
       catch (const std::exception& e) {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
-         evaluations.objective = Inf;
+         evaluations.objective = std::numeric_limits<double>::quiet_NaN();
+         evaluations.is_objective_computed = false;
+         valid_evaluations = false;
       }
       try {
          evaluations.evaluate_constraints(user_model, iterate.primals);
       }
       catch (const std::exception& e) {
          DISCRETE  << "The constraints could not be evaluated at the final iterate: " << e.what()  << '\n';
+         // the constraint vector may be stale or partially written
+         evaluations.constraints.fill(std::numeric_limits<double>::quiet_NaN());
+         evaluations.are_constraints_computed = false;
+         valid_evaluations = false;
       }
       DEBUG2 << "Final iterate:\n" << iterate;
+      return valid_evaluations;
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,

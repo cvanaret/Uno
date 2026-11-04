@@ -45,7 +45,7 @@ namespace uno {
          UserCallbacks& user_callbacks);
       [[nodiscard]] Result uno_solve(const Model& user_model, const Model& model, const Options& options,
          UserCallbacks& user_callbacks);
-      void postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) const;
+      [[nodiscard]] bool postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
          Evaluations&& evaluations, size_t major_iterations, const Timers& timers, std::vector<OptionOverride>&& option_overrides) const;
       static void postprocess_multipliers_signs(const Model& model, Result& result);
