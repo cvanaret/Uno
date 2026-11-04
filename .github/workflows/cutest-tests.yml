@@ -1,7 +1,9 @@
-name: CUTEst HS15 test
+name: CUTEst tests on HS15 and HIMMELBD
 
 # Installs Uno as a shared library, compiles CUTEst (classic ARCHDefs/make build,
 # the one the `runcutest -p uno` interface relies on), and solves the HS15 instance.
+# Then solves a few small instances with the filtersqp and ipopt presets, each with
+# its default globalization strategy (filter method) and with the merit function.
 
 on:
   push:
@@ -131,3 +133,45 @@ jobs:
           cp "$custom" uno.opt                        # in case a local copy takes precedence
           bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" custom HS15
           diff -u "$custom" uno.opt && echo "custom uno.opt was used"
+
+      - name: Run filtersqp and ipopt presets with filter method and merit function
+        if: ${{ !cancelled() }}
+        run: |
+          problems="HS15 HIMMELBD"
+          failed=()
+          {
+            echo "## Presets × globalization strategies"
+            echo
+            echo "| Preset | Globalization strategy | Problem | Optimization status | Iterate status | Iterations |"
+            echo "| :--- | :--- | :--- | :--- | :--- | ---: |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for preset in filtersqp ipopt; do
+            for strategy in default merit_function; do
+              for problem in $problems; do
+                label="${preset}-${strategy}-${problem}"
+                echo "::group::${label}"
+                mkdir -p "$GITHUB_WORKSPACE/runs/${label}" && cd "$GITHUB_WORKSPACE/runs/${label}"
+                # minimal option file: the preset, optionally overriding its globalization strategy
+                echo "preset ${preset}" > uno.opt
+                if [ "$strategy" != default ]; then
+                  echo "globalization_strategy ${strategy}" >> uno.opt
+                fi
+                cp uno.opt "$CUTEST/src/uno/uno.opt"     # the default that gets picked up
+                if bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" "$label" "$problem" \
+                   && grep -Eq '^[[:space:]]*Optimization status:[[:space:]]+Success' "$label.log"; then
+                  :
+                else
+                  failed+=("$label")
+                fi
+                optimization_status=$(sed -n 's/^[[:space:]]*Optimization status:[[:space:]]*//p' "$label.log" | head -n 1)
+                iterate_status=$(sed -n 's/^[[:space:]]*Iterate status:[[:space:]]*//p' "$label.log" | head -n 1)
+                iterations=$(sed -n 's/^[[:space:]]*Number iterations[[:space:]]*//p' "$label.log" | head -n 1)
+                echo "| ${preset} | ${strategy} | ${problem} | ${optimization_status:-crash} | ${iterate_status:--} | ${iterations:--} |" >> "$GITHUB_STEP_SUMMARY"
+                echo "::endgroup::"
+              done
+            done
+          done
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::Not solved: ${failed[*]}"
+            exit 1
+          fi
