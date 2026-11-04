@@ -82,7 +82,7 @@ jobs:
       # the MA27/MA57/MA86 numerical tests need the real libhsl (see the self-hosted job)
       - name: Run the other unit tests
         working-directory: build
-        run: ctest --output-on-failure -C ${BUILD_TYPE} -E '^(HSLRuntimeLoading\.|MA(27|57|86)/)'
+        run: ctest --output-on-failure -C ${BUILD_TYPE} -E '^(HSLRuntimeLoading\.|MA(27|57|86)(/|Solver\.))'
 
   with-libhsl:
     name: With libhsl (self-hosted)
@@ -139,7 +139,7 @@ jobs:
       # the MA27/MA57/MA86 numerical tests, with libhsl dlopen'd through UNO_HSL_LIBRARY
       - name: Run the HSL solver tests through the dlopen'd libhsl
         working-directory: build
-        run: UNO_HSL_LIBRARY=${LIBHSL_PATH} ctest --output-on-failure --no-tests=error -C ${BUILD_TYPE} -R '^MA(27|57|86)/'
+        run: UNO_HSL_LIBRARY=${LIBHSL_PATH} ctest --output-on-failure --no-tests=error -C ${BUILD_TYPE} -R '^MA(27|57|86)(/|Solver\.)'
 
       - name: Run all unit tests
         working-directory: build
