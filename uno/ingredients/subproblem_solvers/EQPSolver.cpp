@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -22,6 +23,10 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
+   static bool is_finite_vector(const Vector<double>& vector) {
+      return std::all_of(vector.begin(), vector.end(), [](double value) { return std::isfinite(value); });
+   }
+
    namespace {
       IterativeRefinementParameters read_iterative_refinement_parameters(const Options& options) {
          const IterativeRefinementParameters parameters{
@@ -218,6 +223,11 @@ namespace uno {
       if (this->linear_solver->matrix_is_singular()) {
          this->direction.status = SubproblemStatus::INFEASIBLE;
       }
+      // a non-finite solution (e.g. after an overflow or a failed solve) cannot be used
+      else if (!is_finite_vector(linear_system.solution)) {
+         DEBUG << "The solution of the linear system has non-finite components\n";
+         this->direction.status = SubproblemStatus::ERROR;
+      }
       else {
          this->low_rank_correction.apply(linear_system.solution);
          // assemble the full primal-dual direction
@@ -271,6 +281,12 @@ namespace uno {
       // solve the linear system (the factorization is not modified: no pivoting tolerance increase, no singularity
       // handling) and assemble the full primal-dual direction
       this->solve_with_iterative_refinement(statistics, subproblem, /* allow_refactorization = */ false);
+      if (!is_finite_vector(linear_system.solution)) {
+         DEBUG << "The solution of the SOC linear system has non-finite components\n";
+         this->direction_SOC.status = SubproblemStatus::ERROR;
+         return this->direction_SOC;
+      }
+      this->direction_SOC.status = SubproblemStatus::OPTIMAL;
       this->low_rank_correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
