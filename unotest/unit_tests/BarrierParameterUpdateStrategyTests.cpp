@@ -74,13 +74,13 @@ TEST(BarrierParameterUpdateStrategy, ForcedDecreaseSaturatesAtLowerBound) {
    double previous_parameter = strategy.get_barrier_parameter();
    while (strategy.force_barrier_parameter_decrease()) {
       ASSERT_LT(strategy.get_barrier_parameter(), previous_parameter);
-      ASSERT_GE(strategy.get_barrier_parameter(), minimal_parameter);
+      ASSERT_GE(strategy.get_barrier_parameter(), barrier_parameter_threshold);
       previous_parameter = strategy.get_barrier_parameter();
       ASSERT_LT(++number_decreases, 100u);
    }
-   EXPECT_EQ(strategy.get_barrier_parameter(), minimal_parameter);
+   EXPECT_EQ(strategy.get_barrier_parameter(), barrier_parameter_threshold);
    EXPECT_FALSE(strategy.force_barrier_parameter_decrease());
-   EXPECT_EQ(strategy.get_barrier_parameter(), minimal_parameter);
+   EXPECT_EQ(strategy.get_barrier_parameter(), barrier_parameter_threshold);
 }
 
 // a parameter set below the lower bound is pulled back up by a forced "decrease", which reports no decrease
