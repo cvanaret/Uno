@@ -51,12 +51,11 @@ namespace uno {
       // compute the candidate pair (s, y) WITHOUT modifying the memory yet
       this->compute_candidate_pair(current_iterate, trial_iterate, current_evaluations, trial_evaluations);
 
-      // safeguard: if dot(sk, yk) is too small relative to sk, skip the update
-      const double norm_sk = norm_2(this->latest_s);
+      // safeguard: skip the update if the pair is not finite or if dot(sk, yk) is too small relative to ||sk|| ||yk||
+      // (a non-finite pair committed to the memory would poison every subsequent product)
       const double sTy = dot(this->latest_s, this->latest_y);
-      // tolerance is √(machine epsilon)
-      if (sTy <= std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk) {
-         DEBUG << "dot(sk, yk) is too small, skipping the update\n";
+      if (!this->is_candidate_pair_acceptable(sTy)) {
+         DEBUG << "The (s, y) pair is not finite or dot(sk, yk) is too small, skipping the update\n";
       }
       else {
          // append the candidate pair as the newest memory entry, physically shifting out the oldest if the memory is full

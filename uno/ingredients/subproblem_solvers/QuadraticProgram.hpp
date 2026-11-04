@@ -59,6 +59,17 @@ namespace uno {
          const Vector<double>& hessian_values,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) = 0;
+
+   protected:
+      // validate the data of the COO fill() before any native storage is written: consistent array lengths, indices
+      // within the dimensions (C indexing), finite coefficients and non-NaN bounds. Throws std::invalid_argument
+      static void validate_coo_data(const Vector<double>& linear_objective,
+         const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
+         const Vector<double>& jacobian_values,
+         const Vector<uno_int>& hessian_row_indices, const Vector<uno_int>& hessian_column_indices,
+         const Vector<double>& hessian_values,
+         const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
+         const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds);
    };
 } // namespace
 

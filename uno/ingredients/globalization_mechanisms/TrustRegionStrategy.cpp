@@ -29,7 +29,7 @@ namespace uno {
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
          primal_tolerance(options.get_double("primal_tolerance")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
-      if (this->radius <= 0.) {
+      if (!(0. < this->radius)) {
          throw std::runtime_error("The trust-region radius should be positive");
       }
       if (this->increase_factor <= 1.) {
@@ -76,7 +76,14 @@ namespace uno {
             // compute the direction within the trust region
             const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics,
                current_iterate, this->radius, evaluation_cache.current_evaluations, warmstart_information);
-            if (direction.status == SubproblemStatus::INFEASIBLE) {
+            // a direction with non-finite components (e.g. after a breakdown of the subproblem solver) cannot be used
+            SubproblemStatus direction_status = direction.status;
+            if (direction_status != SubproblemStatus::INFEASIBLE && direction_status != SubproblemStatus::ERROR &&
+                  !direction.is_finite()) {
+               DEBUG << "The direction has non-finite components\n";
+               direction_status = SubproblemStatus::ERROR;
+            }
+            if (direction_status == SubproblemStatus::INFEASIBLE) {
                if (model.number_constraints == 0) {
                   throw std::runtime_error("The model is unconstrained but the iterate is infeasible, should not happen");
                }
@@ -94,7 +101,7 @@ namespace uno {
             // the subproblem solver failed repeatedly on the optimality subproblem at an infeasible iterate: the failure
             // does not depend on the radius. Solve the feasibility problem (a different subproblem) at the next TR
             // iteration with the same radius, as the line search does
-            number_consecutive_solver_errors = (direction.status == SubproblemStatus::ERROR) ? number_consecutive_solver_errors + 1 : 0;
+            number_consecutive_solver_errors = (direction_status == SubproblemStatus::ERROR) ? number_consecutive_solver_errors + 1 : 0;
             if (TrustRegionStrategy::max_consecutive_solver_errors <= number_consecutive_solver_errors &&
                   0 < model.number_constraints && !this->constraint_relaxation_strategy->solving_feasibility_problem() &&
                   this->primal_tolerance < current_iterate.scaled_residuals.primal_infeasibility) {
@@ -105,18 +112,18 @@ namespace uno {
                number_consecutive_solver_errors = 0;
                continue;
             }
-            assert(direction.status != SubproblemStatus::INFEASIBLE);
+            assert(direction_status != SubproblemStatus::INFEASIBLE);
             statistics.set("||Step||", direction.norm);
             warmstart_information.no_changes();
 
             // deal with errors in the subproblem
-            if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+            if (direction_status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
                statistics.set("Status", "unbounded subproblem");
                warmstart_information.trust_region_changed = true;
                this->decrease_radius_aggressively();
             }
-            else if (direction.status == SubproblemStatus::ERROR) {
+            else if (direction_status == SubproblemStatus::ERROR) {
                statistics.set("Status", "solver error");
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
@@ -167,7 +174,8 @@ namespace uno {
             statistics.print_current_line();
          }
 
-         if (!is_acceptable && this->radius < this->minimum_radius) {
+         // written so that a NaN radius also terminates the loop
+         if (!is_acceptable && !(this->minimum_radius <= this->radius)) {
             throw std::runtime_error("Small radius");
          }
       }

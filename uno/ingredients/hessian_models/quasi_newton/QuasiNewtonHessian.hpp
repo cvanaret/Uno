@@ -48,6 +48,9 @@ namespace uno {
       void compute_candidate_pair(const Iterate& current_iterate, const Iterate& trial_iterate, Evaluations& current_evaluations,
          Evaluations& trial_evaluations);
       void compute_latest_s(const Iterate& current_iterate, const Iterate& trial_iterate);
+      // curvature safeguard of the candidate pair (s, y): s, y and sᵀy are finite and sᵀy > √ε ||s|| ||y||. The test is
+      // invariant to the scaling of s and of y; a zero s or y is rejected
+      [[nodiscard]] bool is_candidate_pair_acceptable(double sTy) const;
       void compute_latest_y(const Iterate& current_iterate, const Iterate& trial_iterate, Evaluations& current_evaluations,
          Evaluations& trial_evaluations);
       // append the candidate pair as the newest memory entry, physically dropping the oldest if the memory is full;

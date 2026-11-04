@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <cmath>
 #include <stdexcept>
 #include "BacktrackingLineSearch.hpp"
 #include "RejectionHistory.hpp"
@@ -245,6 +246,13 @@ namespace uno {
          return true;
       }
 
+      // a non-finite direction or step length cannot be backtracked along (NaN never satisfies the termination test)
+      if (!direction.is_finite() || !std::isfinite(direction.primal_dual_step_length) || std::isnan(minimum_step_length)) {
+         DEBUG << "The line search failed: the direction or the step length is not finite\n";
+         statistics.set("Status", "non-finite step");
+         return false;
+      }
+
       // skip the first trial step (e.g. after the watchdog failed, the full step has already been rejected)
       double step_length = skip_full_step ? this->backtracking_ratio : 1.;
       bool termination = false;
@@ -314,8 +322,8 @@ namespace uno {
          if (!is_acceptable) {
             step_length *= this->backtracking_ratio;
             // note: if minimum_step_length = 0 and step_length reaches 0 by successive divisions, this inequality
-            // protects from an endless loop
-            if (step_length * direction.primal_dual_step_length <= minimum_step_length) {
+            // protects from an endless loop. It is written so that a NaN also terminates the loop
+            if (!(minimum_step_length < step_length * direction.primal_dual_step_length) || step_length == 0.) {
                // minimum step length reached
                DEBUG << "The line search failed with a step length <= " << minimum_step_length << '\n';
                // switch to solving the feasibility problem
@@ -533,6 +541,11 @@ namespace uno {
 
             const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(statistics,
                current_iterate);
+            if (direction_SOC.status == SubproblemStatus::ERROR || !direction_SOC.is_finite()) {
+               // terminate the SOCs and keep backtracking
+               DEBUG << "The SOC direction could not be computed, resume backtracking\n";
+               break;
+            }
             assemble_trial_iterate(current_iterate, trial_iterate, direction_SOC, 1.);
             evaluation_cache.trial_evaluations.reset();
 

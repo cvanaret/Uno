@@ -5,6 +5,7 @@
 #include <cassert>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 #include <vector>
 #include "MA86Solver.hpp"
 #include "linear_algebra/View.hpp"
@@ -110,9 +111,23 @@ namespace uno {
    // told about it via f_arrays / f_array_in / f_array_out.
    void MA86Solver::build_csc_from_coo() {
       const size_t coo_number_nonzeros = this->linear_system.number_nonzeros;
-      const auto& coo_rows = this->linear_system.matrix_row_indices;
-      const auto& coo_columns = this->linear_system.matrix_column_indices;
       const uno_int base = static_cast<uno_int>(this->solver_indexing);
+      // every entry must lie within the matrix: an entry outside would never be visited by the column sweep below,
+      // and its default COO -> CSC mapping (slot 0) would silently corrupt the first entry during the factorization
+      for (size_t entry: Range(coo_number_nonzeros)) {
+         const uno_int row = this->linear_system.matrix_row_indices[entry];
+         const uno_int column = this->linear_system.matrix_column_indices[entry];
+         if (row < base || static_cast<uno_int>(this->n) + base <= row || column < base || static_cast<uno_int>(this->n) + base <= column) {
+            throw std::out_of_range("MA86: the matrix entry (" + std::to_string(row) + ", " + std::to_string(column) +
+               ") is out of range");
+         }
+      }
+      // the matrix is symmetric: an entry of the upper triangle is mirrored into the lower triangle
+      std::vector<uno_int> coo_rows(coo_number_nonzeros), coo_columns(coo_number_nonzeros);
+      for (size_t entry: Range(coo_number_nonzeros)) {
+         coo_rows[entry] = std::max(this->linear_system.matrix_row_indices[entry], this->linear_system.matrix_column_indices[entry]);
+         coo_columns[entry] = std::min(this->linear_system.matrix_row_indices[entry], this->linear_system.matrix_column_indices[entry]);
+      }
 
       // sort the COO entries by (column, row): this is the order of a lower-triangular CSC matrix
       std::vector<size_t> sorted(coo_number_nonzeros);

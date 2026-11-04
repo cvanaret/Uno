@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include "MA27Solver.hpp"
 
@@ -169,6 +170,16 @@ namespace uno {
 
    void MA27Solver::solve_indefinite_system(double* solution) {
       assert(this->factorization_performed);
+      // MA27CD has no error return: the solve is meaningful only if the factorization succeeded. Negative values of
+      // IFLAG (e.g. a singular matrix detected at a pivot step) leave an incomplete factorization; nonnegative values
+      // (success or warnings, such as rank deficiency) allow the solution of consistent systems.
+      // The callers may solve a system known to be singular (matrix_is_singular()) and reject non-finite solutions:
+      // the solution of an incomplete factorization is therefore NaN rather than an exception
+      if (MA27_INFO(1) < 0) {
+         DEBUG << "MA27: the factorization failed (IFLAG = " << MA27_INFO(1) << "), the solution is not computed\n";
+         std::fill_n(solution, static_cast<size_t>(this->workspace.n), std::numeric_limits<double>::quiet_NaN());
+         return;
+      }
 
       // copy rhs into solution (overwritten by MA27)
       const size_t dimension = static_cast<size_t>(this->workspace.n);
@@ -177,12 +188,6 @@ namespace uno {
       MA27_linear_solve(&this->workspace.n, this->workspace.factor.data(), &this->workspace.la, this->workspace.iw.data(),
          &this->workspace.liw, this->workspace.w.data(), &this->workspace.maxfrt, solution, this->workspace.iw1.data(),
          &this->workspace.nsteps, this->workspace.icntl.data(), this->workspace.info.data());
-
-      assert(MA27_INFO(1) == 0 && "MA27: the linear solve failed");
-      if (MA27_INFO(1) != 0) {
-         WARNING << "MA27 has issued a warning: IFLAG = " << MA27_INFO(1) << " additional info, IERROR = "
-            << this->workspace.info[1] << '\n';
-      }
    }
 
    Inertia MA27Solver::get_inertia() const {

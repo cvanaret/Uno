@@ -6,6 +6,8 @@
 
 #include <cassert>
 #include <cstddef>
+#include <functional>
+#include <type_traits>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -22,6 +24,13 @@
 #include "symbolic/UnaryNegation.hpp"
 
 namespace uno {
+   // types with contiguous storage (data() and size())
+   template <typename T, typename = void>
+   struct has_contiguous_storage: std::false_type {};
+   template <typename T>
+   struct has_contiguous_storage<T, std::void_t<decltype(std::declval<const T&>().data()),
+      decltype(std::declval<const T&>().size())>>: std::true_type {};
+
    // constant contiguous array in memory on which BLAS can be called
    template <typename T>
    class View: public SymbolicExpression {
@@ -55,6 +64,28 @@ namespace uno {
 
       [[nodiscard]] size_t size() const noexcept {
          return this->view_size;
+      }
+
+      // aliasing between this view and an operand of an expression. Operands that are expressions (no data()) are
+      // assumed not to alias this view
+      enum class Aliasing {NONE, EXACT, PARTIAL};
+      template <typename Operand>
+      [[nodiscard]] Aliasing aliasing(const Operand& operand) const noexcept {
+         if constexpr (has_contiguous_storage<Operand>::value) {
+            const auto* this_begin = static_cast<const void*>(this->data());
+            const auto* this_end = static_cast<const void*>(this->data() + this->size());
+            const auto* operand_begin = static_cast<const void*>(operand.data());
+            const auto* operand_end = static_cast<const void*>(operand.data() + operand.size());
+            if (this_begin == operand_begin && this->size() == operand.size()) {
+               return Aliasing::EXACT;
+            }
+            // std::less provides a total order over unrelated pointers
+            const std::less<const void*> less{};
+            if (less(operand_begin, this_end) && less(this_begin, operand_end)) {
+               return Aliasing::PARTIAL;
+            }
+         }
+         return Aliasing::NONE;
       }
 
       [[nodiscard]] bool empty() const {
@@ -135,6 +166,24 @@ namespace uno {
       View& operator=(Subtraction<Vector1, Vector2>&& expression) {
          const auto& x = expression.get_left();
          const auto& z = expression.get_right();
+         const Aliasing z_aliasing = this->aliasing(z);
+         if (z_aliasing == Aliasing::PARTIAL || this->aliasing(x) == Aliasing::PARTIAL) {
+            throw std::invalid_argument("View::operator=: the operands of y = x - z partially overlap y");
+         }
+         // y = x - y: compute -y + x in place (x is read after y is overwritten, so x must not alias y either)
+         if (z_aliasing == Aliasing::EXACT) {
+            if (this->aliasing(x) == Aliasing::EXACT) { // y = y - y
+               this->fill(T(0));
+            }
+            else if constexpr (has_contiguous_storage<Vector1>::value) {
+               this->scale(-1.);
+               *this += x;
+            }
+            else {
+               throw std::invalid_argument("View::operator=: y = x - y with an expression x is not supported");
+            }
+            return *this;
+         }
          *this = x;
          *this -= z;
          return *this;
@@ -144,8 +193,8 @@ namespace uno {
       template <typename Matrix, typename Vector>
       View& operator=(Multiplication<Matrix, Vector>&& expression) {
          const auto& x = expression.get_right();
-         if (x.data() == this->data()) {
-            throw std::invalid_argument("BLASVector::operator= cannot be called with x == y");
+         if (this->aliasing(x) != Aliasing::NONE) {
+            throw std::invalid_argument("View::operator=: y = A x cannot be computed in place (x overlaps y)");
          }
          const auto& A = expression.get_left();
          if (A.number_columns != x.size()) {
@@ -190,8 +239,7 @@ namespace uno {
          if (this->size() != y.size()) {
             throw std::runtime_error("Dimension mismatch");
          }
-         *this = x; // blas copy (tests this->size() == x.size())
-         blas1::add(this->size(), a, y.data(), this->data()); // axpy
+         this->assign_linear_combination(x, a, y);
          return *this;
       }
 
@@ -204,8 +252,7 @@ namespace uno {
          if (this->size() != y.size()) {
             throw std::runtime_error("Dimension mismatch");
          }
-         *this = x; // blas copy (tests this->size() == x.size())
-         blas1::add(this->size(), -a, y.data(), this->data()); // axpy
+         this->assign_linear_combination(x, -a, y);
          return *this;
       }
 
@@ -224,12 +271,10 @@ namespace uno {
       View<T>& operator=(Multiplication<Transpose<Inverse<UpperTriangular<Matrix>>>, Vector>&& expression) {
          const auto& U = expression.get_left().get_matrix().get_matrix().get_matrix();
          const auto& y = expression.get_right();
-         if (this->size() != U.number_columns) {
-            throw std::runtime_error("Dimension mismatch");
-         }
+         this->check_triangular_solve_operands(U, y);
          // copy the RHS into this
          blas1::copy(this->size(), y.data(), this->data());
-         blas3::triangular_back_solve('L', 'U', 'T' /* transpose */, 'N' /* non-unit */, y.size(), 1, 1., U.data(),
+         blas3::triangular_back_solve('L', 'U', 'T' /* transpose */, 'N' /* non-unit */, this->size(), 1, 1., U.data(),
             U.leading_dimension, this->data(), this->size());
          return *this;
       }
@@ -239,12 +284,10 @@ namespace uno {
       View<T>& operator=(Multiplication<Inverse<UpperTriangular<Matrix>>, Vector>&& expression) {
          const auto& U = expression.get_left().get_matrix().get_matrix();
          const auto& y = expression.get_right();
-         if (this->size() != U.number_columns) {
-            throw std::runtime_error("Dimension mismatch");
-         }
+         this->check_triangular_solve_operands(U, y);
          // copy the RHS into this
          blas1::copy(this->size(), y.data(), this->data());
-         blas3::triangular_back_solve('L', 'U', 'N' /* no transpose */, 'N' /* non-unit */, y.size(), 1, 1., U.data(),
+         blas3::triangular_back_solve('L', 'U', 'N' /* no transpose */, 'N' /* non-unit */, this->size(), 1, 1., U.data(),
             U.leading_dimension, this->data(), this->size());
          return *this;
       }
@@ -254,6 +297,9 @@ namespace uno {
       View& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
+         if (this->aliasing(x) != Aliasing::NONE) {
+            throw std::invalid_argument("View::operator=: y = Aᵀ x cannot be computed in place (x overlaps y)");
+         }
          if (A.number_rows != x.size()) {
             throw std::invalid_argument("Dimension mismatch");
          }
@@ -307,6 +353,43 @@ namespace uno {
 
       void operator*=(T factor) {
          this->scale(factor);
+      }
+
+   private:
+      // this = x + a * y, robust to x and/or y being exactly this view
+      template <typename Vector1, typename Vector2>
+      void assign_linear_combination(const Vector1& x, double a, const Vector2& y) {
+         const Aliasing x_aliasing = this->aliasing(x);
+         const Aliasing y_aliasing = this->aliasing(y);
+         if (x_aliasing == Aliasing::PARTIAL || y_aliasing == Aliasing::PARTIAL) {
+            throw std::invalid_argument("View::operator=: the operands of z = x + a y partially overlap z");
+         }
+         if (y_aliasing == Aliasing::EXACT) {
+            if (x_aliasing == Aliasing::EXACT) { // z = (1 + a) z
+               this->scale(1. + a);
+            }
+            else if constexpr (has_contiguous_storage<Vector1>::value) { // z = a z + x
+               this->scale(a);
+               *this += x;
+            }
+            else {
+               throw std::invalid_argument("View::operator=: z = x + a z with an expression x is not supported");
+            }
+            return;
+         }
+         *this = x; // blas copy (tests this->size() == x.size())
+         blas1::add(this->size(), a, y.data(), this->data()); // axpy
+      }
+
+      // x := U⁻¹ y or U⁻ᵀ y: U is square and all dimensions agree, so that BLAS never reads or writes out of bounds
+      template <typename Matrix, typename Vector>
+      void check_triangular_solve_operands(const Matrix& U, const Vector& y) const {
+         if (U.number_rows != U.number_columns || this->size() != U.number_columns || y.size() != this->size()) {
+            throw std::invalid_argument("Dimension mismatch in triangular solve");
+         }
+         if (this->aliasing(y) == Aliasing::PARTIAL) {
+            throw std::invalid_argument("View::operator=: the RHS of the triangular solve partially overlaps the solution");
+         }
       }
    };
 

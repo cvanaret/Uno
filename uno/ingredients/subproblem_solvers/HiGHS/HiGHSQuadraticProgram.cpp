@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
+#include <string>
+#include <utility>
 #include "HiGHSQuadraticProgram.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
@@ -55,6 +58,11 @@ namespace uno {
          const Vector<uno_int>& hessian_column_indices, const Vector<double>& hessian_values,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) {
+      // reject malformed data before anything is (re)allocated or written
+      QuadraticProgram::validate_coo_data(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,
+         hessian_row_indices, hessian_column_indices, hessian_values, variables_lower_bounds, variables_upper_bounds,
+         constraints_lower_bounds, constraints_upper_bounds);
+
       // infer the dimensions from the data
       this->number_variables = linear_objective.size();
       this->number_constraints = constraints_lower_bounds.size();
@@ -197,8 +205,20 @@ namespace uno {
    // jacobian_row_indices/jacobian_column_indices. Shared by the Subproblem path and the data-driven path.
    void HiGHSQuadraticProgram::build_csc_jacobian_from_coo(size_t number_variables, size_t number_constraints,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices) {
-      (void) number_constraints;
       const size_t number_jacobian_nonzeros = jacobian_row_indices.size();
+      // the column starts are written based on the column indices: check them (and the row indices) first
+      if (jacobian_column_indices.size() != number_jacobian_nonzeros) {
+         throw std::invalid_argument("HiGHSQuadraticProgram: inconsistent lengths of the Jacobian COO arrays");
+      }
+      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
+         const uno_int constraint_index = jacobian_row_indices[nonzero_index];
+         const uno_int variable_index = jacobian_column_indices[nonzero_index];
+         if (constraint_index < 0 || number_constraints <= static_cast<size_t>(constraint_index) ||
+               variable_index < 0 || number_variables <= static_cast<size_t>(variable_index)) {
+            throw std::out_of_range("HiGHSQuadraticProgram: Jacobian entry (" + std::to_string(constraint_index) + ", " +
+               std::to_string(variable_index) + ") is out of range");
+         }
+      }
       // column-wise constraint Jacobian
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kColwise;
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
@@ -231,7 +251,6 @@ namespace uno {
 
          // variable index is used to build the pointers to the column starts
          const uno_int variable_index = jacobian_column_indices[permuted_nonzero_index];
-         assert(current_variable <= variable_index);
          while (current_variable < variable_index) {
             ++current_variable;
             this->model.lp_.a_matrix_.start_[static_cast<size_t>(current_variable)] = static_cast<HighsInt>(jacobian_nonzero_index);
@@ -248,6 +267,23 @@ namespace uno {
    // already present in hessian_row_indices/hessian_column_indices. Shared by both build paths.
    void HiGHSQuadraticProgram::build_csc_hessian_from_coo(size_t number_variables) {
       const size_t number_hessian_nonzeros = this->hessian_row_indices.size();
+      // the column starts are written based on the column indices: check them (and the row indices) first
+      if (this->hessian_column_indices.size() != number_hessian_nonzeros || this->hessian_values.size() != number_hessian_nonzeros) {
+         throw std::invalid_argument("HiGHSQuadraticProgram: inconsistent lengths of the Hessian COO arrays");
+      }
+      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
+         uno_int& row_index = this->hessian_row_indices[nonzero_index];
+         uno_int& column_index = this->hessian_column_indices[nonzero_index];
+         if (row_index < 0 || number_variables <= static_cast<size_t>(row_index) ||
+               column_index < 0 || number_variables <= static_cast<size_t>(column_index)) {
+            throw std::out_of_range("HiGHSQuadraticProgram: Hessian entry (" + std::to_string(row_index) + ", " +
+               std::to_string(column_index) + ") is out of range");
+         }
+         // HiGHS expects the lower triangle: an entry of the upper triangle is mirrored (the Hessian is symmetric)
+         if (row_index < column_index) {
+            std::swap(row_index, column_index);
+         }
+      }
       this->model.hessian_.dim_ = static_cast<HighsInt>(number_variables);
       this->model.hessian_.format_ = HessianFormat::kTriangular;
       this->model.hessian_.index_.resize(number_hessian_nonzeros);
@@ -281,7 +317,6 @@ namespace uno {
 
          // column index
          const uno_int column_index = this->hessian_column_indices[permuted_nonzero_index];
-         assert(current_column <= column_index);
          while (current_column < column_index) {
             ++current_column;
             this->model.hessian_.start_[static_cast<size_t>(current_column)] = static_cast<HighsInt>(hessian_nonzero_index);

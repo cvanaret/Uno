@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <limits>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
@@ -42,23 +43,48 @@ namespace uno {
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
       DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
-      // the functions are scaled at the initial point
-      Vector<double> initial_primals(model.number_variables);
-      model.initial_primal_point(initial_primals);
+      // the whole solve lifecycle (reformulations of the model included) is guarded: an error is reported in the Result
+      try {
+         // the functions are scaled at the initial point
+         Vector<double> initial_primals(model.number_variables);
+         model.initial_primal_point(initial_primals);
 
-      // reformulate the model if:
-      // - the user wants an interior-point method with log barrier function
-      // - the model has bound constraints or inequality constraints
-      if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
-            (model.has_bound_constraints() || model.has_inequality_constraints())) {
-         // slightly relax the bound constraints. As in IPOPT, the original (unscaled) bounds are relaxed: relaxing the
-         // scaled bounds would allow violations of the original constraints of up to relaxation/constraint scaling
-         const BoundRelaxedModel bound_relaxed_model(model, options);
-         const ScaledModel scaled_model(bound_relaxed_model, initial_primals, options);
+         // reformulate the model if:
+         // - the user wants an interior-point method with log barrier function
+         // - the model has bound constraints or inequality constraints
+         if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
+               (model.has_bound_constraints() || model.has_inequality_constraints())) {
+            // slightly relax the bound constraints. As in IPOPT, the original (unscaled) bounds are relaxed: relaxing the
+            // scaled bounds would allow violations of the original constraints of up to relaxation/constraint scaling
+            const BoundRelaxedModel bound_relaxed_model(model, options);
+            const ScaledModel scaled_model(bound_relaxed_model, initial_primals, options);
+            return uno_solve(model, scaled_model, options, user_callbacks);
+         }
+         const ScaledModel scaled_model(model, initial_primals, options);
          return uno_solve(model, scaled_model, options, user_callbacks);
       }
-      const ScaledModel scaled_model(model, initial_primals, options);
-      return uno_solve(model, scaled_model, options, user_callbacks);
+      catch (const EvaluationError& e) {
+         DISCRETE << "An evaluation error occurred: " << e.what() << '\n';
+         return this->create_failure_result(model, OptimizationStatus::EVALUATION_ERROR, options.get_bool("print_solution"));
+      }
+      catch (const std::exception& e) {
+         DISCRETE << "An error occurred: " << e.what() << '\n';
+         return this->create_failure_result(model, OptimizationStatus::ALGORITHMIC_ERROR, options.get_bool("print_solution"));
+      }
+   }
+
+   // result of a solve that failed outside the optimization loop: no iterate is available
+   Result Uno::create_failure_result(const Model& model, OptimizationStatus optimization_status, bool print_solution) {
+      this->globalization_mechanism.reset();
+      this->method_description = "strategy combination not initialized";
+      Iterate iterate(model.number_variables, model.number_constraints);
+      Evaluations evaluations(model);
+      evaluations.objective = std::numeric_limits<double>::quiet_NaN();
+      evaluations.constraints.fill(std::numeric_limits<double>::quiet_NaN());
+      Result result = this->create_result(model, optimization_status, std::move(iterate), std::move(evaluations), 0,
+         Timers{}, {});
+      this->print_optimization_summary(result, print_solution);
+      return result;
    }
 
    // protected solve function
@@ -136,7 +162,12 @@ namespace uno {
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
 
-      this->postprocess_solution(user_model, current_iterate, evaluation_cache.current_evaluations);
+      const bool valid_final_evaluations = this->postprocess_solution(user_model, current_iterate,
+         evaluation_cache.current_evaluations);
+      // a successful solve whose function values could not be evaluated at the final iterate is not a success
+      if (!valid_final_evaluations && optimization_status == OptimizationStatus::SUCCESS) {
+         optimization_status = OptimizationStatus::EVALUATION_ERROR;
+      }
       statistics.timers.wallclock.stop();
       Result result = this->create_result(model, optimization_status, std::move(current_iterate),
          std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
@@ -261,7 +292,9 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_solution(const Model& user_model, Iterate& iterate, Evaluations& evaluations) const {
+   // returns false if the objective or the constraints could not be evaluated at the final iterate. In that case, the
+   // corresponding values are set to NaN, so that stale or partially written values are never returned
+   bool Uno::postprocess_solution(const Model& user_model, Iterate& iterate, Evaluations& evaluations) const {
       // 1. primal-dual postprocessing only (unscaling of the multipliers, removal of slacks, fixed variables, ...)
       if (this->globalization_mechanism != nullptr) {
          this->globalization_mechanism->postprocess_solution(iterate, evaluations);
@@ -269,20 +302,28 @@ namespace uno {
       // 2. function values of the original model at the final primals. The postprocessing chain has either converted
       // the cached values to the units of the original model (ScaledModel) or invalidated them (e.g. snapped fixed
       // variables): only the invalidated values are evaluated, so that the user functions are not called again needlessly
+      bool valid_evaluations = true;
       try {
          evaluations.evaluate_objective(user_model, iterate.primals);
       }
       catch (const std::exception& e) {
          DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
-         evaluations.objective = Inf;
+         evaluations.objective = std::numeric_limits<double>::quiet_NaN();
+         evaluations.is_objective_computed = false;
+         valid_evaluations = false;
       }
       try {
          evaluations.evaluate_constraints(user_model, iterate.primals);
       }
       catch (const std::exception& e) {
          DISCRETE  << "The constraints could not be evaluated at the final iterate: " << e.what()  << '\n';
+         // the constraint vector may be stale or partially written
+         evaluations.constraints.fill(std::numeric_limits<double>::quiet_NaN());
+         evaluations.are_constraints_computed = false;
+         valid_evaluations = false;
       }
       DEBUG2 << "Final iterate:\n" << iterate;
+      return valid_evaluations;
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,

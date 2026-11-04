@@ -906,14 +906,14 @@ namespace uno {
       size_t index = 0;
       for (const size_t variable_index: this->lower_bounded_variables) {
          direction_multipliers.lower_bounds[variable_index] = this->bound_dual_direction_buffer[index++];
-         if (is_infinite(direction_multipliers.lower_bounds[variable_index])) {
-            throw std::runtime_error("The lower bound dual is infinite");
+         if (!std::isfinite(direction_multipliers.lower_bounds[variable_index])) {
+            throw std::runtime_error("The lower bound dual direction is not finite");
          }
       }
       for (const size_t variable_index: this->upper_bounded_variables) {
          direction_multipliers.upper_bounds[variable_index] = this->bound_dual_direction_buffer[index++];
-         if (is_infinite(direction_multipliers.upper_bounds[variable_index])) {
-            throw std::runtime_error("The upper bound dual is infinite");
+         if (!std::isfinite(direction_multipliers.upper_bounds[variable_index])) {
+            throw std::runtime_error("The upper bound dual direction is not finite");
          }
       }
    }
