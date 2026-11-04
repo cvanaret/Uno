@@ -138,6 +138,19 @@ sed -i 's/(*opt)/opt->count() > 0/' extern/cli11/CLI11.hpp
 # fix-destroy.patch
 sed -i 's/Highs::resetGlobalScheduler(true);//' highs/interfaces/highs_c_api.cpp
 
+# On macOS, HiGHS hard-codes `-framework Accelerate` for HiPO in
+# cmake/FindHipoDeps.cmake and consults neither BLA_VENDOR nor BLAS_LIBRARIES.
+# Neutralise the three APPLE branches (highs_configure_blas_target,
+# highs_configure_blas_metadata, highs_link_blas) so HiPO links the OpenBLAS we
+# ship: a single BLAS in the binary rather than Accelerate alongside OpenBLAS.
+# HIPO_USES_APPLE_BLAS is licensing metadata only, no C++ source depends on it.
+if [[ "${target}" == *apple* ]]; then
+    sed -i 's/^    if(APPLE)$/    if(FALSE) # Uno: link our OpenBLAS, not Accelerate/' cmake/FindHipoDeps.cmake
+    # Fail loudly instead of silently falling back to Accelerate
+    grep -q 'if(FALSE) # Uno' cmake/FindHipoDeps.cmake || \
+        { echo "ERROR: the HiGHS Accelerate patch did not apply"; exit 1; }
+fi
+
 mkdir build
 cd build
 cmake .. \
@@ -150,7 +163,10 @@ cmake .. \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
+    -DBLA_VENDOR=OpenBLAS \
     -DBLAS_LIBRARIES=${libdir}/libopenblas.${dlext} \
+    -DOPENBLAS_LIB=${libdir}/libopenblas.${dlext} \
+    -DOPENBLAS_INCLUDE_DIR=${includedir} \
     -DBUILD_SHARED_EXTRAS_LIB=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
