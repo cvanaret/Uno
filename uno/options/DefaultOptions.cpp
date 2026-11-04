@@ -207,7 +207,7 @@ namespace uno {
       options.set_double("adaptive_mu_sigma_min", 1e-6);
       options.set_double("adaptive_mu_sigma_max", 1e2);
       options.set_double("adaptive_mu_min", 1e-11);
-      options.set_double("adaptive_mu_max_factor", 1e3);
+      options.set_double("adaptive_mu_max_factor", 10.);
       options.set_double("adaptive_mu_monotone_init_factor", 0.8);
       options.set_double("adaptive_mu_filter_margin_factor", 1e-5);
       options.set_double("adaptive_mu_filter_max_margin", 1);

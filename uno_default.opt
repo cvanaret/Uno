@@ -446,7 +446,7 @@ adaptive_mu_sigma_max 1e2
 adaptive_mu_min 1e-11
 
 # Upper bound of the adaptive barrier parameter, relative to the initial average complementarity (double)
-adaptive_mu_max_factor 1e3
+adaptive_mu_max_factor 10
 
 # Barrier parameter (relative to the average complementarity) when switching to the fixed mode (double)
 adaptive_mu_monotone_init_factor 0.8

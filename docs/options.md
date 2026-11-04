@@ -250,7 +250,7 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 | `adaptive_mu_sigma_min` | double | 1e-6 | Lower bound of the centering parameter in the adaptive barrier update |
 | `adaptive_mu_sigma_max` | double | 1e2 | Upper bound of the centering parameter in the adaptive barrier update |
 | `adaptive_mu_min` | double | 1e-11 | Lower bound of the barrier parameter in the adaptive barrier update |
-| `adaptive_mu_max_factor` | double | 1e3 | Upper bound of the adaptive barrier parameter, relative to the initial average complementarity |
+| `adaptive_mu_max_factor` | double | 10 | Upper bound of the adaptive barrier parameter, relative to the initial average complementarity |
 | `adaptive_mu_monotone_init_factor` | double | 0.8 | Barrier parameter (relative to the average complementarity) when switching to the fixed mode |
 | `adaptive_mu_filter_margin_factor` | double | 1e-5 | Margin factor of the filter that decides the free mode of the adaptive barrier update |
 | `adaptive_mu_filter_max_margin` | double | 1 | Maximum margin of the filter that decides the free mode of the adaptive barrier update |
