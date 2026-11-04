@@ -119,6 +119,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    # parameterized over the available linear solvers (no test instantiated if none is available)
    unotest/functional_tests/IterativeRefinementTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
+   unotest/functional_tests/LBFGSTests.cpp
    unotest/functional_tests/NewtonSystemTests.cpp
    unotest/functional_tests/PostprocessingEvaluationsTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
