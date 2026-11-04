@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <chrono>
+#include <limits>
+#include <stdexcept>
 #include <thread>
 #include <gtest/gtest.h>
 #if !defined(_WIN32)
@@ -167,4 +169,99 @@ TEST(HiGHSSolver, NonbasicVariablesLieOnTheirActiveBound) {
    // the upper bound of d0 is active (the unconstrained minimizer is d0 = 0.5): complementarity must hold
    EXPECT_NEAR(direction.multipliers.upper_bounds[0], -1., 1e-3);
    EXPECT_DOUBLE_EQ(direction.primals[0], upper_bound);
+}
+namespace {
+   // min 1/2 (x0^2 + x1^2) - x0 x1 / 2 - x0  s.t.  x0 + x1 <= 1,  0 <= x <= 10
+   struct SmallQP {
+      Vector<double> linear_objective{-1., 0.};
+      Vector<uno_int> jacobian_row_indices{0, 0};
+      Vector<uno_int> jacobian_column_indices{0, 1};
+      Vector<double> jacobian_values{1., 1.};
+      Vector<uno_int> hessian_row_indices{0, 1, 1};
+      Vector<uno_int> hessian_column_indices{0, 0, 1};
+      Vector<double> hessian_values{1., -0.5, 1.};
+      std::vector<double> variables_lower_bounds{0., 0.};
+      std::vector<double> variables_upper_bounds{10., 10.};
+      std::vector<double> constraints_lower_bounds{-Inf};
+      std::vector<double> constraints_upper_bounds{1.};
+
+      void fill(QuadraticProgram& quadratic_program) const {
+         quadratic_program.fill(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,
+            hessian_row_indices, hessian_column_indices, hessian_values, variables_lower_bounds, variables_upper_bounds,
+            constraints_lower_bounds, constraints_upper_bounds);
+      }
+   };
+
+   Direction solve(HiGHSSolver& solver) {
+      Direction direction(2, 1);
+      const WarmstartInformation warmstart_information{};
+      Statistics statistics;
+      solver.solve(statistics, Vector<double>(2), direction, warmstart_information);
+      return direction;
+   }
+} // namespace
+
+// Bug: the COO -> CSC conversion trusted the indices: a column index >= number of variables advanced the column
+// counter past the end of the column starts array (out-of-bounds write), and inconsistent array lengths were read out
+// of bounds. Malformed data must be rejected before anything is written.
+TEST(HiGHSSolver, MalformedCOODataIsRejected) {
+   Options options;
+   options.set_bool("print_subproblem", false);
+   HiGHSSolver solver(options);
+   QuadraticProgram& quadratic_program = solver.get_quadratic_program();
+   {
+      SmallQP qp;
+      qp.jacobian_column_indices[1] = 2; // out of range
+      EXPECT_THROW(qp.fill(quadratic_program), std::invalid_argument);
+   }
+   {
+      SmallQP qp;
+      qp.jacobian_row_indices[0] = -1; // out of range
+      EXPECT_THROW(qp.fill(quadratic_program), std::invalid_argument);
+   }
+   {
+      SmallQP qp;
+      qp.hessian_row_indices[2] = 5; // out of range
+      EXPECT_THROW(qp.fill(quadratic_program), std::invalid_argument);
+   }
+   {
+      SmallQP qp;
+      qp.jacobian_values = Vector<double>{1.}; // inconsistent lengths
+      EXPECT_THROW(qp.fill(quadratic_program), std::invalid_argument);
+   }
+   {
+      SmallQP qp;
+      qp.hessian_values[0] = std::numeric_limits<double>::quiet_NaN();
+      EXPECT_THROW(qp.fill(quadratic_program), std::invalid_argument);
+   }
+   {
+      SmallQP qp;
+      qp.variables_upper_bounds.pop_back(); // inconsistent bound size
+      EXPECT_THROW(qp.fill(quadratic_program), std::invalid_argument);
+   }
+   // valid data can still be filled and solved afterwards
+   const SmallQP qp;
+   qp.fill(quadratic_program);
+   EXPECT_EQ(solve(solver).status, SubproblemStatus::OPTIMAL);
+}
+
+// the COO Hessian may be given as either triangle: HiGHS expects the lower one
+TEST(HiGHSSolver, UpperTriangularHessianIsMirrored) {
+   Options options;
+   options.set_bool("print_subproblem", false);
+   HiGHSSolver lower_solver(options);
+   HiGHSSolver upper_solver(options);
+   const SmallQP lower_qp;
+   SmallQP upper_qp;
+   upper_qp.hessian_row_indices = Vector<uno_int>{0, 0, 1};
+   upper_qp.hessian_column_indices = Vector<uno_int>{0, 1, 1};
+   lower_qp.fill(lower_solver.get_quadratic_program());
+   upper_qp.fill(upper_solver.get_quadratic_program());
+   const Direction lower_direction = solve(lower_solver);
+   const Direction upper_direction = solve(upper_solver);
+   ASSERT_EQ(lower_direction.status, SubproblemStatus::OPTIMAL);
+   ASSERT_EQ(upper_direction.status, SubproblemStatus::OPTIMAL);
+   for (size_t index: Range(2)) {
+      EXPECT_NEAR(lower_direction.primals[index], upper_direction.primals[index], 1e-8);
+   }
 }

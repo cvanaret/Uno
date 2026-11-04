@@ -124,6 +124,11 @@ namespace uno {
          const Vector<double>& hessian_values,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) {
+      // reject malformed data before anything is (re)allocated or written
+      QuadraticProgram::validate_coo_data(linear_objective, jacobian_row_indices, jacobian_column_indices, jacobian_values,
+         hessian_row_indices, hessian_column_indices, hessian_values, variables_lower_bounds, variables_upper_bounds,
+         constraints_lower_bounds, constraints_upper_bounds);
+
       // infer the dimensions from the data
       this->number_variables = linear_objective.size();
       this->number_constraints = constraints_lower_bounds.size();
