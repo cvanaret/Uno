@@ -223,7 +223,9 @@ cmake .. \
     -DBLA_VENDOR=Generic \
     -DBLAS_LIBRARIES=${prefix}/lib/libblas.a \
     -DBUILD_SHARED_EXTRAS_LIB=OFF \
-    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_UNITY_BUILD=ON \
+    -DCMAKE_UNITY_BUILD_BATCH_SIZE=16
 
 if [[ "${target}" == *-linux* ]]; then
         make -j ${nproc}
