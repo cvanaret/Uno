@@ -1,8 +1,9 @@
 name: CUTEst tests on HS15 and HIMMELBD
 
 # Installs Uno as a shared library, compiles CUTEst (classic ARCHDefs/make build,
-# the one the `runcutest -p uno` interface relies on), and solves the HS15 instance.
-# Then solves a few small instances with the filtersqp and ipopt presets, each with
+# the one the `runcutest -p uno` interface relies on), and:
+# - solves the HS15 instance with Uno's default options;
+# - solves the HS15 and HIMMELBD instances with the filtersqp and ipopt presets, each with
 # its default globalization strategy (filter method) and with the merit function.
 
 on:
@@ -26,7 +27,7 @@ on:
       - 'docs/**'
 
 jobs:
-  uno-cutest-hs15:
+  uno-cutest-tests:
     runs-on: ubuntu-latest
 
     env:
@@ -108,19 +109,16 @@ jobs:
           ./install_cutest < install_config
 
       # ----------------------------------------------------------------
-      # 3) Provide HS15 and solve it through the Uno interface
+      # 3) Provide HS15 and HIMMELBD, and solve through the Uno interface
       # ----------------------------------------------------------------
-      - name: Get the SIF test set (MASTSIF — contains HS15.SIF)
+      - name: Get the SIF test set (MASTSIF — contains HS15.SIF and HIMMELBD.SIF)
         run: git clone --depth=1 https://bitbucket.org/optrove/sif.git "$MASTSIF"
-        # Lighter alternative if you only ever need HS15:
-        #   mkdir -p "$MASTSIF"
-        #   curl -L -o "$MASTSIF/HS15.SIF" \
-        #     https://bitbucket.org/optrove/sif/raw/HEAD/HS15.SIF
 
-      #- name: Run HS15 with shipped uno.opt
+      #- name: Run HS15 and HIMMELBD with shipped uno.opt
       #  run: |
       #    mkdir run-shipped && cd run-shipped
       #    bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HS15
+      #    bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HIMMELBD
 
       - name: Run HS15 with custom uno.opt
         if: ${{ !cancelled() }}
