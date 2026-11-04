@@ -20,6 +20,7 @@ namespace {
    constexpr double theta_mu = 1.5;
    constexpr double k_epsilon = 10.;
    constexpr double update_fraction = 10.;
+   constexpr double complementarity_tolerance = 1e-4;
    constexpr double minimal_parameter = dual_tolerance / update_fraction;
 
    Options make_barrier_options() {
@@ -30,6 +31,7 @@ namespace {
       options.set_double("barrier_theta_mu", theta_mu);
       options.set_double("barrier_k_epsilon", k_epsilon);
       options.set_double("barrier_update_fraction", update_fraction);
+      options.set_double("tight_unscaled_complementarity_tolerance", complementarity_tolerance);
       return options;
    }
 }
@@ -87,4 +89,14 @@ TEST(BarrierParameterUpdateStrategy, ForcedDecreaseBelowLowerBound) {
    strategy.set_barrier_parameter(minimal_parameter / 100.);
    EXPECT_FALSE(strategy.force_barrier_parameter_decrease());
    EXPECT_EQ(strategy.get_barrier_parameter(), minimal_parameter);
+}
+
+// with a dual tolerance looser than the complementarity tolerance of the termination test, the lower bound follows the
+// latter, so that the complementarity can reach it
+TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsComplementarityTolerance) {
+   Options options = make_barrier_options();
+   options.set_double("dual_tolerance", 1e-2);
+   Strategy strategy(options);
+   while (strategy.force_barrier_parameter_decrease()) { }
+   EXPECT_EQ(strategy.get_barrier_parameter(), complementarity_tolerance / update_fraction);
 }

@@ -40,7 +40,8 @@ namespace uno {
    template <typename BarrierProblem>
    BarrierParameterUpdateStrategy<BarrierProblem>::BarrierParameterUpdateStrategy(const Options& options):
       barrier_parameter(options.get_double("barrier_initial_parameter")),
-      dual_tolerance(options.get_double("dual_tolerance")),
+      // the floor of the barrier parameter also respects the unscaled complementarity tolerance of the termination test
+      dual_tolerance(std::min(options.get_double("dual_tolerance"), options.get_double("tight_unscaled_complementarity_tolerance"))),
       parameters({
          options.get_double("barrier_k_mu"),
          options.get_double("barrier_theta_mu"),
