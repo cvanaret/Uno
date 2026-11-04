@@ -118,7 +118,7 @@ namespace uno {
    bool BarrierParameterUpdateStrategy<BarrierProblem>::force_barrier_parameter_decrease() {
       const double barrier_parameter_threshold = this->minimal_barrier_parameter / this->parameters.update_fraction;
       const double old_barrier_parameter = this->barrier_parameter;
-      this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
+      this->barrier_parameter = std::max(barrier_parameter_threshold, std::min(this->parameters.k_mu * this->barrier_parameter,
          std::pow(this->barrier_parameter, this->parameters.theta_mu)));
       DEBUG << "Barrier parameter mu forcefully updated to " << this->barrier_parameter << '\n';
       return (this->barrier_parameter < old_barrier_parameter);
