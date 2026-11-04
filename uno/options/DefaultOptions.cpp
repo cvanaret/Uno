@@ -86,6 +86,7 @@ namespace uno {
 
       /** merit function options **/
       options.set_double("sufficient_infeasibility_decrease_ratio", 0.9);
+      options.set_double("merit_infeasibility_reduction_fraction", 0.1);
 
       /** filter method options **/
       options.set_double("filter_beta", 0.999);

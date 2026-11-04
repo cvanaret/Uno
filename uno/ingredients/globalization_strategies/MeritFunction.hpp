@@ -25,8 +25,13 @@ namespace uno {
    protected:
       double smallest_known_infeasibility{Inf};
       const double sufficient_infeasibility_decrease_ratio;
+      // inverse penalty parameter τ ∈ (0, 1]: scales the optimality measure (objective + auxiliary) of the problem.
+      // Nonincreasing until reset (the problem parameterization changes)
+      double inverse_penalty_parameter{1.};
+      const double infeasibility_reduction_fraction;
 
-      [[nodiscard]] static double constrained_merit_function(const ProgressMeasures& progress, double objective_multiplier);
+      void update_inverse_penalty_parameter(const ProgressMeasures& predicted_reductions, double objective_multiplier);
+      [[nodiscard]] double merit_function(const ProgressMeasures& progress, double objective_multiplier) const;
    };
 } // namespace
 
