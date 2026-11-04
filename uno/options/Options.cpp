@@ -55,6 +55,7 @@ namespace uno {
       {"switching_merit_exponent", OptionType::DOUBLE},
       {"switching_infeasibility_exponent", OptionType::DOUBLE},
       {"sufficient_infeasibility_decrease_ratio", OptionType::DOUBLE},
+      {"merit_infeasibility_reduction_fraction", OptionType::DOUBLE},
       {"filter_beta", OptionType::DOUBLE},
       {"filter_gamma", OptionType::DOUBLE},
       {"filter_ubd", OptionType::DOUBLE},

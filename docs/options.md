@@ -113,9 +113,10 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 
 ## Merit function options
 
-| Option                                     | Type    | Default | Description                             |
-| :---                                       | :---    | :---    |:----------------------------------------|
-| `sufficient_infeasibility_decrease_ratio`  | double  | 0.9     | Sufficient infeasibility decrease ratio |
+| Option                                     | Type    | Default | Description                                                                                                                         |
+| :---                                       | :---    | :---    |:------------------------------------------------------------------------------------------------------------------------------------|
+| `sufficient_infeasibility_decrease_ratio`  | double  | 0.9     | Sufficient infeasibility decrease ratio                                                                                             |
+| `merit_infeasibility_reduction_fraction`   | double  | 0.1     | Fraction of the predicted infeasibility reduction that the merit function model should achieve, used to select the objective multiplier |
 
 ## Filter method options
 
