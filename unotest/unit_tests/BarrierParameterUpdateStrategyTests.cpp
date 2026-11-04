@@ -20,7 +20,8 @@ namespace {
    constexpr double theta_mu = 1.5;
    constexpr double k_epsilon = 10.;
    constexpr double update_fraction = 10.;
-   constexpr double minimal_parameter = dual_tolerance / update_fraction;
+   constexpr double complementarity_tolerance = 1e-4;
+   constexpr double barrier_parameter_threshold = dual_tolerance / update_fraction;
 
    Options make_barrier_options() {
       Options options;
@@ -30,6 +31,7 @@ namespace {
       options.set_double("barrier_theta_mu", theta_mu);
       options.set_double("barrier_k_epsilon", k_epsilon);
       options.set_double("barrier_update_fraction", update_fraction);
+      options.set_double("tight_unscaled_complementarity_tolerance", complementarity_tolerance);
       return options;
    }
 }
@@ -72,19 +74,29 @@ TEST(BarrierParameterUpdateStrategy, ForcedDecreaseSaturatesAtLowerBound) {
    double previous_parameter = strategy.get_barrier_parameter();
    while (strategy.force_barrier_parameter_decrease()) {
       ASSERT_LT(strategy.get_barrier_parameter(), previous_parameter);
-      ASSERT_GE(strategy.get_barrier_parameter(), minimal_parameter);
+      ASSERT_GE(strategy.get_barrier_parameter(), barrier_parameter_threshold);
       previous_parameter = strategy.get_barrier_parameter();
       ASSERT_LT(++number_decreases, 100u);
    }
-   EXPECT_EQ(strategy.get_barrier_parameter(), minimal_parameter);
+   EXPECT_EQ(strategy.get_barrier_parameter(), barrier_parameter_threshold);
    EXPECT_FALSE(strategy.force_barrier_parameter_decrease());
-   EXPECT_EQ(strategy.get_barrier_parameter(), minimal_parameter);
+   EXPECT_EQ(strategy.get_barrier_parameter(), barrier_parameter_threshold);
 }
 
 // a parameter set below the lower bound is pulled back up by a forced "decrease", which reports no decrease
 TEST(BarrierParameterUpdateStrategy, ForcedDecreaseBelowLowerBound) {
    Strategy strategy(make_barrier_options());
-   strategy.set_barrier_parameter(minimal_parameter / 100.);
+   strategy.set_barrier_parameter(barrier_parameter_threshold / 100.);
    EXPECT_FALSE(strategy.force_barrier_parameter_decrease());
-   EXPECT_EQ(strategy.get_barrier_parameter(), minimal_parameter);
+   EXPECT_EQ(strategy.get_barrier_parameter(), barrier_parameter_threshold);
+}
+
+// with a dual tolerance looser than the complementarity tolerance of the termination test, the lower bound follows the
+// latter, so that the complementarity can reach it
+TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsComplementarityTolerance) {
+   Options options = make_barrier_options();
+   options.set_double("dual_tolerance", 1e-2);
+   Strategy strategy(options);
+   while (strategy.force_barrier_parameter_decrease()) { }
+   EXPECT_EQ(strategy.get_barrier_parameter(), complementarity_tolerance / update_fraction);
 }
