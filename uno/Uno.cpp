@@ -43,23 +43,48 @@ namespace uno {
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
       DISCRETE << "Problem class: " << to_string(model.get_problem_type()) << '\n';
 
-      // the functions are scaled at the initial point
-      Vector<double> initial_primals(model.number_variables);
-      model.initial_primal_point(initial_primals);
+      // the whole solve lifecycle (reformulations of the model included) is guarded: an error is reported in the Result
+      try {
+         // the functions are scaled at the initial point
+         Vector<double> initial_primals(model.number_variables);
+         model.initial_primal_point(initial_primals);
 
-      // reformulate the model if:
-      // - the user wants an interior-point method with log barrier function
-      // - the model has bound constraints or inequality constraints
-      if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
-            (model.has_bound_constraints() || model.has_inequality_constraints())) {
-         // slightly relax the bound constraints. As in IPOPT, the original (unscaled) bounds are relaxed: relaxing the
-         // scaled bounds would allow violations of the original constraints of up to relaxation/constraint scaling
-         const BoundRelaxedModel bound_relaxed_model(model, options);
-         const ScaledModel scaled_model(bound_relaxed_model, initial_primals, options);
+         // reformulate the model if:
+         // - the user wants an interior-point method with log barrier function
+         // - the model has bound constraints or inequality constraints
+         if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log" &&
+               (model.has_bound_constraints() || model.has_inequality_constraints())) {
+            // slightly relax the bound constraints. As in IPOPT, the original (unscaled) bounds are relaxed: relaxing the
+            // scaled bounds would allow violations of the original constraints of up to relaxation/constraint scaling
+            const BoundRelaxedModel bound_relaxed_model(model, options);
+            const ScaledModel scaled_model(bound_relaxed_model, initial_primals, options);
+            return uno_solve(model, scaled_model, options, user_callbacks);
+         }
+         const ScaledModel scaled_model(model, initial_primals, options);
          return uno_solve(model, scaled_model, options, user_callbacks);
       }
-      const ScaledModel scaled_model(model, initial_primals, options);
-      return uno_solve(model, scaled_model, options, user_callbacks);
+      catch (const EvaluationError& e) {
+         DISCRETE << "An evaluation error occurred: " << e.what() << '\n';
+         return this->create_failure_result(model, OptimizationStatus::EVALUATION_ERROR, options.get_bool("print_solution"));
+      }
+      catch (const std::exception& e) {
+         DISCRETE << "An error occurred: " << e.what() << '\n';
+         return this->create_failure_result(model, OptimizationStatus::ALGORITHMIC_ERROR, options.get_bool("print_solution"));
+      }
+   }
+
+   // result of a solve that failed outside the optimization loop: no iterate is available
+   Result Uno::create_failure_result(const Model& model, OptimizationStatus optimization_status, bool print_solution) {
+      this->globalization_mechanism.reset();
+      this->method_description = "strategy combination not initialized";
+      Iterate iterate(model.number_variables, model.number_constraints);
+      Evaluations evaluations(model);
+      evaluations.objective = std::numeric_limits<double>::quiet_NaN();
+      evaluations.constraints.fill(std::numeric_limits<double>::quiet_NaN());
+      Result result = this->create_result(model, optimization_status, std::move(iterate), std::move(evaluations), 0,
+         Timers{}, {});
+      this->print_optimization_summary(result, print_solution);
+      return result;
    }
 
    // protected solve function

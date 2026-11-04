@@ -22,13 +22,20 @@ namespace uno {
          // evaluate the gradients at the current point
          Vector<double> objective_gradient(this->model.number_variables);
          Vector<double> jacobian_values(this->model.number_jacobian_nonzeros());
+         bool gradients_evaluated = true;
          try {
             this->model.evaluate_objective_gradient(initial_primals, objective_gradient);
             this->model.evaluate_jacobian(initial_primals, jacobian_values.data());
-            this->scaling.compute(this->model, objective_gradient, jacobian_values);
          }
-         catch (const EvaluationError&) {
-            DEBUG << "The gradients could not be evaluated at the initial point, functions will not be scaled\n";
+         // any failure of the user callbacks (not only an EvaluationError) disables the scaling. If the failure persists,
+         // it is reported (and classified) by the evaluation of the initial iterate
+         catch (const std::exception& exception) {
+            DEBUG << "The gradients could not be evaluated at the initial point (" << exception.what() <<
+               "), functions will not be scaled\n";
+            gradients_evaluated = false;
+         }
+         if (gradients_evaluated) {
+            this->scaling.compute(this->model, objective_gradient, jacobian_values);
          }
       }
 

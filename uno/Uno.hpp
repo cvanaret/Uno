@@ -48,6 +48,7 @@ namespace uno {
       [[nodiscard]] bool postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
          Evaluations&& evaluations, size_t major_iterations, const Timers& timers, std::vector<OptionOverride>&& option_overrides) const;
+      [[nodiscard]] Result create_failure_result(const Model& model, OptimizationStatus optimization_status, bool print_solution);
       static void postprocess_multipliers_signs(const Model& model, Result& result);
       void print_optimization_summary(const Result& result, bool print_solution) const;
    };
