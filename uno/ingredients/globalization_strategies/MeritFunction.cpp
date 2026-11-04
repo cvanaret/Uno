@@ -59,8 +59,8 @@ namespace uno {
       return (trial_iterate.progress.infeasibility <= this->sufficient_infeasibility_decrease_ratio * this->smallest_known_infeasibility);
    }
 
+   // the inverse penalty parameter is kept: it is nonincreasing within a phase (reset only in initialize())
    void MeritFunction::reset() {
-      this->inverse_penalty_parameter = 1.;
    }
 
    void MeritFunction::avoid_cycling_back_to(const ProgressMeasures& /*current_progress*/) {

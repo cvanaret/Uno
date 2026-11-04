@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 // selection of the inverse penalty parameter τ of the merit function τ (objective + auxiliary) + infeasibility:
-// τ is the largest value (nonincreasing until reset) such that pred(τ) ≥ σ Δinfeasibility, with σ = 0.1 (default)
+// τ is the largest value (nonincreasing within a phase) such that pred(τ) ≥ σ Δinfeasibility, with σ = 0.1 (default)
 
 #include <memory>
 #include <tuple>
@@ -90,13 +90,19 @@ TEST_F(MeritFunctionTest, ObjectiveMeasureUsesObjectiveMultiplier) {
    EXPECT_DOUBLE_EQ(this->merit_function->get_inverse_penalty_parameter(), 1.);
 }
 
-TEST_F(MeritFunctionTest, IsMonotoneUntilReset) {
+TEST_F(MeritFunctionTest, IsMonotoneWithinPhase) {
    std::ignore = this->test(progress(1., 0.), progress(0., 5.), progress(1., -9.));
    EXPECT_DOUBLE_EQ(this->merit_function->get_inverse_penalty_parameter(), 0.1);
    // threshold 0.9 > 0.1: τ is not increased
    std::ignore = this->test(progress(1., 0.), progress(0., 0.5), progress(1., -1.));
    EXPECT_DOUBLE_EQ(this->merit_function->get_inverse_penalty_parameter(), 0.1);
+   // reset() (e.g. barrier parameter update) does not increase τ
    this->merit_function->reset();
+   EXPECT_DOUBLE_EQ(this->merit_function->get_inverse_penalty_parameter(), 0.1);
+   // initialize() (start of a phase) does
+   Iterate iterate(1, 1);
+   iterate.progress = progress(1., 0.);
+   this->merit_function->initialize(this->statistics, iterate);
    EXPECT_DOUBLE_EQ(this->merit_function->get_inverse_penalty_parameter(), 1.);
 }
 
