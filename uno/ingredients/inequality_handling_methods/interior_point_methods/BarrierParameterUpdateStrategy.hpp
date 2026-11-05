@@ -22,7 +22,9 @@ namespace uno {
    template <typename BarrierProblem>
    class BarrierParameterUpdateStrategy {
    public:
-      explicit BarrierParameterUpdateStrategy(const Options& options);
+      // unscaled_complementarity_factor: ratio between the unscaled and the scaled complementarity (inverse of the
+      // objective scaling)
+      explicit BarrierParameterUpdateStrategy(const Options& options, double unscaled_complementarity_factor = 1.);
       [[nodiscard]] const double& get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
       [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
@@ -30,6 +32,7 @@ namespace uno {
       [[nodiscard]] bool force_barrier_parameter_decrease();
 
    protected:
+      static constexpr double minimal_barrier_parameter_safeguard{1e-11}; // IPOPT's default mu_min
       double barrier_parameter;
       const double minimal_barrier_parameter;
       const UpdateParameters parameters;
@@ -38,10 +41,14 @@ namespace uno {
    // class template implementation
 
    template <typename BarrierProblem>
-   BarrierParameterUpdateStrategy<BarrierProblem>::BarrierParameterUpdateStrategy(const Options& options):
+   BarrierParameterUpdateStrategy<BarrierProblem>::BarrierParameterUpdateStrategy(const Options& options,
+         double unscaled_complementarity_factor):
       barrier_parameter(options.get_double("barrier_initial_parameter")),
-      // the floor of the barrier parameter also respects the unscaled complementarity tolerance of the termination test
-      minimal_barrier_parameter(std::min(options.get_double("dual_tolerance"), options.get_double("tight_unscaled_complementarity_tolerance"))),
+      // the floor of the barrier parameter also respects the unscaled complementarity tolerance of the termination test,
+      // expressed in the scaled space (IPOPT: apply_obj_scaling(compl_inf_tol)). Otherwise, a small objective scaling makes
+      // the unscaled complementarity unreachable. It is safeguarded by IPOPT's default mu_min against tiny objective scalings
+      minimal_barrier_parameter(std::max(minimal_barrier_parameter_safeguard, std::min(options.get_double("dual_tolerance"),
+         options.get_double("tight_unscaled_complementarity_tolerance") / unscaled_complementarity_factor))),
       parameters({
          options.get_double("barrier_k_mu"),
          options.get_double("barrier_theta_mu"),

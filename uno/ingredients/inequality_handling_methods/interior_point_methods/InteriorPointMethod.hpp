@@ -121,7 +121,7 @@ namespace uno {
             options.get_double("barrier_default_multiplier"),
             std::pow(std::numeric_limits<double>::epsilon(), 0.75) // slack_move
          }),
-         barrier_parameter_update_strategy(options),
+         barrier_parameter_update_strategy(options, problem.model.unscaled_complementarity(1.)),
          barrier_problem(problem, this->parameters, this->barrier_parameter(), options.get_double("residual_scaling_threshold")),
          is_square_problem(is_square(problem)) {
       // create the ingredients
