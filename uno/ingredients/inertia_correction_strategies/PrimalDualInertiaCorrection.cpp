@@ -159,7 +159,10 @@ namespace uno {
             }
             singular = linear_solver.matrix_is_singular() || 0 < estimated_inertia.zero;
             missing_negative = estimated_inertia.negative < expected_inertia.negative;
-            missing_positive = estimated_inertia.positive < expected_inertia.positive;
+            // positive eigenvalues missing beyond the zero ones (those may be fixed by the dual regularization alone)
+            const size_t number_missing_positive = expected_inertia.positive - std::min(expected_inertia.positive,
+               estimated_inertia.positive);
+            missing_positive = estimated_inertia.zero < number_missing_positive;
          }
          DEBUG << "Number of attempts: " << number_attempts << '\n';
 
@@ -172,7 +175,9 @@ namespace uno {
             dual_regularization_added = true;
          }
 
-         // missing positive eigenvalues, or dual regularization is unavailable/exhausted -> increase the primal regularization
+         // missing positive eigenvalues, or dual regularization is unavailable/exhausted -> increase the primal regularization.
+         // When the dual regularization was just added to a singular matrix, it is tested alone first (IPOPT: delta_c > 0,
+         // delta_w = 0): a rank-deficient Jacobian does not require primal regularization
          if (missing_positive || !dual_regularization_added) {
             this->increase_primal_regularization(number_attempts);
          }
