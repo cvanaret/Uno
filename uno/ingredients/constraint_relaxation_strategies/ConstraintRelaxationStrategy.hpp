@@ -72,8 +72,8 @@ namespace uno {
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) = 0;
-      // the line search failed in the optimality phase. Returns true if the trial iterate was set to a terminal iterate
-      // (the current iterate or the last acceptable iterate) instead of switching to the feasibility problem
+      // the line search failed. Returns true if the trial iterate was set to a terminal iterate (the current iterate or
+      // the last acceptable iterate) instead of switching to (or failing in) the feasibility problem
       [[nodiscard]] virtual bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
@@ -82,8 +82,8 @@ namespace uno {
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
-      // whether the last iterate tested for termination satisfies the acceptable conditions
-      [[nodiscard]] bool is_last_iterate_acceptable() const { return this->last_iterate_acceptable; }
+      // status of the last iterate tested for termination wrt the acceptable conditions (NOT_OPTIMAL if not acceptable)
+      [[nodiscard]] SolutionStatus get_last_iterate_acceptable_status() const { return this->last_iterate_acceptable_status; }
       // number of updates of the parameterization (e.g. the barrier parameter) so far. Lets the globalization mechanism
       // detect that the problem definition changed (e.g. to reset the watchdog, as IPOPT does when mu changes)
       [[nodiscard]] size_t get_number_parameterization_updates() const { return this->number_parameterization_updates; }
@@ -113,7 +113,9 @@ namespace uno {
       std::optional<double> previous_objective{};
       // last iterate that satisfied the acceptable conditions (fallback upon line-search failure, see IPOPT)
       std::optional<Iterate> acceptable_iterate{};
-      bool last_iterate_acceptable{false};
+      // last iterate of the current feasibility phase that was an acceptable infeasible stationary point
+      std::optional<Iterate> acceptable_infeasible_iterate{};
+      SolutionStatus last_iterate_acceptable_status{SolutionStatus::NOT_OPTIMAL};
 
       template <typename Problem>
       [[nodiscard]] static bool satisfies_unscaled_tolerances(const Problem& problem, const Iterate& iterate,
@@ -126,6 +128,9 @@ namespace uno {
          const Evaluations& evaluations) const;
       template <typename Problem>
       [[nodiscard]] bool fall_back_after_line_search_failure(const Problem& problem, const Iterate& current_iterate,
+         Iterate& trial_iterate, const Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
+      template <typename Problem>
+      [[nodiscard]] bool fall_back_to_infeasible_stationary_point(const Problem& problem, const Iterate& current_iterate,
          Iterate& trial_iterate, const Evaluations& current_evaluations, Evaluations& trial_evaluations) const;
    };
 
@@ -178,12 +183,17 @@ namespace uno {
       if (evaluations.is_objective_computed) {
          this->previous_objective = evaluations.objective; // after the objective-change test
       }
-      this->last_iterate_acceptable = (status_acceptable != SolutionStatus::NOT_OPTIMAL);
+      this->last_iterate_acceptable_status = status_acceptable;
       if (status_acceptable == SolutionStatus::NOT_OPTIMAL) {
          this->acceptable_consecutive_iterations = 0;
          return SolutionStatus::NOT_OPTIMAL;
       }
-      this->acceptable_iterate = iterate;
+      if (status_acceptable == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         this->acceptable_infeasible_iterate = iterate;
+      }
+      else {
+         this->acceptable_iterate = iterate;
+      }
       ++this->acceptable_consecutive_iterations;
       if (this->acceptable_iteration_threshold <= this->acceptable_consecutive_iterations) {
          return status_acceptable;
@@ -199,12 +209,18 @@ namespace uno {
       // 1. scaled overall optimality error
       const SolutionStatus status = problem.check_first_order_convergence(iterate, this->acceptable_tolerance,
          this->acceptable_tolerance);
-      if (status != SolutionStatus::FEASIBLE_KKT_POINT) { // exclude infeasible points from the acceptable termination
+      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(iterate.scaled_residuals.primal_infeasibility,
+         evaluations.constraints, this->residual_norm);
+      // acceptable infeasible stationary point (IPOPT: the restoration phase converged to an acceptable point of local
+      // infeasibility). As in the tight test, the point should also be infeasible for the original (unscaled) constraints
+      if (status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         return (this->tight_unscaled_primal_infeasibility_tolerance < unscaled_primal_infeasibility) ? status :
+            SolutionStatus::NOT_OPTIMAL;
+      }
+      if (status != SolutionStatus::FEASIBLE_KKT_POINT) {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // 2-4. unscaled residuals
-      const double unscaled_primal_infeasibility = problem.model.unscaled_primal_infeasibility(iterate.scaled_residuals.primal_infeasibility,
-         evaluations.constraints, this->residual_norm);
       if (!satisfies_unscaled_tolerances(problem, iterate, unscaled_primal_infeasibility, this->acceptable_unscaled_stationarity_tolerance,
             this->acceptable_unscaled_primal_infeasibility_tolerance, this->acceptable_unscaled_complementarity_tolerance)) {
          return SolutionStatus::NOT_OPTIMAL;
@@ -229,7 +245,7 @@ namespace uno {
    bool ConstraintRelaxationStrategy::fall_back_after_line_search_failure(const Problem& problem, const Iterate& current_iterate,
          Iterate& trial_iterate, const Evaluations& current_evaluations, Evaluations& trial_evaluations) const {
       if (0 < this->acceptable_iteration_threshold && this->check_acceptable_termination(problem, current_iterate,
-            current_evaluations) != SolutionStatus::NOT_OPTIMAL) {
+            current_evaluations) == SolutionStatus::FEASIBLE_KKT_POINT) {
          WARNING << "The line search failed at an acceptable iterate\n";
          trial_iterate = current_iterate;
          trial_evaluations = current_evaluations;
@@ -250,6 +266,34 @@ namespace uno {
          throw std::runtime_error("The line search failed at an almost feasible point and no acceptable iterate is available");
       }
       return false;
+   }
+
+   // upon line-search failure in the feasibility phase: terminate at the current iterate if it is an acceptable infeasible
+   // stationary point, otherwise at the last such iterate of the current feasibility phase (if any).
+   // Returns true if the trial iterate was set to a terminal iterate
+   template <typename Problem>
+   bool ConstraintRelaxationStrategy::fall_back_to_infeasible_stationary_point(const Problem& problem,
+         const Iterate& current_iterate, Iterate& trial_iterate, const Evaluations& current_evaluations,
+         Evaluations& trial_evaluations) const {
+      if (this->acceptable_iteration_threshold == 0) {
+         return false;
+      }
+      if (this->check_acceptable_termination(problem, current_iterate, current_evaluations) ==
+            SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         WARNING << "The line search failed at an acceptable infeasible stationary point\n";
+         trial_iterate = current_iterate;
+         trial_evaluations = current_evaluations;
+      }
+      else if (this->acceptable_infeasible_iterate.has_value()) {
+         WARNING << "The line search failed in the feasibility phase, the last acceptable infeasible stationary point is restored\n";
+         trial_iterate = *this->acceptable_infeasible_iterate;
+         trial_evaluations.reset(); // the functions are evaluated again at the restored iterate upon postprocessing
+      }
+      else {
+         return false;
+      }
+      trial_iterate.status = SolutionStatus::INFEASIBLE_STATIONARY_POINT;
+      return true;
    }
 } // namespace
 

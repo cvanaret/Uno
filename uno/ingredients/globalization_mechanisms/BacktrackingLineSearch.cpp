@@ -136,9 +136,8 @@ namespace uno {
          // if backtracking failed, switch to the feasibility problem from the watchdog iterate (below)
       }
 
-      // if the line search failed in the optimality phase, terminate at an acceptable iterate if possible
-      if (!this->constraint_relaxation_strategy->solving_feasibility_problem() &&
-            this->constraint_relaxation_strategy->terminate_at_line_search_failure(current_iterate, trial_iterate,
+      // if the line search failed, terminate at an acceptable iterate if possible
+      if (this->constraint_relaxation_strategy->terminate_at_line_search_failure(current_iterate, trial_iterate,
                evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations)) {
          statistics.set("Status", "acceptable");
          set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
@@ -375,8 +374,9 @@ namespace uno {
       if (force_parameterization_update && !parameterization_updated && trial_iterate.status == SolutionStatus::NOT_OPTIMAL) {
          DEBUG << "Tiny steps and the parameterization cannot be updated: terminating\n";
          // an iterate that satisfies the acceptable conditions is reported as such (as with acceptable termination)
-         if (this->constraint_relaxation_strategy->is_last_iterate_acceptable()) {
-            trial_iterate.status = SolutionStatus::FEASIBLE_KKT_POINT;
+         const SolutionStatus acceptable_status = this->constraint_relaxation_strategy->get_last_iterate_acceptable_status();
+         if (acceptable_status != SolutionStatus::NOT_OPTIMAL) {
+            trial_iterate.status = acceptable_status;
          }
          else {
             trial_iterate.status = (trial_iterate.scaled_residuals.primal_infeasibility <= this->primal_tolerance) ?
