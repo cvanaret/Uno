@@ -5,6 +5,7 @@ from gemseo.algos.optimization_problem import OptimizationProblem
 from gemseo.algos.opt.factory import OptimizationLibraryFactory
 from gemseo.core.mdo_functions.mdo_function import MDOFunction
 from gemseo.problems.optimization.power_2 import Power2
+from gemseo.utils.constants import C_LONG_MAX
 from numpy import allclose
 from numpy import array
 
@@ -100,8 +101,27 @@ def test_settings_forwarded_to_uno(monkeypatch):
         "TR_radius": 0.5,
         "print_solution": False,
         "filter_capacity": 10,
+        "max_iterations": C_LONG_MAX,
     }
     assert res.is_feasible
+
+
+def test_max_iter_above_uno_default(monkeypatch):
+    """Check that Uno's iteration limit does not stop it before GEMSEO's max_iter."""
+    options = {}
+    set_option = unopy.UnoSolver.set_option
+
+    def spy(solver, name, value):
+        options[name] = value
+        set_option(solver, name, value)
+
+    monkeypatch.setattr(unopy.UnoSolver, "set_option", spy)
+    # Uno's default maximum number of iterations is 2000.
+    UnoOpt("UNO_Filter_SQP").execute(
+        Power2(),
+        settings_model=UNO_Settings(max_iter=5000, normalize_design_space=False),
+    )
+    assert options["max_iterations"] >= 5000
 
 
 def test_message_and_status():
