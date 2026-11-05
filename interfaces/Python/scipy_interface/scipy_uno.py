@@ -1,6 +1,7 @@
 # Copyright (c) 2026 Francois Gallard, Jean-Christophe Giret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 import numpy as np
+import scipy.sparse as sp
 import unopy
 from numbers import Number
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
@@ -10,6 +11,12 @@ Inf = float("inf")
 AVAILABLE_METHODS = ["filterslp", "filtersqp", "funnelsqp", "ipopt"]
 _MAX_ITERATIONS_ALIASES = ("maxiter", "max_iter")
 """The aliases of the Uno option "max_iterations"."""
+_FEASIBLE_SOLUTION_STATUSES = (
+    unopy.SolutionStatus.FEASIBLE_KKT_POINT,
+    unopy.SolutionStatus.FEASIBLE_FJ_POINT,
+    unopy.SolutionStatus.FEASIBLE_SMALL_STEP,
+)
+"""The solution statuses of a feasible solution, required for a successful run."""
 
 
 def _process_bounds(bounds, n):
@@ -102,17 +109,172 @@ def _set_option(uno_solver, name, value):
             raise error from None
 
 
+class _JacobianBlock:
+    """The Jacobian of a block of constraints with a sparsity pattern fixed for the run.
+
+    The sparsity pattern is deduced from a first value of the Jacobian:
+    all the entries of a dense Jacobian
+    or the stored entries of a ``scipy.sparse`` Jacobian.
+    The nonzeros are ordered row by row and, within a row, by increasing column.
+    A sparse Jacobian is never converted to a dense array.
+    """
+
+    def __init__(self, value, x0, m, index, jacobian=None):
+        """
+        Args:
+            value: The value of the Jacobian at ``x0``,
+                either array-like or a ``scipy.sparse`` matrix.
+            x0: The point at which ``value`` has been computed.
+            m: The number of constraints of the block.
+            index: The index of the constraint in the user's constraints,
+                used in the error messages.
+            jacobian: The function ``jacobian(x) -> value`` computing the Jacobian.
+                If ``None``, the Jacobian is constant and equal to ``value``.
+        """
+        n = len(x0)
+        self._index = index
+        self._shape = (m, n)
+        self._is_sparse = sp.issparse(value)
+        if self._is_sparse:
+            value = self._to_canonical_csr(value, copy=True)
+            self.rows = np.repeat(np.arange(m), np.diff(value.indptr))
+            self.cols = value.indices.astype(np.int64)
+            # The linear indices of the nonzeros, sorted in increasing order.
+            self._keys = self.rows * n + self.cols
+        else:
+            value = np.array(self._check_dense_size(value), dtype=float)
+            self.rows = np.repeat(np.arange(m), n)
+            self.cols = np.tile(np.arange(n), m)
+        self.nnz = len(self.rows)
+        """The number of nonzeros of the sparsity pattern."""
+
+        if jacobian is None:
+            self._constant_values = np.empty(self.nnz)
+            self._write_values(value, self._constant_values)
+            self._jacobian = None
+        else:
+            self._constant_values = None
+            # The value at x0 is reused for the first evaluation by Uno.
+            self._jacobian = _reuse_first_value(jacobian, x0, value)
+
+    def _check_dense_size(self, value):
+        """Return a dense Jacobian as an array after checking its size.
+
+        Args:
+            value: The dense Jacobian.
+
+        Returns:
+            The Jacobian as an array of floats.
+
+        Raises:
+            ValueError: If the Jacobian does not have the expected size.
+        """
+        value = np.asarray(value, dtype=float)
+        if value.size != self._shape[0] * self._shape[1]:
+            raise ValueError(
+                f"The Jacobian of the constraint {self._index} must have the shape "
+                f"{self._shape}, got an array of shape {value.shape}."
+            )
+        return value
+
+    def _to_canonical_csr(self, value, copy=False):
+        """Convert a sparse Jacobian to a CSR matrix in canonical format.
+
+        Args:
+            value: The sparse Jacobian.
+            copy: Whether to copy the data.
+
+        Returns:
+            The CSR matrix with sorted indices and no duplicates.
+
+        Raises:
+            ValueError: If the Jacobian does not have the expected shape.
+        """
+        if value.shape != self._shape:
+            raise ValueError(
+                f"The Jacobian of the constraint {self._index} must have the shape "
+                f"{self._shape}, got a sparse matrix of shape {value.shape}."
+            )
+        value = sp.csr_matrix(value, dtype=float, copy=copy)
+        if not value.has_canonical_format:
+            if not copy:
+                value = value.copy()
+            value.sum_duplicates()
+        return value
+
+    def _write_values(self, value, values):
+        """Write the values of the Jacobian in the order of the sparsity pattern.
+
+        Args:
+            value: The value of the Jacobian.
+            values: The output vector of size ``nnz``.
+
+        Raises:
+            ValueError: If the Jacobian has a nonzero entry
+                outside the sparsity pattern.
+        """
+        if not self._is_sparse:
+            if sp.issparse(value):
+                value = self._to_canonical_csr(value).toarray()
+            values[:] = self._check_dense_size(value).ravel()
+            return
+
+        n = self._shape[1]
+        if sp.issparse(value):
+            value = self._to_canonical_csr(value)
+            keys = (
+                np.repeat(np.arange(self._shape[0]), np.diff(value.indptr)) * n
+                + value.indices
+            )
+            data = value.data
+        else:
+            value = self._check_dense_size(value).ravel()
+            keys = np.flatnonzero(value)
+            data = value[keys]
+
+        positions = np.searchsorted(self._keys, keys)
+        in_pattern = positions < self.nnz
+        in_pattern[in_pattern] = self._keys[positions[in_pattern]] == keys[in_pattern]
+        outside = ~in_pattern & (data != 0.0)
+        if np.any(outside):
+            row, col = divmod(int(keys[np.argmax(outside)]), n)
+            raise ValueError(
+                f"The Jacobian of the constraint {self._index} has a nonzero entry "
+                f"at ({row}, {col}) outside its sparsity pattern, "
+                "which is the one of its Jacobian at x0."
+            )
+        values[:] = 0.0
+        values[positions[in_pattern]] = data[in_pattern]
+
+    def write(self, x, values):
+        """Evaluate the Jacobian and write its values in the order of the pattern.
+
+        Args:
+            x: The point at which the Jacobian is evaluated.
+            values: The output vector of size ``nnz``.
+        """
+        if self._jacobian is None:
+            values[:] = self._constant_values
+        else:
+            self._write_values(self._jacobian(x), values)
+
+
 class _EvaluationErrorGuard:
     """Catch the exceptions raised by the user functions during an optimization.
 
     Uno converts any exception raised in a Python callback into an evaluation error
     and keeps iterating (e.g. by backtracking), so the original exception would be lost.
     Instead, the first exception raised by a user function is stored,
-    the callback returns NaN values
+    the callback returns zeros
     (except the Hessian operator, which raises the exception to Uno),
     and the termination callback asks Uno to stop.
-    Once an exception has been stored, the user functions are no longer called.
-    The exception is re-raised once Uno has returned.
+    Once an exception has been stored, the user functions are no longer called
+    and the callbacks keep returning zeros (or raising for the Hessian operator).
+    Zeros are used rather than NaN values
+    because NaN values can make the LP/QP solvers loop forever
+    before the termination callback is called;
+    the values returned after a failure are discarded anyway
+    since the exception is re-raised once Uno has returned.
     """
 
     def __init__(self):
@@ -126,7 +288,7 @@ class _EvaluationErrorGuard:
             callback: The callback ``callback(x) -> float``.
 
         Returns:
-            The callback returning NaN instead of raising an exception.
+            The callback returning 0.0 instead of raising an exception.
         """
 
         def guarded_callback(x):
@@ -135,24 +297,22 @@ class _EvaluationErrorGuard:
                     return callback(x)
                 except BaseException as exception:
                     self.exception = exception
-            return float("nan")
+            return 0.0
 
         return guarded_callback
 
-    def wrap_inplace(self, callback, fill_with_nan=True):
+    def wrap_inplace(self, callback, fill_with_zeros=True):
         """Wrap a callback writing its result in its last argument.
 
         Args:
             callback: The callback ``callback(*inputs, output) -> None``.
-            fill_with_nan: Whether to fill the output with NaN after a failure.
+            fill_with_zeros: Whether to fill the output with zeros after a failure.
                 Otherwise, the exception is raised to Uno,
                 which stops with an evaluation error.
-                This is required for the Hessian operator
-                as NaN values can make the QP solver loop forever
-                before the termination callback is called.
+                This is used for the Hessian operator.
 
         Returns:
-            The callback filling the output with NaN instead of raising an exception.
+            The callback filling the output with zeros instead of raising an exception.
         """
 
         def guarded_callback(*arguments):
@@ -162,9 +322,9 @@ class _EvaluationErrorGuard:
                     return
                 except BaseException as exception:
                     self.exception = exception
-            if not fill_with_nan:
+            if not fill_with_zeros:
                 raise self.exception
-            arguments[-1][:] = float("nan")
+            arguments[-1][:] = 0.0
 
         return guarded_callback
 
@@ -215,6 +375,8 @@ def minimize(
         where ""x"" is a 1-D array with shape (n,) and ""args""
         is a tuple of the fixed parameters needed to completely
         specify the function.
+        An array of size 1 (e.g. of shape (1,)) is accepted;
+        a ""ValueError"" is raised for an array of another size.
 
         Suppose the callable has signature ""f0(x, *my_args, **my_kwargs)"", where
         ""my_args"" and ""my_kwargs"" are required positional and keyword arguments.
@@ -256,6 +418,8 @@ def minimize(
         In that case, every nonlinear constraint must be a "NonlinearConstraint"
         with a callable "hess" ("LinearConstraint" has a zero Hessian);
         otherwise a "ValueError" is raised before the optimization.
+        The Lagrangian Hessian is computed once per point
+        and "nhev" is the number of calls to "hess".
 
     bounds : sequence or "Bounds", optional
         Bounds on variables. There are two ways to specify the bounds:
@@ -297,6 +461,18 @@ def minimize(
         When this dimension cannot be deduced from the bounds
         (scalar bounds or dictionary), the constraint function is evaluated at "x0";
         this value is reused for the first evaluation at "x0" by Uno.
+
+        The Jacobian of a constraint and the matrix "A" of a "LinearConstraint"
+        can be either array-like or a "scipy.sparse" matrix of shape (m, n),
+        where "m" is the dimension of the constraint.
+        A sparse Jacobian is kept sparse: only its stored entries are passed to Uno.
+        The sparsity pattern is fixed for the whole optimization:
+        it is the one of "A" or of the Jacobian at "x0"
+        (all the entries for a dense Jacobian, the stored entries for a sparse one).
+        To this end, the Jacobian of a nonlinear constraint is evaluated at "x0"
+        before the optimization; this value is reused for the first evaluation at "x0"
+        by Uno. An entry of the pattern missing from a later evaluation is zero
+        and a nonzero entry outside the pattern raises a "ValueError".
 
     tol : float, optional
         Tolerance for termination. When "tol" is specified, the selected
@@ -411,13 +587,23 @@ def minimize(
         ""message"" which describes the cause of the termination. See
         "OptimizeResult" for a description of other attributes.
 
+        ""success"" is True if and only if Uno returns the optimization status
+        "SUCCESS" with a feasible solution, i.e. the solution status
+        "FEASIBLE_KKT_POINT", "FEASIBLE_FJ_POINT" or "FEASIBLE_SMALL_STEP";
+        e.g. it is False at an infeasible stationary point
+        or when the objective is unbounded.
+        ""message"" is a string giving both the optimization status
+        and the solution status, and ""status"" is the solution status.
+        ""nhev"" is the number of calls to "hess" when it is provided.
+
     Raises
     ------
     TypeError
         If the Jacobian of a constraint is not a callable.
     ValueError
         If "jac" is not a callable, if the bounds are ill-shaped or inconsistent,
-        or if "hess" is provided and a nonlinear constraint has no callable Hessian.
+        if "hess" is provided and a nonlinear constraint has no callable Hessian,
+        or if a constraint Jacobian at "x0" has a wrong shape.
     BaseException
         The first exception raised by "fun", "jac", "hess" or a constraint
         function during the optimization. Uno is stopped as soon as possible
@@ -461,7 +647,13 @@ def minimize(
 
     # Step 3: Build objective callbacks
     def objective_callback(x):
-        return float(fun(x, *args))
+        value = np.asarray(fun(x, *args), dtype=float)
+        if value.size != 1:
+            raise ValueError(
+                "The objective function must return a scalar, "
+                f"got an array of shape {value.shape}."
+            )
+        return value.item()
 
     if jac is None:
         raise ValueError("Objective gradient is not defined.")
@@ -517,9 +709,15 @@ def minimize(
             c_ub = np.broadcast_to(
                 np.atleast_1d(np.asarray(con.ub, dtype=float)), (m_i,)
             ).copy()
+            # The Jacobian at x0 gives the sparsity pattern;
+            # it is reused for the first evaluation by Uno.
+            c_jac = _JacobianBlock(c_jac(x0.copy()), x0, m_i, i, jacobian=c_jac)
             normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         elif isinstance(con, LinearConstraint):
-            A = np.atleast_2d(np.asarray(con.A, dtype=float))
+            if sp.issparse(con.A):
+                A = sp.csr_matrix(con.A, dtype=float)
+            else:
+                A = np.atleast_2d(np.asarray(con.A, dtype=float))
             m_i = A.shape[0]
             c_lb = np.broadcast_to(
                 np.atleast_1d(np.asarray(con.lb, dtype=float)), (m_i,)
@@ -529,7 +727,8 @@ def minimize(
             ).copy()
             # Use default-arg binding to capture A
             c_fun = lambda x, _A=A: _A @ x
-            c_jac = lambda x, _A=A: _A
+            # A constant Jacobian whose sparsity pattern is the one of A.
+            c_jac = _JacobianBlock(A, x0, m_i, i)
             c_hess = None  # Linear constraints have zero Hessian
             normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         elif isinstance(con, dict):
@@ -563,9 +762,10 @@ def minimize(
                 x0,
                 val,
             )
-            c_jac = lambda x, _j=c_jac_raw, _a=c_args: np.atleast_2d(
-                np.asarray(_j(x, *_a), dtype=float)
-            )
+            c_jac = lambda x, _j=c_jac_raw, _a=c_args: _j(x, *_a)
+            # The Jacobian at x0 gives the sparsity pattern;
+            # it is reused for the first evaluation by Uno.
+            c_jac = _JacobianBlock(c_jac(x0.copy()), x0, m_i, i, jacobian=c_jac)
             c_hess = None  # Dict constraints don't support Hessians
             normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         else:
@@ -597,22 +797,21 @@ def minimize(
             offset += m_i
 
     def constraint_jacobian_callback(x, jacobian_values):
-        jacobian = np.vstack(
-            [
-                np.asarray(c_jac_i(x), dtype=float).reshape(m_i, n)
-                for _, c_jac_i, _, _, _, m_i in normalized
-            ]
-        )
-        # Column-major (Fortran) ordering of the whole merged Jacobian,
-        # consistently with the sparsity pattern below.
-        jacobian_values[:] = jacobian.ravel(order="F")
+        # The values of each block are written in the order of the sparsity pattern
+        # below, without building the dense merged Jacobian.
+        start = 0
+        for _, block, _, _, _, _ in normalized:
+            block.write(x, jacobian_values[start:start + block.nnz])
+            start += block.nnz
 
-    # 4e: Dense sparsity pattern (column-major ordering)
+    # 4e: Sparsity pattern (COO), concatenation of the patterns of the blocks
     if total_constraints > 0:
-        nnz_jac = total_constraints * n
-        # Column-major: iterate columns first, then rows within each column
-        col_indices = np.repeat(np.arange(n), total_constraints).tolist()
-        row_indices = np.tile(np.arange(total_constraints), n).tolist()
+        nnz_jac = sum(item[1].nnz for item in normalized)
+        row_offsets = np.cumsum([0] + [item[5] for item in normalized[:-1]])
+        row_indices = np.concatenate(
+            [item[1].rows + offset for item, offset in zip(normalized, row_offsets)]
+        ).tolist()
+        col_indices = np.concatenate([item[1].cols for item in normalized]).tolist()
     else:
         nnz_jac = 0
         row_indices = []
@@ -647,10 +846,14 @@ def minimize(
         # at which it was evaluated, reused by the successive Hessian-vector
         # products computed by the subproblem solver at the same point.
         hessian_cache = {}
+        # The number of evaluations of the user Hessian:
+        # Uno does not count the evaluations of a Hessian operator.
+        hessian_evaluations = [0]
 
         def compute_lagrangian_hessian(x, obj_mult, multipliers):
             # Objective Hessian contribution
-            H = float(obj_mult) * np.atleast_2d(np.asarray(hess(x, *args), dtype=float))
+            hessian_evaluations[0] += 1
+            H =float(obj_mult) * np.atleast_2d(np.asarray(hess(x, *args), dtype=float))
 
             # Constraint Hessian contributions
             offset = 0
@@ -687,7 +890,7 @@ def minimize(
             result[:] = hessian_cache["H"] @ vector
 
         model.set_lagrangian_hessian_operator(
-            guard.wrap_inplace(hessian_operator_callback, fill_with_nan=False)
+            guard.wrap_inplace(hessian_operator_callback, fill_with_zeros=False)
         )
         model.set_lagrangian_sign_convention(unopy.MULTIPLIER_POSITIVE)
 
@@ -709,15 +912,27 @@ def minimize(
     guard.raise_exception()
 
     # Step 7: Return OptimizeResult
+    # Uno may return the status SUCCESS at an infeasible stationary point.
+    success = (
+        result.optimization_status == unopy.OptimizationStatus.SUCCESS
+        and result.solution_status in _FEASIBLE_SOLUTION_STATUSES
+    )
+    if hess is None:
+        nhev = result.number_hessian_evaluations
+    else:
+        nhev = hessian_evaluations[0]
     return OptimizeResult(
         x=result.primal_solution,
-        success=result.optimization_status == unopy.OptimizationStatus.SUCCESS,
+        success=success,
         status=result.solution_status,
-        message=result.optimization_status,
+        message=(
+            f"Optimization status: {result.optimization_status.name}; "
+            f"solution status: {result.solution_status.name}."
+        ),
         fun=result.solution_objective,
         nfev=result.number_objective_evaluations,
         njev=result.number_jacobian_evaluations,
-        nhev=result.number_hessian_evaluations,
+        nhev=nhev,
         nit=result.number_iterations,
         maxcv=result.solution_primal_feasibility,
     )
