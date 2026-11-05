@@ -3,12 +3,103 @@
 import numpy as np
 import unopy
 from numbers import Number
-from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
-from scipy.optimize._minimize import standardize_bounds, _validate_bounds, Bounds
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 from typing import Iterable, Sequence, Any
 
 Inf = float("inf")
 AVAILABLE_METHODS = ["filterslp", "filtersqp", "funnelsqp", "ipopt"]
+_MAX_ITERATIONS_ALIASES = ("maxiter", "max_iter")
+"""The aliases of the Uno option "max_iterations"."""
+
+
+def _process_bounds(bounds, n):
+    """Return the lower and upper bounds of the variables as new float arrays.
+
+    Args:
+        bounds: Either a "Bounds" instance or a sequence of "(min, max)" pairs
+            with "None" meaning no bound. It is not modified.
+        n: The number of variables.
+
+    Returns:
+        The lower and upper bounds, each of shape (n,).
+
+    Raises:
+        ValueError: If the bounds are ill-shaped or a lower bound is greater
+            than the corresponding upper bound.
+    """
+    if isinstance(bounds, Bounds):
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        try:
+            lb = np.array(np.broadcast_to(lb, (n,)), dtype=float)
+            ub = np.array(np.broadcast_to(ub, (n,)), dtype=float)
+        except ValueError:
+            raise ValueError(
+                f"The bounds must be broadcastable to the shape ({n},) of x0, "
+                f"got lb of shape {lb.shape} and ub of shape {ub.shape}."
+            ) from None
+    else:
+        pairs = list(bounds)
+        if len(pairs) != n or any(np.ndim(pair) != 1 or len(pair) != 2 for pair in pairs):
+            raise ValueError(
+                f"The bounds must be a Bounds instance or a sequence of {n} "
+                "(min, max) pairs."
+            )
+        lb = np.array([-Inf if low is None else low for low, _ in pairs], dtype=float)
+        ub = np.array([Inf if high is None else high for _, high in pairs], dtype=float)
+
+    if np.any(lb > ub):
+        raise ValueError(
+            "A lower bound is greater than the corresponding upper bound."
+        )
+    return lb, ub
+
+
+def _reuse_first_value(function, x0, value):
+    """Wrap a function to reuse its value at x0 for its first call at x0.
+
+    Args:
+        function: The function ``function(x) -> value``.
+        x0: The point at which the function has already been evaluated.
+        value: The value of the function at x0.
+
+    Returns:
+        The function returning ``value`` if its first call is at ``x0``.
+    """
+    cache = [(x0, value)]
+
+    def wrapped_function(x):
+        if cache:
+            x_cached, value_cached = cache.pop()
+            if np.array_equal(x, x_cached):
+                return value_cached
+        return function(x)
+
+    return wrapped_function
+
+
+def _set_option(uno_solver, name, value):
+    """Set an option of Uno.
+
+    The bindings choose the type of the option from the Python type of the value,
+    so an integer value of a floating-point option is converted to a float.
+
+    Args:
+        uno_solver: The Uno solver.
+        name: The name of the option.
+        value: The value of the option.
+    """
+    try:
+        uno_solver.set_option(name, value)
+    except TypeError as error:
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+            value, (int, np.integer)
+        ):
+            raise
+        try:
+            uno_solver.set_option(name, float(value))
+        except TypeError:
+            raise error from None
 
 
 class _EvaluationErrorGuard:
@@ -145,15 +236,17 @@ def minimize(
         - "funnelsqp"
         - "ipopt"
 
-    jac : {callable}, optional
+    jac : {callable}
         Method for computing the gradient vector.
-        It should be a function that returns the gradient
+        It must be a function that returns the gradient
         vector::
 
             jac(x, *args) -> array_like, shape (n,)
 
         where ""x"" is an array with shape (n,) and ""args"" is a tuple with
         the fixed parameters.
+        "jac=True" (i.e. "fun" returning the objective and its gradient)
+        and finite-difference schemes are not supported.
 
     hess : callable, optional
         Hessian of the objective function. Signature: hess(x, *args) -> ndarray (n, n).
@@ -170,6 +263,8 @@ def minimize(
         1. Instance of "Bounds" class.
         2. Sequence of ""(min, max)"" pairs for each element in "x". None
            is used to specify no bound.
+
+        The bounds are not modified.
 
     constraints : {Constraint, dict} or List of {Constraint, dict}, optional
         Constraints definition.
@@ -199,6 +294,9 @@ def minimize(
         A non-callable "NonlinearConstraint.hess" (e.g. the default "BFGS()")
         is ignored. The bounds "lb" and "ub" of a "NonlinearConstraint"
         are broadcast to the dimension of the constraint.
+        When this dimension cannot be deduced from the bounds
+        (scalar bounds or dictionary), the constraint function is evaluated at "x0";
+        this value is reused for the first evaluation at "x0" by Uno.
 
     tol : float, optional
         Tolerance for termination. When "tol" is specified, the selected
@@ -208,46 +306,43 @@ def minimize(
     options : dict, optional
         A dictionary of solver options.
 
-        The available options and their types are:
+        The available options and their types are listed below.
+        An int value is accepted for a float option.
 
         "primal_tolerance" : float
         "dual_tolerance" : float
         "loose_primal_tolerance" : float
         "loose_dual_tolerance" : float
-        "loose_tolerance_consecutive_iteration_threshold" : int
-        "max_iterations" or "max_iter: int
+        "loose_tolerance_iteration_threshold" : int
+        "max_iterations" (or its aliases "maxiter" and "max_iter") : int
         "time_limit" : float
         "print_solution" : bool
         "unbounded_objective_threshold" : float
-        "enforce_linear_constraints" : bool
-        "logger" : str,
-        "constraint_relaxation_strategy" : str,
-        "inequality_handling_method" : str,
+        "logger" : str
+        "constraint_relaxation_strategy" : str
+        "inequality_handling_method" : str
         "globalization_mechanism" : str
-        "globalization_strategy" : str,
-        "hessian_model" : str,
-        "inertia_correction_strategy" : str,
-        "scale_functions" : bool
-        "function_scaling_threshold" : float
-        "function_scaling_factor" : float
-        "scale_residuals" : bool
-        "progress_norm" : str,
-        "residual_norm" : str,
+        "globalization_strategy" : str
+        "hessian_model" : str
+        "inertia_correction_strategy" : str
+        "progress_norm" : str
+        "residual_norm" : str
         "residual_scaling_threshold" : float
         "protect_actual_reduction_against_roundoff" : bool
+        "protected_actual_reduction_macheps_coefficient" : float
         "print_subproblem" : bool
         "armijo_decrease_fraction" : float
         "armijo_tolerance" : float
         "switching_delta" : float
         "switching_infeasibility_exponent" : float
-        "filter_type" : str,
+        "sufficient_infeasibility_decrease_ratio" : float
+        "filter_type" : str
         "filter_beta" : float
         "filter_gamma" : float
         "filter_ubd" : float
         "filter_fact" : float
         "filter_capacity" : int
         "filter_sufficient_infeasibility_decrease_factor" : float
-        "nonmonotone_filter_number_dominated_entries" : int
         "funnel_kappa" : float
         "funnel_beta" : float
         "funnel_gamma" : float
@@ -258,8 +353,12 @@ def minimize(
         "LS_backtracking_ratio" : float
         "LS_min_step_length" : float
         "LS_scale_duals_with_step_length" : bool
+        "quasi_newton_memory_size" : int
+        "quasi_newton_delta_lower_bound" : float
+        "quasi_newton_delta_upper_bound" : float
+        "LBFGS_max_skips_before_reset" : int
+        "LSR1_pivot_max_magnitude" : float
         "regularization_failure_threshold" : float
-        "regularization_initial_value" : float
         "regularization_increase_factor" : float
         "primal_regularization_initial_factor" : float
         "dual_regularization_fraction" : float
@@ -277,11 +376,11 @@ def minimize(
         "TR_radius_reset_threshold" : float
         "switch_to_optimality_requires_linearized_feasibility" : bool
         "l1_constraint_violation_coefficient" : float
+        "barrier_function" : str
         "barrier_initial_parameter" : float
         "barrier_default_multiplier" : float
         "barrier_tau_min" : float
         "barrier_k_sigma" : float
-        "barrier_smax" : float
         "barrier_k_mu" : float
         "barrier_theta_mu" : float
         "barrier_k_epsilon" : float
@@ -291,11 +390,16 @@ def minimize(
         "barrier_push_variable_to_interior_k1" : float
         "barrier_push_variable_to_interior_k2" : float
         "barrier_damping_factor" : float
+        "barrier_small_infeasibility_factor" : float
         "least_square_multiplier_max_norm" : float
         "BQPD_kmax_heuristic" : str
         "QP_solver" : str
         "LP_solver" : str
         "linear_solver" : str
+        "option_file" : str
+        "write_solution_to_file" : bool
+        "SOC_max_iterations" : int
+        "SOC_infeasibility_fraction" : float
 
 
     Returns
@@ -312,7 +416,8 @@ def minimize(
     TypeError
         If the Jacobian of a constraint is not a callable.
     ValueError
-        If "hess" is provided and a nonlinear constraint has no callable Hessian.
+        If "jac" is not a callable, if the bounds are ill-shaped or inconsistent,
+        or if "hess" is provided and a nonlinear constraint has no callable Hessian.
     BaseException
         The first exception raised by "fun", "jac", "hess" or a constraint
         function during the optimization. Uno is stopped as soon as possible
@@ -349,10 +454,7 @@ def minimize(
 
     # Step 2: Process bounds
     if bounds is not None:
-        bounds = standardize_bounds(bounds, x0, "new")
-        _validate_bounds(bounds, x0, method)
-        var_lb = bounds.lb
-        var_ub = bounds.ub
+        var_lb, var_ub = _process_bounds(bounds, n)
     else:
         var_lb = [-Inf] * n
         var_ub = [Inf] * n
@@ -361,11 +463,17 @@ def minimize(
     def objective_callback(x):
         return float(fun(x, *args))
 
-    if jac is not None:
-        def gradient_callback(x, gradient):
-            gradient[:] = np.asarray(jac(x, *args), dtype=float).ravel()
-    else:
+    if jac is None:
         raise ValueError("Objective gradient is not defined.")
+    if not callable(jac):
+        raise ValueError(
+            f"The objective gradient 'jac' must be a callable, got {jac!r}; "
+            "'jac=True' (fun returning the objective and its gradient) "
+            "and finite differences are not supported."
+        )
+
+    def gradient_callback(x, gradient):
+        gradient[:] = np.asarray(jac(x, *args), dtype=float).ravel()
 
     # Step 4: Normalize and merge constraints
     # 4a: Normalize input to a list
@@ -391,7 +499,18 @@ def minimize(
             if not callable(c_hess):
                 # E.g. the default BFGS() strategy or a finite-difference scheme.
                 c_hess = None
-            m_i = len(np.atleast_1d(c_fun(x0)))
+            # The size of the constraint is given by its bounds if they are not scalars;
+            # otherwise, the constraint is evaluated at x0
+            # and this value is reused for the first evaluation by Uno.
+            bounds_size = np.broadcast(
+                np.asarray(con.lb, dtype=float), np.asarray(con.ub, dtype=float)
+            ).size
+            if bounds_size > 1:
+                m_i = bounds_size
+            else:
+                value = c_fun(x0.copy())
+                m_i = len(np.atleast_1d(value))
+                c_fun = _reuse_first_value(c_fun, x0, value)
             c_lb = np.broadcast_to(
                 np.atleast_1d(np.asarray(con.lb, dtype=float)), (m_i,)
             ).copy()
@@ -423,8 +542,8 @@ def minimize(
                 )
             c_args = con.get("args", ())
             c_type = con["type"]
-            # Evaluate to get dimension
-            val = np.atleast_1d(np.asarray(c_fun_raw(x0, *c_args), dtype=float))
+            # Evaluate to get dimension; this value is reused for the first evaluation by Uno.
+            val = np.atleast_1d(np.asarray(c_fun_raw(x0.copy(), *c_args), dtype=float))
             m_i = len(val)
             if c_type == "eq":
                 c_lb = np.zeros(m_i)
@@ -437,8 +556,12 @@ def minimize(
                     f"Unknown constraint type '{c_type}'. Must be 'eq' or 'ineq'"
                 )
             # Use default-arg binding
-            c_fun = lambda x, _f=c_fun_raw, _a=c_args: np.atleast_1d(
-                np.asarray(_f(x, *_a), dtype=float)
+            c_fun = _reuse_first_value(
+                lambda x, _f=c_fun_raw, _a=c_args: np.atleast_1d(
+                    np.asarray(_f(x, *_a), dtype=float)
+                ),
+                x0,
+                val,
             )
             c_jac = lambda x, _j=c_jac_raw, _a=c_args: np.atleast_2d(
                 np.asarray(_j(x, *_a), dtype=float)
@@ -573,12 +696,12 @@ def minimize(
     uno_solver = unopy.UnoSolver()
     uno_solver.set_preset(method_lower)
     if tol is not None:
-        uno_solver.set_option("primal_tolerance", tol)
-        uno_solver.set_option("dual_tolerance", tol)
+        uno_solver.set_option("primal_tolerance", float(tol))
+        uno_solver.set_option("dual_tolerance", float(tol))
     for key, value in options.items():
-        if key == "maxiter":
+        if key in _MAX_ITERATIONS_ALIASES:
             key = "max_iterations"
-        uno_solver.set_option(key, value)
+        _set_option(uno_solver, key, value)
 
     uno_solver.set_termination_callback(guard.terminate)
 

@@ -32,6 +32,7 @@ from gemseo.algos.opt.base_optimization_library import (
     BaseOptimizationLibrary,
 )
 from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
+from gemseo.utils.constants import C_LONG_MAX
 from numpy import isfinite
 from numpy import real
 
@@ -136,6 +137,8 @@ class UnoOpt(BaseOptimizationLibrary[UNO_Settings]):
 
         # Deactivate stopping criteria which are handled by GEMSEO
         tolerance = 0.0
+        # C_LONG_MAX is the largest 32-bit integer, i.e. the largest uno_int.
+        settings_["max_iterations"] = C_LONG_MAX
 
         opt_result = minimize(
             fun=lambda x: real(problem.objective.evaluate(x)),
