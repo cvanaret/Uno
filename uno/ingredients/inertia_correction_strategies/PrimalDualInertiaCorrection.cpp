@@ -91,7 +91,11 @@ namespace uno {
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) {
       this->primal_regularization = 0.;
-      this->dual_regularization = 0.;
+      // more constraints than variables: the Jacobian is structurally rank deficient and the matrix singular. Add the dual
+      // regularization upfront (the unregularized factorization may be very expensive, with many delayed pivots)
+      const bool structurally_singular = (expected_inertia.positive < expected_inertia.negative) &&
+         !block_augmented_matrix.dual_inertia_correction.empty();
+      this->dual_regularization = structurally_singular ? this->dual_regularization_fraction * dual_regularization_parameter : 0.;
       this->regularize_until_correct_inertia(statistics, dual_regularization_parameter, expected_inertia, linear_solver,
          block_augmented_matrix, primal_regularization_variables, /* assume_singular = */ false);
    }

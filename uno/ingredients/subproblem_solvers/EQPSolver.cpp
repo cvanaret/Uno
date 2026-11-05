@@ -122,7 +122,11 @@ namespace uno {
       hessian.fill(0.); // no Hessian contribution
       primal_inertia_correction.fill(1.); // Identity block
       subproblem.evaluate_jacobian(iterate, jacobian, evaluations);
-      dual_inertia_correction.fill(0.); // no dual regularization
+      // more constraints than variables: the Jacobian is structurally rank deficient and the system singular. Regularize it
+      // upfront (the unregularized factorization may be very expensive, with many delayed pivots)
+      const bool structurally_singular = (subproblem.number_variables < subproblem.number_constraints) &&
+         !dual_inertia_correction.empty();
+      dual_inertia_correction.fill(structurally_singular ? -least_squares_dual_regularization : 0.);
 
       // perform the symbolic analysis once and for all
       if (!this->analysis_performed) {
@@ -134,7 +138,7 @@ namespace uno {
       // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
-      if (this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {
+      if (!structurally_singular && this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {
          DEBUG << "The least-squares system is singular, regularizing it\n";
          dual_inertia_correction.fill(-least_squares_dual_regularization);
          this->linear_solver->do_numerical_factorization(false);
