@@ -11,6 +11,93 @@ Inf = float("inf")
 AVAILABLE_METHODS = ["filterslp", "filtersqp", "funnelsqp", "ipopt"]
 
 
+class _EvaluationErrorGuard:
+    """Catch the exceptions raised by the user functions during an optimization.
+
+    Uno converts any exception raised in a Python callback into an evaluation error
+    and keeps iterating (e.g. by backtracking), so the original exception would be lost.
+    Instead, the first exception raised by a user function is stored,
+    the callback returns NaN values
+    (except the Hessian operator, which raises the exception to Uno),
+    and the termination callback asks Uno to stop.
+    Once an exception has been stored, the user functions are no longer called.
+    The exception is re-raised once Uno has returned.
+    """
+
+    def __init__(self):
+        self.exception = None
+        """The first exception raised by a user function, if any."""
+
+    def wrap_objective(self, callback):
+        """Wrap a callback returning the objective value.
+
+        Args:
+            callback: The callback ``callback(x) -> float``.
+
+        Returns:
+            The callback returning NaN instead of raising an exception.
+        """
+
+        def guarded_callback(x):
+            if self.exception is None:
+                try:
+                    return callback(x)
+                except BaseException as exception:
+                    self.exception = exception
+            return float("nan")
+
+        return guarded_callback
+
+    def wrap_inplace(self, callback, fill_with_nan=True):
+        """Wrap a callback writing its result in its last argument.
+
+        Args:
+            callback: The callback ``callback(*inputs, output) -> None``.
+            fill_with_nan: Whether to fill the output with NaN after a failure.
+                Otherwise, the exception is raised to Uno,
+                which stops with an evaluation error.
+                This is required for the Hessian operator
+                as NaN values can make the QP solver loop forever
+                before the termination callback is called.
+
+        Returns:
+            The callback filling the output with NaN instead of raising an exception.
+        """
+
+        def guarded_callback(*arguments):
+            if self.exception is None:
+                try:
+                    callback(*arguments)
+                    return
+                except BaseException as exception:
+                    self.exception = exception
+            if not fill_with_nan:
+                raise self.exception
+            arguments[-1][:] = float("nan")
+
+        return guarded_callback
+
+    def terminate(self, *_):
+        """Return whether Uno must stop because a user function raised an exception.
+
+        Args:
+            *_: The arguments passed by Uno (iterate, multipliers and residuals).
+
+        Returns:
+            Whether a user function raised an exception.
+        """
+        return self.exception is not None
+
+    def raise_exception(self):
+        """Re-raise the exception raised by a user function, if any.
+
+        Raises:
+            BaseException: The exception raised by a user function.
+        """
+        if self.exception is not None:
+            raise self.exception
+
+
 def minimize(
     fun: callable,
     x0: np.ndarray,
@@ -211,6 +298,13 @@ def minimize(
         ""message"" which describes the cause of the termination. See
         "OptimizeResult" for a description of other attributes.
 
+    Raises
+    ------
+    BaseException
+        The first exception raised by "fun", "jac", "hess" or a constraint
+        function during the optimization. Uno is stopped as soon as possible
+        and the user functions are no longer called.
+
     Examples
     --------
     Let us consider the problem of minimizing the Rosenbrock function under constraints:
@@ -371,17 +465,22 @@ def minimize(
     model = unopy.Model(
         unopy.PROBLEM_NONLINEAR, n, var_lb, var_ub, unopy.ZERO_BASED_INDEXING
     )
-    model.set_objective(unopy.MINIMIZE, objective_callback, gradient_callback)
+    guard = _EvaluationErrorGuard()
+    model.set_objective(
+        unopy.MINIMIZE,
+        guard.wrap_objective(objective_callback),
+        guard.wrap_inplace(gradient_callback),
+    )
     if total_constraints > 0:
         model.set_constraints(
             total_constraints,
-            constraint_callback,
+            guard.wrap_inplace(constraint_callback),
             all_lb,
             all_ub,
             nnz_jac,
             row_indices,
             col_indices,
-            constraint_jacobian_callback,
+            guard.wrap_inplace(constraint_jacobian_callback),
         )
     model.set_initial_primal_iterate(list(x0))
 
@@ -403,7 +502,9 @@ def minimize(
             # Compute H @ vector
             result[:] = H @ vector
 
-        model.set_lagrangian_hessian_operator(hessian_operator_callback)
+        model.set_lagrangian_hessian_operator(
+            guard.wrap_inplace(hessian_operator_callback, fill_with_nan=False)
+        )
         model.set_lagrangian_sign_convention(unopy.MULTIPLIER_POSITIVE)
 
 
@@ -421,7 +522,10 @@ def minimize(
             key = "max_iterations"
         uno_solver.set_option(key, value)
 
+    uno_solver.set_termination_callback(guard.terminate)
+
     result = uno_solver.optimize(model)
+    guard.raise_exception()
 
     # Step 7: Return OptimizeResult
     return OptimizeResult(
