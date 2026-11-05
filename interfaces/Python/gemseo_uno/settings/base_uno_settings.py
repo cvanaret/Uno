@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-"""Settings for the SciPy COBYQA algorithm."""
+"""Settings for the Uno algorithms."""
 
 from __future__ import annotations
 
@@ -20,7 +20,6 @@ from gemseo.algos.opt.base_gradient_based_algorithm_settings import (
     BaseGradientBasedAlgorithmSettings,
 )
 from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
-from pydantic import PositiveFloat  # noqa:TC002
 
 
 class UNO_Settings(
@@ -29,16 +28,14 @@ class UNO_Settings(
     """Settings for the UNO algorithm."""
 
     _TARGET_CLASS_NAME = "UNO"
-    initial_tr_radius: PositiveFloat | None = None
     primal_tolerance: float | None = None
     dual_tolerance: float | None = None
     loose_primal_tolerance: float | None = None
     loose_dual_tolerance: float | None = None
-    loose_tolerance_consecutive_iteration_threshold: int | None = None
+    loose_tolerance_iteration_threshold: int | None = None
     time_limit: float | None = None
     print_solution: bool | None = None
     unbounded_objective_threshold: float | None = None
-    enforce_linear_constraints: bool | None = None
     logger: str | None = None
     constraint_relaxation_strategy: str | None = None
     inequality_handling_method: str | None = None
@@ -46,10 +43,6 @@ class UNO_Settings(
     globalization_strategy: str | None = None
     hessian_model: str | None = None
     inertia_correction_strategy: str | None = None
-    scale_functions: bool | None = None
-    function_scaling_threshold: float | None = None
-    function_scaling_factor: float | None = None
-    scale_residuals: bool | None = None
     progress_norm: str | None = None
     residual_norm: str | None = None
     residual_scaling_threshold: float | None = None
@@ -66,7 +59,6 @@ class UNO_Settings(
     filter_fact: float | None = None
     filter_capacity: int | None = None
     filter_sufficient_infeasibility_decrease_factor: float | None = None
-    nonmonotone_filter_number_dominated_entries: int | None = None
     funnel_kappa: float | None = None
     funnel_beta: float | None = None
     funnel_gamma: float | None = None
@@ -78,7 +70,6 @@ class UNO_Settings(
     LS_min_step_length: float | None = None
     LS_scale_duals_with_step_length: bool | None = None
     regularization_failure_threshold: float | None = None
-    regularization_initial_value: float | None = None
     regularization_increase_factor: float | None = None
     primal_regularization_initial_factor: float | None = None
     dual_regularization_fraction: float | None = None
@@ -100,7 +91,6 @@ class UNO_Settings(
     barrier_default_multiplier: float | None = None
     barrier_tau_min: float | None = None
     barrier_k_sigma: float | None = None
-    barrier_smax: float | None = None
     barrier_k_mu: float | None = None
     barrier_theta_mu: float | None = None
     barrier_k_epsilon: float | None = None

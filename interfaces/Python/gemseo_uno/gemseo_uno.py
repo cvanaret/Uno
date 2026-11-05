@@ -31,6 +31,7 @@ from gemseo.algos.opt.base_optimization_library import (
     OptimizationAlgorithmDescription,
     BaseOptimizationLibrary,
 )
+from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
 from numpy import isfinite
 from numpy import real
 
@@ -127,8 +128,11 @@ class UnoOpt(BaseOptimizationLibrary[UNO_Settings]):
             for constraint in self._get_right_sign_constraints(problem)
         ]
 
-        # Filter settings to get only the uno ones
-        settings_ = self._filter_settings(self._settings.model_dump(), UNO_Settings)
+        # Filter settings to get only the Uno ones,
+        # i.e. remove the GEMSEO ones and the Uno ones left to their default value.
+        settings_ = self._filter_settings(
+            self._settings.model_dump(exclude_none=True), BaseOptimizerSettings
+        )
 
         # Deactivate stopping criteria which are handled by GEMSEO
         tolerance = 0.0
@@ -144,4 +148,4 @@ class UnoOpt(BaseOptimizationLibrary[UNO_Settings]):
             tol=tolerance,
         )
 
-        return opt_result.message, opt_result.status
+        return str(opt_result.message), int(opt_result.status)
