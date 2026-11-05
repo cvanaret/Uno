@@ -181,6 +181,7 @@ namespace uno {
       }
       warmstart_information.whole_problem_changed();
       this->acceptable_consecutive_iterations = 0;
+      this->acceptable_infeasible_iterate.reset();
    }
 
    bool FeasibilityRestoration::has_second_order_corrections() const {
@@ -409,7 +410,8 @@ namespace uno {
    bool FeasibilityRestoration::terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       if (this->current_phase != Phase::OPTIMALITY) {
-         return false;
+         return this->fall_back_to_infeasible_stationary_point(this->feasibility_problem, current_iterate, trial_iterate,
+            current_evaluations, trial_evaluations);
       }
       return this->fall_back_after_line_search_failure(this->original_problem, current_iterate, trial_iterate,
          current_evaluations, trial_evaluations);

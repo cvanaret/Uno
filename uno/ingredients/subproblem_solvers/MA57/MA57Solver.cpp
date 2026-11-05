@@ -66,6 +66,12 @@ namespace uno {
          return error_code == 11 || error_code == -4;
       }
 
+      // workspace size with a safety factor, clamped to the largest size MA57 (32-bit integers) can address
+      int get_initial_workspace_size(int size_estimate) {
+         const double size = MA57Settings::allocation_safety_factor * static_cast<double>(size_estimate);
+         return static_cast<int>(std::min(size, static_cast<double>(std::numeric_limits<int>::max())));
+      }
+
       // geometric growth: the number of enlargements is logarithmic in the final size, even when the fill is much larger
       // than the estimate of the analysis (e.g. many delayed pivots)
       int get_larger_workspace_size(int size_current, std::optional<int> size_estimate) {
@@ -155,8 +161,8 @@ namespace uno {
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
-      this->workspace.lfact = static_cast<int>(MA57Settings::allocation_safety_factor * MA57_INFO(11));
-      this->workspace.lifact = static_cast<int>(MA57Settings::allocation_safety_factor * MA57_INFO(12));
+      this->workspace.lfact = get_initial_workspace_size(MA57_INFO(11));
+      this->workspace.lifact = get_initial_workspace_size(MA57_INFO(12));
       this->workspace.fact.resize(static_cast<size_t>(this->workspace.lfact));
       this->workspace.ifact.resize(static_cast<size_t>(this->workspace.lifact));
       this->analysis_performed = true;

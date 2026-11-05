@@ -100,3 +100,19 @@ TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsComplementarityTolerance)
    while (strategy.force_barrier_parameter_decrease()) { }
    EXPECT_EQ(strategy.get_barrier_parameter(), complementarity_tolerance / update_fraction);
 }
+
+// with a small objective scaling (unscaled complementarity = factor * scaled complementarity), the lower bound follows the
+// complementarity tolerance expressed in the scaled space, so that the unscaled complementarity can reach it
+TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsObjectiveScaling) {
+   constexpr double unscaled_complementarity_factor = 1e6;
+   Strategy strategy(make_barrier_options(), unscaled_complementarity_factor);
+   while (strategy.force_barrier_parameter_decrease()) { }
+   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), complementarity_tolerance / unscaled_complementarity_factor / update_fraction);
+}
+
+// a tiny objective scaling does not drive the lower bound below IPOPT's default mu_min (1e-11)
+TEST(BarrierParameterUpdateStrategy, LowerBoundIsSafeguarded) {
+   Strategy strategy(make_barrier_options(), 1e20);
+   while (strategy.force_barrier_parameter_decrease()) { }
+   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), 1e-11 / update_fraction);
+}
