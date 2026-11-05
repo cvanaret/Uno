@@ -160,6 +160,9 @@ def minimize(
         If provided, constraint Hessians are also read from NonlinearConstraint.hess
         attributes. The constraint Hessian callable has signature:
         hess(x, v) -> ndarray (n, n), where v is the vector of constraint multipliers.
+        In that case, every nonlinear constraint must be a "NonlinearConstraint"
+        with a callable "hess" ("LinearConstraint" has a zero Hessian);
+        otherwise a "ValueError" is raised before the optimization.
 
     bounds : sequence or "Bounds", optional
         Bounds on variables. There are two ways to specify the bounds:
@@ -183,13 +186,19 @@ def minimize(
             Constraint type: 'eq' for equality, 'ineq' for inequality.
         fun : callable
             The function defining the constraint.
-        jac : callable, optional
-            The Jacobian of "fun" (only for SLSQP).
+        jac : callable
+            The Jacobian of "fun" (required).
         args : sequence, optional
             Extra arguments to be passed to the function and Jacobian.
 
         Equality constraint means that the constraint function result is to
         be zero whereas inequality means that it is to be non-negative.
+
+        The Jacobian of a "NonlinearConstraint" must be a callable:
+        finite-difference schemes such as '2-point' are not supported.
+        A non-callable "NonlinearConstraint.hess" (e.g. the default "BFGS()")
+        is ignored. The bounds "lb" and "ub" of a "NonlinearConstraint"
+        are broadcast to the dimension of the constraint.
 
     tol : float, optional
         Tolerance for termination. When "tol" is specified, the selected
@@ -300,6 +309,10 @@ def minimize(
 
     Raises
     ------
+    TypeError
+        If the Jacobian of a constraint is not a callable.
+    ValueError
+        If "hess" is provided and a nonlinear constraint has no callable Hessian.
     BaseException
         The first exception raised by "fun", "jac", "hess" or a constraint
         function during the optimization. Uno is stopped as soon as possible
@@ -369,10 +382,22 @@ def minimize(
         if isinstance(con, NonlinearConstraint):
             c_fun = con.fun
             c_jac = con.jac
+            if not callable(c_jac):
+                raise TypeError(
+                    f"The Jacobian of the constraint {i} must be a callable, "
+                    f"got {c_jac!r}; finite differences are not supported."
+                )
             c_hess = getattr(con, "hess", None)
-            c_lb = np.atleast_1d(np.asarray(con.lb, dtype=float))
-            c_ub = np.atleast_1d(np.asarray(con.ub, dtype=float))
+            if not callable(c_hess):
+                # E.g. the default BFGS() strategy or a finite-difference scheme.
+                c_hess = None
             m_i = len(np.atleast_1d(c_fun(x0)))
+            c_lb = np.broadcast_to(
+                np.atleast_1d(np.asarray(con.lb, dtype=float)), (m_i,)
+            ).copy()
+            c_ub = np.broadcast_to(
+                np.atleast_1d(np.asarray(con.ub, dtype=float)), (m_i,)
+            ).copy()
             normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         elif isinstance(con, LinearConstraint):
             A = np.atleast_2d(np.asarray(con.A, dtype=float))
@@ -391,6 +416,11 @@ def minimize(
         elif isinstance(con, dict):
             c_fun_raw = con["fun"]
             c_jac_raw = con.get("jac")
+            if not callable(c_jac_raw):
+                raise TypeError(
+                    f"The 'jac' of the constraint {i} must be a callable, "
+                    f"got {c_jac_raw!r}."
+                )
             c_args = con.get("args", ())
             c_type = con["type"]
             # Evaluate to get dimension
@@ -410,16 +440,22 @@ def minimize(
             c_fun = lambda x, _f=c_fun_raw, _a=c_args: np.atleast_1d(
                 np.asarray(_f(x, *_a), dtype=float)
             )
-            if c_jac_raw is not None:
-                c_jac = lambda x, _j=c_jac_raw, _a=c_args: np.atleast_2d(
-                    np.asarray(_j(x, *_a), dtype=float)
-                )
-            else:
-                c_jac = None
+            c_jac = lambda x, _j=c_jac_raw, _a=c_args: np.atleast_2d(
+                np.asarray(_j(x, *_a), dtype=float)
+            )
             c_hess = None  # Dict constraints don't support Hessians
             normalized.append((c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         else:
             raise TypeError(f"Unsupported constraint type: {type(con)}")
+
+        if hess is not None and c_hess is None and not isinstance(
+            con, LinearConstraint
+        ):
+            raise ValueError(
+                f"The constraint {i} has no callable Hessian, "
+                "which is required when 'hess' is provided; "
+                "use a NonlinearConstraint with a callable 'hess'."
+            )
 
     # 4c: Merge
     total_constraints = sum(item[5] for item in normalized)
@@ -438,17 +474,15 @@ def minimize(
             offset += m_i
 
     def constraint_jacobian_callback(x, jacobian_values):
-        offset = 0
-        for c_fun_i, c_jac_i, _, _, _, m_i in normalized:
-            if c_jac_i is not None:
-                jac_block = np.atleast_2d(np.asarray(c_jac_i(x), dtype=float))
-            else:
-                raise ValueError("Constraint Jacobian is not provided.")
-            # Column-major (Fortran) ordering to match unopy convention
-            flat = jac_block.ravel(order="F")
-            for j in range(len(flat)):
-                jacobian_values[offset + j] = float(flat[j])
-            offset += len(flat)
+        jacobian = np.vstack(
+            [
+                np.asarray(c_jac_i(x), dtype=float).reshape(m_i, n)
+                for _, c_jac_i, _, _, _, m_i in normalized
+            ]
+        )
+        # Column-major (Fortran) ordering of the whole merged Jacobian,
+        # consistently with the sparsity pattern below.
+        jacobian_values[:] = jacobian.ravel(order="F")
 
     # 4e: Dense sparsity pattern (column-major ordering)
     if total_constraints > 0:
@@ -486,8 +520,12 @@ def minimize(
 
     # Step 5b: Lagrangian Hessian operator (if Hessian provided)
     if hess is not None:
-        def hessian_operator_callback(x, evaluate_at_x, obj_mult,
-                                      multipliers, vector, result):
+        # The last Lagrangian Hessian and the point (x, obj_mult, multipliers)
+        # at which it was evaluated, reused by the successive Hessian-vector
+        # products computed by the subproblem solver at the same point.
+        hessian_cache = {}
+
+        def compute_lagrangian_hessian(x, obj_mult, multipliers):
             # Objective Hessian contribution
             H = float(obj_mult) * np.atleast_2d(np.asarray(hess(x, *args), dtype=float))
 
@@ -496,11 +534,34 @@ def minimize(
             for _, _, c_hess_i, _, _, m_i in normalized:
                 if c_hess_i is not None:
                     mult_slice = np.asarray(multipliers[offset:offset + m_i], dtype=float)
-                    H += np.atleast_2d(np.asarray(c_hess_i(x, mult_slice), dtype=float))
+                    H = H + np.atleast_2d(np.asarray(c_hess_i(x, mult_slice), dtype=float))
                 offset += m_i
+            return H
+
+        def hessian_operator_callback(x, evaluate_at_x, obj_mult,
+                                      multipliers, vector, result):
+            # Uno passes views on its own buffers: copy them to build the cache key.
+            point = (
+                np.array(x, dtype=float),
+                float(obj_mult),
+                np.array(multipliers, dtype=float),
+            )
+            cached_point = hessian_cache.get("point")
+            if cached_point is None or (
+                evaluate_at_x
+                and not (
+                    np.array_equal(point[0], cached_point[0])
+                    and point[1] == cached_point[1]
+                    and np.array_equal(point[2], cached_point[2])
+                )
+            ):
+                # Store the point only once the Hessian has been computed,
+                # so that a failed evaluation is not cached.
+                hessian_cache["H"] = compute_lagrangian_hessian(*point)
+                hessian_cache["point"] = point
 
             # Compute H @ vector
-            result[:] = H @ vector
+            result[:] = hessian_cache["H"] @ vector
 
         model.set_lagrangian_hessian_operator(
             guard.wrap_inplace(hessian_operator_callback, fill_with_nan=False)
@@ -511,9 +572,6 @@ def minimize(
     # Step 6: Configure and run solver
     uno_solver = unopy.UnoSolver()
     uno_solver.set_preset(method_lower)
-    uno_solver.set_option("logger", "DEBUG3")
-    uno_solver.set_option("print_subproblem", True)
-    uno_solver.set_option("print_solution", True)
     if tol is not None:
         uno_solver.set_option("primal_tolerance", tol)
         uno_solver.set_option("dual_tolerance", tol)
@@ -530,7 +588,7 @@ def minimize(
     # Step 7: Return OptimizeResult
     return OptimizeResult(
         x=result.primal_solution,
-        success=str(result.optimization_status) == "OptimizationStatus.SUCCESS",
+        success=result.optimization_status == unopy.OptimizationStatus.SUCCESS,
         status=result.solution_status,
         message=result.optimization_status,
         fun=result.solution_objective,
