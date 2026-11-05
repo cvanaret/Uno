@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class UnoAlgorithmDescription(OptimizationAlgorithmDescription):
-    """The description of the Uno constrained grdient based optimization library."""
+    """The description of the Uno constrained gradient-based optimization library."""
 
     library_name: str = "Uno"
     """The library name."""
@@ -85,7 +85,7 @@ class UnoOpt(BaseOptimizationLibrary[UNO_Settings]):
         "UNO_Filter_SLP": UnoAlgorithmDescription(
             algorithm_name="UNO_Filter_SLP",
             description=(
-                "Sequential Linear Programming (SLP) " "implemented in the Uno library"
+                "Sequential Linear Programming (SLP) implemented in the Uno library"
             ),
             internal_algorithm_name="filterslp",
             Settings=UNO_Settings,
@@ -93,7 +93,7 @@ class UnoOpt(BaseOptimizationLibrary[UNO_Settings]):
         "UNO_Funnel_SQP": UnoAlgorithmDescription(
             algorithm_name="UNO_Funnel_SQP",
             description=(
-                "Funnel Sequential Quadratic Programming (SQP)"
+                "Funnel Sequential Quadratic Programming (SQP) "
                 "implemented in the Uno library"
             ),
             internal_algorithm_name="funnelsqp",
@@ -102,7 +102,7 @@ class UnoOpt(BaseOptimizationLibrary[UNO_Settings]):
         "UNO_IPOPT": UnoAlgorithmDescription(
             algorithm_name="UNO_IPOPT",
             description=(
-                "Interior Point Optimization (IPOPT)" "implemented in the Uno library"
+                "Interior Point Optimization (IPOPT) implemented in the Uno library"
             ),
             internal_algorithm_name="ipopt",
             Settings=UNO_Settings,
