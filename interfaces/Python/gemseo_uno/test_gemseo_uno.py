@@ -1,6 +1,14 @@
+import re
+from types import NoneType
+from typing import get_args
+
 import pytest
 import unopy
 from gemseo.algos.design_space import DesignSpace
+from gemseo.algos.opt.base_gradient_based_algorithm_settings import (
+    BaseGradientBasedAlgorithmSettings,
+)
+from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
 from gemseo.algos.optimization_problem import OptimizationProblem
 from gemseo.algos.opt.factory import OptimizationLibraryFactory
 from gemseo.core.mdo_functions.mdo_function import MDOFunction
@@ -11,6 +19,7 @@ from numpy import array
 
 from gemseo_uno.gemseo_uno import UnoOpt
 from gemseo_uno.settings.base_uno_settings import UNO_Settings
+from scipy_interface.scipy_uno import minimize
 
 
 @pytest.mark.parametrize(
@@ -93,6 +102,8 @@ def test_settings_forwarded_to_uno(monkeypatch):
             TR_radius=0.5,
             print_solution=False,
             filter_capacity=10,
+            SOC_max_iterations=3,
+            barrier_small_infeasibility_factor=0.5,
         ),
     )
     assert options == {
@@ -101,9 +112,40 @@ def test_settings_forwarded_to_uno(monkeypatch):
         "TR_radius": 0.5,
         "print_solution": False,
         "filter_capacity": 10,
+        "SOC_max_iterations": 3,
+        "barrier_small_infeasibility_factor": 0.5,
         "max_iterations": C_LONG_MAX,
     }
     assert res.is_feasible
+
+
+def test_uno_settings_are_uno_options():
+    """Check that the Uno settings are Uno options with the right types.
+
+    The Uno options and their types are read from the documentation of minimize,
+    which lists the options of uno/options/Options.cpp.
+    """
+    documented_options = {
+        name: {"float": float, "int": int, "bool": bool, "str": str}[type_name]
+        for name, type_name in re.findall(
+            r'^\s*"(\w+)"[^:\n]*: (\w+)\s*$', minimize.__doc__, flags=re.MULTILINE
+        )
+    }
+    base_fields = set(BaseOptimizerSettings.model_fields) | set(
+        BaseGradientBasedAlgorithmSettings.model_fields
+    )
+    uno_fields = {
+        name: field
+        for name, field in UNO_Settings.model_fields.items()
+        if name not in base_fields
+    }
+    assert uno_fields
+    for name, field in uno_fields.items():
+        assert name in documented_options, name
+        assert set(get_args(field.annotation)) == {documented_options[name], NoneType}
+        assert field.default is None
+    # All the options except those set by the wrapper are exposed.
+    assert set(documented_options) - set(uno_fields) == {"max_iterations"}
 
 
 def test_max_iter_above_uno_default(monkeypatch):

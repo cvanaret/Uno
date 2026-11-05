@@ -25,7 +25,20 @@ from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
 class UNO_Settings(
     BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings
 ):  # noqa: N801
-    """Settings for the UNO algorithm."""
+    """Settings for the UNO algorithm.
+
+    The Uno options are optional fields named after the Uno options
+    (see ``uno/options/Options.cpp``); only those set by the user are passed to Uno.
+    The following Uno options are not exposed:
+
+    - ``preset``, set from the algorithm name,
+    - ``max_iterations``, set to the largest value
+      so that GEMSEO stops the driver with ``max_iter``.
+
+    The wrapper sets ``primal_tolerance`` and ``dual_tolerance`` to 0
+    so that GEMSEO stops the driver with its own criteria;
+    setting them here overrides these zero values.
+    """
 
     _TARGET_CLASS_NAME = "UNO"
     primal_tolerance: float | None = None
@@ -47,11 +60,13 @@ class UNO_Settings(
     residual_norm: str | None = None
     residual_scaling_threshold: float | None = None
     protect_actual_reduction_against_roundoff: bool | None = None
+    protected_actual_reduction_macheps_coefficient: float | None = None
     print_subproblem: bool | None = None
     armijo_decrease_fraction: float | None = None
     armijo_tolerance: float | None = None
     switching_delta: float | None = None
     switching_infeasibility_exponent: float | None = None
+    sufficient_infeasibility_decrease_ratio: float | None = None
     filter_type: str | None = None
     filter_beta: float | None = None
     filter_gamma: float | None = None
@@ -69,6 +84,11 @@ class UNO_Settings(
     LS_backtracking_ratio: float | None = None
     LS_min_step_length: float | None = None
     LS_scale_duals_with_step_length: bool | None = None
+    quasi_newton_memory_size: int | None = None
+    quasi_newton_delta_lower_bound: float | None = None
+    quasi_newton_delta_upper_bound: float | None = None
+    LBFGS_max_skips_before_reset: int | None = None
+    LSR1_pivot_max_magnitude: float | None = None
     regularization_failure_threshold: float | None = None
     regularization_increase_factor: float | None = None
     primal_regularization_initial_factor: float | None = None
@@ -87,6 +107,7 @@ class UNO_Settings(
     TR_radius_reset_threshold: float | None = None
     switch_to_optimality_requires_linearized_feasibility: bool | None = None
     l1_constraint_violation_coefficient: float | None = None
+    barrier_function: str | None = None
     barrier_initial_parameter: float | None = None
     barrier_default_multiplier: float | None = None
     barrier_tau_min: float | None = None
@@ -100,8 +121,13 @@ class UNO_Settings(
     barrier_push_variable_to_interior_k1: float | None = None
     barrier_push_variable_to_interior_k2: float | None = None
     barrier_damping_factor: float | None = None
+    barrier_small_infeasibility_factor: float | None = None
     least_square_multiplier_max_norm: float | None = None
     BQPD_kmax_heuristic: str | None = None
     QP_solver: str | None = None
     LP_solver: str | None = None
     linear_solver: str | None = None
+    option_file: str | None = None
+    write_solution_to_file: bool | None = None
+    SOC_max_iterations: int | None = None
+    SOC_infeasibility_fraction: float | None = None
