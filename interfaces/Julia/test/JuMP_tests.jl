@@ -81,5 +81,27 @@ function test_camshape_6400()
     @assert occursin("interior-point", uno_method)
 end
 
+function test_infeasible_linear_constraints()
+    model = Model(() -> UnoSolver.Optimizer(; preset="ipopt", logger = "INFO"))
+
+    @variable(model, x[1:2])
+    set_start_value(x[1], 2.)
+    set_start_value(x[2], 10.)
+
+    @objective(model, Min, x[2])
+
+    c1 = @constraint(model, x[1] + x[2] <= 3)
+    c2 = @constraint(model, x[1] + x[2] >= 5)
+
+    optimize!(model)
+
+    @assert termination_status(model) == MOI.LOCALLY_INFEASIBLE
+    @assert primal_status(model) == MOI.INFEASIBLE_POINT
+    # the stationary points of the l1 constraint violation satisfy 3 <= x1 + x2 <= 5
+    tolerance = 1e-6
+    @assert 3. - tolerance <= value(x[1]) + value(x[2]) <= 5. + tolerance
+end
+
 test_hs015()
 test_camshape_6400()
+test_infeasible_linear_constraints()
