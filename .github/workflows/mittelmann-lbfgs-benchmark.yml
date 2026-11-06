@@ -1,0 +1,39 @@
+name: Mittelmann L-BFGS benchmark
+
+# Runs uno_ampl with the ipopt preset, L-BFGS and MA57 on the Mittelmann instances
+# NARX_CFy and WM_CFy (large-scale industrial problems), via the reusable
+# Mittelmann benchmark workflow. Results are stored in the artifact
+# `mittelmann-lbfgs-results-pr-<pr_number>` and posted in their own sticky PR
+# comment; with `compare_pr`, as a before/after table against the latest L-BFGS
+# results of that PR.
+#   gh workflow run "Mittelmann L-BFGS benchmark" -f pr_number=123 [-f compare_pr=118]
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to comment on'
+        required: true
+        type: string
+      compare_pr:
+        description: 'PR number to compare against (optional; uses its latest L-BFGS benchmark results)'
+        required: false
+        default: ''
+        type: string
+
+# a called workflow cannot be granted more than its caller
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  benchmark:
+    uses: ./.github/workflows/mittelmann-benchmark.yml
+    with:
+      pr_number: ${{ inputs.pr_number }}
+      compare_pr: ${{ inputs.compare_pr }}
+      title: Mittelmann L-BFGS benchmark
+      tag: lbfgs
+      instances: NARX_CFy WM_CFy
+      options: hessian_model=LBFGS linear_solver=MA57
