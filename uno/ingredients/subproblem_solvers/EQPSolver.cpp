@@ -217,12 +217,32 @@ namespace uno {
 
       // solve the linear system
       DEBUG3 << "KKT matrix values: " << linear_system.matrix_values << "\n\n";
+      this->solve_assembled_system(statistics, subproblem, current_iterate, /* allow_refactorization = */ true);
+      return this->direction;
+   }
+
+   template <typename LowRankCorrection>
+   const Direction& EQPSolver<LowRankCorrection>::resolve(Statistics& statistics, const Subproblem& subproblem,
+         const Iterate& current_iterate, Evaluations& current_evaluations) {
+      this->direction.reset();
+      auto& linear_system = this->linear_solver->get_linear_system();
+      this->newton_system->assemble_rhs({statistics, current_iterate, current_evaluations}, linear_system.rhs.view());
+      // the factorization must be kept: no refactorization during the iterative refinement
+      this->solve_assembled_system(statistics, subproblem, current_iterate, /* allow_refactorization = */ false);
+      return this->direction;
+   }
+
+   // solve the system with the current factorization and right-hand side, and assemble the direction
+   template <typename LowRankCorrection>
+   void EQPSolver<LowRankCorrection>::solve_assembled_system(Statistics& statistics, const Subproblem& subproblem,
+         const Iterate& current_iterate, bool allow_refactorization) {
+      auto& linear_system = this->linear_solver->get_linear_system();
       // solve with iterative refinement only if the matrix is not deemed singular
       if (this->linear_solver->matrix_is_singular()) {
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       }
       else {
-         this->solve_with_iterative_refinement(statistics, subproblem, /* allow_refactorization = */ true);
+         this->solve_with_iterative_refinement(statistics, subproblem, allow_refactorization);
       }
       if (this->linear_solver->matrix_is_singular()) {
          this->direction.status = SubproblemStatus::INFEASIBLE;
@@ -237,8 +257,7 @@ namespace uno {
          // assemble the full primal-dual direction
          subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction);
       }
-      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
-      return this->direction;
+      this->direction.norm = norm_inf(view(this->direction.primals, 0, subproblem.problem.get_number_original_variables()));
    }
 
    template <typename LowRankCorrection>
