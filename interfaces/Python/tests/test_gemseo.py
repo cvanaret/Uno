@@ -4,7 +4,10 @@
 
 from __future__ import annotations
 
+import os
 import re
+import subprocess
+import sys
 from typing import get_args
 
 import pytest
@@ -89,7 +92,9 @@ def _get_target_class_name(settings_class):
     return settings_class().target_class_name
 
 
-@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
+@pytest.mark.parametrize(
+    "method", ["UNO_Filter_SQP", "UNO_Filter_SLP", "UNO_Funnel_SQP", "UNO_IPOPT"]
+)
 def test_power2(method):
     problem = Power2()
     if IS_GEMSEO_6:
@@ -268,7 +273,9 @@ def _create_coupled_problem():
     return problem
 
 
-@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
+@pytest.mark.parametrize(
+    "method", ["UNO_Filter_SQP", "UNO_Filter_SLP", "UNO_Funnel_SQP", "UNO_IPOPT"]
+)
 def test_several_constraints(method):
     """Check a problem with several constraints having non-diagonal Jacobians."""
     problem = _create_coupled_problem()
@@ -369,7 +376,9 @@ def _create_mixed_problem(calls=None):
     return problem
 
 
-@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
+@pytest.mark.parametrize(
+    "method", ["UNO_Filter_SQP", "UNO_Filter_SLP", "UNO_Funnel_SQP", "UNO_IPOPT"]
+)
 def test_merged_constraints(monkeypatch, method):
     """Check that the constraints are merged into one block per type."""
     scipy_constraints = []
@@ -429,3 +438,114 @@ def test_concatenate_constraints():
     jacobian = constraint["jac"](x)
     assert not issparse(jacobian)
     assert_array_equal(jacobian, expected_jacobian[[0, 0]])
+
+
+_DEFAULT_NORMALIZATION_SETTINGS = {
+    "UNO_Filter_SQP": {},
+    "UNO_Filter_SLP": {},
+    "UNO_Funnel_SQP": {},
+    # Without xtol_rel, IPOPT does not stop on these problems
+    # (see test_ipopt_infinite_loop).
+    "UNO_IPOPT": {"xtol_rel": 1e-4},
+}
+"""The settings of the algorithms for the tests with the default normalization."""
+
+
+@pytest.mark.parametrize("method", sorted(SETTINGS))
+@pytest.mark.parametrize(
+    "create_problem",
+    [Power2, _create_coupled_problem, _create_mixed_problem],
+    ids=["power2", "coupled", "mixed"],
+)
+def test_default_normalization(method, create_problem):
+    """Check the solution with the design space normalized by default."""
+    settings = SETTINGS[method](max_iter=100, **_DEFAULT_NORMALIZATION_SETTINGS[method])
+    assert settings.normalize_design_space
+    problem = create_problem()
+    res = _execute(UnoOpt(method), problem, settings)
+    reference = _execute(
+        OptimizationLibraryFactory(),
+        create_problem(),
+        SLSQP_Settings(max_iter=100, ftol_rel=1e-12),
+    )
+    assert res.is_feasible
+    # IPOPT is stopped by xtol_rel before reaching the optimum accurately.
+    atol = 1e-3 if method == "UNO_IPOPT" else 1e-6
+    assert allclose(res.x_opt, reference.x_opt, atol=atol)
+    if create_problem is Power2:
+        assert allclose(
+            res.x_opt, [0.5 ** (1 / 3), 0.5 ** (1 / 3), 0.9 ** (1 / 3)], atol=atol
+        )
+
+
+_IPOPT_LOOP_TIMEOUT = 10
+"""The time in seconds after which the IPOPT run is considered as an infinite loop."""
+
+_IPOPT_LOOP_EXIT_CODE = 3
+"""The exit code of the subprocess when the IPOPT run times out."""
+
+_IPOPT_LOOP_SCRIPT = f"""
+import os
+import threading
+
+from unopy.gemseo._compat import IS_GEMSEO_6
+from unopy.gemseo.settings.ipopt import UNO_IPOPT_Settings
+from unopy.gemseo.uno import UnoOpt
+
+if IS_GEMSEO_6:
+    from gemseo.problems.optimization.power_2 import Power2
+else:
+    from gemseo.problem.optimization.power_2 import Power2
+
+# The process exits by itself as killing it may not kill the Python interpreter
+# started by the launcher of a virtual environment on Windows.
+timer = threading.Timer({_IPOPT_LOOP_TIMEOUT}, os._exit, ({_IPOPT_LOOP_EXIT_CODE},))
+timer.daemon = True
+timer.start()
+problem = Power2()
+settings = UNO_IPOPT_Settings(max_iter=50, normalize_design_space=False)
+library = UnoOpt("UNO_IPOPT")
+if IS_GEMSEO_6:
+    result = library.execute(problem, settings_model=settings)
+else:
+    result = library.execute(problem, settings)
+assert result.is_feasible
+assert len(problem.database) <= 50
+"""
+"""The script running IPOPT on Power2 without xtol_rel."""
+
+
+class InfiniteLoopError(Exception):
+    """An optimization which does not terminate."""
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=InfiniteLoopError,
+    reason=(
+        "Known issue: with tol=0, Uno's IPOPT keeps accepting the same iterate "
+        "once it has converged; the functions are evaluated from GEMSEO's database, "
+        "so neither max_iter nor max_time stops it."
+    ),
+)
+def test_ipopt_infinite_loop(tmp_path):
+    """Check that UNO_IPOPT terminates on Power2 without xtol_rel.
+
+    The run is done in a subprocess so that the infinite loop can be interrupted.
+    """
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(path for path in sys.path if path)
+    completed = subprocess.run(
+        [sys.executable, "-c", _IPOPT_LOOP_SCRIPT],
+        cwd=tmp_path,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        timeout=_IPOPT_LOOP_TIMEOUT + 120,
+        check=False,
+    )
+    if completed.returncode == _IPOPT_LOOP_EXIT_CODE:
+        raise InfiniteLoopError(
+            f"UNO_IPOPT did not terminate within {_IPOPT_LOOP_TIMEOUT} seconds."
+        )
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")

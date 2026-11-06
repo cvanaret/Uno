@@ -25,12 +25,24 @@ env:
 
 jobs:
   build:
+    name: GEMSEO ${{ matrix.gemseo.name }}
     runs-on: ${{ matrix.os }}
+    # The job builds unopy from source: a hang must not block CI for 6 hours.
+    timeout-minutes: 60
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         architecture: [x64]
         python-version: ["3.12"]
+        gemseo:
+          # The latest stable release.
+          - name: stable
+            requirement: gemseo
+          # The pre-releases of GEMSEO 7 (Python >= 3.11);
+          # a specifier naming a pre-release lets pip select pre-releases.
+          - name: 7 pre-release
+            requirement: gemseo>=7.0.0rc0
 
     steps:
       - uses: actions/checkout@v4
@@ -46,8 +58,8 @@ jobs:
       - name: Install pybind11
         run: sudo apt install -y python3-pybind11 pybind11-dev
 
-      - name: Install pytest, gemseo, and scipy
-        run: pip install pytest gemseo scipy
+      - name: Install pytest, pytest-timeout, gemseo, and scipy
+        run: pip install pytest pytest-timeout "${{ matrix.gemseo.requirement }}" scipy
 
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
@@ -56,4 +68,4 @@ jobs:
         run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
 
       - name: Run tests
-        run: python -m pytest -s --import-mode=importlib ${{github.workspace}}/interfaces/Python/tests/test_gemseo.py
+        run: python -m pytest -s --timeout=300 --import-mode=importlib ${{github.workspace}}/interfaces/Python/tests/test_gemseo.py

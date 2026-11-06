@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import inspect
 import warnings
 
 import pytest
@@ -15,6 +16,7 @@ import scipy.sparse as sp  # noqa: E402
 import unopy  # noqa: E402
 from scipy.optimize import BFGS  # noqa: E402
 from scipy.optimize import Bounds  # noqa: E402
+from scipy.optimize import HessianUpdateStrategy  # noqa: E402
 from scipy.optimize import LinearConstraint  # noqa: E402
 from scipy.optimize import NonlinearConstraint  # noqa: E402
 from scipy.optimize import OptimizeResult  # noqa: E402
@@ -28,8 +30,10 @@ from scipy.sparse.linalg import LinearOperator  # noqa: E402
 from unopy.scipy import minimize  # noqa: E402
 from unopy.scipy._constraints import _JacobianBlock  # noqa: E402
 from unopy.scipy._constraints import _normalize_constraints  # noqa: E402
+from unopy.scipy._finite_differences import _approximate_jacobian  # noqa: E402
 from unopy.scipy._guard import _EvaluationErrorGuard  # noqa: E402
 from unopy.scipy._hessian import _LagrangianHessianOperator  # noqa: E402
+from unopy.scipy._objective import _Objective  # noqa: E402
 
 
 @pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
@@ -1340,3 +1344,283 @@ def test_multipliers_of_several_constraints():
     for v, v_reference in zip(res.v, reference.v):
         assert np.allclose(v, v_reference, atol=1e-3)
     assert [c.shape for c in res.constr] == [(1,), (2,)]
+
+
+# --- filterslp ---
+
+
+def test_filterslp_linear_problem():
+    """Check that the SLP method solves a linear problem at a vertex."""
+    res = minimize(
+        lambda x: -x[0] - 2 * x[1],
+        np.zeros(2),
+        jac=lambda x: np.array([-1.0, -2.0]),
+        method="filterslp",
+        bounds=Bounds([0.0, 0.0], [3.0, 3.0]),
+        constraints=LinearConstraint(
+            [[1.0, 1.0], [1.0, -1.0]], lb=[-np.inf, -2.0], ub=[4.0, np.inf]
+        ),
+    )
+    assert res.success
+    assert np.allclose(res.x, [1.0, 3.0], atol=1e-8)
+    assert res.fun == pytest.approx(-7.0)
+
+
+@pytest.mark.parametrize("kind", ["NonlinearConstraint", "dict"])
+def test_filterslp_nonlinear_constraint(kind):
+    """Check that the SLP method solves a linear objective over a disk."""
+    if kind == "dict":
+        constraint = {
+            "type": "ineq",
+            "fun": lambda x: 1.0 - x @ x,
+            "jac": lambda x: -2 * x.reshape(1, -1),
+        }
+    else:
+        constraint = NonlinearConstraint(
+            fun=lambda x: x @ x, lb=-np.inf, ub=1.0, jac=lambda x: 2 * x.reshape(1, -1)
+        )
+    res = minimize(
+        lambda x: x[0] + x[1],
+        np.array([0.5, 0.0]),
+        jac=lambda x: np.ones(2),
+        method="filterslp",
+        tol=1e-8,
+        constraints=constraint,
+        options={"max_iterations": 1000},
+    )
+    assert res.success
+    assert np.allclose(res.x, [-(0.5**0.5), -(0.5**0.5)], atol=1e-5)
+
+
+# --- invalid inputs ---
+
+
+class _CustomHessianUpdate(HessianUpdateStrategy):
+    """A Hessian update strategy which is neither BFGS nor SR1."""
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error", "message"),
+    [
+        ({"method": "slsqp"}, ValueError, r"Unknown method 'slsqp'\. Must be one of"),
+        (
+            {"hess": _CustomHessianUpdate()},
+            NotImplementedError,
+            r"The Hessian update strategy .* is not supported; use BFGS\(\) or SR1\(\)",
+        ),
+        (
+            {"constraints": {"type": "lt", "fun": lambda x: x, "jac": lambda x: np.eye(2)}},
+            ValueError,
+            "Unknown constraint type 'lt'. Must be 'eq' or 'ineq'",
+        ),
+        (
+            {"constraints": [LinearConstraint(np.eye(2), lb=-1.0, ub=1.0), (0.0, 1.0)]},
+            TypeError,
+            "Unsupported constraint type: <class 'tuple'>",
+        ),
+        (
+            {
+                "constraints": NonlinearConstraint(
+                    fun=lambda x: x[0], lb=-np.inf, ub=1.0, jac=lambda x: np.ones(3)
+                )
+            },
+            ValueError,
+            r"constraint 0 must have the shape \(1, 2\), got an array of shape \(3,\)",
+        ),
+    ],
+    ids=["method", "hess", "dict_type", "constraint_type", "jacobian_size"],
+)
+def test_invalid_input(kwargs, error, message):
+    """Check that an invalid input is rejected before optimizing."""
+    fun, calls = _counting(rosen)
+    with pytest.raises(error, match=message):
+        minimize(fun, np.zeros(2), jac=rosen_der, **kwargs)
+    assert not calls
+
+
+# --- non-canonical sparse Jacobians ---
+
+
+def _non_canonical_jacobian(x, sparse_format):
+    """Return the Jacobian of _non_canonical_constraint with duplicate entries.
+
+    The Jacobian [[1, 4 x1, 0], [0, 0, 3]] is stored with the entries of the row 0
+    in unsorted column order, the entry (0, 1) split into two duplicates
+    and the entry (1, 2) split into two duplicates.
+    """
+    data = np.array([2 * x[1], 1.0, 2 * x[1], 1.0, 2.0])
+    rows = np.array([0, 0, 0, 1, 1])
+    cols = np.array([1, 0, 1, 2, 2])
+    if sparse_format == "coo":
+        return sp.coo_matrix((data, (rows, cols)), shape=(2, 3))
+    jacobian = sp.csr_matrix((data, cols, np.array([0, 3, 5])), shape=(2, 3))
+    assert not jacobian.has_canonical_format
+    return jacobian
+
+
+def _non_canonical_constraint(x):
+    return np.array([x[0] + 2 * x[1] ** 2, 3 * x[2]])
+
+
+@pytest.mark.parametrize("sparse_format", ["csr", "coo"])
+def test_jacobian_block_non_canonical(sparse_format):
+    """Check a sparse Jacobian block with unsorted indices and duplicate entries."""
+    x0 = np.zeros(3)
+    jacobians = []
+
+    def jac(x):
+        jacobians.append(_non_canonical_jacobian(x, sparse_format))
+        return jacobians[-1]
+
+    block = _JacobianBlock(jac(x0), x0, 2, 0, jacobian=jac)
+    # The duplicates are summed, including the explicitly stored zeros at x0.
+    assert block.nnz == 3
+    assert block.rows.tolist() == [0, 0, 1]
+    assert block.cols.tolist() == [0, 1, 2]
+    output = np.empty(3)
+    block.write(x0, output)
+    assert output.tolist() == [1.0, 0.0, 3.0]
+    block.write(np.array([0.0, 1.5, 0.0]), output)
+    assert output.tolist() == [1.0, 6.0, 3.0]
+    # The matrices of the user are not modified.
+    assert all(jacobian.nnz == 5 for jacobian in jacobians)
+
+
+@pytest.mark.parametrize("sparse_format", ["csr", "coo"])
+def test_non_canonical_sparse_constraint_jacobian(sparse_format):
+    """Check the solution with a sparse Jacobian with unsorted and duplicate entries."""
+
+    def solve(jac):
+        return minimize(
+            _sphere,
+            np.zeros(3),
+            jac=_sphere_der,
+            tol=1e-8,
+            constraints=NonlinearConstraint(
+                fun=_non_canonical_constraint, lb=-np.inf, ub=[2.0, 1.0], jac=jac
+            ),
+        )
+
+    res = solve(lambda x: _non_canonical_jacobian(x, sparse_format))
+    reference = solve(lambda x: _non_canonical_jacobian(x, sparse_format).toarray())
+    assert res.success
+    assert res.nit > 1
+    assert np.allclose(res.x, reference.x, atol=1e-8)
+    assert np.all(_non_canonical_constraint(res.x) <= [2.0 + 1e-8, 1.0 + 1e-8])
+
+
+def test_sparse_jacobian_of_dense_block():
+    """Check a sparse Jacobian returned for a block whose Jacobian at x0 is dense."""
+    x0 = np.zeros(3)
+
+    def jac(x):
+        jacobian = _non_canonical_jacobian(x, "csr")
+        return jacobian.toarray() if np.array_equal(x, x0) else jacobian
+
+    block = _JacobianBlock(jac(x0), x0, 2, 0, jacobian=jac)
+    # The dense pattern.
+    assert block.nnz == 6
+    output = np.empty(6)
+    block.write(np.array([0.0, 1.5, 0.0]), output)
+    assert output.tolist() == [1.0, 6.0, 0.0, 0.0, 0.0, 3.0]
+
+    def solve(jac):
+        return minimize(
+            _sphere,
+            x0,
+            jac=_sphere_der,
+            tol=1e-8,
+            constraints=NonlinearConstraint(
+                fun=_non_canonical_constraint, lb=-np.inf, ub=[2.0, 1.0], jac=jac
+            ),
+        )
+
+    res = solve(jac)
+    reference = solve(lambda x: _non_canonical_jacobian(x, "csr").toarray())
+    assert res.success
+    assert np.allclose(res.x, reference.x, atol=1e-8)
+
+
+# --- objective, finite differences and Hessian operator ---
+
+
+def test_objective_jac_true_gradient_at_another_point():
+    """Check jac=True when the gradient is requested at another point than the last one."""
+    fun, calls = _counting(lambda x: (rosen(x), rosen_der(x)))
+    objective = _Objective(fun, True, ())
+    x1 = np.array([0.5, 0.5])
+    x2 = np.array([-1.0, 2.0])
+    assert objective.evaluate(x1) == rosen(x1)
+    gradient = np.empty(2)
+    # fun is called at the new point.
+    objective.compute_gradient(x2, gradient)
+    assert np.array_equal(gradient, rosen_der(x2))
+    assert len(calls) == 2
+    # The value at this point is then reused.
+    assert objective.evaluate(x2) == rosen(x2)
+    assert len(calls) == 2
+    # Another point requires a new call.
+    assert objective.evaluate(x1) == rosen(x1)
+    assert len(calls) == 3
+    assert objective.evaluations == 3
+
+
+def test_approximate_jacobian_2_point_without_value():
+    """Check the '2-point' scheme evaluating the function at the point itself."""
+    function, calls = _counting(lambda x: np.array([x[0] ** 2, x[0] * x[1]]))
+    x = np.array([1.0, -2.0])
+    jacobian = _approximate_jacobian(function, x, "2-point")
+    assert np.allclose(jacobian, [[2.0, 0.0], [-2.0, 1.0]], atol=1e-6)
+    # The point itself and the 2 perturbed points.
+    assert len(calls) == 3
+    assert np.array_equal(calls[0], x)
+
+
+def test_lagrangian_hessian_operator_same_point():
+    """Check that the Hessian term is reused when Uno has not changed the point."""
+    calls = []
+
+    def hess(x):
+        calls.append(np.array(x))
+        return np.diag(x)
+
+    operator = _LagrangianHessianOperator(hess, (), [])
+    result = np.empty(2)
+    operator(np.array([1.0, 2.0]), True, 1.0, np.empty(0), np.ones(2), result)
+    assert result.tolist() == [1.0, 2.0]
+    operator(np.array([1.0, 2.0]), False, 2.0, np.empty(0), np.ones(2), result)
+    assert result.tolist() == [2.0, 4.0]
+    assert len(calls) == 1
+
+
+# --- callback with a signature that cannot be inspected ---
+
+
+class _UninspectableCallback:
+    """A callback whose signature cannot be inspected."""
+
+    def __init__(self):
+        self.calls = []
+
+    @property
+    def __signature__(self):
+        raise ValueError("No signature.")
+
+    def __call__(self, *args):
+        self.calls.append(args)
+
+
+def test_callback_uninspectable_signature():
+    """Check that a callback whose signature cannot be inspected receives the iterate."""
+    callback = _UninspectableCallback()
+    with pytest.raises(ValueError, match="No signature."):
+        inspect.signature(callback)
+    res = minimize(rosen, np.zeros(2), jac=rosen_der, callback=callback)
+    assert res.success
+    assert len(callback.calls) == res.nit
+    # The legacy form callback(xk).
+    assert all(
+        len(args) == 1 and isinstance(args[0], np.ndarray) and args[0].shape == (2,)
+        for args in callback.calls
+    )
+    assert np.allclose(callback.calls[-1][0], res.x)
