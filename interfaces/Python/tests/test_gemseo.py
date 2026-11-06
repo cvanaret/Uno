@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import re
-from types import NoneType
 from typing import get_args
 
 import pytest
@@ -209,7 +208,7 @@ def test_uno_settings_are_uno_options():
     assert uno_fields
     for name, field in uno_fields.items():
         assert name in documented_options, name
-        assert set(get_args(field.annotation)) == {documented_options[name], NoneType}
+        assert set(get_args(field.annotation)) == {documented_options[name], type(None)}
         assert field.default is None
     # All the options except those set by the wrapper are exposed.
     assert set(documented_options) - set(uno_fields) == {"max_iterations"}
