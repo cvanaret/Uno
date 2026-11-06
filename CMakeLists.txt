@@ -463,6 +463,9 @@ if(SKBUILD)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
    endif()
 
+   # also installs the optional subpackages unopy.scipy and unopy.gemseo
+   install(DIRECTORY interfaces/Python/unopy/ DESTINATION unopy
+           PATTERN "__pycache__" EXCLUDE)
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
