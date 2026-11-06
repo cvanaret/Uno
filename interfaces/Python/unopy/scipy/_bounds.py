@@ -12,8 +12,6 @@ from scipy.optimize import Bounds
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-Inf = float("inf")
-
 
 def _process_bounds(
     bounds: Bounds | Iterable[tuple[float | None, float | None]], n: int
@@ -50,8 +48,8 @@ def _process_bounds(
                 f"The bounds must be a Bounds instance or a sequence of {n} "
                 "(min, max) pairs."
             )
-        lb = np.array([-Inf if low is None else low for low, _ in pairs], dtype=float)
-        ub = np.array([Inf if high is None else high for _, high in pairs], dtype=float)
+        lb = np.array([-np.inf if low is None else low for low, _ in pairs], dtype=float)
+        ub = np.array([np.inf if high is None else high for _, high in pairs], dtype=float)
 
     if np.any(lb > ub):
         raise ValueError(
@@ -80,4 +78,4 @@ def _get_variable_bounds(
     """
     if bounds is not None:
         return _process_bounds(bounds, n)
-    return [-Inf] * n, [Inf] * n
+    return [-np.inf] * n, [np.inf] * n
