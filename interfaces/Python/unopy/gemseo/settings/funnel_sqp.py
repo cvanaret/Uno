@@ -10,4 +10,5 @@ from unopy.gemseo.settings.base_uno_settings import BaseUnoSettings
 class UNO_Funnel_SQP_Settings(BaseUnoSettings):  # noqa: N801
     """Settings for the Uno funnel SQP algorithm."""
 
+    # Used by GEMSEO 6; GEMSEO 7 derives it from the class name.
     _TARGET_CLASS_NAME = "UNO_Funnel_SQP"

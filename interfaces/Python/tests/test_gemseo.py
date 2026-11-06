@@ -14,16 +14,6 @@ pytest.importorskip("gemseo")
 
 import unopy  # noqa: E402
 import unopy.gemseo.uno as uno_module  # noqa: E402
-from gemseo.algos.design_space import DesignSpace  # noqa: E402
-from gemseo.algos.opt.base_gradient_based_algorithm_settings import (  # noqa: E402
-    BaseGradientBasedAlgorithmSettings,
-)
-from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings  # noqa: E402
-from gemseo.algos.opt.factory import OptimizationLibraryFactory  # noqa: E402
-from gemseo.algos.optimization_problem import OptimizationProblem  # noqa: E402
-from gemseo.core.mdo_functions.mdo_function import MDOFunction  # noqa: E402
-from gemseo.problems.optimization.power_2 import Power2  # noqa: E402
-from gemseo.utils.constants import C_LONG_MAX  # noqa: E402
 from numpy import allclose  # noqa: E402
 from numpy import array  # noqa: E402
 from numpy import identity  # noqa: E402
@@ -32,6 +22,11 @@ from numpy.testing import assert_array_equal  # noqa: E402
 from scipy.sparse import csr_array  # noqa: E402
 from scipy.sparse import issparse  # noqa: E402
 
+from unopy.gemseo._compat import IS_GEMSEO_6  # noqa: E402
+from unopy.gemseo._compat import MAX_INT  # noqa: E402
+from unopy.gemseo._compat import SETTINGS_FIELD  # noqa: E402
+from unopy.gemseo._compat import BaseGradientBasedAlgorithmSettings  # noqa: E402
+from unopy.gemseo._compat import BaseOptimizerSettings  # noqa: E402
 from unopy.gemseo.settings.base_uno_settings import BaseUnoSettings  # noqa: E402
 from unopy.gemseo.settings.filter_slp import UNO_Filter_SLP_Settings  # noqa: E402
 from unopy.gemseo.settings.filter_sqp import UNO_Filter_SQP_Settings  # noqa: E402
@@ -40,6 +35,21 @@ from unopy.gemseo.settings.ipopt import UNO_IPOPT_Settings  # noqa: E402
 from unopy.gemseo.uno import UnoOpt  # noqa: E402
 from unopy.gemseo.uno import _concatenate_constraints  # noqa: E402
 from unopy.scipy import minimize  # noqa: E402
+
+if IS_GEMSEO_6:
+    from gemseo.algos.design_space import DesignSpace
+    from gemseo.algos.opt.factory import OptimizationLibraryFactory
+    from gemseo.algos.opt.scipy_local.settings.slsqp import SLSQP_Settings
+    from gemseo.algos.optimization_problem import OptimizationProblem
+    from gemseo.core.mdo_functions.mdo_function import MDOFunction
+    from gemseo.problems.optimization.power_2 import Power2
+else:
+    from gemseo.core.function.array_function import ArrayFunction as MDOFunction
+    from gemseo.optimization.factory import OptimizationLibraryFactory
+    from gemseo.optimization.problem import OptimizationProblem
+    from gemseo.optimization.scipy_local.settings.slsqp import SLSQP_Settings
+    from gemseo.problem.optimization.power_2 import Power2
+    from gemseo.space.design import DesignSpace
 
 SETTINGS = {
     "UNO_Filter_SQP": UNO_Filter_SQP_Settings,
@@ -50,14 +60,45 @@ SETTINGS = {
 """The settings classes of the Uno algorithms."""
 
 
-@pytest.mark.parametrize(
-    "method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"]
-)
+def _execute(library, problem, settings):
+    """Execute a library or a factory on a problem with GEMSEO 6 or 7.
+
+    Args:
+        library: The optimization library or the library factory.
+        problem: The optimization problem.
+        settings: The settings of the algorithm.
+
+    Returns:
+        The optimization result.
+    """
+    if IS_GEMSEO_6:
+        return library.execute(problem, settings_model=settings)
+    return library.execute(problem, settings)
+
+
+def _get_target_class_name(settings_class):
+    """Return the name of the algorithm targeted by a settings class.
+
+    Args:
+        settings_class: The settings class.
+
+    Returns:
+        The name of the algorithm.
+    """
+    if IS_GEMSEO_6:
+        return settings_class._TARGET_CLASS_NAME
+    return settings_class().target_class_name
+
+
+@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
 def test_power2(method):
     problem = Power2()
-    problem.preprocess_functions()
-    res = UnoOpt(method).execute(
-        problem, settings_model=SETTINGS[method](xtol_rel=1e-4, max_iter=50, normalize_design_space=False)
+    if IS_GEMSEO_6:
+        problem.preprocess_functions()
+    res = _execute(
+        UnoOpt(method),
+        problem,
+        SETTINGS[method](xtol_rel=1e-4, max_iter=50, normalize_design_space=False),
     )
     assert res.is_feasible
     assert allclose(
@@ -66,14 +107,14 @@ def test_power2(method):
     assert 3 <= len(problem.database) <= 50
 
 
-@pytest.mark.parametrize(
-    "method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"]
-)
+@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
 def test_power2_max_iter(method):
     """Check that GEMSEO stops Uno when the maximum number of iterations is reached."""
     problem = Power2()
-    res = UnoOpt(method).execute(
-        problem, settings_model=SETTINGS[method](max_iter=3, normalize_design_space=False)
+    res = _execute(
+        UnoOpt(method),
+        problem,
+        SETTINGS[method](max_iter=3, normalize_design_space=False),
     )
     assert len(problem.database) == 3
     assert res.message == (
@@ -85,9 +126,7 @@ class UserError(Exception):
     """An error raised by a user function."""
 
 
-@pytest.mark.parametrize(
-    "method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"]
-)
+@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
 def test_power2_user_exception(method):
     """Check that an exception raised by a function is propagated."""
     problem = Power2()
@@ -99,13 +138,12 @@ def test_power2_user_exception(method):
             raise UserError("Failure.")
         return (x**2).sum()
 
-    problem.objective = MDOFunction(
-        failing_function, "pow2", jac=lambda x: 2 * x
-    )
+    problem.objective = MDOFunction(failing_function, "pow2", jac=lambda x: 2 * x)
     with pytest.raises(UserError, match="Failure."):
-        UnoOpt(method).execute(
+        _execute(
+            UnoOpt(method),
             problem,
-            settings_model=SETTINGS[method](max_iter=50, normalize_design_space=False),
+            SETTINGS[method](max_iter=50, normalize_design_space=False),
         )
     assert len(calls) == 3
 
@@ -121,9 +159,10 @@ def test_settings_forwarded_to_uno(monkeypatch):
 
     monkeypatch.setattr(unopy.UnoSolver, "set_option", spy)
     problem = Power2()
-    res = UnoOpt("UNO_Filter_SQP").execute(
+    res = _execute(
+        UnoOpt("UNO_Filter_SQP"),
         problem,
-        settings_model=UNO_Filter_SQP_Settings(
+        UNO_Filter_SQP_Settings(
             max_iter=50,
             xtol_rel=1e-4,
             normalize_design_space=False,
@@ -142,7 +181,7 @@ def test_settings_forwarded_to_uno(monkeypatch):
         "filter_capacity": 10,
         "SOC_max_iterations": 3,
         "barrier_small_infeasibility_factor": 0.5,
-        "max_iterations": C_LONG_MAX,
+        "max_iterations": MAX_INT,
     }
     assert res.is_feasible
 
@@ -187,9 +226,10 @@ def test_max_iter_above_uno_default(monkeypatch):
 
     monkeypatch.setattr(unopy.UnoSolver, "set_option", spy)
     # Uno's default maximum number of iterations is 2000.
-    UnoOpt("UNO_Filter_SQP").execute(
+    _execute(
+        UnoOpt("UNO_Filter_SQP"),
         Power2(),
-        settings_model=UNO_Filter_SQP_Settings(max_iter=5000, normalize_design_space=False),
+        UNO_Filter_SQP_Settings(max_iter=5000, normalize_design_space=False),
     )
     assert options["max_iterations"] >= 5000
 
@@ -197,9 +237,10 @@ def test_max_iter_above_uno_default(monkeypatch):
 def test_message_and_status():
     """Check that the message is a string and the status an integer."""
     problem = Power2()
-    res = UnoOpt("UNO_Filter_SQP").execute(
+    res = _execute(
+        UnoOpt("UNO_Filter_SQP"),
         problem,
-        settings_model=UNO_Filter_SQP_Settings(max_iter=50, normalize_design_space=False),
+        UNO_Filter_SQP_Settings(max_iter=50, normalize_design_space=False),
     )
     assert isinstance(res.message, str)
     assert type(res.status) is int
@@ -228,18 +269,19 @@ def _create_coupled_problem():
     return problem
 
 
-@pytest.mark.parametrize(
-    "method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"]
-)
+@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
 def test_several_constraints(method):
     """Check a problem with several constraints having non-diagonal Jacobians."""
     problem = _create_coupled_problem()
-    res = UnoOpt(method).execute(
+    res = _execute(
+        UnoOpt(method),
         problem,
-        settings_model=SETTINGS[method](max_iter=100, normalize_design_space=False),
+        SETTINGS[method](max_iter=100, normalize_design_space=False),
     )
-    reference = OptimizationLibraryFactory().execute(
-        _create_coupled_problem(), algo_name="SLSQP", max_iter=100, ftol_rel=1e-12
+    reference = _execute(
+        OptimizationLibraryFactory(),
+        _create_coupled_problem(),
+        SLSQP_Settings(max_iter=100, ftol_rel=1e-12),
     )
     assert res.is_feasible
     assert allclose(res.x_opt, reference.x_opt, atol=1e-4)
@@ -248,10 +290,10 @@ def test_several_constraints(method):
 @pytest.mark.parametrize("algo_name", sorted(SETTINGS))
 def test_settings_classes(algo_name):
     """Check that each algorithm has its own settings class targeting it."""
-    settings_class = UnoOpt.ALGORITHM_INFOS[algo_name].Settings
+    settings_class = getattr(UnoOpt.ALGORITHM_INFOS[algo_name], SETTINGS_FIELD)
     assert settings_class is SETTINGS[algo_name]
     assert issubclass(settings_class, BaseUnoSettings)
-    assert settings_class._TARGET_CLASS_NAME == algo_name
+    assert _get_target_class_name(settings_class) == algo_name
     assert set(settings_class.model_fields) == set(BaseUnoSettings.model_fields)
 
 
@@ -328,9 +370,7 @@ def _create_mixed_problem(calls=None):
     return problem
 
 
-@pytest.mark.parametrize(
-    "method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"]
-)
+@pytest.mark.parametrize("method", ["UNO_Filter_SQP", "UNO_Funnel_SQP", "UNO_IPOPT"])
 def test_merged_constraints(monkeypatch, method):
     """Check that the constraints are merged into one block per type."""
     scipy_constraints = []
@@ -342,14 +382,15 @@ def test_merged_constraints(monkeypatch, method):
     monkeypatch.setattr(uno_module, "minimize", spy)
     calls = []
     problem = _create_mixed_problem(calls)
-    res = UnoOpt(method).execute(
+    res = _execute(
+        UnoOpt(method),
         problem,
-        settings_model=SETTINGS[method](
-            max_iter=100, xtol_rel=1e-10, normalize_design_space=False
-        ),
+        SETTINGS[method](max_iter=100, xtol_rel=1e-10, normalize_design_space=False),
     )
-    reference = OptimizationLibraryFactory().execute(
-        _create_mixed_problem(), algo_name="SLSQP", max_iter=100, ftol_rel=1e-12
+    reference = _execute(
+        OptimizationLibraryFactory(),
+        _create_mixed_problem(),
+        SLSQP_Settings(max_iter=100, ftol_rel=1e-12),
     )
     assert res.is_feasible
     assert allclose(res.x_opt, reference.x_opt, atol=1e-4)

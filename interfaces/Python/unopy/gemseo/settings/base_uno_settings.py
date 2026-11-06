@@ -4,10 +4,8 @@
 
 from __future__ import annotations
 
-from gemseo.algos.opt.base_gradient_based_algorithm_settings import (
-    BaseGradientBasedAlgorithmSettings,
-)
-from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
+from unopy.gemseo._compat import BaseGradientBasedAlgorithmSettings
+from unopy.gemseo._compat import BaseOptimizerSettings
 
 
 class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings):
