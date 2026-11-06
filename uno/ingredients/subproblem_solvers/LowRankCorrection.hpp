@@ -28,6 +28,7 @@ namespace uno {
       static constexpr bool uses_explicit_hessian_matrix = true;
       void update(const Subproblem& /*subproblem*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/) { }
       void apply(Vector<double>& /*b*/) const { }
+      void add_matrix_vector_product(View<const double> /*vector*/, View<double> /*result*/) const { }
       [[nodiscard]] Inertia get_inertia(const Inertia& base_inertia) const { return base_inertia; }
    };
 
@@ -46,6 +47,8 @@ namespace uno {
       explicit WoodburyCorrection(const DirectQuasiNewtonHessian& hessian_model);
       void update(const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver);
       void apply(Vector<double>& b) const;
+      // Add E C Eᵀ vector to the original primal entries; the diagonal part is already in the base matrix.
+      void add_matrix_vector_product(View<const double> vector, View<double> result) const;
       [[nodiscard]] Inertia get_inertia(const Inertia& base_inertia) const;
 
    protected:

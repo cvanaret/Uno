@@ -176,3 +176,54 @@ TEST_F(LowRankCorrectionTest, SingularFullMatrixTriggersRegularization) {
    EXPECT_NEAR(shift * direction.primals[0], -1., 1e-10);
    EXPECT_NEAR((1. + shift) * direction.primals[1], -2., 1e-12);
 }
+
+TEST_F(LowRankCorrectionTest, RefinementReducesErrorOfIllConditionedFullMatrix) {
+   if (SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
+      GTEST_SKIP() << "requires a direct linear solver";
+   }
+   this->hessian->columns = {{1e5, 0.}};
+   this->hessian->coefficients = {1.};
+   long double errors[2]{};
+   size_t index = 0;
+   for (const int max_steps: {0, 10}) {
+      Options options = this->options;
+      options.set_integer("iterative_refinement_min_steps", 1);
+      options.set_integer("iterative_refinement_max_steps", max_steps);
+      EQPSolver<WoodburyCorrection> solver(options, WoodburyCorrection(*this->hessian));
+      Statistics statistics;
+      solver.initialize_statistics(statistics);
+      solver.initialize_memory(*this->subproblem);
+      Iterate iterate(2, 0);
+      this->model.initial_primal_point(iterate.primals);
+      Evaluations evaluations(this->model);
+      const Direction& direction = solver.solve(statistics, *this->subproblem, iterate, Inf, Vector<double>(2), evaluations, {});
+      ASSERT_EQ(direction.status, SubproblemStatus::OPTIMAL);
+      // Independent residual for diag(1 + 1e10, 1) dx = -(1, 2), evaluated in extended precision.
+      errors[index++] = std::abs((1.L + 1e10L) * direction.primals[0] + 1.L);
+      EXPECT_NEAR(direction.primals[1], -2., 1e-14);
+      if (max_steps == 0) {
+         EXPECT_EQ(solver.get_number_refinement_steps(), 0);
+         EXPECT_TRUE(std::isnan(solver.get_residual_ratio()));
+      }
+      else {
+         EXPECT_GE(solver.get_number_refinement_steps(), 1);
+         EXPECT_LE(solver.get_residual_ratio(), 1e-10);
+      }
+   }
+   EXPECT_GT(errors[0], 1e-9L);
+   EXPECT_LT(errors[1], errors[0] * 1e-3L);
+   EXPECT_LT(errors[1], 1e-12L);
+}
+
+TEST_F(LowRankCorrectionTest, ResidualProductAddsOnlyLowRankPrimalContribution) {
+   this->hessian->columns = {{1., 0.}, {1., 1.}};
+   this->hessian->coefficients = {-1., -0.5};
+   this->update();
+   const Vector<double> vector{2., 3., 5., 7.};
+   Vector<double> product{11., 13., 17., 19.};
+   this->correction->add_matrix_vector_product(vector.view(), product.view());
+   EXPECT_DOUBLE_EQ(product[0], 6.5);
+   EXPECT_DOUBLE_EQ(product[1], 10.5);
+   EXPECT_DOUBLE_EQ(product[2], 17.);
+   EXPECT_DOUBLE_EQ(product[3], 19.);
+}

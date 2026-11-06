@@ -91,9 +91,7 @@ namespace uno {
 
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::initialize_statistics(Statistics& statistics) {
-      if constexpr (LowRankCorrection::uses_explicit_hessian_matrix) {
-         statistics.add_column("IR", Statistics::int_width, 0, /* is_extended = */ true);
-      }
+      statistics.add_column("IR", Statistics::int_width, 0, /* is_extended = */ true);
    }
 
    template <typename LowRankCorrection>
@@ -230,7 +228,6 @@ namespace uno {
          this->direction.status = SubproblemStatus::ERROR;
       }
       else {
-         this->low_rank_correction.apply(linear_system.solution);
          // assemble the full primal-dual direction
          subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction);
       }
@@ -288,7 +285,6 @@ namespace uno {
          return this->direction_SOC;
       }
       this->direction_SOC.status = SubproblemStatus::OPTIMAL;
-      this->low_rank_correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
    }
@@ -321,7 +317,7 @@ namespace uno {
    //    regularization.
    // allow_refactorization == false: the factorization must not be modified (e.g. second-order corrections) and the
    // refined solution is accepted whatever its residual ratio.
-   // max_steps = 0 (or a low-rank Hessian correction) disables the mechanism. Without refinement step, the solution is
+   // max_steps = 0 disables the mechanism. Without a refinement step, the solution is
    // that of the plain solve (bitwise)
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
@@ -329,10 +325,10 @@ namespace uno {
       auto& linear_system = this->linear_solver->get_linear_system();
       this->number_refinement_steps = 0;
       this->matrix_deemed_singular = false;
-      // the residuals require the full Hessian in the condensed matrix (not available with low-rank corrections)
-      if (!LowRankCorrection::uses_explicit_hessian_matrix || this->iterative_refinement.max_steps == 0) {
+      if (this->iterative_refinement.max_steps == 0) {
          this->residual_ratio = std::numeric_limits<double>::quiet_NaN(); // not computed
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+         this->low_rank_correction.apply(linear_system.solution);
          return;
       }
       this->newton_system->uncondense_rhs(linear_system.rhs.view(), this->uncondensed_rhs.view());
@@ -340,6 +336,7 @@ namespace uno {
       while (true) {
          // solve the condensed system, recover the uncondensed solution and refine it
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+         this->low_rank_correction.apply(linear_system.solution);
          this->newton_system->expand_solution(this->uncondensed_rhs.view(), linear_system.solution.view(), this->uncondensed_solution.view());
          this->residual_ratio = this->compute_uncondensed_residual_ratio();
          DEBUG2 << "Residual ratio: " << this->residual_ratio << '\n';
@@ -427,6 +424,7 @@ namespace uno {
       linear_system.compute_matrix_vector_product(this->uncondensed_solution.data(), this->uncondensed_residual.data(), schur_begin,
          schur_end);
       this->newton_system->complete_uncondensed_product(this->uncondensed_solution.view(), this->uncondensed_residual.view());
+      this->low_rank_correction.add_matrix_vector_product(this->uncondensed_solution.view(), this->uncondensed_residual.view());
       this->uncondensed_residual -= this->uncondensed_rhs;
 
       const double rhs_norm = norm_inf(this->uncondensed_rhs);
@@ -445,6 +443,7 @@ namespace uno {
    void EQPSolver<LowRankCorrection>::compute_iterative_refinement_correction() {
       this->newton_system->condense_rhs(this->uncondensed_residual.view(), this->condensed_rhs_buffer.view());
       this->linear_solver->solve_indefinite_system(this->condensed_rhs_buffer.data(), this->condensed_solution_buffer.data(), 1);
+      this->low_rank_correction.apply(this->condensed_solution_buffer);
       this->newton_system->expand_solution(this->uncondensed_residual.view(), this->condensed_solution_buffer.view(),
          this->uncondensed_correction.view());
    }

@@ -118,6 +118,15 @@ namespace uno {
       return {positive - this->scaling_negative, negative - this->scaling_positive, this->correction_inertia->zero};
    }
 
+   void WoodburyCorrection::add_matrix_vector_product(View<const double> vector, View<double> result) const {
+      for (size_t column_index: Range(this->correction_rank)) {
+         const auto column = this->hessian_model.get_correction_column(column_index);
+         const double coefficient = this->hessian_model.get_correction_column_scaling(column_index) *
+            dot(column, view(vector.data(), column.size()));
+         blas1::add(column.size(), coefficient, column.data(), result.data());
+      }
+   }
+
    // b := b - H T⁻¹ Eᵀ b
    void WoodburyCorrection::apply(Vector<double>& b) const {
       if (this->correction_rank == 0) {
