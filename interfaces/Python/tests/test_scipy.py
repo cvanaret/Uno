@@ -1593,6 +1593,50 @@ def test_lagrangian_hessian_operator_same_point():
     assert len(calls) == 1
 
 
+def test_lagrangian_hessian_operator_same_point_new_multipliers():
+    """Check that a constraint term is recomputed when only the multipliers change.
+
+    Uno may keep the point (``evaluate_at_x=False``) and change the multipliers:
+    the objective term is reused but not the constraint term.
+    """
+    x0 = np.array([1.0, 2.0])
+    objective_calls = []
+    constraint_calls = []
+
+    def hess(x):
+        objective_calls.append(np.array(x))
+        return np.zeros((2, 2))
+
+    def constraint_hess(x, v):
+        constraint_calls.append(np.array(v))
+        return v[0] * np.diag([2.0, 2.0])
+
+    constraints = _normalize_constraints(
+        NonlinearConstraint(
+            fun=lambda x: np.array([x @ x]),
+            jac=lambda x: np.atleast_2d(2 * x),
+            hess=constraint_hess,
+            lb=-np.inf,
+            ub=1.0,
+        ),
+        x0,
+        hess,
+    )
+    operator = _LagrangianHessianOperator(hess, (), constraints)
+    result = np.empty(2)
+    operator(x0, True, 1.0, np.array([1.0]), np.ones(2), result)
+    assert result.tolist() == [2.0, 2.0]
+    # Same point and multipliers: both terms are reused.
+    operator(x0, False, 1.0, np.array([1.0]), np.ones(2), result)
+    assert result.tolist() == [2.0, 2.0]
+    assert len(objective_calls) == len(constraint_calls) == 1
+    # Same point, new multipliers: only the constraint term is recomputed.
+    operator(x0, False, 1.0, np.array([3.0]), np.ones(2), result)
+    assert result.tolist() == [6.0, 6.0]
+    assert len(objective_calls) == 1
+    assert len(constraint_calls) == 2
+
+
 # --- callback with a signature that cannot be inspected ---
 
 
