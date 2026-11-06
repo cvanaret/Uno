@@ -240,12 +240,23 @@ if(BQPD)
 endif()
 
 # HiGHS
-find_library(HIGHS highs)
+# an explicit -DHIGHS=<libs> (+ -DHIGHS_INCLUDE_DIR) takes precedence over the CMake package
+if(NOT HIGHS)
+   find_package(highs CONFIG QUIET)
+endif()
+if(NOT HIGHS AND TARGET highs::highs)
+   # the exported target carries include dirs, highs_extras, BLAS::BLAS (set BLAS_LIBRARIES) and Threads
+   target_link_libraries(uno_dependencies INTERFACE highs::highs)
+   set(HIGHS highs::highs)
+else()
+   find_library(HIGHS highs)
+   if(HIGHS)
+      target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
+      target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_INCLUDE_DIR})
+   endif()
+endif()
 if(HIGHS)
-   target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
    target_compile_definitions(uno_dependencies INTERFACE HAS_HIGHS)
-
-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_INCLUDE_DIR})
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp

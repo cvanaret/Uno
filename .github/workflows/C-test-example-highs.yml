@@ -1,0 +1,78 @@
+name: Test the C API on the example (HiGHS auto-detection)
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        shell: bash
+        run: |
+          bash dependencies/scripts/download_dependencies.sh
+          # the script deletes lib/cmake: restore the HiGHS CMake package
+          tar -xzf dependencies/UnoUtils.tar.gz -C dependencies lib/cmake/highs
+
+      - name: Configure Uno CMake (HiGHS found via find_package)
+        shell: bash
+        run: |
+          D=${{github.workspace}}/dependencies
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DCMAKE_PREFIX_PATH=$D \
+                -DMETIS_INCLUDE_DIR=$D/include \
+                -DSPRAL_INCLUDE_DIR=$D/include \
+                -DBQPD=$D/lib/libbqpd.a \
+                -DMETIS=$D/lib/libmetis.a \
+                -DSPRAL=$D/lib/libspral.a \
+                -DLAPACK_LIBRARIES=$D/lib/liblapack.a \
+                -DBLAS_LIBRARIES="$D/lib/libcblas.a;$D/lib/libblas.a" \
+                -DBUILD_STATIC_LIBS=OFF \
+                -DBUILD_SHARED_LIBS=ON . | tee configure.log
+          grep -q "Found HIGHS" configure.log || { echo "HiGHS was not detected"; exit 1; }
+
+      - name: Build Uno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Install Uno
+        run: sudo cmake --install ${{github.workspace}}/build
+
+      - name: Configure example CMake
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO=/usr/local/lib/libuno.so \
+                -DUNO_EXAMPLE_HIGHS=ON .
+
+      - name: Build example
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
+        run: |
+          ./example_hs015 | tee run.log
+          grep -q "Running HiGHS" run.log || { echo "HiGHS was not used"; exit 1; }
