@@ -190,8 +190,12 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
         # nor the Uno ones left to their default value.
         settings_ = filter_settings(self)
 
-        # Deactivate stopping criteria which are handled by GEMSEO
-        tolerance = 0.0
+        # Leave the stopping criteria to GEMSEO: Uno stops only when nothing
+        # measurable is left to gain. A zero tolerance is not used because
+        # the interior-point method never reaches it and then loops forever
+        # on the same iterate, which GEMSEO's database serves without counting
+        # an iteration.
+        tolerance = 1e-15
         # MAX_INT is the largest 32-bit integer, i.e. the largest uno_int.
         settings_["max_iterations"] = MAX_INT
 

@@ -178,8 +178,8 @@ def test_settings_forwarded_to_uno(monkeypatch):
         ),
     )
     assert options == {
-        "primal_tolerance": 0.0,
-        "dual_tolerance": 0.0,
+        "primal_tolerance": 1e-15,
+        "dual_tolerance": 1e-15,
         "TR_radius": 0.5,
         "print_solution": False,
         "filter_capacity": 10,
@@ -440,17 +440,6 @@ def test_concatenate_constraints():
     assert_array_equal(jacobian, expected_jacobian[[0, 0]])
 
 
-_DEFAULT_NORMALIZATION_SETTINGS = {
-    "UNO_Filter_SQP": {},
-    "UNO_Filter_SLP": {},
-    "UNO_Funnel_SQP": {},
-    # Without xtol_rel, IPOPT does not stop on these problems
-    # (see test_ipopt_infinite_loop).
-    "UNO_IPOPT": {"xtol_rel": 1e-4},
-}
-"""The settings of the algorithms for the tests with the default normalization."""
-
-
 @pytest.mark.parametrize("method", sorted(SETTINGS))
 @pytest.mark.parametrize(
     "create_problem",
@@ -459,7 +448,7 @@ _DEFAULT_NORMALIZATION_SETTINGS = {
 )
 def test_default_normalization(method, create_problem):
     """Check the solution with the design space normalized by default."""
-    settings = SETTINGS[method](max_iter=100, **_DEFAULT_NORMALIZATION_SETTINGS[method])
+    settings = SETTINGS[method](max_iter=100)
     assert settings.normalize_design_space
     problem = create_problem()
     res = _execute(UnoOpt(method), problem, settings)
@@ -469,12 +458,10 @@ def test_default_normalization(method, create_problem):
         SLSQP_Settings(max_iter=100, ftol_rel=1e-12),
     )
     assert res.is_feasible
-    # IPOPT is stopped by xtol_rel before reaching the optimum accurately.
-    atol = 1e-3 if method == "UNO_IPOPT" else 1e-6
-    assert allclose(res.x_opt, reference.x_opt, atol=atol)
+    assert allclose(res.x_opt, reference.x_opt, atol=1e-6)
     if create_problem is Power2:
         assert allclose(
-            res.x_opt, [0.5 ** (1 / 3), 0.5 ** (1 / 3), 0.9 ** (1 / 3)], atol=atol
+            res.x_opt, [0.5 ** (1 / 3), 0.5 ** (1 / 3), 0.9 ** (1 / 3)], atol=1e-6
         )
 
 
@@ -515,23 +502,13 @@ assert len(problem.database) <= 50
 """The script running IPOPT on Power2 without xtol_rel."""
 
 
-class InfiniteLoopError(Exception):
-    """An optimization which does not terminate."""
-
-
-@pytest.mark.xfail(
-    strict=True,
-    raises=InfiniteLoopError,
-    reason=(
-        "Known issue: with tol=0, Uno's IPOPT keeps accepting the same iterate "
-        "once it has converged; the functions are evaluated from GEMSEO's database, "
-        "so neither max_iter nor max_time stops it."
-    ),
-)
-def test_ipopt_infinite_loop(tmp_path):
+def test_ipopt_terminates(tmp_path):
     """Check that UNO_IPOPT terminates on Power2 without xtol_rel.
 
-    The run is done in a subprocess so that the infinite loop can be interrupted.
+    With a zero tolerance, Uno's IPOPT keeps accepting the same iterate
+    once it has converged; the functions are then evaluated from GEMSEO's database,
+    so neither max_iter nor max_time stops it.
+    The run is done in a subprocess so that such a loop can be interrupted.
     """
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(path for path in sys.path if path)
@@ -544,8 +521,7 @@ def test_ipopt_infinite_loop(tmp_path):
         timeout=_IPOPT_LOOP_TIMEOUT + 120,
         check=False,
     )
-    if completed.returncode == _IPOPT_LOOP_EXIT_CODE:
-        raise InfiniteLoopError(
-            f"UNO_IPOPT did not terminate within {_IPOPT_LOOP_TIMEOUT} seconds."
-        )
+    assert completed.returncode != _IPOPT_LOOP_EXIT_CODE, (
+        f"UNO_IPOPT did not terminate within {_IPOPT_LOOP_TIMEOUT} seconds."
+    )
     assert completed.returncode == 0, completed.stderr.decode(errors="replace")

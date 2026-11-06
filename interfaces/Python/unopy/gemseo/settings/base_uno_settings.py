@@ -19,9 +19,9 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     - ``max_iterations``, set to the largest value
       so that GEMSEO stops the driver with ``max_iter``.
 
-    The wrapper sets ``primal_tolerance`` and ``dual_tolerance`` to 0
+    The wrapper sets ``primal_tolerance`` and ``dual_tolerance`` to 1e-15
     so that GEMSEO stops the driver with its own criteria;
-    setting them here overrides these zero values.
+    setting them here overrides these values.
     """
 
     primal_tolerance: float | None = None
