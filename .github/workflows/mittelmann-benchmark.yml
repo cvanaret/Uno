@@ -8,9 +8,13 @@ name: Mittelmann benchmark
 # with the line   Optimization status:            Success
 #
 # Each run uploads its results (results.tsv + meta.json) as the artifact
-# `mittelmann-results-pr-<pr_number>`. If `compare_pr` is given, the PR comment
-# is a before/after table against the latest results of that PR (from its
-# artifact or, for older runs, from its benchmark comment).
+# `mittelmann-[<tag>-]results-pr-<pr_number>`. If `compare_pr` is given, the PR
+# comment is a before/after table against the latest results of that PR with the
+# same tag (from its artifact or, for older runs, from its benchmark comment).
+#
+# The workflow is also reusable (workflow_call) to benchmark a configuration on a
+# subset of the instances, e.g. mittelmann-lbfgs-benchmark.yml. Such a run has its
+# own `tag` and `title`, hence its own artifacts and sticky PR comment.
 
 on:
   # Manual trigger: re-run the benchmark at any time from the Actions tab
@@ -28,6 +32,40 @@ on:
         required: false
         default: ''
         type: string
+  workflow_call:
+    inputs:
+      pr_number:
+        required: true
+        type: string
+      compare_pr:
+        required: false
+        default: ''
+        type: string
+      title:
+        description: 'Title of the report (also identifies the report in the PR comments)'
+        required: false
+        default: 'Mittelmann benchmark'
+        type: string
+      tag:
+        description: 'Identifies the configuration in the artifact names and the sticky PR comment'
+        required: false
+        default: ''
+        type: string
+      instances:
+        description: 'Space-separated instance names (default: all the instances)'
+        required: false
+        default: ''
+        type: string
+      options:
+        description: 'Space-separated name=value Uno options, on top of uno_mittelmann.opt'
+        required: false
+        default: ''
+        type: string
+      time_limit:
+        description: 'Time limit per instance (in seconds)'
+        required: false
+        default: 1200
+        type: number
 
 permissions:
   contents: read
@@ -41,6 +79,14 @@ env:
   SCRATCH: /scratch/local/opt-008547/cvanaret
   OPENBLAS_NUM_THREADS: 1
   OMP_NUM_THREADS: 1
+  # configuration of the run (defaults: full benchmark, triggered via workflow_dispatch)
+  TITLE: ${{ inputs.title || 'Mittelmann benchmark' }}
+  ARTIFACT_PREFIX: ${{ inputs.tag && format('mittelmann-{0}-results-pr-', inputs.tag) || 'mittelmann-results-pr-' }}
+  COMMENT_HEADER: ${{ inputs.tag && format('mittelmann-{0}-benchmark', inputs.tag) || 'mittelmann-benchmark' }}
+  LOGS_ARTIFACT: ${{ inputs.tag && format('mittelmann-{0}-logs', inputs.tag) || 'mittelmann-logs' }}
+  INSTANCES: ${{ inputs.instances }}
+  UNO_OPTIONS: ${{ inputs.options }}
+  TIME_LIMIT: ${{ inputs.time_limit || 1200 }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -91,23 +137,34 @@ jobs:
           set -uo pipefail
           UNO="${{ github.workspace }}/build/uno_ampl"
           DIR="${{ env.SCRATCH }}/Mittelmann"
-          # 20 minutes
-          TIMELIMIT=1200
+          TIMELIMIT="$TIME_LIMIT"
           OPTION_FILE="uno_mittelmann.opt"
+          read -ra EXTRA_OPTIONS <<< "$UNO_OPTIONS"
 
-          mapfile -t INSTANCES < <(find "$DIR" -type f -name '*.nl' | sort)
-          if [ "${#INSTANCES[@]}" -eq 0 ]; then
+          if [ -z "$INSTANCES" ]; then
+            mapfile -t NL_FILES < <(find "$DIR" -type f -name '*.nl' | sort)
+          else
+            NL_FILES=()
+            for name in $INSTANCES; do
+              file="$(find "$DIR" -type f -name "${name}.nl" | head -n 1)"
+              if [ -z "$file" ]; then
+                echo "::error::Instance '${name}' not found under '$DIR'"; exit 1
+              fi
+              NL_FILES+=("$file")
+            done
+          fi
+          if [ "${#NL_FILES[@]}" -eq 0 ]; then
             echo "::error::No .nl files found under '$DIR'"; exit 1
           fi
 
           mkdir -p logs results
           : > results/results.tsv
           solved=0
-          total=${#INSTANCES[@]}
+          total=${#NL_FILES[@]}
           declare -a CONSOLE
           rows=""
 
-          for nl in "${INSTANCES[@]}"; do
+          for nl in "${NL_FILES[@]}"; do
             name="$(basename "$nl" .nl)"
             log="logs/${name}.log"
 
@@ -115,7 +172,7 @@ jobs:
             # Uno enforces time_limit=$TIMELIMIT itself; the outer `timeout` is only a
             # safety net in case a run gets stuck past its own limit.
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Solving ${name}"
-            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" option_file="$OPTION_FILE" time_limit="$TIMELIMIT" > "$log" 2>&1 || true
+            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" option_file="$OPTION_FILE" time_limit="$TIMELIMIT" "${EXTRA_OPTIONS[@]}" > "$log" 2>&1 || true
             end=$(date +%s.%N)
             secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
 
@@ -135,7 +192,7 @@ jobs:
 
           # ---- machine-readable metadata, used by later comparisons ----
           cat > results/meta.json <<EOF
-          {"sha": "${GITHUB_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT},
+          {"sha": "${GITHUB_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT}, "options": "${UNO_OPTIONS}",
            "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
           EOF
 
@@ -149,9 +206,13 @@ jobs:
 
           # ---- build the markdown report (shared by the run page and the PR comment) ----
           {
-            echo "## Mittelmann benchmark — uno_ampl (time_limit=${TIMELIMIT}s)"
+            echo "## ${TITLE} — uno_ampl (time_limit=${TIMELIMIT}s)"
             echo ""
             echo "Commit \`${GITHUB_SHA:0:7}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            if [ -n "$UNO_OPTIONS" ]; then
+              echo ""
+              echo "Options: \`${UNO_OPTIONS}\`"
+            fi
             echo ""
             echo "| | instance | result |"
             echo "|:-:|:--|:--|"
@@ -163,7 +224,7 @@ jobs:
           # ---- pretty summary on the workflow run page ----
           cat benchmark-comment.md >> "$GITHUB_STEP_SUMMARY"
 
-          echo "::notice title=Mittelmann benchmark::Solved ${solved}/${total} instances"
+          echo "::notice title=${TITLE}::Solved ${solved}/${total} instances"
 
       # Replaces the plain report with a before/after table against the latest
       # results of `compare_pr`. If those cannot be found, a warning is emitted
@@ -180,7 +241,7 @@ jobs:
             echo "::error::compare_pr must be a PR number, got '$COMPARE_PR'"; exit 1
           fi
           ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
-            --title "Mittelmann benchmark" --artifact-prefix mittelmann-results-pr- --comment-fallback \
+            --title "$TITLE" --artifact-prefix "$ARTIFACT_PREFIX" --comment-fallback \
             --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
             --results-dir results --output benchmark-comment.md
           if grep -q 'before/after' benchmark-comment.md; then
@@ -191,7 +252,7 @@ jobs:
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
-          name: mittelmann-results-pr-${{ inputs.pr_number }}
+          name: ${{ env.ARTIFACT_PREFIX }}${{ inputs.pr_number }}
           path: results/
           retention-days: 90
 
@@ -203,7 +264,7 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           append: true
-          header: mittelmann-benchmark
+          header: ${{ env.COMMENT_HEADER }}
           number: ${{ inputs.pr_number }}
           path: benchmark-comment.md
 
@@ -211,5 +272,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mittelmann-logs
+          name: ${{ env.LOGS_ARTIFACT }}
           path: logs/
