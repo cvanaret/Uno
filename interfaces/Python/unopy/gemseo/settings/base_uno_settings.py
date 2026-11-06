@@ -1,18 +1,6 @@
-# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-"""Settings for the Uno algorithms."""
+# Copyright (c) 2021-2026 IRT Saint Exupéry, https://www.irt-saintexupery.com
+# Licensed under the MIT license. See LICENSE file in the project directory for details.
+"""The base settings of the Uno algorithms."""
 
 from __future__ import annotations
 
@@ -22,10 +10,8 @@ from gemseo.algos.opt.base_gradient_based_algorithm_settings import (
 from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
 
 
-class UNO_Settings(
-    BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings
-):  # noqa: N801
-    """Settings for the UNO algorithm.
+class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings):
+    """The settings common to the Uno algorithms.
 
     The Uno options are optional fields named after the Uno options
     (see ``uno/options/Options.cpp``); only those set by the user are passed to Uno.
@@ -40,7 +26,6 @@ class UNO_Settings(
     setting them here overrides these zero values.
     """
 
-    _TARGET_CLASS_NAME = "UNO"
     primal_tolerance: float | None = None
     dual_tolerance: float | None = None
     loose_primal_tolerance: float | None = None
