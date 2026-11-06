@@ -12,9 +12,10 @@ import numpy as np
 from unopy.scipy._finite_differences import FINITE_DIFFERENCE_METHODS
 from unopy.scipy._finite_differences import _approximate_jacobian
 from unopy.scipy._finite_differences import _is_finite_difference_method
+from unopy.scipy._last_value import _LastPointValue
 
 
-class _Objective:
+class _Objective(_LastPointValue):
     """The objective function and its gradient computed for Uno.
 
     The last value of the objective computed for Uno is stored with its point,
@@ -50,15 +51,10 @@ class _Objective:
                 f"or a finite-difference scheme in {FINITE_DIFFERENCE_METHODS}, "
                 f"got {jac!r}."
             )
+        super().__init__()
         self._fun = fun
         self._jac = jac
         self._args = args
-        self._x = None
-        """The last point at which the objective has been computed for Uno."""
-
-        self._value = None
-        """The value of the objective at ``_x``."""
-
         self._gradient = None
         """The gradient of the objective at ``_x`` when ``jac`` is ``True``."""
 
@@ -99,17 +95,6 @@ class _Objective:
             )
         return value.item()
 
-    def _is_last_point(self, x: np.ndarray) -> bool:
-        """Return whether a point is the last one at which the objective was computed.
-
-        Args:
-            x: The point.
-
-        Returns:
-            Whether the point is the last one.
-        """
-        return self._x is not None and np.array_equal(x, self._x)
-
     def evaluate(self, x: np.ndarray) -> float:
         """Evaluate the objective function for Uno.
 
@@ -128,9 +113,7 @@ class _Objective:
         else:
             value, gradient = output, None
         value = self._to_scalar(value)
-        # Uno passes a view on its own buffer: copy it.
-        self._x = np.array(x, dtype=float)
-        self._value = value
+        self._store(x, value)
         self._gradient = gradient
         return value
 

@@ -17,11 +17,10 @@ from scipy.optimize import NonlinearConstraint
 from unopy.scipy._finite_differences import FINITE_DIFFERENCE_METHODS
 from unopy.scipy._finite_differences import _approximate_jacobian
 from unopy.scipy._finite_differences import _is_finite_difference_method
+from unopy.scipy._last_value import _LastPointValue
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-
-Inf = float("inf")
 
 
 def _reuse_first_value(
@@ -49,7 +48,7 @@ def _reuse_first_value(
     return wrapped_function
 
 
-class _LastValue:
+class _LastValue(_LastPointValue):
     """A function storing its last value with its point."""
 
     def __init__(self, function: Callable[[np.ndarray], Any]) -> None:
@@ -57,9 +56,8 @@ class _LastValue:
         Args:
             function: The function ``function(x) -> array_like``.
         """
+        super().__init__()
         self._function = function
-        self._x = None
-        self._value = None
 
     def __call__(self, x: np.ndarray) -> Any:
         """Evaluate the function and store its value.
@@ -71,9 +69,7 @@ class _LastValue:
             The value of the function.
         """
         value = self._function(x)
-        # Uno passes a view on its own buffer: copy it.
-        self._x = np.array(x, dtype=float)
-        self._value = np.array(value, dtype=float)
+        self._store(x, np.array(value, dtype=float))
         return value
 
     def value_at(self, x: np.ndarray) -> np.ndarray:
@@ -85,7 +81,7 @@ class _LastValue:
         Returns:
             The value of the function.
         """
-        if self._x is None or not np.array_equal(x, self._x):
+        if not self._is_last_point(x):
             self(x)
         return self._value
 
@@ -310,6 +306,85 @@ class _Constraint(NamedTuple):
     """The dimension of the constraint."""
 
 
+def _broadcast_bounds(lb: Any, ub: Any, m: int) -> tuple[np.ndarray, np.ndarray]:
+    """Broadcast the bounds of a constraint to its dimension.
+
+    Args:
+        lb: The lower bound, either a scalar or array-like.
+        ub: The upper bound, either a scalar or array-like.
+        m: The dimension of the constraint.
+
+    Returns:
+        The lower and upper bounds as new float arrays of shape ``(m,)``.
+    """
+    lower_bound, upper_bound = (
+        np.broadcast_to(np.atleast_1d(np.asarray(bound, dtype=float)), (m,)).copy()
+        for bound in (lb, ub)
+    )
+    return lower_bound, upper_bound
+
+
+def _check_jacobian(jac: Any, index: int, name: str) -> None:
+    """Check that the Jacobian of a constraint is a callable or a finite-difference scheme.
+
+    Args:
+        jac: The Jacobian of the constraint.
+        index: The index of the constraint in the user's constraints.
+        name: The name of the Jacobian in the error message.
+
+    Raises:
+        TypeError: If the Jacobian is neither a callable
+            nor a finite-difference scheme.
+    """
+    if not (callable(jac) or _is_finite_difference_method(jac)):
+        raise TypeError(
+            f"The {name} of the constraint {index} must be a callable "
+            "or a finite-difference scheme "
+            f"in {FINITE_DIFFERENCE_METHODS}, got {jac!r}."
+        )
+
+
+def _create_jacobian_block(
+    fun: Callable[[np.ndarray], Any],
+    jac: Callable[[np.ndarray], Any] | str,
+    raw_fun: Callable[[np.ndarray], Any],
+    x0: np.ndarray,
+    m: int,
+    index: int,
+) -> tuple[Callable[[np.ndarray], Any], _JacobianBlock]:
+    """Create the Jacobian block of a nonlinear constraint.
+
+    Args:
+        fun: The function ``fun(x) -> value`` computing the constraint for Uno.
+        jac: Either the function ``jac(x) -> value`` computing the Jacobian
+            or a finite-difference scheme.
+        raw_fun: The function ``raw_fun(x) -> array_like``
+            used for the finite differences;
+            with "cs", it must accept a complex ``x``.
+        x0: The initial guess.
+        m: The dimension of the constraint.
+        index: The index of the constraint in the user's constraints.
+
+    Returns:
+        The function computing the constraint for Uno,
+        which stores its last value when the Jacobian is approximated
+        with finite differences, and the Jacobian block.
+    """
+    if callable(jac):
+        # The Jacobian at x0 gives the sparsity pattern;
+        # it is reused for the first evaluation by Uno.
+        return fun, _JacobianBlock(jac(x0.copy()), x0, m, index, jacobian=jac)
+    # The finite differences give a dense Jacobian.
+    last_value = _LastValue(fun)
+    return last_value, _JacobianBlock(
+        None,
+        x0,
+        m,
+        index,
+        jacobian=_create_finite_difference_jacobian(raw_fun, last_value, jac),
+    )
+
+
 def _normalize_constraints(
     constraints: dict[str, Any]
     | NonlinearConstraint
@@ -350,13 +425,7 @@ def _normalize_constraints(
     for i, con in enumerate(constraints):
         if isinstance(con, NonlinearConstraint):
             c_fun = con.fun
-            c_jac = con.jac
-            if not (callable(c_jac) or _is_finite_difference_method(c_jac)):
-                raise TypeError(
-                    f"The Jacobian of the constraint {i} must be a callable "
-                    "or a finite-difference scheme "
-                    f"in {FINITE_DIFFERENCE_METHODS}, got {c_jac!r}."
-                )
+            _check_jacobian(con.jac, i, "Jacobian")
             c_hess = getattr(con, "hess", None)
             if not callable(c_hess):
                 # E.g. the default BFGS() strategy or a finite-difference scheme.
@@ -373,67 +442,35 @@ def _normalize_constraints(
                 value = c_fun(x0.copy())
                 m_i = len(np.atleast_1d(value))
                 c_fun = _reuse_first_value(c_fun, x0, value)
-            c_lb = np.broadcast_to(
-                np.atleast_1d(np.asarray(con.lb, dtype=float)), (m_i,)
-            ).copy()
-            c_ub = np.broadcast_to(
-                np.atleast_1d(np.asarray(con.ub, dtype=float)), (m_i,)
-            ).copy()
-            if callable(c_jac):
-                # The Jacobian at x0 gives the sparsity pattern;
-                # it is reused for the first evaluation by Uno.
-                c_jac = _JacobianBlock(c_jac(x0.copy()), x0, m_i, i, jacobian=c_jac)
-            else:
-                # The finite differences give a dense Jacobian.
-                c_fun = _LastValue(c_fun)
-                c_jac = _JacobianBlock(
-                    None,
-                    x0,
-                    m_i,
-                    i,
-                    jacobian=_create_finite_difference_jacobian(con.fun, c_fun, c_jac),
-                )
-            normalized.append(_Constraint(c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
+            c_lb, c_ub = _broadcast_bounds(con.lb, con.ub, m_i)
+            c_fun, c_jac = _create_jacobian_block(c_fun, con.jac, con.fun, x0, m_i, i)
         elif isinstance(con, LinearConstraint):
             if sp.issparse(con.A):
                 A = sp.csr_matrix(con.A, dtype=float)
             else:
                 A = np.atleast_2d(np.asarray(con.A, dtype=float))
             m_i = A.shape[0]
-            c_lb = np.broadcast_to(
-                np.atleast_1d(np.asarray(con.lb, dtype=float)), (m_i,)
-            ).copy()
-            c_ub = np.broadcast_to(
-                np.atleast_1d(np.asarray(con.ub, dtype=float)), (m_i,)
-            ).copy()
+            c_lb, c_ub = _broadcast_bounds(con.lb, con.ub, m_i)
             # Use default-arg binding to capture A
             c_fun = lambda x, _A=A: _A @ x
             # A constant Jacobian whose sparsity pattern is the one of A.
             c_jac = _JacobianBlock(A, x0, m_i, i)
             c_hess = None  # Linear constraints have zero Hessian
-            normalized.append(_Constraint(c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         elif isinstance(con, dict):
             c_fun_raw = con["fun"]
             c_jac_raw = con.get("jac")
             if c_jac_raw is None or c_jac_raw is False:
                 c_jac_raw = "2-point"
-            if not (callable(c_jac_raw) or _is_finite_difference_method(c_jac_raw)):
-                raise TypeError(
-                    f"The 'jac' of the constraint {i} must be a callable "
-                    "or a finite-difference scheme "
-                    f"in {FINITE_DIFFERENCE_METHODS}, got {c_jac_raw!r}."
-                )
+            _check_jacobian(c_jac_raw, i, "'jac'")
             c_args = con.get("args", ())
             c_type = con["type"]
             # Evaluate to get dimension; this value is reused for the first evaluation by Uno.
             val = np.atleast_1d(np.asarray(c_fun_raw(x0.copy(), *c_args), dtype=float))
             m_i = len(val)
             if c_type == "eq":
-                c_lb = np.zeros(m_i)
-                c_ub = np.zeros(m_i)
+                c_lb, c_ub = _broadcast_bounds(0.0, 0.0, m_i)
             elif c_type == "ineq":
-                c_lb = np.zeros(m_i)
-                c_ub = np.full(m_i, Inf)
+                c_lb, c_ub = _broadcast_bounds(0.0, np.inf, m_i)
             else:
                 raise ValueError(
                     f"Unknown constraint type '{c_type}'. Must be 'eq' or 'ineq'"
@@ -447,27 +484,20 @@ def _normalize_constraints(
                 val,
             )
             if callable(c_jac_raw):
-                c_jac = lambda x, _j=c_jac_raw, _a=c_args: _j(x, *_a)
-                # The Jacobian at x0 gives the sparsity pattern;
-                # it is reused for the first evaluation by Uno.
-                c_jac = _JacobianBlock(c_jac(x0.copy()), x0, m_i, i, jacobian=c_jac)
-            else:
-                # The finite differences give a dense Jacobian.
-                c_fun = _LastValue(c_fun)
-                c_jac = _JacobianBlock(
-                    None,
-                    x0,
-                    m_i,
-                    i,
-                    jacobian=_create_finite_difference_jacobian(
-                        lambda x, _f=c_fun_raw, _a=c_args: _f(x, *_a), c_fun, c_jac_raw
-                    ),
-                )
+                c_jac_raw = lambda x, _j=c_jac_raw, _a=c_args: _j(x, *_a)
+            c_fun, c_jac = _create_jacobian_block(
+                c_fun,
+                c_jac_raw,
+                lambda x, _f=c_fun_raw, _a=c_args: _f(x, *_a),
+                x0,
+                m_i,
+                i,
+            )
             c_hess = None  # Dict constraints don't support Hessians
-            normalized.append(_Constraint(c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         else:
             raise TypeError(f"Unsupported constraint type: {type(con)}")
 
+        normalized.append(_Constraint(c_fun, c_jac, c_hess, c_lb, c_ub, m_i))
         if callable(hess) and c_hess is None and not isinstance(
             con, LinearConstraint
         ):
