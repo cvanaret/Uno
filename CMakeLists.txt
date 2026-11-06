@@ -521,6 +521,7 @@ endif()
 #########################################
 # install library (and AMPL executable) #
 #########################################
+
 set(INSTALL_TARGETS "")
 if(TARGET uno_static)
    list(APPEND INSTALL_TARGETS uno_static)
