@@ -28,6 +28,15 @@ namespace uno {
       // Returns false if the tolerance cannot be increased (not supported or maximum value reached).
       // The new tolerance is used from the next numerical factorization on, and is never decreased
       [[nodiscard]] virtual bool increase_pivoting_tolerance() { return false; }
+
+      // split solves with the factors of A = P L D Lᵀ Pᵀ: A⁻¹ = (P Lᵀ Pᵀ)⁻¹ (P D Pᵀ)⁻¹ (P L Pᵀ)⁻¹. Each function overwrites
+      // `number_of_rhs` column-major right-hand sides. Solvers without partial solves treat A as the middle factor
+      // (L = I), so that the composition is always the full solve
+      virtual void solve_lower_factor(ElementType* /*rhs*/, size_t /*number_of_rhs*/) { } // (P L Pᵀ)⁻¹
+      virtual void solve_middle_factor(ElementType* rhs, size_t number_of_rhs) { // (P D Pᵀ)⁻¹
+         this->solve_indefinite_system(rhs, rhs, number_of_rhs);
+      }
+      virtual void solve_upper_factor(ElementType* /*rhs*/, size_t /*number_of_rhs*/) { } // (P Lᵀ Pᵀ)⁻¹
    };
 } // namespace
 

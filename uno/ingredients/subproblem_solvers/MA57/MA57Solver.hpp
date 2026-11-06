@@ -24,6 +24,14 @@ namespace uno {
    class Statistics;
    class Subproblem;
 
+   // JOB parameter of MA57CD for the factorization A = P L D Lᵀ Pᵀ
+   enum class MA57Job: int {
+      FULL = 1, // A⁻¹
+      LOWER = 2, // (P L Pᵀ)⁻¹
+      DIAGONAL = 3, // (P D Pᵀ)⁻¹
+      UPPER = 4 // (P Lᵀ Pᵀ)⁻¹
+   };
+
    struct MA57Workspace {
       int n{};
       int nnz{};
@@ -44,8 +52,6 @@ namespace uno {
       std::array<double, 20> rinfo{};
       std::array<int, 40> info{};
 
-      const int job{1};
-
       MA57Workspace() = default;
    };
 
@@ -60,6 +66,9 @@ namespace uno {
       void do_numerical_factorization(bool is_matrix_positive_definite) override;
       void solve_indefinite_system(double* solution) override;
       void solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) override;
+      void solve_lower_factor(double* rhs, size_t number_of_rhs) override;
+      void solve_middle_factor(double* rhs, size_t number_of_rhs) override;
+      void solve_upper_factor(double* rhs, size_t number_of_rhs) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -78,6 +87,7 @@ namespace uno {
       bool analysis_performed{false};
       bool factorization_performed{false};
 
+      void solve(MA57Job job, double* rhs, size_t number_of_rhs);
       [[nodiscard]] int& MA57_ICNTL(size_t index);
       [[nodiscard]] double& MA57_CNTL(size_t index);
       [[nodiscard]] int MA57_INFO(size_t index) const;
