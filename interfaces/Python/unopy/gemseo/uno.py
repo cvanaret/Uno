@@ -10,13 +10,6 @@ from typing import Any
 from typing import ClassVar
 from typing import TYPE_CHECKING
 
-from gemseo.algos.design_space_utils import get_value_and_bounds
-from gemseo.algos.opt.base_optimization_library import BaseOptimizationLibrary
-from gemseo.algos.opt.base_optimization_library import (
-    OptimizationAlgorithmDescription,
-)
-from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
-from gemseo.utils.constants import C_LONG_MAX
 from numpy import atleast_1d
 from numpy import atleast_2d
 from numpy import concatenate
@@ -27,6 +20,12 @@ from scipy.sparse import csr_array
 from scipy.sparse import issparse
 from scipy.sparse import vstack as sparse_vstack
 
+from unopy.gemseo._compat import MAX_INT
+from unopy.gemseo._compat import SETTINGS_FIELD
+from unopy.gemseo._compat import BaseOptimizationLibrary
+from unopy.gemseo._compat import OptimizationAlgorithmDescription
+from unopy.gemseo._compat import filter_settings
+from unopy.gemseo._compat import get_initial_point_and_bounds
 from unopy.gemseo.settings.base_uno_settings import BaseUnoSettings
 from unopy.gemseo.settings.filter_slp import UNO_Filter_SLP_Settings
 from unopy.gemseo.settings.filter_sqp import UNO_Filter_SQP_Settings
@@ -37,9 +36,11 @@ from unopy.scipy import minimize
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from gemseo.typing import NumberArray
+
+    # GEMSEO 6 names; GEMSEO 7 provides them as deprecated aliases.
     from gemseo.algos.optimization_problem import OptimizationProblem
     from gemseo.core.mdo_functions.mdo_function import MDOFunction
-    from gemseo.typing import NumberArray
 
 
 def _concatenate_constraints(
@@ -128,9 +129,6 @@ class UnoAlgorithmDescription(OptimizationAlgorithmDescription):
     require_gradient: bool = True
     """Whether the optimization algorithm requires the gradient."""
 
-    Settings: type[BaseUnoSettings] = BaseUnoSettings
-    """The option validation model for Uno optimization library."""
-
     website: str = "https://unosolver.readthedocs.io/en/latest/"
     """The website of the wrapped library or algorithm."""
 
@@ -146,7 +144,7 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
                 "implemented in the Uno library"
             ),
             internal_algorithm_name="filtersqp",
-            Settings=UNO_Filter_SQP_Settings,
+            **{SETTINGS_FIELD: UNO_Filter_SQP_Settings},
         ),
         "UNO_Filter_SLP": UnoAlgorithmDescription(
             algorithm_name="UNO_Filter_SLP",
@@ -154,7 +152,7 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
                 "Sequential Linear Programming (SLP) implemented in the Uno library"
             ),
             internal_algorithm_name="filterslp",
-            Settings=UNO_Filter_SLP_Settings,
+            **{SETTINGS_FIELD: UNO_Filter_SLP_Settings},
         ),
         "UNO_Funnel_SQP": UnoAlgorithmDescription(
             algorithm_name="UNO_Funnel_SQP",
@@ -163,7 +161,7 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
                 "implemented in the Uno library"
             ),
             internal_algorithm_name="funnelsqp",
-            Settings=UNO_Funnel_SQP_Settings,
+            **{SETTINGS_FIELD: UNO_Funnel_SQP_Settings},
         ),
         "UNO_IPOPT": UnoAlgorithmDescription(
             algorithm_name="UNO_IPOPT",
@@ -171,15 +169,12 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
                 "Interior Point Optimization (IPOPT) implemented in the Uno library"
             ),
             internal_algorithm_name="ipopt",
-            Settings=UNO_IPOPT_Settings,
+            **{SETTINGS_FIELD: UNO_IPOPT_Settings},
         ),
     }
 
     def _run(self, problem: OptimizationProblem) -> tuple[str, Any]:
-        # Get the normalized bounds:
-        x_0, l_b, u_b = get_value_and_bounds(
-            problem.design_space, self._settings.normalize_design_space
-        )
+        x_0, l_b, u_b = get_initial_point_and_bounds(self, problem)
         # Replace infinite values with None:
         l_b = [val if isfinite(val) else None for val in l_b]
         u_b = [val if isfinite(val) else None for val in u_b]
@@ -191,16 +186,14 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
             list(self._get_right_sign_constraints(problem))
         )
 
-        # Filter settings to get only the Uno ones,
-        # i.e. remove the GEMSEO ones and the Uno ones left to their default value.
-        settings_ = self._filter_settings(
-            self._settings.model_dump(exclude_none=True), BaseOptimizerSettings
-        )
+        # Only the Uno settings set by the user, i.e. neither the GEMSEO ones
+        # nor the Uno ones left to their default value.
+        settings_ = filter_settings(self)
 
         # Deactivate stopping criteria which are handled by GEMSEO
         tolerance = 0.0
-        # C_LONG_MAX is the largest 32-bit integer, i.e. the largest uno_int.
-        settings_["max_iterations"] = C_LONG_MAX
+        # MAX_INT is the largest 32-bit integer, i.e. the largest uno_int.
+        settings_["max_iterations"] = MAX_INT
 
         opt_result = minimize(
             fun=lambda x: real(problem.objective.evaluate(x)),

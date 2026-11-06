@@ -10,4 +10,5 @@ from unopy.gemseo.settings.base_uno_settings import BaseUnoSettings
 class UNO_IPOPT_Settings(BaseUnoSettings):  # noqa: N801
     """Settings for the Uno IPOPT algorithm."""
 
+    # Used by GEMSEO 6; GEMSEO 7 derives it from the class name.
     _TARGET_CLASS_NAME = "UNO_IPOPT"
