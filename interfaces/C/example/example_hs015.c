@@ -208,6 +208,22 @@ int main() {
    const double solution_complementarity = uno_get_solution_complementarity(solver);
    printf("Complementarity at solution = %e\n", solution_complementarity);
 
+#ifdef UNO_EXAMPLE_HIGHS
+   // run 3: solve with the filterslp preset and HiGHS as LP solver
+   printf("\n");
+   uno_set_solver_preset(solver, "filterslp");
+   bool option_set = uno_set_solver_string_option(solver, "LP_solver", "HiGHS");
+   assert(option_set);
+   uno_optimize(solver, model);
+   printf("Method used: %s\n", uno_get_method_description(solver));
+   optimization_status = uno_get_optimization_status(solver);
+   assert(optimization_status == UNO_SUCCESS);
+   iterate_status = uno_get_solution_status(solver);
+   assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
+   solution_objective = uno_get_solution_objective(solver);
+   printf("Solution objective = %g\n", solution_objective);
+#endif
+
    // cleanup
    uno_destroy_solver(solver);
    uno_destroy_model(model);
