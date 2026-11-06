@@ -103,6 +103,8 @@ namespace uno {
       size_t iteration_refinement_steps{0};
       std::vector<std::string_view> iteration_refinement_flags{};
 
+      [[nodiscard]] Inertia evaluate_inertia(const Subproblem& subproblem);
+
       void solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
          bool allow_refactorization);
       [[nodiscard]] bool refine_uncondensed_solution();

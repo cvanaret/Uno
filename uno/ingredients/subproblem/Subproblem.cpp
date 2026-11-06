@@ -142,39 +142,44 @@ namespace uno {
    }
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const {
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
+         const InertiaEvaluator& evaluate_inertia) const {
       // if regularization is required
       if (this->requires_augmented_matrix_regularization()) {
          const Inertia expected_inertia = this->expected_augmented_matrix_inertia();
          this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, dual_regularization_parameter,
-            expected_inertia, linear_solver, block_augmented_matrix, this->get_primal_regularization_variables());
+            expected_inertia, linear_solver, block_augmented_matrix, this->get_primal_regularization_variables(), evaluate_inertia);
       }
       else { // no regularization required
          block_augmented_matrix.primal_inertia_correction.fill(0.);
          block_augmented_matrix.dual_inertia_correction.fill(0.);
          linear_solver.do_numerical_factorization(false);
+         if (evaluate_inertia) evaluate_inertia();
       }
    }
 
    bool Subproblem::regularize_singular_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const {
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
+         const InertiaEvaluator& evaluate_inertia) const {
       if (this->requires_augmented_matrix_regularization()) {
          return this->inertia_correction_strategy.regularize_singular_augmented_matrix(statistics, *this,
             dual_regularization_parameter, this->expected_augmented_matrix_inertia(), linear_solver, block_augmented_matrix,
-            this->get_primal_regularization_variables());
+            this->get_primal_regularization_variables(), evaluate_inertia);
       }
       return false;
    }
 
    void Subproblem::refactorize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const {
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
+         const InertiaEvaluator& evaluate_inertia) const {
       if (this->requires_augmented_matrix_regularization()) {
          this->inertia_correction_strategy.refactorize_augmented_matrix(statistics, *this, dual_regularization_parameter,
             this->expected_augmented_matrix_inertia(), linear_solver, block_augmented_matrix,
-            this->get_primal_regularization_variables());
+            this->get_primal_regularization_variables(), evaluate_inertia);
       }
       else { // no regularization: the regularization blocks are already zero
          linear_solver.do_numerical_factorization(false);
+         if (evaluate_inertia) evaluate_inertia();
       }
    }
 

@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <vector>
+#include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/DenseMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
@@ -19,6 +20,7 @@ namespace uno {
    // Policies for EQPSolver. Interface:
    // - uses_explicit_hessian_matrix: whether the augmented matrix contains the full Hessian
    // - update(): called once per numerical factorization of the augmented matrix A
+   // - get_inertia(): returns the inertia including the low-rank terms
    // - apply(b): turns b = A⁻¹ r into the solution of the system with the full matrix
 
    // the augmented matrix contains the full Hessian: nothing to do
@@ -26,6 +28,7 @@ namespace uno {
       static constexpr bool uses_explicit_hessian_matrix = true;
       void update(const Subproblem& /*subproblem*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/) { }
       void apply(Vector<double>& /*b*/) const { }
+      [[nodiscard]] Inertia get_inertia(const Inertia& base_inertia) const { return base_inertia; }
    };
 
    // The Hessian approximation is a low-rank correction to a diagonal part: H = δ I + E P Eᵀ.
@@ -43,6 +46,7 @@ namespace uno {
       explicit WoodburyCorrection(const DirectQuasiNewtonHessian& hessian_model);
       void update(const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver);
       void apply(Vector<double>& b) const;
+      [[nodiscard]] Inertia get_inertia(const Inertia& base_inertia) const;
 
    protected:
       const DirectQuasiNewtonHessian& hessian_model;
@@ -51,6 +55,8 @@ namespace uno {
       std::optional<DenseMatrix<double>> H{};
       std::optional<DenseMatrix<double>> T{}; // Bunch-Kaufman factors of P⁻¹ + Eᵀ H
       std::vector<int> ipiv{};
+      std::optional<Inertia> correction_inertia{};
+      size_t scaling_positive{0}, scaling_negative{0};
    };
 } // namespace
 

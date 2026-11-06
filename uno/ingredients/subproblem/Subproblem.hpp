@@ -5,6 +5,7 @@
 #define UNO_SUBPROBLEM_H
 
 #include <memory>
+#include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
@@ -54,14 +55,17 @@ namespace uno {
 
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
+         const InertiaEvaluator& evaluate_inertia = {}) const;
       // the factorized augmented matrix is deemed singular: returns false if it cannot be regularized further
       [[nodiscard]] bool regularize_singular_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
+         const InertiaEvaluator& evaluate_inertia = {}) const;
       // refactorize the augmented matrix with the current regularization (e.g. after the pivoting tolerance of the linear
       // solver was increased); the inertia is checked again and the regularization increased if needed
       void refactorize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
+         const InertiaEvaluator& evaluate_inertia = {}) const;
       void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system, const Vector<double>& solution,
          Direction& direction) const;
       [[nodiscard]] BlockAugmentedMatrix compute_block_augmented_matrix(LinearSystem& linear_system) const;

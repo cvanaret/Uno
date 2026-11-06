@@ -166,10 +166,11 @@ namespace {
 
       void refactorize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem, double dual_regularization_parameter,
             const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-            BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override {
+            BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables,
+            const InertiaEvaluator& evaluate_inertia = {}) override {
          ++this->number_refactorizations;
          PrimalDualInertiaCorrection::refactorize_augmented_matrix(statistics, subproblem, dual_regularization_parameter,
-            expected_inertia, linear_solver, block_augmented_matrix, primal_regularization_variables);
+            expected_inertia, linear_solver, block_augmented_matrix, primal_regularization_variables, evaluate_inertia);
       }
    };
 

@@ -29,7 +29,8 @@ namespace uno {
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> primal_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-        BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) = 0;
+        BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables,
+         const InertiaEvaluator& evaluate_inertia = {}) = 0;
 
       // the augmented matrix factorized with the current regularization is deemed singular by the caller (e.g. iterative
       // refinement failed): increase the regularization and refactorize the matrix until its inertia is correct.
@@ -37,7 +38,7 @@ namespace uno {
       [[nodiscard]] virtual bool regularize_singular_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
             double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
             DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/, BlockAugmentedMatrix /*block_augmented_matrix*/,
-            Range<> /*primal_regularization_variables*/) {
+            Range<> /*primal_regularization_variables*/, const InertiaEvaluator& /*evaluate_inertia*/ = {}) {
          return false;
       }
 
@@ -47,8 +48,9 @@ namespace uno {
       virtual void refactorize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
             double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
             DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix /*block_augmented_matrix*/,
-            Range<> /*primal_regularization_variables*/) {
+            Range<> /*primal_regularization_variables*/, const InertiaEvaluator& evaluate_inertia = {}) {
          linear_solver.do_numerical_factorization(false);
+         if (evaluate_inertia) evaluate_inertia();
       }
 
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;

@@ -198,11 +198,8 @@ namespace uno {
 
          // regularize the augmented matrix (this calls the factorization)
          subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
-            block_augmented_matrix);
+            block_augmented_matrix, [this, &subproblem] { return this->evaluate_inertia(subproblem); });
          this->pivoting_tolerance_increased_for_current_matrix = false;
-         if (!this->linear_solver->matrix_is_singular()) {
-            this->low_rank_correction.update(subproblem, *this->linear_solver);
-         }
 
          // assemble the RHS
          this->newton_system->assemble_rhs({statistics, current_iterate, current_evaluations}, linear_system.rhs.view());
@@ -305,6 +302,14 @@ namespace uno {
       this->constraints_SOC += this->constraints_buffer_SOC;
    }
 
+   template <typename LowRankCorrection>
+   Inertia EQPSolver<LowRankCorrection>::evaluate_inertia(const Subproblem& subproblem) {
+      const Inertia base_inertia = this->linear_solver->get_inertia();
+      if (this->linear_solver->matrix_is_singular()) return base_inertia;
+      this->low_rank_correction.update(subproblem, *this->linear_solver);
+      return this->low_rank_correction.get_inertia(base_inertia);
+   }
+
    // solve the condensed system with the current factorization (RHS: linear_system.rhs, solution: linear_system.solution)
    // and refine the solution iteratively wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve.
    // If the refined solution is not accurate:
@@ -355,7 +360,7 @@ namespace uno {
             this->iteration_refinement_flags.emplace_back("piv");
             DEBUG << "Refactorizing the augmented matrix with an increased pivoting tolerance\n";
             subproblem.refactorize_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
-               *this->linear_solver, block_augmented_matrix);
+               *this->linear_solver, block_augmented_matrix, [this, &subproblem] { return this->evaluate_inertia(subproblem); });
             if (this->linear_solver->matrix_is_singular()) {
                // singular and not regularized: the caller handles the singularity
                DEBUG << "The refactorized augmented matrix is singular\n";
@@ -374,7 +379,7 @@ namespace uno {
          // 4. deem the matrix singular and regularize it
          this->matrix_deemed_singular = true;
          if (!subproblem.regularize_singular_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
-               *this->linear_solver, block_augmented_matrix)) {
+               *this->linear_solver, block_augmented_matrix, [this, &subproblem] { return this->evaluate_inertia(subproblem); })) {
             DEBUG << "The matrix cannot be regularized further, the current solution is accepted\n";
             break;
          }

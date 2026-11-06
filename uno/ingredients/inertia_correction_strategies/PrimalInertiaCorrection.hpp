@@ -26,7 +26,8 @@ namespace uno {
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> primal_regularization_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables,
+         const InertiaEvaluator& evaluate_inertia = {}) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
@@ -34,6 +35,10 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
+      void regularize_matrix(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> primal_regularization_values,
+         const InertiaEvaluator& evaluate_inertia);
+
       const Options& options;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double regularization_factor{0.};

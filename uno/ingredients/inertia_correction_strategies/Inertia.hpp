@@ -4,6 +4,7 @@
 #ifndef UNO_INERTIA_H
 #define UNO_INERTIA_H
 
+#include <functional>
 #include <ostream>
 
 namespace uno {
@@ -22,6 +23,9 @@ namespace uno {
 
       friend std::ostream& operator<<(std::ostream& stream, const Inertia& inertia);
    };
+
+   // Evaluates the inertia of the full matrix after each numerical factorization.
+   using InertiaEvaluator = std::function<Inertia()>;
 
    inline std::ostream& operator<<(std::ostream& stream, const Inertia& inertia) {
       stream << '(' << inertia.positive << ", " << inertia.negative << ", " << inertia.zero << ')';
