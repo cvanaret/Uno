@@ -5,10 +5,12 @@
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include "../cpp_classes/PythonModel.hpp"
 #include "../cpp_classes/UnoSolverWrapper.hpp"
 #include "options/Options.hpp"
+#include "ingredients/subproblem_solvers/Krylov/KrylovLoader.hpp"
 #include "options/Presets.hpp"
 
 namespace py = pybind11;
@@ -101,6 +103,19 @@ namespace uno {
          return solver.optimize(user_model);
       }, py::arg("model"), "Optimize an optimization model with the Uno solver")
 
-      .def("get_method_description", &UnoSolverWrapper::get_method_description);
+      .def("get_method_description", &UnoSolverWrapper::get_method_description)
+
+      .def("is_libkrylov_functional", [](const UnoSolverWrapper& solver) {
+         // libkrylov_path: user options > preset options > default options
+         std::optional<std::string> libkrylov_path = solver.user_options.get_string_optional("libkrylov_path");
+         if (!libkrylov_path.has_value()) {
+            libkrylov_path = solver.preset_options.get_string_optional("libkrylov_path");
+         }
+         if (!libkrylov_path.has_value()) {
+            libkrylov_path = solver.default_options.get_string_optional("libkrylov_path");
+         }
+         return is_libkrylov_functional(libkrylov_path.value_or(""));
+      }, "Load libkrylov (option libkrylov_path, then the UNO_KRYLOV_LIBRARY environment variable, then the library "
+         "bundled with unopy) and check that it is functional");
    }
 } // namespace

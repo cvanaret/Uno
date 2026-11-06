@@ -101,7 +101,8 @@ void print_uno_options() {
    uno_destroy_solver(solver);
 }
 
-int main() {
+// usage: example_hs015 [path to libkrylov]
+int main(int argc, char* argv[]) {
    uno_int uno_major, uno_minor, uno_patch;
    uno_get_version(&uno_major, &uno_minor, &uno_patch);
    printf("Uno v%d.%d.%d\n", uno_major, uno_minor, uno_patch);
@@ -223,6 +224,19 @@ int main() {
    solution_objective = uno_get_solution_objective(solver);
    printf("Solution objective = %g\n", solution_objective);
 #endif
+
+   // optional: load libkrylov (C interface of Krylov.jl) at runtime and check that it is functional
+   if (argc > 1) {
+      printf("\n");
+      if (!uno_set_solver_string_option(solver, "libkrylov_path", argv[1])) {
+         return 1;
+      }
+      const bool libkrylov_functional = uno_is_libkrylov_functional(solver);
+      printf("libkrylov (%s) functional: %s\n", argv[1], libkrylov_functional ? "yes" : "no");
+      if (!libkrylov_functional) {
+         return 1;
+      }
+   }
 
    // cleanup
    uno_destroy_solver(solver);

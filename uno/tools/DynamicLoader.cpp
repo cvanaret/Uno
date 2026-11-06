@@ -4,14 +4,29 @@
 #include "DynamicLoader.hpp"
 #include <cstring>
 #include <cctype>
+#include <cstdlib>
+#include <string>
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
 
 namespace uno {
 #ifdef _WIN32
+   // with a path, LOAD_WITH_ALTERED_SEARCH_PATH searches the dependencies of the library in its own directory
+   // (e.g. libkrylov.dll and its bundled Julia runtime DLLs). A bare name keeps the standard search order
    LibraryHandle open_library(const char* name) {
-      return LoadLibraryA(name);
+      const bool has_path = (std::strchr(name, '/') != nullptr || std::strchr(name, '\\') != nullptr);
+      if (!has_path) {
+         return LoadLibraryA(name);
+      }
+      // the altered search path is derived from the path: use backslashes only (e.g. MSYS2 mixed-separator paths)
+      std::string path(name);
+      for (char& character: path) {
+         if (character == '/') {
+            character = '\\';
+         }
+      }
+      return LoadLibraryExA(path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
    }
 
    void close_library(LibraryHandle handle) {

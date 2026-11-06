@@ -197,6 +197,14 @@ and reset the logger stream to the standard output:
 uno_reset_logger_stream();
 ```
 
+### Loading libkrylov (optional)
+
+[libkrylov](https://github.com/JuliaSmoothOptimizers/Krylov.jl/tree/main/interfaces) (the C interface of Krylov.jl) is never linked: Uno loads it at runtime. Its path is given by the option `libkrylov_path` (or the `UNO_KRYLOV_LIBRARY` environment variable). The following call loads it and checks that it is functional:
+```c
+uno_set_solver_string_option(solver, "libkrylov_path", "/path/to/libkrylov/lib/libkrylov.so");
+bool libkrylov_functional = uno_is_libkrylov_functional(solver);
+```
+
 ### Solving the model
 
 The model can then be solved by Uno:

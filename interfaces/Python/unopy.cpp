@@ -5,6 +5,7 @@
 #include <pybind11/stl.h>
 #include "unopy.hpp"
 #include "Uno.hpp"
+#include "ingredients/subproblem_solvers/Krylov/KrylovLoader.hpp"
 
 namespace py = pybind11;
 
@@ -22,6 +23,9 @@ namespace uno {
       module.doc() = description;
 
       module.def("current_uno_version", &Uno::current_version);
+      // fallback libkrylov, used when neither libkrylov_path nor UNO_KRYLOV_LIBRARY is set (set by __init__.py to the
+      // library bundled in the wheel)
+      module.def("_set_default_libkrylov_path", &set_default_krylov_library, py::arg("path"));
 
       define_Model(module);
       define_Result(module);

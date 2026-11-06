@@ -303,4 +303,12 @@ jobs:
 
       - name: Run tests
         working-directory: build
-        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
+        # the libkrylov tests (KrylovRuntimeLoadingTests) are skipped if UNO_KRYLOV_LIBRARY is not set
+        run: |
+          case "${{ runner.os }}" in
+            Linux) LIBKRYLOV=lib/libkrylov.so;;
+            macOS) LIBKRYLOV=lib/libkrylov.dylib;;
+            Windows) LIBKRYLOV=bin/libkrylov.dll;;
+          esac
+          export UNO_KRYLOV_LIBRARY="${{github.workspace}}/dependencies/libkrylov/${LIBKRYLOV}"
+          ctest --output-on-failure -C ${{env.BUILD_TYPE}}

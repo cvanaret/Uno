@@ -235,5 +235,8 @@ namespace uno {
       // path to the HSL shared library to dlopen for MA27/MA57 at runtime
       // (empty = platform default libhsl.{so,dylib,dll})
       // options.set_string("libhsl_path", "");
+      // path to libkrylov (C interface of Krylov.jl) to dlopen at runtime
+      // (empty = UNO_KRYLOV_LIBRARY environment variable, then platform default libkrylov.{so,dylib,dll})
+      // options.set_string("libkrylov_path", "");
    }
 } // namespace

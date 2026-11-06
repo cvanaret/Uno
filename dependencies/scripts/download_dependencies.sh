@@ -48,6 +48,39 @@ curl -L -o UnoUtils.tar.gz "$ASSET_URL"
 tar -xzf UnoUtils.tar.gz
 pwd
 
+# download libkrylov (C interface of Krylov.jl, compiled with juliac). It is never linked: Uno loads it at runtime
+# (option libkrylov_path). The self-contained bundle (library + Julia runtime) is kept in its own directory
+# dependencies/libkrylov so that its private runtime libraries do not shadow those in dependencies/lib
+VERSION="v0.0.33"
+REPO="https://github.com/amontoison/Krylov.jl/releases/download/${VERSION}"
+case "${ARCH}-${OS}" in
+    x86_64-linux-gnu) KRYLOV_PLATFORM="linux-x86_64.tar.gz";;
+    aarch64-linux-gnu) KRYLOV_PLATFORM="linux-aarch64.tar.gz";;
+    x86_64-apple-darwin) KRYLOV_PLATFORM="macos-x86_64.tar.gz";;
+    aarch64-apple-darwin) KRYLOV_PLATFORM="macos-arm64.tar.gz";;
+    x86_64-w64-mingw32) KRYLOV_PLATFORM="windows-x86_64.zip";;
+    *) KRYLOV_PLATFORM="";;
+esac
+if [[ -n "$KRYLOV_PLATFORM" ]]; then
+    ASSET_URL="${REPO}/libkrylov-${KRYLOV_PLATFORM}"
+    echo "Downloading: ${ASSET_URL}"
+    rm -rf libkrylov && mkdir libkrylov
+    curl -fL -o "libkrylov/libkrylov-${KRYLOV_PLATFORM}" "$ASSET_URL"
+    if [[ "$KRYLOV_PLATFORM" == *.zip ]]; then
+        if command -v unzip >/dev/null 2>&1; then
+            unzip -q "libkrylov/libkrylov-${KRYLOV_PLATFORM}" -d libkrylov
+        else
+            PYTHON_BIN="$(command -v python3 || command -v python)"
+            "$PYTHON_BIN" -m zipfile -e "libkrylov/libkrylov-${KRYLOV_PLATFORM}" libkrylov
+        fi
+    else
+        tar -xzf "libkrylov/libkrylov-${KRYLOV_PLATFORM}" -C libkrylov
+    fi
+    rm -f "libkrylov/libkrylov-${KRYLOV_PLATFORM}"
+else
+    echo "libkrylov ${VERSION} is not available for ${ARCH}-${OS}: skipped"
+fi
+
 # on MinGW, compile HiGHS on the fly and replace that of UnoUtils
 if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	# delete UnoUtils' HiGHS
