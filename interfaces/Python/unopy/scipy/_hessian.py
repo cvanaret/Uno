@@ -86,18 +86,18 @@ class _LagrangianHessianOperator:
             cache: The cached ``(x, multipliers, term)``, if any.
             x: The point.
             multipliers: The multipliers of the term, if any.
-            evaluate_at_x: Whether the point may have changed since the last call.
+            evaluate_at_x: Whether the point may have changed since the last call;
+                if ``False``, the point is not compared with the cached one,
+                but the multipliers still are.
 
         Returns:
             Whether the cached term can be reused.
         """
         if cache is None:
             return False
-        if not evaluate_at_x:
-            return True
-        return np.array_equal(x, cache[0]) and (
-            multipliers is None or np.array_equal(multipliers, cache[1])
-        )
+        if evaluate_at_x and not np.array_equal(x, cache[0]):
+            return False
+        return multipliers is None or np.array_equal(multipliers, cache[1])
 
     def __call__(
         self,
