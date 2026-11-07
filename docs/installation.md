@@ -110,6 +110,16 @@ To install the built libraries and headers:
 cmake --install build
 ```
 
+The installation includes a CMake package, so that a CMake project can use the installed Uno with `find_package`
+(set `CMAKE_PREFIX_PATH` to the installation prefix if it is not a default location):
+```cmake
+find_package(Uno REQUIRED)
+target_link_libraries(my_target PRIVATE Uno::uno)
+```
+`Uno::uno` is the static library if it was built, the shared library otherwise; `Uno::uno_static` and `Uno::uno_shared` select one explicitly.
+The headers are included as `#include "uno/Uno_C_API.h"`.
+The shared library is self-contained. The static library also requires the libraries Uno was built with, which are referenced by their absolute paths at build time, and the C++ linker (enable `CXX` in your project).
+
 To configure, compile and run the test suite:
 ```console
 cmake -S . -B build -DENABLE_TESTS=ON

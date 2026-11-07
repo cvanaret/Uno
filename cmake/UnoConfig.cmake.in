@@ -1,0 +1,26 @@
+# Copyright (c) 2026 Charlie Vanaret
+# Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+# CMake package of Uno. Usage:
+#    find_package(Uno REQUIRED)
+#    target_link_libraries(my_target PRIVATE Uno::uno)
+# Targets: Uno::uno (the default library), Uno::uno_static and/or Uno::uno_shared (depending on the build of Uno)
+
+@PACKAGE_INIT@
+
+# packages providing the imported targets the static library depends on (e.g. OpenMP for OpenMP::OpenMP_CXX).
+# Empty if only the shared library was built: its dependencies are linked into it.
+include(CMakeFindDependencyMacro)
+foreach(_uno_dependency @UNO_STATIC_PACKAGE_DEPENDENCIES@)
+   find_dependency(${_uno_dependency})
+endforeach()
+unset(_uno_dependency)
+
+include("${CMAKE_CURRENT_LIST_DIR}/UnoTargets.cmake")
+
+if(NOT TARGET Uno::uno)
+   add_library(Uno::uno INTERFACE IMPORTED)
+   set_target_properties(Uno::uno PROPERTIES INTERFACE_LINK_LIBRARIES Uno::@UNO_DEFAULT_LIBRARY@)
+endif()
+
+check_required_components(Uno)
