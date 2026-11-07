@@ -116,6 +116,12 @@ protected_actual_reduction_macheps_coefficient 10
 # Whether the subproblem is printed in DEBUG mode (bool)
 print_subproblem false
 
+# Turn the linear constraints with a single non-fixed variable into variable bounds (bool)
+detect_bound_constraints false
+
+# Consider linear the nonlinear constraints whose Jacobian is constant at random points (bool, heuristic)
+detect_linear_constraints false
+
 # use function scaling based on the initial gradients (bool)
 use_function_scaling false
 
