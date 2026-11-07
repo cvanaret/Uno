@@ -36,6 +36,10 @@ namespace uno {
    void* raw_symbol(LibraryHandle handle, const char* symbol) {
       return reinterpret_cast<void*>(GetProcAddress(handle, symbol));
    }
+
+   std::string last_library_error() {
+      return "Windows error code " + std::to_string(GetLastError());
+   }
 #else
    // resolve now, do not export the HSL symbols globally. RTLD_NODELETE: the library stays mapped after
    // close_library. Unmapping it would orphan the memory that it (or its runtime, e.g. gfortran or OpenMP) allocated
@@ -51,6 +55,11 @@ namespace uno {
 
    void* raw_symbol(LibraryHandle handle, const char* symbol) {
       return dlsym(handle, symbol);
+   }
+
+   std::string last_library_error() {
+      const char* error = dlerror();
+      return (error != nullptr) ? error : "";
    }
 #endif
 

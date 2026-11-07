@@ -90,7 +90,14 @@ namespace uno {
 #endif
       handle = open_library(name.c_str());
       if (handle == nullptr) {
-         DEBUG << "Uno: could not load libkrylov '" << name << "' at runtime\n";
+         // an explicit request deserves a diagnostic (e.g. a missing file, or an incompatible libstdc++ already loaded)
+         const std::string error = last_library_error();
+         if (name != UNO_KRYLOV_DEFAULT_LIBRARY) {
+            WARNING << "Uno: could not load libkrylov '" << name << "': " << error << '\n';
+         }
+         else {
+            DEBUG << "Uno: could not load libkrylov '" << name << "': " << error << '\n';
+         }
          return false;
       }
       loaded_name = name;
