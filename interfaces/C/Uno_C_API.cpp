@@ -4,10 +4,12 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <optional>
 #include <streambuf>
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
 #include "Uno.hpp"
+#include "ingredients/subproblem_solvers/Krylov/KrylovLoader.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "options/DefaultOptions.hpp"
@@ -1076,6 +1078,29 @@ bool uno_reset_logger_stream() {
    c_ostream = nullptr;
    Logger::set_stream(std::cout);
    return true;
+}
+
+bool uno_is_libkrylov_functional(void* solver) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver." << std::endl;
+      return false;
+   }
+   const Solver* uno_solver = static_cast<const Solver*>(solver);
+   // user options > preset options > default options
+   std::optional<std::string> libkrylov_path = uno_solver->user_options.get_string_optional("libkrylov_path");
+   if (!libkrylov_path.has_value()) {
+      libkrylov_path = uno_solver->preset_options.get_string_optional("libkrylov_path");
+   }
+   if (!libkrylov_path.has_value()) {
+      libkrylov_path = uno_solver->default_options.get_string_optional("libkrylov_path");
+   }
+   try {
+      return is_libkrylov_functional(libkrylov_path.value_or(""));
+   }
+   catch (const std::exception& exception) {
+      WARNING << exception.what() << std::endl;
+      return false;
+   }
 }
 
 void uno_optimize(void* solver, void* model) {

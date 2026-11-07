@@ -4,14 +4,29 @@
 #include "DynamicLoader.hpp"
 #include <cstring>
 #include <cctype>
+#include <cstdlib>
+#include <string>
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
 
 namespace uno {
 #ifdef _WIN32
+   // with a path, LOAD_WITH_ALTERED_SEARCH_PATH searches the dependencies of the library in its own directory
+   // (e.g. libkrylov.dll and its bundled Julia runtime DLLs). A bare name keeps the standard search order
    LibraryHandle open_library(const char* name) {
-      return LoadLibraryA(name);
+      const bool has_path = (std::strchr(name, '/') != nullptr || std::strchr(name, '\\') != nullptr);
+      if (!has_path) {
+         return LoadLibraryA(name);
+      }
+      // the altered search path is derived from the path: use backslashes only (e.g. MSYS2 mixed-separator paths)
+      std::string path(name);
+      for (char& character: path) {
+         if (character == '/') {
+            character = '\\';
+         }
+      }
+      return LoadLibraryExA(path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
    }
 
    void close_library(LibraryHandle handle) {
@@ -20,6 +35,24 @@ namespace uno {
 
    void* raw_symbol(LibraryHandle handle, const char* symbol) {
       return reinterpret_cast<void*>(GetProcAddress(handle, symbol));
+   }
+
+   std::string last_library_error() {
+      const DWORD code = GetLastError();
+      std::string message = "Windows error code " + std::to_string(code);
+      char* text = nullptr;
+      const DWORD length = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+         FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, code, 0, reinterpret_cast<LPSTR>(&text), 0, nullptr);
+      if (length != 0 && text != nullptr) {
+         std::string description(text, length);
+         while (!description.empty() && (description.back() == '\n' || description.back() == '\r' ||
+               description.back() == ' ' || description.back() == '.')) {
+            description.pop_back();
+         }
+         message += " (" + description + ")";
+         LocalFree(text);
+      }
+      return message;
    }
 #else
    // resolve now, do not export the HSL symbols globally. RTLD_NODELETE: the library stays mapped after
@@ -36,6 +69,11 @@ namespace uno {
 
    void* raw_symbol(LibraryHandle handle, const char* symbol) {
       return dlsym(handle, symbol);
+   }
+
+   std::string last_library_error() {
+      const char* error = dlerror();
+      return (error != nullptr) ? error : "";
    }
 #endif
 

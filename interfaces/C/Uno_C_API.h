@@ -342,6 +342,13 @@ extern "C" {
    // returns true if it succeeded, false otherwise.
    bool uno_reset_logger_stream();
 
+   // [optional]
+   // loads libkrylov (C interface of Krylov.jl) at runtime, using the option "libkrylov_path" of the solver (empty: the
+   // UNO_KRYLOV_LIBRARY environment variable, then the platform default libkrylov.{so,dylib,dll}), and checks that it
+   // is functional by solving a small linear system. The first successful load wins.
+   // returns true if libkrylov is functional, false otherwise.
+   bool uno_is_libkrylov_functional(void* solver);
+
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
 

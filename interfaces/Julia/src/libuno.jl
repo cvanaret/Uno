@@ -259,6 +259,10 @@ function uno_reset_logger_stream()
     @ccall libuno.uno_reset_logger_stream()::Bool
 end
 
+function uno_is_libkrylov_functional(solver)
+    @ccall libuno.uno_is_libkrylov_functional(solver::Ptr{Cvoid})::Bool
+end
+
 function uno_optimize(solver, model)
     @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Cvoid
 end

@@ -740,6 +740,19 @@ interface
 end interface
 
 !---------------------------------------------
+! uno_is_libkrylov_functional
+!---------------------------------------------
+interface
+   function uno_is_libkrylov_functional(solver) &
+      result(success) &
+      bind(C, name="uno_is_libkrylov_functional")
+      import :: c_ptr, c_bool
+      type(c_ptr), value :: solver
+      logical(c_bool) :: success
+   end function uno_is_libkrylov_functional
+end interface
+
+!---------------------------------------------
 ! uno_optimize
 !---------------------------------------------
 interface
