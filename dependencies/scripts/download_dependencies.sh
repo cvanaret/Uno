@@ -67,11 +67,19 @@ if [[ -n "$KRYLOV_PLATFORM" ]]; then
     rm -rf libkrylov && mkdir libkrylov
     curl -fL -o "libkrylov/libkrylov-${KRYLOV_PLATFORM}" "$ASSET_URL"
     if [[ "$KRYLOV_PLATFORM" == *.zip ]]; then
+        # MSYS2 has no unzip by default, and a login shell (bash -lc) does not inherit the Windows PATH (no Python).
+        # Windows ships bsdtar (System32/tar.exe), which extracts zip archives
+        ARCHIVE="libkrylov/libkrylov-${KRYLOV_PLATFORM}"
+        WINDOWS_TAR="$(cygpath -u "${SYSTEMROOT:-C:\\Windows}" 2>/dev/null || echo /c/Windows)/System32/tar.exe"
+        PYTHON_BIN="$(command -v python3 || command -v python || true)"
         if command -v unzip >/dev/null 2>&1; then
-            unzip -q "libkrylov/libkrylov-${KRYLOV_PLATFORM}" -d libkrylov
+            unzip -q "$ARCHIVE" -d libkrylov
+        elif [[ -x "$WINDOWS_TAR" ]]; then
+            "$WINDOWS_TAR" -xf "$(cygpath -w "$ARCHIVE")" -C "$(cygpath -w libkrylov)"
+        elif [[ -n "$PYTHON_BIN" ]]; then
+            "$PYTHON_BIN" -m zipfile -e "$ARCHIVE" libkrylov
         else
-            PYTHON_BIN="$(command -v python3 || command -v python)"
-            "$PYTHON_BIN" -m zipfile -e "libkrylov/libkrylov-${KRYLOV_PLATFORM}" libkrylov
+            echo "Cannot extract ${ARCHIVE}: install unzip (pacman -S unzip)"; exit 1
         fi
     else
         tar -xzf "libkrylov/libkrylov-${KRYLOV_PLATFORM}" -C libkrylov
