@@ -34,10 +34,6 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      void regularize_matrix(Statistics& statistics, const Subproblem& subproblem, const Inertia& expected_inertia,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> primal_regularization_values,
-         const BlockAugmentedMatrix* block_augmented_matrix);
-
       const Options& options;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double regularization_factor{0.};

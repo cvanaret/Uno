@@ -53,17 +53,20 @@ namespace uno {
    void PrimalInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          View<double> primal_regularization_values) {
-      this->regularize_matrix(statistics, subproblem, expected_inertia, linear_solver, primal_regularization_values, nullptr);
+      View<double> hessian(linear_solver.get_linear_system().matrix_values.data(), subproblem.number_hessian_nonzeros());
+      this->regularize_augmented_matrix(statistics, subproblem, 0., expected_inertia, linear_solver,
+         {hessian, primal_regularization_values, {}, {}}, subproblem.get_primal_regularization_variables());
    }
 
-   void PrimalInertiaCorrection::regularize_matrix(Statistics& statistics, const Subproblem& subproblem,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         View<double> primal_regularization_values, const BlockAugmentedMatrix* block_augmented_matrix) {
+   void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
+         double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         BlockAugmentedMatrix block_augmented_matrix, Range<> /*primal_regularization_variables*/) {
+      block_augmented_matrix.dual_inertia_correction.fill(0.);
       this->regularization_factor = 0.;
       bool good_inertia = false;
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factor " << this->regularization_factor << '\n';
-         primal_regularization_values.fill(this->regularization_factor);
+         block_augmented_matrix.primal_inertia_correction.fill(this->regularization_factor);
          DEBUG << '\n';
 
          // perform factorization to get an estimate of the inertia
@@ -71,8 +74,7 @@ namespace uno {
          linear_solver.do_numerical_factorization(is_matrix_positive_definite);
 
          // check inertia
-         const Inertia estimated_inertia = block_augmented_matrix ? block_augmented_matrix->evaluate_inertia(subproblem,
-            linear_solver) : linear_solver.get_inertia();
+         const Inertia estimated_inertia = block_augmented_matrix.evaluate_inertia(subproblem, linear_solver);
          DEBUG << "Expected inertia: " << expected_inertia << '\n';
          DEBUG << "Estimated inertia: " << estimated_inertia << '\n';
          if (estimated_inertia == expected_inertia) {
@@ -88,14 +90,6 @@ namespace uno {
          }
       }
       statistics.set("Prim reg", this->regularization_factor);
-   }
-
-   void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix block_augmented_matrix, Range<> /*primal_regularization_variables*/) {
-      block_augmented_matrix.dual_inertia_correction.fill(0.);
-      this->regularize_matrix(statistics, subproblem, expected_inertia, linear_solver,
-         block_augmented_matrix.primal_inertia_correction, &block_augmented_matrix);
    }
 
    bool PrimalInertiaCorrection::performs_primal_regularization() const {
