@@ -51,8 +51,8 @@ pwd
 # download libkrylov (C interface of Krylov.jl, compiled with juliac). It is never linked: Uno loads it at runtime
 # (option libkrylov_path). The self-contained bundle (library + Julia runtime) is kept in its own directory
 # dependencies/libkrylov so that its private runtime libraries do not shadow those in dependencies/lib
-VERSION="v0.0.33"
-REPO="https://github.com/amontoison/Krylov.jl/releases/download/${VERSION}"
+VERSION="v0.10.12"
+REPO="https://github.com/juliasmoothoptimizers/krylov.jl/releases/download/${VERSION}"
 case "${ARCH}-${OS}" in
     x86_64-linux-gnu) KRYLOV_PLATFORM="linux-x86_64.tar.gz";;
     aarch64-linux-gnu) KRYLOV_PLATFORM="linux-aarch64.tar.gz";;
