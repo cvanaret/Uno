@@ -7,6 +7,9 @@
 #include "KrylovSolver.hpp"
 #include "tools/DynamicLoader.hpp"
 #include "tools/Logger.hpp"
+#ifndef _WIN32
+#include <fcntl.h>
+#endif
 
 #if defined(_WIN32)
 #define UNO_KRYLOV_DEFAULT_LIBRARY "libkrylov.dll"
@@ -56,6 +59,27 @@ namespace uno {
          }
       }
 #endif
+
+      // the Julia runtime is initialized by the first call into libkrylov, and its I/O layer (libuv) then sets
+      // O_NONBLOCK on the standard streams. This flag belongs to the open file description, which is shared with the
+      // parent process: a shell reading commands from the same pipe gets EAGAIN and exits, and writes to a full pipe
+      // fail. Initialize the runtime with a harmless call and restore the original flags
+      void initialize_julia_runtime() {
+#ifndef _WIN32
+         int saved_flags[3];
+         for (int fd = 0; fd < 3; ++fd) {
+            saved_flags[fd] = fcntl(fd, F_GETFL);
+         }
+#endif
+         (void) library.default_workspace_options();
+#ifndef _WIN32
+         for (int fd = 0; fd < 3; ++fd) {
+            if (saved_flags[fd] != -1 && fcntl(fd, F_GETFL) != saved_flags[fd]) {
+               fcntl(fd, F_SETFL, saved_flags[fd]);
+            }
+         }
+#endif
+      }
 
       bool common_symbols_resolved() {
          return library.workspace_create && library.default_workspace_options && library.get_x && library.is_solved &&
@@ -126,6 +150,7 @@ namespace uno {
          WARNING << "Uno: '" << name << "' was loaded but does not export the libkrylov symbols\n";
          return false;
       }
+      initialize_julia_runtime();
       if (library.get_version != nullptr) {
          int major = 0, minor = 0, patch = 0;
          library.get_version(&major, &minor, &patch);
