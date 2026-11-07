@@ -24,12 +24,19 @@ namespace uno {
    class Model;
    class NewtonSystem;
    class Statistics;
+   class Subproblem;
+   class WoodburyCorrection;
 
    struct BlockAugmentedMatrix {
       View<double> hessian;
       View<double> primal_inertia_correction;
       View<double> jacobian;
       View<double> dual_inertia_correction;
+      // The correction is owned by EQPSolver and outlives this matrix view.
+      WoodburyCorrection* low_rank_correction{nullptr};
+
+      Inertia evaluate_inertia(const Subproblem& subproblem,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
    };
 
    class Subproblem {
@@ -55,17 +62,14 @@ namespace uno {
 
       // augmented system
       void regularize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
-         const InertiaEvaluator& evaluate_inertia = {}) const;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
       // the factorized augmented matrix is deemed singular: returns false if it cannot be regularized further
       [[nodiscard]] bool regularize_singular_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
-         const InertiaEvaluator& evaluate_inertia = {}) const;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
       // refactorize the augmented matrix with the current regularization (e.g. after the pivoting tolerance of the linear
       // solver was increased); the inertia is checked again and the regularization increased if needed
       void refactorize_augmented_matrix(Statistics& statistics, double dual_regularization_parameter,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
-         const InertiaEvaluator& evaluate_inertia = {}) const;
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix) const;
       void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system, const Vector<double>& solution,
          Direction& direction) const;
       [[nodiscard]] BlockAugmentedMatrix compute_block_augmented_matrix(LinearSystem& linear_system) const;

@@ -19,6 +19,7 @@ namespace uno {
    class NewtonSystem;
    class Options;
    class Statistics;
+   struct BlockAugmentedMatrix;
 
    // iterative refinement on the uncondensed Newton system (PDFullSpaceSolver::Solve in IPOPT)
    struct IterativeRefinementParameters {
@@ -103,7 +104,7 @@ namespace uno {
       size_t iteration_refinement_steps{0};
       std::vector<std::string_view> iteration_refinement_flags{};
 
-      [[nodiscard]] Inertia evaluate_inertia(const Subproblem& subproblem);
+      [[nodiscard]] BlockAugmentedMatrix get_block_augmented_matrix();
 
       void solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
          bool allow_refactorization);

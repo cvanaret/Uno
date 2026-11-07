@@ -19,17 +19,14 @@ namespace uno {
 
    // Policies for EQPSolver. Interface:
    // - uses_explicit_hessian_matrix: whether the augmented matrix contains the full Hessian
-   // - update(): called once per numerical factorization of the augmented matrix A
-   // - get_inertia(): returns the inertia including the low-rank terms
    // - apply(b): turns b = A⁻¹ r into the solution of the system with the full matrix
+   // - add_matrix_vector_product(): adds the low-rank terms to the residual product
 
    // the augmented matrix contains the full Hessian: nothing to do
    struct NoLowRankCorrection {
       static constexpr bool uses_explicit_hessian_matrix = true;
-      void update(const Subproblem& /*subproblem*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/) { }
       void apply(Vector<double>& /*b*/) const { }
       void add_matrix_vector_product(View<const double> /*vector*/, View<double> /*result*/) const { }
-      [[nodiscard]] Inertia get_inertia(const Inertia& base_inertia) const { return base_inertia; }
    };
 
    // The Hessian approximation is a low-rank correction to a diagonal part: H = δ I + E P Eᵀ.

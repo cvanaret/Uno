@@ -24,18 +24,15 @@ namespace uno {
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, View<double> primal_regularization_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables,
-         const InertiaEvaluator& evaluate_inertia = {}) override;
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
 
       [[nodiscard]] bool regularize_singular_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables,
-         const InertiaEvaluator& evaluate_inertia = {}) override;
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
 
       void refactorize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables,
-         const InertiaEvaluator& evaluate_inertia = {}) override;
+         BlockAugmentedMatrix block_augmented_matrix, Range<> primal_regularization_variables) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
@@ -58,10 +55,9 @@ namespace uno {
       const size_t threshold_unsuccessful_attempts;
       const bool regularize_all_variables;
 
-      void regularize_until_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
+      void regularize_until_correct_inertia(Statistics& statistics, const Subproblem& subproblem, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular,
-         const InertiaEvaluator& evaluate_inertia);
+         BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular);
       void increase_primal_regularization(size_t number_attempts);
    };
 } // namespace

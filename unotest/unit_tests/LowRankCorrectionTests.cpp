@@ -53,21 +53,24 @@ namespace {
    public:
       std::vector<double> diagonal{1., 1.};
       COOLinearSystem system{0};
+      size_t number_solves{0};
       DiagonalSolver() { this->system.dimension = 2; this->system.rhs.resize(2); }
       void initialize_memory() override { }
       void do_symbolic_analysis() override { }
       void do_numerical_factorization(bool) override { }
       void solve_indefinite_system(double* solution) override { this->solve_indefinite_system(this->system.rhs.data(), solution, 1); }
       void solve_indefinite_system(const double* rhs, double* solution, size_t nrhs) override {
+         ++this->number_solves;
          for (size_t k = 0; k < nrhs * this->system.dimension; ++k) solution[k] = rhs[k] / this->diagonal[k % this->system.dimension];
       }
       Inertia get_inertia() const override {
          const size_t positive = static_cast<size_t>(std::count_if(this->diagonal.begin(), this->diagonal.end(), [](double d) { return d > 0.; }));
-         return {positive, this->diagonal.size() - positive, 0};
+         const size_t negative = static_cast<size_t>(std::count_if(this->diagonal.begin(), this->diagonal.end(), [](double d) { return d < 0.; }));
+         return {positive, negative, this->diagonal.size() - positive - negative};
       }
       size_t number_negative_eigenvalues() const override { return this->get_inertia().negative; }
-      bool matrix_is_singular() const override { return false; }
-      size_t rank() const override { return this->diagonal.size(); }
+      bool matrix_is_singular() const override { return 0 < this->get_inertia().zero; }
+      size_t rank() const override { return this->diagonal.size() - this->get_inertia().zero; }
       LinearSystem& get_linear_system() override { return this->system; }
    };
 
@@ -105,6 +108,33 @@ TEST_F(LowRankCorrectionTest, RankZeroPreservesBaseInertiaAndSolution) {
    this->correction->apply(b);
    EXPECT_DOUBLE_EQ(b[0], 1.);
    EXPECT_DOUBLE_EQ(b[1], 2.);
+}
+
+TEST_F(LowRankCorrectionTest, MatrixViewRefreshesCorrectionForChangedBaseFactors) {
+   this->hessian->columns = {{2., 0.}};
+   this->hessian->coefficients = {-1.};
+   BlockAugmentedMatrix blocks{};
+   EXPECT_TRUE(blocks.evaluate_inertia(*this->subproblem, this->solver) == Inertia(2, 0, 0));
+   EXPECT_EQ(this->solver.number_solves, 0);
+   blocks.low_rank_correction = this->correction.get();
+   EXPECT_TRUE(blocks.evaluate_inertia(*this->subproblem, this->solver) == Inertia(1, 1, 0));
+   this->solver.diagonal = {5., 1.};
+   EXPECT_TRUE(blocks.evaluate_inertia(*this->subproblem, this->solver) == Inertia(2, 0, 0));
+   EXPECT_EQ(this->solver.number_solves, 2);
+   Vector<double> b{0.2, 2.};
+   this->correction->apply(b);
+   EXPECT_NEAR(b[0], 1., 1e-14);
+   EXPECT_DOUBLE_EQ(b[1], 2.);
+}
+
+TEST_F(LowRankCorrectionTest, MatrixViewDoesNotSolveWithSingularBaseFactors) {
+   this->solver.diagonal = {0., 1.};
+   this->hessian->columns = {{1., 0.}};
+   this->hessian->coefficients = {1.};
+   BlockAugmentedMatrix blocks{};
+   blocks.low_rank_correction = this->correction.get();
+   EXPECT_TRUE(blocks.evaluate_inertia(*this->subproblem, this->solver) == Inertia(1, 0, 1));
+   EXPECT_EQ(this->solver.number_solves, 0);
 }
 
 TEST_F(LowRankCorrectionTest, NegativeRankOneTermChangesInertia) {

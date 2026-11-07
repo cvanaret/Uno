@@ -115,16 +115,15 @@ namespace uno {
 
       // set up the linear system (this overwrites the augmented matrix and its factorization)
       this->factorization_holds_least_squares_system = true;
-      auto [hessian, primal_inertia_correction, jacobian, dual_inertia_correction] =
-         this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
-      hessian.fill(0.); // no Hessian contribution
-      primal_inertia_correction.fill(1.); // Identity block
-      subproblem.evaluate_jacobian(iterate, jacobian, evaluations);
+      auto blocks = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+      blocks.hessian.fill(0.); // no Hessian contribution
+      blocks.primal_inertia_correction.fill(1.); // Identity block
+      subproblem.evaluate_jacobian(iterate, blocks.jacobian, evaluations);
       // more constraints than variables: the Jacobian is structurally rank deficient and the system singular. Regularize it
       // upfront (the unregularized factorization may be very expensive, with many delayed pivots)
       const bool structurally_singular = (subproblem.number_variables < subproblem.number_constraints) &&
-         !dual_inertia_correction.empty();
-      dual_inertia_correction.fill(structurally_singular ? -least_squares_dual_regularization : 0.);
+         !blocks.dual_inertia_correction.empty();
+      blocks.dual_inertia_correction.fill(structurally_singular ? -least_squares_dual_regularization : 0.);
 
       // perform the symbolic analysis once and for all
       if (!this->analysis_performed) {
@@ -136,9 +135,9 @@ namespace uno {
       // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
-      if (!structurally_singular && this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {
+      if (!structurally_singular && this->linear_solver->matrix_is_singular() && !blocks.dual_inertia_correction.empty()) {
          DEBUG << "The least-squares system is singular, regularizing it\n";
-         dual_inertia_correction.fill(-least_squares_dual_regularization);
+         blocks.dual_inertia_correction.fill(-least_squares_dual_regularization);
          this->linear_solver->do_numerical_factorization(false);
       }
       // otherwise, the (consistent) singular system is solved anyway: a non-finite solution is rejected below
@@ -184,7 +183,7 @@ namespace uno {
       if (warmstart_information.new_iterate || this->factorization_holds_least_squares_system) {
          this->factorization_holds_least_squares_system = false;
          // evaluate the Newton system (all the blocks except the regularization)
-         auto block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+         auto block_augmented_matrix = this->get_block_augmented_matrix();
          this->newton_system->evaluate({statistics, current_iterate, current_evaluations}, linear_system.matrix_values.view());
 
          // perform the symbolic analysis once and for all
@@ -196,7 +195,7 @@ namespace uno {
 
          // regularize the augmented matrix (this calls the factorization)
          subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
-            block_augmented_matrix, [this, &subproblem] { return this->evaluate_inertia(subproblem); });
+            block_augmented_matrix);
          this->pivoting_tolerance_increased_for_current_matrix = false;
 
          // assemble the RHS
@@ -299,11 +298,13 @@ namespace uno {
    }
 
    template <typename LowRankCorrection>
-   Inertia EQPSolver<LowRankCorrection>::evaluate_inertia(const Subproblem& subproblem) {
-      const Inertia base_inertia = this->linear_solver->get_inertia();
-      if (this->linear_solver->matrix_is_singular()) return base_inertia;
-      this->low_rank_correction.update(subproblem, *this->linear_solver);
-      return this->low_rank_correction.get_inertia(base_inertia);
+   BlockAugmentedMatrix EQPSolver<LowRankCorrection>::get_block_augmented_matrix() {
+      auto& linear_system = this->linear_solver->get_linear_system();
+      auto blocks = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+      if constexpr (!LowRankCorrection::uses_explicit_hessian_matrix) {
+         blocks.low_rank_correction = &this->low_rank_correction;
+      }
+      return blocks;
    }
 
    // solve the condensed system with the current factorization (RHS: linear_system.rhs, solution: linear_system.solution)
@@ -350,14 +351,14 @@ namespace uno {
          if (!allow_refactorization || this->matrix_deemed_singular) {
             break;
          }
-         const BlockAugmentedMatrix block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+         const BlockAugmentedMatrix block_augmented_matrix = this->get_block_augmented_matrix();
          // 2. improve the quality of the factorization
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
             this->iteration_refinement_flags.emplace_back("piv");
             DEBUG << "Refactorizing the augmented matrix with an increased pivoting tolerance\n";
             subproblem.refactorize_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
-               *this->linear_solver, block_augmented_matrix, [this, &subproblem] { return this->evaluate_inertia(subproblem); });
+               *this->linear_solver, block_augmented_matrix);
             if (this->linear_solver->matrix_is_singular()) {
                // singular and not regularized: the caller handles the singularity
                DEBUG << "The refactorized augmented matrix is singular\n";
@@ -376,7 +377,7 @@ namespace uno {
          // 4. deem the matrix singular and regularize it
          this->matrix_deemed_singular = true;
          if (!subproblem.regularize_singular_augmented_matrix(statistics, subproblem.dual_regularization_factor(),
-               *this->linear_solver, block_augmented_matrix, [this, &subproblem] { return this->evaluate_inertia(subproblem); })) {
+               *this->linear_solver, block_augmented_matrix)) {
             DEBUG << "The matrix cannot be regularized further, the current solution is accepted\n";
             break;
          }
