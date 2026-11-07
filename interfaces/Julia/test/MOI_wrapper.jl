@@ -440,21 +440,28 @@ function test_ad_backend(; preset="filtersqp")
     return
 end
 
-function test_mixing_new_old_api(; preset="filtersqp")
+function test_mixing_new_old_api(; preset = "filtersqp")
     # new then old
-    model = UnoSolver.Optimizer(preset=preset)
+    model = UnoSolver.Optimizer(preset = preset)
     MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     bounds = MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0])
     block_data = MOI.NLPBlockData(bounds, MOI.Test.HS071(true), true)
     err = ErrorException("Cannot mix the new and legacy nonlinear APIs")
     @test_throws err MOI.set(model, MOI.NLPBlock(), block_data)
     # old then new
-    model = UnoSolver.Optimizer(preset=preset)
+    model = UnoSolver.Optimizer(preset = preset)
     bounds = MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0])
     block_data = MOI.NLPBlockData(bounds, MOI.Test.HS071(true), true)
     MOI.set(model, MOI.NLPBlock(), block_data)
     err = ErrorException("Cannot mix the new and legacy nonlinear APIs")
     @test_throws err MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    # A quadratic objective can coexist with a legacy NLPBlock.
+    model = UnoSolver.Optimizer(preset = preset)
+    x = MOI.add_variables(model, 4)
+    f = 1.0 * x[1] * x[1]
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    @test MOI.get(model, MOI.NLPBlock()) === block_data
     return
 end
 
@@ -994,15 +1001,16 @@ function test_comprehensive_duals_scalar_nonlinear(; preset="filtersqp")
     return
 end
 
-function test_Parameter_basic(; preset="filtersqp")
+function test_Parameter_basic(; preset = "filtersqp")
     F, S = MOI.VariableIndex, MOI.Parameter{Float64}
-    model = UnoSolver.Optimizer(preset=preset)
+    model = UnoSolver.Optimizer(preset = preset)
     @test MOI.supports_add_constrained_variable(model, S)
     @test !MOI.supports_constraint(model, F, S)
     @test isempty(MOI.get(model, MOI.ListOfConstraintTypesPresent()))
     p1, c1 = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
     @test MOI.is_valid(model, c1)
     @test (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == [(F, S)]
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
     @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c1]
     p2, c2 = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
@@ -1020,6 +1028,81 @@ function test_isempty(; preset="filtersqp")
     f = zero(MOI.ScalarAffineFunction{Float64})
     MOI.add_constraint(model, f, MOI.EqualTo(0.0))
     @test !MOI.is_empty(model)
+    return
+end
+
+function test_constraint_bounds(; preset = "filtersqp")
+    @testset "legacy NLPBlock = $legacy" for legacy in (false, true)
+        model = UnoSolver.Optimizer(preset = preset)
+        x = MOI.add_variables(model, 4)
+        MOI.add_constraint(model, 1.0 * x[1], MOI.LessThan(1.0))
+        MOI.add_constraint(model, 1.0 * x[2] * x[2], MOI.GreaterThan(2.0))
+        oracle = MOI.VectorNonlinearOracle(;
+            dimension = 4,
+            l = [-3.0, -4.0],
+            u = [5.0, 6.0],
+            eval_f = (ret, x) -> copyto!(ret, view(x, 1:2)),
+            jacobian_structure = [(1, 1), (2, 2)],
+            eval_jacobian = (ret, x) -> fill!(ret, 1.0),
+            hessian_lagrangian_structure = Tuple{Int,Int}[],
+            eval_hessian_lagrangian = (ret, x, mu) -> nothing,
+        )
+        MOI.add_constraint(model, MOI.VectorOfVariables(x), oracle)
+        if legacy
+            block = MOI.NLPBlockData(
+                MOI.NLPBoundsPair.([7.0, 9.0], [Inf, 10.0]),
+                MOI.Test.HS071(true),
+                false,
+            )
+            MOI.set(model, MOI.NLPBlock(), block)
+        else
+            f = MOI.ScalarNonlinearFunction(:sin, Any[x[3]])
+            g = MOI.ScalarNonlinearFunction(:cos, Any[x[4]])
+            MOI.add_constraint(model, f, MOI.GreaterThan(7.0))
+            MOI.add_constraint(model, g, MOI.Interval(9.0, 10.0))
+        end
+        for setup in (false, true)
+            if setup
+                ext = Base.get_extension(UnoSolver, :UnoSolverMathOptInterfaceExt)
+                ext._setup_model(model)
+            end
+            bounds = MOI.Utilities.constraint_bounds(model)
+            @test bounds.lower == [-Inf, 2.0, -3.0, -4.0, 7.0, 9.0]
+            @test bounds.upper == [1.0, Inf, 5.0, 6.0, Inf, 10.0]
+        end
+    end
+    return
+end
+
+function test_iteration_limit_primal_status(; preset = "filtersqp")
+    for (start, status) in (
+        (0.5, MOI.INFEASIBLE_POINT),
+        (1.0 - 5e-7, MOI.NEARLY_FEASIBLE_POINT),
+        (1.5, MOI.FEASIBLE_POINT),
+    )
+        model = UnoSolver.Optimizer(preset = preset, max_iterations = 0)
+        MOI.set(model, MOI.Silent(), true)
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariablePrimalStart(), x, start)
+        MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(1.0))
+        oracle = MOI.VectorNonlinearOracle(;
+            dimension = 1,
+            l = [0.0],
+            u = [3.0],
+            eval_f = (ret, x) -> copyto!(ret, x),
+            jacobian_structure = [(1, 1)],
+            eval_jacobian = (ret, x) -> fill!(ret, 1.0),
+            hessian_lagrangian_structure = Tuple{Int,Int}[],
+            eval_hessian_lagrangian = (ret, x, mu) -> nothing,
+        )
+        MOI.add_constraint(model, MOI.VectorOfVariables([x]), oracle)
+        f = MOI.ScalarNonlinearFunction(:sqrt, Any[x])
+        MOI.add_constraint(model, f, MOI.LessThan(2.0))
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.ITERATION_LIMIT
+        @test MOI.get(model, MOI.VariablePrimal(), x) == start
+        @test MOI.get(model, MOI.PrimalStatus()) == status
+    end
     return
 end
 
