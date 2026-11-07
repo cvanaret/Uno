@@ -85,6 +85,23 @@ if [[ -n "$KRYLOV_PLATFORM" ]]; then
         tar -xzf "libkrylov/libkrylov-${KRYLOV_PLATFORM}" -C libkrylov
     fi
     rm -f "libkrylov/libkrylov-${KRYLOV_PLATFORM}"
+    if [[ "$KRYLOV_PLATFORM" == *.zip ]]; then
+        # Windows reuses an already loaded DLL with the same name: in a MinGW host (Uno tests, C/Fortran programs),
+        # the Julia runtime would bind to the host's libstdc++-6.dll, libgcc_s_seh-1.dll, ..., which may not export
+        # the symbols it needs (e.g. libstdc++'s non-TLS std::call_once symbols), and libkrylov.dll fails to load.
+        # Make the bundled GCC runtime DLLs private: rename them (same-length names, lib* -> ljl*) and patch the
+        # references in the bundle (import tables, preload list of libjulia.dll)
+        GCC_RUNTIME_DLLS="stdc++-6|gcc_s_seh-1|winpthread-1|gfortran-5|gomp-1|quadmath-0|atomic-1"
+        # GNU sed (part of every MSYS2 install) is binary-safe with LC_ALL=C; the replacement keeps the length
+        for DLL in libkrylov/bin/*.dll; do
+            LC_ALL=C sed -i -E "s/(^|[^A-Za-z0-9_.+-])lib(${GCC_RUNTIME_DLLS//+/\\+})\\.dll/\\1ljl\\2.dll/gI" "$DLL"
+        done
+        for DLL in ${GCC_RUNTIME_DLLS//|/ }; do
+            if [[ -f "libkrylov/bin/lib${DLL}.dll" ]]; then
+                mv "libkrylov/bin/lib${DLL}.dll" "libkrylov/bin/ljl${DLL}.dll"
+            fi
+        done
+    fi
 else
     echo "libkrylov ${VERSION} is not available for ${ARCH}-${OS}: skipped"
 fi
