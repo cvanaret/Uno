@@ -3,6 +3,8 @@
 
 #include <cmath>
 #include <exception>
+#include <string>
+#include <utility>
 #include "KrylovLoader.hpp"
 #include "KrylovSolver.hpp"
 #include "tools/DynamicLoader.hpp"
@@ -26,6 +28,17 @@ namespace uno {
       std::string loaded_name{};
       std::string default_name{UNO_KRYLOV_DEFAULT_LIBRARY};
       int functional_check{-1}; // -1: not checked, 0: failed, 1: passed
+      std::string error_message{}; // why libkrylov is not loaded/functional
+
+      void report(const std::string& message, bool warning) {
+         error_message = message;
+         if (warning) {
+            WARNING << "Uno: " << message << '\n';
+         }
+         else {
+            DEBUG << "Uno: " << message << '\n';
+         }
+      }
 
       template <typename FunctionPointer>
       void resolve_c(FunctionPointer& function_pointer, const char* symbol) {
@@ -91,6 +104,10 @@ namespace uno {
       return library;
    }
 
+   const std::string& krylov_library_error() {
+      return error_message;
+   }
+
    const std::string& loaded_krylov_library() {
       return loaded_name;
    }
@@ -114,14 +131,8 @@ namespace uno {
 #endif
       handle = open_library(name.c_str());
       if (handle == nullptr) {
-         // an explicit request deserves a diagnostic (e.g. a missing file, or an incompatible libstdc++ already loaded)
-         const std::string error = last_library_error();
-         if (name != UNO_KRYLOV_DEFAULT_LIBRARY) {
-            WARNING << "Uno: could not load libkrylov '" << name << "': " << error << '\n';
-         }
-         else {
-            DEBUG << "Uno: could not load libkrylov '" << name << "': " << error << '\n';
-         }
+         // an explicit request deserves a warning (e.g. a missing file, or an incompatible libstdc++ already loaded)
+         report("could not load libkrylov '" + name + "': " + last_library_error(), name != UNO_KRYLOV_DEFAULT_LIBRARY);
          return false;
       }
       loaded_name = name;
@@ -147,7 +158,27 @@ namespace uno {
          library.abi = (common_symbols_resolved() && library.default_options_abi1 && library.solve_abi1) ? 1 : 0;
       }
       if (library.abi == 0) {
-         WARNING << "Uno: '" << name << "' was loaded but does not export the libkrylov symbols\n";
+         std::string missing;
+         const std::pair<const void*, const char*> symbols[] = {
+            {reinterpret_cast<const void*>(library.workspace_create), "krylov_workspace_create"},
+            {reinterpret_cast<const void*>(library.default_workspace_options), "krylov_default_workspace_options"},
+            {reinterpret_cast<const void*>(library.get_x), "krylov_get_x"},
+            {reinterpret_cast<const void*>(library.is_solved), "krylov_is_solved"},
+            {reinterpret_cast<const void*>(library.niter), "krylov_niter"},
+            {reinterpret_cast<const void*>(library.elapsed_time), "krylov_elapsed_time"},
+            {reinterpret_cast<const void*>(library.warm_start), "krylov_warm_start"},
+            {reinterpret_cast<const void*>(library.workspace_free), "krylov_workspace_free"},
+            {(library.get_version != nullptr) ? reinterpret_cast<const void*>(library.default_options_abi2) :
+               reinterpret_cast<const void*>(library.default_options_abi1), "krylov_default_options"},
+            {(library.get_version != nullptr) ? reinterpret_cast<const void*>(library.solve_abi2) :
+               reinterpret_cast<const void*>(library.solve_abi1), "krylov_solve"}
+         };
+         for (const auto& [pointer, symbol]: symbols) {
+            if (pointer == nullptr) {
+               missing += std::string(missing.empty() ? "" : ", ") + symbol;
+            }
+         }
+         report("'" + name + "' was loaded but does not export the libkrylov symbols (missing: " + missing + ")", true);
          return false;
       }
       initialize_julia_runtime();
@@ -186,9 +217,13 @@ namespace uno {
             A(x, y);
             const double residual = std::fabs(y[0] - b[0]) + std::fabs(y[1] - b[1]) + std::fabs(y[2] - b[2]);
             functional_check = (result.solved && residual <= 1e-8) ? 1 : 0;
+            if (functional_check == 0) {
+               report("libkrylov is not functional: CG solve " + std::string(result.solved ? "solved" : "not solved") +
+                  " in " + std::to_string(result.iterations) + " iterations, residual " + std::to_string(residual), true);
+            }
          }
          catch (const std::exception& exception) {
-            WARNING << "Uno: libkrylov is not functional: " << exception.what() << '\n';
+            report(std::string("libkrylov is not functional: ") + exception.what(), true);
             functional_check = 0;
          }
       }

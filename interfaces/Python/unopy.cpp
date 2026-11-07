@@ -26,6 +26,8 @@ namespace uno {
       // fallback libkrylov, used when neither libkrylov_path nor UNO_KRYLOV_LIBRARY is set (set by __init__.py to the
       // library bundled in the wheel)
       module.def("_set_default_libkrylov_path", &set_default_krylov_library, py::arg("path"));
+      module.def("libkrylov_error", &krylov_library_error,
+         "Why libkrylov could not be loaded or is not functional (empty if no failure)");
 
       define_Model(module);
       define_Result(module);

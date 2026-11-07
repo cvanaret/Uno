@@ -101,6 +101,17 @@ if [[ -n "$KRYLOV_PLATFORM" ]]; then
                 mv "libkrylov/bin/lib${DLL}.dll" "libkrylov/bin/ljl${DLL}.dll"
             fi
         done
+        # check: no reference to the original names is left, and the private DLLs exist
+        REMAINING="$(LC_ALL=C grep -a -i -l -E "(^|[^A-Za-z0-9_.+-])lib(${GCC_RUNTIME_DLLS//+/\\+})\\.dll" libkrylov/bin/*.dll || true)"
+        if [[ -n "$REMAINING" ]]; then
+            echo "error: libkrylov DLLs still reference the original GCC runtime DLLs:" $REMAINING; exit 1
+        fi
+        for DLL in ${GCC_RUNTIME_DLLS//|/ }; do
+            if [[ ! -f "libkrylov/bin/ljl${DLL}.dll" ]]; then
+                echo "error: libkrylov/bin/ljl${DLL}.dll is missing"; exit 1
+            fi
+        done
+        echo "libkrylov: private GCC runtime DLLs: $(cd libkrylov/bin && ls ljl*.dll | tr '\n' ' ')"
     fi
 else
     echo "libkrylov ${VERSION} is not available for ${ARCH}-${OS}: skipped"

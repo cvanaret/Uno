@@ -24,7 +24,7 @@ TEST(KrylovRuntimeLoading, IsFunctional) {
    if (!libkrylov_requested()) {
       GTEST_SKIP() << "UNO_KRYLOV_LIBRARY is not set";
    }
-   ASSERT_TRUE(is_libkrylov_functional());
+   ASSERT_TRUE(is_libkrylov_functional()) << krylov_library_error();
    ASSERT_NE(krylov_library().abi, 0);
    ASSERT_FALSE(loaded_krylov_library().empty());
 }

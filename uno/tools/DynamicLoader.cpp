@@ -38,7 +38,21 @@ namespace uno {
    }
 
    std::string last_library_error() {
-      return "Windows error code " + std::to_string(GetLastError());
+      const DWORD code = GetLastError();
+      std::string message = "Windows error code " + std::to_string(code);
+      char* text = nullptr;
+      const DWORD length = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+         FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, code, 0, reinterpret_cast<LPSTR>(&text), 0, nullptr);
+      if (length != 0 && text != nullptr) {
+         std::string description(text, length);
+         while (!description.empty() && (description.back() == '\n' || description.back() == '\r' ||
+               description.back() == ' ' || description.back() == '.')) {
+            description.pop_back();
+         }
+         message += " (" + description + ")";
+         LocalFree(text);
+      }
+      return message;
    }
 #else
    // resolve now, do not export the HSL symbols globally. RTLD_NODELETE: the library stays mapped after

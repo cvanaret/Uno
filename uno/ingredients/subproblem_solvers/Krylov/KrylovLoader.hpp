@@ -100,6 +100,8 @@ namespace uno {
    // library bundled with unopy) > platform default libkrylov.{so,dylib,dll}. Idempotent: the first successful load wins.
    // Returns true if all the required symbols were resolved
    bool load_krylov_library(const std::string& user_library_name = "");
+   // why libkrylov could not be loaded or is not functional (empty if no failure)
+   [[nodiscard]] const std::string& krylov_library_error();
    // name of the loaded library (empty if not loaded)
    [[nodiscard]] const std::string& loaded_krylov_library();
    // fallback library name, used when neither libkrylov_path nor UNO_KRYLOV_LIBRARY is set

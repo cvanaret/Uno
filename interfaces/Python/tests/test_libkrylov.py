@@ -23,7 +23,7 @@ def test_bundled_libkrylov_present():
 def test_libkrylov_functional(solver):
 	if not libkrylov_available() and os.environ.get("UNOPY_REQUIRE_LIBKRYLOV") != "1":
 		pytest.skip("libkrylov is not available")
-	assert solver.is_libkrylov_functional()
+	assert solver.is_libkrylov_functional(), unopy.libkrylov_error()
 
 
 def test_libkrylov_path_option_type(solver):
