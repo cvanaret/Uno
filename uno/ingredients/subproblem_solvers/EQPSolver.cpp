@@ -233,7 +233,6 @@ namespace uno {
          this->direction.status = SubproblemStatus::ERROR;
       }
       else {
-         this->low_rank_correction.apply(linear_system.solution);
          // assemble the full primal-dual direction
          subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction);
       }
@@ -291,7 +290,6 @@ namespace uno {
          return this->direction_SOC;
       }
       this->direction_SOC.status = SubproblemStatus::OPTIMAL;
-      this->low_rank_correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
    }
@@ -327,7 +325,7 @@ namespace uno {
       // the residuals require the full Hessian in the condensed matrix (not available with low-rank corrections)
       if (!LowRankCorrection::uses_explicit_hessian_matrix || this->iterative_refinement.max_steps == 0) {
          this->residual_ratio = std::numeric_limits<double>::quiet_NaN(); // not computed
-         this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+         this->low_rank_correction.solve(*this->linear_solver, linear_system.rhs, linear_system.solution);
          return;
       }
       this->newton_system->uncondense_rhs(linear_system.rhs.view(), this->uncondensed_rhs.view());
