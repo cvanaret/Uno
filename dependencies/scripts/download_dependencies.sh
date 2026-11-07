@@ -92,9 +92,16 @@ if [[ -n "$KRYLOV_PLATFORM" ]]; then
         # Make the bundled GCC runtime DLLs private: rename them (same-length names, lib* -> ljl*) and patch the
         # references in the bundle (import tables, preload list of libjulia.dll)
         GCC_RUNTIME_DLLS="stdc++-6|gcc_s_seh-1|winpthread-1|gfortran-5|gomp-1|quadmath-0|atomic-1"
-        # GNU sed (part of every MSYS2 install) is binary-safe with LC_ALL=C; the replacement keeps the length
+        # GNU sed (part of every MSYS2 install), with LC_ALL=C and -b: MSYS2's sed opens files in text mode by default
+        # and drops the CR of CR LF byte pairs, which corrupts the DLLs (Windows error 193). The replacement keeps the
+        # length: a file whose size changed is corrupted
         for DLL in libkrylov/bin/*.dll; do
-            LC_ALL=C sed -i -E "s/(^|[^A-Za-z0-9_.+-])lib(${GCC_RUNTIME_DLLS//+/\\+})\\.dll/\\1ljl\\2.dll/gI" "$DLL"
+            SIZE_BEFORE=$(stat -c %s "$DLL")
+            LC_ALL=C sed -b -i -E "s/(^|[^A-Za-z0-9_.+-])lib(${GCC_RUNTIME_DLLS//+/\\+})\\.dll/\\1ljl\\2.dll/gI" "$DLL"
+            SIZE_AFTER=$(stat -c %s "$DLL")
+            if [[ "$SIZE_BEFORE" -ne "$SIZE_AFTER" ]]; then
+                echo "error: patching ${DLL} changed its size (${SIZE_BEFORE} -> ${SIZE_AFTER} bytes)"; exit 1
+            fi
         done
         for DLL in ${GCC_RUNTIME_DLLS//|/ }; do
             if [[ -f "libkrylov/bin/lib${DLL}.dll" ]]; then
