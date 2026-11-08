@@ -558,7 +558,7 @@ if(ENABLE_TESTS)
    # NARX_CFy instance. Requires the AMPL interface and the path to NARX_CFy.nl
    set(UNO_NARX_CFY_NL "" CACHE FILEPATH "Path to Mittelmann's NARX_CFy.nl instance (optional end-to-end test)")
    set(UNO_NARX_CFY_LINEAR_SOLVERS "MA57" CACHE STRING "Linear solvers tested on NARX_CFy (among MA27, MA57, MUMPS)")
-   if(AMPLSOLVER AND UNO_NARX_CFY_NL)
+   if(TARGET uno_ampl AND UNO_NARX_CFY_NL)
       foreach(linear_solver ${UNO_NARX_CFY_LINEAR_SOLVERS})
          # only the solvers that are compiled and that support the pivoting tolerance increase
          if((linear_solver STREQUAL "MA57" AND _compile_ma57) OR (linear_solver STREQUAL "MA27" AND _compile_ma27) OR
@@ -585,9 +585,6 @@ endif()
 if(TARGET uno_shared)
    list(APPEND INSTALL_TARGETS uno_shared)
 endif()
-if(TARGET uno_ampl)
-   list(APPEND INSTALL_TARGETS uno_ampl)
-endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
    EXPORT UnoTargets
@@ -596,6 +593,16 @@ install(TARGETS ${INSTALL_TARGETS}
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # shared libraries
    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/uno # headers
 )
+
+# uno_ampl is EXCLUDE_FROM_ALL and links the internal cppasl library: install it outside of the UnoTargets export set,
+# and only if it was built (OPTIONAL)
+if(TARGET uno_ampl)
+   install(TARGETS uno_ampl
+      COMPONENT uno_ampl
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      OPTIONAL
+   )
+endif()
 
 #################
 # CMake package #
