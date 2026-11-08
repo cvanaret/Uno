@@ -167,7 +167,7 @@ def format_cell(result):
 def build_report(title, before, before_meta, before_pr, after, after_meta, after_pr, changed_only=False,
                  max_length=None):
     time_limit = after_meta.get("time_limit")
-    all_names = sorted(set(before) | set(after))
+    all_names = sorted(set(before) | set(after), key=lambda name: (name.casefold(), name))
     common = [name for name in all_names if name in before and name in after]
 
     newly_solved = [name for name in common if after[name][0] and not before[name][0]]
