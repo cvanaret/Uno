@@ -9,7 +9,7 @@ It unifies most derivative-based iterative (Lagrange-Newton) methods and organiz
 
 Uno allows the automatic generation of various strategy combinations on the fly with no programming effort from the user. While all combinations do not lead to convergent methods, some of them result in efficient solvers that may not exist as software implementations.
 
-**Uno currently solves 45/47 instances in the [Mittelmann benchmark](https://plato.asu.edu/ftp/ampl-nlp.html) in about the same time as IPOPT.**
+**Uno currently solves 45/47 instances on the [Mittelmann benchmark](https://plato.asu.edu/ftp/ampl-nlp.html), while IPOPT solves 42.**
 
 For a gentle introduction, watch the talk I gave at [JuMP-dev 2026](https://jump.dev/meetings/jumpdev2026/):
 <div class="video-wrapper">
