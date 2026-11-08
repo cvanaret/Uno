@@ -112,18 +112,21 @@ TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsObjectiveScaling) {
 }
 
 TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsTinyObjectiveScaling) {
-   Strategy strategy(make_barrier_options(), 1e20);
+   constexpr double unscaled_complementarity_factor = 1e20; // objective scaling of 1e-20
+   Strategy strategy(make_barrier_options(), unscaled_complementarity_factor);
    while (strategy.force_barrier_parameter_decrease()) { }
-   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), complementarity_tolerance / 1e20 / update_fraction);
+   // min(1e-8, 1e-4 / 1e20) / 10
+   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), (complementarity_tolerance / unscaled_complementarity_factor) / update_fraction);
 }
 
 TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsTightScaledComplementarityTolerance) {
    Options options = make_barrier_options();
    options.set_double("dual_tolerance", 1e-2);
    options.set_double("tight_unscaled_complementarity_tolerance", 1e-8);
-   Strategy strategy(options, 1e6);
+   constexpr double unscaled_complementarity_factor = 1e6;
+   Strategy strategy(options, unscaled_complementarity_factor);
    while (strategy.force_barrier_parameter_decrease()) { }
-   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), 1e-8 / 1e6 / update_fraction);
+   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), (1e-8 / unscaled_complementarity_factor) / update_fraction);
 }
 
 TEST(BarrierParameterUpdateStrategy, LowerBoundStaysNormalAfterUnderflow) {
