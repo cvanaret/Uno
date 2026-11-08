@@ -633,6 +633,86 @@ namespace cppasl::detail {
 
    /// Lower-triangular CSC pattern of the Lagrangian Hessian: union of the quadratic entries and the element variable
    /// pairs of the Hessian objective and of all constraints. Every contribution receives the index of its slot.
+   namespace {
+      /// elements over more variables keep a dense Hessian pattern (bounds the cost of the analysis)
+      constexpr std::size_t maximum_structural_analysis_variables = 512;
+
+      /// Structural Hessian pattern of a tape w.r.t. its local variables (packed lower triangle, see
+      /// packed_lower_index), by propagation of the nonlinear interaction domains (as ASL): each instruction depends
+      /// on a set of local variables; a nonlinear operation couples the sets of its operands (u*w: dep(u) x dep(w),
+      /// phi(u): dep(u) x dep(u), ...) and linear operations only merge them. This is a superset of the actual
+      /// pattern. Returns false (dense pattern) if the tape reads shared defined variables or is too large.
+      bool structural_hessian_mask(const TapeInstruction* instructions, const std::int32_t* arguments, std::size_t begin,
+            std::size_t count, std::size_t k, char* mask) {
+         if (k > maximum_structural_analysis_variables) return false;
+         using O = TapeOperation;
+         std::vector<std::vector<std::uint32_t>> dependencies(count);
+         auto dependencies_of = [&](std::int32_t operand) -> const std::vector<std::uint32_t>& {
+            return dependencies[static_cast<std::size_t>(operand) - begin];
+         };
+         auto merge = [](const std::vector<std::uint32_t>& a, const std::vector<std::uint32_t>& b, std::vector<std::uint32_t>& result) {
+            std::vector<std::uint32_t> merged;
+            merged.reserve(a.size() + b.size());
+            std::set_union(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(merged));
+            result = std::move(merged);
+         };
+         auto couple = [&](const std::vector<std::uint32_t>& a, const std::vector<std::uint32_t>& b) {
+            for (std::uint32_t i: a) {
+               for (std::uint32_t j: b) mask[packed_lower_index(std::max(i, j), std::min(i, j), k)] = 1;
+            }
+         };
+         for (std::size_t local = 0; local < count; ++local) {
+            const TapeInstruction& instruction = instructions[begin + local];
+            std::vector<std::uint32_t>& result = dependencies[local];
+            switch (instruction.operation) {
+               case O::Constant: break;
+               case O::Variable: result.push_back(static_cast<std::uint32_t>(instruction.second)); break;
+               case O::DefinedValue: return false;
+               // linear or piecewise-linear unary operations: no coupling
+               case O::Negate: case O::AddConstant: case O::MultiplyConstant: case O::Abs: case O::PiecewiseLinear:
+                  result = dependencies_of(instruction.first);
+                  break;
+               case O::Add: case O::Subtract:
+                  merge(dependencies_of(instruction.first), dependencies_of(instruction.second), result);
+                  break;
+               case O::Multiply: {
+                  const auto& u = dependencies_of(instruction.first);
+                  const auto& w = dependencies_of(instruction.second);
+                  couple(u, w);
+                  merge(u, w, result);
+                  break;
+               }
+               case O::Divide: {
+                  const auto& u = dependencies_of(instruction.first);
+                  const auto& w = dependencies_of(instruction.second);
+                  couple(u, w);
+                  couple(w, w);
+                  merge(u, w, result);
+                  break;
+               }
+               case O::Sum: case O::Minimum: case O::Maximum: case O::IfThenElse:
+                  for (std::int32_t a = 0; a < instruction.second; ++a) {
+                     merge(result, dependencies_of(arguments[instruction.first + a]), result);
+                  }
+                  break;
+               default:
+                  switch (derivative_category(instruction.operation)) {
+                     case DerivativeCategory::Unary:
+                        result = dependencies_of(instruction.first);
+                        couple(result, result);
+                        break;
+                     case DerivativeCategory::Binary: // Power, Atan2, Less, Remainder
+                        merge(dependencies_of(instruction.first), dependencies_of(instruction.second), result);
+                        couple(result, result);
+                        break;
+                     default: break; // piecewise constant: zero derivatives
+                  }
+            }
+         }
+         return true;
+      }
+   } // namespace
+
    void ModelBuilder::assemble_hessian_structure() {
       ModelData& model = *this->data;
       const auto n = static_cast<std::size_t>(model.number_variables);
@@ -682,6 +762,31 @@ namespace cppasl::detail {
          if (defined.contributes_to_hessian) number_defined_slots += defined.variable_count * (defined.variable_count + 1) / 2;
       }
       model.defined_hessian_slots.assign(number_defined_slots, no_hessian_slot);
+
+      // structural Hessian patterns of the elements and defined variables (dense where the analysis is not applied):
+      // the entries outside them keep no_hessian_slot and are skipped by the scatter loops
+      std::vector<char> element_mask(number_element_slots, 0), defined_mask(number_defined_slots, 0);
+      for (std::size_t f = 0; f < model.functions.size(); ++f) {
+         if (!contributes(f)) continue;
+         for (std::size_t e = model.functions[f].element_begin; e < model.functions[f].element_end; ++e) {
+            const NonlinearElement& element = model.elements[e];
+            char* mask = element_mask.data() + element.hessian_slot_begin;
+            const std::size_t size = element.variable_count * (element.variable_count + 1) / 2;
+            if (!structural_hessian_mask(model.tapes.instructions.data(), model.tapes.arguments.data(), element.instruction_begin,
+                  element.instruction_count, element.variable_count, mask)) {
+               std::fill(mask, mask + size, 1);
+            }
+         }
+      }
+      for (const DefinedTape& defined: model.defined_tapes) {
+         if (!defined.contributes_to_hessian) continue;
+         char* mask = defined_mask.data() + defined.hessian_slot_begin;
+         const std::size_t size = defined.variable_count * (defined.variable_count + 1) / 2;
+         if (!structural_hessian_mask(model.defined_storage.instructions.data(), model.defined_storage.arguments.data(),
+               defined.instruction_begin, defined.instruction_count, defined.variable_count, mask)) {
+            std::fill(mask, mask + size, 1);
+         }
+      }
       std::vector<std::size_t> quadratic_starts(n + 1, 0), segment_starts(n + 1, 0);
       for (std::size_t f = 0; f < model.functions.size(); ++f) {
          if (!contributes(f)) continue;
@@ -760,21 +865,28 @@ namespace cppasl::detail {
             const std::size_t index = segment_records[r].element, b = segment_records[r].local_column;
             std::size_t k, variable_begin;
             std::uint32_t* slots;
+            const char* mask;
             if (index < model.elements.size()) {
                const NonlinearElement& element = model.elements[index];
                k = element.variable_count;
                variable_begin = element.variable_begin;
                slots = model.element_hessian_slots.data() + element.hessian_slot_begin;
+               mask = element_mask.data() + element.hessian_slot_begin;
             }
             else {
                const DefinedTape& defined = model.defined_tapes[index - model.elements.size()];
                k = defined.variable_count;
                variable_begin = defined.variable_begin;
                slots = model.defined_hessian_slots.data() + defined.hessian_slot_begin;
+               mask = defined_mask.data() + defined.hessian_slot_begin;
             }
             const int* variables = model.tapes.element_variables.data() + variable_begin;
-            slots += packed_lower_index(b, b, k);
-            for (std::size_t a = b; a < k; ++a) visit(variables[a], slots[a - b]);
+            const std::size_t column_offset = packed_lower_index(b, b, k);
+            slots += column_offset;
+            mask += column_offset;
+            for (std::size_t a = b; a < k; ++a) {
+               if (mask[a - b]) visit(variables[a], slots[a - b]);
+            }
          }
       };
       for (std::size_t j = 0; j < n; ++j) {

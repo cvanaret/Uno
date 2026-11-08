@@ -179,3 +179,26 @@ TEST_CASE(shared_defined_variables_chain_rule) {
       CHECK_DERIVATIVES(model, x, 0.9, std::vector<double>({1.1, -0.7, 0.4}), 2e-6);
    }
 }
+
+TEST_CASE(structural_element_hessian_pattern) {
+   // (sum_j y_j^2) * (1 + sin(0.5 sum_i x_i^2)^2) (dtoc2): the y-y off-diagonal entries are structural zeros, so the
+   // pattern is diag(y) + dense(x) + y-x coupling = 4 + 6 + 12 = 22 entries (a dense pattern would have 28)
+   NlProblem p;
+   p.number_variables = 7; // y0..y3, x4..x6
+   std::vector<Expression> ys, xs;
+   for (int j = 0; j < 4; ++j) ys.push_back(pow(var(j), num(2.)));
+   for (int i = 4; i < 7; ++i) xs.push_back(pow(var(i), num(2.)));
+   p.objectives.push_back({op_list(54, ys) * (num(1.) + pow(op(41, {num(0.5) * op_list(54, xs)}), num(2.))), {}});
+   // x4 / x5 + x6 * y0
+   p.constraints.push_back({var(4) / var(5) + var(6) * var(0), {}});
+   p.constraint_lower = {-INFINITY};
+   p.constraint_upper = {1.};
+   const cppasl::NlModel model = testing::write_and_read(p, Format::Text, "structural_hessian_pattern");
+   // the constraint entries (5, 4), (5, 5) and (6, 0) are already in the objective's pattern
+   CHECK(model.number_hessian_nonzeros() == 22);
+   std::mt19937_64 random(5);
+   for (int trial = 0; trial < 3; ++trial) {
+      const std::vector<double> x = testing::random_vector(random, 7, 0.5, 1.5);
+      CHECK_DERIVATIVES(model, x, 0.7, std::vector<double>{1.3}, 2e-6);
+   }
+}

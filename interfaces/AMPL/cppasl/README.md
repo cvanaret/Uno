@@ -138,7 +138,7 @@ operand lists of n-ary sums.
 
 Imported functions (`F`), logical constraints (`L`), string arguments and counting/logical operators outside of
 conditions are rejected with an error; binary files must have the native byte order; element Hessian patterns are
-dense over the element's variables (ASL can be sparser, e.g. `x0/x1` or `min`); convexity of connected quadratic forms
+structural (nonlinear interaction domains, as ASL), except for elements reading shared defined variables or over more than 512 variables, which are dense; convexity of connected quadratic forms
 with more than 4000 variables that are not diagonally dominant is reported as `Unknown` (a sparse Cholesky would lift
 this); the shared defined variables are all evaluated as soon as one function needs one of them (ASL tracks which
 common expressions each function needs).
