@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 import inspect
+import re
 import warnings
+from pathlib import Path
 
 import pytest
 
@@ -393,7 +395,11 @@ def test_success_flag():
     assert res.message == (
         "Optimization status: SUCCESS; solution status: FEASIBLE_KKT_POINT."
     )
-    assert res.status == unopy.SolutionStatus.FEASIBLE_KKT_POINT
+    assert res.status == 0
+    assert type(res.status) is int
+    assert res.optimization_status == unopy.OptimizationStatus.SUCCESS
+    assert res.solution_status == unopy.SolutionStatus.FEASIBLE_KKT_POINT
+    assert type(res.x) is np.ndarray
 
 
 @pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
@@ -410,9 +416,10 @@ def test_infeasible_problem(method):
         options={"max_iterations": 200},
     )
     assert res.success is False
-    assert res.status == unopy.SolutionStatus.INFEASIBLE_STATIONARY_POINT
+    assert res.solution_status == unopy.SolutionStatus.INFEASIBLE_STATIONARY_POINT
     assert "INFEASIBLE_STATIONARY_POINT" in res.message
-    assert res.maxcv > 0.5
+    # The maximum violation of x @ x <= -1, in the units of the constraint.
+    assert res.maxcv == pytest.approx(res.x @ res.x + 1.0)
 
 
 def _spy_set_option(monkeypatch):
@@ -595,14 +602,11 @@ def test_guard_returns_zeros_after_failure():
 
     objective = guard.wrap_objective(failing)
     inplace = guard.wrap_inplace(failing)
-    hessian = guard.wrap_inplace(failing, fill_with_zeros=False)
     assert objective(np.ones(2)) == 0.0
     assert guard.terminate()
     output = np.ones(3)
     inplace(np.ones(2), output)
     assert np.array_equal(output, np.zeros(3))
-    with pytest.raises(UserError, match="Failure."):
-        hessian(np.ones(2), output)
     # The user function is no longer called after the first failure.
     assert len(calls) == 1
     with pytest.raises(UserError, match="Failure."):
@@ -1217,6 +1221,7 @@ def test_callback_stop_iteration(method):
     assert res.nit == 3
     assert res.success is False
     assert res.message == "`callback` raised `StopIteration`."
+    assert res.status == 99
     assert np.allclose(res.x, iterates[-1])
 
 
@@ -1668,3 +1673,176 @@ def test_callback_uninspectable_signature():
         for args in callback.calls
     )
     assert np.allclose(callback.calls[-1][0], res.x)
+
+
+def test_hess_with_ipopt():
+    """Check that a callable Hessian with 'ipopt' raises before the optimization."""
+    with pytest.raises(ValueError, match="requires an explicit Hessian matrix"):
+        minimize(rosen, np.zeros(2), jac=rosen_der, hess=rosen_hess, method="ipopt")
+
+
+@pytest.mark.parametrize(
+    ("method", "options"),
+    [
+        ("filterslp", {}),
+        ("filtersqp", {"hessian_model": "LBFGS"}),
+        ("ipopt", {"hessian_model": "LBFGS"}),
+    ],
+)
+def test_hess_not_used(method, options):
+    """Check that a callable Hessian unused by the method is ignored.
+
+    The constraint Hessians are then not required.
+    """
+    calls = []
+
+    def hess(x):
+        calls.append(x)
+        return rosen_hess(x)
+
+    res = minimize(
+        rosen,
+        np.array([0.5, 0.5]),
+        jac=rosen_der,
+        hess=hess,
+        method=method,
+        bounds=[(-2.0, 2.0)] * 2,
+        constraints={"type": "ineq", "fun": lambda x: 1.0 - x @ x},
+        options={"max_iterations": 500, **options},
+    )
+    assert not calls
+    assert res.nhev == 0
+
+
+def test_lagrangian_hessian_operator_zero_multipliers():
+    """Check that the terms with zero multipliers are not computed."""
+    x0 = np.array([1.0, 2.0])
+    objective_calls = []
+    constraint_calls = []
+
+    def hess(x):
+        objective_calls.append(np.array(x))
+        return np.eye(2)
+
+    def constraint_hess(x, v):
+        constraint_calls.append(np.array(v))
+        return v[0] * np.eye(2)
+
+    constraints = _normalize_constraints(
+        NonlinearConstraint(
+            fun=lambda x: np.array([x @ x]),
+            jac=lambda x: np.atleast_2d(2 * x),
+            hess=constraint_hess,
+            lb=-np.inf,
+            ub=1.0,
+        ),
+        x0,
+        hess,
+    )
+    operator = _LagrangianHessianOperator(hess, (), constraints)
+    result = np.empty(2)
+    # E.g. the feasibility restoration phase: the objective multiplier is zero.
+    operator(x0, True, 0.0, np.array([2.0]), np.ones(2), result)
+    assert result.tolist() == [2.0, 2.0]
+    assert not objective_calls
+    assert len(constraint_calls) == 1
+    # An inactive constraint: its multipliers are zero.
+    operator(x0, True, 1.0, np.array([0.0]), np.ones(2), result)
+    assert result.tolist() == [1.0, 1.0]
+    assert len(objective_calls) == 1
+    assert len(constraint_calls) == 1
+    assert operator.evaluations == 1
+
+
+def test_dense_linear_constraint_pattern(monkeypatch):
+    """Check that the sparsity pattern of a dense LinearConstraint is its nonzeros."""
+    numbers_of_nonzeros, _ = _spy_set_constraints(monkeypatch)
+    res = minimize(
+        rosen,
+        np.zeros(3),
+        jac=rosen_der,
+        constraints=LinearConstraint(
+            np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0], [0.0, 2.0, 0.0]]), -1.0, 0.5
+        ),
+    )
+    assert numbers_of_nonzeros == [3]
+    assert res.success
+    reference = scipy_minimize(
+        rosen,
+        np.zeros(3),
+        jac=rosen_der,
+        constraints=LinearConstraint(
+            np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0], [0.0, 2.0, 0.0]]), -1.0, 0.5
+        ),
+        method="trust-constr",
+    )
+    assert np.allclose(res.x, reference.x, atol=1e-4)
+
+
+def test_jacobian_block_same_structure():
+    """Check the values of a sparse Jacobian with the structure of the pattern.
+
+    The values are copied directly; a Jacobian with another structure,
+    e.g. without an explicit zero of the pattern, is still written correctly.
+    """
+    x0 = np.zeros(2)
+    pattern = sp.csr_matrix(
+        (np.array([1.0, 0.0, 3.0]), np.array([0, 1, 1]), np.array([0, 2, 3])),
+        shape=(2, 2),
+    )
+    values = [pattern]
+    block = _JacobianBlock(pattern, x0, 2, 0, jacobian=lambda x: values[0])
+    assert block.nnz == 3
+    output = np.empty(3)
+    block.write(x0, output)
+    assert output.tolist() == [1.0, 0.0, 3.0]
+    values[0] = sp.csr_matrix(
+        (np.array([4.0, 5.0, 6.0]), np.array([0, 1, 1]), np.array([0, 2, 3])),
+        shape=(2, 2),
+    )
+    block.write(x0, output)
+    assert output.tolist() == [4.0, 5.0, 6.0]
+    values[0] = sp.csr_matrix(np.array([[7.0, 0.0], [0.0, 8.0]]))
+    block.write(x0, output)
+    assert output.tolist() == [7.0, 0.0, 8.0]
+
+
+def test_njev_and_maxcv_with_bounds():
+    """Check njev and the maximum violation of the bounds."""
+    gradient_calls = []
+
+    def jac(x):
+        gradient_calls.append(x)
+        return rosen_der(x)
+
+    res = minimize(rosen, np.zeros(2), jac=jac, bounds=[(-1.0, 0.5), (-1.0, 0.5)])
+    assert res.njev == len(gradient_calls)
+    assert res.maxcv == pytest.approx(
+        max(0.0, np.max(res.x - 0.5), np.max(-1.0 - res.x))
+    )
+    assert res.maxcv < 1e-6
+
+
+def test_documented_options_are_uno_options():
+    """Check that the options documented by minimize are the options of Uno.
+
+    The options of Uno are read from uno/options/Options.cpp,
+    except "preset", which is set from the method.
+    """
+    options_file = (
+        Path(__file__).resolve().parents[3] / "uno" / "options" / "Options.cpp"
+    )
+    if not options_file.is_file():
+        pytest.skip("The source of Uno is not available.")
+    types = {"DOUBLE": "float", "INTEGER": "int", "BOOL": "bool", "STRING": "str"}
+    uno_options = {
+        name: types[kind]
+        for name, kind in re.findall(
+            r'\{"(\w+)",\s*OptionType::(\w+)\}', options_file.read_text()
+        )
+    }
+    documented_options = dict(
+        re.findall(r'^\s*"(\w+)"[^:\n]*: (\w+)\s*$', minimize.__doc__, re.MULTILINE)
+    )
+    del uno_options["preset"]
+    assert documented_options == uno_options

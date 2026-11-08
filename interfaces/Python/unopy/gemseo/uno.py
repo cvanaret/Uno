@@ -13,10 +13,11 @@ from typing import TYPE_CHECKING
 from numpy import atleast_1d
 from numpy import atleast_2d
 from numpy import concatenate
-from numpy import isfinite
+from numpy import indices
 from numpy import real
 from numpy import vstack
-from scipy.sparse import csr_array
+from scipy.optimize import Bounds
+from scipy.sparse import coo_array
 from scipy.sparse import issparse
 from scipy.sparse import vstack as sparse_vstack
 
@@ -43,6 +44,26 @@ if TYPE_CHECKING:
     from gemseo.core.mdo_functions.mdo_function import MDOFunction
 
 
+def _to_sparse(jacobian: NumberArray) -> coo_array:
+    """Convert a dense Jacobian to a sparse one storing all its entries.
+
+    The zeros are stored explicitly,
+    as the sparsity pattern of a Jacobian is deduced from its first value
+    and an entry which is zero at a point can be nonzero at another one.
+
+    Args:
+        jacobian: The dense Jacobian.
+
+    Returns:
+        The sparse Jacobian.
+    """
+    jacobian = atleast_2d(jacobian)
+    rows, columns = indices(jacobian.shape)
+    return coo_array(
+        (jacobian.ravel(), (rows.ravel(), columns.ravel())), shape=jacobian.shape
+    )
+
+
 def _concatenate_constraints(
     constraints: Sequence[MDOFunction], constraint_type: str
 ) -> dict[str, Any]:
@@ -60,7 +81,8 @@ def _concatenate_constraints(
     Returns:
         The SciPy dictionary constraint concatenating the values of the constraints
         and stacking their Jacobians in the same order;
-        the Jacobian is sparse if one of the Jacobians is sparse.
+        the Jacobian is sparse if one of the Jacobians is sparse,
+        with all the entries of the dense Jacobians stored.
     """
 
     def evaluate(x: NumberArray) -> NumberArray:
@@ -73,7 +95,7 @@ def _concatenate_constraints(
         if any(issparse(jacobian) for jacobian in jacobians):
             return sparse_vstack(
                 [
-                    jacobian if issparse(jacobian) else csr_array(atleast_2d(jacobian))
+                    jacobian if issparse(jacobian) else _to_sparse(jacobian)
                     for jacobian in jacobians
                 ],
                 format="csr",
@@ -175,10 +197,6 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
 
     def _run(self, problem: OptimizationProblem) -> tuple[str, Any]:
         x_0, l_b, u_b = get_initial_point_and_bounds(self, problem)
-        # Replace infinite values with None:
-        l_b = [val if isfinite(val) else None for val in l_b]
-        u_b = [val if isfinite(val) else None for val in u_b]
-        bounds = list(zip(l_b, u_b, strict=False))
 
         # Get the constraints in SciPy format,
         # merged into one equality and one inequality constraint.
@@ -198,13 +216,18 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
         tolerance = 1e-15
         # MAX_INT is the largest 32-bit integer, i.e. the largest uno_int.
         settings_["max_iterations"] = MAX_INT
+        # Uno still stops by itself after "acceptable_iteration_threshold"
+        # consecutive iterates satisfying its looser acceptable tolerances
+        # ("acceptable_tolerance" and the "acceptable_unscaled_*" ones).
+        # This is kept on purpose: it is what stops the interior-point method
+        # once it only repeats the same iterate.
 
         opt_result = minimize(
             fun=lambda x: real(problem.objective.evaluate(x)),
             jac=problem.objective.jac,
             x0=x_0,
             method=self.ALGORITHM_INFOS[self._algo_name].internal_algorithm_name,
-            bounds=bounds,
+            bounds=Bounds(l_b, u_b),
             constraints=scipy_constraints,
             options=settings_,
             tol=tolerance,

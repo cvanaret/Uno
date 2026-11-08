@@ -46,6 +46,7 @@ class _LagrangianHessianOperator:
     by the successive Hessian-vector products computed by the subproblem solver:
     the objective Hessian is computed again when ``x`` changes
     and the Hessian of a constraint when ``x`` or its multipliers change.
+    A term whose multipliers are all zero is not computed.
     """
 
     def __init__(
@@ -124,19 +125,24 @@ class _LagrangianHessianOperator:
         vector = np.asarray(vector, dtype=float)
 
         # A term is cached only once computed, so that a failed evaluation is not cached.
-        if not self._is_cached(self._objective_cache, x, None, evaluate_at_x):
-            self.evaluations += 1
-            term = _as_hessian_operator(self._hess(x, *self._args))
-            self._objective_cache = (x, None, term)
-        product = float(obj_mult) * np.asarray(
-            self._objective_cache[2] @ vector, dtype=float
-        ).ravel()
+        # A term with zero multipliers is not computed,
+        # e.g. the objective term in the feasibility restoration phase.
+        product = np.zeros(len(vector))
+        obj_mult = float(obj_mult)
+        if obj_mult != 0.0:
+            if not self._is_cached(self._objective_cache, x, None, evaluate_at_x):
+                self.evaluations += 1
+                term = _as_hessian_operator(self._hess(x, *self._args))
+                self._objective_cache = (x, None, term)
+            product += obj_mult * np.asarray(
+                self._objective_cache[2] @ vector, dtype=float
+            ).ravel()
 
         offset = 0
         for index, constraint in enumerate(self._constraints):
             size = constraint.size
-            if constraint.hessian is not None:
-                multipliers_i = multipliers[offset:offset + size]
+            multipliers_i = multipliers[offset:offset + size]
+            if constraint.hessian is not None and np.any(multipliers_i):
                 cache = self._constraint_caches[index]
                 if not self._is_cached(cache, x, multipliers_i, evaluate_at_x):
                     term = _as_hessian_operator(constraint.hessian(x, multipliers_i))

@@ -37,6 +37,7 @@ from unopy.gemseo.settings.ipopt import UNO_IPOPT_Settings  # noqa: E402
 from unopy.gemseo.uno import UnoOpt  # noqa: E402
 from unopy.gemseo.uno import _concatenate_constraints  # noqa: E402
 from unopy.scipy import minimize  # noqa: E402
+from unopy.scipy._constraints import _JacobianBlock  # noqa: E402
 
 if IS_GEMSEO_6:
     from gemseo.algos.design_space import DesignSpace
@@ -525,3 +526,29 @@ def test_ipopt_terminates(tmp_path):
         f"UNO_IPOPT did not terminate within {_IPOPT_LOOP_TIMEOUT} seconds."
     )
     assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+
+
+def test_concatenate_constraints_keeps_dense_zeros():
+    """Check that the zeros of a dense Jacobian are kept in a merged sparse Jacobian.
+
+    The sparsity pattern is deduced from the Jacobian at x0,
+    so an entry of a dense Jacobian which is zero at x0 must be in the pattern.
+    """
+    x0 = array([0.0, 0.0])
+    sparse = MDOFunction(
+        lambda x: array([x[0]]), "sparse", jac=lambda x: csr_array(array([[1.0, 0.0]]))
+    )
+    dense = MDOFunction(
+        lambda x: array([x[0] ** 2 + x[1]]),
+        "dense",
+        jac=lambda x: array([[2 * x[0], 1.0]]),
+    )
+    constraint = _concatenate_constraints([sparse, dense], "ineq")
+    jacobian = constraint["jac"]
+    block = _JacobianBlock(jacobian(x0), x0, 2, 0, jacobian=jacobian)
+    # The stored entry of the sparse Jacobian and all the entries of the dense one.
+    assert block.nnz == 3
+    values = array([0.0, 0.0, 0.0])
+    block.write(x0, values)
+    block.write(array([1.0, 0.0]), values)
+    assert_array_equal(values, [1.0, 2.0, 1.0])

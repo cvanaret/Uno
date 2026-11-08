@@ -11,19 +11,24 @@ from typing import Callable
 class _EvaluationErrorGuard:
     """Catch the exceptions raised by the user functions during an optimization.
 
-    Uno converts any exception raised in a Python callback into an evaluation error
-    and keeps iterating (e.g. by backtracking), so the original exception would be lost.
+    Uno converts any exception raised in a Python callback into an evaluation error,
+    which its globalization mechanism catches to backtrack and keep iterating,
+    so the original exception would be lost;
+    only the termination callback, called once per iteration, stops Uno.
     Instead, the first exception raised by a user function is stored,
     the callback returns zeros
-    (except the Hessian operator, which raises the exception to Uno),
     and the termination callback asks Uno to stop.
     Once an exception has been stored, the user functions are no longer called
-    and the callbacks keep returning zeros (or raising for the Hessian operator).
+    and the callbacks keep returning zeros.
+    No exception is raised to Uno: the Hessian operator is called from
+    the Fortran code of BQPD, through which a C++ exception must not unwind.
     Zeros are used rather than NaN values
     because NaN values can make the LP/QP solvers loop forever
     before the termination callback is called;
     the values returned after a failure are discarded anyway
     since the exception is re-raised once Uno has returned.
+    Any exception is caught, including ``KeyboardInterrupt`` and ``SystemExit``,
+    so that it is not lost either; Uno then stops at its next termination check.
     """
 
     def __init__(self) -> None:
@@ -52,17 +57,11 @@ class _EvaluationErrorGuard:
 
         return guarded_callback
 
-    def wrap_inplace(
-        self, callback: Callable[..., None], fill_with_zeros: bool = True
-    ) -> Callable[..., None]:
+    def wrap_inplace(self, callback: Callable[..., None]) -> Callable[..., None]:
         """Wrap a callback writing its result in its last argument.
 
         Args:
             callback: The callback ``callback(*inputs, output) -> None``.
-            fill_with_zeros: Whether to fill the output with zeros after a failure.
-                Otherwise, the exception is raised to Uno,
-                which stops with an evaluation error.
-                This is used for the Hessian operator.
 
         Returns:
             The callback filling the output with zeros instead of raising an exception.
@@ -75,8 +74,6 @@ class _EvaluationErrorGuard:
                     return
                 except BaseException as exception:
                     self.exception = exception
-            if not fill_with_zeros:
-                raise self.exception
             arguments[-1][:] = 0.0
 
         return guarded_callback

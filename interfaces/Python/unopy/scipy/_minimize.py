@@ -40,6 +40,41 @@ _FEASIBLE_SOLUTION_STATUSES = (
 )
 """The solution statuses of a feasible solution, required for a successful run."""
 
+STOP_ITERATION_STATUS = 99
+"""The status of the result when the callback raises ``StopIteration``, as in SciPy."""
+
+
+def _compute_maximum_violation(
+    x: np.ndarray,
+    variable_lower_bounds: Iterable[float],
+    variable_upper_bounds: Iterable[float],
+    constraint_values: np.ndarray,
+    constraint_lower_bounds: np.ndarray,
+    constraint_upper_bounds: np.ndarray,
+) -> float:
+    """Return the maximum violation of the bounds and the constraints.
+
+    Args:
+        x: The point.
+        variable_lower_bounds: The lower bounds of the variables.
+        variable_upper_bounds: The upper bounds of the variables.
+        constraint_values: The values of the constraints at ``x``.
+        constraint_lower_bounds: The lower bounds of the constraints.
+        constraint_upper_bounds: The upper bounds of the constraints.
+
+    Returns:
+        The maximum violation, zero if ``x`` is feasible
+        and NaN if a value is NaN.
+    """
+    violations = [np.zeros(1)]
+    for values, lower_bounds, upper_bounds in (
+        (x, variable_lower_bounds, variable_upper_bounds),
+        (constraint_values, constraint_lower_bounds, constraint_upper_bounds),
+    ):
+        violations.append(np.asarray(lower_bounds, dtype=float) - values)
+        violations.append(values - np.asarray(upper_bounds, dtype=float))
+    return float(np.max(np.concatenate(violations)))
+
 
 def _get_quasi_newton_hessian_model(
     hess: Callable[..., Any] | HessianUpdateStrategy | str | None,
@@ -188,7 +223,13 @@ def minimize(
         the settings of the instance are not used
         and the option "quasi_newton_memory_size" sets the memory.
         The "hess" attributes of the constraints are then ignored.
-        The method 'filterslp' uses no Hessian and ignores ``hess``.
+        The method 'filterslp' uses no Hessian and ignores ``hess``,
+        and so does any method when the option "hessian_model" is set
+        to a value other than "exact";
+        the Hessians of the constraints are then not required.
+        A callable ``hess`` is not supported by the method 'ipopt',
+        which requires an explicit Hessian matrix, and raises a "ValueError";
+        use a quasi-Newton model with this method.
         Without ``hess``, Uno uses its L-BFGS model.
         The finite-difference schemes ('2-point', '3-point', 'cs')
         are not supported for ``hess`` and raise a "NotImplementedError":
@@ -246,7 +287,11 @@ def minimize(
         A sparse Jacobian is kept sparse: only its stored entries are passed to Uno.
         The sparsity pattern is fixed for the whole optimization:
         it is the one of "A" or of the Jacobian at "x0"
-        (all the entries for a dense Jacobian, the stored entries for a sparse one).
+        (the nonzero entries of a dense "A", all the entries of a dense Jacobian
+        and the stored entries of a sparse one, explicit zeros included).
+        A sparse Jacobian at "x0" must thus store every entry
+        that can be nonzero during the optimization, even if it is zero at "x0";
+        e.g. a sparse matrix built from a dense array drops its zeros.
         To this end, the Jacobian of a nonlinear constraint given as a callable
         is evaluated at "x0" before the optimization; this value is reused for the first evaluation at "x0"
         by Uno. An entry of the pattern missing from a later evaluation is zero
@@ -304,12 +349,19 @@ def minimize(
 
         "primal_tolerance" : float
         "dual_tolerance" : float
-        "loose_primal_tolerance" : float
-        "loose_dual_tolerance" : float
-        "loose_tolerance_iteration_threshold" : int
+        "tight_unscaled_stationarity_tolerance" : float
+        "tight_unscaled_primal_infeasibility_tolerance" : float
+        "tight_unscaled_complementarity_tolerance" : float
+        "acceptable_tolerance" : float
+        "acceptable_unscaled_stationarity_tolerance" : float
+        "acceptable_unscaled_primal_infeasibility_tolerance" : float
+        "acceptable_unscaled_complementarity_tolerance" : float
+        "acceptable_objective_change_tolerance" : float
+        "acceptable_iteration_threshold" : int
         "max_iterations" (or its aliases "maxiter" and "max_iter") : int
         "time_limit" : float
         "print_solution" : bool
+        "diverging_iterate_threshold" : float
         "unbounded_objective_threshold" : float
         "logger" : str
         "constraint_relaxation_strategy" : str
@@ -324,18 +376,31 @@ def minimize(
         "protect_actual_reduction_against_roundoff" : bool
         "protected_actual_reduction_macheps_coefficient" : float
         "print_subproblem" : bool
+        "use_function_scaling" : bool
+        "function_scaling_threshold" : float
+        "function_scaling_lower_bound" : float
+        "print_minor_iterations" : bool
+        "print_extended_statistics" : bool
         "armijo_decrease_fraction" : float
         "armijo_tolerance" : float
         "switching_delta" : float
+        "switching_merit_exponent" : float
         "switching_infeasibility_exponent" : float
         "sufficient_infeasibility_decrease_ratio" : float
-        "filter_type" : str
+        "merit_infeasibility_reduction_fraction" : float
         "filter_beta" : float
         "filter_gamma" : float
         "filter_ubd" : float
         "filter_fact" : float
         "filter_capacity" : int
         "filter_sufficient_infeasibility_decrease_factor" : float
+        "filter_reset_iteration_threshold" : int
+        "max_number_filter_resets" : int
+        "filter_ubd_raise_trigger" : int
+        "filter_ubd_raise_factor" : float
+        "filter_ubd_max_raises" : int
+        "filter_merit_max_increase" : float
+        "filter_margin_uses_entry_infeasibility" : bool
         "funnel_kappa" : float
         "funnel_beta" : float
         "funnel_gamma" : float
@@ -344,8 +409,10 @@ def minimize(
         "funnel_update_strategy" : int
         "funnel_require_acceptance_wrt_current_iterate" : bool
         "LS_backtracking_ratio" : float
-        "LS_min_step_length" : float
         "LS_scale_duals_with_step_length" : bool
+        "gamma_alpha" : float
+        "LS_watchdog_shortened_iterations_trigger" : int
+        "LS_watchdog_max_trial_iterations" : int
         "quasi_newton_memory_size" : int
         "quasi_newton_delta_lower_bound" : float
         "quasi_newton_delta_upper_bound" : float
@@ -360,6 +427,12 @@ def minimize(
         "primal_regularization_fast_increase_factor" : float
         "primal_regularization_slow_increase_factor" : float
         "threshold_unsuccessful_attempts" : int
+        "regularize_all_variables" : bool
+        "iterative_refinement_min_steps" : int
+        "iterative_refinement_max_steps" : int
+        "iterative_refinement_residual_ratio_max" : float
+        "iterative_refinement_residual_ratio_singular" : float
+        "iterative_refinement_improvement_factor" : float
         "TR_radius" : float
         "TR_increase_factor" : float
         "TR_decrease_factor" : float
@@ -369,6 +442,7 @@ def minimize(
         "TR_radius_reset_threshold" : float
         "switch_to_optimality_requires_linearized_feasibility" : bool
         "l1_constraint_violation_coefficient" : float
+        "use_proximal_term" : bool
         "barrier_function" : str
         "barrier_initial_parameter" : float
         "barrier_default_multiplier" : float
@@ -385,6 +459,9 @@ def minimize(
         "barrier_damping_factor" : float
         "barrier_small_infeasibility_factor" : float
         "least_square_multiplier_max_norm" : float
+        "bound_multiplier_max_norm" : float
+        "constraint_violation_tolerance" : float
+        "bound_relaxation_factor" : float
         "BQPD_kmax_heuristic" : str
         "QP_solver" : str
         "LP_solver" : str
@@ -393,6 +470,10 @@ def minimize(
         "write_solution_to_file" : bool
         "SOC_max_iterations" : int
         "SOC_infeasibility_fraction" : float
+        "libhsl_path" : str
+        "MA57_use_scaling" : bool
+        "dump_kkt_path" : str
+        "dump_kkt_frequency" : int
 
 
     Returns
@@ -410,10 +491,20 @@ def minimize(
         e.g. it is False at an infeasible stationary point
         or when the objective is unbounded.
         ``message`` is a string giving both the optimization status
-        and the solution status, and ``status`` is the solution status.
+        and the solution status,
+        which are also given as Uno enumerations by
+        ``optimization_status`` and ``solution_status``.
+        ``status`` is the optimization status as an int:
+        0 if Uno terminated normally, as in SciPy
+        (``success`` is still False at an infeasible point),
+        and 99 if the callback raised ``StopIteration``.
         ``nfev`` is the number of calls to "fun",
-        including the finite-difference ones.
+        including the finite-difference ones,
+        and ``njev`` the number of evaluations of the gradient of "fun",
+        including the finite-difference approximations.
         ``nhev`` is the number of calls to "hess" when it is a callable.
+        ``maxcv`` is the maximum violation of the bounds and the constraints
+        at ``x``, in the units of the user functions.
 
         The Lagrange multipliers follow the convention of SciPy's 'trust-constr':
         the Lagrangian is
@@ -444,7 +535,9 @@ def minimize(
         If "jac" is neither a callable, a boolean, None
         nor a finite-difference scheme,
         if "hess" is not valid, if the bounds are ill-shaped or inconsistent,
-        if "hess" is a callable and a nonlinear constraint has no callable Hessian,
+        if "hess" is a callable used by the method
+        and a nonlinear constraint has no callable Hessian,
+        if "hess" is a callable and the method is 'ipopt',
         or if a constraint Jacobian at "x0" has a wrong shape.
     NotImplementedError
         If "hess" is a finite-difference scheme
@@ -486,6 +579,20 @@ def minimize(
     if options is None:
         options = {}
     hessian_model = _get_quasi_newton_hessian_model(hess)
+    # The user Hessian is used only by the methods using a Hessian
+    # with the exact Hessian model.
+    uses_hessian_operator = (
+        callable(hess)
+        and method_lower != "filterslp"
+        and options.get("hessian_model", "exact") == "exact"
+    )
+    if uses_hessian_operator and method_lower == "ipopt":
+        raise ValueError(
+            "The method 'ipopt' requires an explicit Hessian matrix, "
+            "which cannot be computed from 'hess': "
+            "use a quasi-Newton model (e.g. hess=BFGS()) "
+            "or the method 'filtersqp' or 'funnelsqp'."
+        )
 
     # Step 2: Process bounds
     var_lb, var_ub = _get_variable_bounds(bounds, n)
@@ -494,7 +601,9 @@ def minimize(
     objective = _Objective(fun, jac, args)
 
     # Step 4: Normalize and merge constraints
-    normalized = _normalize_constraints(constraints, x0, hess)
+    normalized = _normalize_constraints(
+        constraints, x0, hess if uses_hessian_operator else None
+    )
     merged_constraints = _MergedConstraints(normalized)
 
     # Step 5: Build unopy.Model
@@ -525,11 +634,9 @@ def minimize(
 
     # Step 5b: Lagrangian Hessian operator (if Hessian provided)
     hessian_operator = None
-    if callable(hess):
+    if uses_hessian_operator:
         hessian_operator = _LagrangianHessianOperator(hess, args, normalized)
-        model.set_lagrangian_hessian_operator(
-            guard.wrap_inplace(hessian_operator, fill_with_zeros=False)
-        )
+        model.set_lagrangian_hessian_operator(guard.wrap_inplace(hessian_operator))
 
     # Step 6: Configure and run solver
     uno_solver = unopy.UnoSolver()
@@ -560,9 +667,12 @@ def minimize(
         f"Optimization status: {result.optimization_status.name}; "
         f"solution status: {result.solution_status.name}."
     )
+    # As in SciPy, 0 means that the optimizer terminated normally.
+    status = int(result.optimization_status)
     if iteration_callback is not None and iteration_callback.stopped:
         success = False
         message = STOP_ITERATION_MESSAGE
+        status = STOP_ITERATION_STATUS
     if hessian_operator is None:
         nhev = result.number_hessian_evaluations
     else:
@@ -584,18 +694,28 @@ def minimize(
     ]
     if bounds is not None:
         v.append(lower_bound_multipliers + upper_bound_multipliers)
+    x = np.asarray(result.primal_solution, dtype=float)
 
     return OptimizeResult(
-        x=result.primal_solution,
+        x=x,
         success=success,
-        status=result.solution_status,
+        status=status,
+        optimization_status=result.optimization_status,
+        solution_status=result.solution_status,
         message=message,
         fun=result.solution_objective,
         nfev=objective.evaluations,
-        njev=result.number_jacobian_evaluations,
+        njev=result.number_objective_gradient_evaluations,
         nhev=nhev,
         nit=result.number_iterations,
-        maxcv=result.solution_primal_feasibility,
+        maxcv=_compute_maximum_violation(
+            x,
+            var_lb,
+            var_ub,
+            constraint_values,
+            merged_constraints.lower_bounds,
+            merged_constraints.upper_bounds,
+        ),
         v=v,
         constr=constr,
         lower_bound_multipliers=lower_bound_multipliers,

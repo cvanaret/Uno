@@ -116,8 +116,11 @@ class _JacobianBlock:
     """The Jacobian of a block of constraints with a sparsity pattern fixed for the run.
 
     The sparsity pattern is deduced from a first value of the Jacobian:
-    all the entries of a dense Jacobian
-    or the stored entries of a ``scipy.sparse`` Jacobian.
+    all the entries of a dense Jacobian,
+    the nonzero entries of a constant dense Jacobian
+    or the stored entries of a ``scipy.sparse`` Jacobian, explicit zeros included;
+    the stored entries of a sparse Jacobian must thus include
+    all the entries that can be nonzero during the run.
     The nonzeros are ordered row by row and, within a row, by increasing column.
     A sparse Jacobian is never converted to a dense array.
     Without a first value, the sparsity pattern is dense.
@@ -156,11 +159,19 @@ class _JacobianBlock:
             self._jacobian = jacobian
             return
 
+        if jacobian is None and not sp.issparse(value):
+            # A constant dense Jacobian, e.g. a dense LinearConstraint.A:
+            # its zeros are structural, so its sparsity pattern is its nonzeros.
+            value = sp.csr_matrix(self._check_dense_size(value).reshape(self._shape))
         self._is_sparse = sp.issparse(value)
         if self._is_sparse:
             value = self._to_canonical_csr(value, copy=True)
             self.rows = np.repeat(np.arange(m), np.diff(value.indptr))
             self.cols = value.indices.astype(np.int64)
+            # The CSR structure of the pattern, to copy the values of a Jacobian
+            # with the same structure directly.
+            self._indptr = value.indptr
+            self._indices = value.indices
             # The linear indices of the nonzeros, sorted in increasing order.
             self._keys = self.rows * n + self.cols
         else:
@@ -244,6 +255,12 @@ class _JacobianBlock:
         n = self._shape[1]
         if sp.issparse(value):
             value = self._to_canonical_csr(value)
+            if np.array_equal(value.indptr, self._indptr) and np.array_equal(
+                value.indices, self._indices
+            ):
+                # Same structure as the pattern: the values are in the same order.
+                values[:] = value.data
+                return
             keys = (
                 np.repeat(np.arange(self._shape[0]), np.diff(value.indptr)) * n
                 + value.indices
