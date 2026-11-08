@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <gtest/gtest.h>
 #include "ingredients/inequality_handling_methods/interior_point_methods/BarrierParameterUpdateStrategy.hpp"
@@ -110,9 +111,43 @@ TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsObjectiveScaling) {
    EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), complementarity_tolerance / unscaled_complementarity_factor / update_fraction);
 }
 
-// a tiny objective scaling does not drive the lower bound below IPOPT's default mu_min (1e-11)
-TEST(BarrierParameterUpdateStrategy, LowerBoundIsSafeguarded) {
+TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsTinyObjectiveScaling) {
    Strategy strategy(make_barrier_options(), 1e20);
    while (strategy.force_barrier_parameter_decrease()) { }
-   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), 1e-11 / update_fraction);
+   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), complementarity_tolerance / 1e20 / update_fraction);
+}
+
+TEST(BarrierParameterUpdateStrategy, LowerBoundRespectsTightScaledComplementarityTolerance) {
+   Options options = make_barrier_options();
+   options.set_double("dual_tolerance", 1e-2);
+   options.set_double("tight_unscaled_complementarity_tolerance", 1e-8);
+   Strategy strategy(options, 1e6);
+   while (strategy.force_barrier_parameter_decrease()) { }
+   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), 1e-8 / 1e6 / update_fraction);
+}
+
+TEST(BarrierParameterUpdateStrategy, LowerBoundStaysNormalAfterUnderflow) {
+   for (const double tolerance: {0., std::numeric_limits<double>::denorm_min(), std::numeric_limits<double>::min()}) {
+      Options options = make_barrier_options();
+      options.set_double("dual_tolerance", tolerance);
+      options.set_double("tight_unscaled_complementarity_tolerance", tolerance);
+      Strategy strategy(options, std::numeric_limits<double>::max());
+      size_t number_decreases = 0;
+      while (strategy.force_barrier_parameter_decrease()) {
+         ASSERT_GT(strategy.get_barrier_parameter(), 0.);
+         ASSERT_TRUE(std::isfinite(strategy.get_barrier_parameter()));
+         ASSERT_LT(++number_decreases, 100u);
+      }
+      EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), std::numeric_limits<double>::min());
+   }
+}
+
+TEST(BarrierParameterUpdateStrategy, LowerBoundStaysPositiveAfterDivisionUnderflows) {
+   Options options = make_barrier_options();
+   options.set_double("dual_tolerance", std::numeric_limits<double>::min());
+   options.set_double("tight_unscaled_complementarity_tolerance", std::numeric_limits<double>::min());
+   options.set_double("barrier_update_fraction", std::numeric_limits<double>::max());
+   Strategy strategy(options);
+   while (strategy.force_barrier_parameter_decrease()) { }
+   EXPECT_DOUBLE_EQ(strategy.get_barrier_parameter(), std::numeric_limits<double>::min());
 }
