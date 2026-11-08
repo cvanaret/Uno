@@ -106,7 +106,16 @@ jobs:
       - name: Restore write permissions from a previous run
         run: chmod -R u+w "${{ github.workspace }}/cutest-tools" 2>/dev/null || true
 
+      # Benchmark the head of PR `pr_number`, whichever branch the workflow is run
+      # from: refs/pull/<N>/head also exists for PRs from forks, whose branches
+      # cannot be selected in the "Run workflow" menu.
       - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/head
+          persist-credentials: false
+
+      - name: Record the benchmarked commit
+        run: echo "BENCHMARK_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Check inputs and toolchain
         env:
@@ -336,7 +345,7 @@ jobs:
           MASTSIF_COMMIT=$(git -C "$MASTSIF" rev-parse --short HEAD)
           MM_COMMIT=$(git -C "$MAROS_MESZAROS" rev-parse --short HEAD)
           cat > results/meta.json <<EOF
-          {"sha": "${GITHUB_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT},
+          {"sha": "${BENCHMARK_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT},
            "selection": "${SELECTION}", "preset": "${PRESET}",
            "mastsif_commit": "${MASTSIF_COMMIT}", "maros_meszaros_commit": "${MM_COMMIT}",
            "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
@@ -364,7 +373,7 @@ jobs:
           header() {
             echo "## CUTEst benchmark — Uno (preset=${PRESET}, time_limit=${TIMELIMIT}s)"
             echo ""
-            echo "Commit \`${GITHUB_SHA:0:7}\` · ${SELECTION} · preset \`${PRESET}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo "Commit \`${BENCHMARK_SHA:0:7}\` · ${SELECTION} · preset \`${PRESET}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
             echo ""
             echo "Times are Uno's CPU time (wall-clock time of the whole run when Uno did not report it)."
             echo ""

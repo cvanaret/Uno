@@ -96,7 +96,16 @@ jobs:
   benchmark:
     runs-on: self-hosted
     steps:
+      # Benchmark the head of PR `pr_number`, whichever branch the workflow is run
+      # from: refs/pull/<N>/head also exists for PRs from forks, whose branches
+      # cannot be selected in the "Run workflow" menu.
       - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/head
+          persist-credentials: false
+
+      - name: Record the benchmarked commit
+        run: echo "BENCHMARK_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Download Uno solver dependencies
         run: bash dependencies/scripts/download_dependencies.sh
@@ -192,7 +201,7 @@ jobs:
 
           # ---- machine-readable metadata, used by later comparisons ----
           cat > results/meta.json <<EOF
-          {"sha": "${GITHUB_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT}, "options": "${UNO_OPTIONS}",
+          {"sha": "${BENCHMARK_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT}, "options": "${UNO_OPTIONS}",
            "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
           EOF
 
@@ -208,7 +217,7 @@ jobs:
           {
             echo "## ${TITLE} — uno_ampl (time_limit=${TIMELIMIT}s)"
             echo ""
-            echo "Commit \`${GITHUB_SHA:0:7}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo "Commit \`${BENCHMARK_SHA:0:7}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
             if [ -n "$UNO_OPTIONS" ]; then
               echo ""
               echo "Options: \`${UNO_OPTIONS}\`"
