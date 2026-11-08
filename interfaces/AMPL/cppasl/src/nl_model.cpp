@@ -278,7 +278,9 @@ namespace cppasl {
                   element.has_defined_leaves ? &links : nullptr);
             }
             const std::uint32_t* slots = model.element_hessian_slots.data() + element.hessian_slot_begin;
-            for (std::size_t k = 0; k < size; ++k) hessian_values[slots[k]] += packed[k];
+            for (std::size_t k = 0; k < size; ++k) {
+               if (slots[k] != detail::no_hessian_slot) hessian_values[slots[k]] += packed[k]; // structural zeros: no slot
+            }
          }
       }
 
@@ -313,7 +315,9 @@ namespace cppasl {
             detail::evaluate_tape_hessian(model.tape_of(defined), workspace.defined_values.data(), partials, workspace.adjoints.data(),
                workspace.tangents.data(), workspace.second_order_adjoints.data(), defined.variable_count, weight, packed);
             const std::uint32_t* slots = model.defined_hessian_slots.data() + defined.hessian_slot_begin;
-            for (std::size_t k = 0; k < size; ++k) hessian_values[slots[k]] += packed[k];
+            for (std::size_t k = 0; k < size; ++k) {
+               if (slots[k] != detail::no_hessian_slot) hessian_values[slots[k]] += packed[k]; // structural zeros: no slot
+            }
          }
       }
 
