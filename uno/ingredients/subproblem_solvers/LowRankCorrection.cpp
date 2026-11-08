@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <stdexcept>
@@ -18,33 +17,31 @@ namespace uno {
    namespace {
       Inertia bunch_kaufman_inertia(const DenseMatrix<double>& factors, const std::vector<int>& ipiv) {
          size_t positive = 0, negative = 0, zero = 0;
-         const auto count = [&](double value) {
-            if (!std::isfinite(value)) throw std::runtime_error("WoodburyCorrection: non-finite pivot");
-            if (0. < value) ++positive;
-            else if (value < 0.) ++negative;
-            else ++zero;
-         };
          for (size_t k = 0; k < ipiv.size();) {
+            const double diagonal = factors.entry(k, k);
+            if (!std::isfinite(diagonal)) {
+               throw std::runtime_error("WoodburyCorrection: non-finite pivot");
+            }
             if (0 < ipiv[k]) {
-               count(factors.entry(k, k));
+               positive += (0. < diagonal);
+               negative += (diagonal < 0.);
+               zero += (diagonal == 0.);
                ++k;
             }
             else {
                if (ipiv[k] == 0 || k + 1 == ipiv.size() || ipiv[k + 1] != ipiv[k]) {
                   throw std::runtime_error("WoodburyCorrection: invalid Bunch-Kaufman pivots");
                }
-               const double a = factors.entry(k, k), b = factors.entry(k + 1, k), c = factors.entry(k + 1, k + 1);
-               const double scale = std::max({std::abs(a), std::abs(b), std::abs(c)});
-               if (scale == 0.) {
-                  zero += 2;
+               const double off_diagonal = factors.entry(k + 1, k);
+               if (!std::isfinite(off_diagonal) || !std::isfinite(factors.entry(k + 1, k + 1))) {
+                  throw std::runtime_error("WoodburyCorrection: non-finite pivot");
                }
-               else {
-                  const double x = a / scale, y = b / scale, z = c / scale;
-                  const double center = (x + z) / 2.;
-                  const double large = center + std::copysign(std::hypot((x - z) / 2., y), center);
-                  count(large);
-                  count(large == 0. ? 0. : std::fma(x, z, -y * y) / large);
+               if (off_diagonal == 0.) {
+                  throw std::runtime_error("WoodburyCorrection: invalid Bunch-Kaufman pivot block");
                }
+               // DSYTRF's Bunch-Kaufman pivot test guarantees a negative determinant for every 2-by-2 block.
+               ++positive;
+               ++negative;
                k += 2;
             }
          }

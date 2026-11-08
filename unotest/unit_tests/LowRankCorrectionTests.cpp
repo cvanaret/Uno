@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <gtest/gtest.h>
 #include "../DenseTestModel.hpp"
@@ -173,6 +174,16 @@ TEST_F(LowRankCorrectionTest, TwoByTwoPivotHasCorrectInertiaAndSolve) {
    this->correction->apply(b);
    EXPECT_NEAR(-0.5 * b[0] - 0.5 * b[1], 1., 1e-14);
    EXPECT_NEAR(-0.5 * b[0] + 0.5 * b[1], 2., 1e-14);
+}
+
+TEST_F(LowRankCorrectionTest, TwoByTwoPivotPreservesInertiaWithWidelySeparatedScales) {
+   const double large = std::ldexp(1., 500);
+   const double small = std::ldexp(1., -500);
+   this->hessian->columns = {{small, 0.}, {large, large}, {0., 2. * large}};
+   this->hessian->coefficients = {-large * large, -small * small, 1.};
+   // T starts with the 2-by-2 pivot [[0, 1], [1, 2^1000]]; its eigenvalues have opposite signs.
+   // The full matrix is [[-1, -1], [-1, 2^1002]].
+   EXPECT_EQ(this->update(), Inertia(1, 1, 0));
 }
 
 TEST_F(LowRankCorrectionTest, InvalidCoefficientsAreRejected) {
