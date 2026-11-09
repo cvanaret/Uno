@@ -6,7 +6,6 @@
 
 #include <optional>
 #include <string>
-#include "ingredients/globalization_strategies/Decision.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
 
@@ -19,10 +18,7 @@ namespace uno {
    class Multipliers;
    class OptimizationProblem;
    class Options;
-   class ProgressMeasures;
    class Statistics;
-   class SolverWorkspace;
-   class Subproblem;
    template <typename T>
    class Vector;
    class WarmstartInformation;

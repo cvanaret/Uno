@@ -8,14 +8,13 @@
 #include <string>
 #include <vector>
 #include "InequalityHandlingMethod.hpp"
-#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
    // forward declaration
    class HessianModel;
    class InertiaCorrectionStrategy;
+   class Subproblem;
    class SubproblemSolver;
 
    class NoInequalityReformulation : public InequalityHandlingMethod {

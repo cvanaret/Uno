@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "InequalityHandlingMethod.hpp"
-#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
