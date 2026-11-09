@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <numeric>
 #include <stdexcept>
@@ -10,6 +11,7 @@
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/Range.hpp"
@@ -179,6 +181,34 @@ namespace uno {
       }
    }
    
+   void BQPDQuadraticProgram::compute_hessian_vector_product_for_bqpd(View<const double> vector, View<double> result) const noexcept {
+      // a previous product of this BQPD run failed: do not evaluate the Hessian again
+      if (this->hessian_vector_product_exception) {
+         result.fill(0.);
+         return;
+      }
+      try {
+         this->compute_hessian_vector_product(vector, result);
+         for (size_t variable_index: Range(result.size())) {
+            if (!std::isfinite(result[variable_index])) {
+               throw HessianEvaluationError();
+            }
+         }
+      }
+      catch (...) {
+         this->hessian_vector_product_exception = std::current_exception();
+         result.fill(0.);
+      }
+   }
+
+   void BQPDQuadraticProgram::rethrow_hessian_vector_product_exception() {
+      if (this->hessian_vector_product_exception) {
+         std::exception_ptr exception = this->hessian_vector_product_exception;
+         this->hessian_vector_product_exception = nullptr;
+         std::rethrow_exception(exception);
+      }
+   }
+
    void BQPDQuadraticProgram::set_from_coo(size_t number_variables, size_t number_constraints, const Vector<double>& linear_objective,
          const Vector<uno_int>& jacobian_row_indices, const Vector<uno_int>& jacobian_column_indices,
          const Vector<double>& jacobian_values,
