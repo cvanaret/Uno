@@ -61,6 +61,8 @@ namespace uno {
       MeritFunction globalization_strategy;
       const double least_square_multiplier_max_norm;
       Vector<double> initial_point;
+
+      using ConstraintRelaxationStrategy::is_iterate_acceptable;
    };
 } // namespace
 

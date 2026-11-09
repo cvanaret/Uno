@@ -119,6 +119,9 @@ namespace uno {
       SolutionStatus last_iterate_acceptable_status{SolutionStatus::NOT_OPTIMAL};
 
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
+      [[nodiscard]] static Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const OptimizationProblem& problem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions);
 
       template <typename Problem>
       [[nodiscard]] static bool satisfies_unscaled_tolerances(const Problem& problem, const Iterate& iterate,

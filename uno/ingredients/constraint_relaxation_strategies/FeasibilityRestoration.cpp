@@ -369,7 +369,7 @@ namespace uno {
       this->trial_globalization_strategy = &globalization_strategy;
       const auto& reformulated_problem = inequality_handling_method.reformulated_problem();
       reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
-      const Decision decision = inequality_handling_method.is_iterate_acceptable(statistics, globalization_strategy,
+      const Decision decision = is_iterate_acceptable(statistics, globalization_strategy, reformulated_problem,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (uses_trust_region || decision.accepted) {
          inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,

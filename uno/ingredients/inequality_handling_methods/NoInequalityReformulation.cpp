@@ -140,13 +140,6 @@ namespace uno {
          current_evaluations, this->subproblem_solver->get_workspace());
    }
 
-   Decision NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const {
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
-   }
-
    void NoInequalityReformulation::accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const {
       InequalityHandlingMethod::accept_iterate_unconditionally(*this->subproblem, trial_iterate, trial_evaluations);
    }

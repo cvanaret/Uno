@@ -112,7 +112,7 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
       reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
-      const Decision decision = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
+      const Decision decision = is_iterate_acceptable(statistics, this->globalization_strategy, reformulated_problem,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (decision.accepted) {
          compute_residuals(reformulated_problem, trial_iterate, trial_evaluations);

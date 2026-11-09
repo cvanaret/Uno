@@ -73,9 +73,6 @@ namespace uno {
 
       [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const = 0;
-      [[nodiscard]] virtual Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const = 0;
       // accept the trial iterate without globalization test (tiny steps)
       virtual void accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const = 0;
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
@@ -95,9 +92,6 @@ namespace uno {
       const Norm progress_norm;
       const Norm residual_norm;
 
-      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
       void accept_iterate_unconditionally(const Subproblem& subproblem, Iterate& trial_iterate, Evaluations& trial_evaluations) const;
    };
 } // namespace
