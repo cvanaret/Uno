@@ -71,7 +71,6 @@ namespace uno {
       virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const = 0;
 
-      virtual void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const = 0;
       [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const = 0;
       [[nodiscard]] virtual Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -97,7 +96,6 @@ namespace uno {
       const Norm progress_norm;
       const Norm residual_norm;
 
-      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

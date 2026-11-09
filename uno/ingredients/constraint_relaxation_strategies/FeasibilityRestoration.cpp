@@ -60,7 +60,8 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
          this->least_square_multiplier_max_norm);
-      this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations, this->progress_norm);
       this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
 
@@ -169,8 +170,7 @@ namespace uno {
 
       // re-evaluate the progress measures at the current iterate
       const auto& reformulated_problem = this->feasibility_inequality_handling_method->reformulated_problem();
-
-      this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+      reformulated_problem.evaluate_progress_measures(current_iterate, current_evaluations, this->progress_norm);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
       this->feasibility_inequality_handling_method->compute_residuals(current_iterate, current_evaluations);
 
@@ -230,7 +230,7 @@ namespace uno {
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
       if (inequality_handling_method.update_parameterization(statistics, current_iterate, current_evaluations)) {
-         refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate, current_evaluations);
+         refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate);
       }
 
       const Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius,
@@ -260,7 +260,8 @@ namespace uno {
       // the restoration bounds may have been relaxed beyond the optimality bounds: relax the latter (otherwise the
       // barrier measure is infinite and restoration may never terminate when a variable sits at its relaxed bound)
       this->inequality_handling_method->relax_bounds_around(this->iterate_buffer);
-      this->inequality_handling_method->evaluate_progress_measures(this->iterate_buffer, trial_evaluations);
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(this->iterate_buffer, trial_evaluations, this->progress_norm);
       // same measure as the reference infeasibility (primal infeasibility of the optimality reformulation)
       this->iterate_buffer.scaled_residuals.primal_infeasibility =
          this->inequality_handling_method->compute_reformulation_infeasibility(this->iterate_buffer, trial_evaluations);
@@ -322,7 +323,8 @@ namespace uno {
       }
       trial_iterate.objective_multiplier = 1.;
       this->inequality_handling_method->relax_bounds_around(trial_iterate);
-      this->inequality_handling_method->evaluate_progress_measures(trial_iterate, trial_evaluations);
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
 
       this->initial_point.resize(this->original_problem.number_variables);
       this->acceptable_consecutive_iterations = 0;
@@ -330,7 +332,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Evaluations& current_evaluations) {
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate) {
       ++this->number_parameterization_updates;
       globalization_strategy.reset();
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
@@ -339,7 +341,8 @@ namespace uno {
          DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       }
       // after the proximal update: the auxiliary measure must use the new coefficient and center
-      inequality_handling_method.evaluate_progress_measures(current_iterate, current_evaluations); // TODO only auxiliary
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      reformulated_problem.set_auxiliary_measure(current_iterate);
    }
 
    PredictedReductionModels FeasibilityRestoration::build_predicted_reduction_models(const Iterate& current_iterate,
@@ -364,6 +367,8 @@ namespace uno {
       GlobalizationStrategy& globalization_strategy = (this->current_phase == Phase::OPTIMALITY) ?
          *this->globalization_strategy : *this->feasibility_globalization_strategy;
       this->trial_globalization_strategy = &globalization_strategy;
+      const auto& reformulated_problem = inequality_handling_method.reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
       const Decision decision = inequality_handling_method.is_iterate_acceptable(statistics, globalization_strategy,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (uses_trust_region || decision.accepted) {
@@ -399,9 +404,11 @@ namespace uno {
       const bool parameterization_updated = force_parameterization_update &&
          inequality_handling_method.force_parameterization_update(statistics);
       if (parameterization_updated) {
-         refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate, current_evaluations);
+         refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate);
       }
       inequality_handling_method.accept_iterate_unconditionally(trial_iterate, trial_evaluations);
+      const auto& reformulated_problem = inequality_handling_method.reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
       inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
          trial_evaluations);
       this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,

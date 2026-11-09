@@ -134,10 +134,6 @@ namespace uno {
          bound_dual_step_length);
    }
 
-   void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
-      InequalityHandlingMethod::evaluate_progress_measures(this->problem, iterate, evaluations);
-   }
-
    PredictedReductionModels NoInequalityReformulation::build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const {
       return this->subproblem->build_predicted_reduction_model(current_iterate, direction, this->progress_norm,

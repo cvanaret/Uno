@@ -89,6 +89,7 @@ namespace uno {
       [[nodiscard]] size_t get_number_parameterization_updates() const { return this->number_parameterization_updates; }
 
    protected:
+      const Norm progress_norm;
       const Norm residual_norm;
       const double primal_tolerance;
       const double dual_tolerance;

@@ -8,6 +8,7 @@
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):
+         progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          primal_tolerance(options.get_double("primal_tolerance")),
          dual_tolerance(options.get_double("dual_tolerance")),

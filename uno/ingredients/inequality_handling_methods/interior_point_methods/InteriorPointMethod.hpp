@@ -61,7 +61,6 @@ namespace uno {
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
-      void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const override;
       [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -351,11 +350,6 @@ namespace uno {
          double& bound_dual_step_length) const {
       this->barrier_problem.compute_bound_dual_direction(current_primals, current_multipliers, direction_primals,
          direction_multipliers, bound_dual_step_length);
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
-      InequalityHandlingMethod::evaluate_progress_measures(this->barrier_problem, iterate, evaluations);
    }
 
    template <typename BarrierProblem>

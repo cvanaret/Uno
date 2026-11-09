@@ -275,6 +275,12 @@ namespace uno {
 
    // progress measures
 
+   void OptimizationProblem::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const {
+      this->set_infeasibility_measure(iterate, evaluations, progress_norm);
+      this->set_objective_measure(iterate, evaluations);
+      this->set_auxiliary_measure(iterate);
+   }
+
    void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
       iterate.progress.infeasibility = this->model.constraint_violation(evaluations.constraints, norm);

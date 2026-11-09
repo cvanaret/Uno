@@ -39,7 +39,8 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->create_initial_iterate(initial_iterate, evaluation_cache.current_evaluations,
          this->least_square_multiplier_max_norm);
-      this->inequality_handling_method->evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations);
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations, this->progress_norm);
       this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
 
@@ -60,7 +61,8 @@ namespace uno {
       if (parameterization_updated) {
          ++this->number_parameterization_updates;
          this->globalization_strategy.reset();
-         this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations); // TODO auxiliary
+         const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+         reformulated_problem.set_auxiliary_measure(current_iterate);
       }
 
       this->initial_point.fill(0.);
@@ -108,6 +110,8 @@ namespace uno {
          Iterate& trial_iterate, const Direction& direction, double /*step_length*/, bool uses_trust_region, Evaluations& current_evaluations,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
       const Decision decision = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (decision.accepted) {
@@ -133,15 +137,17 @@ namespace uno {
          Iterate& trial_iterate, const Direction& /*direction*/, double /*step_length*/, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
       // update the parameterization first: the progress measures and the postprocessing of the trial iterate depend on it
       const bool parameterization_updated = force_parameterization_update &&
          this->inequality_handling_method->force_parameterization_update(statistics);
       if (parameterization_updated) {
          ++this->number_parameterization_updates;
          this->globalization_strategy.reset();
-         this->inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
+         reformulated_problem.set_auxiliary_measure(current_iterate);
       }
       this->inequality_handling_method->accept_iterate_unconditionally(trial_iterate, trial_evaluations);
+      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
       this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,

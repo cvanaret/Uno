@@ -101,7 +101,7 @@ namespace uno {
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations);
       void switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations);
       void refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Evaluations& current_evaluations);
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate);
       void finalize_accepted_iterate(const Model& model, Iterate& trial_iterate, const Direction& direction, double step_length,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks);

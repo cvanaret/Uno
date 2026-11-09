@@ -20,13 +20,6 @@ namespace uno {
 
    // protected member functions
 
-   void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,
-         Evaluations& evaluations) const {
-      problem.set_infeasibility_measure(iterate, evaluations, this->progress_norm);
-      problem.set_objective_measure(iterate, evaluations);
-      problem.set_auxiliary_measure(iterate);
-   }
-
    // stationarity errors:
    // - for KKT conditions: with standard multipliers and current objective multiplier
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
@@ -56,9 +49,6 @@ namespace uno {
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const {
       subproblem.problem.postprocess_iterate(trial_iterate, trial_evaluations);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
-
-      // evaluate progress measures
-      evaluate_progress_measures(subproblem.problem, trial_iterate, trial_evaluations);
       trial_iterate.objective_multiplier = objective_multiplier;
 
       // zero step in all the primal variables (direction.norm only measures the original variables: slacks or elastic
@@ -88,7 +78,6 @@ namespace uno {
    void InequalityHandlingMethod::accept_iterate_unconditionally(const Subproblem& subproblem, Iterate& trial_iterate,
          Evaluations& trial_evaluations) const {
       subproblem.problem.postprocess_iterate(trial_iterate, trial_evaluations);
-      evaluate_progress_measures(subproblem.problem, trial_iterate, trial_evaluations);
       trial_iterate.objective_multiplier = subproblem.problem.get_objective_multiplier();
       // the next subproblem must be well defined (an exception is thrown upon evaluation failure)
       trial_evaluations.evaluate_objective_gradient(this->problem.model, trial_iterate.primals);
