@@ -48,6 +48,10 @@ namespace uno {
       return this->direction;
    }
 
+   bool IQPSolver::requires_hessian_matrix(const Subproblem& subproblem) const {
+      return subproblem.has_curvature() && this->qp_solver->requires_hessian_matrix(subproblem);
+   }
+
    bool IQPSolver::has_second_order_corrections() const {
       return false;
    }

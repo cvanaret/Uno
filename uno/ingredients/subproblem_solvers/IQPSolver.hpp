@@ -26,6 +26,7 @@ namespace uno {
       ~IQPSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
+      [[nodiscard]] bool requires_hessian_matrix(const Subproblem& subproblem) const override;
       void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) override;
 

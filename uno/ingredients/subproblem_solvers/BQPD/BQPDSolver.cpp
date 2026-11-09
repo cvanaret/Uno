@@ -78,6 +78,11 @@ namespace uno {
 
    BQPDSolver::~BQPDSolver() = default;
 
+   bool BQPDSolver::requires_hessian_matrix(const Subproblem& subproblem) const {
+      // same condition as the allocation of the explicit Hessian in BQPDQuadraticProgram::initialize_memory
+      return !subproblem.is_hessian_positive_definite() && subproblem.performs_primal_regularization();
+   }
+
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
       // build the BQPD-native quadratic program (allocates gradients/Hessian/bounds storage and the
       // iteration-invariant sparsity patterns)

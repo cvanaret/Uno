@@ -20,6 +20,8 @@ namespace uno {
       ~HiGHSSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
+      // HiGHS needs the explicit Hessian matrix
+      [[nodiscard]] bool requires_hessian_matrix(const Subproblem& /*subproblem*/) const override { return true; }
 
       [[nodiscard]] QuadraticProgram& get_quadratic_program() override;
 

@@ -49,6 +49,8 @@ namespace uno {
       ~BQPDSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
+      // BQPD uses a Hessian operator, unless the Hessian must be regularized (see BQPDQuadraticProgram)
+      [[nodiscard]] bool requires_hessian_matrix(const Subproblem& subproblem) const override;
 
       [[nodiscard]] QuadraticProgram& get_quadratic_program() override;
 

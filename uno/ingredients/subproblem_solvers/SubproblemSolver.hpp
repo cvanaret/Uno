@@ -23,6 +23,8 @@ namespace uno {
       virtual ~SubproblemSolver() = default;
 
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
+      // whether the solver needs the explicit Hessian matrix of the subproblem (a Hessian operator is not enough)
+      [[nodiscard]] virtual bool requires_hessian_matrix(const Subproblem& /*subproblem*/) const { return false; }
       virtual void initialize_statistics(Statistics& /*statistics*/) { }
       virtual void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) = 0;

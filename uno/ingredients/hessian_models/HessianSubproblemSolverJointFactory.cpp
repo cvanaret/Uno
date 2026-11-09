@@ -38,23 +38,33 @@ namespace uno {
       // then look at the option hessian_model
       // from now onwards, the problem is nonlinear (QP or NLP)
       bool default_to_lbfgs = false;
+      std::string lbfgs_reason{};
       if (hessian_model_type == "exact") {
          if (model.has_hessian_matrix() || model.has_hessian_operator()) {
             auto hessian_model = std::make_unique<ExactHessian>(model);
             Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
             auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
-            return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+            // a Hessian operator only is not enough if the subproblem solver needs the matrix (e.g. a direct linear
+            // solver in the interior-point method): pick L-BFGS
+            if (model.has_hessian_matrix() || !subproblem_solver->requires_hessian_matrix(subproblem)) {
+               return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+            }
+            default_to_lbfgs = true;
+            lbfgs_reason = "only a Hessian operator available";
+            WARNING << "Only a Hessian operator was provided, but the subproblem solver requires an explicit Hessian "
+               "matrix, setting an L-BFGS Hessian instead\n";
          }
          else {
             // no Hessian (matrix or operator) is available: pick L-BFGS
             default_to_lbfgs = true;
+            lbfgs_reason = "no Hessian available";
+            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
          }
       }
 
       if (hessian_model_type == "LBFGS" || default_to_lbfgs) {
          if (default_to_lbfgs) {
-            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
-            option_overrides.emplace_back("hessian_model", hessian_model_type, "LBFGS", "no Hessian available");
+            option_overrides.emplace_back("hessian_model", hessian_model_type, "LBFGS", lbfgs_reason);
          }
          if (0 < model.number_constraints || model.has_bound_constraints() || uses_trust_region) { // constrained
             auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
