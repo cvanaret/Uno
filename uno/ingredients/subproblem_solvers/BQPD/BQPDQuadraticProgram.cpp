@@ -13,6 +13,7 @@
 #include "linear_algebra/View.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/UserTermination.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/Range.hpp"
 
@@ -183,7 +184,7 @@ namespace uno {
    
    void BQPDQuadraticProgram::compute_hessian_vector_product_for_bqpd(View<const double> vector, View<double> result) const noexcept {
       // a previous product of this BQPD run failed: do not evaluate the Hessian again
-      if (this->hessian_vector_product_exception) {
+      if (this->has_hessian_vector_product_exception()) {
          result.fill(0.);
          return;
       }
@@ -191,21 +192,42 @@ namespace uno {
          this->compute_hessian_vector_product(vector, result);
          for (size_t variable_index: Range(result.size())) {
             if (!std::isfinite(result[variable_index])) {
-               throw HessianEvaluationError();
+               this->hessian_vector_product_failure = HessianVectorProductFailure::EVALUATION_ERROR;
+               break;
             }
          }
       }
+      catch (const EvaluationError&) {
+         this->hessian_vector_product_failure = HessianVectorProductFailure::EVALUATION_ERROR;
+      }
+      catch (const UserTermination&) {
+         this->hessian_vector_product_failure = HessianVectorProductFailure::USER_TERMINATION;
+      }
+      catch (const std::exception& exception) {
+         this->hessian_vector_product_failure = HessianVectorProductFailure::OTHER;
+         this->hessian_vector_product_failure_message = exception.what();
+      }
       catch (...) {
-         this->hessian_vector_product_exception = std::current_exception();
+         this->hessian_vector_product_failure = HessianVectorProductFailure::OTHER;
+         this->hessian_vector_product_failure_message = "An unknown exception was thrown by the Hessian-vector product";
+      }
+      if (this->has_hessian_vector_product_exception()) {
          result.fill(0.);
       }
    }
 
    void BQPDQuadraticProgram::rethrow_hessian_vector_product_exception() {
-      if (this->hessian_vector_product_exception) {
-         std::exception_ptr exception = this->hessian_vector_product_exception;
-         this->hessian_vector_product_exception = nullptr;
-         std::rethrow_exception(exception);
+      const HessianVectorProductFailure failure = this->hessian_vector_product_failure;
+      this->hessian_vector_product_failure = HessianVectorProductFailure::NONE;
+      switch (failure) {
+         case HessianVectorProductFailure::NONE:
+            return;
+         case HessianVectorProductFailure::EVALUATION_ERROR:
+            throw HessianEvaluationError();
+         case HessianVectorProductFailure::USER_TERMINATION:
+            throw UserTermination();
+         case HessianVectorProductFailure::OTHER:
+            throw std::runtime_error(this->hessian_vector_product_failure_message);
       }
    }
 

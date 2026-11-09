@@ -5,6 +5,8 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
+#include <string>
 #include <gtest/gtest.h>
 #include "../DenseTestModel.hpp"
 #include "Uno.hpp"
@@ -20,6 +22,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/Result.hpp"
+#include "optimization/UserTermination.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
@@ -34,7 +37,7 @@ using namespace uno;
 extern "C" void FC_GLOBAL(gdotx, GDOTX)(int* dimension, const double vector[], const double ws[], const int lws[], double result[]);
 
 namespace {
-   enum class HessianFailure { NONE, THROW, NAN_PRODUCT };
+   enum class HessianFailure { NONE, THROW, NAN_PRODUCT, USER_TERMINATION, RUNTIME_ERROR };
 
    // min x0^2 + x1^2  s.t.  x0 + x1 <= 1.5, -10 <= x <= 10, with a Hessian operator that fails at its failing_call-th
    // call (1-based), either by throwing a HessianEvaluationError or by returning NaNs
@@ -59,6 +62,12 @@ namespace {
          if (this->number_operator_calls == this->failing_call) {
             if (this->failure == HessianFailure::THROW) {
                throw HessianEvaluationError();
+            }
+            if (this->failure == HessianFailure::USER_TERMINATION) {
+               throw UserTermination();
+            }
+            if (this->failure == HessianFailure::RUNTIME_ERROR) {
+               throw std::runtime_error("operator failure");
             }
             if (this->failure == HessianFailure::NAN_PRODUCT) {
                result.fill(std::numeric_limits<double>::quiet_NaN());
@@ -212,4 +221,39 @@ TEST(BQPDHessianErrors, FilterSQPRecoversFromFailingOperator) {
       EXPECT_NEAR(result.primal_solution[1], 0., 1e-6) << label;
       EXPECT_GT(model.number_operator_calls, 1) << label;
    }
+}
+
+// the deferred failure keeps its kind: a termination request and other errors are rethrown as such once BQPD has
+// returned (the failure is not stored as a std::exception_ptr, which breaks when two C++ runtimes are loaded)
+TEST(BQPDHessianErrors, DeferredFailureKeepsItsKind) {
+   {
+      FailingHessianOperatorModel model;
+      model.failure = HessianFailure::USER_TERMINATION;
+      BQPDSubproblemFixture fixture(model);
+      EXPECT_THROW(fixture.solve(), UserTermination);
+      EXPECT_EQ(model.number_operator_calls, 1);
+   }
+   {
+      FailingHessianOperatorModel model;
+      model.failure = HessianFailure::RUNTIME_ERROR;
+      BQPDSubproblemFixture fixture(model);
+      try {
+         fixture.solve();
+         ADD_FAILURE() << "no exception was rethrown";
+      }
+      catch (const std::runtime_error& exception) {
+         EXPECT_EQ(std::string(exception.what()), "operator failure");
+      }
+      EXPECT_EQ(model.number_operator_calls, 1);
+   }
+}
+
+// end to end: a termination request from the Hessian operator stops Uno with USER_TERMINATION
+TEST(BQPDHessianErrors, UserTerminationFromOperatorStopsUno) {
+   FailingHessianOperatorModel model;
+   model.failure = HessianFailure::USER_TERMINATION;
+   Uno uno;
+   const Result result = uno.solve(model, filtersqp_options());
+   EXPECT_EQ(result.optimization_status, OptimizationStatus::USER_TERMINATION);
+   EXPECT_EQ(model.number_operator_calls, 1);
 }
