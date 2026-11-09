@@ -81,7 +81,6 @@ namespace uno {
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
-      virtual void compute_residuals(Iterate& iterate, Evaluations& evaluations) const = 0;
       // square problem (as many free variables as equality constraints, IPOPT's IsSquareProblem): the constraint
       // multipliers are recomputed as least-squares estimates at each accepted iterate (IPOPT's ComputeFeasibilityMultipliers)
       virtual void update_multipliers_of_square_problem(Iterate& /*iterate*/, Evaluations& /*evaluations*/,
@@ -96,7 +95,6 @@ namespace uno {
       const Norm progress_norm;
       const Norm residual_norm;
 
-      void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;

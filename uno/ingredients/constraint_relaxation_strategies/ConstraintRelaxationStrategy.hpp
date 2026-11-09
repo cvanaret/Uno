@@ -118,6 +118,8 @@ namespace uno {
       std::optional<Iterate> acceptable_infeasible_iterate{};
       SolutionStatus last_iterate_acceptable_status{SolutionStatus::NOT_OPTIMAL};
 
+      void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
+
       template <typename Problem>
       [[nodiscard]] static bool satisfies_unscaled_tolerances(const Problem& problem, const Iterate& iterate,
          double unscaled_primal_infeasibility, double stationarity_tolerance, double primal_infeasibility_tolerance,

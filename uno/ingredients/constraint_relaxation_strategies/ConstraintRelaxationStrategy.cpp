@@ -27,6 +27,30 @@ namespace uno {
 
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() = default;
 
+   // stationarity errors:
+   // - for KKT conditions: with standard multipliers and current objective multiplier
+   // - for FJ conditions: with standard multipliers and 0 objective multiplier
+   // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
+   void ConstraintRelaxationStrategy::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
+         Evaluations& evaluations) const {
+      // stationarity error (norm of the Lagrangian gradient)
+      problem.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
+         iterate.multipliers.upper_bounds, evaluations, iterate.scaled_residuals.lagrangian_gradient.view());
+      iterate.scaled_residuals.stationarity = norm(this->residual_norm, iterate.scaled_residuals.lagrangian_gradient);
+
+      // primal infeasibility (constraint violation of the model, possibly with additional residuals of the reformulation)
+      iterate.scaled_residuals.primal_infeasibility = problem.primal_infeasibility(iterate, evaluations, this->residual_norm);
+      assert(evaluations.are_constraints_computed);
+
+      // complementarity error
+      iterate.scaled_residuals.complementarity = problem.complementarity_error(iterate.primals, evaluations.constraints,
+         iterate.multipliers, this->residual_norm);
+
+      // scaling factors
+      iterate.scaled_residuals.stationarity_scaling = problem.compute_stationarity_scaling(iterate.multipliers);
+      iterate.scaled_residuals.complementarity_scaling = problem.compute_complementarity_scaling(iterate.multipliers);
+   }
+
    size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
       return this->number_subproblems_solved;
    }

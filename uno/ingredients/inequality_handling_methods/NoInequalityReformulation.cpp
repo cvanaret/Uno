@@ -156,10 +156,6 @@ namespace uno {
       this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);
    }
 
-   void NoInequalityReformulation::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
-      InequalityHandlingMethod::compute_residuals(this->problem, iterate, evaluations);
-   }
-
    double NoInequalityReformulation::compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
       return this->problem.reformulation_infeasibility(iterate, evaluations, this->residual_norm);
    }

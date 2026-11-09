@@ -41,7 +41,7 @@ namespace uno {
          this->least_square_multiplier_max_norm);
       const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
       reformulated_problem.evaluate_progress_measures(initial_iterate, evaluation_cache.current_evaluations, this->progress_norm);
-      this->inequality_handling_method->compute_residuals(initial_iterate, evaluation_cache.current_evaluations);
+      compute_residuals(reformulated_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
 
       // statistics
@@ -115,7 +115,7 @@ namespace uno {
       const Decision decision = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (decision.accepted) {
-         this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
+         compute_residuals(reformulated_problem, trial_iterate, trial_evaluations);
          trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
             this->original_problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
@@ -148,7 +148,7 @@ namespace uno {
       }
       this->inequality_handling_method->accept_iterate_unconditionally(trial_iterate, trial_evaluations);
       reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
-      this->inequality_handling_method->compute_residuals(trial_iterate, trial_evaluations);
+      compute_residuals(reformulated_problem, trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
       user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
          this->original_problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
