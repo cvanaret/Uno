@@ -138,6 +138,13 @@ namespace uno {
          this->subproblem_solver->compute_least_squares_multipliers(*this->subproblem, iterate, evaluations,
             multipliers_threshold);
       }
+      // slack reset (accepted iterate): reduces the residuals c(x) - s of the slacked inequality constraints
+      const size_t number_reset_slacks = this->barrier_problem.reset_slacks(iterate, evaluations);
+      if (0 < number_reset_slacks) {
+         DEBUG << number_reset_slacks << " slacks were reset\n";
+         this->barrier_problem.postprocess_iterate(iterate, evaluations); // kappa_sigma reset of the bound multipliers
+         this->evaluate_progress_measures(iterate, evaluations);
+      }
    }
 
    template <typename BarrierProblem>

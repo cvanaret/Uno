@@ -83,6 +83,12 @@ namespace uno {
       [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;
       // (constraint index, slack index) of the slacked inequality constraints
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const;
+      // slack reset of the slacked inequality constraints, moves the slacks towards c(x) (the residuals c(x) - s decrease):
+      // - s_i = c_i(x) if c_i(x) lies strictly within the bounds of the slack and is not closer to its nearest bound;
+      // - otherwise s_i = c_i(x) projected onto [lb + mu/z_L, ub - mu/|z_U|] (central-path distance to the bounds), if
+      //   this is closer to c_i(x).
+      // Returns the number of reset slacks
+      size_t reset_slacks(Iterate& iterate, Evaluations& evaluations) const;
 
       // primal_infeasibility (termination) is not overridden: constraint violation of the unslacked problem (IPOPT)
       // reformulation_infeasibility (restoration switching test): max of the constraint violation of the unslacked problem

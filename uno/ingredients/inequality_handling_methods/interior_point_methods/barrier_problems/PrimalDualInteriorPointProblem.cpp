@@ -579,6 +579,46 @@ namespace uno {
       return this->slacks;
    }
 
+   size_t PrimalDualInteriorPointProblem::reset_slacks(Iterate& iterate, Evaluations& evaluations) const {
+      if (this->slacks.is_empty()) {
+         return 0;
+      }
+      evaluations.evaluate_constraints(this->unslacked_problem.model, iterate.primals); // cached if already evaluated
+      const auto distance_to_bounds = [](double value, double lower_bound, double upper_bound) {
+         return std::min(value - lower_bound, upper_bound - value); // infinite bounds give an infinite distance
+      };
+      size_t number_reset_slacks = 0;
+      for (const auto [constraint_index, slack_index]: this->slacks) {
+         const double constraint_value = evaluations.constraints[constraint_index];
+         const double slack = iterate.primals[slack_index];
+         const double lower_bound = this->variables_lower_bounds[slack_index];
+         const double upper_bound = this->variables_upper_bounds[slack_index];
+         // c(x) strictly within the bounds and not closer to the nearest bound: s = c(x)
+         if (constraint_value != slack && lower_bound < constraint_value && constraint_value < upper_bound &&
+               distance_to_bounds(slack, lower_bound, upper_bound) <= distance_to_bounds(constraint_value, lower_bound, upper_bound)) {
+            iterate.primals[slack_index] = constraint_value;
+            ++number_reset_slacks;
+         }
+         else {
+            // move the slack towards c(x), not closer to a bound than its central-path distance mu/|z|
+            double target = constraint_value;
+            const double lower_bound_multiplier = iterate.multipliers.lower_bounds[slack_index];
+            const double upper_bound_multiplier = iterate.multipliers.upper_bounds[slack_index]; // nonpositive
+            if (is_finite(lower_bound) && 0. < lower_bound_multiplier) {
+               target = std::max(target, lower_bound + this->barrier_parameter / lower_bound_multiplier);
+            }
+            if (is_finite(upper_bound) && upper_bound_multiplier < 0.) {
+               target = std::min(target, upper_bound + this->barrier_parameter / upper_bound_multiplier);
+            }
+            if (lower_bound < target && target < upper_bound && std::abs(constraint_value - target) < std::abs(constraint_value - slack)) {
+               iterate.primals[slack_index] = target;
+               ++number_reset_slacks;
+            }
+         }
+      }
+      return number_reset_slacks;
+   }
+
    void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate, Evaluations& /*evaluations*/) const {
       // 1. with tiny slacks (x - lb), x + alpha d may round onto (or past) a bound: relax the bound (the primals and
       // therefore the evaluations are unchanged)
