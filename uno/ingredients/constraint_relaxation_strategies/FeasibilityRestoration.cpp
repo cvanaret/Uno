@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <functional>
+#include <stdexcept>
 #include "FeasibilityRestoration.hpp"
 #include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
@@ -17,6 +18,7 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Collection.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
 #include "tools/Logger.hpp"
@@ -29,8 +31,10 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model, options.get_double("residual_scaling_threshold")),
-         // relax nonlinear constraints + linear constraints in the presence of a trust region
-         feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region,
+         // relax nonlinear constraints + linear constraints in the presence of a trust region or if all constraints are
+         // linear (otherwise, the feasibility problem would have no elastic variables and could not reduce the violation)
+         feasibility_problem(model, 0., this->constraint_violation_coefficient,
+            use_trust_region || model.get_nonlinear_constraints().empty(),
             options.get_bool("use_proximal_term"), options.get_double("residual_scaling_threshold")),
          globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
          feasibility_globalization_strategy(GlobalizationStrategyFactory::create(model, options, option_overrides)),
@@ -38,6 +42,9 @@ namespace uno {
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          bound_multiplier_max_norm(options.get_double("bound_multiplier_max_norm")),
+         infeasibility_detection_multiplier_threshold(options.get_double("infeasibility_detection_multiplier_threshold")),
+         infeasibility_detection_stagnation_iterations(options.get_unsigned_int("infeasibility_detection_stagnation_iterations")),
+         infeasibility_detection_disable_tolerance(options.get_double("infeasibility_detection_disable_tolerance")),
          constraints_buffer(model.number_constraints) {
    }
 
@@ -86,8 +93,34 @@ namespace uno {
 
    const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-
-      // solve the current problem (OPTIMALITY or FEASIBILITY_RESTORATION)
+      // infeasibility detection: diverging constraint multipliers at an iterate whose infeasibility has stagnated indicate
+      // a Fritz-John point with zero objective multiplier, i.e. a stationary point of the constraint violation. Switch (once)
+      // to the feasibility problem to certify it. Large multipliers alone are not enough: badly scaled problems may need
+      // them while still making progress towards feasibility
+      if (this->current_phase == Phase::OPTIMALITY && this->may_trigger_infeasibility_detection &&
+            0 < this->feasibility_problem.get_number_elastic_variables()) {
+         const double infeasibility = current_iterate.scaled_residuals.primal_infeasibility;
+         // like IPOPT's expect_infeasible_problem_ctol: once nearly feasible, the problem is unlikely to be infeasible
+         if (infeasibility <= this->infeasibility_detection_disable_tolerance) {
+            DEBUG << "Infeasibility below infeasibility_detection_disable_tolerance: disabling infeasibility detection\n";
+            this->may_trigger_infeasibility_detection = false;
+         }
+         else if (infeasibility < (1. - this->infeasibility_detection_sufficient_decrease) * this->infeasibility_detection_reference) {
+            // sufficient decrease of the infeasibility: progress is being made
+            this->infeasibility_detection_reference = infeasibility;
+            this->infeasibility_detection_stagnation_counter = 0;
+         }
+         else {
+            ++this->infeasibility_detection_stagnation_counter;
+         }
+         if (this->may_trigger_infeasibility_detection &&
+               this->infeasibility_detection_stagnation_iterations <= this->infeasibility_detection_stagnation_counter &&
+               this->infeasibility_detection_multiplier_threshold < norm_inf(current_iterate.multipliers.constraints)) {
+            DEBUG << "Large constraint multipliers and stagnating infeasibility: switching to the feasibility problem\n";
+            this->may_trigger_infeasibility_detection = false;
+            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
+         }
+      }
       if (this->current_phase == Phase::OPTIMALITY) {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
@@ -112,6 +145,11 @@ namespace uno {
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+      // without elastic variables (e.g. all relaxable constraints have infinite bounds), the feasibility problem cannot
+      // reduce the constraint violation
+      if (this->feasibility_problem.get_number_elastic_variables() == 0) {
+         throw std::runtime_error("Feasibility restoration: no constraints were relaxed, the constraint violation cannot be reduced");
+      }
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
