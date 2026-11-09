@@ -168,6 +168,8 @@ namespace uno {
       this->feasibility_inequality_handling_method->relax_bounds_around(current_iterate);
 
       // re-evaluate the progress measures at the current iterate
+      const auto& reformulated_problem = this->feasibility_inequality_handling_method->reformulated_problem();
+
       this->feasibility_inequality_handling_method->evaluate_progress_measures(current_iterate, current_evaluations);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
       this->feasibility_inequality_handling_method->compute_residuals(current_iterate, current_evaluations);

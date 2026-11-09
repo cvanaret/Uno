@@ -48,6 +48,10 @@ namespace uno {
       this->problem.postprocess_solution(iterate, evaluations);
    }
 
+   const OptimizationProblem& NoInequalityReformulation::reformulated_problem() const {
+      return this->problem;
+   }
+
    bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
          Evaluations& /*evaluations*/) {
       // the parameterization is not updated

@@ -45,6 +45,7 @@ namespace uno {
       [[nodiscard]] virtual std::pair<size_t, size_t> get_dimensions() const = 0;
       virtual void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const = 0;
 
+      [[nodiscard]] virtual const OptimizationProblem& reformulated_problem() const = 0;
       [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
          Evaluations& evaluations) = 0;
       // unconditional update of the parameterization (e.g. after tiny steps). Returns true if it changed

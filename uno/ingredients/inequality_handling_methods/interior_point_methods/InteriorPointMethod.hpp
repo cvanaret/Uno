@@ -39,6 +39,7 @@ namespace uno {
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
       void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
+      [[nodiscard]] const OptimizationProblem& reformulated_problem() const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
          Evaluations& evaluations) override;
       [[nodiscard]] bool force_parameterization_update(Statistics& statistics) override;
@@ -169,6 +170,11 @@ namespace uno {
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
       this->barrier_problem.postprocess_solution(iterate, evaluations);
+   }
+
+   template <typename BarrierProblem>
+   const OptimizationProblem& InteriorPointMethod<BarrierProblem>::reformulated_problem() const {
+      return this->barrier_problem;
    }
 
    template <typename BarrierProblem>
