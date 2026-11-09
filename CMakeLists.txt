@@ -124,6 +124,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/NewtonSystemTests.cpp
    unotest/functional_tests/PostprocessingEvaluationsTests.cpp
    unotest/functional_tests/PreprocessingTests.cpp
+   unotest/functional_tests/UserTerminationTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
    unotest/functional_tests/SolveErrorBoundaryTests.cpp
    unotest/functional_tests/StagnationTests.cpp

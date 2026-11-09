@@ -23,6 +23,7 @@
 #include "model/ScaledModel.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/EvaluationErrors.hpp"
+#include "optimization/UserTermination.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -62,6 +63,10 @@ namespace uno {
             return this->evaluate_single_point(model, reduced_model, options);
          }
          return this->reformulate_and_solve(model, reduced_model, options, user_callbacks);
+      }
+      catch (const UserTermination& e) {
+         DISCRETE << e.what() << '\n';
+         return this->create_failure_result(model, OptimizationStatus::USER_TERMINATION, options.get_bool("print_solution"));
       }
       catch (const EvaluationError& e) {
          DISCRETE << "An evaluation error occurred: " << e.what() << '\n';
@@ -210,6 +215,15 @@ namespace uno {
             std::swap(evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
          }
       }
+      // a user callback requested the termination: return the last accepted iterate
+      catch (const UserTermination& exception) {
+         statistics.start_new_line();
+         statistics.set("Status", "user termination");
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         if (Logger::level == INFO) statistics.print_current_line();
+         DEBUG << exception.what() << '\n';
+         optimization_status = OptimizationStatus::USER_TERMINATION;
+      }
       // catch errors during the optimization process
       catch (std::exception& exception) {
          statistics.start_new_line();
@@ -220,8 +234,9 @@ namespace uno {
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
       }
 
+      // after a termination request, the user functions are not called again
       const bool valid_final_evaluations = this->postprocess_solution(user_model, model, current_iterate,
-         evaluation_cache.current_evaluations);
+         evaluation_cache.current_evaluations, optimization_status != OptimizationStatus::USER_TERMINATION);
       // a successful solve whose function values could not be evaluated at the final iterate is not a success
       if (!valid_final_evaluations && optimization_status == OptimizationStatus::SUCCESS) {
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
@@ -280,6 +295,12 @@ namespace uno {
             statistics.print_current_line();
          }
          return std::nullopt;
+      }
+      // a user callback requested the termination during the initialization
+      catch (const UserTermination& e) {
+         DISCRETE << e.what() << '\n';
+         this->discard_ingredients(model, current_iterate, evaluation_cache);
+         return OptimizationStatus::USER_TERMINATION;
       }
       // the functions could not be evaluated at the initial iterate
       catch (const EvaluationError& e) {
@@ -351,8 +372,10 @@ namespace uno {
    }
 
    // returns false if the objective or the constraints could not be evaluated at the final iterate. In that case, the
-   // corresponding values are set to NaN, so that stale or partially written values are never returned
-   bool Uno::postprocess_solution(const Model& user_model, const Model& model, Iterate& iterate, Evaluations& evaluations) const {
+   // corresponding values are set to NaN, so that stale or partially written values are never returned. If
+   // call_user_functions is false (after a termination request), the values that are not cached are not evaluated
+   bool Uno::postprocess_solution(const Model& user_model, const Model& model, Iterate& iterate, Evaluations& evaluations,
+         bool call_user_functions) const {
       // 1. primal-dual postprocessing only (unscaling of the multipliers, removal of slacks, expansion of the reduced
       // model, ...). Without ingredients (e.g. max_iterations = 0), the iterate lives in the space of the model
       if (this->globalization_mechanism != nullptr) {
@@ -365,24 +388,49 @@ namespace uno {
       // the cached values to the units of the original model (ScaledModel) or invalidated them (e.g. snapped fixed
       // variables): only the invalidated values are evaluated, so that the user functions are not called again needlessly
       bool valid_evaluations = true;
-      try {
-         evaluations.evaluate_objective(user_model, iterate.primals);
-      }
-      catch (const std::exception& e) {
-         DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
+      const auto invalidate_objective = [&]() {
          evaluations.objective = std::numeric_limits<double>::quiet_NaN();
          evaluations.is_objective_computed = false;
          valid_evaluations = false;
-      }
-      try {
-         evaluations.evaluate_constraints(user_model, iterate.primals);
-      }
-      catch (const std::exception& e) {
-         DISCRETE  << "The constraints could not be evaluated at the final iterate: " << e.what()  << '\n';
+      };
+      const auto invalidate_constraints = [&]() {
          // the constraint vector may be stale or partially written
          evaluations.constraints.fill(std::numeric_limits<double>::quiet_NaN());
          evaluations.are_constraints_computed = false;
          valid_evaluations = false;
+      };
+      if (!call_user_functions) {
+         if (!evaluations.is_objective_computed) {
+            invalidate_objective();
+         }
+         if (!evaluations.are_constraints_computed && 0 < user_model.number_constraints) {
+            invalidate_constraints();
+         }
+      }
+      else {
+         try {
+            evaluations.evaluate_objective(user_model, iterate.primals);
+         }
+         // the run is over: a termination request only means that the value is not available
+         catch (const UserTermination& e) {
+            DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
+            invalidate_objective();
+         }
+         catch (const std::exception& e) {
+            DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
+            invalidate_objective();
+         }
+         try {
+            evaluations.evaluate_constraints(user_model, iterate.primals);
+         }
+         catch (const UserTermination& e) {
+            DISCRETE  << "The constraints could not be evaluated at the final iterate: " << e.what()  << '\n';
+            invalidate_constraints();
+         }
+         catch (const std::exception& e) {
+            DISCRETE  << "The constraints could not be evaluated at the final iterate: " << e.what()  << '\n';
+            invalidate_constraints();
+         }
       }
       DEBUG2 << "Final iterate:\n" << iterate;
       return valid_evaluations;

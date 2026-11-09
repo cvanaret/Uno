@@ -141,6 +141,18 @@ Uno accepts a termination callback that forces solver termination when it return
 uno_solver.set_termination_callback(termination_callback)
 ```
 
+The termination callback is checked once per iteration. To stop Uno immediately from any callback (a model function or a
+solver callback), raise `unopy.UserTermination` (or a subclass):
+```python
+def objective(x):
+    if out_of_budget():
+        raise unopy.UserTermination("evaluation budget exhausted")
+    return ...
+```
+`optimize` then returns the last accepted iterate with the status `OptimizationStatus.USER_TERMINATION`, and the
+callbacks are not called again. Any other exception raised in a model function is an evaluation error: Uno backtracks
+(line search) or reduces the trust-region radius, and evaluates the functions at another point.
+
 Uno mimics the state-of-the-art solvers filterSQP and IPOPT via presets:
 ```python
 uno_solver.set_preset("filtersqp")

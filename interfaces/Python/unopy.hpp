@@ -14,6 +14,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include "../UserModel.hpp"
+#include "optimization/UserTermination.hpp"
 
 namespace py = pybind11;
 
@@ -130,6 +131,29 @@ namespace uno {
    using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,
       std::optional<Jacobian>, std::optional<JacobianOperator>, std::optional<JacobianTransposedOperator>,
       std::optional<Hessian>, std::optional<HessianOperator>, std::vector<double>, std::optional<py::object>>;
+   // Python type of the exception unopy.UserTermination (set when the module is imported)
+   inline py::handle& user_termination_type() {
+      static py::handle type{};
+      return type;
+   }
+
+   // wraps a Python callback: a unopy.UserTermination (or a subclass) raised by the callback becomes a
+   // uno::UserTermination, which stops Uno immediately. Any other Python exception is left as is
+   template <typename Result, typename... Arguments>
+   std::function<Result(Arguments...)> forward_user_termination(std::function<Result(Arguments...)> callback) {
+      return [callback = std::move(callback)](Arguments... arguments) -> Result {
+         try {
+            return callback(std::forward<Arguments>(arguments)...);
+         }
+         catch (const py::error_already_set& error) {
+            if (user_termination_type() && error.matches(user_termination_type())) {
+               throw UserTermination();
+            }
+            throw;
+         }
+      };
+   }
+
 } // namespace
 
 #endif // UNO_UNOPY_H
