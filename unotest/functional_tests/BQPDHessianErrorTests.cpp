@@ -83,13 +83,13 @@ namespace {
    };
 
    // solves the QP subproblem at (0.3, 0.4) with BQPD: min g^T d + d^T d (g = 2x)  s.t.  d0 + d1 <= 0.8
-   class BQPDSubproblemFixture {
+   class BQPDSubproblemScenario {
    public:
-      explicit BQPDSubproblemFixture(const FailingHessianOperatorModel& model):
+      explicit BQPDSubproblemScenario(const FailingHessianOperatorModel& model):
             problem(model, 100.),
             hessian_model(model),
             subproblem(this->problem, this->hessian_model, this->inertia_correction_strategy),
-            solver(BQPDSubproblemFixture::options()),
+            solver(BQPDSubproblemScenario::options()),
             iterate(this->subproblem.number_variables, this->subproblem.number_constraints),
             evaluations(model),
             direction(this->subproblem.number_variables, this->subproblem.number_constraints),
@@ -142,18 +142,18 @@ namespace {
 TEST(BQPDHessianErrors, OperatorExceptionIsRethrownAfterBQPDReturns) {
    FailingHessianOperatorModel model;
    model.failure = HessianFailure::THROW;
-   BQPDSubproblemFixture fixture(model);
+   BQPDSubproblemScenario scenario(model);
 
-   EXPECT_THROW(fixture.solve(), HessianEvaluationError);
+   EXPECT_THROW(scenario.solve(), HessianEvaluationError);
    EXPECT_EQ(model.number_operator_calls, 1) << "the operator was called again after its failure";
 
    // the operator no longer fails: the same subproblem is solved correctly (d = -x)
    const size_t number_calls_before = model.number_operator_calls;
-   fixture.solve();
+   scenario.solve();
    EXPECT_GT(model.number_operator_calls, number_calls_before);
-   ASSERT_EQ(fixture.direction.status, SubproblemStatus::OPTIMAL);
-   EXPECT_NEAR(fixture.direction.primals[0], -0.3, 1e-8);
-   EXPECT_NEAR(fixture.direction.primals[1], -0.4, 1e-8);
+   ASSERT_EQ(scenario.direction.status, SubproblemStatus::OPTIMAL);
+   EXPECT_NEAR(scenario.direction.primals[0], -0.3, 1e-8);
+   EXPECT_NEAR(scenario.direction.primals[1], -0.4, 1e-8);
 }
 
 // the gdotx callback (called by the Fortran code of BQPD) never lets an exception escape: it returns zero products and
@@ -161,8 +161,8 @@ TEST(BQPDHessianErrors, OperatorExceptionIsRethrownAfterBQPDReturns) {
 TEST(BQPDHessianErrors, GdotxCallbackDoesNotThrow) {
    FailingHessianOperatorModel model;
    model.failure = HessianFailure::THROW;
-   BQPDSubproblemFixture fixture(model);
-   auto& quadratic_program = dynamic_cast<BQPDQuadraticProgram&>(fixture.solver.get_quadratic_program());
+   BQPDSubproblemScenario scenario(model);
+   auto& quadratic_program = dynamic_cast<BQPDQuadraticProgram&>(scenario.solver.get_quadratic_program());
    std::vector<int> lws(hidden_pointer_size_in_lws);
    hide_pointer(0, lws.data(), quadratic_program);
 
@@ -194,15 +194,15 @@ TEST(BQPDHessianErrors, GdotxCallbackDoesNotThrow) {
 TEST(BQPDHessianErrors, NonFiniteProductIsAnEvaluationError) {
    FailingHessianOperatorModel model;
    model.failure = HessianFailure::NAN_PRODUCT;
-   BQPDSubproblemFixture fixture(model);
+   BQPDSubproblemScenario scenario(model);
 
-   EXPECT_THROW(fixture.solve(), HessianEvaluationError);
+   EXPECT_THROW(scenario.solve(), HessianEvaluationError);
    EXPECT_EQ(model.number_operator_calls, 1) << "the operator was called again after its failure";
 
-   fixture.solve();
-   ASSERT_EQ(fixture.direction.status, SubproblemStatus::OPTIMAL);
-   EXPECT_NEAR(fixture.direction.primals[0], -0.3, 1e-8);
-   EXPECT_NEAR(fixture.direction.primals[1], -0.4, 1e-8);
+   scenario.solve();
+   ASSERT_EQ(scenario.direction.status, SubproblemStatus::OPTIMAL);
+   EXPECT_NEAR(scenario.direction.primals[0], -0.3, 1e-8);
+   EXPECT_NEAR(scenario.direction.primals[1], -0.4, 1e-8);
 }
 
 // end to end: a failing Hessian operator is handled by the trust region like any evaluation error (the radius is
@@ -229,16 +229,16 @@ TEST(BQPDHessianErrors, DeferredFailureKeepsItsKind) {
    {
       FailingHessianOperatorModel model;
       model.failure = HessianFailure::USER_TERMINATION;
-      BQPDSubproblemFixture fixture(model);
-      EXPECT_THROW(fixture.solve(), UserTermination);
+      BQPDSubproblemScenario scenario(model);
+      EXPECT_THROW(scenario.solve(), UserTermination);
       EXPECT_EQ(model.number_operator_calls, 1);
    }
    {
       FailingHessianOperatorModel model;
       model.failure = HessianFailure::RUNTIME_ERROR;
-      BQPDSubproblemFixture fixture(model);
+      BQPDSubproblemScenario scenario(model);
       try {
-         fixture.solve();
+         scenario.solve();
          ADD_FAILURE() << "no exception was rethrown";
       }
       catch (const std::runtime_error& exception) {
