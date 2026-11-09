@@ -198,6 +198,9 @@ namespace uno {
             warmstart_information.iterate_changed();
             this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                evaluation_cache, warmstart_information, user_callbacks);
+            // stop when the same iterate is repeated (e.g. the tolerances cannot be reached)
+            this->globalization_mechanism->detect_stagnation(model, current_iterate, trial_iterate,
+               evaluation_cache.trial_evaluations);
             termination = check_termination(trial_iterate, major_iterations, max_iterations,
                statistics.timers.wallclock.get_elapsed_time(), time_limit, InterruptGuard::interrupt_requested(),
                optimization_status, user_callbacks);

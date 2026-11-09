@@ -27,7 +27,6 @@ namespace uno {
          activity_tolerance(options.get_double("TR_activity_tolerance")),
          minimum_radius(options.get_double("TR_min_radius")),
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
-         primal_tolerance(options.get_double("primal_tolerance")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
       if (!(0. < this->radius)) {
          throw std::runtime_error("The trust-region radius should be positive");

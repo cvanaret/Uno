@@ -36,7 +36,6 @@ namespace uno {
          SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
          SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
          tiny_step_factor(options.get_double("barrier_small_direction_factor")),
-         primal_tolerance(options.get_double("primal_tolerance")),
          print_minor_iterations(options.get_bool("print_minor_iterations")),
          watchdog_shortened_iterations_trigger(options.get_unsigned_int("LS_watchdog_shortened_iterations_trigger")),
          watchdog_max_trial_iterations(options.get_unsigned_int("LS_watchdog_max_trial_iterations")) {
@@ -373,15 +372,7 @@ namespace uno {
 
       if (force_parameterization_update && !parameterization_updated && trial_iterate.status == SolutionStatus::NOT_OPTIMAL) {
          DEBUG << "Tiny steps and the parameterization cannot be updated: terminating\n";
-         // an iterate that satisfies the acceptable conditions is reported as such (as with acceptable termination)
-         const SolutionStatus acceptable_status = this->constraint_relaxation_strategy->get_last_iterate_acceptable_status();
-         if (acceptable_status != SolutionStatus::NOT_OPTIMAL) {
-            trial_iterate.status = acceptable_status;
-         }
-         else {
-            trial_iterate.status = (trial_iterate.scaled_residuals.primal_infeasibility <= this->primal_tolerance) ?
-               SolutionStatus::FEASIBLE_SMALL_STEP : SolutionStatus::INFEASIBLE_SMALL_STEP;
-         }
+         trial_iterate.status = this->small_step_status(model, trial_iterate, evaluation_cache.trial_evaluations);
       }
       set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
       set_dual_residuals_statistics(statistics, trial_iterate);

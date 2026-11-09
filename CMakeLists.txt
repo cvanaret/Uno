@@ -125,6 +125,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/PreprocessingTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
    unotest/functional_tests/SolveErrorBoundaryTests.cpp
+   unotest/functional_tests/StagnationTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)

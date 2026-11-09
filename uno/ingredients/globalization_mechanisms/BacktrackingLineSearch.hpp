@@ -49,7 +49,6 @@ namespace uno {
       // constraint dual direction, and whether the previous iteration was a tiny step with a small dual direction
       const double tiny_step_factor;
       static constexpr double tiny_step_dual_tolerance{1e-2}; // IPOPT's tiny_step_y_tol
-      const double primal_tolerance;
       bool previous_tiny_step_with_small_dual_direction{false};
       const bool print_minor_iterations;
 
