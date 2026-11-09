@@ -32,7 +32,7 @@ env:
   # xdsmjs and minisom (GEMSEO dependencies) are pure Python but only published as sdists
   CIBW_BEFORE_TEST: >-
     pip install --only-binary=:all: "scipy>=1.8" || echo "scipy unavailable: skipping its tests" &&
-    pip install --only-binary=:all: --no-binary=xdsmjs,minisom "gemseo>=6" || echo "gemseo unavailable: skipping its tests"
+    pip install --only-binary=:all: --no-binary=xdsmjs,minisom "gemseo>=6.3" || echo "gemseo unavailable: skipping its tests"
   # -rs reports the skipped tests (and why) in the log
   CIBW_TEST_COMMAND: >-
     python -m pytest -rs {project}/interfaces/Python/tests &&
