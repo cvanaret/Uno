@@ -122,6 +122,8 @@ namespace uno {
       [[nodiscard]] static Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions);
+      static void accept_iterate_unconditionally(const OptimizationProblem& problem, Iterate& trial_iterate,
+         Evaluations& trial_evaluations);
 
       template <typename Problem>
       [[nodiscard]] static bool satisfies_unscaled_tolerances(const Problem& problem, const Iterate& iterate,

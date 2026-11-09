@@ -408,8 +408,8 @@ namespace uno {
       if (parameterization_updated) {
          refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate);
       }
-      inequality_handling_method.accept_iterate_unconditionally(trial_iterate, trial_evaluations);
       const auto& reformulated_problem = inequality_handling_method.reformulated_problem();
+      accept_iterate_unconditionally(reformulated_problem, trial_iterate, trial_evaluations);
       reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
       inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
          trial_evaluations);

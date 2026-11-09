@@ -63,6 +63,7 @@ namespace uno {
       Vector<double> initial_point;
 
       using ConstraintRelaxationStrategy::is_iterate_acceptable;
+      using ConstraintRelaxationStrategy::accept_iterate_unconditionally;
    };
 } // namespace
 

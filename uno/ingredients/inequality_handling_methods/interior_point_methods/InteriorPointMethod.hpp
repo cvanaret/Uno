@@ -61,7 +61,6 @@ namespace uno {
 
       [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const override;
-      void accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const override;
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
@@ -346,11 +345,6 @@ namespace uno {
          const Direction& direction, Evaluations& current_evaluations) const {
       return this->subproblem->build_predicted_reduction_model(current_iterate, direction, this->progress_norm,
          current_evaluations, this->subproblem_solver->get_workspace());
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const {
-      InequalityHandlingMethod::accept_iterate_unconditionally(*this->subproblem, trial_iterate, trial_evaluations);
    }
 
    template <typename BarrierProblem>

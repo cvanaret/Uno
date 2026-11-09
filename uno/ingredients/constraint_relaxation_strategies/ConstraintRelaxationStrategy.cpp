@@ -84,6 +84,15 @@ namespace uno {
       return decision;
    }
 
+   void ConstraintRelaxationStrategy::accept_iterate_unconditionally(const OptimizationProblem& problem, Iterate& trial_iterate,
+         Evaluations& trial_evaluations) {
+      problem.postprocess_iterate(trial_iterate, trial_evaluations);
+      trial_iterate.objective_multiplier = problem.get_objective_multiplier();
+      // the next subproblem must be well defined (an exception is thrown upon evaluation failure)
+      trial_evaluations.evaluate_objective_gradient(problem.model, trial_iterate.primals);
+      trial_evaluations.evaluate_jacobian(problem.model, trial_iterate.primals);
+   }
+
    size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
       return this->number_subproblems_solved;
    }

@@ -71,8 +71,6 @@ namespace uno {
 
       [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const = 0;
-      // accept the trial iterate without globalization test (tiny steps)
-      virtual void accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const = 0;
       virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
@@ -89,8 +87,6 @@ namespace uno {
       const OptimizationProblem& problem;
       const Norm progress_norm;
       const Norm residual_norm;
-
-      void accept_iterate_unconditionally(const Subproblem& subproblem, Iterate& trial_iterate, Evaluations& trial_evaluations) const;
    };
 } // namespace
 

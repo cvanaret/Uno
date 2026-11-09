@@ -135,10 +135,6 @@ namespace uno {
          current_evaluations, this->subproblem_solver->get_workspace());
    }
 
-   void NoInequalityReformulation::accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const {
-      InequalityHandlingMethod::accept_iterate_unconditionally(*this->subproblem, trial_iterate, trial_evaluations);
-   }
-
    void NoInequalityReformulation::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,
          const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);

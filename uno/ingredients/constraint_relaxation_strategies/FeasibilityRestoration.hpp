@@ -95,6 +95,7 @@ namespace uno {
       mutable Vector<double> constraints_buffer;
 
       using ConstraintRelaxationStrategy::is_iterate_acceptable;
+      using ConstraintRelaxationStrategy::accept_iterate_unconditionally;
       const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);

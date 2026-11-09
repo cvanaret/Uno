@@ -147,7 +147,7 @@ namespace uno {
          this->globalization_strategy.reset();
          reformulated_problem.set_auxiliary_measure(current_iterate);
       }
-      this->inequality_handling_method->accept_iterate_unconditionally(trial_iterate, trial_evaluations);
+      accept_iterate_unconditionally(reformulated_problem, trial_iterate, trial_evaluations);
       reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
       compute_residuals(reformulated_problem, trial_iterate, trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, trial_evaluations);
