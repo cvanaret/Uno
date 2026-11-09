@@ -4,12 +4,9 @@
 #include "InequalityHandlingMethod.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
-#include "tools/Logger.hpp"
-#include "tools/Statistics.hpp"
 
 namespace uno {
    InequalityHandlingMethod::InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options):

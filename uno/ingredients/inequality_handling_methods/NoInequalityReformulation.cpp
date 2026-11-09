@@ -9,7 +9,6 @@
 #include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
-#include "tools/Infinity.hpp"
 
 namespace uno {
    NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
@@ -42,10 +41,6 @@ namespace uno {
 
    std::pair<size_t, size_t> NoInequalityReformulation::get_dimensions() const {
       return {this->problem.number_variables, this->problem.number_constraints};
-   }
-
-   void NoInequalityReformulation::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->problem.postprocess_solution(iterate, evaluations);
    }
 
    const OptimizationProblem& NoInequalityReformulation::reformulated_problem() const {

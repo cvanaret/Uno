@@ -19,7 +19,6 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
 #include "options/Options.hpp"
-#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -37,7 +36,6 @@ namespace uno {
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       void update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold) override;
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
-      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] const OptimizationProblem& reformulated_problem() const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
@@ -160,11 +158,6 @@ namespace uno {
    template <typename BarrierProblem>
    std::pair<size_t, size_t> InteriorPointMethod<BarrierProblem>::get_dimensions() const {
       return {this->barrier_problem.number_variables, this->barrier_problem.number_constraints};
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->barrier_problem.postprocess_solution(iterate, evaluations);
    }
 
    template <typename BarrierProblem>

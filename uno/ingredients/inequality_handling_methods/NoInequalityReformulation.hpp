@@ -28,7 +28,6 @@ namespace uno {
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
-      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] const OptimizationProblem& reformulated_problem() const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,

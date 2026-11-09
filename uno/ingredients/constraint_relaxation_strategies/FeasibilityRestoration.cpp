@@ -78,10 +78,12 @@ namespace uno {
 
    void FeasibilityRestoration::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
       if (this->current_phase == Phase::OPTIMALITY) {
-         this->inequality_handling_method->postprocess_solution(iterate, evaluations);
+         const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+         reformulated_problem.postprocess_solution(iterate, evaluations);
       }
       else {
-         this->feasibility_inequality_handling_method->postprocess_solution(iterate, evaluations);
+         const auto& reformulated_problem = this->feasibility_inequality_handling_method->reformulated_problem();
+         reformulated_problem.postprocess_solution(iterate, evaluations);
       }
    }
 
