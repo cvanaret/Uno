@@ -49,7 +49,7 @@ namespace uno {
       [[nodiscard]] Result uno_solve(const Model& user_model, const Model& model, const Options& options,
          UserCallbacks& user_callbacks);
       [[nodiscard]] bool postprocess_solution(const Model& user_model, const Model& model, Iterate& iterate,
-         Evaluations& evaluations) const;
+         Evaluations& evaluations, bool call_user_functions = true) const;
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
          Evaluations&& evaluations, size_t major_iterations, const Timers& timers, std::vector<OptionOverride>&& option_overrides) const;
       [[nodiscard]] Result create_failure_result(const Model& model, OptimizationStatus optimization_status, bool print_solution);

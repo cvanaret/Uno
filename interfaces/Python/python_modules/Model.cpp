@@ -69,8 +69,8 @@ namespace uno {
             throw std::invalid_argument("Please specify a valid objective sense.");
          }
          user_model.optimization_sense = optimization_sense;
-         user_model.objective_function = std::move(objective_function);
-         user_model.objective_gradient = std::move(objective_gradient);
+         user_model.objective_function = forward_user_termination(std::move(objective_function));
+         user_model.objective_gradient = forward_user_termination(std::move(objective_gradient));
       })
 
       .def("set_constraints", [](PythonUserModel& user_model, uno_int number_constraints, Constraints constraint_functions,
@@ -90,13 +90,13 @@ namespace uno {
          auto row_indices = to_vector(jacobian_row_indices, nnz, "jacobian_row_indices");
          auto column_indices = to_vector(jacobian_column_indices, nnz, "jacobian_column_indices");
          user_model.number_constraints = number_constraints;
-         user_model.constraint_functions = std::move(constraint_functions);
+         user_model.constraint_functions = forward_user_termination(std::move(constraint_functions));
          user_model.constraints_lower_bounds = std::move(lower_bounds);
          user_model.constraints_upper_bounds = std::move(upper_bounds);
          user_model.number_jacobian_nonzeros = number_jacobian_nonzeros;
          user_model.jacobian_row_indices = std::move(row_indices);
          user_model.jacobian_column_indices = std::move(column_indices);
-         user_model.jacobian = std::move(jacobian);
+         user_model.jacobian = forward_user_termination(std::move(jacobian));
          user_model.initial_dual_iterate.resize(static_cast<size_t>(number_constraints), 0.);
       })
 
@@ -147,20 +147,20 @@ namespace uno {
             user_model.hessian_row_indices = std::move(row_indices);
             user_model.hessian_column_indices = std::move(column_indices);
             user_model.hessian_triangular_part = UNO_LOWER_TRIANGLE;
-            user_model.lagrangian_hessian = std::move(lagrangian_hessian);
+            user_model.lagrangian_hessian = forward_user_termination(std::move(lagrangian_hessian));
          }
       })
 
       .def("set_jacobian_operator", [](PythonUserModel& user_model, JacobianOperator jacobian_operator) {
-         user_model.jacobian_operator = std::move(jacobian_operator);
+         user_model.jacobian_operator = forward_user_termination(std::move(jacobian_operator));
       })
 
       .def("set_jacobian_transposed_operator", [](PythonUserModel& user_model, JacobianTransposedOperator jacobian_transposed_operator) {
-         user_model.jacobian_transposed_operator = std::move(jacobian_transposed_operator);
+         user_model.jacobian_transposed_operator = forward_user_termination(std::move(jacobian_transposed_operator));
       })
 
       .def("set_lagrangian_hessian_operator", [](PythonUserModel& user_model, HessianOperator lagrangian_hessian_operator) {
-         user_model.lagrangian_hessian_operator = std::move(lagrangian_hessian_operator);
+         user_model.lagrangian_hessian_operator = forward_user_termination(std::move(lagrangian_hessian_operator));
       })
 
       .def("set_lagrangian_sign_convention", [](PythonUserModel& user_model, uno_int lagrangian_sign_convention) {

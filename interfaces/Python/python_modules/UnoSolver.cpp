@@ -90,11 +90,11 @@ namespace uno {
       .def("set_preset", &UnoSolverWrapper::set_preset, py::arg("preset_name"))
 
       .def("set_notify_acceptable_iterate_callback", [](UnoSolverWrapper& solver, NotifyAcceptableIterateCallback callback) {
-         solver.set_notify_acceptable_iterate_callback(std::move(callback));
+         solver.set_notify_acceptable_iterate_callback(forward_user_termination(std::move(callback)));
       })
 
       .def("set_termination_callback", [](UnoSolverWrapper& solver, TerminationCallback callback) {
-         solver.set_termination_callback(std::move(callback));
+         solver.set_termination_callback(forward_user_termination(std::move(callback)));
       })
 
       .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {

@@ -115,6 +115,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/BoundRelaxationTests.cpp
    unotest/functional_tests/BoundRelaxationScalingTests.cpp
    unotest/functional_tests/FinalEvaluationTests.cpp
+   unotest/functional_tests/HessianOperatorOnlyTests.cpp
    unotest/functional_tests/InterruptTests.cpp
    # parameterized over the available linear solvers (no test instantiated if none is available)
    unotest/functional_tests/IterativeRefinementTests.cpp
@@ -123,8 +124,10 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/NewtonSystemTests.cpp
    unotest/functional_tests/PostprocessingEvaluationsTests.cpp
    unotest/functional_tests/PreprocessingTests.cpp
+   unotest/functional_tests/UserTerminationTests.cpp
    unotest/functional_tests/ScaledObjectiveWithFixedVariableTests.cpp
    unotest/functional_tests/SolveErrorBoundaryTests.cpp
+   unotest/functional_tests/StagnationTests.cpp
    unotest/unit_tests/*.cpp
 )
 if(ENABLE_TESTS)
@@ -236,6 +239,7 @@ if(BQPD)
    if(ENABLE_TESTS)
       target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp
          unotest/functional_tests/BQPDQuadraticProgramTests.cpp
+         unotest/functional_tests/BQPDHessianErrorTests.cpp
          unotest/functional_tests/SQPPathTests.cpp)
    endif()
 endif()

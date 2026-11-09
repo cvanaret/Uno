@@ -78,6 +78,11 @@ namespace uno {
 
    BQPDSolver::~BQPDSolver() = default;
 
+   bool BQPDSolver::requires_hessian_matrix(const Subproblem& subproblem) const {
+      // same condition as the allocation of the explicit Hessian in BQPDQuadraticProgram::initialize_memory
+      return !subproblem.is_hessian_positive_definite() && subproblem.performs_primal_regularization();
+   }
+
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
       // build the BQPD-native quadratic program (allocates gradients/Hessian/bounds storage and the
       // iteration-invariant sparsity patterns)
@@ -227,6 +232,11 @@ namespace uno {
       const int m = static_cast<int>(quadratic_program.number_constraints);
 
       BQPDMode mode = determine_mode(warmstart_information);
+      // the previous run was aborted by a Hessian failure: its active set was computed with zero Hessian products
+      if (this->previous_run_aborted) {
+         mode = BQPDMode::COLD_START;
+         this->previous_run_aborted = false;
+      }
       // solve the LP/QP
       bool termination = false;
       size_t number_workspace_increases = 0;
@@ -240,6 +250,13 @@ namespace uno {
             this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution,
             this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
          DEBUG2 << "Ran BQPD\n";
+         // a Hessian-vector product failed during the run: BQPD worked with zero products from then on. Rethrow the
+         // exception now that BQPD has returned (the caller handles a HessianEvaluationError like any evaluation error)
+         if (quadratic_program.has_hessian_vector_product_exception()) {
+            DEBUG << "A Hessian-vector product failed during the BQPD run\n";
+            this->previous_run_aborted = true;
+            quadratic_program.rethrow_hessian_vector_product_exception();
+         }
          const BQPDStatus bqpd_status = bqpd_status_from_int(this->ifail);
          // if the workspace was insufficient, enlarge it (a bounded number of times) and solve again from scratch
          const bool workspace_enlarged = (number_workspace_increases < BQPDSolver::max_number_workspace_increases) &&
@@ -364,5 +381,6 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    BQPDQuadraticProgram* quadratic_program = uno::retrieve_pointer<uno::BQPDQuadraticProgram>(0, lws);
    assert(quadratic_program != nullptr);
    const size_t number_variables = static_cast<size_t>(*dimension);
-   quadratic_program->compute_hessian_vector_product(view(vector, number_variables), view(result, number_variables));
+   // noexcept: an exception must not unwind through the Fortran frames of BQPD. It is rethrown in solve_subproblem()
+   quadratic_program->compute_hessian_vector_product_for_bqpd(view(vector, number_variables), view(result, number_variables));
 }

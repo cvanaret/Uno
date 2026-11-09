@@ -49,6 +49,8 @@ namespace uno {
       ~BQPDSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
+      // BQPD uses a Hessian operator, unless the Hessian must be regularized (see BQPDQuadraticProgram)
+      [[nodiscard]] bool requires_hessian_matrix(const Subproblem& subproblem) const override;
 
       [[nodiscard]] QuadraticProgram& get_quadratic_program() override;
 
@@ -80,6 +82,8 @@ namespace uno {
       int peq_solution{0}, ifail{0};
 
       const bool print_subproblem;
+      // whether the last BQPD run was aborted by a failing Hessian-vector product (the next run is a cold start)
+      bool previous_run_aborted{false};
 
       [[nodiscard]] size_t compute_mxws() const;
       [[nodiscard]] size_t compute_mxlws() const;

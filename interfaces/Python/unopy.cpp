@@ -23,6 +23,12 @@ namespace uno {
 
       module.def("current_uno_version", &Uno::current_version);
 
+      // raised by a callback (model evaluation or solver callback) to stop Uno immediately with USER_TERMINATION
+      static py::exception<UserTermination> user_termination(module, "UserTermination", PyExc_Exception);
+      user_termination.attr("__doc__") = "Raise it in a callback (model evaluation or solver callback) to stop Uno "
+         "immediately. optimize() then returns the last accepted iterate with OptimizationStatus.USER_TERMINATION.";
+      user_termination_type() = user_termination;
+
       define_Model(module);
       define_Result(module);
       define_UnoSolver(module);

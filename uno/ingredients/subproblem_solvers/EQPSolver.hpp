@@ -38,6 +38,10 @@ namespace uno {
       ~EQPSolver() override; // defined in EQPSolver.cpp (incomplete linear solver type)
 
       void initialize_memory(const Subproblem& subproblem) override;
+      // the augmented matrix of the direct linear solver contains the Hessian matrix (unless it is a low-rank correction)
+      [[nodiscard]] bool requires_hessian_matrix(const Subproblem& /*subproblem*/) const override {
+         return LowRankCorrection::uses_explicit_hessian_matrix;
+      }
       void initialize_statistics(Statistics& statistics) override;
       void compute_least_squares_multipliers(const Subproblem& subproblem, Iterate& iterate, Evaluations& evaluations,
          double multipliers_threshold) override;

@@ -30,6 +30,8 @@ namespace uno {
 
       // allocate native storage; also constructs and initializes the owned QuadraticProgram
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
+      // whether the backend needs the explicit Hessian matrix of a subproblem with curvature (an operator is not enough)
+      [[nodiscard]] virtual bool requires_hessian_matrix(const Subproblem& /*subproblem*/) const { return false; }
 
       // the QuadraticProgram owned by this backend, populated by IQPSolver before each solve
       [[nodiscard]] virtual QuadraticProgram& get_quadratic_program() = 0;

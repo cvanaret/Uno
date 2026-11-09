@@ -85,6 +85,11 @@ namespace uno {
       const std::vector<double> variables_upper_bounds;
       const std::vector<double> constraints_lower_bounds;
       const std::vector<double> constraints_upper_bounds;
+      // the multipliers passed to the user's Hessian callbacks, in the user's sign convention. Uno's multipliers are
+      // never modified in place, so that an exception thrown by a callback cannot leave them with a flipped sign
+      mutable std::vector<double> user_multipliers;
+
+      [[nodiscard]] const double* to_user_sign_convention(const Vector<double>& multipliers) const;
    };
 } // namespace
 

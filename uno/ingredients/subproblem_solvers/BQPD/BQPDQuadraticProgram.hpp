@@ -5,6 +5,7 @@
 #define UNO_BQPDQUADRATICPROGRAM_H
 
 #include <functional>
+#include <string>
 #include <vector>
 #include "ingredients/subproblem_solvers/QuadraticProgram.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
@@ -44,8 +45,23 @@ namespace uno {
       // whether the QP has a Hessian: determines BQPD's kmax (0 for an LP). Valid after a build().
       [[nodiscard]] bool has_curvature() const { return this->use_explicit_hessian || bool(this->hessian_operator); }
 
-      // result <- H * vector, called from the Fortran gdotx callback. Subproblem-free.
+      // result <- H * vector. Subproblem-free. May throw (e.g. HessianEvaluationError from the model's operator)
       void compute_hessian_vector_product(View<const double> vector, View<double> result) const;
+
+      // result <- H * vector, called from the Fortran gdotx callback. An exception must not unwind through the Fortran
+      // frames of BQPD: the failure is recorded, a zero product is returned to BQPD (here and in all the subsequent calls
+      // of the same BQPD run, without calling the Hessian again), and an exception of the same kind is thrown by
+      // rethrow_hessian_vector_product_exception() once BQPD has returned. A non-finite product is reported as a
+      // HessianEvaluationError (BQPD may not terminate with NaNs).
+      // The failure is recorded by kind, not as a std::exception_ptr: when two C++ runtimes are loaded (e.g. libc++ and
+      // the libstdc++ required by a dependency), std::rethrow_exception may come from one runtime and the exception
+      // object from the other, and the rethrown exception is then unusable
+      void compute_hessian_vector_product_for_bqpd(View<const double> vector, View<double> result) const noexcept;
+      // rethrows (and clears) the exception stored during the last BQPD run, if any
+      void rethrow_hessian_vector_product_exception();
+      [[nodiscard]] bool has_hessian_vector_product_exception() const {
+         return this->hessian_vector_product_failure != HessianVectorProductFailure::NONE;
+      }
       
       // data-driven setup: dense objective gradient + COO constraint Jacobian (row = constraint,
       // column = variable) + COO Lagrangian Hessian (one triangle; empty for an LP). Allocates native
@@ -83,6 +99,10 @@ namespace uno {
       // Hessian representation selected at build() time
       bool use_explicit_hessian{false};
       std::function<void(View<const double> vector, View<double> result)> hessian_operator{};
+      // failure of a Hessian-vector product during a BQPD run, rethrown once BQPD has returned
+      enum class HessianVectorProductFailure { NONE, EVALUATION_ERROR, USER_TERMINATION, OTHER };
+      mutable HessianVectorProductFailure hessian_vector_product_failure{HessianVectorProductFailure::NONE};
+      mutable std::string hessian_vector_product_failure_message{};
       
       // allocate native storage for the given problem shape
       void allocate_memory(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,

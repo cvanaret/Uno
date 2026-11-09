@@ -21,7 +21,8 @@ namespace uno {
          variables_lower_bounds(normalize_infinite_bounds(user_model.variables_lower_bounds)),
          variables_upper_bounds(normalize_infinite_bounds(user_model.variables_upper_bounds)),
          constraints_lower_bounds(normalize_infinite_bounds(user_model.constraints_lower_bounds)),
-         constraints_upper_bounds(normalize_infinite_bounds(user_model.constraints_upper_bounds)) {
+         constraints_upper_bounds(normalize_infinite_bounds(user_model.constraints_upper_bounds)),
+         user_multipliers(user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE ? this->number_constraints : 0) {
       // partition equality/inequality constraints
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
@@ -141,12 +142,8 @@ namespace uno {
          View<double> hessian_values) const {
       if (this->user_model.lagrangian_hessian.has_value()) {
          objective_multiplier *= this->optimization_sense;
-         // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
-         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-            const_cast<Vector<double>&>(multipliers).scale(-1.);
-         }
          const auto x_py = input_view(x.data(), this->number_variables);
-         const auto multipliers_py = input_view(multipliers.data(), this->number_constraints);
+         const auto multipliers_py = input_view(this->to_user_sign_convention(multipliers), this->number_constraints);
          auto hessian_py = output_view(hessian_values.data(), this->number_hessian_nonzeros());
 
          // evaluate Lagrangian Hessian
@@ -155,15 +152,7 @@ namespace uno {
             ++this->number_model_evaluations.hessian;
          }
          catch (const std::exception&) {
-            // flip the signs of the multipliers back
-            if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-               const_cast<Vector<double>&>(multipliers).scale(-1.);
-            }
             throw HessianEvaluationError();
-         }
-         // flip the signs of the multipliers back
-         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-            const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
       }
       else {
@@ -213,12 +202,8 @@ namespace uno {
          const Vector<double>& multipliers, View<double> result) const {
       if (this->user_model.lagrangian_hessian_operator.has_value()) {
          objective_multiplier *= this->optimization_sense;
-         // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
-         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-            const_cast<Vector<double>&>(multipliers).scale(-1.);
-         }
          const auto x_py = input_view(x.data(), this->number_variables);
-         const auto multipliers_py = input_view(multipliers.data(), this->number_constraints);
+         const auto multipliers_py = input_view(this->to_user_sign_convention(multipliers), this->number_constraints);
          const auto vector_py = input_view(vector.data(), this->number_variables);
          auto result_py = output_view(result.data(), this->number_variables);
 
@@ -229,14 +214,22 @@ namespace uno {
          catch (const std::exception&) {
             throw HessianEvaluationError();
          }
-         // flip the signs of the multipliers back
-         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-            const_cast<Vector<double>&>(multipliers).scale(-1.);
-         }
       }
       else {
          throw std::runtime_error("compute_hessian_vector_product not implemented");
       }
+   }
+
+   // returns the multipliers in the user's sign convention: Uno's multipliers if the conventions agree, otherwise a
+   // negated copy (Uno's multipliers are left untouched)
+   const double* PythonModel::to_user_sign_convention(const Vector<double>& multipliers) const {
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            this->user_multipliers[constraint_index] = -multipliers[constraint_index];
+         }
+         return this->user_multipliers.data();
+      }
+      return multipliers.data();
    }
 
    const std::vector<double>& PythonModel::get_variables_lower_bounds() const {
