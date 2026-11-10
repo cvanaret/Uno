@@ -389,7 +389,11 @@ namespace uno {
 
    bool FeasibilityRestoration::terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) {
-      return this->fall_back_to_infeasible_stationary_point(this->current().problem, current_iterate, trial_iterate,
+      if (this->current_phase != Phase::OPTIMALITY) {
+         return this->fall_back_to_infeasible_stationary_point(this->feasibility.problem, current_iterate, trial_iterate,
+            current_evaluations, trial_evaluations);
+      }
+      return this->fall_back_after_line_search_failure(this->optimality.problem, current_iterate, trial_iterate,
          current_evaluations, trial_evaluations);
    }
 
