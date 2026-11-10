@@ -65,8 +65,7 @@ namespace uno {
       compute_residuals(reformulated_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
 
-      const auto [number_optimality_variables, _] = this->inequality_handling_method->get_dimensions();
-      this->pre_restoration_primals.resize(number_optimality_variables);
+      this->pre_restoration_primals.resize(reformulated_problem.number_variables);
       this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.view());
 
       // statistics
@@ -119,20 +118,21 @@ namespace uno {
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
 
-      const auto [number_optimality_variables, number_optimality_constraints] = this->inequality_handling_method->get_dimensions();
-      const auto [number_feasibility_variables, number_feasibility_constraints] = this->feasibility_inequality_handling_method->get_dimensions();
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      const auto& reformulated_feasibility_problem = this->feasibility_inequality_handling_method->reformulated_problem();
+
       // layouts: optimality (x, s) = [0, n) [n, n + s); restoration (x, p/n, s) = [0, n) [n, n + e) [n + e, n + e + s)
       const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
-      const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables; // s
+      const size_t number_slacks = reformulated_problem.number_variables - this->original_problem.number_variables; // s
 
       // save the current point (infeasibility and primals) upon switching
       this->reference_infeasibility = this->inequality_handling_method->compute_reformulation_infeasibility(current_iterate,
          current_evaluations);
-      this->pre_restoration_primals = view(current_iterate.primals, 0, number_optimality_variables);
+      this->pre_restoration_primals = view(current_iterate.primals, 0, reformulated_problem.number_variables);
       this->feasibility_problem.set_proximal_center(this->pre_restoration_primals.view());
 
       // prepare the iterate for restoration (resize + set primal-dual values)
-      current_iterate.set_dimensions(number_feasibility_variables, number_feasibility_constraints);
+      current_iterate.set_dimensions(reformulated_feasibility_problem.number_variables, reformulated_feasibility_problem.number_constraints);
       // move the slacks [n, n + s) -> [n + e, n + e + s). The destination lies after the source:
       // copy backward so that the copy is correct even if the ranges overlap (e < s)
       for (size_t index = number_slacks; index-- > 0;) {
@@ -140,7 +140,8 @@ namespace uno {
             current_iterate.primals[this->original_problem.number_variables + index];
       }
       if (this->first_switch_to_feasibility) {
-         this->other_phase_multipliers.resize(number_feasibility_variables, number_feasibility_constraints);
+         this->other_phase_multipliers.resize(reformulated_feasibility_problem.number_variables,
+            reformulated_feasibility_problem.number_constraints);
          this->feasibility_inequality_handling_method->initialize_memory();
          this->first_switch_to_feasibility = false;
       }
@@ -153,10 +154,10 @@ namespace uno {
          view(optimality_multipliers.lower_bounds, 0, this->original_problem.number_variables);
       view(restoration_multipliers.upper_bounds, 0, this->original_problem.number_variables) =
          view(optimality_multipliers.upper_bounds, 0, this->original_problem.number_variables);
-      view(restoration_multipliers.lower_bounds, first_restoration_slack, number_feasibility_variables) =
-         view(optimality_multipliers.lower_bounds, this->original_problem.number_variables, number_optimality_variables);
-      view(restoration_multipliers.upper_bounds, first_restoration_slack, number_feasibility_variables) =
-         view(optimality_multipliers.upper_bounds, this->original_problem.number_variables, number_optimality_variables);
+      view(restoration_multipliers.lower_bounds, first_restoration_slack, reformulated_feasibility_problem.number_variables) =
+         view(optimality_multipliers.lower_bounds, this->original_problem.number_variables, reformulated_problem.number_variables);
+      view(restoration_multipliers.upper_bounds, first_restoration_slack, reformulated_feasibility_problem.number_variables) =
+         view(optimality_multipliers.upper_bounds, this->original_problem.number_variables, reformulated_problem.number_variables);
       current_iterate.multipliers.constraints.fill(0.);
 
       // initialize the feasibility inequality handling method
@@ -171,10 +172,9 @@ namespace uno {
       this->feasibility_inequality_handling_method->relax_bounds_around(current_iterate);
 
       // re-evaluate the progress measures at the current iterate
-      const auto& reformulated_problem = this->feasibility_inequality_handling_method->reformulated_problem();
-      reformulated_problem.evaluate_progress_measures(current_iterate, current_evaluations, this->progress_norm);
+      reformulated_feasibility_problem.evaluate_progress_measures(current_iterate, current_evaluations, this->progress_norm);
       this->feasibility_globalization_strategy->initialize(statistics, current_iterate);
-      compute_residuals(reformulated_problem, current_iterate, current_evaluations);
+      compute_residuals(reformulated_feasibility_problem, current_iterate, current_evaluations);
 
       this->initial_point.resize(this->feasibility_problem.number_variables);
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
@@ -245,24 +245,23 @@ namespace uno {
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
-      const auto [number_optimality_variables, number_optimality_constraints] = this->inequality_handling_method->get_dimensions();
-      const auto [number_feasibility_variables, number_feasibility_constraints] = this->feasibility_inequality_handling_method->get_dimensions();
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
+      const auto& reformulated_feasibility_problem = this->feasibility_inequality_handling_method->reformulated_problem();
 
       // allocate a buffer iterate if this is the first time we enter this function
       if (this->first_test_of_switch_back) {
-         this->iterate_buffer = Iterate(number_optimality_variables, number_optimality_constraints);
+         this->iterate_buffer = Iterate(reformulated_problem.number_variables, reformulated_problem.number_constraints);
          this->first_test_of_switch_back = false;
       }
       // copy the trial iterate into the buffer iterate, and evaluate the progress measures and primal infeasibility wrt
       // the original problem
       view(this->iterate_buffer.primals, 0, this->original_problem.number_variables) = view(trial_iterate.primals, 0, this->original_problem.number_variables);
-      view(this->iterate_buffer.primals, this->original_problem.number_variables, number_optimality_variables) =
-         view(trial_iterate.primals, this->feasibility_problem.number_variables, number_feasibility_variables);
+      view(this->iterate_buffer.primals, this->original_problem.number_variables, reformulated_problem.number_variables) =
+         view(trial_iterate.primals, this->feasibility_problem.number_variables, reformulated_feasibility_problem.number_variables);
       trial_evaluations.evaluate_constraints(model, this->iterate_buffer.primals);
       // the restoration bounds may have been relaxed beyond the optimality bounds: relax the latter (otherwise the
       // barrier measure is infinite and restoration may never terminate when a variable sits at its relaxed bound)
       this->inequality_handling_method->relax_bounds_around(this->iterate_buffer);
-      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
       reformulated_problem.evaluate_progress_measures(this->iterate_buffer, trial_evaluations, this->progress_norm);
       // same measure as the reference infeasibility (primal infeasibility of the optimality reformulation)
       this->iterate_buffer.scaled_residuals.primal_infeasibility =
@@ -286,10 +285,10 @@ namespace uno {
    void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations) {
       DEBUG << "\nSwitching from restoration back to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
+      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
 
-      const auto [number_optimality_variables, number_optimality_constraints] = this->inequality_handling_method->get_dimensions();
       const size_t first_restoration_slack = this->feasibility_problem.number_variables; // n + e
-      const size_t number_slacks = number_optimality_variables - this->original_problem.number_variables;
+      const size_t number_slacks = reformulated_problem.number_variables - this->original_problem.number_variables;
 
       // move the slacks [n + e, n + e + s) -> [n, n + s) BEFORE shrinking. The destination lies before
       // the source: a forward copy is correct even if the ranges overlap
@@ -299,13 +298,13 @@ namespace uno {
 
       // swap the iterate's multipliers and the optimality multipliers maintained by the class
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
-      trial_iterate.set_dimensions(number_optimality_variables, number_optimality_constraints);
+      trial_iterate.set_dimensions(reformulated_problem.number_variables, reformulated_problem.number_constraints);
       trial_iterate.multipliers.constraints.fill(0.);
 
       // compute the bound duals using the linearized complementarity, pretending that restoration was a single step
-      Vector<double> primal_restoration_direction(view(trial_iterate.primals, 0, number_optimality_variables)
+      Vector<double> primal_restoration_direction(view(trial_iterate.primals, 0, reformulated_problem.number_variables)
          - this->pre_restoration_primals);
-      Multipliers direction_multipliers(number_optimality_variables, 0);
+      Multipliers direction_multipliers(reformulated_problem.number_variables, 0);
       double step_length = 1.;
       this->inequality_handling_method->compute_bound_dual_direction(this->pre_restoration_primals, trial_iterate.multipliers,
          primal_restoration_direction, direction_multipliers, step_length);
@@ -314,7 +313,7 @@ namespace uno {
       // discard the multipliers if their magnitude exceeds a threshold
       // note: this assumes that the infinite bounds get a 0 multiplier (which Uno satisfies)
       if (norm_inf(trial_iterate.multipliers.lower_bounds, trial_iterate.multipliers.upper_bounds) > this->bound_multiplier_max_norm) {
-         for (size_t variable_index: Range(number_optimality_variables)) {
+         for (size_t variable_index: Range(reformulated_problem.number_variables)) {
             if (trial_iterate.multipliers.lower_bounds[variable_index] > 0.) {
                trial_iterate.multipliers.lower_bounds[variable_index] = 1.;
             }
@@ -325,7 +324,6 @@ namespace uno {
       }
       trial_iterate.objective_multiplier = 1.;
       this->inequality_handling_method->relax_bounds_around(trial_iterate);
-      const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
       reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
 
       this->initial_point.resize(this->original_problem.number_variables);

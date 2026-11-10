@@ -40,10 +40,6 @@ namespace uno {
          multipliers_threshold);
    }
 
-   std::pair<size_t, size_t> NoInequalityReformulation::get_dimensions() const {
-      return {this->problem.number_variables, this->problem.number_constraints};
-   }
-
    const OptimizationProblem& NoInequalityReformulation::reformulated_problem() const {
       return this->problem;
    }
