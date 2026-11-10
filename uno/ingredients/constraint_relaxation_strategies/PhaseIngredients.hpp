@@ -7,6 +7,7 @@
 #include <memory>
 
 namespace uno {
+   // forward declarations
    class GlobalizationStrategy;
    class InequalityHandlingMethod;
 
@@ -24,8 +25,9 @@ namespace uno {
       std::unique_ptr<GlobalizationStrategy> globalization_strategy{};
 
       template <typename... Args>
-      PhaseIngredients(Args&&... args): problem(std::forward<Args>(args)...) { }
+      explicit PhaseIngredients(Args&&... args): problem(std::forward<Args>(args)...) { }
 
+      // create a view to erase the type of Problem
       [[nodiscard]] PhaseIngredientsView view() const {
          return {this->problem, *this->inequality_handling_method, *this->globalization_strategy};
       }
