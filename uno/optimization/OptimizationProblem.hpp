@@ -110,6 +110,7 @@ namespace uno {
       [[nodiscard]] virtual double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
       // progress measures
+      void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const;
       virtual void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const;
       virtual void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const;
       virtual void set_auxiliary_measure(Iterate& iterate) const;

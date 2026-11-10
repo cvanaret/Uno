@@ -5,11 +5,11 @@
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
-#include "tools/Infinity.hpp"
 
 namespace uno {
    NoInequalityReformulation::NoInequalityReformulation(std::string name, const OptimizationProblem& problem,
@@ -40,12 +40,8 @@ namespace uno {
          multipliers_threshold);
    }
 
-   std::pair<size_t, size_t> NoInequalityReformulation::get_dimensions() const {
-      return {this->problem.number_variables, this->problem.number_constraints};
-   }
-
-   void NoInequalityReformulation::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->problem.postprocess_solution(iterate, evaluations);
+   const OptimizationProblem& NoInequalityReformulation::reformulated_problem() const {
+      return this->problem;
    }
 
    bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
@@ -130,34 +126,15 @@ namespace uno {
          bound_dual_step_length);
    }
 
-   void NoInequalityReformulation::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
-      InequalityHandlingMethod::evaluate_progress_measures(this->problem, iterate, evaluations);
-   }
-
    PredictedReductionModels NoInequalityReformulation::build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const {
       return this->subproblem->build_predicted_reduction_model(current_iterate, direction, this->progress_norm,
          current_evaluations, this->subproblem_solver->get_workspace());
    }
 
-   Decision NoInequalityReformulation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const {
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
-   }
-
-   void NoInequalityReformulation::accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const {
-      InequalityHandlingMethod::accept_iterate_unconditionally(*this->subproblem, trial_iterate, trial_evaluations);
-   }
-
    void NoInequalityReformulation::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,
          const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);
-   }
-
-   void NoInequalityReformulation::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
-      InequalityHandlingMethod::compute_residuals(this->problem, iterate, evaluations);
    }
 
    double NoInequalityReformulation::compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {

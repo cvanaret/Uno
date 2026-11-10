@@ -15,11 +15,11 @@
 #include "InteriorPointParameters.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
 #include "options/Options.hpp"
-#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -36,9 +36,8 @@ namespace uno {
       void initialize_statistics(Statistics& statistics) override;
       void create_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations, double multipliers_threshold) const override;
       void update_multipliers_of_square_problem(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold) override;
-      [[nodiscard]] std::pair<size_t, size_t> get_dimensions() const override;
-      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
+      [[nodiscard]] const OptimizationProblem& reformulated_problem() const override;
       [[nodiscard]] bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
          Evaluations& evaluations) override;
       [[nodiscard]] bool force_parameterization_update(Statistics& statistics) override;
@@ -60,17 +59,11 @@ namespace uno {
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
 
-      void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const override;
-      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const override;
-      void accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const override;
       void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
-      void compute_residuals(Iterate& iterate, Evaluations& evaluations) const override;
       [[nodiscard]] double compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] std::string get_name() const override;
@@ -162,13 +155,8 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   std::pair<size_t, size_t> InteriorPointMethod<BarrierProblem>::get_dimensions() const {
-      return {this->barrier_problem.number_variables, this->barrier_problem.number_constraints};
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      this->barrier_problem.postprocess_solution(iterate, evaluations);
+   const OptimizationProblem& InteriorPointMethod<BarrierProblem>::reformulated_problem() const {
+      return this->barrier_problem;
    }
 
    template <typename BarrierProblem>
@@ -348,11 +336,6 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations) const {
-      InequalityHandlingMethod::evaluate_progress_measures(this->barrier_problem, iterate, evaluations);
-   }
-
-   template <typename BarrierProblem>
    PredictedReductionModels InteriorPointMethod<BarrierProblem>::build_predicted_reduction_models(const Iterate& current_iterate,
          const Direction& direction, Evaluations& current_evaluations) const {
       return this->subproblem->build_predicted_reduction_model(current_iterate, direction, this->progress_norm,
@@ -360,27 +343,9 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   Decision InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, Evaluations& trial_evaluations,
-         const ProgressMeasures& predicted_reductions) const {
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::accept_iterate_unconditionally(Iterate& trial_iterate, Evaluations& trial_evaluations) const {
-      InequalityHandlingMethod::accept_iterate_unconditionally(*this->subproblem, trial_iterate, trial_evaluations);
-   }
-
-   template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate,
          const Iterate& trial_iterate, Evaluations& current_evaluations, Evaluations& trial_evaluations) {
       this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations, trial_evaluations);
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::compute_residuals(Iterate& iterate, Evaluations& evaluations) const {
-      InequalityHandlingMethod::compute_residuals(this->barrier_problem, iterate, evaluations);
    }
 
    template <typename BarrierProblem>

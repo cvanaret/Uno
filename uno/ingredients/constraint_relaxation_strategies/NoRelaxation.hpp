@@ -10,8 +10,7 @@
 #include "optimization/OptimizationProblem.hpp"
 
 namespace uno {
-   // forward declarations
-   class Direction;
+   // forward declaration
    class InequalityHandlingMethod;
 
    class NoRelaxation : public ConstraintRelaxationStrategy {
@@ -61,6 +60,9 @@ namespace uno {
       MeritFunction globalization_strategy;
       const double least_square_multiplier_max_norm;
       Vector<double> initial_point;
+
+      using ConstraintRelaxationStrategy::is_iterate_acceptable;
+      using ConstraintRelaxationStrategy::accept_iterate_unconditionally;
    };
 } // namespace
 

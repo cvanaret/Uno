@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include "ConstraintRelaxationStrategy.hpp"
+#include "PhaseIngredients.hpp"
 #include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
@@ -15,11 +16,7 @@
 
 namespace uno {
    // forward declaration
-   class Direction;
-   class HessianModel;
    class InequalityHandlingMethod;
-   class InertiaCorrectionStrategy;
-   class SubproblemSolver;
 
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
@@ -67,13 +64,8 @@ namespace uno {
 
    private:
       Phase current_phase{Phase::OPTIMALITY};
-      const double constraint_violation_coefficient;
-      const OptimizationProblem original_problem;
-      l1RelaxedProblem feasibility_problem;
-      std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
-      std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
-      std::unique_ptr<GlobalizationStrategy> globalization_strategy;
-      std::unique_ptr<GlobalizationStrategy> feasibility_globalization_strategy;
+      PhaseIngredients<const OptimizationProblem> optimality;
+      PhaseIngredients<l1RelaxedProblem> feasibility;
       // strategy that tested the last trial iterate. Upon acceptance, the phase may change: the trial iterates of a step
       // are nonetheless all tested by the same strategy
       GlobalizationStrategy* trial_globalization_strategy{nullptr};
@@ -94,6 +86,9 @@ namespace uno {
 
       mutable Vector<double> constraints_buffer;
 
+      [[nodiscard]] PhaseIngredientsView current() const;
+      using ConstraintRelaxationStrategy::is_iterate_acceptable;
+      using ConstraintRelaxationStrategy::accept_iterate_unconditionally;
       const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
@@ -101,7 +96,7 @@ namespace uno {
          const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations);
       void switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations);
       void refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Evaluations& current_evaluations);
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate);
       void finalize_accepted_iterate(const Model& model, Iterate& trial_iterate, const Direction& direction, double step_length,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks);
