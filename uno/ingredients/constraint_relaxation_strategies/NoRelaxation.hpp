@@ -10,8 +10,7 @@
 #include "optimization/OptimizationProblem.hpp"
 
 namespace uno {
-   // forward declarations
-   class Direction;
+   // forward declaration
    class InequalityHandlingMethod;
 
    class NoRelaxation : public ConstraintRelaxationStrategy {

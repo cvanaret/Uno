@@ -15,11 +15,7 @@
 
 namespace uno {
    // forward declaration
-   class Direction;
-   class HessianModel;
    class InequalityHandlingMethod;
-   class InertiaCorrectionStrategy;
-   class SubproblemSolver;
 
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
