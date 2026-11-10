@@ -323,7 +323,7 @@ namespace uno {
          DEBUG << "Proximal coefficient set to " << proximal_coefficient << '\n';
       }
       // after the proximal update: the auxiliary measure must use the new coefficient and center
-      const auto& reformulated_problem = this->optimality.inequality_handling_method->reformulated_problem();
+      const auto& reformulated_problem = inequality_handling_method.reformulated_problem();
       reformulated_problem.set_auxiliary_measure(current_iterate);
    }
 
