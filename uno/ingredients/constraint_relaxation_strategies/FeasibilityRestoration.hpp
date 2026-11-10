@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include "ConstraintRelaxationStrategy.hpp"
+#include "PhaseIngredients.hpp"
 #include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
@@ -63,13 +64,8 @@ namespace uno {
 
    private:
       Phase current_phase{Phase::OPTIMALITY};
-      const double constraint_violation_coefficient;
-      const OptimizationProblem original_problem;
-      l1RelaxedProblem feasibility_problem;
-      std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
-      std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
-      std::unique_ptr<GlobalizationStrategy> globalization_strategy;
-      std::unique_ptr<GlobalizationStrategy> feasibility_globalization_strategy;
+      PhaseIngredients<const OptimizationProblem> optimality;
+      PhaseIngredients<l1RelaxedProblem> feasibility;
       // strategy that tested the last trial iterate. Upon acceptance, the phase may change: the trial iterates of a step
       // are nonetheless all tested by the same strategy
       GlobalizationStrategy* trial_globalization_strategy{nullptr};
@@ -90,6 +86,7 @@ namespace uno {
 
       mutable Vector<double> constraints_buffer;
 
+      [[nodiscard]] PhaseIngredientsView current() const;
       using ConstraintRelaxationStrategy::is_iterate_acceptable;
       using ConstraintRelaxationStrategy::accept_iterate_unconditionally;
       const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
