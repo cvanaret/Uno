@@ -27,10 +27,10 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, const Options& options,
       std::vector<OptionOverride>& option_overrides) :
          ConstraintRelaxationStrategy(options),
-         optimality(model, options.get_double("residual_scaling_threshold")),
+         optimality("optimality", "OPT", model, options.get_double("residual_scaling_threshold")),
          // relax nonlinear constraints + linear constraints in the presence of a trust region
-         feasibility(model, 0., options.get_double("l1_constraint_violation_coefficient"), use_trust_region,
-            options.get_bool("use_proximal_term"), options.get_double("residual_scaling_threshold")),
+         feasibility("feasibility", "FEAS", model, 0., options.get_double("l1_constraint_violation_coefficient"),
+            use_trust_region, options.get_bool("use_proximal_term"), options.get_double("residual_scaling_threshold")),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
@@ -75,35 +75,19 @@ namespace uno {
    }
 
    void FeasibilityRestoration::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
-      if (this->current_phase == Phase::OPTIMALITY) {
-         const auto& reformulated_problem = this->optimality.inequality_handling_method->reformulated_problem();
-         reformulated_problem.postprocess_solution(iterate, evaluations);
-      }
-      else {
-         const auto& reformulated_problem = this->feasibility.inequality_handling_method->reformulated_problem();
-         reformulated_problem.postprocess_solution(iterate, evaluations);
-      }
+      const auto& reformulated_problem = this->current().inequality_handling_method.reformulated_problem();
+      reformulated_problem.postprocess_solution(iterate, evaluations);
    }
 
    const Direction& FeasibilityRestoration::compute_direction(Statistics& statistics, Iterate& current_iterate,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
-
       // solve the current problem (OPTIMALITY or FEASIBILITY_RESTORATION)
-      if (this->current_phase == Phase::OPTIMALITY) {
-         DEBUG << "Solving the optimality subproblem\n";
-         statistics.set("Phase", "OPT");
-         this->initial_point.fill(0.);
-         return this->solve_subproblem(statistics, *this->optimality.inequality_handling_method, *this->optimality.globalization_strategy,
-            current_iterate, trust_region_radius, current_evaluations, warmstart_information);
-      }
-      else {
-         // solve the feasibility problem (minimize the constraint violation)
-         DEBUG << "Solving the feasibility subproblem\n";
-         statistics.set("Phase", "FEAS");
-         return this->solve_subproblem(statistics, *this->feasibility.inequality_handling_method,
-            *this->feasibility.globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
-            warmstart_information);
-      }
+      const auto current_ingredients = this->current();
+      DEBUG << "Solving the " << current_ingredients.problem_name << " problem\n";
+      statistics.set("Phase", current_ingredients.phase_label);
+      return this->solve_subproblem(statistics, current_ingredients.inequality_handling_method,
+         current_ingredients.globalization_strategy, current_iterate, trust_region_radius, current_evaluations,
+         warmstart_information);
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -216,7 +200,7 @@ namespace uno {
       if (inequality_handling_method.update_parameterization(statistics, current_iterate, current_evaluations)) {
          refresh_after_parameterization_update(inequality_handling_method, globalization_strategy, current_iterate);
       }
-
+      this->initial_point.fill(0.);
       const Direction& direction = inequality_handling_method.solve(statistics, current_iterate, trust_region_radius,
          this->initial_point, current_evaluations, warmstart_information);
       ++this->number_subproblems_solved;
