@@ -41,7 +41,7 @@ The settings of the Uno algorithms are of two kinds:
   They default to `None`, which means the default value of Uno (or of the preset);
   only the options set by the user are passed to Uno.
 
-The settings can be passed either as a settings model:
+The settings are passed as a settings model, whose class sets the algorithm:
 
 ```python
 from unopy.gemseo.settings.filter_sqp import UNO_Filter_SQP_Settings
@@ -50,14 +50,8 @@ settings = UNO_Filter_SQP_Settings(max_iter=50, xtol_rel=1e-8, TR_radius=0.5, lo
 scenario.execute(settings)
 ```
 
-or as keyword arguments, with the name of the algorithm:
-
-```python
-scenario.execute(algo_name="UNO_Filter_SQP", max_iter=50, xtol_rel=1e-8, TR_radius=0.5, logger="SILENT")
-```
-
 The settings model gives autocompletion and documentation in an IDE,
-and both ways validate the settings:
+and validates the settings:
 a misspelled setting or a value of the wrong type raises a `pydantic.ValidationError` before the optimization.
 
 ```python
@@ -102,11 +96,13 @@ print(result.f_opt)        # 2.1920908016810308
 print(result.is_feasible)  # True
 ```
 
-The same problem with the IPOPT preset, and the settings passed as keyword arguments:
+The same problem with the IPOPT preset:
 
 ```python
+from unopy.gemseo.settings.ipopt import UNO_IPOPT_Settings
+
 problem = Power2()
-result = execute_algo(problem, algo_name="UNO_IPOPT", max_iter=50, logger="SILENT")
+result = execute_algo(problem, settings_model=UNO_IPOPT_Settings(max_iter=50, logger="SILENT"))
 ```
 
 ## Example: the supersonic business jet (SSBJ)
@@ -147,5 +143,4 @@ print(result.is_feasible)  # True
 ```
 
 Uno finds the optimal range of 3963.38 in a few iterations.
-Another algorithm is used by changing the settings class, e.g. `UNO_IPOPT_Settings`,
-or the `algo_name` argument.
+Another algorithm is used by changing the settings class, e.g. `UNO_IPOPT_Settings`.
