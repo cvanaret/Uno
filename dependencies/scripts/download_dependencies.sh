@@ -117,7 +117,7 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
 		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-	cmake --build "$BLD_W" --config Release --parallel
+	cmake --build "$BLD_W" --config Release --parallel 2
 	cmake --install "$BLD_W" --config Release
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
