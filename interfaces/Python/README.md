@@ -23,7 +23,7 @@ pip install "unopy[scipy]"   # scipy.optimize.minimize-like interface
 pip install "unopy[gemseo]"  # GEMSEO plugin
 ```
 
-`unopy.scipy.minimize` follows the API of `scipy.optimize.minimize`, with the Uno presets as methods (`"filtersqp"`, `"filterslp"`, `"funnelsqp"` and `"ipopt"`):
+`unopy.scipy.minimize` follows the API of `scipy.optimize.minimize`, with the Uno presets as methods (`"filtersqp"` and `"ipopt"`):
 
 ```python
 from scipy.optimize import rosen, rosen_der
