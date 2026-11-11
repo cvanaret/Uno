@@ -13,7 +13,7 @@ pip install "unopy[scipy]"
 
 ## Solving a problem
 
-The methods are the [Uno presets](../presets.md): `"filtersqp"` (the default), `"filterslp"`, `"funnelsqp"` and `"ipopt"`.
+The methods are the [Uno presets](../presets.md) `"filtersqp"` (the default) and `"ipopt"`.
 
 ```python
 import numpy as np
@@ -48,8 +48,7 @@ The Hessian `hess` can be:
   L-BFGS or L-SR1 (the option `quasi_newton_memory_size` sets the memory);
 - `None` (the default): Uno uses its L-BFGS model.
 
-A callable `hess` is used by `"filtersqp"` and `"funnelsqp"`.
-It is ignored by `"filterslp"`, which uses no Hessian, and when the option `hessian_model` is not `"exact"`.
+A callable `hess` is used by `"filtersqp"`, unless the option `hessian_model` is not `"exact"`.
 It is not supported by `"ipopt"`, which needs an explicit Hessian matrix: use `BFGS()` with this method.
 
 ## Bounds and constraints
@@ -78,7 +77,7 @@ res = minimize(
     np.array([0.5, 0.0]),
     jac=rosen_der,
     hess=rosen_hess,
-    method="funnelsqp",
+    method="filtersqp",
     bounds=bounds,
     constraints=[linear_constraint, nonlinear_constraint],
 )
