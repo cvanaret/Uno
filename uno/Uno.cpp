@@ -24,6 +24,7 @@
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/UserTermination.hpp"
+#include "optimization/InitialPointPerturbation.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -271,7 +272,29 @@ namespace uno {
       return this->method_description;
    }
 
+   // if the functions cannot be evaluated at the initial point, retry from deterministic perturbations of increasing
+   // magnitude (relative 1e-8, 1e-6, 1e-4, ...) of the initial point
    std::optional<OptimizationStatus> Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) {
+      const size_t max_attempts = options.get_unsigned_int("initial_point_perturbation_attempts");
+      const std::vector<OptionOverride> initial_option_overrides = option_overrides;
+      double relative_magnitude = 1e-8;
+      for (size_t attempt = 0;; ++attempt) {
+         const std::optional<OptimizationStatus> status = this->initialize_once(statistics, model, current_iterate,
+            evaluation_cache, options, option_overrides);
+         if (status != OptimizationStatus::EVALUATION_ERROR || attempt == max_attempts) {
+            return status;
+         }
+         // the ingredients were discarded and the iterate was reset to the (projected) initial point: perturb it
+         perturb_point(current_iterate.primals, model.get_variables_lower_bounds(), model.get_variables_upper_bounds(),
+            relative_magnitude);
+         DISCRETE << "Retrying from a perturbation (relative magnitude " << relative_magnitude << ") of the initial point\n";
+         relative_magnitude *= 100.;
+         option_overrides = initial_option_overrides;
+      }
+   }
+
+   std::optional<OptimizationStatus> Uno::initialize_once(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) {
       try {
          statistics.start_new_line();
