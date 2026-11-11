@@ -59,6 +59,7 @@ MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
 # HiGHS
 HIGHS = "dependencies/lib/libhighs.a;dependencies/lib/libhighs_extras.a"
 HIGHS_INCLUDE_DIR = "dependencies/include/highs"
+HIGHS_WITH_HIPO = "ON"
 # SPRAL
 SPRAL = "dependencies/lib/libspral.a"
 SPRAL_INCLUDE_DIR = "dependencies/include"
