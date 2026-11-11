@@ -4,7 +4,9 @@
 [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html):
 the objective, its derivatives, the bounds and the constraints are given as in SciPy,
 and the result is a SciPy `OptimizeResult`.
-Code written for `scipy.optimize.minimize` therefore runs with Uno by changing the import and the method.
+Code written for `scipy.optimize.minimize` therefore runs with Uno by changing the import and the method,
+except for the `options` dictionary, which holds [Uno options](../options.md) instead of the options of the SciPy methods
+(see [Options](#options)).
 
 It is part of [unopy](python.md) and its dependencies are installed with the `scipy` extra:
 ```bash
@@ -22,7 +24,7 @@ from unopy.scipy import minimize
 
 x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
 res = minimize(rosen, x0, jac=rosen_der, hess=rosen_hess, method="filtersqp")
-print(res.x)        # [1. 1. 1. 1. 1.]
+print(res.x)        # ≈ [1. 1. 1. 1. 1.]
 print(res.success)  # True
 print(res.message)  # Optimization status: SUCCESS; solution status: FEASIBLE_KKT_POINT.
 ```
@@ -42,7 +44,9 @@ The Hessian `hess` can be:
 
 - a callable `hess(x, *args)` returning the Hessian of the objective as a dense array, a `scipy.sparse` matrix or a `LinearOperator`.
   The Hessian of each `NonlinearConstraint` is then read from its `hess` attribute,
-  `hess(x, v)`, returning the sum of the Hessians of its components weighted by the multipliers `v`.
+  `hess(x, v)`, returning the sum of the Hessians of its components weighted by the multipliers `v`;
+  every nonlinear constraint must then be a `NonlinearConstraint` with a callable `hess`
+  (a `LinearConstraint` has a zero Hessian), otherwise a `ValueError` is raised before the optimization.
   Uno only uses Hessian-vector products, so the Lagrangian Hessian is never built as a dense matrix;
 - a `scipy.optimize.BFGS()` or `SR1()` instance: Uno then uses its limited-memory quasi-Newton model,
   L-BFGS or L-SR1 (the option `quasi_newton_memory_size` sets the memory);
@@ -110,9 +114,13 @@ its `"jac"` entry is optional, and its `"args"` entry gives extra arguments to `
 
 The Jacobian of a constraint, and the matrix `A` of a `LinearConstraint`,
 can be a `scipy.sparse` matrix: it is passed to Uno without being converted to a dense array.
-The sparsity pattern is fixed for the whole optimization.
-It is the pattern of the Jacobian at `x0`, which is evaluated before the optimization,
-or the nonzero entries of a dense `A`.
+The sparsity pattern is fixed for the whole optimization:
+
+- for a `LinearConstraint`, it is the stored entries of a sparse `A` or the nonzero entries of a dense `A`;
+- for a Jacobian computed by a function, the Jacobian at `x0` is evaluated before the optimization,
+  and the pattern is all its entries if it is dense, or its stored entries if it is sparse;
+- for a Jacobian approximated by finite differences, the pattern is dense.
+
 A sparse Jacobian must therefore store every entry that can be nonzero during the optimization,
 even if it is zero at `x0`; for instance, a sparse matrix built from a dense array drops its zeros.
 A COO matrix built from its entries keeps them:
@@ -164,8 +172,9 @@ An unknown option or a value of the wrong type raises an error before the optimi
 
 ## Callback
 
-The callback is called after each iteration.
-With a parameter named `intermediate_result`, it is passed an `OptimizeResult` with the current point `x` and objective `fun`;
+The callback is called on each iterate accepted by Uno.
+With a parameter named `intermediate_result`, it is passed an `OptimizeResult` with
+the current point `x`, the objective `fun`, the iteration number `nit` and the current multipliers;
 otherwise, it is passed a copy of the current point.
 Raising `StopIteration` in the callback stops Uno cleanly:
 
@@ -205,12 +214,12 @@ The user functions are no longer called once one of them has raised an exception
 | `x` | the solution |
 | `fun` | the objective value at `x` |
 | `success` | whether Uno returned the optimization status `SUCCESS` with a feasible solution (`FEASIBLE_KKT_POINT`, `FEASIBLE_FJ_POINT` or `FEASIBLE_SMALL_STEP`) |
-| `status` | the optimization status as an int: 0 when Uno terminated normally (`success` can still be False at an infeasible point), 99 when the callback raised `StopIteration` |
+| `status` | the optimization status as an int: 0 when Uno terminated normally (`success` can still be False at an infeasible point), the value of `unopy.OptimizationStatus` otherwise (e.g. 1 for `ITERATION_LIMIT`), and 99 when the callback raised `StopIteration` |
 | `message` | the optimization status and the solution status |
 | `nit` | the number of iterations |
 | `nfev` | the number of calls to `fun`, finite differences included |
 | `njev` | the number of evaluations of the gradient |
-| `nhev` | the number of calls to `hess` |
+| `nhev` | the number of calls to `hess` when it is a callable, the number of Hessian evaluations counted by Uno otherwise |
 | `maxcv` | the maximum violation of the bounds and the constraints at `x` |
 
 and the following ones:

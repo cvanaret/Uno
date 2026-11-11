@@ -9,7 +9,8 @@ It is part of [unopy](python.md) and its dependencies (GEMSEO 6.3 or later, and 
 pip install "unopy[gemseo]"
 ```
 
-GEMSEO discovers the plugin automatically once unopy is installed: no import is needed to use the algorithms by name.
+GEMSEO discovers the plugin automatically once unopy is installed:
+the algorithms below are then listed among the optimization algorithms available in GEMSEO.
 
 ## Algorithms
 
@@ -37,6 +38,8 @@ The settings of the Uno algorithms are of two kinds:
   e.g. `TR_radius`, `filter_capacity`, `barrier_initial_parameter`, `linear_solver` or `logger`.
   They default to `None`, which means the default value of Uno (or of the preset);
   only the options set by the user are passed to Uno.
+  The options `preset` and `max_iterations` are not available, as the plugin sets them
+  (see [Stopping criteria](#stopping-criteria)).
 
 The settings are passed as a settings model, whose class sets the algorithm:
 
@@ -58,14 +61,15 @@ UNO_Filter_SQP_Settings(TR_radius="big")  # ValidationError: Input should be a v
 
 ### Stopping criteria
 
-The stopping criteria are left to GEMSEO (`max_iter`, `max_time`, `ftol_rel`, `xtol_rel`, ...).
+The stopping criteria are mainly left to GEMSEO (`max_iter`, `max_time`, `ftol_rel`, `xtol_rel`, ...).
 To this end, the plugin sets the Uno options `max_iterations` to the largest integer
 and `primal_tolerance` and `dual_tolerance` to 1e-15,
-so that Uno does not stop before GEMSEO unless the problem is solved to machine precision.
+so that Uno's own convergence test only stops it once the problem is solved to machine precision.
 Setting `primal_tolerance` or `dual_tolerance` overrides these values.
-Uno can also stop after `acceptable_iteration_threshold` consecutive iterates satisfying its looser acceptable tolerances
-(`acceptable_tolerance` and the `acceptable_unscaled_*` options),
-which stops the IPOPT preset once it no longer makes progress.
+Uno can still stop before GEMSEO with its acceptable test:
+after `acceptable_iteration_threshold` (15 by default) consecutive iterates satisfying its looser acceptable tolerances
+(`acceptable_tolerance`, 1e-6 by default, and the `acceptable_unscaled_*` options).
+This is what stops the IPOPT preset once it no longer makes progress.
 
 ## Example: the Power2 problem
 
