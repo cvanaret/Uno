@@ -69,11 +69,9 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
 	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "${BUILD_ROOT}/HiGHS" --strip-components=1
 
-	# Patch v1.15.1 (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+	# Patch (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
 	# fix-cli11.patch
 	sed -i 's/(*opt)/opt->count() > 0/' "${BUILD_ROOT}/HiGHS/extern/cli11/CLI11.hpp"
-	# fix-destroy.patch
-	sed -i 's/Highs::resetGlobalScheduler(true);//' "${BUILD_ROOT}/HiGHS/highs/interfaces/highs_c_api.cpp"
 
 	# Build HiGHS with the SAME compiler the consuming workflow links with.
 	# A mismatch here is what produces the __emutls_v._ZSt*__once_call* and
