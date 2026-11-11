@@ -27,6 +27,7 @@
 #include "optimization/InitialPointPerturbation.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationStatus.hpp"
+#include "optimization/PushToInterior.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/InterruptHandler.hpp"
 #include "tools/Logger.hpp"
@@ -82,10 +83,6 @@ namespace uno {
    // user_model is the original model provided by the user, model is the possibly reduced model
    Result Uno::reformulate_and_solve(const Model& user_model, const Model& model, const Options& options,
          UserCallbacks& user_callbacks) {
-      // the functions are scaled at the initial point
-      Vector<double> initial_primals(model.number_variables);
-      model.initial_primal_point(initial_primals);
-
       // reformulate the model if:
       // - the user wants an interior-point method with log barrier function
       // - the model has bound constraints or inequality constraints
@@ -94,11 +91,42 @@ namespace uno {
          // slightly relax the bound constraints. As in IPOPT, the original (unscaled) bounds are relaxed: relaxing the
          // scaled bounds would allow violations of the original constraints of up to relaxation/constraint scaling
          const BoundRelaxedModel bound_relaxed_model(model, options);
-         const ScaledModel scaled_model(bound_relaxed_model, initial_primals, options);
+         // the functions are scaled at the initial point pushed strictly inside the relaxed bounds
+         const Vector<double> scaling_point = Uno::compute_interior_initial_point(bound_relaxed_model, options);
+         const ScaledModel scaled_model(bound_relaxed_model, scaling_point, options);
          return uno_solve(user_model, scaled_model, options, user_callbacks);
       }
-      const ScaledModel scaled_model(model, initial_primals, options);
+      // the functions are scaled at the initial point projected onto the bounds
+      const Vector<double> scaling_point = Uno::compute_projected_initial_point(model);
+      const ScaledModel scaled_model(model, scaling_point, options);
       return uno_solve(user_model, scaled_model, options, user_callbacks);
+   }
+
+   // The function scaling is computed at the point where the optimization actually starts, not at the initial point of
+   // the user (which may lie outside the bounds, where the functions may not be defined). The function scaling leaves the
+   // variable bounds unchanged, therefore these points coincide with the primals of the initial iterate.
+
+   // initial point projected onto the variable bounds (as in Uno::initialize_once)
+   Vector<double> Uno::compute_projected_initial_point(const Model& model) {
+      Vector<double> point(model.number_variables);
+      model.initial_primal_point(point);
+      model.project_onto_variable_bounds(point);
+      return point;
+   }
+
+   // initial point projected onto the variable bounds, then pushed strictly inside them (as in the initial iterate of
+   // the barrier problem)
+   Vector<double> Uno::compute_interior_initial_point(const Model& model, const Options& options) {
+      Vector<double> point = Uno::compute_projected_initial_point(model);
+      const double absolute_factor = options.get_double("barrier_push_variable_to_interior_k1");
+      const double relative_factor = options.get_double("barrier_push_variable_to_interior_k2");
+      const auto& variables_lower_bounds = model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = model.get_variables_upper_bounds();
+      for (size_t variable_index: Range(model.number_variables)) {
+         point[variable_index] = push_variable_to_interior(point[variable_index], variables_lower_bounds[variable_index],
+            variables_upper_bounds[variable_index], absolute_factor, relative_factor);
+      }
+      return point;
    }
 
    // all the variables were eliminated: the only point is a KKT point iff the remaining constraints are satisfied (their
