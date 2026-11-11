@@ -39,6 +39,8 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     acceptable_unscaled_complementarity_tolerance: float | None = None
     acceptable_objective_change_tolerance: float | None = None
     acceptable_iteration_threshold: int | None = None
+    roundoff_feasibility_factor: float | None = None
+    initial_point_perturbation_attempts: int | None = None
     time_limit: float | None = None
     print_solution: bool | None = None
     diverging_iterate_threshold: float | None = None

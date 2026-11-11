@@ -7,11 +7,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+from typing import Callable
 from typing import ClassVar
 from typing import TYPE_CHECKING
 
 from numpy import atleast_1d
 from numpy import atleast_2d
+from numpy import clip
 from numpy import concatenate
 from numpy import indices
 from numpy import real
@@ -65,7 +67,9 @@ def _to_sparse(jacobian: NumberArray) -> coo_array:
 
 
 def _concatenate_constraints(
-    constraints: Sequence[MDOFunction], constraint_type: str
+    constraints: Sequence[MDOFunction],
+    constraint_type: str,
+    project: Callable[[NumberArray], NumberArray] | None = None,
 ) -> dict[str, Any]:
     """Merge constraints of the same type into a single SciPy constraint.
 
@@ -77,6 +81,8 @@ def _concatenate_constraints(
     Args:
         constraints: The constraints of the same type.
         constraint_type: The type of the constraints, either "eq" or "ineq".
+        project: The function projecting a point onto the bounds
+            before the evaluation of the constraints, if any.
 
     Returns:
         The SciPy dictionary constraint concatenating the values of the constraints
@@ -85,12 +91,19 @@ def _concatenate_constraints(
         with all the entries of the dense Jacobians stored.
     """
 
+    if project is None:
+
+        def project(x: NumberArray) -> NumberArray:
+            return x
+
     def evaluate(x: NumberArray) -> NumberArray:
+        x = project(x)
         return concatenate([
             atleast_1d(constraint.evaluate(x)) for constraint in constraints
         ])
 
     def compute_jacobian(x: NumberArray) -> Any:
+        x = project(x)
         jacobians = [constraint.jac(x) for constraint in constraints]
         if any(issparse(jacobian) for jacobian in jacobians):
             return sparse_vstack(
@@ -105,7 +118,10 @@ def _concatenate_constraints(
     return {"type": constraint_type, "fun": evaluate, "jac": compute_jacobian}
 
 
-def _merge_constraints(constraints: Sequence[MDOFunction]) -> list[dict[str, Any]]:
+def _merge_constraints(
+    constraints: Sequence[MDOFunction],
+    project: Callable[[NumberArray], NumberArray] | None = None,
+) -> list[dict[str, Any]]:
     """Merge the constraints into one equality and one inequality SciPy constraint.
 
     The order of the constraints of the same type is preserved.
@@ -114,6 +130,8 @@ def _merge_constraints(constraints: Sequence[MDOFunction]) -> list[dict[str, Any
 
     Args:
         constraints: The constraints with the sign expected by SciPy.
+        project: The function projecting a point onto the bounds
+            before the evaluation of the constraints, if any.
 
     Returns:
         At most two SciPy dictionary constraints,
@@ -127,7 +145,7 @@ def _merge_constraints(constraints: Sequence[MDOFunction]) -> list[dict[str, Any
         ]
         if constraints_of_type:
             merged_constraints.append(
-                _concatenate_constraints(constraints_of_type, constraint_type)
+                _concatenate_constraints(constraints_of_type, constraint_type, project)
             )
     return merged_constraints
 
@@ -198,10 +216,16 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
     def _run(self, problem: OptimizationProblem) -> tuple[str, Any]:
         x_0, l_b, u_b = get_initial_point_and_bounds(self, problem)
 
+        def project(x: NumberArray) -> NumberArray:
+            # Uno may evaluate the functions slightly outside the bounds,
+            # e.g. the interior-point method relaxes them,
+            # whereas GEMSEO rejects such points.
+            return clip(x, l_b, u_b)
+
         # Get the constraints in SciPy format,
         # merged into one equality and one inequality constraint.
         scipy_constraints = _merge_constraints(
-            list(self._get_right_sign_constraints(problem))
+            list(self._get_right_sign_constraints(problem)), project
         )
 
         # Only the Uno settings set by the user, i.e. neither the GEMSEO ones
@@ -223,8 +247,8 @@ class UnoOpt(BaseOptimizationLibrary[BaseUnoSettings]):
         # once it only repeats the same iterate.
 
         opt_result = minimize(
-            fun=lambda x: real(problem.objective.evaluate(x)),
-            jac=problem.objective.jac,
+            fun=lambda x: real(problem.objective.evaluate(project(x))),
+            jac=lambda x: problem.objective.jac(project(x)),
             x0=x_0,
             method=self.ALGORITHM_INFOS[self._algo_name].internal_algorithm_name,
             bounds=Bounds(l_b, u_b),

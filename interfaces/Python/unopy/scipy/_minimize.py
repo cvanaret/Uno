@@ -358,6 +358,8 @@ def minimize(
         "acceptable_unscaled_complementarity_tolerance" : float
         "acceptable_objective_change_tolerance" : float
         "acceptable_iteration_threshold" : int
+        "roundoff_feasibility_factor" : float
+        "initial_point_perturbation_attempts" : int
         "max_iterations" (or its aliases "maxiter" and "max_iter") : int
         "time_limit" : float
         "print_solution" : bool

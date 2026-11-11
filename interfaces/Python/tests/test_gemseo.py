@@ -552,3 +552,33 @@ def test_concatenate_constraints_keeps_dense_zeros():
     block.write(x0, values)
     block.write(array([1.0, 0.0]), values)
     assert_array_equal(values, [1.0, 2.0, 1.0])
+
+
+@pytest.mark.parametrize("method", sorted(SETTINGS))
+def test_points_projected_onto_bounds(method):
+    """Check that the functions are never evaluated outside the bounds.
+
+    The interior-point method relaxes the bounds and GEMSEO rejects the points
+    outside the design space; the optimum is at the upper bounds.
+    """
+    design_space = DesignSpace()
+    design_space.add_variable(
+        "x", 2, lower_bound=0.0, upper_bound=60000.0, value=array([30000.0, 30000.0])
+    )
+    problem = OptimizationProblem(design_space)
+    problem.objective = MDOFunction(
+        lambda x: -(x[0] + x[1]) / 60000.0,
+        "f",
+        jac=lambda x: array([-1.0, -1.0]) / 60000.0,
+    )
+    problem.add_constraint(
+        MDOFunction(
+            lambda x: array([x[0] / 60000.0 - 2.0]),
+            "g",
+            jac=lambda x: array([[1.0 / 60000.0, 0.0]]),
+        ),
+        constraint_type=MDOFunction.ConstraintType.INEQ,
+    )
+    res = _execute(UnoOpt(method), problem, SETTINGS[method](max_iter=100))
+    assert res.is_feasible
+    assert allclose(res.x_opt, [60000.0, 60000.0])
