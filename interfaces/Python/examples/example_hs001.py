@@ -34,7 +34,7 @@ if __name__ == '__main__':
 	print("Solving with Uno", unopy.current_uno_version())
 
 	# solve with an interior-point method and with an SQP method
-	for preset, option, solver in [("ipopt", "linear_solver", "MUMPS"), ("filtersqp", "QP_solver", "BQPD")]:
+	for preset, option, solver in [("ipopt", "linear_solver", "MUMPS"), ("ipopt", "linear_solver", "HIPO"), ("filtersqp", "QP_solver", "BQPD"), ("filterslp", "LP_solver", "HiGHS")]:
 		uno_solver.set_preset(preset)
 		uno_solver.set_option(option, solver)
 		result = uno_solver.optimize(model)
