@@ -9,9 +9,11 @@
 #include "HiPOSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    HiPOSolver::HiPOSolver(): DirectSymmetricIndefiniteLinearSolver<double>() {
+      INFO << "Running HiPO v" << hipoVersion() << '\n';
       // initialize the global HiPO scheduler once for the whole process
       static const HighsInt initialize_status = FactorHighs_initialise(0); // 0: default number of threads
       if (initialize_status != 0) {

@@ -1,7 +1,7 @@
 // Vendored copy of HiGHS's HiPO C API header (highs/ipm/hipo/factorhighs/FactorHighs_c_api.h).
 // HiGHS does not install this header, so Uno keeps a copy here. Keep it in sync with the HiGHS
 // version you link against (it depends only on the installed core header "util/HighsInt.h").
-// Source: HiGHS branch hipo-c, commit 2581f1c376.
+// Source: HiGHS branch hipo-c, commit a7a2225.
 
 #ifndef FACTOR_HIGHS_C_API_H
 #define FACTOR_HIGHS_C_API_H
@@ -17,6 +17,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+static const char* hipoVersion() {
+   return "1.15.1";
+}
 
 // Initialise and create/destroy objects
 HighsInt FactorHighs_initialise(HighsInt threads);
