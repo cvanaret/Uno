@@ -63,8 +63,11 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	# fetch HiGHS source
 	BUILD_ROOT="$(mktemp -d)"
 	mkdir "${BUILD_ROOT}/HiGHS"
-	VERSION="v1.15.0"
-	ASSET_URL="https://github.com/ERGO-Code/HiGHS/archive/refs/tags/${VERSION}.tar.gz"
+	#VERSION="v1.15.0"
+  #ASSET_URL="https://github.com/ERGO-Code/HiGHS/archive/refs/tags/${VERSION}.tar.gz"
+  # prerelease v1.16
+  COMMIT="a7a2225cd162c4fe79ef13c498b88d8eb8d4bfb5"
+  ASSET_URL="https://github.com/ERGO-Code/HiGHS/archive/${COMMIT}.tar.gz"
 	echo "Downloading: ${ASSET_URL}"
 	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
 	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "${BUILD_ROOT}/HiGHS" --strip-components=1
@@ -112,11 +115,9 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DBLA_VENDOR=Generic \
 		-DBLAS_LIBRARIES="$BLAS_W" \
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
-		-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-		-DCMAKE_UNITY_BUILD=ON \
-		-DCMAKE_UNITY_BUILD_BATCH_SIZE=16
+		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-	cmake --build "$BLD_W" --config Release --parallel
+	cmake --build "$BLD_W" --config Release --parallel 2
 	cmake --install "$BLD_W" --config Release
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
