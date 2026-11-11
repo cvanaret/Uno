@@ -25,6 +25,8 @@ nav:
   - 'Benchmarks': 'benchmarks.md'
   - 'Interfaces':
     - 'Python': 'interfaces/python.md'
+    - 'SciPy': 'interfaces/scipy.md'
+    - 'GEMSEO': 'interfaces/gemseo.md'
     - 'Julia': 'interfaces/julia.md'
     - 'C': 'interfaces/c.md'
     - 'AMPL': 'interfaces/ampl.md'
