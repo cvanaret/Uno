@@ -31,18 +31,26 @@ def _set_option(uno_solver: unopy.UnoSolver, name: str, value: Any) -> None:
         uno_solver: The Uno solver.
         name: The name of the option.
         value: The value of the option.
+
+    Raises:
+        TypeError: If the option does not accept the type of the value.
     """
     try:
         uno_solver.set_option(name, value)
     except TypeError as error:
-        if isinstance(value, (bool, np.bool_)) or not isinstance(
+        if not isinstance(value, (bool, np.bool_)) and isinstance(
             value, (int, np.integer)
         ):
-            raise
-        try:
-            uno_solver.set_option(name, float(value))
-        except TypeError:
-            raise error from None
+            try:
+                uno_solver.set_option(name, float(value))
+                return
+            except TypeError:
+                pass
+        # Uno's message names the type of the value, not the type of the option.
+        raise TypeError(
+            f"The Uno option {name!r} does not accept the value {value!r} "
+            f"of type {type(value).__name__} ({error})."
+        ) from None
 
 
 def _set_options(

@@ -460,12 +460,29 @@ def test_int_tolerance_and_float_option(monkeypatch):
 @pytest.mark.parametrize(
     ("name", "value", "message"),
     [
-        ("print_solution", 1, "print_solution is not of type int"),
-        ("max_iterations", True, "max_iterations is not of type bool"),
+        (
+            "print_solution",
+            1,
+            "The Uno option 'print_solution' does not accept the value 1 of type int",
+        ),
+        (
+            "max_iterations",
+            True,
+            "The Uno option 'max_iterations' does not accept the value True "
+            "of type bool",
+        ),
+        (
+            "TR_radius",
+            "big",
+            "The Uno option 'TR_radius' does not accept the value 'big' of type str",
+        ),
     ],
 )
 def test_wrong_option_type(name, value, message):
-    """Check that an int is not converted for a bool option and a bool is kept as is."""
+    """Check the error raised for a value of the wrong type.
+
+    An int is not converted for a bool option and a bool is kept as is.
+    """
     with pytest.raises(TypeError, match=message):
         minimize(rosen, np.zeros(2), jac=rosen_der, options={name: value})
 
