@@ -94,6 +94,28 @@ if __name__ == '__main__':
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
 	print("Objective at solution:", result.solution_objective)
+
+	# run 3: solve with the ipopt preset and MUMPS
+	uno_solver.set_preset("ipopt")
+	uno_solver.set_option("linear_solver", "MUMPS")
+	result = uno_solver.optimize(model)
+	print("Method used:", uno_solver.get_method_description())
+	print("Objective at solution:", result.solution_objective)
+
+	# run 4: solve with the ipopt preset and HIPO
+	uno_solver.set_preset("ipopt")
+	uno_solver.set_option("linear_solver", "HIPO")
+	result = uno_solver.optimize(model)
+	print("Method used:", uno_solver.get_method_description())
+	print("Objective at solution:", result.solution_objective)
+
+	# run 5: solve with the filterslp preset
+	uno_solver.set_preset("filterslp")
+	uno_solver.set_option("LP_solver", "HiGHS")
+	result = uno_solver.optimize(model)
+	print("Method used:", uno_solver.get_method_description())
+	print("Objective at solution:", result.solution_objective)
+
 	# optimization summary
 	print("Optimization status:", result.optimization_status)
 	print("Solution status:", result.solution_status)
@@ -113,17 +135,3 @@ if __name__ == '__main__':
 	print("Number of Jacobian evaluations:", result.number_jacobian_evaluations)
 	print("Number of Hessian evaluations:", result.number_hessian_evaluations)
 	print("Number of subproblems solved:", result.number_subproblems_solved)
-
-	# run 3: solve with the ipopt preset
-	uno_solver.set_preset("ipopt")
-	uno_solver.set_option("linear_solver", "MUMPS")
-	result = uno_solver.optimize(model)
-	print("Method used:", uno_solver.get_method_description())
-	print("Objective at solution:", result.solution_objective)
-
-	# run 4: solve with the filterslp preset
-	uno_solver.set_preset("filterslp")
-	uno_solver.set_option("LP_solver", "HiGHS")
-	result = uno_solver.optimize(model)
-	print("Method used:", uno_solver.get_method_description())
-	print("Objective at solution:", result.solution_objective)
