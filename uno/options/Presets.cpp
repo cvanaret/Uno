@@ -121,6 +121,7 @@ namespace uno {
          options.set_bool("LS_scale_duals_with_step_length", true);
          options.set_bool("protect_actual_reduction_against_roundoff", true);
          options.set_bool("regularize_all_variables", true);
+         options.set_double("roundoff_feasibility_factor", 1e-2);
       }
       else if (preset == Preset::FILTERSQP) {
          options.set_string("constraint_relaxation_strategy", "feasibility_restoration");

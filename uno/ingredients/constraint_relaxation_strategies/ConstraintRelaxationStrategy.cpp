@@ -4,13 +4,17 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <string>
+#include <limits>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):
@@ -28,7 +32,8 @@ namespace uno {
          acceptable_unscaled_primal_infeasibility_tolerance(options.get_double("acceptable_unscaled_primal_infeasibility_tolerance")),
          acceptable_unscaled_complementarity_tolerance(options.get_double("acceptable_unscaled_complementarity_tolerance")),
          acceptable_objective_change_tolerance(options.get_double("acceptable_objective_change_tolerance")),
-         acceptable_iteration_threshold(options.get_unsigned_int("acceptable_iteration_threshold")) {
+         acceptable_iteration_threshold(options.get_unsigned_int("acceptable_iteration_threshold")),
+         roundoff_feasibility_factor(options.get_double("roundoff_feasibility_factor")) {
    }
 
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() = default;
@@ -59,7 +64,7 @@ namespace uno {
 
    Decision ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) {
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const {
       problem.postprocess_iterate(trial_iterate, trial_evaluations);
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
@@ -78,14 +83,51 @@ namespace uno {
          return Decision::reject(RejectionReason::INVALID_TRIAL_ITERATE);
       }
       // determine acceptance wrt the globalization strategy
-      const Decision decision = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress,
+      Decision decision = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress,
          trial_iterate.progress, predicted_reductions, objective_multiplier);
+      // both points are feasible up to roundoff: the infeasibility measure is noise and cannot drive the acceptance
+      if (!decision.accepted && 0. < objective_multiplier &&
+            this->is_roundoff_feasible_monotone_step(problem, current_iterate, trial_iterate, trial_evaluations,
+               predicted_reductions)) {
+         DEBUG << "Trial iterate accepted: feasible up to roundoff and the merit does not increase\n";
+         statistics.set("Status", std::string(symbols::check) + " (feasible)");
+         decision = Decision::accept();
+      }
       if (decision.accepted) {
          // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
          trial_evaluations.evaluate_objective_gradient(problem.model, trial_iterate.primals);
          trial_evaluations.evaluate_jacobian(problem.model, trial_iterate.primals);
       }
       return decision;
+   }
+
+   // the current and trial iterates are feasible up to roundoff (their primal infeasibility is below a small fraction of
+   // the primal tolerance), the predicted reduction of the merit (objective + auxiliary terms) is at roundoff level, and
+   // the merit of the trial iterate is not larger than that of the current iterate, up to roundoff. In this regime, the
+   // infeasibility (h-type steps, filter) and the merit (switching and Armijo conditions) only measure noise, and all the
+   // trial iterates may be rejected; this also blocks the update of the constraint multipliers (scaled with the step
+   // length), although the stationarity error may still be large. A step whose predicted reduction is not negligible is
+   // left to the globalization strategy (sufficient decrease)
+   bool ConstraintRelaxationStrategy::is_roundoff_feasible_monotone_step(const OptimizationProblem& problem,
+         const Iterate& current_iterate, const Iterate& trial_iterate, Evaluations& trial_evaluations,
+         const ProgressMeasures& predicted_reductions) const {
+      const double threshold = this->roundoff_feasibility_factor * this->primal_tolerance;
+      if (threshold <= 0. || threshold < current_iterate.scaled_residuals.primal_infeasibility) {
+         return false;
+      }
+      const double objective_multiplier = problem.get_objective_multiplier();
+      const double current_merit = current_iterate.progress.objective(objective_multiplier) + current_iterate.progress.auxiliary;
+      const double trial_merit = trial_iterate.progress.objective(objective_multiplier) + trial_iterate.progress.auxiliary;
+      const double predicted_merit_reduction = predicted_reductions.objective(objective_multiplier) + predicted_reductions.auxiliary;
+      constexpr double machine_epsilon = std::numeric_limits<double>::epsilon();
+      const double roundoff = 10. * machine_epsilon * std::max(1., std::abs(current_merit));
+      if (!std::isfinite(trial_merit) || roundoff < predicted_merit_reduction || current_merit + roundoff < trial_merit) {
+         return false;
+      }
+      const double trial_primal_infeasibility = problem.primal_infeasibility(trial_iterate, trial_evaluations, this->residual_norm);
+      DEBUG << "Roundoff-feasible step test: primal infeasibilities " << current_iterate.scaled_residuals.primal_infeasibility <<
+         " -> " << trial_primal_infeasibility << " (threshold " << threshold << ")\n";
+      return (trial_primal_infeasibility <= threshold);
    }
 
    void ConstraintRelaxationStrategy::accept_iterate_unconditionally(const OptimizationProblem& problem, Iterate& trial_iterate,

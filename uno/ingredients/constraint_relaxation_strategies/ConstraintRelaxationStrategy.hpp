@@ -103,6 +103,10 @@ namespace uno {
       const double acceptable_unscaled_complementarity_tolerance;    // unscaled [1e-2]
       const double acceptable_objective_change_tolerance;   // relative [1e20]
       const size_t acceptable_iteration_threshold;          // [15], 0 disables the heuristic
+      // a rejected optimality step between two points whose primal infeasibility is below
+      // roundoff_feasibility_factor * primal_tolerance, whose predicted merit reduction is at roundoff level, is accepted
+      // if the merit does not increase (0 disables)
+      const double roundoff_feasibility_factor;
       size_t acceptable_consecutive_iterations{0};
       std::optional<double> previous_objective{};
       // last iterate that satisfied the acceptable conditions (fallback upon line-search failure, see IPOPT)
@@ -112,9 +116,11 @@ namespace uno {
       SolutionStatus last_iterate_acceptable_status{SolutionStatus::NOT_OPTIMAL};
 
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
-      [[nodiscard]] static Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions);
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
+      [[nodiscard]] bool is_roundoff_feasible_monotone_step(const OptimizationProblem& problem, const Iterate& current_iterate,
+         const Iterate& trial_iterate, Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
       static void accept_iterate_unconditionally(const OptimizationProblem& problem, Iterate& trial_iterate,
          Evaluations& trial_evaluations);
       [[nodiscard]] static bool satisfies_unscaled_tolerances(const OptimizationProblem& problem, const Iterate& iterate,

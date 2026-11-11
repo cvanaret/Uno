@@ -37,6 +37,7 @@ namespace uno {
       options.set_double("acceptable_objective_change_tolerance", 1e20);
       // number of consecutive acceptable iterates until acceptable termination
       options.set_integer("acceptable_iteration_threshold", 15);
+      options.set_double("roundoff_feasibility_factor", 0.); // 0: disabled
 
       // maximum number of outer iterations
       options.set_integer("max_iterations", 2000);
