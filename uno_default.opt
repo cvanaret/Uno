@@ -76,6 +76,12 @@ acceptable_objective_change_tolerance 1e20
 # Number of consecutive acceptable iterates until acceptable termination (integer)
 acceptable_iteration_threshold 15
 
+# Optimality steps between two points with primal infeasibility below this factor times `primal_tolerance` are accepted if the merit does not increase (0: disabled; ipopt preset: 1e-2)
+roundoff_feasibility_factor 0
+
+# Number of retries from a perturbed initial point when the functions cannot be evaluated at the initial point (0: disabled)
+initial_point_perturbation_attempts 3
+
 # Maximum number of outer iterations (integer)
 max_iterations 2000
 

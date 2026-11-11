@@ -26,6 +26,8 @@ namespace uno {
       {"acceptable_unscaled_complementarity_tolerance", OptionType::DOUBLE},
       {"acceptable_objective_change_tolerance", OptionType::DOUBLE},
       {"acceptable_iteration_threshold", OptionType::INTEGER},
+      {"roundoff_feasibility_factor", OptionType::DOUBLE},
+      {"initial_point_perturbation_attempts", OptionType::INTEGER},
       {"max_iterations", OptionType::INTEGER},
       {"time_limit", OptionType::DOUBLE},
       {"print_solution", OptionType::BOOL},

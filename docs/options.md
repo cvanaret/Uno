@@ -50,6 +50,8 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `acceptable_unscaled_complementarity_tolerance`      | double  | 1e-2   | Bound on the unscaled complementarity residual for a solution to be acceptable                                 |
 | `acceptable_objective_change_tolerance`              | double  | 1e20   | Bound on the relative change of the objective between consecutive iterates for a solution to be acceptable     |
 | `acceptable_iteration_threshold`                     | integer | 15     | Number of consecutive acceptable iterates until acceptable termination                                         |
+| `roundoff_feasibility_factor`                        | double  | 0      | Optimality steps between two points with primal infeasibility below this factor times `primal_tolerance` are accepted if the merit does not increase (0: disabled; ipopt preset: 1e-2) |
+| `initial_point_perturbation_attempts`                | integer | 3      | Number of retries from a perturbed initial point when the functions cannot be evaluated at the initial point (0: disabled) |
 | `max_iterations`                      | integer | 2000     | Maximum number of outer iterations                                 |
 | `time_limit`                          | double  | infinity | Time limit                                                         |
 | `print_solution`                      | bool    | false    | Whether the primal-dual solution is printed                        |

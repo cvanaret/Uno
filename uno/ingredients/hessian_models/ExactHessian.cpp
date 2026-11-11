@@ -1,7 +1,9 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include "ExactHessian.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -20,6 +22,11 @@ namespace uno {
       // try to evaluate the Hessian. Upon failure, keep the previous one
       try {
          model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian_buffer.view());
+         // a non-finite Hessian (e.g. a second derivative that does not exist at the current point) would corrupt the
+         // factorization of the KKT matrix: handle it like an evaluation failure
+         if (!std::all_of(this->hessian_buffer.begin(), this->hessian_buffer.end(), [](double value) { return std::isfinite(value); })) {
+            throw HessianEvaluationError();
+         }
          // success: copy the new Hessian into the Hessian values
          view(hessian_values, 0, this->hessian_buffer.size()) = this->hessian_buffer;
       }
