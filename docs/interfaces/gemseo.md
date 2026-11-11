@@ -16,16 +16,13 @@ GEMSEO discovers the plugin automatically once unopy is installed: no import is 
 | GEMSEO algorithm | Uno preset | Settings class |
 |------------------|------------|----------------|
 | `UNO_Filter_SQP` | `filtersqp` | `UNO_Filter_SQP_Settings` (`unopy.gemseo.settings.filter_sqp`) |
-| `UNO_Filter_SLP` | `filterslp` | `UNO_Filter_SLP_Settings` (`unopy.gemseo.settings.filter_slp`) |
-| `UNO_Funnel_SQP` | `funnelsqp` | `UNO_Funnel_SQP_Settings` (`unopy.gemseo.settings.funnel_sqp`) |
 | `UNO_IPOPT` | `ipopt` | `UNO_IPOPT_Settings` (`unopy.gemseo.settings.ipopt`) |
 
-All of them handle equality and inequality constraints and use the gradients provided by GEMSEO.
+Both handle equality and inequality constraints and use the gradients provided by GEMSEO.
 The functions are only evaluated inside the design space:
 Uno can try points slightly outside the bounds (e.g. the IPOPT preset relaxes them),
 which are projected onto the bounds before GEMSEO evaluates the functions.
-The SQP and IPOPT algorithms approximate the Hessian of the Lagrangian with Uno's L-BFGS model;
-the SLP algorithm uses no Hessian.
+They approximate the Hessian of the Lagrangian with Uno's L-BFGS model.
 
 ## Settings
 
