@@ -182,7 +182,7 @@ To inspect the result of the optimization, read the attributes of the `result` o
 - the stationarity residual at the solution: `result.solution_stationarity`
 - the complementarity residual at the solution: `result.solution_complementarity`
 - the number of (outer) iterations: `result.number_iterations`
-- the CPU time (in seconds): `result.cpu_time`
+- the solve time (in seconds): `result.cpu_time`
 - the number of objective evaluations: `result.number_objective_evaluations`
 - the number of constraint evaluations: `result.number_constraint_evaluations`
 - the number of objective gradient evaluations: `result.number_objective_gradient_evaluations`

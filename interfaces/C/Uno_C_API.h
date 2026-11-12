@@ -405,7 +405,7 @@ extern "C" {
    // gets the number of outer iterations required by the solver (once the model was solved)
    uno_int uno_get_number_iterations(void* solver);
 
-   // gets the CPU time required by the solver (once the model was solved)
+   // gets the solve time required by the solver (once the model was solved)
    double uno_get_cpu_time(void* solver);
 
    // gets the number of objective evaluations required by the solver (once the model was solved)

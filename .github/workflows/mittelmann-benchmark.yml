@@ -8,7 +8,7 @@ name: Mittelmann benchmark
 # with the line   Optimization status:            Success
 #
 # Besides the wall time of each run, the log provides
-#  - the solve time: "CPU time" in the optimization summary (wall clock of the solve);
+#  - the solve time: "Solve time" in the optimization summary (wall clock of the solve);
 #  - the model read time: "Model read time" (reading the .nl file), printed by
 #    uno_ampl after the summary. Older versions of uno_ampl do not print it: it is
 #    then the wall time minus the solve time.
@@ -197,8 +197,8 @@ jobs:
             end=$(date +%s.%N)
             secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
 
-            # "CPU time:   <seconds>s" (optimization summary) and "Model read time:   <seconds>s" (uno_ampl)
-            solve_time=$(sed -nE 's/^CPU time:[[:space:]]+([0-9.eE+-]+)s[[:space:]]*$/\1/p' "$log" | tail -n 1)
+            # "Solve time:   <seconds>s" (optimization summary) and "Model read time:   <seconds>s" (uno_ampl)
+            solve_time=$(sed -nE 's/^Solve time:[[:space:]]+([0-9.eE+-]+)s[[:space:]]*$/\1/p' "$log" | tail -n 1)
             read_time=$(sed -nE 's/^Model read time:[[:space:]]+([0-9.eE+-]+)s[[:space:]]*$/\1/p' "$log" | tail -n 1)
             if [ -n "$solve_time" ]; then
               if [ -z "$read_time" ]; then
