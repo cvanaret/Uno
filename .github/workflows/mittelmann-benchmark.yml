@@ -102,6 +102,9 @@ concurrency:
 jobs:
   benchmark:
     runs-on: self-hosted
+    # the default (360 minutes) is too short when many instances reach the time
+    # limit. The PR comment needs the job token, which expires after 24 hours
+    timeout-minutes: 1380
     steps:
       # Benchmark the head of PR `pr_number`, whichever branch the workflow is run
       # from: refs/pull/<N>/head also exists for PRs from forks, whose branches

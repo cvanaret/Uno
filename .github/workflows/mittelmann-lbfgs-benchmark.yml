@@ -1,12 +1,13 @@
-name: Mittelmann L-BFGS benchmark
+name: Full Mittelmann L-BFGS benchmark
 
-# Runs uno_ampl with the ipopt preset, L-BFGS and MA57 on the Mittelmann instances
-# NARX_CFy and WM_CFy (large-scale industrial problems), via the reusable
-# Mittelmann benchmark workflow. Results are stored in the artifact
-# `mittelmann-lbfgs-results-pr-<pr_number>` and posted in their own sticky PR
-# comment; with `compare_pr`, as a before/after table against the latest L-BFGS
-# results of that PR.
-#   gh workflow run "Mittelmann L-BFGS benchmark" -f pr_number=123 [-f compare_pr=118]
+# Runs uno_ampl with the ipopt preset, MA57 and an L-BFGS Hessian on all the
+# Mittelmann instances (time_limit=600s per instance), via the reusable
+# Mittelmann benchmark workflow. Unlike mittelmann-lbfgs-benchmark.yml (NARX_CFy
+# and WM_CFy only), results are stored in the artifact
+# `mittelmann-lbfgs-full-results-pr-<pr_number>` and posted in their own sticky
+# PR comment; with `compare_pr`, as a before/after table against the latest
+# results of this workflow on that PR.
+#   gh workflow run "Full Mittelmann L-BFGS benchmark" -f pr_number=123 [-f compare_pr=118]
 
 on:
   workflow_dispatch:
@@ -16,7 +17,7 @@ on:
         required: true
         type: string
       compare_pr:
-        description: 'PR number to compare against (optional; uses its latest L-BFGS benchmark results)'
+        description: 'PR number to compare against (optional; uses its latest full L-BFGS benchmark results)'
         required: false
         default: ''
         type: string
@@ -33,7 +34,9 @@ jobs:
     with:
       pr_number: ${{ inputs.pr_number }}
       compare_pr: ${{ inputs.compare_pr }}
-      title: Mittelmann L-BFGS benchmark
-      tag: lbfgs
-      instances: NARX_CFy WM_CFy
-      options: hessian_model=LBFGS linear_solver=MA57
+      # must not start with the title of another Mittelmann report: the comment
+      # fallback of benchmark_compare.py finds the reports by their title
+      title: Full Mittelmann L-BFGS benchmark
+      tag: lbfgs-full
+      options: preset=ipopt hessian_model=LBFGS linear_solver=MA57
+      time_limit: 600
