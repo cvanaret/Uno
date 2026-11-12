@@ -12,6 +12,11 @@ namespace uno {
    // forward declaration
    struct InteriorPointParameters;
 
+   struct PushParameters {
+      static constexpr size_t maximum_push_reductions = 8;
+      static constexpr double push_reduction_factor = 0.1;
+   };
+
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,

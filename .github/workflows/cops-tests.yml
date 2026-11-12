@@ -1,0 +1,84 @@
+name: Uno-ipopt on COPS tetra_par1
+
+# Regression test: the IPOPT-style push of the initial point into the bounds (k1*max(1, |bound|) ~ 0.64 here) inverts
+# tetrahedra, where area^(2/3) cannot be evaluated. Uno must reduce the push and converge
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - 'uno/**'
+      - 'interfaces/AMPL/**'
+      - '.github/workflows/tetra-par1.yml'
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - 'uno/**'
+      - 'interfaces/AMPL/**'
+      - '.github/workflows/tetra-par1.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  tetra-par1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt update
+          sudo apt install -y gfortran cmake
+
+      - name: Download Uno dependencies
+        shell: bash
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      # Builds amplsolver.a next to its headers: Uno's CMake takes the include directory from the library's directory
+      - name: Build the AMPL Solver Library
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ampl/asl.git ${{ runner.temp }}/asl
+          cd ${{ runner.temp }}/asl/src/solvers
+          sh ./configurehere
+          make -j"$(nproc)" CFLAGS="-O2 -fPIC"
+          test -f amplsolver.a
+
+      - name: Configure Uno (ASL + MUMPS)
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                -DAMPLSOLVER=${{ runner.temp }}/asl/src/solvers/amplsolver.a \
+                -DMUMPS_INCLUDE_DIR=${DEPS}/include \
+                -DMETIS_INCLUDE_DIR=${DEPS}/include \
+                -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+                -DBQPD=${DEPS}/lib/libbqpd.a \
+                -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
+                -DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a \
+                -DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a \
+                -DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a \
+                -DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a \
+                -DSPRAL=${DEPS}/lib/libspral.a \
+                -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+                -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+                -DBUILD_STATIC_LIBS=OFF \
+                -DBUILD_SHARED_LIBS=ON
+
+      # uno_ampl is EXCLUDE_FROM_ALL
+      - name: Build uno_ampl
+        run: cmake --build ${{ github.workspace }}/build --target uno_ampl --parallel
+
+      - name: Solve tetra_par1 with the ipopt preset
+        run: |
+          set -euo pipefail
+          gunzip -c interfaces/AMPL/examples/tetra_par1.nl.gz > tetra_par1.nl
+          ./build/uno_ampl tetra_par1.nl preset=ipopt linear_solver=MUMPS | tee tetra_par1.log
+          grep -q "Optimization status:.*Success" tetra_par1.log
+          # reference objective value: 6425.6
+          awk '/^Objective value:/ { f = $3 } END { exit !(f > 6425.5 && f < 6425.7) }' tetra_par1.log
