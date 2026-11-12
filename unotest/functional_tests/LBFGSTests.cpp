@@ -56,3 +56,30 @@ TEST(LBFGS, GradientScalingDoesNotAffectConvergence) {
       EXPECT_NEAR(result.primal_solution[1], 1., 1e-4) << "sigma = " << sigma;
    }
 }
+
+TEST(LSR1, NegativeCurvatureIsRegularizedBeforeComputingDirection) {
+   if (SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
+      GTEST_SKIP() << "requires a direct linear solver";
+   }
+   DenseTestModel model("concave_box", 1, 0, ProblemType::NONLINEAR,
+      [](const Vector<double>& x) { return -x[0] * x[0] / 2.; },
+      [](const Vector<double>& x, Vector<double>& g) { g[0] = -x[0]; },
+      [](const Vector<double>&, Vector<double>&) { },
+      [](const Vector<double>&, double*) { },
+      [](const Vector<double>&, double w, const Vector<double>&, double* h) { h[0] = -w; },
+      {-10.}, {10.}, {}, {}, {0.5});
+   for (const std::string strategy: {"primal_dual", "primal"}) {
+      Options options;
+      DefaultOptions::load(options);
+      Presets::set(options, "ipopt");
+      options.set_string("hessian_model", "LSR1");
+      options.set_string("inertia_correction_strategy", strategy);
+      options.set_double("bound_relaxation_factor", 0.);
+      options.set_integer("max_iterations", 100);
+      Logger::level = SILENT;
+      Uno solver;
+      const Result result = solver.solve(model, options);
+      ASSERT_EQ(result.optimization_status, OptimizationStatus::SUCCESS) << strategy;
+      EXPECT_NEAR(result.primal_solution[0], 10., 1e-5) << strategy;
+   }
+}

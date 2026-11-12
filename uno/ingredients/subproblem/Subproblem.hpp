@@ -5,6 +5,7 @@
 #define UNO_SUBPROBLEM_H
 
 #include <memory>
+#include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/View.hpp"
@@ -23,12 +24,19 @@ namespace uno {
    class Model;
    class NewtonSystem;
    class Statistics;
+   class Subproblem;
+   class WoodburyCorrection;
 
    struct BlockAugmentedMatrix {
       View<double> hessian;
       View<double> primal_inertia_correction;
       View<double> jacobian;
       View<double> dual_inertia_correction;
+      // The correction is owned by EQPSolver and outlives this matrix view.
+      WoodburyCorrection* low_rank_correction{nullptr};
+
+      Inertia evaluate_inertia(const Subproblem& subproblem,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
    };
 
    class Subproblem {

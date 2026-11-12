@@ -44,11 +44,12 @@ namespace uno {
       // the augmented matrix must be refactorized with the current regularization factors (e.g. after the pivoting
       // tolerance of the linear solver was increased). Strategies that correct the inertia check it again and increase
       // the regularization if needed; by default, the matrix is simply refactorized
-      virtual void refactorize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+      virtual void refactorize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
             double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
-            DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix /*block_augmented_matrix*/,
+            DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, BlockAugmentedMatrix block_augmented_matrix,
             Range<> /*primal_regularization_variables*/) {
          linear_solver.do_numerical_factorization(false);
+         block_augmented_matrix.evaluate_inertia(subproblem, linear_solver);
       }
 
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;

@@ -6,6 +6,7 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/LowRankCorrection.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -17,6 +18,16 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
+   Inertia BlockAugmentedMatrix::evaluate_inertia(const Subproblem& subproblem,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
+      const Inertia base_inertia = linear_solver.get_inertia();
+      if (this->low_rank_correction == nullptr || linear_solver.matrix_is_singular()) {
+         return base_inertia;
+      }
+      this->low_rank_correction->update(subproblem, linear_solver);
+      return this->low_rank_correction->get_inertia(base_inertia);
+   }
+
    Subproblem::Subproblem(const OptimizationProblem& problem, HessianModel& hessian_model,
       InertiaCorrectionStrategy& inertia_correction_strategy):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
@@ -153,6 +164,7 @@ namespace uno {
          block_augmented_matrix.primal_inertia_correction.fill(0.);
          block_augmented_matrix.dual_inertia_correction.fill(0.);
          linear_solver.do_numerical_factorization(false);
+         block_augmented_matrix.evaluate_inertia(*this, linear_solver);
       }
    }
 
@@ -175,6 +187,7 @@ namespace uno {
       }
       else { // no regularization: the regularization blocks are already zero
          linear_solver.do_numerical_factorization(false);
+         block_augmented_matrix.evaluate_inertia(*this, linear_solver);
       }
    }
 

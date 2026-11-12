@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <vector>
+#include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/DenseMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
@@ -18,14 +19,14 @@ namespace uno {
 
    // Policies for EQPSolver. Interface:
    // - uses_explicit_hessian_matrix: whether the augmented matrix contains the full Hessian
-   // - update(): called once per numerical factorization of the augmented matrix A
    // - apply(b): turns b = A⁻¹ r into the solution of the system with the full matrix
+   // - add_matrix_vector_product(): adds the low-rank terms to the residual product
 
    // the augmented matrix contains the full Hessian: nothing to do
    struct NoLowRankCorrection {
       static constexpr bool uses_explicit_hessian_matrix = true;
-      void update(const Subproblem& /*subproblem*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/) { }
       void apply(Vector<double>& /*b*/) const { }
+      void add_matrix_vector_product(View<const double> /*vector*/, View<double> /*result*/) const { }
    };
 
    // The Hessian approximation is a low-rank correction to a diagonal part: H = δ I + E P Eᵀ.
@@ -43,6 +44,9 @@ namespace uno {
       explicit WoodburyCorrection(const DirectQuasiNewtonHessian& hessian_model);
       void update(const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver);
       void apply(Vector<double>& b) const;
+      // Add E C Eᵀ vector to the original primal entries; the diagonal part is already in the base matrix.
+      void add_matrix_vector_product(View<const double> vector, View<double> result) const;
+      [[nodiscard]] Inertia get_inertia(const Inertia& base_inertia) const;
 
    protected:
       const DirectQuasiNewtonHessian& hessian_model;
@@ -51,6 +55,8 @@ namespace uno {
       std::optional<DenseMatrix<double>> H{};
       std::optional<DenseMatrix<double>> T{}; // Bunch-Kaufman factors of P⁻¹ + Eᵀ H
       std::vector<int> ipiv{};
+      std::optional<Inertia> correction_inertia{};
+      size_t scaling_positive{0}, scaling_negative{0};
    };
 } // namespace
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <cmath>
 #include <stdexcept>
 #include "LowRankCorrection.hpp"
 #include "DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -13,6 +14,40 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
+   namespace {
+      Inertia bunch_kaufman_inertia(const DenseMatrix<double>& factors, const std::vector<int>& ipiv) {
+         size_t positive = 0, negative = 0, zero = 0;
+         for (size_t k = 0; k < ipiv.size();) {
+            const double diagonal = factors.entry(k, k);
+            if (!std::isfinite(diagonal)) {
+               throw std::runtime_error("WoodburyCorrection: non-finite pivot");
+            }
+            if (0 < ipiv[k]) {
+               positive += (0. < diagonal);
+               negative += (diagonal < 0.);
+               zero += (diagonal == 0.);
+               ++k;
+            }
+            else {
+               if (ipiv[k] == 0 || k + 1 == ipiv.size() || ipiv[k + 1] != ipiv[k]) {
+                  throw std::runtime_error("WoodburyCorrection: invalid Bunch-Kaufman pivots");
+               }
+               const double off_diagonal = factors.entry(k + 1, k);
+               if (!std::isfinite(off_diagonal) || !std::isfinite(factors.entry(k + 1, k + 1))) {
+                  throw std::runtime_error("WoodburyCorrection: non-finite pivot");
+               }
+               if (off_diagonal == 0.) {
+                  throw std::runtime_error("WoodburyCorrection: invalid Bunch-Kaufman pivot block");
+               }
+               // DSYTRF's Bunch-Kaufman pivot test guarantees a negative determinant for every 2-by-2 block.
+               ++positive;
+               ++negative;
+               k += 2;
+            }
+         }
+         return {positive, negative, zero};
+      }
+   } // namespace
    WoodburyCorrection::WoodburyCorrection(const DirectQuasiNewtonHessian& hessian_model): hessian_model(hessian_model) {
       assert(!this->hessian_model.has_hessian_matrix());
    }
@@ -20,6 +55,8 @@ namespace uno {
    // precondition: the augmented matrix A has been factorized and is nonsingular
    void WoodburyCorrection::update(const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) {
       this->correction_rank = this->hessian_model.get_correction_rank();
+      this->correction_inertia.reset();
+      this->scaling_positive = this->scaling_negative = 0;
       DEBUG << "Correction rank: " << this->correction_rank << '\n';
       if (this->correction_rank == 0) {
          return;
@@ -40,21 +77,60 @@ namespace uno {
       // factorize it in place
       this->T.emplace(this->correction_rank, this->correction_rank);
       for (size_t column_index: Range(this->correction_rank)) {
-         this->T->entry(column_index, column_index) = 1./this->hessian_model.get_correction_column_scaling(column_index);
+         const double coefficient = this->hessian_model.get_correction_column_scaling(column_index);
+         const double inverse = 1. / coefficient;
+         if (!std::isfinite(coefficient) || !std::isfinite(inverse)) {
+            throw std::runtime_error("WoodburyCorrection: invalid rank-one coefficient");
+         }
+         if (0. < coefficient) ++this->scaling_positive;
+         else ++this->scaling_negative;
+         this->T->entry(column_index, column_index) = inverse;
       }
       *this->T += transpose(*this->E) * *this->H;
+      for (size_t column: Range(this->correction_rank)) {
+         for (size_t row: Range(column, this->correction_rank)) {
+            if (!std::isfinite(this->T->entry(row, column))) {
+               throw std::runtime_error("WoodburyCorrection: non-finite correction matrix");
+            }
+         }
+      }
       DEBUG2 << "T = " << *this->T;
       auto [success, ipiv] = this->T->compute_bunch_kaufman_factorization();
-      if (!success) {
+      this->correction_inertia.emplace(bunch_kaufman_inertia(*this->T, ipiv));
+      if (!success && this->correction_inertia->zero == 0) {
          throw std::runtime_error("WoodburyCorrection: the Bunch-Kaufman factorization failed");
       }
       this->ipiv = std::move(ipiv);
+   }
+
+   Inertia WoodburyCorrection::get_inertia(const Inertia& base_inertia) const {
+      if (this->correction_rank == 0) return base_inertia;
+      assert(base_inertia.zero == 0 && this->correction_inertia);
+      // Haynsworth: inertia(A + E C Eᵀ) = inertia(A) + inertia(-T) - inertia(-C⁻¹).
+      const size_t positive = base_inertia.positive + this->correction_inertia->negative;
+      const size_t negative = base_inertia.negative + this->correction_inertia->positive;
+      if (positive < this->scaling_negative || negative < this->scaling_positive) {
+         throw std::runtime_error("WoodburyCorrection: inconsistent inertia");
+      }
+      return {positive - this->scaling_negative, negative - this->scaling_positive, this->correction_inertia->zero};
+   }
+
+   void WoodburyCorrection::add_matrix_vector_product(View<const double> vector, View<double> result) const {
+      for (size_t column_index: Range(this->correction_rank)) {
+         const auto column = this->hessian_model.get_correction_column(column_index);
+         const double coefficient = this->hessian_model.get_correction_column_scaling(column_index) *
+            dot(column, view(vector.data(), column.size()));
+         blas1::add(column.size(), coefficient, column.data(), result.data());
+      }
    }
 
    // b := b - H T⁻¹ Eᵀ b
    void WoodburyCorrection::apply(Vector<double>& b) const {
       if (this->correction_rank == 0) {
          return;
+      }
+      if (!this->correction_inertia || 0 < this->correction_inertia->zero) {
+         throw std::runtime_error("WoodburyCorrection: the full matrix is singular");
       }
       Vector<double> c(this->correction_rank);
       Vector<double> d(this->correction_rank);

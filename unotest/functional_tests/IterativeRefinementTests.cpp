@@ -11,6 +11,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include "ingredients/hessian_models/ExactHessian.hpp"
+#include "ingredients/hessian_models/quasi_newton/direct/LSR1Hessian.hpp"
 #include "ingredients/inequality_handling_methods/interior_point_methods/InteriorPointParameters.hpp"
 #include "ingredients/inequality_handling_methods/interior_point_methods/barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/inertia_correction_strategies/PrimalDualInertiaCorrection.hpp"
@@ -204,6 +205,31 @@ namespace {
          const Vector<double> initial_point(this->barrier_problem.number_variables);
          return solver.solve(this->statistics, this->subproblem, this->iterate, Inf, initial_point,
             this->evaluations, warmstart_information);
+      }
+   };
+
+   class BarrierSR1Hessian: public LSR1Hessian {
+   public:
+      BarrierSR1Hessian(const Model& model, const Options& options): LSR1Hessian(model, 1., options) {
+         // I + (1,1)(1,1)ᵀ - (0,1)(0,1)ᵀ equals this fixture's exact Hessian at y0=0.5.
+         this->number_entries_in_memory = 2;
+         this->U.entry(0, 0) = this->U.entry(1, 0) = this->U.entry(1, 1) = 1.;
+         this->correction_scaling[0] = 1.;
+         this->correction_scaling[1] = -1.;
+      }
+   };
+
+   struct LowRankBarrierScenario: BarrierScenario {
+      BarrierSR1Hessian low_rank_hessian;
+      Subproblem low_rank_subproblem;
+      explicit LowRankBarrierScenario(const Options& options): BarrierScenario(options),
+            low_rank_hessian(this->model, this->options),
+            low_rank_subproblem(this->barrier_problem, this->low_rank_hessian, this->inertia_correction) { }
+      const Direction& solve(EQPSolver<WoodburyCorrection>& solver) {
+         solver.initialize_statistics(this->statistics);
+         solver.initialize_memory(this->low_rank_subproblem);
+         return solver.solve(this->statistics, this->low_rank_subproblem, this->iterate, Inf,
+            Vector<double>(this->barrier_problem.number_variables), this->evaluations, {});
       }
    };
 
@@ -489,4 +515,59 @@ TEST_P(IterativeRefinement, StagnationStopsRefinement) {
    (void)scenario.solve(solver);
    const size_t number_solves = supports_pivoting_tolerance_increase(GetParam()) ? 2 : 1; // + refactorization
    EXPECT_EQ(solver.get_number_refinement_steps(), 2 * number_solves);
+}
+
+TEST_P(IterativeRefinement, LowRankMatchesExplicitHessianAndRefinesOnce) {
+   const Options options = make_options(GetParam(), 1, 10);
+   BarrierScenario reference(options);
+   EQPSolver<NoLowRankCorrection> exact_solver(options);
+   const Direction& expected = reference.solve(exact_solver);
+   LowRankBarrierScenario scenario(options);
+   EQPSolver<WoodburyCorrection> solver(options, WoodburyCorrection(scenario.low_rank_hessian));
+   const Direction& direction = scenario.solve(solver);
+   ASSERT_EQ(direction.status, SubproblemStatus::OPTIMAL);
+   EXPECT_EQ(solver.get_number_refinement_steps(), 1);
+   EXPECT_LE(solver.get_residual_ratio(), 1e-10);
+   const auto compare = [](const Vector<double>& actual, const Vector<double>& expected) {
+      ASSERT_EQ(actual.size(), expected.size());
+      for (size_t i: Range(actual.size())) EXPECT_NEAR(actual[i], expected[i], 1e-10 * (1. + std::abs(expected[i])));
+   };
+   compare(direction.primals, expected.primals);
+   compare(direction.multipliers.constraints, expected.multipliers.constraints);
+   compare(direction.multipliers.lower_bounds, expected.multipliers.lower_bounds);
+   compare(direction.multipliers.upper_bounds, expected.multipliers.upper_bounds);
+}
+
+TEST_P(IterativeRefinement, LowRankRecoveryRefreshesCorrectionAndSOCPreservesMatrix) {
+   Options options = make_failing_options(GetParam());
+   options.set_double("dual_regularization_fraction", 1.);
+   LowRankBarrierScenario scenario(options);
+   EQPSolver<WoodburyCorrection> solver(options, WoodburyCorrection(scenario.low_rank_hessian));
+   const Direction& direction = scenario.solve(solver);
+   ASSERT_GT(solver.get_residual_ratio(), 0.);
+   EXPECT_TRUE(solver.is_matrix_deemed_singular());
+   EXPECT_EQ(scenario.inertia_correction.number_refactorizations, supports_pivoting_tolerance_increase(GetParam()) ? 1 : 0);
+   ASSERT_EQ(direction.status, SubproblemStatus::OPTIMAL);
+   const auto& system = static_cast<const LinearSystem&>(solver.get_workspace());
+   const auto check_full_residual = [&] {
+      Vector<double> product(system.dimension);
+      system.compute_matrix_vector_product(system.solution.data(), product.data());
+      // Add the known low-rank block [[1,1],[1,0]] independently of the residual implementation.
+      product[0] += system.solution[0] + system.solution[1];
+      product[1] += system.solution[0];
+      for (size_t i: Range(system.dimension)) EXPECT_NEAR(product[i], system.rhs[i], 1e-10 * (1. + std::abs(system.rhs[i])));
+   };
+   check_full_residual();
+   const Vector<double> matrix_values = system.matrix_values;
+   const size_t refactorizations = scenario.inertia_correction.number_refactorizations;
+   Iterate trial_iterate = scenario.iterate;
+   Evaluations trial_evaluations(scenario.model);
+   solver.initialize_second_order_corrections(scenario.low_rank_subproblem, scenario.iterate, trial_iterate,
+      scenario.evaluations, trial_evaluations);
+   const Direction& soc = solver.compute_second_order_correction(scenario.statistics, scenario.low_rank_subproblem, scenario.iterate);
+   EXPECT_EQ(soc.status, SubproblemStatus::OPTIMAL);
+   EXPECT_FALSE(solver.is_matrix_deemed_singular());
+   EXPECT_EQ(scenario.inertia_correction.number_refactorizations, refactorizations);
+   for (size_t i: Range(matrix_values.size())) EXPECT_DOUBLE_EQ(matrix_values[i], system.matrix_values[i]);
+   check_full_residual();
 }

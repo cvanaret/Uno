@@ -91,9 +91,7 @@ namespace uno {
 
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::initialize_statistics(Statistics& statistics) {
-      if constexpr (LowRankCorrection::uses_explicit_hessian_matrix) {
-         statistics.add_column("IR", Statistics::int_width, 0, /* is_extended = */ true);
-      }
+      statistics.add_column("IR", Statistics::int_width, 0, /* is_extended = */ true);
    }
 
    template <typename LowRankCorrection>
@@ -117,16 +115,15 @@ namespace uno {
 
       // set up the linear system (this overwrites the augmented matrix and its factorization)
       this->factorization_holds_least_squares_system = true;
-      auto [hessian, primal_inertia_correction, jacobian, dual_inertia_correction] =
-         this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
-      hessian.fill(0.); // no Hessian contribution
-      primal_inertia_correction.fill(1.); // Identity block
-      subproblem.evaluate_jacobian(iterate, jacobian, evaluations);
+      auto blocks = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+      blocks.hessian.fill(0.); // no Hessian contribution
+      blocks.primal_inertia_correction.fill(1.); // Identity block
+      subproblem.evaluate_jacobian(iterate, blocks.jacobian, evaluations);
       // more constraints than variables: the Jacobian is structurally rank deficient and the system singular. Regularize it
       // upfront (the unregularized factorization may be very expensive, with many delayed pivots)
       const bool structurally_singular = (subproblem.number_variables < subproblem.number_constraints) &&
-         !dual_inertia_correction.empty();
-      dual_inertia_correction.fill(structurally_singular ? -least_squares_dual_regularization : 0.);
+         !blocks.dual_inertia_correction.empty();
+      blocks.dual_inertia_correction.fill(structurally_singular ? -least_squares_dual_regularization : 0.);
 
       // perform the symbolic analysis once and for all
       if (!this->analysis_performed) {
@@ -138,9 +135,9 @@ namespace uno {
       // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
-      if (!structurally_singular && this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {
+      if (!structurally_singular && this->linear_solver->matrix_is_singular() && !blocks.dual_inertia_correction.empty()) {
          DEBUG << "The least-squares system is singular, regularizing it\n";
-         dual_inertia_correction.fill(-least_squares_dual_regularization);
+         blocks.dual_inertia_correction.fill(-least_squares_dual_regularization);
          this->linear_solver->do_numerical_factorization(false);
       }
       // otherwise, the (consistent) singular system is solved anyway: a non-finite solution is rejected below
@@ -186,7 +183,7 @@ namespace uno {
       if (warmstart_information.new_iterate || this->factorization_holds_least_squares_system) {
          this->factorization_holds_least_squares_system = false;
          // evaluate the Newton system (all the blocks except the regularization)
-         auto block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+         auto block_augmented_matrix = this->get_block_augmented_matrix();
          this->newton_system->evaluate({statistics, current_iterate, current_evaluations}, linear_system.matrix_values.view());
 
          // perform the symbolic analysis once and for all
@@ -200,9 +197,6 @@ namespace uno {
          subproblem.regularize_augmented_matrix(statistics, subproblem.dual_regularization_factor(), *this->linear_solver,
             block_augmented_matrix);
          this->pivoting_tolerance_increased_for_current_matrix = false;
-         if (!this->linear_solver->matrix_is_singular()) {
-            this->low_rank_correction.update(subproblem, *this->linear_solver);
-         }
 
          // assemble the RHS
          this->newton_system->assemble_rhs({statistics, current_iterate, current_evaluations}, linear_system.rhs.view());
@@ -233,7 +227,6 @@ namespace uno {
          this->direction.status = SubproblemStatus::ERROR;
       }
       else {
-         this->low_rank_correction.apply(linear_system.solution);
          // assemble the full primal-dual direction
          subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction);
       }
@@ -291,7 +284,6 @@ namespace uno {
          return this->direction_SOC;
       }
       this->direction_SOC.status = SubproblemStatus::OPTIMAL;
-      this->low_rank_correction.apply(linear_system.solution);
       subproblem.assemble_primal_dual_direction(current_iterate, *this->newton_system, linear_system.solution, this->direction_SOC);
       return this->direction_SOC;
    }
@@ -305,6 +297,16 @@ namespace uno {
       this->constraints_SOC += this->constraints_buffer_SOC;
    }
 
+   template <typename LowRankCorrection>
+   BlockAugmentedMatrix EQPSolver<LowRankCorrection>::get_block_augmented_matrix() {
+      auto& linear_system = this->linear_solver->get_linear_system();
+      auto blocks = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+      if constexpr (!LowRankCorrection::uses_explicit_hessian_matrix) {
+         blocks.low_rank_correction = &this->low_rank_correction;
+      }
+      return blocks;
+   }
+
    // solve the condensed system with the current factorization (RHS: linear_system.rhs, solution: linear_system.solution)
    // and refine the solution iteratively wrt the uncondensed Newton system, following IPOPT's PDFullSpaceSolver::Solve.
    // If the refined solution is not accurate:
@@ -316,7 +318,7 @@ namespace uno {
    //    regularization.
    // allow_refactorization == false: the factorization must not be modified (e.g. second-order corrections) and the
    // refined solution is accepted whatever its residual ratio.
-   // max_steps = 0 (or a low-rank Hessian correction) disables the mechanism. Without refinement step, the solution is
+   // max_steps = 0 disables the mechanism. Without a refinement step, the solution is
    // that of the plain solve (bitwise)
    template <typename LowRankCorrection>
    void EQPSolver<LowRankCorrection>::solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
@@ -324,10 +326,10 @@ namespace uno {
       auto& linear_system = this->linear_solver->get_linear_system();
       this->number_refinement_steps = 0;
       this->matrix_deemed_singular = false;
-      // the residuals require the full Hessian in the condensed matrix (not available with low-rank corrections)
-      if (!LowRankCorrection::uses_explicit_hessian_matrix || this->iterative_refinement.max_steps == 0) {
+      if (this->iterative_refinement.max_steps == 0) {
          this->residual_ratio = std::numeric_limits<double>::quiet_NaN(); // not computed
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+         this->low_rank_correction.apply(linear_system.solution);
          return;
       }
       this->newton_system->uncondense_rhs(linear_system.rhs.view(), this->uncondensed_rhs.view());
@@ -335,6 +337,7 @@ namespace uno {
       while (true) {
          // solve the condensed system, recover the uncondensed solution and refine it
          this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+         this->low_rank_correction.apply(linear_system.solution);
          this->newton_system->expand_solution(this->uncondensed_rhs.view(), linear_system.solution.view(), this->uncondensed_solution.view());
          this->residual_ratio = this->compute_uncondensed_residual_ratio();
          DEBUG2 << "Residual ratio: " << this->residual_ratio << '\n';
@@ -348,7 +351,7 @@ namespace uno {
          if (!allow_refactorization || this->matrix_deemed_singular) {
             break;
          }
-         const BlockAugmentedMatrix block_augmented_matrix = this->newton_system->block_augmented_matrix(linear_system.matrix_values.view());
+         const BlockAugmentedMatrix block_augmented_matrix = this->get_block_augmented_matrix();
          // 2. improve the quality of the factorization
          if (!this->pivoting_tolerance_increased_for_current_matrix && this->linear_solver->increase_pivoting_tolerance()) {
             this->pivoting_tolerance_increased_for_current_matrix = true;
@@ -422,6 +425,7 @@ namespace uno {
       linear_system.compute_matrix_vector_product(this->uncondensed_solution.data(), this->uncondensed_residual.data(), schur_begin,
          schur_end);
       this->newton_system->complete_uncondensed_product(this->uncondensed_solution.view(), this->uncondensed_residual.view());
+      this->low_rank_correction.add_matrix_vector_product(this->uncondensed_solution.view(), this->uncondensed_residual.view());
       this->uncondensed_residual -= this->uncondensed_rhs;
 
       const double rhs_norm = norm_inf(this->uncondensed_rhs);
@@ -440,6 +444,7 @@ namespace uno {
    void EQPSolver<LowRankCorrection>::compute_iterative_refinement_correction() {
       this->newton_system->condense_rhs(this->uncondensed_residual.view(), this->condensed_rhs_buffer.view());
       this->linear_solver->solve_indefinite_system(this->condensed_rhs_buffer.data(), this->condensed_solution_buffer.data(), 1);
+      this->low_rank_correction.apply(this->condensed_solution_buffer);
       this->newton_system->expand_solution(this->uncondensed_residual.view(), this->condensed_solution_buffer.view(),
          this->uncondensed_correction.view());
    }
