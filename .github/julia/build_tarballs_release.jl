@@ -16,9 +16,9 @@ sources = [
     # MUMPS v5.9.1
     ArchiveSource("https://mumps-solver.org/MUMPS_5.9.1.tar.gz",
                   "659c9b57646b5a003ac618baa1faf9dd2044e46c732b3daaccbc7158003e1b46"),
-    # HiGHS v1.15.1
+    # HiGHS v1.16.0
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
-              "04024d701f79feb8e2f18bc3df0dffc04ef05088"),
+              "f3f113d230429a8c0014b12ab0dd1a3847e58c55"),
     # Hwloc v2.13.0
     ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
                   "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
@@ -132,11 +132,9 @@ meson install -C builddir
 # Compile HiGHS
 cd $WORKSPACE/srcdir/HiGHS
 
-# Patch v1.15.1 (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+# Patch (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
 # fix-cli11.patch
 sed -i 's/(*opt)/opt->count() > 0/' extern/cli11/CLI11.hpp
-# fix-destroy.patch
-sed -i 's/Highs::resetGlobalScheduler(true);//' highs/interfaces/highs_c_api.cpp
 
 mkdir build
 cd build

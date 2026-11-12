@@ -39,7 +39,7 @@ tar -xzf BQPD.tar.gz
 pwd
 
 # download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
-VERSION="2026.8.29"
+VERSION="2026.11.12"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5-cxx11.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
@@ -63,17 +63,15 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	# fetch HiGHS source
 	BUILD_ROOT="$(mktemp -d)"
 	mkdir "${BUILD_ROOT}/HiGHS"
-	VERSION="v1.15.0"
+	VERSION="v1.16.0"
 	ASSET_URL="https://github.com/ERGO-Code/HiGHS/archive/refs/tags/${VERSION}.tar.gz"
 	echo "Downloading: ${ASSET_URL}"
 	curl -fL -o "${BUILD_ROOT}/HiGHS-src.tar.gz" "$ASSET_URL"
 	tar -xzf "${BUILD_ROOT}/HiGHS-src.tar.gz" -C "${BUILD_ROOT}/HiGHS" --strip-components=1
 
-	# Patch v1.15.1 (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+	# Patch (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
 	# fix-cli11.patch
 	sed -i 's/(*opt)/opt->count() > 0/' "${BUILD_ROOT}/HiGHS/extern/cli11/CLI11.hpp"
-	# fix-destroy.patch
-	sed -i 's/Highs::resetGlobalScheduler(true);//' "${BUILD_ROOT}/HiGHS/highs/interfaces/highs_c_api.cpp"
 
 	# Build HiGHS with the SAME compiler the consuming workflow links with.
 	# A mismatch here is what produces the __emutls_v._ZSt*__once_call* and
@@ -112,11 +110,9 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DBLA_VENDOR=Generic \
 		-DBLAS_LIBRARIES="$BLAS_W" \
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
-		-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-		-DCMAKE_UNITY_BUILD=ON \
-		-DCMAKE_UNITY_BUILD_BATCH_SIZE=16
+		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-	cmake --build "$BLD_W" --config Release --parallel
+	cmake --build "$BLD_W" --config Release --parallel 2
 	cmake --install "$BLD_W" --config Release
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
