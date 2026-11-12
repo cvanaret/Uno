@@ -17,6 +17,7 @@
 #include "linear_algebra/View.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Infinity.hpp"
@@ -114,19 +115,48 @@ namespace uno {
    void PrimalDualInteriorPointProblem::create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const {
       iterate.set_dimensions(this->number_variables, this->number_constraints);
 
-      // make the initial point strictly feasible wrt the bounds
-      bool iterate_changed = false;
-      for (size_t variable_index: Range(this->unslacked_problem.number_variables)) {
-         const double old_value = iterate.primals[variable_index];
-         iterate.primals[variable_index] = push_variable_to_interior(iterate.primals[variable_index],
-            this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index],
-            this->parameters.push_variable_to_interior_k1, this->parameters.push_variable_to_interior_k2);
-         if (iterate.primals[variable_index] != old_value) {
-            iterate_changed = true;
+      // make the initial point strictly feasible wrt the bounds. The push (k1*max(1, |bound|)) is not scale invariant: for
+      // large bounds, it may move the point outside of the domain of the functions (e.g. inverted elements in mesh
+      // problems). If the functions cannot be evaluated at the pushed point, the push is reduced
+      const size_t number_original_variables = this->unslacked_problem.number_variables;
+      Vector<double> user_primals(number_original_variables);
+      std::copy_n(iterate.primals.begin(), number_original_variables, user_primals.begin());
+      double k1 = this->parameters.push_variable_to_interior_k1;
+      double k2 = this->parameters.push_variable_to_interior_k2;
+      for (size_t push_reduction: Range(PushParameters::maximum_push_reductions + 1)) {
+         bool iterate_changed = false;
+         for (size_t variable_index: Range(number_original_variables)) {
+            iterate.primals[variable_index] = push_variable_to_interior(user_primals[variable_index],
+               this->variables_lower_bounds[variable_index], this->variables_upper_bounds[variable_index], k1, k2);
+            if (iterate.primals[variable_index] != user_primals[variable_index]) {
+               iterate_changed = true;
+            }
          }
-      }
-      if (iterate_changed) {
-         evaluations.reset();
+         // the evaluations may hold values at the user point or at a previous pushed point
+         if (iterate_changed || 0 < push_reduction) {
+            evaluations.reset();
+         }
+         // the user point is strictly interior: its evaluation errors are handled by the caller
+         if (!iterate_changed) {
+            break;
+         }
+         // these quantities are required at the initial iterate anyway (progress measures, least-squares multipliers)
+         try {
+            evaluations.evaluate_objective(this->model, iterate.primals);
+            evaluations.evaluate_constraints(this->model, iterate.primals);
+            evaluations.evaluate_objective_gradient(this->model, iterate.primals);
+            evaluations.evaluate_jacobian(this->model, iterate.primals);
+            break; // exit with success
+         }
+         catch (const EvaluationError& exception) {
+            if (push_reduction == PushParameters::maximum_push_reductions) {
+               throw;
+            }
+            k1 *= PushParameters::push_reduction_factor;
+            k2 *= PushParameters::push_reduction_factor;
+            WARNING << "Retrying the push of the initial point into the bounds with factors k1 = " << k1 << ", k2 = " <<
+               k2 << ". " << exception.what();
+         }
       }
 
       // set the slack variables (if any)
