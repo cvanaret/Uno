@@ -42,7 +42,7 @@ namespace uno {
       // maximum number of outer iterations
       options.set_integer("max_iterations", 2000);
       options.set_integer("initial_point_perturbation_attempts", 3); // 0: disabled
-      // CPU time limit (in seconds)
+      // solve time limit (in seconds)
       options.set_double("time_limit", Inf);
       // print optimal solution (true|false)
       options.set_bool("print_solution", false);

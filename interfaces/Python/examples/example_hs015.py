@@ -106,7 +106,7 @@ if __name__ == '__main__':
 	print("Upper bound dual solution:", result.upper_bound_dual_solution)
 	print("Solution constraints:", result.solution_constraints)
 	print("Number of iterations:", result.number_iterations)
-	print("CPU time:", result.cpu_time)
+	print("Solve time:", result.cpu_time)
 	print("Number of objective evaluations:", result.number_objective_evaluations)
 	print("Number of constraint evaluations:", result.number_constraint_evaluations)
 	print("Number of objective gradient evaluations:", result.number_objective_gradient_evaluations)

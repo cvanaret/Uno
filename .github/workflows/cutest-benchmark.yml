@@ -375,7 +375,7 @@ jobs:
             echo ""
             echo "Commit \`${BENCHMARK_SHA:0:7}\` · ${SELECTION} · preset \`${PRESET}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
             echo ""
-            echo "Times are Uno's CPU time (wall-clock time of the whole run when Uno did not report it)."
+            echo "Times are Uno's solve time (wall-clock time of the whole run when Uno did not report it)."
             echo ""
           }
 

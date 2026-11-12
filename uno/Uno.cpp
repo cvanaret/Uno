@@ -189,7 +189,7 @@ namespace uno {
       size_t major_iterations = 0;
       // allocate the trial iterate once and for all
       Iterate trial_iterate(current_iterate);
-      const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
+      const double time_limit = options.get_double("time_limit"); // solve time limit (can be inf)
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
       try {
