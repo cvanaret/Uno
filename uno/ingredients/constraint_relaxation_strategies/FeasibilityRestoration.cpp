@@ -162,7 +162,7 @@ namespace uno {
       this->initial_point.resize(this->feasibility.problem.number_variables);
       DEBUG2 << "\nCurrent iterate to start feasibility restoration:\n" << current_iterate << '\n';
 
-      statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+      statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
       if (Logger::level == INFO) {
          statistics.print_current_line();
       }

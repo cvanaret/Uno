@@ -107,7 +107,7 @@ namespace uno {
       this->globalization_mechanism.reset();
       this->method_description = "preprocessing (all variables eliminated)";
       Timers timers;
-      timers.wallclock.start();
+      timers.solve.start();
       Iterate iterate(0, model.number_constraints);
       Evaluations evaluations(model);
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
@@ -126,7 +126,7 @@ namespace uno {
       if (!this->postprocess_solution(user_model, model, iterate, evaluations) && optimization_status == OptimizationStatus::SUCCESS) {
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
-      timers.wallclock.stop();
+      timers.solve.stop();
       Result result = this->create_result(user_model, optimization_status, std::move(iterate), std::move(evaluations), 0,
          timers, {});
       postprocess_multipliers_signs(user_model, result);
@@ -157,7 +157,7 @@ namespace uno {
       this->globalization_mechanism.reset();
       this->method_description = "strategy combination not initialized";
       Statistics statistics = create_statistics(model, options.get_bool("print_extended_statistics"));
-      statistics.timers.wallclock.start();
+      statistics.timers.solve.start();
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
@@ -208,7 +208,7 @@ namespace uno {
             this->globalization_mechanism->detect_stagnation(model, current_iterate, trial_iterate,
                evaluation_cache.trial_evaluations);
             termination = check_termination(trial_iterate, major_iterations, max_iterations,
-               statistics.timers.wallclock.get_elapsed_time(), time_limit, InterruptGuard::interrupt_requested(),
+               statistics.timers.solve.get_elapsed_time(), time_limit, InterruptGuard::interrupt_requested(),
                optimization_status, user_callbacks);
 
             // the trial iterate becomes the current iterate for the next iteration
@@ -220,7 +220,7 @@ namespace uno {
       catch (const UserTermination& exception) {
          statistics.start_new_line();
          statistics.set("Status", "user termination");
-         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
          if (Logger::level == INFO) statistics.print_current_line();
          DEBUG << exception.what() << '\n';
          optimization_status = OptimizationStatus::USER_TERMINATION;
@@ -229,7 +229,7 @@ namespace uno {
       catch (std::exception& exception) {
          statistics.start_new_line();
          statistics.set("Status", exception.what());
-         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
          if (Logger::level == INFO) statistics.print_current_line();
          DEBUG << exception.what() << '\n';
          optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
@@ -242,7 +242,7 @@ namespace uno {
       if (!valid_final_evaluations && optimization_status == OptimizationStatus::SUCCESS) {
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
-      statistics.timers.wallclock.stop();
+      statistics.timers.solve.stop();
       Result result = this->create_result(user_model, optimization_status, std::move(current_iterate),
          std::move(evaluation_cache.current_evaluations), major_iterations, statistics.timers, std::move(option_overrides));
       postprocess_multipliers_signs(user_model, result);
@@ -312,7 +312,7 @@ namespace uno {
             option_overrides);
          this->method_description = this->globalization_mechanism->get_name();
 
-         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
          if (Logger::level == INFO) {
             statistics.print_header();
             statistics.print_current_line();

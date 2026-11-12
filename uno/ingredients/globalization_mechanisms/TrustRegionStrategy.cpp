@@ -168,7 +168,7 @@ namespace uno {
          }
 
          // print the statistics
-         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
          if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
             statistics.print_current_line();
          }

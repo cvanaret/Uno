@@ -26,7 +26,7 @@ namespace uno {
       }
 
       DISCRETE << "Iterations:\t\t\t\t" << this->number_iterations << '\n';
-      DISCRETE << "CPU time:\t\t\t\t" << this->timers.wallclock.get_duration() << "s\n";
+      DISCRETE << "CPU time:\t\t\t\t" << this->timers.solve.get_duration() << "s\n";
       DISCRETE << "Objective evaluations:\t\t\t" << this->number_objective_evaluations << '\n';
       DISCRETE << "Constraints evaluations:\t\t" << this->number_constraint_evaluations << '\n';
       DISCRETE << "Objective gradient evaluations:\t\t" << this->number_objective_gradient_evaluations << '\n';
