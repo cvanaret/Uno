@@ -7,6 +7,13 @@ name: Mittelmann benchmark
 # Success/failure is read from each run's log: the optimization summary starts
 # with the line   Optimization status:            Success
 #
+# Besides the wall time of each run, the log provides
+#  - the solve time: "CPU time" in the optimization summary (wall clock of the solve);
+#  - the model read time: "Model read time" (reading the .nl file), printed by
+#    uno_ampl after the summary. Older versions of uno_ampl do not print it: it is
+#    then the wall time minus the solve time.
+# Both are unknown when the run has no optimization summary (crash, timeout).
+#
 # Each run uploads its results (results.tsv + meta.json) as the artifact
 # `mittelmann-[<tag>-]results-pr-<pr_number>`. If `compare_pr` is given, the PR
 # comment is a before/after table against the latest results of that PR with the
@@ -95,6 +102,9 @@ concurrency:
 jobs:
   benchmark:
     runs-on: self-hosted
+    # the default (360 minutes) is too short when many instances reach the time
+    # limit. The PR comment needs the job token, which expires after 24 hours
+    timeout-minutes: 1380
     steps:
       # Benchmark the head of PR `pr_number`, whichever branch the workflow is run
       # from: refs/pull/<N>/head also exists for PRs from forks, whose branches
@@ -173,6 +183,8 @@ jobs:
           declare -a CONSOLE
           rows=""
 
+          fmt_time() { if [ -n "$1" ]; then echo "${1}s"; else echo "—"; fi; }
+
           for nl in "${NL_FILES[@]}"; do
             name="$(basename "$nl" .nl)"
             log="logs/${name}.log"
@@ -185,18 +197,32 @@ jobs:
             end=$(date +%s.%N)
             secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
 
+            # "CPU time:   <seconds>s" (optimization summary) and "Model read time:   <seconds>s" (uno_ampl)
+            solve_time=$(sed -nE 's/^CPU time:[[:space:]]+([0-9.eE+-]+)s[[:space:]]*$/\1/p' "$log" | tail -n 1)
+            read_time=$(sed -nE 's/^Model read time:[[:space:]]+([0-9.eE+-]+)s[[:space:]]*$/\1/p' "$log" | tail -n 1)
+            if [ -n "$solve_time" ]; then
+              if [ -z "$read_time" ]; then
+                # older uno_ampl: the rest of the run
+                read_time=$(awk -v t="${end}" -v s="${start}" -v u="${solve_time}" 'BEGIN{r = t - s - u; if (r < 0) r = 0; print r}')
+              fi
+              read_time=$(awk -v r="${read_time}" 'BEGIN{printf "%.2f", r}')
+              solve_time=$(awk -v u="${solve_time}" 'BEGIN{printf "%.2f", u}')
+            else
+              read_time=""
+            fi
+            breakdown="model read $(fmt_time "$read_time"), solve $(fmt_time "$solve_time")"
+
             if grep -Eq '^Optimization status:[[:space:]]+Success' "$log"; then
               solved=$((solved + 1))
-              CONSOLE+=("✓ instance ${name} was solved in ${secs} seconds")
-              rows+="| ✅ | \`${name}\` | solved in ${secs}s |"$'\n'
-              printf '%s\tsolved\t%s\n' "$name" "$secs" >> results/results.tsv
-              echo "solved in ${secs}s"
+              result=solved; icon=✅; console_icon=✓; verb="was solved"
             else
-              CONSOLE+=("✗ instance ${name} failed in ${secs} seconds")
-              rows+="| ❌ | \`${name}\` | failed in ${secs}s |"$'\n'
-              printf '%s\tfailed\t%s\n' "$name" "$secs" >> results/results.tsv
-              echo "failed in ${secs}s"
+              result=failed; icon=❌; console_icon=✗; verb="failed"
             fi
+            CONSOLE+=("${console_icon} instance ${name} ${verb} in ${secs} seconds (${breakdown})")
+            rows+="| ${icon} | \`${name}\` | ${result} in ${secs}s | $(fmt_time "$read_time") | $(fmt_time "$solve_time") |"$'\n'
+            # <name> <solved|failed> <wall time> <model read time> <solve time> (the last two may be empty)
+            printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$result" "$secs" "$read_time" "$solve_time" >> results/results.tsv
+            echo "${result} in ${secs}s (${breakdown})"
           done
 
           # ---- machine-readable metadata, used by later comparisons ----
@@ -223,9 +249,11 @@ jobs:
               echo "Options: \`${UNO_OPTIONS}\`"
             fi
             echo ""
-            echo "| | instance | result |"
-            echo "|:-:|:--|:--|"
+            echo "| | instance | result | model read | solve |"
+            echo "|:-:|:--|:--|--:|--:|"
             printf '%s' "$rows"
+            echo ""
+            echo "<sub>result: wall time of the run · model read and solve: from uno_ampl's log</sub>"
             echo ""
             echo "**Solved ${solved} / ${total} instances**"
           } > benchmark-comment.md
