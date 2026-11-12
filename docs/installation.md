@@ -172,3 +172,12 @@ You can pass the following options as `-DOPTION=value`:
 > 3. the platform default `libhsl.so` / `libhsl.dylib` / `libhsl.dll`.
 >
 > Since the default `linear_solver` is auto-selected before user options are parsed, use `UNO_HSL_LIBRARY` (rather than the `libhsl_path` option) if you want `MA27`/`MA57`/`MA86` to be picked automatically when the library is not on the default search path.
+
+> [!NOTE]
+> [libkrylov](https://github.com/JuliaSmoothOptimizers/Krylov.jl/tree/main/interfaces) (the C interface of Krylov.jl, a self-contained bundle with the Julia runtime) is never linked: Uno always loads it at runtime via `dlopen`, in static and shared builds alike. `dependencies/scripts/download_dependencies.sh` downloads the bundle into `dependencies/libkrylov` (Linux x86_64/aarch64 glibc, macOS x86_64/arm64, Windows x86_64). The library is resolved in this order:
+> 1. the `libkrylov_path` [option](options.md) (empty by default);
+> 2. the `UNO_KRYLOV_LIBRARY` environment variable;
+> 3. the library bundled with unopy (Python wheels);
+> 4. the platform default `libkrylov.so` / `libkrylov.dylib` / `libkrylov.dll`.
+>
+> `uno_is_libkrylov_functional(solver)` (C/Fortran) and `UnoSolver.is_libkrylov_functional()` (Python) load libkrylov and check it on a small linear system.

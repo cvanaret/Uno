@@ -1,6 +1,7 @@
 # Copyright (c) 2025-2026 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+import sys
 import unopy
 Inf = float("inf")
 
@@ -127,3 +128,12 @@ if __name__ == '__main__':
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
 	print("Objective at solution:", result.solution_objective)
+
+	# optional: load libkrylov (C interface of Krylov.jl) at runtime. The path is the first command-line argument,
+	# otherwise the libkrylov bundled with the unopy wheels (if any)
+	if len(sys.argv) > 1:
+		uno_solver.set_option("libkrylov_path", sys.argv[1])
+	if len(sys.argv) > 1 or unopy.bundled_libkrylov_path() is not None:
+		libkrylov_functional = uno_solver.is_libkrylov_functional()
+		print("libkrylov functional:", libkrylov_functional)
+		assert libkrylov_functional

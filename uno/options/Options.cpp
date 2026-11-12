@@ -142,6 +142,7 @@ namespace uno {
       {"SOC_max_iterations", OptionType::INTEGER},
       {"SOC_infeasibility_fraction", OptionType::DOUBLE},
       {"libhsl_path", OptionType::STRING},
+      {"libkrylov_path", OptionType::STRING},
       {"MA57_use_scaling", OptionType::BOOL},
       {"dump_kkt_path", OptionType::STRING},
       {"dump_kkt_frequency", OptionType::INTEGER},

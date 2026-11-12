@@ -48,6 +48,82 @@ curl -L -o UnoUtils.tar.gz "$ASSET_URL"
 tar -xzf UnoUtils.tar.gz
 pwd
 
+# download libkrylov (C interface of Krylov.jl, compiled with juliac). It is never linked: Uno loads it at runtime
+# (option libkrylov_path). The self-contained bundle (library + Julia runtime) is kept in its own directory
+# dependencies/libkrylov so that its private runtime libraries do not shadow those in dependencies/lib
+VERSION="v0.10.12"
+REPO="https://github.com/juliasmoothoptimizers/krylov.jl/releases/download/${VERSION}"
+case "${ARCH}-${OS}" in
+    x86_64-linux-gnu) KRYLOV_PLATFORM="linux-x86_64.tar.gz";;
+    aarch64-linux-gnu) KRYLOV_PLATFORM="linux-aarch64.tar.gz";;
+    x86_64-apple-darwin) KRYLOV_PLATFORM="macos-x86_64.tar.gz";;
+    aarch64-apple-darwin) KRYLOV_PLATFORM="macos-arm64.tar.gz";;
+    x86_64-w64-mingw32) KRYLOV_PLATFORM="windows-x86_64.zip";;
+    *) KRYLOV_PLATFORM="";;
+esac
+if [[ -n "$KRYLOV_PLATFORM" ]]; then
+    ASSET_URL="${REPO}/libkrylov-${KRYLOV_PLATFORM}"
+    echo "Downloading: ${ASSET_URL}"
+    rm -rf libkrylov && mkdir libkrylov
+    curl -fL -o "libkrylov/libkrylov-${KRYLOV_PLATFORM}" "$ASSET_URL"
+    if [[ "$KRYLOV_PLATFORM" == *.zip ]]; then
+        # MSYS2 has no unzip by default, and a login shell (bash -lc) does not inherit the Windows PATH (no Python).
+        # Windows ships bsdtar (System32/tar.exe), which extracts zip archives
+        ARCHIVE="libkrylov/libkrylov-${KRYLOV_PLATFORM}"
+        WINDOWS_TAR="$(cygpath -u "${SYSTEMROOT:-C:\\Windows}" 2>/dev/null || echo /c/Windows)/System32/tar.exe"
+        PYTHON_BIN="$(command -v python3 || command -v python || true)"
+        if command -v unzip >/dev/null 2>&1; then
+            unzip -q "$ARCHIVE" -d libkrylov
+        elif [[ -x "$WINDOWS_TAR" ]]; then
+            "$WINDOWS_TAR" -xf "$(cygpath -w "$ARCHIVE")" -C "$(cygpath -w libkrylov)"
+        elif [[ -n "$PYTHON_BIN" ]]; then
+            "$PYTHON_BIN" -m zipfile -e "$ARCHIVE" libkrylov
+        else
+            echo "Cannot extract ${ARCHIVE}: install unzip (pacman -S unzip)"; exit 1
+        fi
+    else
+        tar -xzf "libkrylov/libkrylov-${KRYLOV_PLATFORM}" -C libkrylov
+    fi
+    rm -f "libkrylov/libkrylov-${KRYLOV_PLATFORM}"
+    if [[ "$KRYLOV_PLATFORM" == *.zip ]]; then
+        # Windows reuses an already loaded DLL with the same name: in a MinGW host (Uno tests, C/Fortran programs),
+        # the Julia runtime would bind to the host's libstdc++-6.dll, libgcc_s_seh-1.dll, ..., which may not export
+        # the symbols it needs (e.g. libstdc++'s non-TLS std::call_once symbols), and libkrylov.dll fails to load.
+        # Make the bundled GCC runtime DLLs private: rename them (same-length names, lib* -> ljl*) and patch the
+        # references in the bundle (import tables, preload list of libjulia.dll)
+        GCC_RUNTIME_DLLS="stdc++-6|gcc_s_seh-1|winpthread-1|gfortran-5|gomp-1|quadmath-0|atomic-1"
+        # GNU sed (part of every MSYS2 install), with LC_ALL=C and -b: MSYS2's sed opens files in text mode by default
+        # and drops the CR of CR LF byte pairs, which corrupts the DLLs (Windows error 193). The replacement keeps the
+        # length: a file whose size changed is corrupted
+        for DLL in libkrylov/bin/*.dll; do
+            SIZE_BEFORE=$(stat -c %s "$DLL")
+            LC_ALL=C sed -b -i -E "s/(^|[^A-Za-z0-9_.+-])lib(${GCC_RUNTIME_DLLS//+/\\+})\\.dll/\\1ljl\\2.dll/gI" "$DLL"
+            SIZE_AFTER=$(stat -c %s "$DLL")
+            if [[ "$SIZE_BEFORE" -ne "$SIZE_AFTER" ]]; then
+                echo "error: patching ${DLL} changed its size (${SIZE_BEFORE} -> ${SIZE_AFTER} bytes)"; exit 1
+            fi
+        done
+        for DLL in ${GCC_RUNTIME_DLLS//|/ }; do
+            if [[ -f "libkrylov/bin/lib${DLL}.dll" ]]; then
+                mv "libkrylov/bin/lib${DLL}.dll" "libkrylov/bin/ljl${DLL}.dll"
+            fi
+        done
+        # check: no reference to the original names is left, and the private DLLs exist
+        REMAINING="$(LC_ALL=C grep -a -i -l -E "(^|[^A-Za-z0-9_.+-])lib(${GCC_RUNTIME_DLLS//+/\\+})\\.dll" libkrylov/bin/*.dll || true)"
+        if [[ -n "$REMAINING" ]]; then
+            echo "error: libkrylov DLLs still reference the original GCC runtime DLLs:" $REMAINING; exit 1
+        fi
+        for DLL in ${GCC_RUNTIME_DLLS//|/ }; do
+            if [[ ! -f "libkrylov/bin/ljl${DLL}.dll" ]]; then
+                echo "error: libkrylov/bin/ljl${DLL}.dll is missing"; exit 1
+            fi
+        done
+        echo "libkrylov: private GCC runtime DLLs: $(cd libkrylov/bin && ls ljl*.dll | tr '\n' ' ')"
+    fi
+else
+    echo "libkrylov ${VERSION} is not available for ${ARCH}-${OS}: skipped"
+fi
+
 # on MinGW, compile HiGHS on the fly and replace that of UnoUtils
 if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	# delete UnoUtils' HiGHS
