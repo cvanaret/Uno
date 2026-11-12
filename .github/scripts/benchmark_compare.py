@@ -8,6 +8,10 @@ those of the latest benchmark run on another PR, looked up in this order:
   2. with --comment-fallback, the last report posted in that PR's benchmark
      comment (this covers runs that predate the results artifact).
 
+Each results.tsv row is <name> <solved|failed> <seconds>, optionally followed by
+<model read seconds> <solve seconds> (empty when unknown). When either run has
+this breakdown, the per-instance table has separate model read/solve columns.
+
 The comparison is written as Markdown to --output. If the "before" results
 cannot be found, a warning is printed, --output is left untouched and the
 script exits with 0 so that the plain report is posted instead.
@@ -25,6 +29,7 @@ import sys
 import urllib.error
 import urllib.request
 import zipfile
+from typing import NamedTuple, Optional
 
 API_URL = os.environ.get("GITHUB_API_URL", "https://api.github.com")
 # GitHub rejects comments longer than 65536 characters
@@ -70,14 +75,28 @@ def download_artifact_zip(repository, artifact_id, token):
         return response.read()
 
 
+class Result(NamedTuple):
+    solved: bool
+    seconds: float  # wall time of the run
+    read: Optional[float] = None  # model read time (None if unknown)
+    solve: Optional[float] = None  # solve time (None if unknown)
+
+
+def parse_optional_time(field):
+    field = field.strip().rstrip("s")
+    return float(field) if field and field != "—" else None
+
+
 def parse_results_tsv(text):
     results = {}
     for line in text.splitlines():
-        fields = line.strip().split("\t")
-        if len(fields) != 3:
+        # not strip(): it would drop the trailing empty fields
+        fields = line.rstrip("\r\n").split("\t")
+        if len(fields) not in (3, 5):
             continue
-        name, status, seconds = fields
-        results[name] = (status == "solved", float(seconds))
+        name, status, seconds = fields[:3]
+        read, solve = (parse_optional_time(field) for field in fields[3:]) if len(fields) == 5 else (None, None)
+        results[name.strip()] = Result(status.strip() == "solved", float(seconds), read, solve)
     return results
 
 
@@ -99,8 +118,10 @@ def fetch_from_artifact(repository, artifact_prefix, pr_number, token, current_r
     return results, meta
 
 
-# rows of the plain report: | ✅ | `name` | solved in 12.34s |
-ROW_PATTERN = re.compile(r"^\|\s*(✅|❌)\s*\|\s*`([^`]+)`\s*\|\s*(?:solved|failed) in ([0-9.]+)s\s*\|\s*$")
+# rows of the plain report: | ✅ | `name` | solved in 12.34s | [1.23s | 11.11s |]
+# (the model read and solve columns are absent from older reports)
+ROW_PATTERN = re.compile(r"^\|\s*(✅|❌)\s*\|\s*`([^`]+)`\s*\|\s*(?:solved|failed) in ([0-9.]+)s\s*\|"
+                         r"(?:\s*([0-9.]+s|—)\s*\|\s*([0-9.]+s|—)\s*\|)?\s*$")
 
 
 def fetch_from_comments(repository, pr_number, token, title):
@@ -123,7 +144,9 @@ def fetch_from_comments(repository, pr_number, token, title):
             for line in section.splitlines():
                 match = ROW_PATTERN.match(line.strip())
                 if match:
-                    results[match.group(2)] = (match.group(1) == "✅", float(match.group(3)))
+                    results[match.group(2)] = Result(match.group(1) == "✅", float(match.group(3)),
+                                                     parse_optional_time(match.group(4) or ""),
+                                                     parse_optional_time(match.group(5) or ""))
             if not results:
                 continue
             meta = {"source": "comment", "comment_url": comment.get("html_url")}
@@ -160,8 +183,29 @@ def describe_run(label, pr_number, meta):
 def format_cell(result):
     if result is None:
         return "—"
-    solved, seconds = result
-    return f"{'✅' if solved else '❌'} {seconds:.2f}s"
+    return f"{'✅' if result.solved else '❌'} {result.seconds:.2f}s"
+
+
+def format_read_cell(result):
+    if result is None or result.read is None:
+        return "—"
+    return f"{result.read:.2f}s"
+
+
+def format_solve_cell(result):
+    if result is None:
+        return "—"
+    icon = "✅" if result.solved else "❌"
+    if result.solve is None:
+        # no breakdown (no optimization summary, or older results): wall time of the whole run
+        return f"{icon} {result.seconds:.2f}s*"
+    return f"{icon} {result.solve:.2f}s"
+
+
+def format_ratio(before, after):
+    if before is None or after is None or before <= 0:
+        return "—"
+    return f"{after / before:.2f}×"
 
 
 def build_report(title, before, before_meta, before_pr, after, after_meta, after_pr, changed_only=False,
@@ -177,13 +221,18 @@ def build_report(title, before, before_meta, before_pr, after, after_meta, after
 
     # shifted geometric means over the common instances, failures counted at the time limit
     def capped(result):
-        solved, seconds = result
+        solved, seconds = result.solved, result.seconds
         return seconds if solved or time_limit is None else max(seconds, float(time_limit))
     sgm_before = shifted_geometric_mean([capped(before[name]) for name in common])
     sgm_after = shifted_geometric_mean([capped(after[name]) for name in common])
     both_solved = [name for name in common if before[name][0] and after[name][0]]
     sgm_both_before = shifted_geometric_mean([before[name][1] for name in both_solved])
     sgm_both_after = shifted_geometric_mean([after[name][1] for name in both_solved])
+
+    # model read/solve breakdown, if either run has it
+    has_breakdown = any(result.solve is not None for result in list(before.values()) + list(after.values()))
+    read_known = [name for name in common if before[name].read is not None and after[name].read is not None]
+    solve_known = [name for name in both_solved if before[name].solve is not None and after[name].solve is not None]
 
     def ratio(a, b):
         return f"{b / a:.2f}×" if a > 0 and not math.isnan(a) and not math.isnan(b) else "—"
@@ -210,6 +259,18 @@ def build_report(title, before, before_meta, before_pr, after, after_meta, after
         f"| solved ({len(common)} common instances) | {solved_before} | {solved_after} | {solved_after - solved_before:+d} |",
         f"| shifted geo. mean time, all common instances¹ | {sgm_before:.2f}s | {sgm_after:.2f}s | {ratio(sgm_before, sgm_after)} |",
         f"| shifted geo. mean time, solved by both ({len(both_solved)}) | {sgm_both_before:.2f}s | {sgm_both_after:.2f}s | {ratio(sgm_both_before, sgm_both_after)} |",
+    ]
+    if read_known:
+        sgm_read_before = shifted_geometric_mean([before[name].read for name in read_known])
+        sgm_read_after = shifted_geometric_mean([after[name].read for name in read_known])
+        lines.append(f"| shifted geo. mean model read time ({len(read_known)}) | {sgm_read_before:.2f}s | "
+                     f"{sgm_read_after:.2f}s | {ratio(sgm_read_before, sgm_read_after)} |")
+    if solve_known:
+        sgm_solve_before = shifted_geometric_mean([before[name].solve for name in solve_known])
+        sgm_solve_after = shifted_geometric_mean([after[name].solve for name in solve_known])
+        lines.append(f"| shifted geo. mean solve time, solved by both ({len(solve_known)}) | {sgm_solve_before:.2f}s | "
+                     f"{sgm_solve_after:.2f}s | {ratio(sgm_solve_before, sgm_solve_after)} |")
+    lines += [
         "",
         f"<sub>¹ shift of {SGM_SHIFT:g}s; failures counted at the time limit.</sub>",
         "",
@@ -247,22 +308,39 @@ def build_report(title, before, before_meta, before_pr, after, after_meta, after
                         flag = "⚡"
         if changed_only and not flag:
             continue
-        rows.append(f"| {flag} | `{name}` | {format_cell(b)} | {format_cell(a)} | {time_ratio} |")
+        if has_breakdown:
+            read_ratio = format_ratio(b.read if b else None, a.read if a else None)
+            solve_ratio = format_ratio(b.solve if b else None, a.solve if a else None) \
+                if b is not None and a is not None and b.solved and a.solved else "—"
+            rows.append(f"| {flag} | `{name}` | {format_read_cell(b)} | {format_solve_cell(b)} | "
+                        f"{format_read_cell(a)} | {format_solve_cell(a)} | {read_ratio} | {solve_ratio} |")
+        else:
+            rows.append(f"| {flag} | `{name}` | {format_cell(b)} | {format_cell(a)} | {time_ratio} |")
 
     if changed_only:
         summary = f"Instances whose status or time changed ({len(rows)} of {len(all_names)})"
     else:
         summary = f"Per-instance results ({len(all_names)} instances)"
-    header = [
-        f"<details><summary>{summary}</summary>",
-        "",
-        "| | instance | before | after | after/before |",
-        "|:-:|:--|--:|--:|--:|",
-    ]
+    header = [f"<details><summary>{summary}</summary>", ""]
+    if has_breakdown:
+        header += [
+            "| | instance | model read before | solve before | model read after | solve after | model read after/before | solve after/before |",
+            "|:-:|:--|--:|--:|--:|--:|--:|--:|",
+        ]
+        number_columns = 8
+        legend = (", on the wall time of the run)<br>model read and solve: from uno_ampl's log · "
+                  "* no breakdown (no optimization summary, or older results): wall time of the run")
+    else:
+        header += [
+            "| | instance | before | after | after/before |",
+            "|:-:|:--|--:|--:|--:|",
+        ]
+        number_columns = 5
+        legend = ")"
     footer = [
         "",
         f"<sub>🟢 newly solved · 🔴 newly failed · ⚡/🐢 at least {TIME_RATIO_THRESHOLD:g}× faster/slower "
-        f"(both solved, ≥ {MIN_FLAGGED_TIME:g}s)</sub>",
+        f"(both solved, ≥ {MIN_FLAGGED_TIME:g}s{legend}</sub>",
         "",
         "</details>",
         "",
@@ -277,7 +355,7 @@ def build_report(title, before, before_meta, before_pr, after, after_meta, after
         while kept and len("\n".join(lines + header + kept + [truncation_note] + footer)) > max_length:
             kept = kept[:max(0, len(kept) - max(1, len(kept) // 10))]
             truncation_note = (f"| | … {len(rows) - len(kept)} more rows, see the run summary or the results "
-                               f"artifact | | | |")
+                               f"artifact |" + " |" * (number_columns - 2))
         report = "\n".join(lines + header + kept + [truncation_note] + footer)
     return report
 
