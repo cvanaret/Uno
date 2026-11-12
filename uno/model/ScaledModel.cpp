@@ -10,7 +10,7 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   ScaledModel::ScaledModel(const Model& original_model, const Vector<double>& initial_primals, const Options& options):
+   ScaledModel::ScaledModel(const Model& original_model, const Vector<double>& scaling_point, const Options& options):
          Model(original_model.name + " -> scaled", original_model.number_variables, original_model.number_constraints,
                original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
          model(original_model),
@@ -19,13 +19,13 @@ namespace uno {
          constraints_lower_bounds(this->model.get_constraints_lower_bounds()),
          constraints_upper_bounds(this->model.get_constraints_upper_bounds()) {
       if (options.get_bool("use_function_scaling")) {
-         // evaluate the gradients at the current point
+         // evaluate the gradients at the scaling point
          Vector<double> objective_gradient(this->model.number_variables);
          Vector<double> jacobian_values(this->model.number_jacobian_nonzeros());
          bool gradients_evaluated = true;
          try {
-            this->model.evaluate_objective_gradient(initial_primals, objective_gradient);
-            this->model.evaluate_jacobian(initial_primals, jacobian_values.data());
+            this->model.evaluate_objective_gradient(scaling_point, objective_gradient);
+            this->model.evaluate_jacobian(scaling_point, jacobian_values.data());
          }
          // any failure of the user callbacks (not only an EvaluationError) disables the scaling. If the failure persists,
          // it is reported (and classified) by the evaluation of the initial iterate

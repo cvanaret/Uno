@@ -15,7 +15,7 @@ namespace uno {
 
    class ScaledModel: public Model {
    public:
-      ScaledModel(const Model& original_model, const Vector<double>& initial_primals, const Options& options);
+      ScaledModel(const Model& original_model, const Vector<double>& scaling_point, const Options& options);
 
       [[nodiscard]] ProblemType get_problem_type() const override;
 

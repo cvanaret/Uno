@@ -8,6 +8,7 @@
 #include <optional>
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/Result.hpp"
 #include "options/Options.hpp"
 
@@ -46,6 +47,8 @@ namespace uno {
       [[nodiscard]] static bool check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, bool user_interruption, OptimizationStatus& optimization_status,
          UserCallbacks& user_callbacks);
+      [[nodiscard]] static Vector<double> compute_projected_initial_point(const Model& model);
+      [[nodiscard]] static Vector<double> compute_interior_initial_point(const Model& model, const Options& options);
       [[nodiscard]] Result reformulate_and_solve(const Model& user_model, const Model& model, const Options& options,
          UserCallbacks& user_callbacks);
       [[nodiscard]] Result evaluate_single_point(const Model& user_model, const Model& model, const Options& options);
