@@ -5,6 +5,9 @@ It can be installed via `pip`:
 ```bash
 pip install unopy
 ```
+unopy also provides a [SciPy interface](scipy.md), with the API of `scipy.optimize.minimize`,
+and a [GEMSEO interface](gemseo.md), to solve GEMSEO optimization problems and MDO scenarios with Uno.
+
 An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/examples/example_hs015.py).
 
 unopy ships with:

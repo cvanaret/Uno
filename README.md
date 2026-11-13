@@ -29,7 +29,7 @@ Uno breaks down these methods into a set of common building blocks that interact
    <img src="docs/figures/wheel.png" alt="Uno's wheel of strategies" width="40%" />
 </p>
 
-Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
+Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [GEMSEO](interfaces/Python/README.md#scipy-and-gemseo-interfaces), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
 
 ## How to support Uno
 
