@@ -7,6 +7,7 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "QualityFunction.hpp"
 
 namespace uno {
    // forward declaration
@@ -88,6 +89,14 @@ namespace uno {
       [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;
       // (constraint index, slack index) of the slacked inequality constraints
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const;
+
+      // adaptive barrier parameter
+      [[nodiscard]] size_t number_complementarity_pairs() const;
+      [[nodiscard]] double average_complementarity(const Iterate& iterate) const;
+      // quality function along the step affine + sigma * centering. dual_aggregate and primal_aggregate: squared 2-norms
+      // of the dual and primal infeasibilities at the iterate
+      [[nodiscard]] quality_function::QualityFunction quality_function(const Iterate& iterate, const Direction& affine,
+         const Direction& centering, double tau, double dual_aggregate, double primal_aggregate) const;
 
       // primal_infeasibility (termination) is not overridden: constraint violation of the unslacked problem (IPOPT)
       // reformulation_infeasibility (restoration switching test): max of the constraint violation of the unslacked problem
