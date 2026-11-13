@@ -1,4 +1,4 @@
-name: Full Mittelmann L-BFGS benchmark
+name: Mittelmann L-BFGS benchmark
 
 # Runs uno_ampl with the ipopt preset, MA57 and an L-BFGS Hessian on all the
 # Mittelmann instances (time_limit=600s per instance), via the reusable
