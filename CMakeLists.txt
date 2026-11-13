@@ -541,8 +541,8 @@ if(ENABLE_TESTS)
    include(GoogleTest)
    gtest_discover_tests(run_unotest DISCOVERY_MODE PRE_TEST)
 
-   # end-to-end check of iterative refinement (pivoting tolerance increased at the first iteration) on Mittelmann's
-   # NARX_CFy instance. Requires the AMPL interface and the path to NARX_CFy.nl
+   # end-to-end check of iterative refinement (pivoting tolerance increased, or scaling switched on, at the first
+   # iteration) on Mittelmann's NARX_CFy instance. Requires the AMPL interface and the path to NARX_CFy.nl
    set(UNO_NARX_CFY_NL "" CACHE FILEPATH "Path to Mittelmann's NARX_CFy.nl instance (optional end-to-end test)")
    set(UNO_NARX_CFY_LINEAR_SOLVERS "MA57" CACHE STRING "Linear solvers tested on NARX_CFy (among MA27, MA57, MUMPS)")
    if(AMPLSOLVER AND UNO_NARX_CFY_NL)
@@ -551,9 +551,14 @@ if(ENABLE_TESTS)
          if((linear_solver STREQUAL "MA57" AND _compile_ma57) OR (linear_solver STREQUAL "MA27" AND _compile_ma27) OR
                (linear_solver STREQUAL "MUMPS" AND MUMPS_LIBRARY))
             add_dependencies(run_unotest uno_ampl)
+            # without scaling: the pivoting tolerance is increased
             add_test(NAME NARX_CFy_iterative_refinement_${linear_solver}
                COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/unotest/scripts/check_iterative_refinement_first_iteration.sh
-                  $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver})
+                  $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver} pivoting)
+            # with on-demand scaling: the scaling is switched on first
+            add_test(NAME NARX_CFy_iterative_refinement_scaling_${linear_solver}
+               COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/unotest/scripts/check_iterative_refinement_first_iteration.sh
+                  $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver} scaling)
          else()
             message(STATUS "NARX_CFy iterative refinement test skipped for ${linear_solver} (solver not available)")
          endif()

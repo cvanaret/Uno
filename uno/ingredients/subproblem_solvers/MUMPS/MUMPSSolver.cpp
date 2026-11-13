@@ -17,7 +17,7 @@
 #define USE_COMM_WORLD (-987654)
 
 namespace uno {
-   MUMPSSolver::MUMPSSolver(): DirectSymmetricIndefiniteLinearSolver() {
+   MUMPSSolver::MUMPSSolver(bool use_scaling): DirectSymmetricIndefiniteLinearSolver(), use_scaling(use_scaling) {
       INFO << "Running MUMPS v" << MUMPS_VERSION << '\n';
       this->workspace.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
@@ -37,7 +37,7 @@ namespace uno {
 
       MUMPS_ICNTL(6) = MUMPSSettings::permuting_scaling; // column permutation (none)
       MUMPS_ICNTL(7) = MUMPSSettings::pivot_order; // pivot order (AMD)
-      MUMPS_ICNTL(8) = MUMPSSettings::scaling; // scaling strategy (diagonal scaling during factorization)
+      MUMPS_ICNTL(8) = use_scaling ? MUMPSSettings::scaling : 0; // scaling strategy (diagonal scaling during factorization, or none)
       MUMPS_ICNTL(10) = 0; // iterative refinement (none)
       MUMPS_ICNTL(13) = 1; // parallelism of the root nod (ScaLAPACK not used, partly recover parallelism of the root node)
       MUMPS_ICNTL(14) = MUMPSSettings::mem_percent; // percentage increase in the estimated working space (35)
@@ -67,11 +67,13 @@ namespace uno {
       if (MUMPS_INFO(1) < 0) {
          throw std::runtime_error("The MUMPS analysis failed");
       }
-      MUMPS_ICNTL(8) = 8; // recompute scaling before factorization
+      if (this->use_scaling) {
+         MUMPS_ICNTL(8) = 8; // recompute scaling before factorization
+      }
       this->analysis_performed = true;
    }
 
-   void MUMPSSolver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
+   void MUMPSSolver::factorize(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
@@ -106,11 +108,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MUMPSSolver::solve_indefinite_system(double* solution) {
-      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
-   }
-
-   void MUMPSSolver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+   void MUMPSSolver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
       const size_t dimension = static_cast<size_t>(this->workspace.n);
@@ -130,6 +128,13 @@ namespace uno {
       if (MUMPS_INFO(1) < 0) {
          throw std::runtime_error("The MUMPS solve failed");
       }
+   }
+
+   std::optional<size_t> MUMPSSolver::number_delayed_pivots() const {
+      if (this->factorization_aborted_singular) {
+         return std::nullopt;
+      }
+      return static_cast<size_t>(MUMPS_INFOG(13)); // total number of delayed pivots
    }
 
    Inertia MUMPSSolver::get_inertia() const {
