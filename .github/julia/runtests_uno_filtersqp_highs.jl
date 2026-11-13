@@ -23,8 +23,8 @@ function Optimizer(options)
 end
 
 # Note: the HiGHS QP solver tolerates only positive semi-definite Hessians
-# We therefore use primal regularization.
-Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "regularization_strategy=primal", "QP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
+# We therefore use primal inertia correction.
+Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "inertia_correction_strategy=primal", "QP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
