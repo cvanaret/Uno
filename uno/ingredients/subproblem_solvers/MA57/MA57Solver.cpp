@@ -168,7 +168,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA57Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
+   void MA57Solver::factorize(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       bool factorization_done = false;
@@ -215,27 +215,28 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(double* solution) {
-      return this->solve_indefinite_system(this->linear_system.rhs.data(), solution, 1);
-   }
-
-   void MA57Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+   void MA57Solver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       // copy the rhs block into the solution block (overwritten by MA57)
       view(solution, number_of_rhs * static_cast<size_t>(this->workspace.n)) =
          view(rhs, number_of_rhs * static_cast<size_t>(this->workspace.n));
       this->solve(MA57Job::FULL, solution, number_of_rhs);
    }
 
-   void MA57Solver::solve_lower_factor(double* rhs, size_t number_of_rhs) {
+   void MA57Solver::solve_with_lower_factor(double* rhs, size_t number_of_rhs) {
       this->solve(MA57Job::LOWER, rhs, number_of_rhs);
    }
 
-   void MA57Solver::solve_middle_factor(double* rhs, size_t number_of_rhs) {
+   void MA57Solver::solve_with_middle_factor(double* rhs, size_t number_of_rhs) {
       this->solve(MA57Job::DIAGONAL, rhs, number_of_rhs);
    }
 
-   void MA57Solver::solve_upper_factor(double* rhs, size_t number_of_rhs) {
+   void MA57Solver::solve_with_upper_factor(double* rhs, size_t number_of_rhs) {
       this->solve(MA57Job::UPPER, rhs, number_of_rhs);
+   }
+
+   std::optional<size_t> MA57Solver::number_delayed_pivots() const {
+      // total number of fully-summed variables passed to the father node because of numerical pivoting
+      return static_cast<size_t>(MA57_INFO(23));
    }
 
    Inertia MA57Solver::get_inertia() const {
