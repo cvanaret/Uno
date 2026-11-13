@@ -220,35 +220,22 @@ namespace uno {
    }
 
    void MA57Solver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
-      assert(this->factorization_performed);
-
-      const int nrhs = static_cast<int>(number_of_rhs);
-      const int lrhs = this->workspace.n; // leading dimension of the right-hand side block
-
       // copy the rhs block into the solution block (overwritten by MA57)
-      const size_t dimension = static_cast<size_t>(this->workspace.n);
-      view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
+      view(solution, number_of_rhs * static_cast<size_t>(this->workspace.n)) =
+         view(rhs, number_of_rhs * static_cast<size_t>(this->workspace.n));
+      this->solve(MA57Job::FULL, solution, number_of_rhs);
+   }
 
-      // ma57cd requires a work array of size n*nrhs; enlarge it if needed
-      const int required_lwork = this->workspace.n * nrhs;
-      if (this->workspace.lwork < required_lwork) {
-         this->workspace.lwork = required_lwork;
-         this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      }
+   void MA57Solver::solve_lower_factor(double* rhs, size_t number_of_rhs) {
+      this->solve(MA57Job::LOWER, rhs, number_of_rhs);
+   }
 
-      // MA57CD overwrites INFO: use a copy, so that the diagnostics of the factorization (inertia, rank) are kept
-      std::array<int, 40> solve_info = this->workspace.info;
-      MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-         this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, solution, &lrhs,
-         this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
-         solve_info.data());
-      // INFO(1) < 0: error (the solution is meaningless); INFO(1) > 0: warning
-      if (solve_info[0] < 0) {
-         throw std::runtime_error("MA57: the linear solve failed (INFO(1) = " + std::to_string(solve_info[0]) + ")");
-      }
-      if (0 < solve_info[0]) {
-         DEBUG << "MA57 has issued a warning during the linear solve: INFO(1) = " << solve_info[0] << '\n';
-      }
+   void MA57Solver::solve_middle_factor(double* rhs, size_t number_of_rhs) {
+      this->solve(MA57Job::DIAGONAL, rhs, number_of_rhs);
+   }
+
+   void MA57Solver::solve_upper_factor(double* rhs, size_t number_of_rhs) {
+      this->solve(MA57Job::UPPER, rhs, number_of_rhs);
    }
 
    Inertia MA57Solver::get_inertia() const {
@@ -294,6 +281,35 @@ namespace uno {
    }
 
    // protected member functions
+
+   // in-place solve with the factors selected by `job`
+   void MA57Solver::solve(MA57Job job, double* rhs, size_t number_of_rhs) {
+      assert(this->factorization_performed);
+      const int job_code = static_cast<int>(job);
+      const int nrhs = static_cast<int>(number_of_rhs);
+      const int lrhs = this->workspace.n; // leading dimension of the right-hand side block
+
+      // ma57cd requires a work array of size n*nrhs; enlarge it if needed
+      const int required_lwork = this->workspace.n * nrhs;
+      if (this->workspace.lwork < required_lwork) {
+         this->workspace.lwork = required_lwork;
+         this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
+      }
+
+      // MA57CD overwrites INFO: use a copy, so that the diagnostics of the factorization (inertia, rank) are kept
+      std::array<int, 40> solve_info = this->workspace.info;
+      MA57_linear_solve(&job_code, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
+         this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, rhs, &lrhs,
+         this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
+         solve_info.data());
+      // INFO(1) < 0: error (the solution is meaningless); INFO(1) > 0: warning
+      if (solve_info[0] < 0) {
+         throw std::runtime_error("MA57: the linear solve failed (INFO(1) = " + std::to_string(solve_info[0]) + ")");
+      }
+      if (0 < solve_info[0]) {
+         DEBUG << "MA57 has issued a warning during the linear solve: INFO(1) = " << solve_info[0] << '\n';
+      }
+   }
 
    int& MA57Solver::MA57_ICNTL(size_t index) {
       // handle the Fortran indexing (starting at 1)
