@@ -10,16 +10,17 @@ namespace uno {
    class FletcherFilterMethod : public FilterMethod {
    public:
       explicit FletcherFilterMethod(const Options& options);
-      ~FletcherFilterMethod() override;
+      ~FletcherFilterMethod() override = default;
 
-      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,
-         const ProgressMeasures& trial_progress) const override;
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
+      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
+         double reference_infeasibility) const override;
 
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
+      const double sufficient_infeasibility_decrease_factor;
    };
 } // namespace
 

@@ -1,0 +1,178 @@
+name: KKT system dump
+
+# End-to-end tests of the dump_kkt_path / dump_kkt_frequency options: the dumped MatrixMarket files
+# are validated (names, format, symmetry, dimensions, inertia of the regularized matrix) and the
+# unsupported configurations (quasi-Newton Hessian, QP subproblems) must not dump anything.
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - 'uno/ingredients/subproblem_solvers/**'
+      - 'uno/options/**'
+      - 'uno/Uno.cpp'
+      - 'uno/tools/Statistics.*'
+      - 'uno_default.opt'
+      - '.github/scripts/check_kkt_dump.py'
+      - '.github/workflows/kkt-dump.yml'
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - 'uno/ingredients/subproblem_solvers/**'
+      - 'uno/options/**'
+      - 'uno/Uno.cpp'
+      - 'uno/tools/Statistics.*'
+      - 'uno_default.opt'
+      - '.github/scripts/check_kkt_dump.py'
+      - '.github/workflows/kkt-dump.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  NL: interfaces/AMPL/examples/hs015.nl
+  # hs015: the regularized KKT matrix has inertia (n, 2, 0)
+  NUMBER_CONSTRAINTS: 2
+
+jobs:
+  kkt-dump:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt update
+          sudo apt install -y gfortran cmake python3-numpy
+
+      - name: Download Uno dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      # Builds amplsolver.a next to its headers (asl.h, arith.h): Uno's CMake
+      # takes the include directory from the library's directory.
+      - name: Build the AMPL Solver Library
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ampl/asl.git ${{ runner.temp }}/asl
+          cd ${{ runner.temp }}/asl/src/solvers
+          sh ./configurehere
+          make -j"$(nproc)" CFLAGS="-O2 -fPIC"
+          test -f amplsolver.a
+
+      - name: Configure Uno
+        run: |
+          DEPS=${{ github.workspace }}/dependencies
+          cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                -DAMPLSOLVER=${{ runner.temp }}/asl/src/solvers/amplsolver.a \
+                -DBQPD=${DEPS}/lib/libbqpd.a \
+                -DMETIS_INCLUDE_DIR=${DEPS}/include \
+                -DSPRAL_INCLUDE_DIR=${DEPS}/include \
+                -DMETIS=${DEPS}/lib/libmetis.a \
+                -DSPRAL=${DEPS}/lib/libspral.a \
+                -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
+                -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
+                -DBUILD_STATIC_LIBS=OFF \
+                -DBUILD_SHARED_LIBS=ON
+
+      # uno_ampl is EXCLUDE_FROM_ALL
+      - name: Build uno_ampl
+        run: cmake --build build --target uno_ampl --parallel
+
+      # Helpers shared by the test steps: run Uno in a scratch directory and list the iterations
+      # computed in the optimality phase (only those are dumped)
+      - name: Prepare the test helpers
+        run: |
+          cat > ${{ runner.temp }}/helpers.sh <<'SH'
+          set -euo pipefail
+          UNO=${GITHUB_WORKSPACE}/build/uno_ampl
+          NL=${GITHUB_WORKSPACE}/${NL}
+          CHECK="python3 -I ${GITHUB_WORKSPACE}/.github/scripts/check_kkt_dump.py"
+          WORK=${RUNNER_TEMP}/kkt
+          mkdir -p "${WORK}"
+          # run_uno <log> <options...>: solve hs015 from ${WORK}, require success
+          run_uno() {
+            local log=$1; shift
+            (cd "${WORK}" && "${UNO}" "${NL}" "$@") 2>&1 | tee "${WORK}/${log}"
+            grep -q "Optimization status:.*Success" "${WORK}/${log}"
+          }
+          # optimality_iterations <log> <frequency>: comma-separated major iterations (>= 1) in the
+          # OPT phase, sampled as the first one and every <frequency>-th one after it
+          optimality_iterations() {
+            awk -v f="$2" '$2 == "OPT" && $1 ~ /^[0-9]+$/ && $1 >= 1 && ($1 - 1) % f == 0 { print $1 }' \
+              "${WORK}/$1" | paste -sd, -
+          }
+          # no_dump <dir>: no KKT file was written anywhere under ${WORK}/<dir>
+          no_dump() {
+            if [ -n "$(find "${WORK}" -path "${WORK}/$1*" -name 'kkt_*.mtx' -print -quit)" ]; then
+              echo "::error::KKT files were written to $1"; exit 1
+            fi
+          }
+          SH
+
+      - name: "Dump every iteration (exact Hessian, interior point) into a nested new directory"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          run_uno every.log preset=ipopt dump_kkt_path=every/nested/dir
+          ${CHECK} "${WORK}/every/nested/dir" hs015 "$(optimality_iterations every.log 1)" ${NUMBER_CONSTRAINTS}
+
+      - name: "Dump frequency: every 5th iteration"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          run_uno freq5.log preset=ipopt dump_kkt_path=freq5 dump_kkt_frequency=5
+          ${CHECK} "${WORK}/freq5" hs015 "$(optimality_iterations freq5.log 5)" ${NUMBER_CONSTRAINTS}
+
+      - name: "Options read from an option file"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          printf 'dump_kkt_path optfile\ndump_kkt_frequency 3\n' > "${WORK}/kkt.opt"
+          run_uno optfile.log preset=ipopt option_file="${WORK}/kkt.opt"
+          ${CHECK} "${WORK}/optfile" hs015 "$(optimality_iterations optfile.log 3)" ${NUMBER_CONSTRAINTS}
+
+      - name: "Disabled by default"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          mkdir -p "${WORK}/default" && cd "${WORK}/default"
+          "${UNO}" "${NL}" preset=ipopt | tee default.log
+          grep -q "Optimization status:.*Success" default.log
+          no_dump default
+
+      - name: "Invalid frequency (0) is rejected"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          (cd "${WORK}" && "${UNO}" "${NL}" preset=ipopt dump_kkt_path=freq0 dump_kkt_frequency=0) 2>&1 | tee "${WORK}/freq0.log" || true
+          grep -q "dump_kkt_frequency should be positive" "${WORK}/freq0.log"
+          no_dump freq0
+
+      - name: "Quasi-Newton Hessian (low-rank correction): warning, no dump"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          run_uno lbfgs.log preset=ipopt hessian_model=LBFGS dump_kkt_path=lbfgs
+          grep -q "KKT system dumping is only supported" "${WORK}/lbfgs.log"
+          no_dump lbfgs
+
+      - name: "QP subproblems (filtersqp, BQPD): no dump"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          run_uno filtersqp.log preset=filtersqp dump_kkt_path=filtersqp
+          no_dump filtersqp
+
+      - name: "Unwritable directory: warning, the solve still succeeds"
+        run: |
+          source ${{ runner.temp }}/helpers.sh
+          # a regular file as parent: the directory cannot be created, even as root
+          touch "${WORK}/not_a_directory"
+          run_uno unwritable.log preset=ipopt dump_kkt_path="${WORK}/not_a_directory/dump"
+          grep -q "KKTSystemDumper: could not create directory" "${WORK}/unwritable.log"
+
+      - name: Upload the dumped systems and logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kkt-dump
+          path: ${{ runner.temp }}/kkt
+          retention-days: 7

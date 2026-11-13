@@ -4,25 +4,35 @@
 #ifndef UNO_MUMPSSOLVER_H
 #define UNO_MUMPSSOLVER_H
 
-#include <vector>
+#include <dmumps_c.h>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "dmumps_c.h"
-#include "linear_algebra/Vector.hpp"
+#include "../COOLinearSystem.hpp"
+#include "../PivotingToleranceSchedule.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
+   // settings taken from MadNLP
+   struct MUMPSSettings {
+      static constexpr int mem_percent = 35;
+      static constexpr int mem_percent_increase = 2;
+      static constexpr int permuting_scaling = 0;
+      static constexpr int pivot_order = 0; // AMD
+      static constexpr double pivtol = 1e-6; // relative threshold for numerical pivoting
+      static constexpr double max_pivtol = 1e-1; // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_mumps_pivtolmax
+      static constexpr double pivtol_increase_exponent = 0.5;
+      static constexpr int scaling = 1; // diagonal scaling computed during the numerical factorization phase
+      static constexpr size_t max_number_factorization_failures = 10;
+      static constexpr int max_memory_increase_percent = 10000;
+   };
+
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
-      MUMPSSolver();
+      explicit MUMPSSolver(bool use_scaling = true); // MUMPS's internal scaling (ICNTL(8))
       ~MUMPSSolver() override;
 
-      void initialize_hessian(const Subproblem& subproblem) override;
-      void initialize_augmented_system(const Subproblem& subproblem) override;
+      void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(const double* matrix_values) override;
-      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -30,30 +40,22 @@ namespace uno {
       // [[nodiscard]] bool matrix_is_positive_definite() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
+      [[nodiscard]] bool increase_pivoting_tolerance() override;
+      [[nodiscard]] std::optional<size_t> number_delayed_pivots() const override;
 
-      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] LinearSystem& get_linear_system() override;
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;
+      // whether MUMPS scales the matrix itself (ICNTL(8))
+      [[nodiscard]] bool uses_internal_scaling() const { return this->use_scaling; }
 
    protected:
+      void factorize(bool is_matrix_positive_definite) override;
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override;
+
       DMUMPS_STRUC_C workspace{};
-
-      // evaluations
-      Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-
-      // Jacobian
-      size_t number_jacobian_nonzeros{};
-      std::vector<size_t> jacobian_row_indices{};
-      std::vector<size_t> jacobian_column_indices{};
-
-      // augmented system
-      size_t number_hessian_nonzeros{};
-      std::vector<int> matrix_row_indices{};
-      std::vector<int> matrix_column_indices{};
-      Vector<double> matrix_values{};
-      Vector<double> rhs{};
-      Vector<double> solution{};
+      const bool use_scaling;
+      COOLinearSystem linear_system{Indexing::Fortran_indexing};
+      PivotingToleranceSchedule pivoting_tolerance_schedule{MUMPSSettings::max_pivtol, MUMPSSettings::pivtol_increase_exponent};
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;
@@ -63,7 +65,16 @@ namespace uno {
 
       static const int GENERAL_SYMMETRIC = 2;
 
-      const size_t fortran_shift{1};
+      bool analysis_performed{false};
+      bool factorization_performed{false};
+      // the last factorization was aborted because the matrix is numerically singular (INFO(1) = -10): the inertia
+      // information of MUMPS is not available and no solve is possible
+      bool factorization_aborted_singular{false};
+
+      [[nodiscard]] int& MUMPS_ICNTL(size_t index);
+      [[nodiscard]] double& MUMPS_CNTL(size_t index);
+      [[nodiscard]] int MUMPS_INFO(size_t index) const;
+      [[nodiscard]] int MUMPS_INFOG(size_t index) const;
    };
 } // namespace
 

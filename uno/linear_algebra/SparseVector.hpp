@@ -4,11 +4,8 @@
 #ifndef UNO_SPARSEVECTOR_H
 #define UNO_SPARSEVECTOR_H
 
-#include <cassert>
-#include <functional>
 #include <ostream>
 #include <vector>
-#include "symbolic/Range.hpp"
 
 namespace uno {
    // SparseVector is a sparse vector that uses contiguous memory. It contains:
@@ -29,12 +26,16 @@ namespace uno {
          }
 
          iterator& operator++() {
-            this->index++;
+            ++this->index;
             return *this;
          }
 
          friend bool operator!=(const iterator& a, const iterator& b) {
             return &a.vector != &b.vector || a.index != b.index;
+         }
+
+         friend bool operator==(const iterator& a, const iterator& b) {
+            return &a.vector == &b.vector && a.index == b.index;
          }
 
       protected:
@@ -50,7 +51,6 @@ namespace uno {
       void reserve(size_t capacity);
 
       void insert(size_t index, ElementType value);
-      void transform(const std::function<ElementType(ElementType)>& f);
       void clear();
       [[nodiscard]] bool is_empty() const;
 
@@ -87,7 +87,7 @@ namespace uno {
    void SparseVector<ElementType>::insert(size_t index, ElementType value) {
       this->indices.emplace_back(index);
       this->values.emplace_back(value);
-      this->number_nonzeros++;
+      ++this->number_nonzeros;
    }
 
    template <typename ElementType>
@@ -103,60 +103,12 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void SparseVector<ElementType>::transform(const std::function<ElementType (ElementType)>& f) {
-      for (size_t index: Range(this->number_nonzeros)) {
-         this->values[index] = f(this->values[index]);
-      }
-   }
-
-   template <typename ElementType>
    std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& x) {
       stream << "sparse vector with " << x.size() << " nonzeros\n";
       for (const auto [index, element]: x) {
          stream << "index " << index << ", value " << element << '\n';
       }
       return stream;
-   }
-
-   // free functions
-
-   template <typename ElementType>
-   ElementType norm_inf(const SparseVector<ElementType>& x) {
-      ElementType norm = ElementType(0);
-      for (const auto [_, element]: x) {
-         norm = std::max(norm, std::abs(element));
-      }
-      return norm;
-   }
-
-   template <typename Vector>
-   typename Vector::value_type dot(const Vector& x, const Vector& y) {
-      typename Vector::value_type dot_product = 0;
-      const size_t size = std::min(x.size(), y.size());
-      for (size_t index: Range(size)) {
-         dot_product += x[index] * y[index];
-      }
-      return dot_product;
-   }
-
-   template <typename Vector, typename ElementType>
-   ElementType dot(const Vector& x, const SparseVector<ElementType>& y) {
-      static_assert(std::is_same_v<typename Vector::value_type, ElementType>);
-
-      ElementType dot_product = ElementType(0);
-      for (const auto [index, y_element]: y) {
-         assert(index < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");
-         dot_product += x[index] * y_element;
-      }
-      return dot_product;
-   }
-
-   // precondition: factor != 0
-   template <typename ElementType>
-   void scale(SparseVector<ElementType>& x, ElementType factor) {
-      x.transform([=](ElementType element) {
-         return factor * element;
-      });
    }
 } // namespace
 

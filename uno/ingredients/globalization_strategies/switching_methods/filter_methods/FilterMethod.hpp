@@ -4,12 +4,11 @@
 #ifndef UNO_FILTERMETHOD_H
 #define UNO_FILTERMETHOD_H
 
-#include <memory>
+#include "Filter.hpp"
 #include "ingredients/globalization_strategies/switching_methods/SwitchingMethod.hpp"
 
 namespace uno {
-   // forward declarations
-   class Filter;
+   // forward declaration
    class Options;
 
    struct FilterStrategyParameters {
@@ -20,21 +19,15 @@ namespace uno {
    class FilterMethod: public SwitchingMethod {
    public:
       explicit FilterMethod(const Options& options);
-      ~FilterMethod() override = default;
+      ~FilterMethod() override;
 
-      void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
+      void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
       void reset() override;
-      void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
-      void notify_switch_to_optimality(const ProgressMeasures& current_progress) override;
+      void avoid_cycling_back_to(const ProgressMeasures& current_progress) override;
 
    protected:
-      // pointer to allow polymorphism
-      const std::unique_ptr<Filter> filter;
+      Filter filter;
       const FilterStrategyParameters parameters; /*!< Set of constants */
-
-      [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility,
-         double trial_objective_measure);
-      void set_statistics(Statistics& statistics) const override;
    };
 } // namespace
 

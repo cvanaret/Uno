@@ -12,7 +12,9 @@ namespace uno {
       ITERATION_LIMIT,
       TIME_LIMIT,
       EVALUATION_ERROR,
-      ALGORITHMIC_ERROR
+      ALGORITHMIC_ERROR,
+      USER_TERMINATION,
+      USER_INTERRUPTION
    };
 
    std::string optimization_status_to_message(OptimizationStatus status);

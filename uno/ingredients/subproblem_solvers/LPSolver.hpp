@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_LPSOLVER_H
@@ -7,27 +7,42 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class Iterate;
+   class QuadraticProgram;
+   class SolverWorkspace;
    class Statistics;
    class Subproblem;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
 
+   // Numerical backend that solves a (Subproblem-free) QuadraticProgram. An LPSolver is the base
+   // capability: it is guaranteed to solve curvature-free programs (LPs). BQPD and HiGHS implement
+   // the QPSolver refinement (QPSolver : LPSolver), so they are valid LPSolvers too; a simplex-only
+   // backend would implement LPSolver directly.
+   //
+   // The backend owns its native QuadraticProgram (only the backend knows the format). IQPSolver
+   // retrieves it via get_quadratic_program() and populates it from a Subproblem before each solve;
+   // solve() itself never sees a Subproblem.
    class LPSolver {
    public:
       LPSolver() = default;
-      virtual ~LPSolver() = default;
+      virtual ~LPSolver();
 
+      // allocate native storage; also constructs and initializes the owned QuadraticProgram
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
+      // whether the backend needs the explicit Hessian matrix of a subproblem with curvature (an operator is not enough)
+      [[nodiscard]] virtual bool requires_hessian_matrix(const Subproblem& /*subproblem*/) const { return false; }
 
-      virtual void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) = 0;
+      // the QuadraticProgram owned by this backend, populated by IQPSolver before each solve
+      [[nodiscard]] virtual QuadraticProgram& get_quadratic_program() = 0;
 
-      virtual void evaluate_constraint_jacobian(const Subproblem& subproblem) = 0;
-      virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      [[nodiscard]] virtual double compute_hessian_quadratic_product(const Vector<double>& vector) const = 0;
+      // solve the (already built) QuadraticProgram. Fills direction.primals, direction.multipliers
+      // (raw subproblem multipliers, before dual-displacement mapping), direction.status and
+      // direction.subproblem_objective.
+      virtual void solve(Statistics& statistics, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) = 0;
+
+      [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
    };
 } // namespace
 

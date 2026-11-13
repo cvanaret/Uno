@@ -9,25 +9,15 @@ namespace uno {
          upper_bounds(number_variables), constraints(number_constraints) {
    }
 
+   void Multipliers::resize(size_t number_variables, size_t number_constraints) {
+      this->constraints.resize(number_constraints);
+      this->lower_bounds.resize(number_variables);
+      this->upper_bounds.resize(number_variables);
+   }
+
    void Multipliers::reset() {
       this->constraints.fill(0.);
       this->lower_bounds.fill(0.);
       this->upper_bounds.fill(0.);
-   }
-
-   bool Multipliers::not_all_zero(size_t number_variables, double tolerance) const {
-      // constraint multipliers
-      for (double multiplier_j: this->constraints) {
-         if (tolerance < std::abs(multiplier_j)) {
-            return true;
-         }
-      }
-      // bound multipliers
-      for (size_t variable_index: Range(number_variables)) {
-         if (tolerance < std::abs(this->lower_bounds[variable_index] + this->upper_bounds[variable_index])) {
-            return true;
-         }
-      }
-      return false;
    }
 } // namespace

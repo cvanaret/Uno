@@ -1,0 +1,107 @@
+// Copyright (c) 2018-2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#ifndef UNO_L1RELAXEDPROBLEM_H
+#define UNO_L1RELAXEDPROBLEM_H
+
+#include <functional>
+#include "ElasticVariables.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "optimization/OptimizationProblem.hpp"
+
+namespace uno {
+   class l1RelaxedProblem: public OptimizationProblem {
+   public:
+      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
+         bool relax_linear_constraints, bool use_proximal_term, double residual_scaling_threshold);
+      ~l1RelaxedProblem() override = default;
+
+      [[nodiscard]] double get_objective_multiplier() const override;
+      [[nodiscard]] bool has_inequality_constraints() const override;
+      [[nodiscard]] bool has_bound_constraints() const override;
+
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
+
+      void set_proximal_coefficient(double new_proximal_coefficient);
+      void set_proximal_center(View<const double> point);
+
+      // sparsity patterns of Jacobian and Hessian
+      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
+      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override;
+      void compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices, View<uno_int> column_indices,
+         uno_int solver_indexing) const override;
+
+      // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
+      void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const override;
+      void evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const override;
+      void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const override;
+      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const override;
+      void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
+         const Multipliers& multipliers, View<double> hessian_values) const override;
+
+      // linear operators
+      void add_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const override;
+      void add_jacobian_transposed_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const override;
+      void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x, View<const double> vector,
+         const Multipliers& multipliers, View<double> result) const override;
+
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
+
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
+
+      [[nodiscard]] Inertia get_inertia() const override;
+
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const override;
+      [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+         double dual_tolerance) const override;
+
+      void set_elastic_variable_values(const std::function<void(size_t, size_t, ElasticType)>& elastic_setting_function) const;
+
+      // progress measures
+      void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const override;
+      void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const override;
+      void set_auxiliary_measure(Iterate& iterate) const override;
+
+      // predicted reductions
+      [[nodiscard]] PredictedInfeasibilityReduction build_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Norm norm, Evaluations& current_evaluations) const override;
+      [[nodiscard]] PredictedObjectiveReduction build_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Evaluations& current_evaluations, double hessian_quadratic_form) const override;
+      [[nodiscard]] PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const override;
+
+      const double constraint_violation_coefficient;
+
+   protected:
+      ElasticVariables elastic_variables;
+      const size_t number_elastic_variables;
+      const double objective_multiplier;
+      const bool use_proximal_term;
+      double proximal_coefficient{0.};
+      Vector<double> proximal_center;
+
+      std::vector<double> variables_lower_bounds;
+      std::vector<double> variables_upper_bounds;
+
+      Vector<uno_int> jacobian_row_indices;
+      Vector<uno_int> jacobian_column_indices;
+
+      mutable Vector<double> constraints_buffer;
+
+      // delegating constructor
+      l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
+         double constraint_violation_coefficient, bool use_proximal_term, double residual_scaling_threshold);
+   };
+} // namespace
+
+#endif // UNO_L1RELAXEDPROBLEM_H

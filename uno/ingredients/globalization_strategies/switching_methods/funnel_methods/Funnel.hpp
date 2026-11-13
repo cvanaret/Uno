@@ -4,6 +4,7 @@
 #ifndef UNO_FUNNEL_H
 #define UNO_FUNNEL_H
 
+#include "../interfaces/C/uno_int.h"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -25,9 +26,9 @@ namespace uno {
       void print() const;
 
    protected:
-      double width{INF<double>};
+      double width{Inf};
       const double margin;
-      const int update_strategy;
+      const uno_int update_strategy;
       const double kappa;
 
       [[nodiscard]] static double convex_combination(double a, double b, double coefficient);

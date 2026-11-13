@@ -1,0 +1,161 @@
+// Copyright (c) 2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
+#define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
+
+#include "optimization/OptimizationProblem.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
+
+namespace uno {
+   // forward declaration
+   struct InteriorPointParameters;
+
+   struct PushParameters {
+      static constexpr size_t maximum_push_reductions = 8;
+      static constexpr double push_reduction_factor = 0.1;
+   };
+
+   class PrimalDualInteriorPointProblem : public OptimizationProblem {
+   public:
+      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
+         const double& barrier_parameter, double residual_scaling_threshold);
+      PrimalDualInteriorPointProblem(const OptimizationProblem&, const InteriorPointParameters&, const double&&) = delete;
+
+      [[nodiscard]] double get_objective_multiplier() const override;
+      [[nodiscard]] bool has_inequality_constraints() const override;
+      [[nodiscard]] bool has_bound_constraints() const override;
+
+      void create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
+
+      // sparsity patterns of Jacobian and Hessian
+      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
+      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override;
+      void compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices, View<uno_int> column_indices,
+         uno_int solver_indexing) const override;
+
+      // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
+      void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const override;
+      void evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const override;
+      void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const override;
+      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const override;
+      void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
+         const Multipliers& multipliers, View<double> hessian_values) const override;
+
+      // linear operators
+      void add_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const override;
+      void add_jacobian_transposed_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const override;
+      void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x, View<const double> vector,
+         const Multipliers& multipliers, View<double> result) const override;
+
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
+      [[nodiscard]] size_t get_number_bounded_variables() const override;
+
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
+
+      [[nodiscard]] Inertia get_inertia() const override;
+
+      [[nodiscard]] std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
+         bool use_dual_regularization) const override;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
+         const Vector<double>& solution, Direction& direction) const override;
+      void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const override;
+
+      [[nodiscard]] static double push_variable_to_interior(double value, double lower_bound, double upper_bound,
+         double absolute_factor, double relative_factor);
+      // IPOPT-style safeguard (CalculateSafeSlack): slack that replaces a slack smaller than eps*min(1, mu)
+      [[nodiscard]] static double compute_safe_slack(double slack, double bound_multiplier, double barrier_parameter,
+         double bound, double slack_move);
+      [[nodiscard]] double dual_regularization_factor() const override;
+      void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const override;
+      // relax (IPOPT's AdjustVariableBounds) the bounds that are too close to (or violated by) the iterate.
+      // The primals are not modified. Returns the number of relaxed bounds
+      size_t relax_bounds_around(const Iterate& iterate) const;
+      [[nodiscard]] size_t get_number_bound_relaxations() const;
+      [[nodiscard]] const std::vector<double>& get_internal_variables_lower_bounds() const;
+      [[nodiscard]] const std::vector<double>& get_internal_variables_upper_bounds() const;
+      // (constraint index, slack index) of the slacked inequality constraints
+      [[nodiscard]] const SparseVector<size_t>& get_slacks() const;
+
+      // primal_infeasibility (termination) is not overridden: constraint violation of the unslacked problem (IPOPT)
+      // reformulation_infeasibility (restoration switching test): max of the constraint violation of the unslacked problem
+      // and of the residuals c(x) - s of the slacked constraints
+      [[nodiscard]] double reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const override;
+
+      [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const override;
+      [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const override;
+
+      // progress measures
+      void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const override;
+      void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const override;
+      void set_auxiliary_measure(Iterate& iterate) const override;
+
+      // predicted reductions
+      [[nodiscard]] PredictedInfeasibilityReduction build_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Norm norm, Evaluations& current_evaluations) const override;
+      [[nodiscard]] PredictedObjectiveReduction build_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Evaluations& current_evaluations, double hessian_quadratic_form) const override;
+      [[nodiscard]] PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const override;
+
+      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers, double shift) const;
+
+   protected:
+      const OptimizationProblem& unslacked_problem;
+      const double& barrier_parameter;
+      const InteriorPointParameters& parameters;
+      SparseVector<size_t> slacks;
+      std::vector<size_t> equality_constraints;
+      const std::vector<size_t> inequality_constraints{}; // empty
+
+      std::vector<double> barrier_variables_lower_bounds;
+      std::vector<double> barrier_variables_upper_bounds;
+      // internal bounds (mutable: dynamically relaxed when the iterate gets too close, see relax_bounds_around)
+      mutable std::vector<double> variables_lower_bounds;
+      mutable std::vector<double> variables_upper_bounds;
+      mutable size_t number_bound_relaxations{0};
+
+      std::vector<size_t> bounded_variables; // variables with a finite (internal) lower and/or upper bound
+      std::vector<size_t> lower_bounded_variables; // variables with a finite (internal) lower bound
+      std::vector<size_t> upper_bounded_variables; // variables with a finite (internal) upper bound
+      // directions of the bound duals of the lower-bounded, then of the upper-bounded variables
+      mutable Vector<double> bound_dual_direction_buffer;
+      std::vector<double> constraints_lower_bounds;
+      std::vector<double> constraints_upper_bounds;
+
+      Vector<uno_int> jacobian_row_indices{};
+
+      Vector<uno_int> jacobian_column_indices{};
+      mutable Vector<double> constraints_buffer; // scratch buffer
+      // data of the predicted infeasibility reduction model (read lazily by the model: not to be used for anything else)
+      mutable Vector<double> predicted_reduction_constraints;
+      mutable Vector<double> predicted_reduction_jacobian_direction;
+
+      [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
+         double tau) const;
+      [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers, const Multipliers& direction_multipliers,
+         double tau) const;
+      [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const;
+      [[nodiscard]] double damping_term(size_t variable_index) const;
+      void evaluate_damped_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const;
+      [[nodiscard]] auto complementarity_blocks(const Vector<double>& primals, const Multipliers& multipliers) const;
+      void set_bound_dual_direction(Multipliers& direction_multipliers) const;
+   };
+} // namespace
+
+#endif // UNO_PRIMALDUALINTERIORPOINTPROBLEM_H

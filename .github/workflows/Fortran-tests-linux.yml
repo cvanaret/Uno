@@ -1,0 +1,77 @@
+name: Tests of the Fortran interfaces on Linux
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        shell: bash
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure Uno CMake
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                               -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+                                               -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+                                               -DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs \
+                                               -DSPRAL_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+                                               -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+                                               -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+                                               -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+                                               -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+                                               -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+                                               -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
+                                               -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
+                                               -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+                                               -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+                                               -DBUILD_STATIC_LIBS=ON \
+                                               -DBUILD_SHARED_LIBS=OFF .
+
+      - name: Build Uno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
+
+      - name: Compile Fortran tests
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: |
+          gfortran example_uno.f90 -o example_uno \
+                                   -L../../build -luno \
+                                   -L${{github.workspace}}/dependencies/lib \
+                                   -Wl,-rpath,${{github.workspace}}/dependencies/lib \
+                                   -lhighs -lhighs_extras -ldmumps -lmumps_common -lmpiseq -lpord -lmetis \
+                                   -lbqpd -lspral -llapack -lcblas -lblas -lstdc++
+
+      - name: Run Fortran tests
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: ./example_uno

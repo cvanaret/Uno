@@ -4,18 +4,21 @@
 #ifndef UNO_BQPDSOLVER_H
 #define UNO_BQPDSOLVER_H
 
+#include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
-#include "ingredients/subproblem_solvers/QPSolver.hpp"
+#include "../QPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declarations
+   class BQPDQuadraticProgram;
    class Multipliers;
    class Options;
-   class Subproblem;
+   class QuadraticProgram;
 
    // see bqpd.f
    enum class BQPDStatus {
@@ -30,10 +33,10 @@ namespace uno {
       MAX_RESTARTS_REACHED = 8
    };
 
-   enum BQPDMode {
+   enum class BQPDMode {
       COLD_START = 0,
       ACTIVE_SET_EQUALITIES = 1, // cold start
-      USER_DEFINED = 2, // hot start
+      USER_DEFINED_ACTIVE_SET = 2, // hot start
       UNCHANGED_ACTIVE_SET = 3,
       UNCHANGED_ACTIVE_SET_AND_JACOBIAN = 4,
       UNCHANGED_ACTIVE_SET_AND_REDUCED_HESSIAN = 5,
@@ -43,35 +46,28 @@ namespace uno {
    class BQPDSolver : public QPSolver {
    public:
       explicit BQPDSolver(const Options& options);
+      ~BQPDSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
+      // BQPD uses a Hessian operator, unless the Hessian must be regularized (see BQPDQuadraticProgram)
+      [[nodiscard]] bool requires_hessian_matrix(const Subproblem& subproblem) const override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] QuadraticProgram& get_quadratic_program() override;
 
-      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
+      void solve(Statistics& statistics, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) override;
+
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
-      std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
-      std::vector<double> constraints{};
-      Vector<double> gradients{};
-      Vector<int> gradient_sparsity{};
-      // COO constraint Jacobian
-      Vector<size_t> jacobian_row_indices{};
-      Vector<size_t> jacobian_column_indices{};
-      Vector<double> jacobian_values{};
-      Vector<size_t> permutation_vector{};
-      // COO Hessian
-      Vector<size_t> hessian_row_indices{};
-      Vector<size_t> hessian_column_indices{};
-      Vector<double> hessian_values{};
+      // BQPD-native quadratic program (built by IQPSolver before each solve)
+      std::unique_ptr<BQPDQuadraticProgram> quadratic_program{};
 
       int kmax{0};
+      int (*pick_kmax)(size_t number_variables, size_t number_constraints);
       int mlp{1000};
-      const size_t nprof{2000000};
+      static constexpr size_t max_number_workspace_increases{20};
+      size_t nprof{};
       std::array<int, 100> info{};
       std::vector<double> alp{};
       std::vector<int> lp{}, active_set{};
@@ -84,39 +80,43 @@ namespace uno {
       int iprint{0}, nout{6};
       double fmin{-1e20};
       int peq_solution{0}, ifail{0};
-      bool evaluate_hessian{false};
-      const int fortran_shift{1};
 
       const bool print_subproblem;
+      // whether the last BQPD run was aborted by a failing Hessian-vector product (the next run is a cold start)
+      bool previous_run_aborted{false};
 
-      void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
-      void display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const;
-      void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+      [[nodiscard]] size_t compute_mxws() const;
+      [[nodiscard]] size_t compute_mxlws() const;
+      void display_subproblem(const Vector<double>& initial_point) const;
+      // allocate the BQPD algorithm scratch (active set, residuals, ws/lws) for the given problem shape
+      void allocate_workspace(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, bool is_qp);
+      void solve_subproblem(const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
-      void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
-      void compute_gradients_sparsity(const Subproblem& subproblem);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       [[nodiscard]] static BQPDStatus bqpd_status_from_int(int ifail);
       [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);
       [[nodiscard]] static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };
 
+   // number of entries of lws (BQPD integer workspace) occupied by a hidden pointer
+   constexpr size_t hidden_pointer_size_in_lws = (sizeof(std::intptr_t) + sizeof(int) - 1) / sizeof(int);
+
    // hide a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)
    template <typename T>
    void hide_pointer(size_t position_in_lws, int lws[], const T& object) {
-      intptr_t pointer_to_object = reinterpret_cast<intptr_t>(&object);
+      std::intptr_t pointer_to_object = reinterpret_cast<std::intptr_t>(&object);
       std::copy(reinterpret_cast<const char *>(&pointer_to_object),
-         reinterpret_cast<const char *>(&pointer_to_object) + sizeof(intptr_t),
-         reinterpret_cast<char *>(lws) + position_in_lws*sizeof(intptr_t));
+         reinterpret_cast<const char *>(&pointer_to_object) + sizeof(std::intptr_t),
+         reinterpret_cast<char *>(lws) + position_in_lws*sizeof(std::intptr_t));
    }
 
    // retrieve a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)
    template <typename T>
    T* retrieve_pointer(size_t position_in_lws, const int lws[]) {
-      intptr_t pointer_to_object;
-      std::copy(reinterpret_cast<const char *>(lws) + position_in_lws*sizeof(intptr_t),
-         reinterpret_cast<const char *>(lws) + (position_in_lws+1)*sizeof(intptr_t),
+      std::intptr_t pointer_to_object;
+      std::copy(reinterpret_cast<const char *>(lws) + position_in_lws*sizeof(std::intptr_t),
+         reinterpret_cast<const char *>(lws) + (position_in_lws+1)*sizeof(std::intptr_t),
          reinterpret_cast<char *>(&pointer_to_object));
       T* object = reinterpret_cast<T*>(pointer_to_object);
       return object;

@@ -4,30 +4,35 @@
 #ifndef UNO_OPTIMIZATIONPROBLEM_H
 #define UNO_OPTIMIZATIONPROBLEM_H
 
+#include <functional>
+#include <memory>
 #include <vector>
-#include "linear_algebra/MatrixOrder.hpp"
+#include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
+#include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "linear_algebra/View.hpp"
+#include "optimization/SolutionStatus.hpp"
+#include "../interfaces/C/uno_int.h"
 #include "model/Model.hpp"
-#include "optimization/IterateStatus.hpp"
-#include "optimization/LagrangianGradient.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
    // forward declarations
-   template <typename ElementType>
-   class Collection;
-   template <typename IndexType>
-   class COOMatrix;
    class Direction;
+   class Evaluations;
+   class SolverWorkspace;
    class HessianModel;
-   class InequalityHandlingMethod;
    class Iterate;
+   class Model;
    class Multipliers;
+   class NewtonSystem;
    class Statistics;
 
    class OptimizationProblem {
    public:
-      explicit OptimizationProblem(const Model& model);
-      OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
+      OptimizationProblem(const Model& model, double residual_scaling_threshold);
+      OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints, double residual_scaling_threshold);
       virtual ~OptimizationProblem() = default;
 
       const Model& model;
@@ -35,61 +40,94 @@ namespace uno {
       const size_t number_constraints; /*!< Number of constraints */
 
       [[nodiscard]] virtual double get_objective_multiplier() const;
+      [[nodiscard]] virtual bool has_inequality_constraints() const;
+      [[nodiscard]] virtual bool has_bound_constraints() const;
 
-      // constraint evaluations
-      virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const;
-
-      // dense objective gradient
-      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const;
+      virtual void create_initial_iterate(Iterate& iterate, Evaluations& evaluations) const;
+      virtual void postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const;
+      virtual void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
       [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
-      virtual void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
-         MatrixOrder matrix_order) const;
-      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, size_t solver_indexing) const;
+      [[nodiscard]] virtual View<const uno_int> get_jacobian_row_indices() const;
+      [[nodiscard]] virtual View<const uno_int> get_jacobian_column_indices() const;
+      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const;
 
-      // numerical evaluations of Jacobian and Hessian
-      virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;
-      virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const;
-      virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const;
-      virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
-         const Multipliers& multipliers, double* result) const;
+      // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
+      virtual void evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const;
+      virtual void evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) const;
+      virtual void evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const;
+      virtual void evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const;
+      virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
+         const Vector<double>& primal_variables, const Multipliers& multipliers, View<double> hessian_values) const;
+
+      // linear operators
+      virtual void add_jacobian_vector_product(View<const double> vector, View<double> result, const Evaluations& evaluations) const;
+      virtual void add_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
+         const Evaluations& evaluations) const;
+      virtual void compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const;
 
       [[nodiscard]] size_t get_number_original_variables() const;
-      [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const;
-      [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const;
-      [[nodiscard]] virtual const Collection<size_t>& get_lower_bounded_variables() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const;
-      [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const;
+      [[nodiscard]] Range<> get_primal_regularization_variables() const;
+      [[nodiscard]] virtual size_t get_number_bounded_variables() const;
 
-      [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const;
-      [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
-      [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
-      [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const;
+      [[nodiscard]] virtual const std::vector<size_t>& get_equality_constraints() const;
+      [[nodiscard]] virtual const std::vector<size_t>& get_inequality_constraints() const;
 
-      virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
+      [[nodiscard]] virtual Inertia get_inertia() const;
+
+      // symbolic Newton system of the equality-constrained subproblem: [H + δ_w I  *; J  -δ_c I]
+      [[nodiscard]] virtual std::unique_ptr<NewtonSystem> create_newton_system(HessianModel& hessian_model,
+         bool use_dual_regularization) const;
+      // primal-dual direction from the solution of the (condensed) Newton system
+      virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const NewtonSystem& newton_system,
+         const Vector<double>& solution, Direction& direction) const;
+      virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
-      [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm);
-      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
-
-      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+      // primal infeasibility used in the termination tests: constraint violation of the model by default
+      [[nodiscard]] virtual double primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const;
+      // primal infeasibility of the reformulation (e.g. including the slack residuals c(x) - s), used in the switching test of
+      // the feasibility restoration. Defaults to the primal infeasibility
+      [[nodiscard]] virtual double reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const;
+      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const;
+      [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
+      [[nodiscard]] virtual double compute_stationarity_scaling(const Multipliers& multipliers) const;
+      [[nodiscard]] virtual double compute_complementarity_scaling(const Multipliers& multipliers) const;
+
+      // progress measures
+      void evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const;
+      virtual void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const;
+      virtual void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const;
+      virtual void set_auxiliary_measure(Iterate& iterate) const;
+
+      // predicted reductions
+      [[nodiscard]] virtual PredictedInfeasibilityReduction build_predicted_infeasibility_reduction(
+         const Iterate& current_iterate, const Vector<double>& primal_direction, Norm norm,
+         Evaluations& current_evaluations) const;
+      [[nodiscard]] virtual PredictedObjectiveReduction build_predicted_objective_reduction(
+         const Iterate& current_iterate, const Vector<double>& primal_direction,
+         Evaluations& current_evaluations, double hessian_quadratic_form) const;
+      [[nodiscard]] virtual PredictedAuxiliaryReduction build_predicted_auxiliary_reduction(
+         const Iterate& current_iterate, const Vector<double>& primal_direction) const;
+
    protected:
-      const ForwardRange primal_regularization_variables;
-      const ForwardRange dual_regularization_constraints;
+      const double residual_scaling_threshold;
+      mutable Vector<double> Jv_buffer;
    };
 } // namespace
 

@@ -1,25 +1,45 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_EVALUATIONS_H
 #define UNO_EVALUATIONS_H
 
-#include <vector>
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   struct Evaluations {
-      double objective{INF<double>}; /*!< Objective value */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      std::vector<double> linearized_constraints;
-      Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+   // forward declaration
+   class Model;
 
-      Evaluations(size_t number_variables, size_t number_constraints):
-            constraints(number_constraints),
-            linearized_constraints(number_constraints),
-            objective_gradient(number_variables) {
-      }
+   class Evaluations {
+   public:
+      double objective{Inf};
+      Vector<double> constraints;
+      Vector<double> objective_gradient;
+      Vector<double> jacobian_values;
+
+      // flags to perform lazy computations
+      bool is_objective_computed{false};
+      bool are_constraints_computed{false};
+      bool is_objective_gradient_computed{false};
+      bool is_jacobian_computed{false};
+
+      explicit Evaluations(const Model& model);
+      Evaluations(const Evaluations& other) = default;
+      Evaluations(Evaluations&& other) noexcept = default;
+      Evaluations& operator=(const Evaluations& other) = default;
+      Evaluations& operator=(Evaluations&& other) noexcept = default;
+
+      void evaluate_objective(const Model& model, const Vector<double>& primals);
+      void evaluate_constraints(const Model& model, const Vector<double>& primals);
+      void evaluate_objective_gradient(const Model& model, const Vector<double>& primals);
+      void evaluate_jacobian(const Model& model, const Vector<double>& primals);
+
+      void add_jacobian_vector_product(const Model& model, View<const double> vector, View<double> result) const;
+      void add_jacobian_transposed_vector_product(const Model& model, View<const double> vector, View<double> result) const;
+
+      // reset the evaluation flags
+      void reset();
    };
 } // namespace
 

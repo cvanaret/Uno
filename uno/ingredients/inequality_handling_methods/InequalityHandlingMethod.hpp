@@ -4,66 +4,84 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
+#include <optional>
 #include <string>
-
-#include "optimization/OptimizationProblem.hpp"
+#include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
+#include "linear_algebra/Norm.hpp"
 
 namespace uno {
    // forward declarations
    class Direction;
-   class HessianModel;
+   class Evaluations;
    class Iterate;
    class l1RelaxedProblem;
-   class Model;
    class Multipliers;
    class OptimizationProblem;
    class Options;
-   template <typename ElementType>
-   class RegularizationStrategy;
    class Statistics;
-   template <typename ElementType>
+   template <typename T>
    class Vector;
    class WarmstartInformation;
+
+   // the PhaseHandoff class is an object that is exchanged between phases. It is exported from the optimality
+   // InequalityHandlingMethod and imported by the restoration InequalityHandlingMethod in FeasibilityRestoration
+   struct PhaseHandoff {
+      std::optional<double> barrier_parameter; // set by barrier methods only
+   };
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod() = default;
+      InequalityHandlingMethod(const OptimizationProblem& problem, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
-      virtual void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) = 0;
-      virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
-      virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
-      virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
+      virtual void initialize_memory() = 0;
+      virtual void initialize_statistics(Statistics& statistics) = 0;
+      virtual void create_initial_iterate(Iterate& iterate, Evaluations& evaluations, double multipliers_threshold) const = 0;
 
-      virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
-      virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
-      virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual const OptimizationProblem& reformulated_problem() const = 0;
+      [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const Iterate& current_iterate,
+         Evaluations& evaluations) = 0;
+      // unconditional update of the parameterization (e.g. after tiny steps). Returns true if it changed
+      [[nodiscard]] virtual bool force_parameterization_update(Statistics& statistics) = 0;
+      [[nodiscard]] virtual const Direction& solve(Statistics& statistics, const Iterate& current_iterate,
+         double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information) = 0;
+
+      virtual void import_handoff(const PhaseHandoff& handoff, Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual PhaseHandoff export_handoff() const = 0;
+      // upon a phase switch, the incoming iterate may lie outside the (dynamically relaxed) bounds of this phase:
+      // methods that maintain internal bounds relax them to strictly contain the iterate. No-op by default
+      virtual void relax_bounds_around(const Iterate& /*iterate*/) const { }
+      virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
-      // matrix computations
-      virtual void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) = 0;
-      virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      [[nodiscard]] virtual double compute_hessian_quadratic_product(const Vector<double>& vector) const = 0;
+      [[nodiscard]] virtual bool has_second_order_corrections() const = 0;
+      virtual void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
+      [[nodiscard]] virtual const Direction& compute_second_order_correction(Statistics& statistics, const Iterate& current_iterate) = 0;
+      virtual void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
-      // progress measures
-      virtual void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) = 0;
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
-         const Iterate& iterate, const Vector<double>& primal_direction, double step_length) const = 0;
+      virtual void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& direction_primals, Multipliers& direction_multipliers, double& bound_dual_step_length) const = 0;
 
-      virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
+      [[nodiscard]] virtual PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
+         const Direction& direction, Evaluations& current_evaluations) const = 0;
+      virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
 
-      virtual void set_initial_point(const Vector<double>& initial_point) = 0;
-
-      size_t number_subproblems_solved{0};
-      // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
-      bool subproblem_definition_changed{false};
+      // square problem (as many free variables as equality constraints, IPOPT's IsSquareProblem): the constraint
+      // multipliers are recomputed as least-squares estimates at each accepted iterate (IPOPT's ComputeFeasibilityMultipliers)
+      virtual void update_multipliers_of_square_problem(Iterate& /*iterate*/, Evaluations& /*evaluations*/,
+         double /*multipliers_threshold*/) { }
+      // primal infeasibility of the reformulated problem, as used in the restoration switching test
+      [[nodiscard]] virtual double compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
+
+   protected:
+      const OptimizationProblem& problem;
+      const Norm progress_norm;
+      const Norm residual_norm;
    };
 } // namespace
 

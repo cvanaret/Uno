@@ -1,54 +1,96 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <cassert>
+#include <cmath>
 #include "ExactHessian.hpp"
 #include "model/Model.hpp"
+#include "optimization/EvaluationErrors.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
-   bool ExactHessian::has_implicit_representation() const {
-      // As long as we use the ASL library ("solvers"), we need to form the explicit Hessian
-      // The reason is that the ASL Hessian representation changes as soon as trial
-      // iterates are evaluated. The variant "solvers2" should address the issue.
-      return false;
+   // Hessian buffer
+   HessianBuffer::HessianBuffer(const Model& model):
+         hessian_buffer(model.has_hessian_matrix() ? model.number_hessian_nonzeros() : 0) {
    }
 
-   bool ExactHessian::has_explicit_representation() const {
-      return true;
+   void HessianBuffer::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> hessian_values) {
+      assert(hessian_values.size() >= this->hessian_buffer.size());
+
+      // try to evaluate the Hessian. Upon failure, keep the previous one
+      try {
+         model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian_buffer.view());
+         // a non-finite Hessian (e.g. a second derivative that does not exist at the current point) would corrupt the
+         // factorization of the KKT matrix: handle it like an evaluation failure
+         if (!std::all_of(this->hessian_buffer.begin(), this->hessian_buffer.end(), [](double value) { return std::isfinite(value); })) {
+            throw HessianEvaluationError();
+         }
+         // success: copy the new Hessian into the Hessian values
+         view(hessian_values, 0, this->hessian_buffer.size()) = this->hessian_buffer;
+      }
+      catch (const HessianEvaluationError&) {
+         if (this->first_evaluation) {
+            hessian_values.fill(0.);
+            DEBUG << "The initial Hessian could not be evaluated, using a zero matrix\n";
+         }
+         else {
+            // keep the existing Hessian
+            DEBUG << "The Hessian could not be evaluated, using the previous one\n";
+         }
+      }
+      this->first_evaluation = false;
    }
 
-   bool ExactHessian::has_curvature(const Model& model) const {
-      return (0 < model.number_hessian_nonzeros());
+   // exact Hessian
+
+   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model), hessian_buffer(model) {
    }
 
-   size_t ExactHessian::number_nonzeros(const Model& model) const {
-      return model.number_hessian_nonzeros();
+   bool ExactHessian::has_hessian_operator() const {
+      return this->model.has_hessian_operator();
    }
 
-   void ExactHessian::compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   bool ExactHessian::has_hessian_matrix() const {
+      return this->model.has_hessian_matrix();
+   }
+
+   bool ExactHessian::has_curvature() const {
+      return (this->model.get_problem_type() != ProblemType::LINEAR);
+   }
+
+   size_t ExactHessian::number_nonzeros() const {
+      return this->model.number_hessian_nonzeros();
+   }
+
+   void ExactHessian::compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       // Hessian sparsity of the model
-      model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
+      this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }
 
    bool ExactHessian::is_positive_definite() const {
       return false;
    }
 
-   void ExactHessian::initialize(const Model& /*model*/) {
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/) const {
    }
 
-   void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) {
-      model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);
-      this->evaluation_count++;
+   void ExactHessian::notify_trial_iterate(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         const Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/) {
    }
 
-   void ExactHessian::compute_hessian_vector_product(const Model& model, const double* vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, double* result) {
-      model.compute_hessian_vector_product(vector, objective_multiplier, constraint_multipliers, result);
-      this->evaluation_count++;
+   void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& primal_variables,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, View<double> hessian_values) {
+      // try to evaluate the Hessian. Upon failure, keep the previous one
+      this->hessian_buffer.evaluate_hessian(this->model, primal_variables, objective_multiplier, constraint_multipliers,
+         hessian_values);
+      ++this->evaluation_count;
    }
 
-   std::string ExactHessian::get_name() const {
-      return "exact";
+   void ExactHessian::compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> result) {
+      this->model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
+      ++this->evaluation_count;
    }
 } // namespace

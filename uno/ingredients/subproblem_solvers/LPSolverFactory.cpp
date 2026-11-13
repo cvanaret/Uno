@@ -3,9 +3,9 @@
 
 #include <stdexcept>
 #include "LPSolverFactory.hpp"
+#include "LPSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
-#include "LPSolver.hpp"
 
 #ifdef HAS_BQPD
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"

@@ -1,0 +1,96 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#ifndef UNO_PYTHONMODEL_H
+#define UNO_PYTHONMODEL_H
+
+#include <vector>
+#include "../unopy.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "model/Model.hpp"
+#include "symbolic/IntegerRange.hpp"
+#include "tools/NumberModelEvaluations.hpp"
+
+namespace uno {
+   class PythonModel: public Model {
+   public:
+      explicit PythonModel(const PythonUserModel& user_model);
+      ~PythonModel() override = default;
+
+      [[nodiscard]] ProblemType get_problem_type() const override;
+
+      // availability of linear operators
+      [[nodiscard]] bool has_jacobian_operator() const override;
+      [[nodiscard]] bool has_jacobian_transposed_operator() const override;
+      [[nodiscard]] bool has_hessian_operator() const override;
+      [[nodiscard]] bool has_hessian_matrix() const override;
+
+      // function evaluations
+      [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override;
+
+      // dense objective gradient
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
+
+      // sparsity patterns of Jacobian and Hessian
+      [[nodiscard]] View<const uno_int> get_jacobian_row_indices() const override;
+      [[nodiscard]] View<const uno_int> get_jacobian_column_indices() const override;
+      void compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override;
+
+      // numerical evaluations of Jacobian and Hessian
+      void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const override;
+      void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+         View<double> hessian_values) const override;
+
+      // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
+      void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override;
+      void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override;
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const override;
+
+      // purely functions
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
+
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
+      [[nodiscard]] const std::vector<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const std::vector<size_t>& get_inequality_constraints() const override;
+      [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
+      [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override;
+
+      void initial_primal_point(Vector<double>& x) const override;
+      void initial_dual_point(Vector<double>& multipliers) const override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
+
+      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+      [[nodiscard]] size_t number_hessian_nonzeros() const override;
+
+      [[nodiscard]] size_t number_model_objective_evaluations() const override;
+      [[nodiscard]] size_t number_model_constraints_evaluations() const override;
+      [[nodiscard]] size_t number_model_objective_gradient_evaluations() const override;
+      [[nodiscard]] size_t number_model_jacobian_evaluations() const override;
+      [[nodiscard]] size_t number_model_hessian_evaluations() const override;
+      void reset_number_evaluations() const override;
+
+   protected:
+      const PythonUserModel& user_model;
+      mutable NumberModelEvaluations number_model_evaluations{};
+      const IntegerRange linear_constraints{0};
+      const IntegerRange nonlinear_constraints;
+      std::vector<size_t> equality_constraints;
+      std::vector<size_t> inequality_constraints;
+      // user bounds with infinite values made explicit
+      const std::vector<double> variables_lower_bounds;
+      const std::vector<double> variables_upper_bounds;
+      const std::vector<double> constraints_lower_bounds;
+      const std::vector<double> constraints_upper_bounds;
+      // the multipliers passed to the user's Hessian callbacks, in the user's sign convention. Uno's multipliers are
+      // never modified in place, so that an exception thrown by a callback cannot leave them with a flipped sign
+      mutable std::vector<double> user_multipliers;
+
+      [[nodiscard]] const double* to_user_sign_convention(const Vector<double>& multipliers) const;
+   };
+} // namespace
+
+#endif // UNO_PYTHONMODEL_H

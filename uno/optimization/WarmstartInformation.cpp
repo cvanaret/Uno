@@ -6,44 +6,41 @@
 
 namespace uno {
    void WarmstartInformation::display() const {
-      std::cout << "Objective changed: " << std::boolalpha << this->objective_changed << '\n';
-      std::cout << "Constraints changed: " << std::boolalpha << this->constraints_changed << '\n';
+      std::cout << "New iterate: " << std::boolalpha << this->new_iterate << '\n';
       std::cout << "Constraint bounds changed: " << std::boolalpha << this->constraint_bounds_changed << '\n';
-      std::cout << "Variable bounds changed: " << std::boolalpha << this->variable_bounds_changed << '\n';
+      std::cout << "Trust-region radius changed: " << std::boolalpha << this->trust_region_changed << '\n';
       std::cout << "Hessian sparsity changed: " << std::boolalpha << this->hessian_sparsity_changed << '\n';
       std::cout << "Jacobian sparsity changed: " << std::boolalpha << this->jacobian_sparsity_changed << '\n';
    }
 
    void WarmstartInformation::no_changes() {
-      this->objective_changed = false;
-      this->constraints_changed = false;
+      this->new_iterate = false;
       this->constraint_bounds_changed = false;
-      this->variable_bounds_changed = false;
+      this->trust_region_changed = false;
       this->hessian_sparsity_changed = false;
       this->jacobian_sparsity_changed = false;
    }
 
+   // a new iterate does not change the structure of the problem. A pending structural change (e.g. requested by
+   // whole_problem_changed()) is kept until a subproblem has been solved (see no_changes())
    void WarmstartInformation::iterate_changed() {
-      this->objective_changed = true;
-      this->constraints_changed = true;
+      this->new_iterate = true;
       this->constraint_bounds_changed = true;
-      this->variable_bounds_changed = true;
+      this->trust_region_changed = true;
    }
 
    void WarmstartInformation::whole_problem_changed() {
-      this->objective_changed = true;
-      this->constraints_changed = true;
+      this->new_iterate = true;
       this->constraint_bounds_changed = true;
-      this->variable_bounds_changed = true;
+      this->trust_region_changed = true;
       this->hessian_sparsity_changed = true;
       this->jacobian_sparsity_changed = true;
    }
 
    void WarmstartInformation::only_objective_changed() {
-      this->objective_changed = true;
-      this->constraints_changed = false;
+      this->new_iterate = true;
       this->constraint_bounds_changed = false;
-      this->variable_bounds_changed = false;
+      this->trust_region_changed = false;
       this->hessian_sparsity_changed = false;
       this->jacobian_sparsity_changed = false;
    }

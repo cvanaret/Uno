@@ -1,21 +1,29 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_TIMER_H
 #define UNO_TIMER_H
 
-#include <ctime>
+#include <chrono>
+#include <string>
 
 namespace uno {
-   // timer starts upon creation
+   // timer that accumulates a total duration (gaps between start() and stop())
    class Timer {
    public:
-      Timer();
+      Timer() = default;
+
+      void start();
+      void stop();
+      [[nodiscard]] double get_elapsed_time() const;
       [[nodiscard]] double get_duration() const;
-      [[nodiscard]] static char* get_current_date();
+
+      [[nodiscard]] static std::string get_current_date();
+      [[nodiscard]] static std::string format_to_seconds(double time);
 
    private:
-      std::clock_t start_time;
+      std::chrono::steady_clock::time_point start_point;
+      double duration{0.};
    };
 } // namespace
 

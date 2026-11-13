@@ -1,13 +1,15 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2024-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <cassert>
+#include <limits>
+#include <cmath>
+#include <stdexcept>
 #include "MUMPSSolver.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/COOMatrix.hpp"
-#include "linear_algebra/Indexing.hpp"
-#include "linear_algebra/MatrixOrder.hpp"
-#include "optimization/Direction.hpp"
-#include "optimization/WarmstartInformation.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "options/Options.hpp"
+#include "tools/Logger.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
 #endif
@@ -15,7 +17,8 @@
 #define USE_COMM_WORLD (-987654)
 
 namespace uno {
-   MUMPSSolver::MUMPSSolver(): DirectSymmetricIndefiniteLinearSolver() {
+   MUMPSSolver::MUMPSSolver(bool use_scaling): DirectSymmetricIndefiniteLinearSolver(), use_scaling(use_scaling) {
+      INFO << "Running MUMPS v" << MUMPS_VERSION << '\n';
       this->workspace.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
       // TODO load number of processes from option file
@@ -27,22 +30,20 @@ namespace uno {
       this->workspace.comm_fortran = USE_COMM_WORLD;
       dmumps_c(&this->workspace);
       // control parameters
-      this->workspace.icntl[0] = -1;
-      this->workspace.icntl[1] = -1;
-      this->workspace.icntl[2] = -1;
-      this->workspace.icntl[3] = 0;
-      this->workspace.icntl[5] = 0; // no scaling
-      this->workspace.icntl[7] = 0; // no scaling
+      MUMPS_ICNTL(1) = -1; // output stream for error messages (off)
+      MUMPS_ICNTL(2) = -1; // output stream for diagnostic printing (off)
+      MUMPS_ICNTL(3) = -1; // output stream for global information (off)
+      MUMPS_ICNTL(4) = 0; // level of printing for error, warning, and diagnostic message (off)
 
-      this->workspace.icntl[12] = 1;
-      this->workspace.icntl[23] = 1; // ICNTL(24) controls the detection of “null pivot rows”
-
-      /*
-      // debug for MUMPS team
-      this->workspace.icntl[1] = 6; // ICNTL(2)=6
-      this->workspace.icntl[2] = 6; // ICNTL(3)=6
-      this->workspace.icntl[3] = 6; // ICNTL(4)=2
-       */
+      MUMPS_ICNTL(6) = MUMPSSettings::permuting_scaling; // column permutation (none)
+      MUMPS_ICNTL(7) = MUMPSSettings::pivot_order; // pivot order (AMD)
+      MUMPS_ICNTL(8) = use_scaling ? MUMPSSettings::scaling : 0; // scaling strategy (diagonal scaling during factorization, or none)
+      MUMPS_ICNTL(10) = 0; // iterative refinement (none)
+      MUMPS_ICNTL(13) = 1; // parallelism of the root nod (ScaLAPACK not used, partly recover parallelism of the root node)
+      MUMPS_ICNTL(14) = MUMPSSettings::mem_percent; // percentage increase in the estimated working space (35)
+      MUMPS_ICNTL(24) = 1; // controls the detection of “null pivot rows” (null pivot row detection)
+      MUMPS_CNTL(1) = MUMPSSettings::pivtol; // relative threshold for numerical pivoting (1e-6)
+      // debug for MUMPS team ICNTL(2) = 6; ICNTL(3) = 6; ICNTL(4) = 6;
    }
 
    MUMPSSolver::~MUMPSSolver() {
@@ -50,120 +51,90 @@ namespace uno {
       dmumps_c(&this->workspace);
    }
 
-   void MUMPSSolver::initialize_hessian(const Subproblem& subproblem) {
-      const size_t dimension = subproblem.number_variables;
-
-      // Hessian
-      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t number_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-      this->matrix_row_indices.resize(number_nonzeros);
-      this->matrix_column_indices.resize(number_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(number_nonzeros);
-      Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_hessian_sparsity(tmp_row_indices.data(), tmp_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
-      this->matrix_values.resize(number_nonzeros);
-      this->rhs.resize(dimension);
-      this->solution.resize(dimension);
-
-      // workspace
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(number_nonzeros);
-   }
-
-   void MUMPSSolver::initialize_augmented_system(const Subproblem& subproblem) {
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-
-      // evaluations
-      this->objective_gradient.resize(subproblem.number_variables);
-      this->constraints.resize(subproblem.number_constraints);
-
-      // Jacobian
-      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
-
-      // augmented system
-      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t number_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
-      this->matrix_row_indices.resize(number_nonzeros);
-      this->matrix_column_indices.resize(number_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(number_nonzeros);
-      Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
-         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
-      this->matrix_values.resize(number_nonzeros);
-      this->rhs.resize(dimension);
-      this->solution.resize(dimension);
-
-      // workspace
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(number_nonzeros);
+   void MUMPSSolver::initialize_memory() {
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
    }
 
    void MUMPSSolver::do_symbolic_analysis() {
+      assert(!this->analysis_performed);
+
       this->workspace.job = MUMPSSolver::JOB_ANALYSIS;
       // connect the local sparsity with the pointers in the workspace
-      this->workspace.irn = this->matrix_row_indices.data();
-      this->workspace.jcn = this->matrix_column_indices.data();
+      this->workspace.irn = this->linear_system.matrix_row_indices.data();
+      this->workspace.jcn = this->linear_system.matrix_column_indices.data();
       dmumps_c(&this->workspace);
-      this->workspace.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
+      if (MUMPS_INFO(1) < 0) {
+         throw std::runtime_error("The MUMPS analysis failed");
+      }
+      if (this->use_scaling) {
+         MUMPS_ICNTL(8) = 8; // recompute scaling before factorization
+      }
+      this->analysis_performed = true;
    }
 
-   void MUMPSSolver::do_numerical_factorization(const double* matrix_values) {
+   void MUMPSSolver::factorize(bool /*is_matrix_positive_definite*/) {
+      assert(this->analysis_performed);
+
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
-      this->workspace.a = const_cast<double*>(matrix_values);
-      dmumps_c(&this->workspace);
+      this->workspace.a = this->linear_system.matrix_values.data();
+      this->factorization_aborted_singular = false;
+      size_t number_factorization_failures = 0;
+      while (true) {
+         dmumps_c(&this->workspace);
+         if (MUMPS_INFO(1) == -8 || MUMPS_INFO(1) == -9) { // workspace too small
+            if (number_factorization_failures >= MUMPSSettings::max_number_factorization_failures ||
+                  MUMPS_ICNTL(14) >= MUMPSSettings::max_memory_increase_percent) {
+               throw std::runtime_error("The MUMPS factorization failed (workspace too small)");
+            }
+            // increase the workspace size (kept for subsequent factorizations) and retry
+            MUMPS_ICNTL(14) = std::min(MUMPS_ICNTL(14) * MUMPSSettings::mem_percent_increase,
+               MUMPSSettings::max_memory_increase_percent);
+            ++number_factorization_failures;
+         }
+         else if (MUMPS_INFO(1) == -10) {
+            // singular matrix: reported via matrix_is_singular() and the inertia (all eigenvalues deemed zero)
+            DEBUG << "MUMPS detected a numerically singular matrix\n";
+            this->factorization_aborted_singular = true;
+            break;
+         }
+         else if (MUMPS_INFO(1) < 0) {
+            throw std::runtime_error("The MUMPS factorization failed");
+         }
+         else {
+            break;
+         }
+      }
+      this->factorization_performed = true;
    }
 
-   void MUMPSSolver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs, Vector<double>& result) {
-      result = rhs;
-      this->workspace.rhs = result.data();
+   void MUMPSSolver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
+      assert(this->factorization_performed);
+
+      const size_t dimension = static_cast<size_t>(this->workspace.n);
+      if (this->factorization_aborted_singular) {
+         // no factors are available: the solution is undefined (the caller handles the singularity)
+         view(solution, number_of_rhs * dimension).fill(std::numeric_limits<double>::quiet_NaN());
+         return;
+      }
+      // copy the rhs block into the solution block (overwritten by MUMPS); both are column-major with leading dimension n
+      view(solution, number_of_rhs * dimension) = view(rhs, number_of_rhs * dimension);
+
+      this->workspace.nrhs = static_cast<int>(number_of_rhs);
+      this->workspace.lrhs = this->workspace.n;
+      this->workspace.rhs = solution;
       this->workspace.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->workspace);
+      if (MUMPS_INFO(1) < 0) {
+         throw std::runtime_error("The MUMPS solve failed");
+      }
    }
 
-   void MUMPSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
-      // evaluate the functions at the current iterate
-      if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient.data());
+   std::optional<size_t> MUMPSSolver::number_delayed_pivots() const {
+      if (this->factorization_aborted_singular) {
+         return std::nullopt;
       }
-      if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-      }
-
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
-         // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
-            subproblem.dual_regularization_factor(), *this);
-
-         // assemble the RHS
-         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-            this->matrix_values.data() + this->number_hessian_nonzeros};
-         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);;
-      }
-      this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->solution, direction);
-      if (this->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-      }
+      return static_cast<size_t>(MUMPS_INFOG(13)); // total number of delayed pivots
    }
 
    Inertia MUMPSSolver::get_inertia() const {
@@ -176,13 +147,17 @@ namespace uno {
    }
 
    size_t MUMPSSolver::number_negative_eigenvalues() const {
-      // INFOG(12)
-      return static_cast<size_t>(this->workspace.infog[11]);
+      if (this->factorization_aborted_singular) {
+         return 0;
+      }
+      return static_cast<size_t>(MUMPS_INFOG(12));
    }
 
    size_t MUMPSSolver::number_zero_eigenvalues() const {
-      // INFOG(28)
-      return static_cast<size_t>(this->workspace.infog[27]);
+      if (this->factorization_aborted_singular) {
+         return static_cast<size_t>(this->workspace.n);
+      }
+      return static_cast<size_t>(MUMPS_INFOG(28));
    }
 
    bool MUMPSSolver::matrix_is_singular() const {
@@ -190,36 +165,48 @@ namespace uno {
    }
 
    size_t MUMPSSolver::rank() const {
-      return this->workspace.n - this->number_zero_eigenvalues();
+      return static_cast<size_t>(this->workspace.n) - this->number_zero_eigenvalues();
    }
 
-   void MUMPSSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->matrix_values.data() + this->number_hessian_nonzeros);
-   }
-
-   void MUMPSSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->matrix_values[offset + nonzero_index];
-         if (constraint_index < result.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
+   bool MUMPSSolver::increase_pivoting_tolerance() {
+      const double current_tolerance = MUMPS_CNTL(1);
+      const auto new_tolerance = this->pivoting_tolerance_schedule.increase(current_tolerance);
+      if (!new_tolerance.has_value()) {
+         return false;
       }
+      MUMPS_CNTL(1) = *new_tolerance;
+      DEBUG << "Increasing the MUMPS pivoting tolerance from " << current_tolerance << " to " << MUMPS_CNTL(1) << '\n';
+      return true;
    }
 
-   void MUMPSSolver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->matrix_values[offset + nonzero_index];
-         if (variable_index < result.size()) {
-            result[variable_index] += derivative * vector[constraint_index];
-         }
-      }
+
+   LinearSystem& MUMPSSolver::get_linear_system() {
+      return this->linear_system;
+   }
+
+   COOLinearSystem& MUMPSSolver::get_coo_linear_system() {
+      return this->linear_system;
+   }
+
+   // protected member functions
+
+   int& MUMPSSolver::MUMPS_ICNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.icntl[index-1];
+   }
+
+   double& MUMPSSolver::MUMPS_CNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.cntl[index-1];
+   }
+
+   int MUMPSSolver::MUMPS_INFO(size_t index) const {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.info[index-1];
+   }
+
+   int MUMPSSolver::MUMPS_INFOG(size_t index) const {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.infog[index-1];
    }
 } // namespace

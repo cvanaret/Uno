@@ -4,27 +4,37 @@
 #ifndef UNO_UNARYNEGATION_H
 #define UNO_UNARYNEGATION_H
 
+#include <cstddef>
+#include "symbolic_traits.hpp"
+
 namespace uno {
    // stores the expression -expression symbolically
    // limited to types that possess value_type
    // https://stackoverflow.com/questions/11055923/stdenable-if-parameter-vs-template-parameter
    template <typename Expression>
-   class UnaryNegation {
+   class UnaryNegation: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<Expression>::value_type;
 
       explicit UnaryNegation(Expression&& expression): expression(std::forward<Expression>(expression)) { }
 
-      [[nodiscard]] constexpr size_t size() const { return this->expression.size(); }
-      [[nodiscard]] typename UnaryNegation::value_type operator[](size_t index) const { return -this->expression[index]; }
+      [[nodiscard]] constexpr size_t size() const noexcept {
+         return this->expression.size();
+      }
+
+      [[nodiscard]] constexpr value_type operator[](size_t index) const noexcept {
+         return -this->expression[index];
+      }
+
+      UNO_FORWARD_ACCESSOR(get_expression, this->expression)
 
    protected:
-      Expression expression;
+      storage_t<Expression> expression;
    };
 
    // free function
    template <typename Expression>
-   inline UnaryNegation<Expression> operator-(Expression&& expression) {
+   UnaryNegation<Expression> operator-(Expression&& expression) {
       return UnaryNegation<Expression>(std::forward<Expression>(expression));
    }
 } // namespace

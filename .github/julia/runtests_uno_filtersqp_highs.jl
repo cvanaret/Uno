@@ -22,7 +22,7 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-# Note: the HiGHS QP solver tolerates only positive semi-definite Hessians.
+# Note: the HiGHS QP solver tolerates only positive semi-definite Hessians
 # We therefore use primal regularization.
 Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "regularization_strategy=primal", "QP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
 

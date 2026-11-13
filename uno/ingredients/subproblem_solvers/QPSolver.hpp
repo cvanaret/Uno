@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_QPSOLVER_H
@@ -7,15 +7,15 @@
 #include "LPSolver.hpp"
 
 namespace uno {
+   // Numerical backend that additionally solves QuadraticPrograms with a quadratic term (a Hessian).
+   // The inheritance encodes "every QP solver is also an LP solver, but not vice versa": a QPSolver*
+   // is usable wherever an LPSolver* is expected (so a QP solver may be returned by LPSolverFactory),
+   // while an LPSolver is not necessarily a QPSolver. The Hessian travels inside the QuadraticProgram,
+   // so this refinement adds no method; it is a capability marker.
    class QPSolver : public LPSolver {
    public:
-      QPSolver(): LPSolver() { }
-      ~QPSolver() override = default;
-
-      void initialize_memory(const Subproblem& subproblem) override = 0;
-
-      void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override = 0;
+      QPSolver() = default;
+      ~QPSolver() override;
    };
 } // namespace
 

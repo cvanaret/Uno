@@ -1,137 +1,210 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
-
-#include <sstream>
-#include <iostream>
-#include <iomanip>
+ 
+#include <algorithm>
+#include <cstdio>
 #include "Statistics.hpp"
-#include "options/Options.hpp"
+#include "symbolic/Range.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Symbols.hpp"
 
 namespace uno {
-   // TODO move this to the option file
-   int Statistics::int_width = 7;
-   int Statistics::double_width = 17;
-   int Statistics::string_width = 26;
-   int Statistics::numerical_format_size = 4;
-
-   void Statistics::add_column(std::string_view name, int width, int order) {
-      this->columns[order] = name;
-      this->widths[name] = width;
-   }
-   
-   void Statistics::start_new_line() {
-      for (const auto& column: this->columns) {
-         this->current_line[column.second] = "-";
-      }
-   }
-
-   void Statistics::set(std::string_view name, std::string value) {
-      this->current_line[name] = std::move(value);
-   }
-
-   void Statistics::set(std::string_view name, int value) {
-      this->set(name, std::to_string(value));
-   }
-
-   void Statistics::set(std::string_view name, size_t value) {
-      this->set(name, std::to_string(value));
-   }
-
-   void Statistics::set(std::string_view name, double value) {
-      std::ostringstream stream;
-      stream << std::scientific << std::setprecision(Statistics::numerical_format_size) << value;
-      this->set(name, stream.str());
-   }
-   
-   void Statistics::print_horizontal_line() {
-      for (const auto& element: this->columns) {
-         std::string header = element.second;
-         for (int j = 0; j < this->widths[header]; j++) {
-            std::cout << Statistics::symbol("top");
-         }
-      }
-      std::cout << '\n';
-   }
-
-   void Statistics::print_header() {
-      /* line above */
-      this->print_horizontal_line();
-      /* headers */
-      for (const auto& element: this->columns) {
-         const std::string& header = element.second;
-         std::cout << " " << header;
-         for (int j = 0; j < this->widths[header] - static_cast<int>(header.size()) - 1; j++) {
-            std::cout << " ";
-         }
-      }
-      std::cout << '\n';
-      /* line below */
-      this->print_horizontal_line();
-   }
-
-   // https://cplusplus.com/forum/beginner/192031/
-   std::size_t length_utf8(const std::string& str) {
+   size_t Statistics::int_width = 7;
+   size_t Statistics::double_width = 10;
+   size_t Statistics::string_width = 15;
+ 
+   const std::map<std::string_view, size_t> Statistics::column_order = {
+      {"Iter", 1}, {"LS", 2}, {"TR", 2}, {"Penalty", 5}, {"Barrier", 8},
+      {"Steplength", 10}, {"Radius", 11}, {"Phase", 20}, {"Prim reg", 21}, {"Dual reg", 21}, {"IR", 22},
+      {"Funnel", 25}, {"|BFGS|", 26}, {"|SR1|", 26}, {"||Step||", 31},
+      {"Objective", 100}, {"Infeas", 101}, {"Statio", 104}, {"Compl", 105},
+      {"Time", 200}, {"Status", 300}
+   };
+ 
+   // number of glyphs in a UTF-8 string (counts non-continuation bytes)
+   static size_t length_utf8(std::string_view string) {
       size_t length = 0;
-      for (char c: str) {
+      for (const char c: string) {
          if ((c & 0xC0) != 0x80) {
             ++length;
          }
       }
       return length;
    }
+ 
+   // append leading space, `value`, then pad with spaces so the field occupies `width` glyphs
+   static void append_cell(std::string& line, std::string_view value, size_t width) {
+      line.push_back(' ');
+      line.append(value);
+      const size_t used = 1 + length_utf8(value);
+      if (used < width) {
+         line.append(width - used, ' ');
+      }
+   }
+ 
+   // View the bytes written by snprintf into `buffer`. snprintf returns the would-be length
+   // (excluding the null terminator) or a negative value on error, so clamp to what was
+   // actually written (at most buffer_size - 1). We format numbers with snprintf rather than
+   // std::to_chars because <charconv> is unusable on some target toolchains: the libc++ shipped
+   // in the macOS/FreeBSD SDKs lacks the floating-point overloads at compile time and, for the
+   // minimum deployment target, omits the integer helper symbols (__u32toa/__u64toa) at link time.
+   static std::string_view written_view(const char* buffer, size_t buffer_size, int length) {
+      const size_t count = (0 <= length) ? std::min(static_cast<size_t>(length), buffer_size - 1) : 0;
+      return std::string_view(buffer, count);
+   }
 
+   Statistics::Statistics(bool print_extended_statistics): print_extended_statistics(print_extended_statistics) {
+   }
+
+   void Statistics::add_column(std::string_view name, size_t width, size_t precision, bool is_extended) {
+      // validate and append the column
+      if (column_order.find(name) == column_order.end()) {
+         throw std::invalid_argument("The column " + std::string(name) + " does not exist");
+      }
+      // skip if a column with this name was already added
+      if (std::any_of(this->columns.begin(), this->columns.end(),
+            [name](const Column& column) { return column.name == name; })) {
+         return;
+      }
+      this->columns.push_back(Column{name, width, precision, std::string{}, false, is_extended});
+      // the name->index mapping is built in finalize()
+      this->finalized = false;
+   }
+ 
+   void Statistics::start_new_line() {
+      for (auto& column : this->columns) {
+         column.is_set = false;
+         column.value.clear(); // keeps capacity
+      }
+   }
+
+   void Statistics::set(std::string_view name, std::string value) {
+      Column& column = this->columns[this->index_of(name)];
+      column.value = std::move(value);
+      column.is_set = true;
+   }
+ 
+   void Statistics::set(std::string_view name, int value) {
+      char buffer[16];
+      const int length = std::snprintf(buffer, sizeof(buffer), "%d", value);
+      this->set_value(this->index_of(name), written_view(buffer, sizeof(buffer), length));
+   }
+ 
+   void Statistics::set(std::string_view name, size_t value) {
+      char buffer[24];
+      const int length = std::snprintf(buffer, sizeof(buffer), "%zu", value);
+      this->set_value(this->index_of(name), written_view(buffer, sizeof(buffer), length));
+   }
+ 
+   void Statistics::set(std::string_view name, double value) {
+      const size_t index = this->index_of(name);
+      char buffer[40];
+      const int precision = static_cast<int>(this->columns[index].precision);
+      // "%.*e" reproduces std::chars_format::scientific with a fixed precision
+      const int length = std::snprintf(buffer, sizeof(buffer), "%.*e", precision, value);
+      this->set_value(index, written_view(buffer, sizeof(buffer), length));
+   }
+ 
+   void Statistics::print_horizontal_line() {
+      if (!this->finalized) {
+         this->finalize();
+      }
+      // count the glyphs (column-width units)
+      size_t glyph_count = 0;
+      for (const auto& column : this->columns) {
+         if (this->is_visible(column)) {
+            glyph_count += column.width;
+         }
+      }
+      // create the horizontal line
+      std::string line;
+      line.reserve(glyph_count * symbols::hyphen.size() + 1);
+      for (size_t i = 0; i < glyph_count; ++i) {
+         line.append(symbols::hyphen);
+      }
+      line.push_back('\n');
+      INFO << line; // single insertion
+      Logger::flush();
+   }
+
+   void Statistics::print_header() {
+      //this->print_horizontal_line();
+      this->print_column_names();
+      //this->print_horizontal_line();
+   }
+ 
    void Statistics::print_current_line() {
-      for (const auto& element: this->columns) {
-         const auto& header = element.second;
-         int length;
-         try {
-            const auto& value = this->current_line.at(header);
-            std::cout << " " << value;
-            length = 1 + static_cast<int>(length_utf8(value));
-         }
-         catch (const std::out_of_range&) {
-            std::cout << " -";
-            length = 2;
-         }
-         int number_spaces = (length <= this->widths[header]) ? this->widths[header] - length : 0;
-         for (int j = 0; j < number_spaces; j++) {
-            std::cout << " ";
+      if (!this->finalized) {
+         this->finalize();
+      }
+      // print column names every few iterations
+      if (this->line_index > 0 && this->line_index % header_print_frequency == 0) {
+         print_column_names();
+      }
+
+      // print line
+      std::string line;
+      line.reserve(128);
+      for (const auto& column : this->columns) {
+         if (this->is_visible(column)) {
+            const std::string_view cell = column.is_set ? std::string_view(column.value) : "-";
+            append_cell(line, cell, column.width);
          }
       }
-      std::cout << '\n';
+      line.push_back('\n');
+      INFO << line; // single insertion
+      Logger::flush();
+      ++this->line_index;
    }
 
-   void Statistics::print_footer() {
-      /*
-      for (const auto& element: this->columns) {
-         const auto& header = element.second;
-         for (int j = 0; j < this->widths[header]; j++) {
-            std::cout << Statistics::symbol("bottom");
+   // protected member functions
+
+   void Statistics::finalize() {
+      // order columns by their index
+      std::sort(this->columns.begin(), this->columns.end(),
+         [](const Column& a, const Column& b) {
+            return column_order.at(a.name) < column_order.at(b.name);
+         });
+      // build name->index mapping
+      this->name_to_index.clear();
+      this->name_to_index.reserve(this->columns.size());
+      for (size_t column_index: Range(this->columns.size())) {
+         this->name_to_index.emplace(this->columns[column_index].name, column_index);
+      }
+      this->finalized = true;
+   }
+
+   size_t Statistics::index_of(std::string_view name) {
+      if (!this->finalized) {
+         this->finalize();
+      }
+      return this->name_to_index.at(name);
+   }
+
+   void Statistics::set_value(size_t index, std::string_view value) {
+      Column& column = this->columns[index];
+      column.value.assign(value);
+      column.is_set = true;
+   }
+
+   void Statistics::print_column_names() {
+      if (!this->finalized) {
+         this->finalize();
+      }
+
+      std::string line;
+      line.reserve(128);
+      for (const auto& column : this->columns) {
+         if (this->is_visible(column)) {
+            append_cell(line, column.name, column.width);
          }
       }
-      std::cout << '\n';
-      */
-      Statistics::print_header();
+      line.push_back('\n');
+      INFO << line; // single insertion
+      Logger::flush();
    }
-   
-   std::string_view Statistics::symbol(std::string_view value) {
-      static std::map<std::string_view, std::string_view> symbols = {
-            {"top", "─"},
-            {"top-mid", "┬"},
-            {"top-left", "┌"},
-            {"top-right", "┐"},
-            {"bottom", "─"},
-            {"bottom-mid", "┴"},
-            {"bottom-left", "└"},
-            {"bottom-right", "┘"},
-            {"left", "│"},
-            {"left-mid", "├"},
-            {"mid", "─"},
-            {"mid-mid", "┼"},
-            {"right", "│"},
-            {"right-mid", "┤"},
-            {"middle", "│"}
-      };
-      return symbols[value];
+
+   bool Statistics::is_visible(const Column& column) const {
+      return !column.is_extended || this->print_extended_statistics;
    }
-} // namespace
+}

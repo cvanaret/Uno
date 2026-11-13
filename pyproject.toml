@@ -1,0 +1,64 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.8",
+    "pybind11>=2.11"
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "unopy"
+version = "0.4.17"
+description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
+readme = "interfaces/Python/README.md"
+authors = [
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
+]
+maintainers = [
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
+]
+license = "MIT"
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+Repository = "https://github.com/cvanaret/Uno"
+Issues = "https://github.com/cvanaret/Uno/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["interfaces/Python/tests"]
+
+[tool.scikit-build]
+cmake.source-dir = "."
+build.verbose = true
+wheel.cmake = true
+wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init__.py
+
+# support for passing paths to dependencies from environment to CMake
+[tool.scikit-build.cmake.define]
+BLAS_LIBRARIES = "dependencies/lib/libcblas.a;dependencies/lib/libblas.a"
+LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
+# enable dynamic loading of libhsl
+HSL_RUNTIME_LOADING = "ON"
+BUILD_SHARED_LIBS = "ON"
+# BQPD (cmake -DBQPD=/path/.../libbqpd.a)
+BQPD = "dependencies/lib/libbqpd.a"
+# MUMPS
+MUMPS_INCLUDE_DIR = "dependencies/include"
+METIS_INCLUDE_DIR = "dependencies/include"
+METIS_LIBRARY = "dependencies/lib/libmetis.a"
+MUMPS_LIBRARY = "dependencies/lib/libdmumps.a"
+MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
+MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
+MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
+# HiGHS
+HIGHS = "dependencies/lib/libhighs.a;dependencies/lib/libhighs_extras.a"
+HIGHS_INCLUDE_DIR = "dependencies/include/highs"
+# SPRAL
+SPRAL = "dependencies/lib/libspral.a"
+SPRAL_INCLUDE_DIR = "dependencies/include"

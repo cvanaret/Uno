@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_LOGGER_H
@@ -15,24 +15,23 @@ namespace uno {
    class Logger {
    public:
        static Level level;
+       inline static std::ostream* stream = &std::cout;
        static void set_logger(const std::string& logger_level);
+       static void set_stream(std::ostream& output_stream);
+       static void flush();
    };
 
-   template <typename T>
-   const Level& operator<<(const Level& level, T& element) {
-      if (level <= Logger::level) {
-         std::cout << element;
-      }
-      return level;
-   }
-
+   // single overload: const T& binds to const/non-const lvalues and rvalues alike.
    template <typename T>
    const Level& operator<<(const Level& level, const T& element) {
       if (level <= Logger::level) {
-         std::cout << element;
+         (*Logger::stream) << element;
       }
       return level;
    }
+
+   // manipulators (std::endl, std::flush, ...) need the function-pointer overload.
+   const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&));
 } // namespace
 
 #endif // UNO_LOGGER_H

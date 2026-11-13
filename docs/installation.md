@@ -1,0 +1,174 @@
+# Installation guide
+
+**Contents**
+
+- [Precompiled libraries and executables](#precompiled-libraries-and-executables)
+- [Dependencies](#dependencies)
+- [Compiling and installing Uno from source](#compiling-and-installing-uno-from-source)
+- [CMake options](#cmake-options)
+
+## Precompiled libraries and executables
+
+We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux (x64 and aarch64), macOS (x64 and aarch64), and Windows (x64).
+
+> [!NOTE]
+> The shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` provided in the precompiled archive is a dummy version that does not include the official HSL linear solvers such as `MA27` or `MA57`.
+> However, it can be safely replaced with the official precompiled [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) library without the need to recompile anything.
+> The routine symbols are identical, allowing seamless hot-swapping of the library.
+
+On some platforms, the dynamic linker needs to know where to look for libraries at runtime.
+You might need to set the following environment variables:
+
+- `LD_LIBRARY_PATH` on Linux
+- `DYLD_LIBRARY_PATH` or `DYLD_FALLBACK_LIBRARY_PATH` on macOS
+- `PATH` on Windows
+
+These variables should include the directories where you extracted the library files.
+For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`:
+
+=== "Linux"
+
+    ```console
+    tar -xzf Uno.vX.Y.Z.linux.tar.gz
+    export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$LD_LIBRARY_PATH
+    export PATH=/path/to/extracted/Uno/bin:$PATH
+    ```
+
+=== "macOS"
+
+    ```console
+    tar -xzf Uno.vX.Y.Z.macos.tar.gz
+    export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$DYLD_LIBRARY_PATH
+    export PATH=/path/to/extracted/Uno/bin:$PATH
+    ```
+
+=== "Windows (PowerShell)"
+
+    ```console
+    tar -xzf Uno.vX.Y.Z.windows.zip
+    $env:PATH="C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;$env:PATH"
+    ```
+
+=== "Windows (Command Prompt)"
+
+    ```console
+    tar -xzf Uno.vX.Y.Z.windows.zip
+    set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;%PATH%
+    ```
+
+## Dependencies
+
+* install cmake, BLAS and LAPACK:
+```console
+sudo apt update
+sudo apt install cmake
+sudo apt install libblas-dev liblapack-dev
+```
+
+* **(optional)** download the [AMPL solver library](http://www.netlib.org/ampl/solvers/) (ASL)
+
+* **(optional)** download  solvers:
+    * BQPD (null-space active set solver for nonconvex quadratic programming): get a [precompiled binary](https://github.com/leyffer/BQPD_jll.jl/releases) for your architecture or [get in touch with Sven Leyffer](https://www.mcs.anl.gov/~leyffer/solvers.html) to apply for an academic license
+    * [MA27](https://www.hsl.rl.ac.uk/download/MA27/1.0.0) (sparse indefinite symmetric linear solver)
+    * [MA57](http://www.hsl.rl.ac.uk/catalogue/ma57.html) (sparse indefinite symmetric linear solver)
+    * [MA86](https://www.hsl.rl.ac.uk/catalogue/hsl_ma86.html) (sparse indefinite symmetric linear solver)
+    * [LIBHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) (collection of solvers for sparse linear systems)
+    * [MUMPS](https://mumps-solver.org/index.php?page=dwnld) (sparse indefinite symmetric linear solver)
+    * [SSIDS](https://github.com/ralna/spral) (sparse indefinite symmetric linear solver) from the SPRAL library
+    * [HiGHS](https://highs.dev) (linear programming and convex quadratic programming solver)
+
+* to compile MUMPS in sequential mode, remove the flag `-fopenmp` at the end of your `Makefile.inc` and set the following variables:
+```console
+INCS = $(INCSEQ)
+LIBS = $(LIBSEQ)
+LIBSEQNEEDED = libseqneeded
+```
+
+* to compile SSIDS with OpenMP, set the Meson flag `-Dopenmp=true`. It requires the following environment variables to be set:
+```
+OMP_CANCELLATION=TRUE
+OMP_PROC_BIND=TRUE
+```
+
+* you may experience a short lag at startup (about 1/4s) when running Uno with SSIDS. This is due to `hwloc` (hardware locality), a tool that aims at discovering hardware resources in parallel architectures. To precompute the required topology, run the following commands before running Uno:
+```
+lstopo --of xml ~/.config/hwloc-topology.xml
+echo 'export HWLOC_XMLFILE=$HOME/.config/hwloc-topology.xml' >> ~/.bashrc
+```
+
+## Compiling and installing Uno from source
+
+The sequence of commands to configure and build is as follows (assuming the build directory is `build`):
+```console
+cmake -S . -B build [options]
+cmake --build build --parallel
+```
+See the list of CMake options [here](#cmake-options).
+
+To install the built libraries and headers:
+```console
+cmake --install build
+```
+
+The installation includes a CMake package, so that a CMake project can use the installed Uno with `find_package`
+(set `CMAKE_PREFIX_PATH` to the installation prefix if it is not a default location):
+```cmake
+find_package(Uno REQUIRED)
+target_link_libraries(my_target PRIVATE Uno::uno)
+```
+`Uno::uno` is the static library if it was built, the shared library otherwise; `Uno::uno_static` and `Uno::uno_shared` select one explicitly.
+The headers are included as `#include "uno/Uno_C_API.h"`.
+The shared library is self-contained. The static library also requires the libraries Uno was built with, which are referenced by their absolute paths at build time, and the C++ linker (enable `CXX` in your project).
+
+To configure, compile and run the test suite:
+```console
+cmake -S . -B build -DENABLE_TESTS=ON
+cmake --build build --target run_unotest --parallel
+ctest --test-dir build
+```
+
+## CMake options
+
+You can pass the following options as `-DOPTION=value`:
+
+| Option                 | Description                                                                                                | Possible values             |
+|:-----------------------|:-----------------------------------------------------------------------------------------------------------|:----------------------------|
+| `CMAKE_BUILD_TYPE`     | build type                                                                                                 | `Release`, `Debug`          |
+| `ENABLE_TESTS`         | enable the unit tests                                                                                      | `ON`, `OFF`                 |
+| `BUILD_STATIC_LIBS`    | build the Uno static library                                                                               | `ON`, `OFF`                 |
+| `BUILD_SHARED_LIBS`    | build the Uno shared library                                                                               | `ON`, `OFF`                 |
+| `LAPACK_LIBRARIES`     | path(s) to the LAPACK library, separated by `;`                                                            | `paths`                     |
+| `BLAS_LIBRARIES`       | path(s) to the BLAS library, separated by `;`                                                              | `paths`                     |
+| `AMPLSOLVER`           | path(s) to the ASL library                                                                                 | `path_to_libamplsolver`     |
+| `BQPD`                 | path to the BQPD library                                                                                   | `path_to_libbqpd`           |
+| `MA27`                 | path to the MA27 library                                                                                   | `path_to_libma27`           |
+| `MA57`                 | path to the MA57 library                                                                                   | `path_to_libma57`           |
+| `MA86`                 | path to the MA86 library                                                                                   | `path_to_libma86`           |
+| `HSL`                  | path to the HSL library                                                                                    | `path_to_libhsl`            |
+| `HSL_RUNTIME_LOADING`  | load HSL linear solvers at runtime via `dlopen`; requires `BUILD_SHARED_LIBS=ON`                           | `ON`, `OFF`                 |
+| `HIGHS`                | path to the HiGHS libraries (typically `libhighs` and `libhighs_extras`); overrides the autodetection      | `path_to_libhighs`          |
+| `HIGHS_INCLUDE_DIR`    | path to HiGHS include directory (used together with `HIGHS`)                                               | `path_to_highs_include_dir` |
+| `METIS`                | path to the METIS library                                                                                  | `path_to_libmetis`          |
+| `MUMPS_LIBRARY`        | path to the MUMPS library                                                                                  | `path_to_libdmumps`         |
+| `MUMPS_COMMON_LIBRARY` | path to the MUMPS common library                                                                           | `path_to_libmumps_common`   |
+| `MUMPS_PORD_LIBRARY`   | path to the MUMPS PORD library                                                                             | `path_to_libpord`           |
+| `MUMPS_MPISEQ_LIBRARY` | path to the MUMPS MPISEQ library                                                                           | `path_to_libmpiseq`         |
+| `MUMPS_INCLUDE_DIR`    | path to MUMPS include directory                                                                            | `path_to_mumps_include_dir` |
+| `SPRAL`                | path to SPRAL library </br> (requires `libhwloc` passed to `AUXILIARY_LIBRARIES`)                          | `path_to_libspral`          |
+| `SPRAL_INCLUDE_DIR`    | path to SPRAL include directory                                                                            | `path_to_spral_include_dir` |
+| `AUXILIARY_LIBRARIES`  | path(s) to additional libraries to link against, separated by `;` </br> (e.g., `libhwloc` and `libstdc++`) | `paths`                     |
+
+> [!NOTE]
+> HiGHS is detected automatically via its CMake package (`find_package(highs CONFIG)`), installed by HiGHS under `lib/cmake/highs`. If HiGHS is not in a standard location, add its installation prefix to `CMAKE_PREFIX_PATH`. The imported target `highs::highs` provides the include directories and the dependencies of HiGHS (`highs_extras`, BLAS, Threads and, if enabled, ZLIB). Since HiGHS relies on CBLAS, `BLAS_LIBRARIES` must contain a library that provides CBLAS (e.g., `libcblas;libblas` or OpenBLAS).
+>
+> To force a specific HiGHS build, or if the CMake package is not available (e.g., the `lib/cmake` directory was removed), pass the libraries and headers explicitly with `-DHIGHS=<libs>` and `-DHIGHS_INCLUDE_DIR=<dir>`. These variables take precedence over the CMake package. If neither is found, Uno falls back to searching for `libhighs` in the default library paths.
+
+> [!NOTE]
+> `-DHSL_RUNTIME_LOADING=ON` requires a shared build (`-DBUILD_SHARED_LIBS=ON`): the mode is meant to `dlopen` a shared library `libhsl` from a shared `libuno`, so a static-only build is rejected by CMake.
+>
+> With `-DHSL_RUNTIME_LOADING=ON`, Uno is built without linking any HSL library and instead `dlopen`s it on first use (as IPOPT does), so the same binary can be shipped with or without HSL. At runtime, the shared library is resolved in this order:
+> 1. the `libhsl_path` [option](options.md) (empty by default);
+> 2. the `UNO_HSL_LIBRARY` environment variable;
+> 3. the platform default `libhsl.so` / `libhsl.dylib` / `libhsl.dll`.
+>
+> Since the default `linear_solver` is auto-selected before user options are parsed, use `UNO_HSL_LIBRARY` (rather than the `libhsl_path` option) if you want `MA27`/`MA57`/`MA86` to be picked automatically when the library is not on the default search path.

@@ -9,21 +9,25 @@
 namespace uno {
    class IdentityHessian : public HessianModel {
    public:
-      IdentityHessian() = default;
+      explicit IdentityHessian(size_t number_variables);
 
-      [[nodiscard]] bool has_implicit_representation() const override;
-      [[nodiscard]] bool has_explicit_representation() const override;
-      [[nodiscard]] bool has_curvature(const Model& model) const override;
-      [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
-      void compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override;
+      [[nodiscard]] bool has_hessian_operator() const override;
+      [[nodiscard]] bool has_hessian_matrix() const override;
+      [[nodiscard]] bool has_curvature() const override;
+      [[nodiscard]] size_t number_nonzeros() const override;
+      void compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const override;
       [[nodiscard]] bool is_positive_definite() const override;
 
-      void initialize(const Model& model) override;
-      void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
-      void compute_hessian_vector_product(const Model& model, const double* vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, double* result) override;
-      [[nodiscard]] std::string get_name() const override;
+      void initialize_statistics(Statistics& statistics) const override;
+      void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
+      void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, View<double> hessian_values) override;
+      void compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, View<double> result) override;
+
+   protected:
+      const size_t number_variables;
    };
 } // namespace
 

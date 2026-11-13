@@ -5,15 +5,11 @@
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
 #include <cstddef>
+#include "LinearSystem.hpp"
 
 namespace uno {
    // forward declarations
-   class Direction;
-   class Statistics;
-   class Subproblem;
-   template <typename ElementType>
-   class Vector;
-   class WarmstartInformation;
+   class LinearSystem;
 
    template <typename ElementType>
    class SymmetricIndefiniteLinearSolver {
@@ -21,17 +17,18 @@ namespace uno {
       SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void initialize_hessian(const Subproblem& subproblem) = 0;
-      virtual void initialize_augmented_system(const Subproblem& subproblem) = 0;
+      virtual void initialize_memory() = 0;
 
-      virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
-         Vector<ElementType>& result) = 0;
-      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) = 0;
+      // solve with a single right-hand side: the right-hand side is read from the linear system
+      // (get_linear_system().rhs) and the solution is written to `solution`
+      virtual void solve_indefinite_system(ElementType* solution) = 0;
 
-      virtual void evaluate_constraint_jacobian(const Subproblem& subproblem) = 0;
-      virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
+      // solve with `number_of_rhs` right-hand sides stored column-major (each column has length
+      // get_linear_system().dimension): `rhs` is the block of right-hand sides and `solution` receives
+      // the corresponding solutions (the two blocks may alias)
+      virtual void solve_indefinite_system(const ElementType* rhs, ElementType* solution, size_t number_of_rhs) = 0;
+
+      [[nodiscard]] virtual LinearSystem& get_linear_system() = 0;
    };
 } // namespace
 

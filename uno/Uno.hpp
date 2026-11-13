@@ -5,51 +5,59 @@
 #define UNO_H
 
 #include <memory>
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
+#include <optional>
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
-#include "optimization/IterateStatus.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // forward declarations
    class Model;
-   class Options;
    class Statistics;
    class Timer;
    class UserCallbacks;
 
    class Uno {
    public:
-      Uno(size_t number_constraints, const Options& options);
+      Uno() = default;
 
       // solve with or without user callbacks
-      Result solve(const Model& model, Iterate& current_iterate, const Options& options);
-      Result solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks);
+      Result solve(const Model& model, const Options& options);
+      Result solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
 
       static std::string current_version();
-      static void print_instructions();
       static void print_available_strategies();
-      void print_optimization_summary(const Result& result) const;
+      [[nodiscard]] const std::string& get_method_description() const;
 
    private:
-      std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy;
-      std::unique_ptr<GlobalizationStrategy> globalization_strategy;
-      std::unique_ptr<GlobalizationMechanism> globalization_mechanism;
-      Direction direction{};
-      const size_t max_iterations; /*!< Maximum number of iterations */
-      const double time_limit; /*!< CPU time limit (can be inf) */
-      const bool print_solution;
+      std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
+      std::string method_description{"strategy combination not initialized"};
 
-      [[nodiscard]] std::string get_strategy_combination() const;
-      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
-      [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
-      [[nodiscard]] bool termination_criteria(IterateStatus current_status, size_t iteration, double current_time,
-         OptimizationStatus& optimization_status) const;
-      static void postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status);
-      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate,
-         size_t major_iterations, const Timer& timer) const;
+      // returns std::nullopt upon success, the termination status otherwise
+      [[nodiscard]] std::optional<OptimizationStatus> initialize(Statistics& statistics, const Model& model,
+         Iterate& current_iterate, EvaluationCache& evaluation_cache, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
+      [[nodiscard]] std::optional<OptimizationStatus> initialize_once(Statistics& statistics, const Model& model,
+         Iterate& current_iterate, EvaluationCache& evaluation_cache, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
+      void discard_ingredients(const Model& model, Iterate& current_iterate, EvaluationCache& evaluation_cache);
+      [[nodiscard]] static Statistics create_statistics(const Model& model, bool print_extended_statistics);
+      [[nodiscard]] static bool check_termination(const Iterate& trial_iterate, size_t iteration, size_t max_iterations,
+         double current_time, double time_limit, bool user_interruption, OptimizationStatus& optimization_status,
+         UserCallbacks& user_callbacks);
+      [[nodiscard]] Result reformulate_and_solve(const Model& user_model, const Model& model, const Options& options,
+         UserCallbacks& user_callbacks);
+      [[nodiscard]] Result evaluate_single_point(const Model& user_model, const Model& model, const Options& options);
+      [[nodiscard]] Result uno_solve(const Model& user_model, const Model& model, const Options& options,
+         UserCallbacks& user_callbacks);
+      [[nodiscard]] bool postprocess_solution(const Model& user_model, const Model& model, Iterate& iterate,
+         Evaluations& evaluations, bool call_user_functions = true) const;
+      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate&& solution,
+         Evaluations&& evaluations, size_t major_iterations, const Timers& timers, std::vector<OptionOverride>&& option_overrides) const;
+      [[nodiscard]] Result create_failure_result(const Model& model, OptimizationStatus optimization_status, bool print_solution);
+      static void postprocess_multipliers_signs(const Model& model, Result& result);
+      void print_optimization_summary(const Result& result, bool print_solution) const;
    };
 } // namespace
 

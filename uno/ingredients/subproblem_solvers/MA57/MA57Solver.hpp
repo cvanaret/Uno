@@ -6,13 +6,31 @@
 
 #include <array>
 #include <vector>
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/Vector.hpp"
+#include "../DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "../COOLinearSystem.hpp"
+#include "../PivotingToleranceSchedule.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
+   // settings taken from IPOPT
+   struct MA57Settings {
+      static constexpr double pivoting_threshold = 1e-8;
+      static constexpr double max_pivoting_threshold = 1e-4; // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_ma57_pivtolmax
+      static constexpr double pivoting_threshold_increase_exponent = 0.75;
+      static constexpr double allocation_safety_factor = 1.05;
+   };
+
    // forward declarations
    class Statistics;
    class Subproblem;
+
+   // JOB parameter of MA57CD for the factorization A = P L D Lᵀ Pᵀ
+   enum class MA57Job: int {
+      FULL = 1, // A⁻¹
+      LOWER = 2, // (P L Pᵀ)⁻¹
+      DIAGONAL = 3, // (P D Pᵀ)⁻¹
+      UPPER = 4 // (P Lᵀ Pᵀ)⁻¹
+   };
 
    struct MA57Workspace {
       int n{};
@@ -34,60 +52,48 @@ namespace uno {
       std::array<double, 20> rinfo{};
       std::array<int, 40> info{};
 
-      const int nrhs{1}; // number of right hand side being solved
-      const int job{1};
-      std::vector<double> residuals;
-
       MA57Workspace() = default;
    };
 
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
-      MA57Solver();
+      MA57Solver(bool use_scaling = false); // no scaling by default
       ~MA57Solver() override = default;
 
-      void initialize_hessian(const Subproblem& subproblem) override;
-      void initialize_augmented_system(const Subproblem& subproblem) override;
+      void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(const double* matrix_values) override;
-      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
-      // [[nodiscard]] bool matrix_is_positive_definite() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
+      [[nodiscard]] bool increase_pivoting_tolerance() override;
+      [[nodiscard]] std::optional<size_t> number_delayed_pivots() const override;
 
-      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] LinearSystem& get_linear_system() override;
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;
+      // whether MA57 scales the matrix itself (MC64)
+      [[nodiscard]] bool uses_internal_scaling() const { return this->workspace.icntl[14] != 0; }
 
    private:
+      void factorize(bool is_matrix_positive_definite) override;
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override;
+      void solve_with_lower_factor(double* rhs, size_t number_of_rhs) override;
+      void solve_with_middle_factor(double* rhs, size_t number_of_rhs) override;
+      void solve_with_upper_factor(double* rhs, size_t number_of_rhs) override;
+
       MA57Workspace workspace{};
+      COOLinearSystem linear_system{Indexing::Fortran_indexing};
+      PivotingToleranceSchedule pivoting_tolerance_schedule{MA57Settings::max_pivoting_threshold, MA57Settings::pivoting_threshold_increase_exponent};
 
-      // evaluations
-      Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      bool analysis_performed{false};
+      bool factorization_performed{false};
 
-      // Jacobian
-      size_t number_jacobian_nonzeros{};
-      std::vector<size_t> jacobian_row_indices{};
-      std::vector<size_t> jacobian_column_indices{};
-
-      // matrix
-      size_t number_hessian_nonzeros{};
-      std::vector<int> matrix_row_indices{};
-      std::vector<int> matrix_column_indices{};
-      Vector<double> matrix_values{};
-      Vector<double> rhs{};
-      Vector<double> solution{};
-
-      static constexpr size_t fortran_shift{1};
-
-      bool use_iterative_refinement{false};
+      void solve(MA57Job job, double* rhs, size_t number_of_rhs);
+      [[nodiscard]] int& MA57_ICNTL(size_t index);
+      [[nodiscard]] double& MA57_CNTL(size_t index);
+      [[nodiscard]] int MA57_INFO(size_t index) const;
    };
 } // namespace
 

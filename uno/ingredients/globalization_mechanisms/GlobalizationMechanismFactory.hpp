@@ -6,19 +6,20 @@
 
 #include <array>
 #include <memory>
-#include "GlobalizationMechanism.hpp"
+#include <vector>
+#include "options/Options.hpp"
 
 namespace uno {
-   // forward declaration
-   class Options;
+   // forward declarations
+   class GlobalizationMechanism;
+   class Model;
 
    class GlobalizationMechanismFactory {
    public:
-      static std::unique_ptr<GlobalizationMechanism> create(const Options& options);
+      static std::unique_ptr<GlobalizationMechanism> create(const Model& model, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
 
-      constexpr static std::array available_strategies{
-         "TR", "LS"
-      };
+      constexpr static std::array available_strategies{"TR", "LS"};
    };
 } // namespace
 

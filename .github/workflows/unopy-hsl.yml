@@ -1,0 +1,85 @@
+name: unopy HSL/CoinHSL
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+  VENV: /home/optimi/cvanaret/myenv
+  HOME: /home/optimi/cvanaret
+  STAGING_ROOT: /scratch/local/opt-008547/cvanaret/ci-staging
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Build unopy into a run-scoped venv on shared NFS
+        run: |
+          RUN_DIR="${{env.STAGING_ROOT}}/${{github.run_id}}"
+          RUN_VENV="$RUN_DIR/venv"
+          mkdir -p "${{env.STAGING_ROOT}}"
+          # prune staging from old runs so the NFS home doesn't fill up
+          find "${{env.STAGING_ROOT}}" -mindepth 1 -maxdepth 1 -type d -mtime +2 -exec rm -rf {} + 2>/dev/null || true
+          rm -rf "$RUN_DIR"
+          mkdir -p "$RUN_DIR"
+          ${{env.VENV}}/bin/python -m venv "$RUN_VENV"
+          CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) "$RUN_VENV/bin/pip" install . -v
+
+  run-example:
+    name: Example with ${{matrix.LIBHSL_NAME}}'s ${{matrix.HSL_SOLVER}}
+    needs: build
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        LIBHSL: [libhsl/builddir/libhsl.so, coinhsl-2024.05.15/build/libcoinhsl.so]
+        HSL_SOLVER: [MA57, MA27, MA86]
+        include:
+          - LIBHSL: libhsl/builddir/libhsl.so
+            LIBHSL_NAME: libHSL
+          - LIBHSL: coinhsl-2024.05.15/build/libcoinhsl.so
+            LIBHSL_NAME: CoinHSL
+        # this attaches a label to both paths
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure example for ${{matrix.HSL_SOLVER}}
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
+        run: |
+          # load the HSL library dynamically
+          sed -i '/uno_solver.set_preset("ipopt")/a\\tuno_solver.set_option("libhsl_path", "${{env.HOME}}/${{matrix.LIBHSL}}")' example_hs015.py
+          # substitution of the linear solver
+          sed -i 's/MUMPS/${{matrix.HSL_SOLVER}}/' example_hs015.py
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          "${{env.STAGING_ROOT}}/${{github.run_id}}/venv/bin/python" example_hs015.py

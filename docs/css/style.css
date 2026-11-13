@@ -1,0 +1,24 @@
+.video-wrapper {
+  max-width: 800px;   /* cap how large it gets; remove for full content width */
+  margin: 1em auto;
+}
+
+.video-wrapper iframe {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+
+.md-nav__sidebar-image {
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+}
+.md-nav__sidebar-image img {
+  max-width: 50%;
+  height: auto;
+}
+
+.md-nav--primary > .md-nav__title {
+  box-shadow: none;
+}

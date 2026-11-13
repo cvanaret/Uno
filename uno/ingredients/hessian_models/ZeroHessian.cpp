@@ -2,28 +2,29 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ZeroHessian.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "model/Model.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
-   bool ZeroHessian::has_implicit_representation() const {
+   ZeroHessian::ZeroHessian(size_t number_variables): HessianModel("zero"), number_variables(number_variables) {
+   }
+
+   bool ZeroHessian::has_hessian_operator() const {
       return true;
    }
 
-   bool ZeroHessian::has_explicit_representation() const {
+   bool ZeroHessian::has_hessian_matrix() const {
       return true;
    }
 
-   bool ZeroHessian::has_curvature(const Model& /*model*/) const {
+   bool ZeroHessian::has_curvature() const {
       return false;
    }
 
-   size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
+   size_t ZeroHessian::number_nonzeros() const {
       return 0;
    }
 
-   void ZeroHessian::compute_sparsity(const Model& /*model*/, size_t* /*row_indices*/, size_t* /*column_indices*/,
-         size_t /*solver_indexing*/) const {
+   void ZeroHessian::compute_sparsity(View<uno_int> /*row_indices*/, View<uno_int> /*column_indices*/, uno_int /*solver_indexing*/) const {
       // empty structure
    }
 
@@ -31,22 +32,22 @@ namespace uno {
       return false;
    }
 
-   void ZeroHessian::initialize(const Model& /*model*/) {
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/) const {
    }
 
-   void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
+   void ZeroHessian::notify_trial_iterate(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         const Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/) {
+   }
+
+   void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> /*hessian_values*/) {
       // do nothing
    }
 
-   void ZeroHessian::compute_hessian_vector_product(const Model& model, const double* /*vector*/, double /*objective_multiplier*/,
-         const Vector<double>& /*constraint_multipliers*/, double* result) {
-      for (size_t variable_index: Range(model.number_variables)) {
+   void ZeroHessian::compute_hessian_vector_product(View<const double> /*x*/, View<const double> /*vector*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> result) {
+      for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = 0.;
       }
-   }
-
-   std::string ZeroHessian::get_name() const {
-      return "zero";
    }
 }

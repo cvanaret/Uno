@@ -1,0 +1,380 @@
+// Copyright (c) 2018-2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <stdexcept>
+#include "AMPLModel.hpp"
+#include "optimization/EvaluationErrors.hpp"
+#include "optimization/Iterate.hpp"
+#include "symbolic/UnaryNegation.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Infinity.hpp"
+#include "Uno.hpp"
+
+namespace uno {
+   ASL* generate_asl(const std::string& file_name) {
+      ASL* asl = ASL_alloc(ASL_read_pfgh);
+      if (asl == nullptr) {
+         throw std::runtime_error("The ASL could not be allocated");
+      }
+      FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
+      if (nl == nullptr) {
+         ASL_free(&asl);
+         throw std::runtime_error("The nl file could not be read");
+      }
+
+      int n_discrete = asl->i.nbv_ + asl->i.niv_ + asl->i.nlvbi_ + asl->i.nlvci_ + asl->i.nlvoi_;
+      if (0 < n_discrete) {
+         ASL_free(&asl);
+         throw std::runtime_error("Uno does not support discrete variables");
+      }
+
+      // preallocate initial primal and dual solutions
+      asl->i.X0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(asl->i.n_var_)));
+      asl->i.pi0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(asl->i.n_con_)));
+
+      // read the file_name.nl file
+      asl->i.Fortran_ = 0; // indices start at 0
+      const int read_error = pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
+      if (read_error != 0) {
+         ASL_free(&asl);
+         throw std::runtime_error("pfgh_read_ASL was to able to read the ASL");
+      }
+
+      // set the sign convention for the Lagrangian: Uno uses ∇²L(x, y) = ∇²f(x) - \sum_j y_j ∇²c_j(x)
+      fint error_flag{0};
+      lagscale_ASL(asl, AMPLModel::lagrangian_sign_convention, &error_flag);
+      return asl;
+   }
+
+   // generate the ASL object and call the private constructor
+   AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, generate_asl(file_name)) {
+   }
+
+   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
+         Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_),
+            (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */, AMPLModel::lagrangian_sign_convention, 0),
+         asl(asl),
+         // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
+         number_asl_hessian_nonzeros(this->compute_lagrangian_hessian_sparsity()),
+         variables_lower_bounds(this->number_variables, -Inf),
+         variables_upper_bounds(this->number_variables, Inf),
+         constraints_lower_bounds(this->number_constraints, -Inf),
+         constraints_upper_bounds(this->number_constraints, Inf),
+         // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
+         linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
+         nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),
+         // problem_type is computed based on number_asl_hessian_nonzeros and linear_constraints
+         problem_type(this->determine_problem_type()) {
+      // Jacobian storage: use goff fields of struct cgrad
+      this->asl->i.congrd_mode = 2;
+
+      // variables bounds
+      if (this->asl->i.LUv_ != nullptr) {
+         for (size_t variable_index: Range(this->number_variables)) {
+            this->variables_lower_bounds[variable_index] = this->asl->i.LUv_[2*variable_index];
+            this->variables_upper_bounds[variable_index] = this->asl->i.LUv_[2*variable_index + 1];
+         }
+      }
+
+      // constraints bounds
+      if (this->asl->i.LUrhs_ != nullptr) {
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            this->constraints_lower_bounds[constraint_index] = this->asl->i.LUrhs_[2*constraint_index];
+            this->constraints_upper_bounds[constraint_index] = this->asl->i.LUrhs_[2*constraint_index + 1];
+         }
+      }
+
+      // partition equality/inequality constraints
+      partition_constraints(this->equality_constraints, this->inequality_constraints);
+
+      // Jacobian sparsity
+      this->compute_jacobian_sparsity();
+   }
+
+   AMPLModel::~AMPLModel() {
+      ASL_free(&this->asl);
+   }
+
+   ProblemType AMPLModel::get_problem_type() const {
+      return this->problem_type;
+   }
+   
+   bool AMPLModel::has_jacobian_operator() const {
+      return false;
+   }
+
+   bool AMPLModel::has_jacobian_transposed_operator() const {
+      return false;
+   }
+
+   bool AMPLModel::has_hessian_operator() const {
+      // As long as we use the ASL library ("solvers"), we need to form the explicit Hessian
+      // The reason is that the ASL Hessian representation changes as soon as trial
+      // iterates are evaluated. The variant "solvers2" should address the issue.
+      return false;
+   }
+
+   bool AMPLModel::has_hessian_matrix() const {
+      return true;
+   }
+
+   double AMPLModel::evaluate_objective(const Vector<double>& x) const {
+      fint error_flag = 0;
+      const double result = this->optimization_sense * this->asl->p.Objval(this->asl, 0, x.data(), &error_flag);
+      if (0 < error_flag) {
+         throw FunctionEvaluationError();
+      }
+      ++this->number_model_evaluations.objective;
+      return result;
+   }
+
+   void AMPLModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
+      fint error_flag = 0;
+      this->asl->p.Conval(this->asl, x.data(), constraints.data(), &error_flag);
+      if (0 < error_flag) {
+         throw FunctionEvaluationError();
+      }
+      ++this->number_model_evaluations.constraints;
+   }
+
+   // dense gradient
+   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      fint error_flag = 0;
+      this->asl->p.Objgrd(this->asl, 0, x.data(), gradient.data(), &error_flag);
+      if (0 < error_flag) {
+         throw GradientEvaluationError();
+      }
+      if (this->optimization_sense != 1.) {
+         gradient.scale(this->optimization_sense);
+      }
+      ++this->number_model_evaluations.objective_gradient;
+   }
+
+   View<const uno_int> AMPLModel::get_jacobian_row_indices() const {
+      return this->jacobian_row_indices.view();
+   }
+
+   View<const uno_int> AMPLModel::get_jacobian_column_indices() const {
+      return this->jacobian_column_indices.view();
+   }
+
+   void AMPLModel::compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
+      const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
+      const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
+      size_t current_index = 0;
+      for (size_t column_index: Range(this->number_variables)) {
+         for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
+            const uno_int row_index = static_cast<uno_int>(asl_row_index[nonzero_index]);
+            row_indices[current_index] = row_index + solver_indexing;
+            column_indices[current_index] = static_cast<uno_int>(column_index) + solver_indexing;
+            ++current_index;
+         }
+      }
+   }
+
+   void AMPLModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
+      fint error_flag = 0;
+      this->asl->p.Jacval(this->asl, x.data(), jacobian_values, &error_flag);
+      if (0 < error_flag) {
+         throw GradientEvaluationError();
+      }
+      ++this->number_model_evaluations.jacobian;
+   }
+
+   // register the vector of variables
+   //this->asl->p.Xknown(this->asl, x.data(), nullptr);
+   // unregister the vector of variables
+   //this->asl->i.x_known = 0;
+
+   void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
+         View<double> hessian_values) const {
+      objective_multiplier *= this->optimization_sense;
+      fint error_flag = 0;
+      this->asl->p.Sphese(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier, multipliers.data(),
+         &error_flag);
+      if (0 < error_flag) {
+         throw HessianEvaluationError();
+      }
+      ++this->number_model_evaluations.hessian;
+   }
+
+   void AMPLModel::compute_jacobian_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
+      throw std::runtime_error("AMPLModel::compute_jacobian_vector_product not implemented");
+   }
+
+   void AMPLModel::compute_jacobian_transposed_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
+      throw std::runtime_error("AMPLModel::compute_jacobian_transposed_vector_product not implemented");
+   }
+
+   void AMPLModel::compute_hessian_vector_product(View<const double> /*x*/, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const {
+      // scale by the objective sign
+      objective_multiplier *= this->optimization_sense;
+
+      // compute the Hessian-vector product
+      fint error_flag = 0;
+      (this->asl->p.Hvcompe)(this->asl, result.data(), vector.data(), -1, &objective_multiplier, multipliers.data(), &error_flag);
+      if (0 < error_flag) {
+         throw HessianEvaluationError();
+      }
+   }
+
+   const std::vector<double>& AMPLModel::get_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
+   }
+
+   const std::vector<double>& AMPLModel::get_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
+   }
+
+   const std::vector<double>& AMPLModel::get_constraints_lower_bounds() const {
+      return this->constraints_lower_bounds;
+   }
+
+   const std::vector<double>& AMPLModel::get_constraints_upper_bounds() const {
+      return this->constraints_upper_bounds;
+   }
+
+   const std::vector<size_t>& AMPLModel::get_equality_constraints() const {
+      return this->equality_constraints;
+   }
+
+   const std::vector<size_t>& AMPLModel::get_inequality_constraints() const {
+      return this->inequality_constraints;
+   }
+
+   const Collection<size_t>& AMPLModel::get_linear_constraints() const {
+      return this->linear_constraints;
+   }
+
+   const Collection<size_t>& AMPLModel::get_nonlinear_constraints() const {
+      return this->nonlinear_constraints;
+   }
+
+   // initial primal point
+   void AMPLModel::initial_primal_point(Vector<double>& x) const {
+      assert(x.size() >= this->number_variables);
+      std::copy_n(this->asl->i.X0_, this->number_variables, x.begin());
+   }
+
+   // initial dual point
+   void AMPLModel::initial_dual_point(Vector<double>& multipliers) const {
+      assert(multipliers.size() >= this->number_constraints);
+      std::copy_n(this->asl->i.pi0_, this->number_constraints, multipliers.begin());
+   }
+
+   void AMPLModel::postprocess_solution(Iterate& /*iterate*/, Evaluations& /*evaluations*/) const {
+      // do nothing
+   }
+
+   void AMPLModel::write_solution_to_file(Result& result) const {
+      // write the primal-dual solution and status into a *.sol file
+      this->asl->p.solve_code_ = 400; // limit
+      if (result.solution_status == SolutionStatus::FEASIBLE_KKT_POINT) {
+         this->asl->p.solve_code_ = 0;
+      }
+      else if (result.solution_status == SolutionStatus::FEASIBLE_SMALL_STEP) {
+         this->asl->p.solve_code_ = 100;
+      }
+      else if (result.solution_status == SolutionStatus::INFEASIBLE_STATIONARY_POINT) {
+         this->asl->p.solve_code_ = 200;
+      }
+      else if (result.solution_status == SolutionStatus::DIVERGING_ITERATE ||
+            result.solution_status == SolutionStatus::UNBOUNDED_OBJECTIVE) {
+         this->asl->p.solve_code_ = 300;
+      }
+      else if (result.solution_status == SolutionStatus::INFEASIBLE_SMALL_STEP) {
+         this->asl->p.solve_code_ = 500;
+      }
+
+      // include the bound duals in the .sol file, using suffixes
+      SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+      SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+      std::array<SufDecl, 2> suffixes{lower_bound_suffix, upper_bound_suffix};
+      suf_declare_ASL(this->asl, suffixes.data(), suffixes.size());
+      suf_rput_ASL(this->asl, "lower_bound_duals", ASL_Sufkind_var, result.lower_bound_dual_solution.data());
+      suf_rput_ASL(this->asl, "upper_bound_duals", ASL_Sufkind_var, result.upper_bound_dual_solution.data());
+
+      Option_Info option_info{};
+      option_info.wantsol = 9; // write the solution without printing the message to stdout
+      std::string message = "Uno ";
+      message.append(Uno::current_version()).append(": ").append(solution_status_to_message(result.solution_status));
+
+      // flip the signs of the constraint multipliers (different Lagrangian convention between ASL and Uno)
+      Vector<double> ampl_dual_solution = -result.constraint_dual_solution;
+      write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), ampl_dual_solution.data(), &option_info);
+   }
+
+   size_t AMPLModel::number_jacobian_nonzeros() const {
+      return static_cast<size_t>(this->asl->i.nzc_);
+   }
+
+   size_t AMPLModel::number_hessian_nonzeros() const {
+      return this->number_asl_hessian_nonzeros;
+   }
+
+   size_t AMPLModel::number_model_objective_evaluations() const {
+      return this->number_model_evaluations.objective;
+   }
+
+   size_t AMPLModel::number_model_constraints_evaluations() const {
+      return this->number_model_evaluations.constraints;
+   }
+
+   size_t AMPLModel::number_model_objective_gradient_evaluations() const {
+      return this->number_model_evaluations.objective_gradient;
+   }
+
+   size_t AMPLModel::number_model_jacobian_evaluations() const {
+      return this->number_model_evaluations.jacobian;
+   }
+
+   size_t AMPLModel::number_model_hessian_evaluations() const {
+      return this->number_model_evaluations.hessian;
+   }
+
+   void AMPLModel::reset_number_evaluations() const {
+      this->number_model_evaluations.reset();
+   }
+
+   // protected member functions
+
+   void AMPLModel::compute_jacobian_sparsity() {
+      this->jacobian_row_indices.resize(this->number_jacobian_nonzeros());
+      this->jacobian_column_indices.resize(this->number_jacobian_nonzeros());
+
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
+         while (constraint_gradient != nullptr) {
+            const int variable_index = constraint_gradient->varno;
+            // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
+            const size_t index = static_cast<size_t>(constraint_gradient->goff);
+            this->jacobian_row_indices[index] = static_cast<uno_int>(constraint_index);
+            this->jacobian_column_indices[index] = variable_index;
+            constraint_gradient = constraint_gradient->next;
+         }
+      }
+   }
+
+   size_t AMPLModel::compute_lagrangian_hessian_sparsity() const {
+      // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
+      // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
+      // store in lower-triangular part
+      constexpr int triangular = 2;
+      return static_cast<size_t>(this->asl->p.Sphset(this->asl, nullptr, -1, 1, 1, triangular));
+   }
+
+   ProblemType AMPLModel::determine_problem_type() const {
+      // in an LP, there are no Hessian terms and all the constraints are linear
+      if (this->number_asl_hessian_nonzeros == 0 && this->linear_constraints.size() == this->number_constraints) {
+         return ProblemType::LINEAR;
+      }
+      // as is, we cannot conclude whether the model is a QP (this requires extra work). We simply report an NLP
+      else {
+         return ProblemType::NONLINEAR;
+      }
+   }
+} // namespace

@@ -2,29 +2,42 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <cstdint>
+#include <limits>
 #include <optional>
+#include <string>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include "MA57Solver.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/COOMatrix.hpp"
-#include "linear_algebra/Indexing.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "optimization/Direction.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
-#include "fortran_interface.h"
 
+#ifdef HSL_RUNTIME_LOADING
+#include <stdexcept>
+#include "ingredients/subproblem_solvers/HSL/HSLLoader.hpp"
+// route the calls through the runtime-resolved function pointers
+#define LIBHSL_version uno::hsl_libhsl_version
+#define MA57_set_default_parameters uno::hsl_ma57id
+#define MA57_symbolic_analysis uno::hsl_ma57ad
+#define MA57_numerical_factorization uno::hsl_ma57bd
+#define MA57_linear_solve uno::hsl_ma57cd
+#define MA57_enlarge_workspace uno::hsl_ma57ed
+#else
+#include "fortran_interface.h"
 #define MA57_set_default_parameters FC_GLOBAL(ma57id, MA57ID)
 #define MA57_symbolic_analysis FC_GLOBAL(ma57ad, MA57AD)
 #define MA57_numerical_factorization FC_GLOBAL(ma57bd, MA57BD)
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
-#define MA57_linear_solve_with_iterative_refinement FC_GLOBAL(ma57dd, MA57DD)
 #define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
+#endif
 
 namespace uno {
+#ifndef HSL_RUNTIME_LOADING
    extern "C" {
+      void LIBHSL_version(int *major, int *minor, int *patch);
+
       void MA57_set_default_parameters(double cntl[], int icntl[]);
 
       void MA57_symbolic_analysis(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep,
@@ -37,15 +50,12 @@ namespace uno {
       void MA57_linear_solve(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs,
          double rhs[], const int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 
-      void MA57_linear_solve_with_iterative_refinement(const int* job, const int* n, int* ne, const double a[], const int irn[],
-         const int jcn[], double fact[], int* lfact, int ifact[], int* lifact, const double rhs[], double x[], double resid[],
-         double work[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
-
       // enlarging of workspaces when numerical factorization runs out of memory
       void MA57_enlarge_workspace(const int* n, const int* ic, int keep[], const double fact[], const int* lfact,
          double newfac[], const int* lnew, const int ifact[], const int* lifact, int newifc[], const int* linew,
          int info[]);
    }
+#endif
 
    namespace {
       bool is_error_code_insufficient_real_workspace(int error_code) {
@@ -56,12 +66,22 @@ namespace uno {
          return error_code == 11 || error_code == -4;
       }
 
+      // workspace size with a safety factor, clamped to the largest size MA57 (32-bit integers) can address
+      int get_initial_workspace_size(int size_estimate) {
+         const double size = MA57Settings::allocation_safety_factor * static_cast<double>(size_estimate);
+         return static_cast<int>(std::min(size, static_cast<double>(std::numeric_limits<int>::max())));
+      }
+
+      // geometric growth: the number of enlargements is logarithmic in the final size, even when the fill is much larger
+      // than the estimate of the analysis (e.g. many delayed pivots)
       int get_larger_workspace_size(int size_current, std::optional<int> size_estimate) {
-         const int size_new = std::max(size_current + 1, size_estimate.value_or(size_current));
-         const int oversize_denominator_with_estimate = 5;  // add 20% on top of the estimate
-         const int oversize_denominator_without_estimate = 2;  // grow by 50% if we don't have an estimate
-         const int oversize_denominator = size_estimate.has_value() ? oversize_denominator_with_estimate : oversize_denominator_without_estimate;
-         return size_new + size_new / oversize_denominator;
+         if (size_current == std::numeric_limits<int>::max()) {
+            throw std::runtime_error("MA57: the workspace cannot be enlarged further");
+         }
+         const auto size_current_64 = static_cast<int64_t>(size_current);
+         const auto size_estimate_64 = static_cast<int64_t>(size_estimate.value_or(0));
+         const int64_t size_new = std::max(2 * size_current_64, size_estimate_64 + size_estimate_64 / 5); // estimate + 20%
+         return static_cast<int>(std::min<int64_t>(size_new, std::numeric_limits<int>::max()));
       }
 
       int get_larger_real_workspace_size(const MA57Workspace& workspace) {
@@ -77,131 +97,101 @@ namespace uno {
       }
    }  // anonymous namespace
 
-   MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
+   static void print_version() {
+#if defined(HAS_HSL)
+   #if defined(HSL_RUNTIME_LOADING)
+      if (LIBHSL_version != nullptr) {
+   #endif
+         int major, minor, patch;
+         LIBHSL_version(&major, &minor, &patch);
+         INFO << "Running MA57 v" << major << "." << minor << "." << patch << '\n';
+         return;
+   #if defined(HSL_RUNTIME_LOADING)
+      }
+   #endif
+#endif
+      INFO << "Running MA57\n";
+   }
+
+   MA57Solver::MA57Solver(bool use_scaling): DirectSymmetricIndefiniteLinearSolver() {
+#ifdef HSL_RUNTIME_LOADING
+      if (!ma57_symbols_available()) {
+         throw std::runtime_error("Uno: the MA57 solver was requested but the HSL library could not be loaded at "
+            "runtime (set the UNO_HSL_LIBRARY environment variable to point at libhsl)");
+      }
+#endif
+      print_version();
       // set the default values of the controlling parameters
       MA57_set_default_parameters(this->workspace.cntl.data(), this->workspace.icntl.data());
-      // suppress warning messages
-      this->workspace.icntl[4] = 0;
-      // iterative refinement enabled
-      this->workspace.icntl[8] = 1;
+      MA57_ICNTL(5) = 0; // suppress warning messages
+      MA57_ICNTL(6) = 5; // pivot order (auto between METIS and MC47)
+      MA57_ICNTL(7) = 1; // numerical pivoting (uses threshold in CNTL(1))
+      MA57_ICNTL(8) = 1; // insufficient workspace: suspend the factorization (INFO(1) = 10/11) instead of discarding it (-3/-4)
+      MA57_ICNTL(11) = 16; // block size used by the Level 3 BLAS
+      MA57_ICNTL(12) = 16; // assembly tree
+      MA57_ICNTL(15) = use_scaling ? 1 : 0; // MC64 scaling
+      MA57_ICNTL(16) = 0; // small entries removed (disabled)
+      MA57_CNTL(1) = MA57Settings::pivoting_threshold; // pivoting threshold
+      //MA57_CNTL(2) = 1e-12;
    }
 
-   void MA57Solver::initialize_hessian(const Subproblem& subproblem) {
-      const size_t dimension = subproblem.number_variables;
-
-      // Hessian
-      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t number_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-      this->matrix_row_indices.resize(number_nonzeros);
-      this->matrix_column_indices.resize(number_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(number_nonzeros);
-      Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_hessian_sparsity(tmp_row_indices.data(), tmp_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
-      this->matrix_values.resize(number_nonzeros);
-      this->rhs.resize(dimension);
-      this->solution.resize(dimension);
-
-      // workspace
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(number_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42);
+   void MA57Solver::initialize_memory() {
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
+      this->workspace.lkeep = static_cast<int>(5 * this->linear_system.dimension + this->linear_system.number_nonzeros +
+         std::max(this->linear_system.dimension, this->linear_system.number_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
+      this->workspace.iwork.resize(5 * this->linear_system.dimension);
+      this->workspace.lwork = static_cast<int>(static_cast<double>(this->linear_system.dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(dimension);
-   }
-
-   void MA57Solver::initialize_augmented_system(const Subproblem& subproblem) {
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-
-      // evaluations
-      this->objective_gradient.resize(subproblem.number_variables);
-      this->constraints.resize(subproblem.number_constraints);
-
-      // Jacobian
-      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
-
-      // augmented system
-      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t number_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
-      this->matrix_row_indices.resize(number_nonzeros);
-      this->matrix_column_indices.resize(number_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(number_nonzeros);
-      Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
-         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
-      this->matrix_values.resize(number_nonzeros);
-      this->rhs.resize(dimension);
-      this->solution.resize(dimension);
-
-      // workspace
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(number_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42);
-      this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
-      this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(dimension);
    }
 
    void MA57Solver::do_symbolic_analysis() {
-      // symbolic analysis
-      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->matrix_row_indices.data(), this->matrix_column_indices.data(),
-         &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
-         this->workspace.info.data(), this->workspace.rinfo.data());
+      assert(!this->analysis_performed);
 
-      assert(0 <= this->workspace.info[0] && "MA57: the symbolic analysis failed");
-      if (0 < this->workspace.info[0]) {
-         WARNING << "MA57 has issued a warning: info(1) = " << workspace.info[0] << '\n';
+      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
+         this->linear_system.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
+         this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
+
+      if (MA57_INFO(1) < 0) {
+         throw std::runtime_error("MA57: the symbolic analysis failed");
+      }
+      if (0 < MA57_INFO(1)) {
+         WARNING << "MA57 has issued a warning: info(1) = " << MA57_INFO(1) << '\n';
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
-      int lfact = 2 * this->workspace.info[8];
-      int lifact = 2 * this->workspace.info[9];
-      this->workspace.fact.resize(static_cast<size_t>(lfact));
-      this->workspace.ifact.resize(static_cast<size_t>(lifact));
-      // store the sizes of the symbolic analysis
-      this->workspace.lfact = lfact;
-      this->workspace.lifact = lifact;
+      this->workspace.lfact = get_initial_workspace_size(MA57_INFO(11));
+      this->workspace.lifact = get_initial_workspace_size(MA57_INFO(12));
+      this->workspace.fact.resize(static_cast<size_t>(this->workspace.lfact));
+      this->workspace.ifact.resize(static_cast<size_t>(this->workspace.lifact));
+      this->analysis_performed = true;
    }
 
-   void MA57Solver::do_numerical_factorization(const double* matrix_values) {
+   void MA57Solver::factorize(bool /*is_matrix_positive_definite*/) {
+      assert(this->analysis_performed);
+
       bool factorization_done = false;
       while (!factorization_done) {
          // numerical factorization
-         MA57_numerical_factorization(&this->workspace.n, &this->workspace.nnz, matrix_values, this->workspace.fact.data(),
-            &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.lkeep,
-            this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(),
-            this->workspace.info.data(), this->workspace.rinfo.data());
+         MA57_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_values.data(),
+            this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
+            &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
+            this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
-         if (is_error_code_insufficient_real_workspace(this->workspace.info[0]) ||
-             is_error_code_insufficient_integer_workspace(this->workspace.info[0])) {
+         // insufficient workspace: copy the factors into larger arrays (MA57ED). With ICNTL(8) = 1, the next call resumes the
+         // suspended factorization
+         if (is_error_code_insufficient_real_workspace(MA57_INFO(1)) || is_error_code_insufficient_integer_workspace(MA57_INFO(1))) {
             const bool is_real_workspace = is_error_code_insufficient_real_workspace(this->workspace.info[0]);
 
             const int lnewfact = !is_real_workspace ? 0 : get_larger_real_workspace_size(this->workspace);
             const int lnewifact = is_real_workspace ? 0 : get_larger_integer_workspace_size(this->workspace);
-            std::vector<double> newfact(lnewfact);
-            std::vector<int> newifact(lnewifact);
+            std::vector<double> newfact(static_cast<size_t>(lnewfact));
+            std::vector<int> newifact(static_cast<size_t>(lnewifact));
             const int enlarge_target = is_real_workspace ? 0 : 1;
 
+            DEBUG << "Enlarging the MA57 " << (is_real_workspace ? "real" : "integer") << " workspace to " <<
+               (is_real_workspace ? lnewfact : lnewifact) << '\n';
             MA57_enlarge_workspace(&this->workspace.n, &enlarge_target, this->workspace.keep.data(), this->workspace.fact.data(),
                &this->workspace.lfact, newfact.data(), &lnewfact, this->workspace.ifact.data(), &this->workspace.lifact,
                newifact.data(), &lnewifact, this->workspace.info.data());
@@ -209,68 +199,44 @@ namespace uno {
             if (is_real_workspace) {
                this->workspace.fact = std::move(newfact);
                this->workspace.lfact = lnewfact;
-            } else {
+            }
+            else {
                this->workspace.ifact = std::move(newifact);
                this->workspace.lifact = lnewifact;
             }
-         } else {
+         }
+         else if (MA57_INFO(1) < 0) {
+            throw std::runtime_error("MA57 fatal error");
+         }
+         else {
             factorization_done = true;
          }
       }
+      this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) {
-      // solve
-      const int lrhs = this->workspace.n; // integer, length of rhs
-
-      // solve the linear system
-      if (this->use_iterative_refinement) {
-         MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            matrix_values.data(), this->matrix_row_indices.data(), this->matrix_column_indices.data(), this->workspace.fact.data(),
-            &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact, rhs.data(), result.data(),
-            this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
-            this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
-      }
-      else {
-         // copy rhs into result (overwritten by MA57)
-         result = rhs;
-
-         MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs,
-            this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
-            this->workspace.info.data());
-      }
+   void MA57Solver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
+      // copy the rhs block into the solution block (overwritten by MA57)
+      view(solution, number_of_rhs * static_cast<size_t>(this->workspace.n)) =
+         view(rhs, number_of_rhs * static_cast<size_t>(this->workspace.n));
+      this->solve(MA57Job::FULL, solution, number_of_rhs);
    }
 
-   void MA57Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
-      // evaluate the functions at the current iterate
-      if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient.data());
-      }
-      if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-         // subproblem.evaluate_jacobian(this->constraint_jacobian);
-      }
+   void MA57Solver::solve_with_lower_factor(double* rhs, size_t number_of_rhs) {
+      this->solve(MA57Job::LOWER, rhs, number_of_rhs);
+   }
 
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
-         // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
-            subproblem.dual_regularization_factor(), *this);
+   void MA57Solver::solve_with_middle_factor(double* rhs, size_t number_of_rhs) {
+      this->solve(MA57Job::DIAGONAL, rhs, number_of_rhs);
+   }
 
-         // assemble the RHS
-         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-            this->matrix_values.data() + this->number_hessian_nonzeros};
-         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
-      }
-      this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->solution, direction);
-      if (this->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-      }
+   void MA57Solver::solve_with_upper_factor(double* rhs, size_t number_of_rhs) {
+      this->solve(MA57Job::UPPER, rhs, number_of_rhs);
+   }
+
+   std::optional<size_t> MA57Solver::number_delayed_pivots() const {
+      // total number of fully-summed variables passed to the father node because of numerical pivoting
+      return static_cast<size_t>(MA57_INFO(23));
    }
 
    Inertia MA57Solver::get_inertia() const {
@@ -284,53 +250,80 @@ namespace uno {
    }
 
    size_t MA57Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(this->workspace.info[23]);
+      return static_cast<size_t>(MA57_INFO(24));
    }
-
-   /*
-   bool MA57Solver::matrix_is_positive_definite() const {
-      // positive definite = non-singular and no negative eigenvalues
-      return not this->matrix_is_singular() && this->number_negative_eigenvalues() == 0;
-   }
-   */
 
    bool MA57Solver::matrix_is_singular() const {
-      return (this->workspace.info[0] == 4);
+      return this->rank() < static_cast<size_t>(this->workspace.n);
    }
 
    size_t MA57Solver::rank() const {
-      return static_cast<size_t>(this->workspace.info[24]);
+      return static_cast<size_t>(MA57_INFO(25));
    }
 
-   void MA57Solver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->matrix_values.data() + this->number_hessian_nonzeros);
+   bool MA57Solver::increase_pivoting_tolerance() {
+      const double current_tolerance = MA57_CNTL(1);
+      const auto new_tolerance = this->pivoting_tolerance_schedule.increase(current_tolerance);
+      if (!new_tolerance.has_value()) {
+         return false;
+      }
+      MA57_CNTL(1) = *new_tolerance;
+      DEBUG << "Increasing the MA57 pivoting tolerance from " << current_tolerance << " to " << MA57_CNTL(1) << '\n';
+      return true;
    }
 
-   void MA57Solver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->matrix_values[offset + nonzero_index];
 
-         if (constraint_index < result.size() && variable_index < vector.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
+   LinearSystem& MA57Solver::get_linear_system() {
+      return this->linear_system;
+   }
+
+   COOLinearSystem& MA57Solver::get_coo_linear_system() {
+      return this->linear_system;
+   }
+
+   // protected member functions
+
+   // in-place solve with the factors selected by `job`
+   void MA57Solver::solve(MA57Job job, double* rhs, size_t number_of_rhs) {
+      assert(this->factorization_performed);
+      const int job_code = static_cast<int>(job);
+      const int nrhs = static_cast<int>(number_of_rhs);
+      const int lrhs = this->workspace.n; // leading dimension of the right-hand side block
+
+      // ma57cd requires a work array of size n*nrhs; enlarge it if needed
+      const int required_lwork = this->workspace.n * nrhs;
+      if (this->workspace.lwork < required_lwork) {
+         this->workspace.lwork = required_lwork;
+         this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
+      }
+
+      // MA57CD overwrites INFO: use a copy, so that the diagnostics of the factorization (inertia, rank) are kept
+      std::array<int, 40> solve_info = this->workspace.info;
+      MA57_linear_solve(&job_code, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
+         this->workspace.ifact.data(), &this->workspace.lifact, &nrhs, rhs, &lrhs,
+         this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
+         solve_info.data());
+      // INFO(1) < 0: error (the solution is meaningless); INFO(1) > 0: warning
+      if (solve_info[0] < 0) {
+         throw std::runtime_error("MA57: the linear solve failed (INFO(1) = " + std::to_string(solve_info[0]) + ")");
+      }
+      if (0 < solve_info[0]) {
+         DEBUG << "MA57 has issued a warning during the linear solve: INFO(1) = " << solve_info[0] << '\n';
       }
    }
 
-   void MA57Solver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->matrix_values[offset + nonzero_index];
+   int& MA57Solver::MA57_ICNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.icntl[index-1];
+   }
 
-         if (variable_index < result.size() && constraint_index < vector.size()) {
-            result[variable_index] += derivative * vector[constraint_index];
-         }
-      }
+   double& MA57Solver::MA57_CNTL(size_t index) {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.cntl[index-1];
+   }
+
+   int MA57Solver::MA57_INFO(size_t index) const {
+      // handle the Fortran indexing (starting at 1)
+      return this->workspace.info[index-1];
    }
 } // namespace

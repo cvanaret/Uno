@@ -1,0 +1,63 @@
+name: unopy examples
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        # This is the version of the action for setting up Python, not the Python version.
+        uses: actions/setup-python@v5
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+          
+      - name: Install pybind11 on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt install -y python3-pybind11 pybind11-dev
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Compile and install unopy
+        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install ".[test]" -v -C cmake.define.UNO_PYBIND11_DETAILED_ERRORS=ON
+
+      - name: Run tests
+        run: python -m pytest -v
+
+      - name: Run examples
+        working-directory: ${{github.workspace}}/interfaces/Python/examples
+        run: |
+          python example_hs015.py
+          python example_hs001.py

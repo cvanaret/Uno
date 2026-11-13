@@ -10,8 +10,18 @@ version = VersionNumber(ENV["UNO_RELEASE"])
 # Collection of sources required to complete build
 sources = [
     GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"]),
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.8.0.tar.gz",
-                  "d762eb8b1d9843a0993b8cfc137d043d04c7c51877ad37c94560433a474340a0"),
+    # SPRAL v2025.9.18
+    GitSource("https://github.com/ralna/spral.git",
+              "80bc843ac3847d4a783a0e11213715a70175aee6"),
+    # MUMPS v5.9.1
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.9.1.tar.gz",
+                  "659c9b57646b5a003ac618baa1faf9dd2044e46c732b3daaccbc7158003e1b46"),
+    # HiGHS v1.16.0
+    GitSource("https://github.com/ERGO-Code/HiGHS.git",
+              "f3f113d230429a8c0014b12ab0dd1a3847e58c55"),
+    # Hwloc v2.13.0
+    ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
+                  "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
 ]
 
 # Bash recipe for building across all platforms
@@ -28,13 +38,23 @@ for file in $(ls .); do
       fi
    fi
 done
+
+if [[ "${target}" == *-mingw* ]]; then
+    cp ${prefix}/lib/libbqpd.a ${prefix}/lib/libbqpd.a
+fi
+
 cd ${prefix}
 cp -rL share/licenses deps/licenses
 mkdir deps/licenses/MUMPS
-cp $WORKSPACE/srcdir/MUMPS_5.8.0/LICENSE deps/licenses/MUMPS/LICENSE
+cp $WORKSPACE/srcdir/MUMPS_5.9.1/LICENSE deps/licenses/MUMPS/LICENSE
+mkdir deps/licenses/spral
+cp $WORKSPACE/srcdir/spral/LICENCE deps/licenses/spral/LICENCE
 chmod -R u=rwx deps
 tar -czvf deps.tar.gz deps
 rm -r deps
+
+# Update Ninja
+cp ${host_prefix}/bin/ninja /usr/bin/ninja
 
 # Compile MUMPS
 mkdir -p ${libdir}
@@ -82,16 +102,71 @@ cp include/*.h ${includedir}
 cp libseq/*.h ${includedir}/libseq
 cp lib/*.${dlext} ${libdir}
 
+# Compile Hwloc
+cd $WORKSPACE/srcdir/hwloc-*
+./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --disable-static --enable-shared
+make -j${nproc}
+make install
+
+# Compile SPRAL
+cd $WORKSPACE/srcdir/spral
+
+if [[ "${target}" == *mingw* ]]; then
+  HWLOC="hwloc-15"
+else
+  HWLOC="hwloc"
+fi
+
+meson setup builddir --cross-file="${MESON_TARGET_TOOLCHAIN}" \
+                     --prefix=$prefix \
+                     -Dlibhwloc=$HWLOC \
+                     -Dlibblas=openblas \
+                     -Dliblapack=openblas \
+                     -Dbinaries=false \
+                     -Dtests=false \
+                     -Dexamples=false
+
+meson compile -C builddir
+meson install -C builddir
+
+# Compile HiGHS
+cd $WORKSPACE/srcdir/HiGHS
+
+# Patch (see https://github.com/JuliaPackaging/Yggdrasil/tree/master/H/HiGHS/bundled/patches)
+# fix-cli11.patch
+sed -i 's/(*opt)/opt->count() > 0/' extern/cli11/CLI11.hpp
+
+mkdir build
+cd build
+cmake .. \
+    -DCMAKE_INSTALL_PREFIX=${prefix} \
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=ON \
+    -DZLIB=OFF \
+    -DHIPO=ON \
+    -DBUILD_EXAMPLES=OFF \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_CXX_EXE=OFF \
+    -DBLAS_LIBRARIES=${libdir}/libopenblas.${dlext} \
+    -DBUILD_SHARED_EXTRAS_LIB=ON \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+if [[ "${target}" == *-linux* ]]; then
+        make -j ${nproc}
+else
+    if [[ "${target}" == *-mingw* ]]; then
+        cmake --build . --config Release
+    else
+        cmake --build . --config Release --parallel
+    fi
+fi
+make install
+
 # Compile Uno
 cd $WORKSPACE/srcdir/Uno
 mkdir -p build
 cd build
-
-if [[ "${target}" == *mingw* ]]; then
-    HIGHS_DIR=${prefix}/lib
-else
-    HIGHS_DIR=${libdir}
-fi
 
 if [[ "${target}" == *apple* ]] || [[ "${target}" == *freebsd* ]]; then
     OMP=omp
@@ -105,11 +180,14 @@ cmake \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
-    -DHIGHS_DIR=${HIGHS_DIR} \
+    -DHIGHS=${libdir}/libhighs.${dlext} \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
+    -DSPRAL=${libdir}/libspral.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
+    -DHIGHS_INCLUDE_DIR=${includedir}/highs \
+    -DSPRAL_INCLUDE_DIR=${includedir} \
     -DMUMPS_LIBRARY="${libdir}/libdmumps.${dlext}" \
     -DMUMPS_COMMON_LIBRARY="${libdir}/libmumps_common.${dlext}" \
     -DMUMPS_PORD_LIBRARY="${libdir}/libpord.${dlext}" \
@@ -134,19 +212,22 @@ platforms = expand_gfortran_versions(platforms)
 
 # The products that we will ensure are always built
 products = [
-   LibraryProduct("libdmumps", :libdmumps),
-   ExecutableProduct("uno_ampl", :amplexe),
-   LibraryProduct("libuno", :libuno),
-   FileProduct("lib/libuno.a", :libuno_a),
+    LibraryProduct("libhwloc", :libhwloc),
+    LibraryProduct("libspral", :libspral),
+    LibraryProduct("libdmumps", :libdmumps),
+    LibraryProduct("libhighs", :libhighs),
+    ExecutableProduct("uno_ampl", :amplexe),
+    LibraryProduct("libuno", :libuno),
+    FileProduct("lib/libuno.a", :libuno_a),
 ]
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
+    HostBuildDependency(PackageSpec(name="Ninja_jll", uuid="76642167-d241-5cee-8c94-7a494e8cb7b7")),
     BuildDependency(PackageSpec(name="BQPD_jll", uuid="1325ac01-0a49-589f-8355-43321054aaab")),
-    Dependency(PackageSpec(name="HiGHS_jll", uuid="8fd58aa0-07eb-5a78-9b36-339c94fd15ea"), compat="1.11.0"),
     Dependency(PackageSpec(name="HSL_jll", uuid="017b0a0e-03f4-516a-9b91-836bbd1904dd")),
     Dependency(PackageSpec(name="METIS_jll", uuid="d00139f3-1899-568f-a2f0-47f597d42d70")),
-    Dependency(PackageSpec(name="ASL_jll", uuid="ae81ac8f-d209-56e5-92de-9978fef736f9"), compat="0.1.3"),
+    Dependency(PackageSpec(name="ASL_jll", uuid="ae81ac8f-d209-56e5-92de-9978fef736f9"), compat="0.1.5"),
     Dependency(PackageSpec(name="OpenBLAS32_jll", uuid="656ef2d0-ae68-5445-9ca0-591084a874a2")),
     # For OpenMP we use libomp from `LLVMOpenMP_jll` where we use LLVM as compiler (BSD systems),
     # and libgomp from `CompilerSupportLibraries_jll` everywhere else.
@@ -165,6 +246,6 @@ build_tarballs(
     products,
     dependencies;
     julia_compat = "1.6",
-    preferred_gcc_version = v"10.2.0",
+    preferred_gcc_version = v"11",
     clang_use_lld=false,
 )

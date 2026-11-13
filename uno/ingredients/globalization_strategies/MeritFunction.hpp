@@ -1,0 +1,38 @@
+// Copyright (c) 2018-2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#ifndef UNO_MERITFUNCTION_H
+#define UNO_MERITFUNCTION_H
+
+#include <string>
+#include "GlobalizationStrategy.hpp"
+#include "tools/Infinity.hpp"
+
+namespace uno {
+   class MeritFunction : public GlobalizationStrategy {
+   public:
+      explicit MeritFunction(const Options& options);
+
+      void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
+      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const override;
+      void reset() override;
+      void avoid_cycling_back_to(const ProgressMeasures& current_progress) override;
+
+      [[nodiscard]] std::string get_name() const override;
+
+   protected:
+      double smallest_known_infeasibility{Inf};
+      const double sufficient_infeasibility_decrease_ratio;
+      // inverse penalty parameter τ ∈ (0, 1]: scales the optimality measure (objective + auxiliary) of the problem.
+      // Nonincreasing within a phase (set to 1 in initialize())
+      double inverse_penalty_parameter{1.};
+      const double infeasibility_reduction_fraction;
+
+      void update_inverse_penalty_parameter(const ProgressMeasures& predicted_reductions, double objective_multiplier);
+      [[nodiscard]] double merit_function(const ProgressMeasures& progress, double objective_multiplier) const;
+   };
+} // namespace
+
+#endif // UNO_MERITFUNCTION_H

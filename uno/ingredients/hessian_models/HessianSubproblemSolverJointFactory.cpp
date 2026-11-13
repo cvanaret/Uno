@@ -1,0 +1,102 @@
+// Copyright (c) 2018-2026 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#include <utility>
+#include <stdexcept>
+#include <string>
+#include "HessianSubproblemSolverJointFactory.hpp"
+#include "HessianModel.hpp"
+#include "ExactHessian.hpp"
+#include "quasi_newton/inverse/InverseLBFGSHessian.hpp"
+#include "quasi_newton/direct/LBFGSHessian.hpp"
+#include "quasi_newton/direct/LSR1Hessian.hpp"
+#include "IdentityHessian.hpp"
+#include "ZeroHessian.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
+#include "ingredients/subproblem_solvers/SubproblemSolverFactory.hpp"
+#include "model/Model.hpp"
+#include "options/Options.hpp"
+#include "tools/Logger.hpp"
+
+namespace uno {
+   Ingredients HessianSubproblemSolverJointFactory::create(const OptimizationProblem& problem, bool uses_trust_region,
+         double objective_multiplier, const Options& options, std::vector<OptionOverride>& option_overrides) {
+      const Model& model = problem.model;
+      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy = InertiaCorrectionStrategyFactory::create(options);
+      const std::string& hessian_model_type = options.get_string("hessian_model");
+
+      // first look at the problem type. If it is an LP, pick zero Hessian model
+      if (model.get_problem_type() == ProblemType::LINEAR) {
+         option_overrides.emplace_back("hessian_model", hessian_model_type, "zero", "LP");
+         auto hessian_model = std::make_unique<ZeroHessian>(model.number_variables);
+         Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
+         auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
+         return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+      }
+
+      // then look at the option hessian_model
+      // from now onwards, the problem is nonlinear (QP or NLP)
+      bool default_to_lbfgs = false;
+      std::string lbfgs_reason{};
+      if (hessian_model_type == "exact") {
+         if (model.has_hessian_matrix() || model.has_hessian_operator()) {
+            auto hessian_model = std::make_unique<ExactHessian>(model);
+            Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
+            auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
+            // a Hessian operator only is not enough if the subproblem solver needs the matrix (e.g. a direct linear
+            // solver in the interior-point method): pick L-BFGS
+            if (model.has_hessian_matrix() || !subproblem_solver->requires_hessian_matrix(subproblem)) {
+               return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+            }
+            default_to_lbfgs = true;
+            lbfgs_reason = "only a Hessian operator available";
+            WARNING << "Only a Hessian operator was provided, but the subproblem solver requires an explicit Hessian "
+               "matrix, setting an L-BFGS Hessian instead\n";
+         }
+         else {
+            // no Hessian (matrix or operator) is available: pick L-BFGS
+            default_to_lbfgs = true;
+            lbfgs_reason = "no Hessian available";
+            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
+         }
+      }
+
+      if (hessian_model_type == "LBFGS" || default_to_lbfgs) {
+         if (default_to_lbfgs) {
+            option_overrides.emplace_back("hessian_model", hessian_model_type, "LBFGS", lbfgs_reason);
+         }
+         if (0 < model.number_constraints || model.has_bound_constraints() || uses_trust_region) { // constrained
+            auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+            Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
+            auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
+            return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+         }
+         else { // unconstrained
+            auto hessian_model = std::make_unique<InverseLBFGSHessian>(model, options);
+            Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
+            auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
+            return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+         }
+      }
+      else if (hessian_model_type == "LSR1") {
+         auto hessian_model = std::make_unique<LSR1Hessian>(model, objective_multiplier, options);
+         Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
+         auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
+         return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+      }
+      else if (hessian_model_type == "identity") {
+         auto hessian_model = std::make_unique<IdentityHessian>(model.number_variables);
+         Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
+         auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
+         return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+      }
+      else if (hessian_model_type == "zero") {
+         auto hessian_model = std::make_unique<ZeroHessian>(model.number_variables);
+         Subproblem subproblem{problem, *hessian_model, *inertia_correction_strategy};
+         auto subproblem_solver = SubproblemSolverFactory::create(*hessian_model, subproblem, uses_trust_region, options);
+         return {std::move(inertia_correction_strategy), std::move(hessian_model), std::move(subproblem_solver)};
+      }
+      throw std::invalid_argument("Hessian model " + hessian_model_type + " does not exist");
+   }
+} // namespace

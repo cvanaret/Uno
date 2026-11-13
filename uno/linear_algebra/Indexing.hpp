@@ -6,8 +6,8 @@
 
 namespace uno {
    struct Indexing {
-      static constexpr size_t C_indexing = 0;
-      static constexpr size_t Fortran_indexing = 1;
+      static constexpr int C_indexing = 0;
+      static constexpr int Fortran_indexing = 1;
    };
 } // namespace
 

@@ -8,15 +8,18 @@
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   struct ProgressMeasures {
+   class ProgressMeasures {
+   public:
       double infeasibility{}; // constraint violation
       std::function<double(double objective_multiplier)> objective{}; // objective measure (scaled by penalty parameter): objective, Lagrangian
       double auxiliary{}; // auxiliary terms (independent of penalty parameter): barrier terms, proximal term, ...
+      double step_length{Inf};
 
       void reset() {
-         this->infeasibility = INF<double>;
-         this->objective = [](double) { return INF<double>; };
-         this->auxiliary = INF<double>;
+         this->infeasibility = Inf;
+         this->objective = [](double) { return Inf; };
+         this->auxiliary = Inf;
+         this->step_length = Inf;
       }
    };
 } // namespace

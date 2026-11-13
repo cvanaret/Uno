@@ -2,39 +2,52 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "OptimizationProblem.hpp"
+#include "ingredients/subproblem/SymbolicNewtonSystem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "linear_algebra/MatrixOrder.hpp"
+#include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Expression.hpp"
-#include "symbolic/VectorView.hpp"
+#include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Sum.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
-   OptimizationProblem::OptimizationProblem(const Model& model):
+   OptimizationProblem::OptimizationProblem(const Model& model, double residual_scaling_threshold):
          model(model), number_variables(model.number_variables), number_constraints(model.number_constraints),
-         primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
+         residual_scaling_threshold(residual_scaling_threshold), Jv_buffer(this->model.number_constraints) {
    }
 
-   OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
+   OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints,
+      double residual_scaling_threshold):
          model(model), number_variables(number_variables), number_constraints(number_constraints),
-         primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
+         residual_scaling_threshold(residual_scaling_threshold), Jv_buffer(number_constraints) {
    }
 
    double OptimizationProblem::get_objective_multiplier() const {
       return 1.;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+   bool OptimizationProblem::has_inequality_constraints() const {
+      return this->model.has_inequality_constraints();
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
-      iterate.evaluate_objective_gradient(this->model);
-      for (size_t index: Range(this->number_variables)) {
-         objective_gradient[index] = iterate.evaluations.objective_gradient[index];
-      }
+   bool OptimizationProblem::has_bound_constraints() const {
+      return this->model.has_bound_constraints();
+   }
+
+   void OptimizationProblem::create_initial_iterate(Iterate& /*iterate*/, Evaluations& /*evaluations*/) const {
+      // do nothing
+   }
+
+   void OptimizationProblem::postprocess_iterate(Iterate& iterate, Evaluations& /*evaluations*/) const {
+      // project the trial iterate onto the bounds to avoid numerical errors
+      this->model.project_onto_variable_bounds(iterate.primals);
+   }
+
+   void OptimizationProblem::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {
+      this->model.postprocess_solution(iterate, evaluations);
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
@@ -42,184 +55,286 @@ namespace uno {
    }
 
    bool OptimizationProblem::has_curvature(const HessianModel& hessian_model) const {
-      return hessian_model.has_curvature(this->model);
+      return hessian_model.has_curvature();
    }
 
    size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      return hessian_model.number_nonzeros(this->model);
+      return hessian_model.number_nonzeros();
    }
 
-   void OptimizationProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
-         MatrixOrder matrix_order) const {
-      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   View<const uno_int> OptimizationProblem::get_jacobian_row_indices() const {
+      return this->model.get_jacobian_row_indices();
    }
 
-   void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, size_t solver_indexing) const {
-      hessian_model.compute_sparsity(this->model, row_indices, column_indices, solver_indexing);
+   View<const uno_int> OptimizationProblem::get_jacobian_column_indices() const {
+      return this->model.get_jacobian_column_indices();
    }
 
-   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
+   void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, View<uno_int> row_indices,
+         View<uno_int> column_indices, uno_int solver_indexing) const {
+      hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
+   }
+
+   void OptimizationProblem::evaluate_constraints(const Iterate& iterate, View<double> constraints, Evaluations& evaluations) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      // copy the constraints at the beginning of the "constraints" vector
+      view(constraints, 0, this->model.number_constraints) = evaluations.constraints;
+      view(constraints, this->model.number_constraints, constraints.size()).fill(0.);
+   }
+
+   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, View<double> objective_gradient,
+         Evaluations& evaluations) const {
+      evaluations.evaluate_objective_gradient(this->model, iterate.primals);
+      // copy the objective gradient at the beginning of the "objective_gradient" vector
+      view(objective_gradient, 0, this->model.number_variables) = evaluations.objective_gradient;
+      view(objective_gradient, this->model.number_variables, objective_gradient.size()).fill(0.);
+   }
+
+   void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, View<double> jacobian_values, Evaluations& evaluations) const {
+      evaluations.evaluate_jacobian(this->model, primals);
+      // copy the Jacobian at the beginning of the "jacobian_values" vector
+      const size_t number_jacobian_nonzeros = this->model.number_jacobian_nonzeros();
+      view(jacobian_values, 0, number_jacobian_nonzeros) = evaluations.jacobian_values;
+      view(jacobian_values, number_jacobian_nonzeros, jacobian_values.size()).fill(0.);
    }
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
-   // split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // ∇f(x_k)
-      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data());
-
-      // ∇c(x_k) λ_k
-      inequality_handling_method.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
-         lagrangian_gradient.constraints_contribution);
-      lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
-
-      // z_k
-      for (size_t variable_index: Range(this->number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
-            iterate.multipliers.upper_bounds[variable_index]);
-      }
+   void OptimizationProblem::evaluate_lagrangian_gradient(const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         const Vector<double>& lower_bound_multipliers, const Vector<double>& upper_bound_multipliers, Evaluations& evaluations,
+         View<double> lagrangian_gradient) const {
+      this->model.evaluate_lagrangian_gradient(primals, constraint_multipliers, lower_bound_multipliers, upper_bound_multipliers,
+         this->get_objective_multiplier(), evaluations, lagrangian_gradient);
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
-         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
-      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
+         const Vector<double>& primal_variables, const Multipliers& multipliers, View<double> hessian_values) const {
+      hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
    }
 
-   void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
-         double* result) const {
-      hessian_model.compute_hessian_vector_product(this->model, vector, this->get_objective_multiplier(), multipliers.constraints, result);
+   void OptimizationProblem::add_jacobian_vector_product(View<const double> vector, View<double> result,
+         const Evaluations& evaluations) const {
+      evaluations.add_jacobian_vector_product(this->model, vector, result);
+   }
+
+   void OptimizationProblem::add_jacobian_transposed_vector_product(View<const double> vector, View<double> result,
+         const Evaluations& evaluations) const {
+      evaluations.add_jacobian_transposed_vector_product(this->model, vector, result);
+   }
+
+   void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, View<const double> x,
+         View<const double> vector, const Multipliers& multipliers, View<double> result) const {
+      hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
    }
 
    size_t OptimizationProblem::get_number_original_variables() const {
       return this->model.number_variables;
    }
 
-   double OptimizationProblem::variable_lower_bound(size_t variable_index) const {
-      return this->model.variable_lower_bound(variable_index);
+   const std::vector<double>& OptimizationProblem::get_variables_lower_bounds() const {
+      return this->model.get_variables_lower_bounds();
    }
 
-   double OptimizationProblem::variable_upper_bound(size_t variable_index) const {
-      return this->model.variable_upper_bound(variable_index);
+   const std::vector<double>& OptimizationProblem::get_variables_upper_bounds() const {
+      return this->model.get_variables_upper_bounds();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_lower_bounded_variables() const {
-      return this->model.get_lower_bounded_variables();
+   Range<> OptimizationProblem::get_primal_regularization_variables() const {
+      return Range(this->model.number_variables);
    }
 
-   const Collection<size_t>& OptimizationProblem::get_upper_bounded_variables() const {
-      return this->model.get_upper_bounded_variables();
+   size_t OptimizationProblem::get_number_bounded_variables() const {
+      size_t number_bounded_variables = 0;
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+         if (is_finite(variables_upper_bounds[variable_index])) {
+            ++number_bounded_variables;
+         }
+      }
+      return number_bounded_variables;
    }
 
-   const Collection<size_t>& OptimizationProblem::get_single_lower_bounded_variables() const {
-      return this->model.get_single_lower_bounded_variables();
+   const std::vector<double>& OptimizationProblem::get_constraints_lower_bounds() const {
+      return this->model.get_constraints_lower_bounds();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_single_upper_bounded_variables() const {
-      return this->model.get_single_upper_bounded_variables();
+   const std::vector<double>& OptimizationProblem::get_constraints_upper_bounds() const {
+      return this->model.get_constraints_upper_bounds();
    }
 
-   const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {
-      return this->model.get_fixed_variables();
-   }
-
-   const Collection<size_t>& OptimizationProblem::get_primal_regularization_variables() const {
-      return this->primal_regularization_variables;
-   }
-
-   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
-   }
-
-   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
-   }
-
-   const Collection<size_t>& OptimizationProblem::get_equality_constraints() const {
+   const std::vector<size_t>& OptimizationProblem::get_equality_constraints() const {
       return this->model.get_equality_constraints();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_inequality_constraints() const {
+   const std::vector<size_t>& OptimizationProblem::get_inequality_constraints() const {
       return this->model.get_inequality_constraints();
    }
 
-   const Collection<size_t>& OptimizationProblem::get_dual_regularization_constraints() const {
-      return this->dual_regularization_constraints;
+   Inertia OptimizationProblem::get_inertia() const {
+      return {this->number_variables, this->number_constraints, 0};
    }
 
+   // Newton system in (Δx, -Δy):
+   //    [∇²L + δ_w I   J^T    ] [ Δx ]   [ -∇f + J^T y ]
+   //    [J             -δ_c I ] [-Δy ] = [ -(c - c_L)  ]
+   std::unique_ptr<NewtonSystem> OptimizationProblem::create_newton_system(HessianModel& hessian_model,
+         bool use_dual_regularization) const {
+      return make_newton_system([this, &hessian_model, use_dual_regularization](const Iterate& /*iterate*/) {
+         const size_t n = this->number_variables, m = this->number_constraints;
+         return kkt_system(
+            // clang-format off
+            block_matrix({n, m},
+               row(LagrangianHessian(*this, hessian_model, n) + PrimalRegularization(n), transpose(ConstraintJacobian(*this))),
+               row(ConstraintJacobian(*this),                                            DualRegularization(use_dual_regularization ? m : 0))),
+            // clang-format on
+            block_vector(
+               negative_lagrangian_gradient(*this, [this](const Iterate& iterate, View<double> objective_gradient, Evaluations& evaluations) {
+                  this->evaluate_objective_gradient(iterate, objective_gradient, evaluations);
+               }),
+               NegativeConstraintResidual(*this)));
+      });
+   }
 
-   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& /*solution*/,
-         Direction& /*direction*/) const {
+   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const NewtonSystem& /*newton_system*/,
+         const Vector<double>& solution, Direction& direction) const {
+      // form the primal-dual direction
+      view(direction.primals, 0, this->number_variables) = view(solution, 0, this->number_variables);
+      // retrieve the duals with correct signs (note the sign flip)
+      view(direction.multipliers.constraints, 0, this->number_constraints) = -view(solution, this->number_variables,
+         this->number_variables + this->number_constraints);
+      // set the step lengths (direction unscaled)
+      direction.primal_dual_step_length = direction.bound_dual_step_length = 1.;
+   }
+
+   void OptimizationProblem::compute_bound_dual_direction(const Vector<double>& /*current_primals*/, const Multipliers& /*current_multipliers*/,
+         const Vector<double>& /*direction_primals*/, Multipliers& /*direction_multipliers*/, double& /*bound_dual_step_length*/) const {
+      // do nothing
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
-      return 0.;
+      return 1.;
    }
 
-   double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm) {
-      // norm of the scaled Lagrangian gradient
-      const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
-      return norm(residual_norm, scaled_lagrangian);
+   double OptimizationProblem::primal_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      return this->model.constraint_violation(evaluations.constraints, residual_norm);
    }
 
-   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
-      // bound constraints
-      const Range variables_range = Range(this->number_variables);
-      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
-         assert(variable_index < primals.size());
-         assert(variable_index < multipliers.lower_bounds.size());
-         assert(variable_index < multipliers.upper_bounds.size());
-
-         if (0. < multipliers.lower_bounds[variable_index]) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
-         }
-         if (multipliers.upper_bounds[variable_index] < 0.) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift_value;
-         }
-         return 0.;
-      }};
-
-      // inequality constraints
-      const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
-         assert(constraint_index < constraints.size());
-         assert(constraint_index < multipliers.constraints.size());
-
-         if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) -
-               shift_value;
-         }
-         if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) -
-               shift_value;
-         }
-         return 0.;
-      }};
-      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   double OptimizationProblem::reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations,
+         Norm residual_norm) const {
+      return this->primal_infeasibility(iterate, evaluations, residual_norm);
    }
 
-   IterateStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const {
+      return this->model.complementarity_error(primals, constraints, multipliers, residual_norm);
+   }
+
+   SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= dual_tolerance);
-      const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
-      const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= dual_tolerance);
+      const bool primal_feasibility = (current_iterate.scaled_residuals.primal_infeasibility <= primal_tolerance);
+      const bool stationarity = (current_iterate.scaled_residuals.stationarity / current_iterate.scaled_residuals.stationarity_scaling <= dual_tolerance);
+      const bool complementarity = (current_iterate.scaled_residuals.complementarity / current_iterate.scaled_residuals.complementarity_scaling <= dual_tolerance);
 
       DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
+      DEBUG << "Primal infeasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
-      DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
 
-      if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+      if (primal_feasibility && stationarity && 0. < current_iterate.objective_multiplier && complementarity) {
          // feasible regular stationary point
-         return IterateStatus::FEASIBLE_KKT_POINT;
+         return SolutionStatus::FEASIBLE_KKT_POINT;
       }
-      return IterateStatus::NOT_OPTIMAL;
+      return SolutionStatus::NOT_OPTIMAL;
+   }
+
+   double OptimizationProblem::compute_stationarity_scaling(const Multipliers& multipliers) const {
+      const size_t total_size = this->get_number_bounded_variables() + this->number_constraints;
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double multiplier_norm = norm_1(multipliers.constraints, multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., multiplier_norm / scaling_factor);
+   }
+
+   double OptimizationProblem::compute_complementarity_scaling(const Multipliers& multipliers) const {
+      const size_t total_size = this->get_number_bounded_variables();
+      if (total_size == 0) {
+         return 1.;
+      }
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
+      const double bound_multiplier_norm = norm_1(multipliers.lower_bounds, multipliers.upper_bounds);
+      return std::max(1., bound_multiplier_norm / scaling_factor);
+   }
+
+   // progress measures
+
+   void OptimizationProblem::evaluate_progress_measures(Iterate& iterate, Evaluations& evaluations, Norm progress_norm) const {
+      this->set_infeasibility_measure(iterate, evaluations, progress_norm);
+      this->set_objective_measure(iterate, evaluations);
+      this->set_auxiliary_measure(iterate);
+   }
+
+   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      iterate.progress.infeasibility = this->model.constraint_violation(evaluations.constraints, norm);
+   }
+
+   // objective measure: scaled objective
+   void OptimizationProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
+      evaluations.evaluate_objective(this->model, iterate.primals);
+      const double objective = evaluations.objective;
+      iterate.progress.objective = [=](double objective_multiplier) {
+         return objective_multiplier * objective;
+      };
+   }
+
+   void OptimizationProblem::set_auxiliary_measure(Iterate& iterate) const {
+      iterate.progress.auxiliary = 0.;
+   }
+
+   // predicted reductions
+
+   PredictedInfeasibilityReduction OptimizationProblem::build_predicted_infeasibility_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, Norm norm, Evaluations& current_evaluations) const {
+      // α ↦ ‖c(x)‖ − ‖c(x) + ∇c(x)ᵀ(αd)‖
+      current_evaluations.evaluate_constraints(this->model, current_iterate.primals);
+      current_evaluations.evaluate_jacobian(this->model, current_iterate.primals);
+      const double current_constraint_violation = this->model.constraint_violation(current_evaluations.constraints, norm);
+
+      // cache the (expensive) Jacobian–direction product Jd
+      this->Jv_buffer.fill(0.);
+      current_evaluations.add_jacobian_vector_product(this->model, primal_direction.view(), this->Jv_buffer.view());
+
+      return [this, &current_evaluations, norm, current_constraint_violation](double step_length) {
+         return current_constraint_violation - this->model.constraint_violation(current_evaluations.constraints +
+            step_length * this->Jv_buffer, norm);
+      };
+   }
+
+   PredictedObjectiveReduction OptimizationProblem::build_predicted_objective_reduction(
+         const Iterate& /*current_iterate*/, const Vector<double>& primal_direction,
+         Evaluations& current_evaluations, double hessian_quadratic_form) const {
+      // (α, ρ) ↦ −ρ ∇f(x)ᵀ(αd) − α²/2 dᵀHd   (ρ scales only the gradient term; H already carries ρ)
+      const double directional_derivative = dot(view(primal_direction, 0, this->model.number_variables),
+         current_evaluations.objective_gradient);
+      return [directional_derivative, hessian_quadratic_form](double step_length, double objective_multiplier, bool use_curvature_information) {
+         double reduction = -objective_multiplier * step_length * directional_derivative;
+         if (use_curvature_information) {
+            reduction -= step_length * step_length / 2. * hessian_quadratic_form;
+         }
+         return reduction;
+      };
+   }
+
+   PredictedAuxiliaryReduction OptimizationProblem::build_predicted_auxiliary_reduction(
+         const Iterate& /*current_iterate*/, const Vector<double>& /*primal_direction*/) const {
+      return [](double /*step_length*/) { return 0.; };
    }
 } // namespace

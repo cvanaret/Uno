@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include "symbolic/Concatenation.hpp"
 #include "symbolic/CollectionAdapter.hpp"
-#include "symbolic/Range.hpp"
+#include "symbolic/IntegerRange.hpp"
 #include <vector>
 
 using namespace uno;
@@ -20,16 +20,16 @@ TEST(Concatenation, Size) {
    ASSERT_EQ(chain.size(), x.size() + y.size());
 }
 
-TEST(Concatenation, Range) {
+TEST(Concatenation, IntegerRange) {
    const std::vector<size_t> x{5, 6, 7};
-   const auto range = Range(5);
+   const auto range = IntegerRange(5);
    const auto chain = concatenate(range, CollectionAdapter(x));
    ASSERT_EQ(chain.size(), range.size() + x.size());
 }
 
 TEST(Concatenation, Iterator) {
    const std::vector<size_t> x{5, 6, 7};
-   const auto range = Range(100, 105);
+   const auto range = IntegerRange(100, 105);
    const auto chain = concatenate(CollectionAdapter(x), range);
    const std::vector<size_t> reference_result{5, 6, 7, 100, 101, 102, 103, 104};
    size_t index = 0;

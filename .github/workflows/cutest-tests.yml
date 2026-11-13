@@ -1,0 +1,175 @@
+name: CUTEst tests on HS15 and HIMMELBD
+
+# Installs Uno as a shared library, compiles CUTEst (classic ARCHDefs/make build,
+# the one the `runcutest -p uno` interface relies on), and:
+# - solves the HS15 instance with Uno's default options;
+# - solves the HS15 and HIMMELBD instances with the filtersqp and ipopt presets, each with
+# its default globalization strategy (filter method) and with the merit function.
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+jobs:
+  uno-cutest-tests:
+    runs-on: ubuntu-latest
+
+    env:
+      BUILD_TYPE: Release
+      # CUTEst classic-install layout. The `runcutest -p uno` driver reads
+      # packages/$ARCH/$PRECISION and objects/$ARCH/$PRECISION, so it needs the
+      # ARCHDefs/make build (not the Meson build) plus SIFDecode + ARCHDefs.
+      ARCHDEFS:  ${{ github.workspace }}/ARCHDefs
+      SIFDECODE: ${{ github.workspace }}/SIFDecode
+      CUTEST:    ${{ github.workspace }}/CUTEst
+      MASTSIF:   ${{ github.workspace }}/sif
+      # Architecture key produced by the install answers below (Linux + gfortran).
+      MYARCH:    pc64.lnx.gfo
+
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------------------
+      # 1) Build & install Uno  ->  /usr/local/lib/libuno.so
+      #    (this is the path CUTEst's default `uno` package links against)
+      # ----------------------------------------------------------------
+      - name: Download Uno dependencies (BQPD, MUMPS, HiGHS, BLAS/LAPACK, METIS)
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure Uno (shared library)
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_FORTRAN_COMPILER=gfortran \
+            -DMUMPS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include \
+            -DMETIS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include \
+            -DHIGHS_INCLUDE_DIR=${{ github.workspace }}/dependencies/include/highs \
+            -DBQPD=${{ github.workspace }}/dependencies/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${{ github.workspace }}/dependencies/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${{ github.workspace }}/dependencies/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${{ github.workspace }}/dependencies/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${{ github.workspace }}/dependencies/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${{ github.workspace }}/dependencies/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${{ github.workspace }}/dependencies/lib/libcblas.a;${{ github.workspace }}/dependencies/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${{ github.workspace }}/dependencies/lib/liblapack.a \
+            -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build Uno
+        run: cmake --build build --config ${BUILD_TYPE} --parallel
+
+      - name: Install Uno
+        run: |
+          sudo cmake --install build
+          sudo ldconfig                 # refresh the linker cache for /usr/local/lib
+
+      # ----------------------------------------------------------------
+      # 2) Compile CUTEst (with SIFDecode + ARCHDefs)
+      # ----------------------------------------------------------------
+      - name: Fetch ARCHDefs, SIFDecode, CUTEst
+        run: |
+          git clone --depth=1 https://github.com/ralna/ARCHDefs.git  "$ARCHDEFS"
+          git clone --depth=1 https://github.com/ralna/SIFDecode.git "$SIFDECODE"
+          git clone --depth=1 https://github.com/ralna/CUTEst.git    "$CUTEST"
+
+      - name: Install SIFDecode
+        run: |
+          export TERM=xterm
+          cd "$SIFDECODE"
+          # Answers: Linux / 64-bit / gfortran / no modifications.
+          printf '1\n1\nN1\nNyy' > install_sifdecode_config
+          ./install_sifdecode < install_sifdecode_config
+
+      - name: Compile CUTEst (double precision)
+        run: |
+          export TERM=xterm
+          cd "$CUTEST"
+          # Answers: Linux / 64-bit / gfortran / gcc / no modifications.
+          printf '1\n1\nN1\n2\n2\nNNyDyN' > install_config
+          ./install_cutest < install_config
+
+      # ----------------------------------------------------------------
+      # 3) Provide HS15 and HIMMELBD, and solve through the Uno interface
+      # ----------------------------------------------------------------
+      - name: Get the SIF test set (MASTSIF — contains HS15.SIF and HIMMELBD.SIF)
+        run: git clone --depth=1 https://bitbucket.org/optrove/sif.git "$MASTSIF"
+
+      #- name: Run HS15 and HIMMELBD with shipped uno.opt
+      #  run: |
+      #    mkdir run-shipped && cd run-shipped
+      #    bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HS15
+      #    bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" shipped HIMMELBD
+
+      - name: Run HS15 with custom uno.opt
+        if: ${{ !cancelled() }}
+        run: |
+          custom="$GITHUB_WORKSPACE/uno_default.opt"
+          # show how uno.opt is resolved (diagnostic)
+          grep -n 'uno.opt' "$CUTEST/bin/runcutest" "$CUTEST"/src/uno/* || true
+          cp -v "$custom" "$CUTEST/src/uno/uno.opt"   # the default that gets picked up
+          mkdir run-custom && cd run-custom
+          cp "$custom" uno.opt                        # in case a local copy takes precedence
+          bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" custom HS15
+          diff -u "$custom" uno.opt && echo "custom uno.opt was used"
+
+      - name: Run filtersqp and ipopt presets with filter method and merit function
+        if: ${{ !cancelled() }}
+        run: |
+          problems="HS15 HIMMELBD"
+          failed=()
+          {
+            echo "## Presets × globalization strategies"
+            echo
+            echo "| Preset | Globalization strategy | Problem | Optimization status | Iterate status | Iterations |"
+            echo "| :--- | :--- | :--- | :--- | :--- | ---: |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for preset in filtersqp ipopt; do
+            for strategy in default merit_function; do
+              for problem in $problems; do
+                label="${preset}-${strategy}-${problem}"
+                echo "::group::${label}"
+                mkdir -p "$GITHUB_WORKSPACE/runs/${label}" && cd "$GITHUB_WORKSPACE/runs/${label}"
+                # minimal option file: the preset, optionally overriding its globalization strategy
+                echo "preset ${preset}" > uno.opt
+                if [ "$strategy" != default ]; then
+                  echo "globalization_strategy ${strategy}" >> uno.opt
+                fi
+                cp uno.opt "$CUTEST/src/uno/uno.opt"     # the default that gets picked up
+                if bash "$GITHUB_WORKSPACE/.github/CUTEst/run_cutest.sh" "$label" "$problem" \
+                   && grep -Eq '^[[:space:]]*Optimization status:[[:space:]]+Success' "$label.log"; then
+                  :
+                else
+                  failed+=("$label")
+                fi
+                optimization_status=$(sed -n 's/^[[:space:]]*Optimization status:[[:space:]]*//p' "$label.log" | head -n 1)
+                iterate_status=$(sed -n 's/^[[:space:]]*Iterate status:[[:space:]]*//p' "$label.log" | head -n 1)
+                iterations=$(sed -n 's/^[[:space:]]*Number iterations[[:space:]]*//p' "$label.log" | head -n 1)
+                echo "| ${preset} | ${strategy} | ${problem} | ${optimization_status:-crash} | ${iterate_status:--} | ${iterations:--} |" >> "$GITHUB_STEP_SUMMARY"
+                echo "::endgroup::"
+              done
+            done
+          done
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::Not solved: ${failed[*]}"
+            exit 1
+          fi

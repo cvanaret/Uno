@@ -1,12 +1,10 @@
 # Uno
 
-<div align="center">
+Check out the [official documentation](https://unosolver.readthedocs.io) for instructions on how to compile Uno from source or use the precompiled libraries, and to get started with Uno.
 
-   *A modern, modular solver for nonlinearly constrained optimization*
+## Unifying Nonlinear Optimization
 
-</div>
-
-Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
+Uno (Unifying Nonlinear Optimization) is a C++ framework for solving nonlinearly constrained optimization problems of the form:
 
 $$
 \begin{align}
@@ -18,102 +16,65 @@ $$
 
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
-This formulation allows for unbounded variables and equality constraints, and explicitly separates general nonlinear and bound constraints.
+Uno unifies Lagrange-Newton methods that iteratively solve the optimality (KKT) conditions with Newton's method. The following methods are currently supported:
 
-## Unifying nonlinearly constrained optimization
+- Sequential (convex and nonconvex) Quadratic Programming (SQP) method
+- primal-dual Interior-Point Method (IPM)
+- Sequential Linear Programming (SLP)
+- Newton's method for unconstrained optimization
 
-We consider the family of **Lagrange-Newton (essentially SQP and interior-point) methods** that iteratively solve the optimality (KKT) conditions with Newton's method, and we argue that most Lagrange-Newton methods can be broken down into the following generic ingredients:
-* a **constraint relaxation strategy**: a systematic way to relax the general constraints;
-* an **inequality handling method**: a systematic way to handle the inequality constraints;
-* a **Lagrange-Newton subproblem**: a local Lagrange-Newton approximation of the reformulated problem, composed of:
-	* a **Hessian model**: a model of the Lagrangian Hessian of the original problem;
-	* a **regularization strategy**: a strategy to regularize the Lagrangian Hessian or the augmented system of the reformulated problem;
-* a **globalization strategy**: an acceptance test of the trial iterate;
-* a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
-
-The following graph gives an overview of state-of-the-art strategies:
-<p align="center">
-   <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="55%" />
-</p>
-
-**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [latest slides](https://www.researchgate.net/publication/390271091).
-
-Uno implements **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
-* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
-* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual regularization).
-
-## Installation instructions
-
-See the [INSTALL](INSTALL.md) file for instructions on how to compile Uno from source or use the precompiled libraries and executables.
-
-## Solving a problem with Uno
-
-### Controlling Uno via options
-
-Options can be set in three different ways (with decreasing precedence):
-- passing an option file (`option_file=file`) that contains `option value` on each line;
-- setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt]`);
-- setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/uno/options/DefaultOptions.cpp)).
-
-### Interfaces
-
-#### AMPL/nl files
-To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(format)), type in the `build` directory: ```./uno_ampl model.nl [-AMPL] [option=value ...]```  
-where ```[option=value ...]``` is a list of options separated by spaces. If the `-AMPL` flag is supplied, the solution is written to the AMPL solution file `model.sol`.
-
-A couple of CUTEst instances are available in the `/examples` directory.
-
-#### Julia
-Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used via [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl). An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
-
-### Combining strategies on the fly
-
-For an overview of the available strategies, type: ```./uno_ampl --strategies```:
-- to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration]```  
-- to pick an inequality handling method, use the argument: ```inequality_handling_method=[inequality_constrained|primal_dual_interior_point]``` 
-- to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
-- to pick a regularization strategy, use the argument: ```regularization_strategy=[primal|primal_dual|none]``` 
-- to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```   
-- to pick a globalization mechanism, use the argument : ```globalization_mechanism=[TR|LS]```  
-
-## Latest results (September 26, 2024)
-
-Some of Uno combinations that correspond to existing solvers (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
-The figure below is a performance profile of Uno and state-of-the-art solvers filterSQP, IPOPT, SNOPT, MINOS, LANCELOT, LOQO and CONOPT; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
+Uno breaks down these methods into a set of common building blocks that interact with one another, such as constraint reformulation, step computation, and globalization. These strategies can be combined at runtime in various ways.
 
 <p align="center">
-   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno" width="75%" />
+   <img src="docs/figures/wheel.png" alt="Uno's wheel of strategies" width="40%" />
 </p>
 
-All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_comparison).
+Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
 
-## How to cite Uno
+## How to support Uno
 
-### In an article
+### Cite Uno
 
-We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization).
-
-Until it is published, you can use the following bibtex entry:
+Our [theory paper](https://link.springer.com/article/10.1007/s12532-026-00310-9) published in Mathematical Programming Computation may be cited with the following BibTeX entry:
 
 ```
-@unpublished{VanaretLeyffer2024,
-  author = {Vanaret, Charlie and Leyffer, Sven},
-  title = {Unifying nonlinearly constrained nonconvex optimization},
-  year = {2024},
-  note = {Submitted to Mathematical Programming Computation}
+@article{VanaretLeyffer2026,
+  author  = {Vanaret, Charlie and Leyffer, Sven},
+  title   = {Implementing a unified solver for nonlinearly constrained optimization},
+  journal = {Mathematical Programming Computation},
+  year    = {2026},
+  doi     = {10.1007/s12532-026-00310-9}
 }
 ```
 
-### On social media
+Our [software article](https://joss.theoj.org/papers/10.21105/joss.10229) published in the Journal of Open Source Software (JOSS) may be cited with the following BibTeX entry:
 
-To mention Uno on Twitter, use [@UnoSolver](https://twitter.com/UnoSolver).  
-To mention Uno on LinkedIn, use [#unosolver](https://www.linkedin.com/feed/hashtag/?keywords=unosolver).  
+```
+@article{VanaretMontoison2026,
+  author    = {Vanaret, Charlie and Montoison, Alexis},
+  title     = {Uno: a composable framework for nonlinearly constrained optimization},
+  journal   = {Journal of Open Source Software},
+  publisher = {The Open Journal},
+  year      = {2026},
+  volume    = {11},
+  number    = {123},
+  pages     = {10229},
+  doi       = {10.21105/joss.10229}
+}
+```
+
+### Sponsor Uno
+
+Uno is a [generic cake recipe for nonlinear optimization](https://youtu.be/hDPCVBQm8TE?is=ftCKIdDEYfiHK7ja): one set of instructions, ingredients you swap for your own. If it's useful to you, [sponsor it on GitHub](https://github.com/sponsors/cvanaret) and help keep the baking going.
 
 ## Credits
 
-The theoretical abstract framework for unifying nonlinearly constrained optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
+The theoretical unification framework was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
+The interfaces and continuous integration infrastructure for Uno were developed and are maintained by [Alexis Montoison](https://github.com/amontoison) (Argonne National Laboratory) and Charlie Vanaret.
+Uno itself was designed and implemented by Charlie Vanaret.
+It is released under the [MIT license](LICENSE).
 
 The contributors are (in alphabetical order):
-[Oscar Dowson](https://github.com/odow), [Marcel Jacobse](https://github.com/mjacobse), [David Kiessling](https://github.com/david0oo), [Alexis Montoison](https://github.com/amontoison), [Rujia Liu](https://github.com/rujialiu), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).
+[Oscar Dowson](https://github.com/odow), [Joris Gillis](https://github.com/jgillis), [Alasdair Gray](https://github.com/A-CGray), [Ping He](https://github.com/friedenhe), [Marcel Jacobse](https://github.com/mjacobse), [Arnav Kapoor](https://github.com/arnavk23), [David Kiessling](https://github.com/david0oo), [Rujia Liu](https://github.com/rujialiu), [Stefano Lovato](https://github.com/stefphd), [Alexander Neverov](https://github.com/Nevsky12), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).
 
 The Uno logo was created by Charlie Vanaret based on a [saddle point icon by luimonts](https://thenounproject.com/icon/saddle-point-258207/) (CC BY 3.0).

@@ -1,27 +1,61 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include <string>
 #include "InequalityHandlingMethod.hpp"
 #include "InequalityHandlingMethodFactory.hpp"
-#include "inequality_constrained_methods/InequalityConstrainedMethod.hpp"
-#include "interior_point_methods/PrimalDualInteriorPointMethod.hpp"
+#include "NoInequalityReformulation.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "interior_point_methods/InteriorPointMethod.hpp"
+#include "interior_point_methods/barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const Options& options) {
-      // TODO set unconstrained strategy automatically
+   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const OptimizationProblem& problem,
+         bool uses_trust_region, double objective_multiplier, const Options& options, std::vector<OptionOverride>& option_overrides) {
+      // figure out whether there are inequality constraints altogether
+      if (!problem.has_inequality_constraints() && !problem.has_bound_constraints() && !uses_trust_region) {
+         // no reformulation
+         if (0 < problem.number_constraints) {
+            INFO << "picking a pure SQP method\n";
+            return std::make_unique<NoInequalityReformulation>("pure SQP method", problem, uses_trust_region,
+               objective_multiplier, options, option_overrides);
+         }
+         else {
+            INFO << "picking a pure Newton method\n";
+            return std::make_unique<NoInequalityReformulation>("pure Newton method", problem, uses_trust_region,
+               objective_multiplier, options, option_overrides);
+         }
+      }
+      // from now on, the problem has inequalities
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
-         return std::make_unique<InequalityConstrainedMethod>(options);
+         // no inequality reformulation: let the subproblem solver handle them
+         INFO << "picking an inequality-constrained (LP or QP) method\n";
+         return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method", problem, uses_trust_region,
+            objective_multiplier, options, option_overrides);
       }
       // interior-point method
-      else if (inequality_handling_method == "primal_dual_interior_point") {
-         return std::make_unique<PrimalDualInteriorPointMethod>(options);
+      else if (inequality_handling_method == "interior_point") {
+         // the barrier subproblems are solved with a direct linear solver, which does not support a trust region. A QP
+         // fallback would bypass the fraction-to-boundary rule and the bound dual directions
+         if (uses_trust_region) {
+            throw std::invalid_argument("The interior-point method does not support the trust-region globalization "
+               "mechanism (globalization_mechanism = TR); use a line search (LS)");
+         }
+         const std::string barrier_function = options.get_string("barrier_function");
+         if (barrier_function == "log") {
+            INFO << "picking a barrier method\n";
+            return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(problem, uses_trust_region,
+               objective_multiplier, options, option_overrides);
+         }
+         else {
+            throw std::invalid_argument("The barrier function " + barrier_function + " is not supported");
+         }
       }
       throw std::invalid_argument("Inequality handling method " + inequality_handling_method + " is not supported");
    }
@@ -32,7 +66,7 @@ namespace uno {
          strategies.emplace_back("inequality_constrained");
       }
       if (!SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
-         strategies.emplace_back("primal_dual_interior_point");
+         strategies.emplace_back("interior_point");
       }
       return strategies;
    }

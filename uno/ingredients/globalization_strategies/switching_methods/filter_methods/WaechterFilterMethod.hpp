@@ -11,20 +11,38 @@ namespace uno {
    class WaechterFilterMethod : public FilterMethod {
    public:
       explicit WaechterFilterMethod(const Options& options);
-      ~WaechterFilterMethod() override;
+      ~WaechterFilterMethod() override = default;
 
-      void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
-      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,
-         const ProgressMeasures& trial_progress) const override;
+      void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
+      void notify_step_limited_by(RejectionReason sole_rejection_reason) override;
+      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
+         double reference_infeasibility) const override;
+      [[nodiscard]] double small_infeasibility_threshold() const override;
 
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      double initial_infeasibility{INF<double>};
+      double initial_infeasibility{Inf};
       const double sufficient_infeasibility_decrease_factor;
+      bool last_rejection_due_to_filter{false};
+      // filter resets
+      size_t number_successive_filter_rejections{0};
+      const size_t filter_reset_iteration_threshold; // >= 1
+      size_t number_filter_resets{0};
+      const size_t max_number_filter_resets; // >= 0
 
-      [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
+      // adaptive infeasibility upper bound (POUNCE, pounce#546): after a streak of steps limited by the upper bound
+      // only, the upper bound is raised
+      const size_t upper_bound_raise_trigger; // 0: disabled
+      const double merit_max_increase; // orders of magnitude
+      const double upper_bound_raise_factor; // > 1
+      const size_t max_number_upper_bound_raises;
+      size_t number_upper_bound_raises{0};
+      size_t upper_bound_limited_step_streak{0};
+
+      void raise_infeasibility_upper_bound();
    };
 } // namespace
 

@@ -9,17 +9,20 @@
 namespace uno {
    class TrustRegionStrategy : public GlobalizationMechanism {
    public:
-      explicit TrustRegionStrategy(const Options& options);
+      TrustRegionStrategy(const Model& model, const Options& options, std::vector<OptionOverride>& option_overrides);
       ~TrustRegionStrategy() override = default;
 
-      void initialize(Statistics& statistics, const Options& options) override;
-      void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, EvaluationCache& evaluation_cache,
+         const Options& options, std::vector<OptionOverride>& option_overrides) override;
+      void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] std::string get_name() const override;
 
    private:
+      // number of consecutive subproblem solver failures (with decreasing radii) before switching to the feasibility problem
+      static constexpr size_t max_consecutive_solver_errors{3};
       double radius; /*!< Current trust region radius */
       const double increase_factor;
       const double decrease_factor;
@@ -27,18 +30,18 @@ namespace uno {
       const double activity_tolerance;
       const double minimum_radius;
       const double radius_reset_threshold;
-      const double primal_tolerance;
+      const bool print_minor_iterations;
 
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);
       void decrease_radius(double step_norm);
       void decrease_radius();
       void decrease_radius_aggressively();
       void reset_radius();
       void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-      [[nodiscard]] bool check_termination_with_small_step(Iterate& trial_iterate) const;
+      [[nodiscard]] bool check_termination_with_small_step(Iterate& iterate) const;
       void set_TR_statistics(Statistics& statistics, size_t number_iterations) const;
    };
 } // namespace

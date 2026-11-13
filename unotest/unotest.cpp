@@ -5,6 +5,7 @@
 #include "mpi.h"
 #endif
 #include <gtest/gtest.h>
+#include "tools/Logger.hpp"
 
 // https://www.eriksmistad.no/getting-started-with-google-test-on-ubuntu/
 int main(int argc, char **argv) {
@@ -14,8 +15,9 @@ int main(int argc, char **argv) {
    ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 #endif
 
-    testing::InitGoogleTest(&argc, argv);
-    auto result = RUN_ALL_TESTS();
+   uno::Logger::level = uno::DISCRETE;
+   testing::InitGoogleTest(&argc, argv);
+   auto result = RUN_ALL_TESTS();
 
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
    ierr = MPI_Finalize() ;

@@ -1,141 +1,191 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2024-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
 #include "Presets.hpp"
 #include "Options.hpp"
-#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
+#include "model/Model.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
-   Options Presets::get_preset_options(const std::optional<std::string>& optional_preset) {
-      Options options(false);
-
-      /** optional user preset **/
-      if (optional_preset.has_value()) {
-         Presets::set(options, *optional_preset);
+   Preset Presets::from_string(const std::string& preset) {
+      if (preset == "filtersqp") {
+         return Preset::FILTERSQP;
       }
-      else {
-         /** default preset **/
-         const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
-
-         if constexpr (0 < QPSolverFactory::available_solvers.size()) {
-            Presets::set(options, "filtersqp");
-         }
-         else if (!linear_solvers.empty()) {
-            Presets::set(options, "ipopt");
-         }
-         else if constexpr (0 < LPSolverFactory::available_solvers.size()) {
-            Presets::set(options, "filterslp");
-         }
+      if (preset == "ipopt") {
+         return Preset::IPOPT;
       }
-      return options;
+      if (preset == "funnelsqp") {
+         return Preset::FUNNELSQP;
+      }
+      if (preset == "filterslp") {
+         return Preset::FILTERSLP;
+      }
+      throw std::runtime_error("Unknown preset");
    }
 
-   void Presets::set(Options& options, const std::string& preset_name) {
-      // shortcuts for state-of-the-art combinations
-      if (preset_name == "ipopt") {
-         options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "primal_dual_interior_point";
-         options["hessian_model"] = "exact";
-         options["regularization_strategy"] = "primal_dual";
-         options["globalization_mechanism"] = "LS";
-         options["globalization_strategy"] = "waechter_filter_method";
-         options["filter_type"] = "standard";
-         options["filter_beta"] = "0.99999";
-         options["filter_gamma"] = "1e-8";
-         options["switching_delta"] = "1";
-         options["filter_ubd"] = "1e4";
-         options["filter_fact"] = "1e4";
-         options["filter_switching_infeasibility_exponent"] = "1.1";
-         options["armijo_decrease_fraction"] = "1e-8";
-         options["LS_backtracking_ratio"] = "0.5";
-         options["LS_min_step_length"] = "5e-7";
-         options["barrier_tau_min"] = "0.99";
-         options["barrier_damping_factor"] = "1e-5";
-         options["l1_constraint_violation_coefficient"] = "1000.";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "INF";
-         options["scale_functions"] = "yes";
-         options["primal_tolerance"] = "1e-8";
-         options["dual_tolerance"] = "1e-8";
-         options["loose_dual_tolerance"] = "1e-6";
-         options["loose_tolerance_consecutive_iteration_threshold"] = "15";
-         options["switch_to_optimality_requires_linearized_feasibility"] = "no";
-         options["LS_scale_duals_with_step_length"] = "yes";
-         options["protect_actual_reduction_against_roundoff"] = "yes";
-      }
-      else if (preset_name == "filtersqp") {
-         options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "inequality_constrained";
-         options["hessian_model"] = "exact";
-         options["regularization_strategy"] = "none";
-         options["globalization_mechanism"] = "TR";
-         options["globalization_strategy"] = "fletcher_filter_method";
-         options["filter_type"] = "standard";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "L2";
-         options["TR_radius"] = "10";
-         options["l1_constraint_violation_coefficient"] = "1.";
-         options["enforce_linear_constraints"] = "yes";
-         options["primal_tolerance"] = "1e-6";
-         options["dual_tolerance"] = "1e-6";
-         options["loose_dual_tolerance"] = "1e-6";
-         options["TR_min_radius"] = "1e-8";
-         options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
-         options["protect_actual_reduction_against_roundoff"] = "no";
-      }
-      else if (preset_name == "funnelsqp") {
-         options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "inequality_constrained";
-         options["hessian_model"] = "exact";
-         options["regularization_strategy"] = "none";
-         options["globalization_mechanism"] = "TR";
-         options["globalization_strategy"] = "funnel_method";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "L2";
-         options["TR_radius"] = "10";
-         options["l1_constraint_violation_coefficient"] = "1.";
-         options["enforce_linear_constraints"] = "yes";
-         options["primal_tolerance"] = "1e-6";
-         options["dual_tolerance"] = "1e-6";
-         options["loose_dual_tolerance"] = "1e-6";
-         options["TR_min_radius"] = "1e-8";
-         options["switch_to_optimality_requires_acceptance"] = "no";
-         options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+   Preset Presets::pick_auto_preset(const Model& model) {
+      // thresholds encode "dense active-set QP stops scaling around here"
+      // TODO: calibrate on a representative benchmark set (CUTEst, MINLPTests)
+      constexpr size_t large_problem_dimension = 2000;       // n + m
+      constexpr size_t large_problem_nonzeros = 50'000;      // Jacobian + Hessian nnz
+      // constexpr size_t many_inequalities_floor = 500;        // absolute floor for the ratio rule
 
-         options["funnel_beta"] = "0.9999";
-         options["funnel_gamma"] = "0.001";
-         options["switching_delta"] = "0.999";
-         options["funnel_kappa"] = "0.5";
-         options["funnel_ubd"] = "1.0";
-         options["funnel_fact"] = "1.5";
-         options["funnel_switching_infeasibility_exponent"] = "2";
-         options["funnel_update_strategy"] = "2";
+      // the preset must be supported by the available subproblem solvers
+      const bool has_QP_solver = (0 < QPSolverFactory::available_solvers.size());
+      const bool has_linear_solver = !SymmetricIndefiniteLinearSolverFactory::available_solvers().empty();
+      if (!has_QP_solver && !has_linear_solver) {
+         throw std::runtime_error("The auto preset requires a QP solver or a linear solver, but none is available");
       }
-      else if (preset_name == "filterslp") {
-         options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "inequality_constrained";
-         options["hessian_model"] = "zero";
-         options["regularization_strategy"] = "none";
-         options["globalization_mechanism"] = "TR";
-         options["globalization_strategy"] = "fletcher_filter_method";
-         options["filter_type"] = "standard";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "L2";
-         options["TR_radius"] = "10";
-         options["l1_constraint_violation_coefficient"] = "1.";
-         options["enforce_linear_constraints"] = "yes";
-         options["primal_tolerance"] = "1e-6";
-         options["dual_tolerance"] = "1e-5";
-         options["loose_dual_tolerance"] = "1e-4";
-         options["TR_min_radius"] = "1e-8";
-         options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
-         options["protect_actual_reduction_against_roundoff"] = "no";
+      if (!has_QP_solver) {
+         return Preset::IPOPT;
+      }
+      if (!has_linear_solver) {
+         return Preset::FILTERSQP;
+      }
+
+      const size_t total_dimension = model.number_variables + model.number_constraints;
+      size_t total_nonzeros = model.number_jacobian_nonzeros();
+      if (model.has_hessian_matrix()) {
+         total_nonzeros += model.number_hessian_nonzeros();
+      }
+
+      // 1. large/sparse => barrier
+      if (large_problem_dimension <= total_dimension || large_problem_nonzeros <= total_nonzeros) {
+         return Preset::IPOPT;
+      }
+      /*
+      // 2. many potential active constraints, and more than the DOF => barrier
+      if (many_inequalities_floor < number_potential_active_constraints &&
+            model.number_variables < number_potential_active_constraints) {
+         return Preset::IPOPT;
+      }
+      */
+      // 3. small/medium with modest inequalities (and the specialized cases) => active-set SQP
+      else {
+         return Preset::FILTERSQP;
+      }
+   }
+
+   void Presets::set(Options& options, const std::string& preset) {
+      if (preset == "auto") {
+         throw std::runtime_error("The auto preset requires the model");
       }
       else {
-         throw std::runtime_error("The preset " + preset_name + " is not known");
+         set(options, from_string(preset));
+      }
+   }
+
+   void Presets::set(const Model& model, Options& options, const std::string& preset) {
+      if (preset == "auto") {
+         set(options, pick_auto_preset(model));
+      }
+      else {
+         set(options, from_string(preset));
+      }
+   }
+
+   void Presets::set(Options& options, Preset preset) {
+      // shortcuts for state-of-the-art combinations
+      if (preset == Preset::IPOPT) {
+         options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
+         options.set_string("inequality_handling_method", "interior_point");
+         options.set_string("barrier_function", "log");
+         options.set_string("hessian_model", "exact");
+         options.set_string("inertia_correction_strategy", "primal_dual");
+         options.set_string("globalization_mechanism", "LS");
+         options.set_string("globalization_strategy", "waechter_filter_method");
+         options.set_bool("use_function_scaling", true);
+         options.set_double("filter_beta", 0.99999);
+         options.set_double("filter_gamma", 1e-8);
+         options.set_bool("filter_margin_uses_entry_infeasibility", true);
+         options.set_double("switching_delta", 1);
+         options.set_integer("filter_capacity", 0); // unlimited
+         options.set_double("filter_ubd", 1e4);
+         options.set_double("filter_fact", 1e4);
+         options.set_integer("filter_ubd_raise_trigger", 3);
+         options.set_double("switching_merit_exponent", 2.3);
+         options.set_double("switching_infeasibility_exponent", 1.1);
+         options.set_double("armijo_decrease_fraction", 1e-8);
+         options.set_double("LS_backtracking_ratio", 0.5);
+         options.set_double("barrier_tau_min", 0.99);
+         options.set_double("barrier_damping_factor", 1e-5);
+         options.set_double("l1_constraint_violation_coefficient", 1000.);
+         options.set_bool("use_proximal_term", true);
+         options.set_string("progress_norm", "L1");
+         options.set_string("residual_norm", "INF");
+         options.set_double("primal_tolerance", 1e-8);
+         options.set_double("dual_tolerance", 1e-8);
+         options.set_bool("switch_to_optimality_requires_linearized_feasibility", false);
+         options.set_bool("LS_scale_duals_with_step_length", true);
+         options.set_bool("protect_actual_reduction_against_roundoff", true);
+         options.set_bool("regularize_all_variables", true);
+         options.set_double("roundoff_feasibility_factor", 1e-2);
+      }
+      else if (preset == Preset::FILTERSQP) {
+         options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
+         options.set_string("inequality_handling_method", "inequality_constrained");
+         options.set_string("hessian_model", "exact");
+         options.set_string("inertia_correction_strategy", "none");
+         options.set_string("globalization_mechanism", "TR");
+         options.set_string("globalization_strategy", "fletcher_filter_method");
+         options.set_string("progress_norm", "L1");
+         options.set_string("residual_norm", "L2");
+         options.set_double("TR_radius", 10.);
+         options.set_double("l1_constraint_violation_coefficient", 1.);
+         options.set_bool("use_proximal_term", false);
+         options.set_bool("filter_margin_uses_entry_infeasibility", false);
+         options.set_double("primal_tolerance", 1e-6);
+         options.set_double("dual_tolerance", 1e-6);
+         options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
+         options.set_bool("protect_actual_reduction_against_roundoff", false);
+      }
+      else if (preset == Preset::FUNNELSQP) {
+         options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
+         options.set_string("inequality_handling_method", "inequality_constrained");
+         options.set_string("hessian_model", "exact");
+         options.set_string("inertia_correction_strategy", "none");
+         options.set_string("globalization_mechanism", "TR");
+         options.set_string("globalization_strategy", "funnel_method");
+         options.set_string("progress_norm", "L1");
+         options.set_string("residual_norm", "L2");
+         options.set_double("TR_radius", 10);
+         options.set_double("l1_constraint_violation_coefficient", 1.);
+         options.set_bool("use_proximal_term", false);
+         options.set_double("primal_tolerance", 1e-6);
+         options.set_double("dual_tolerance", 1e-6);
+         options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
+
+         options.set_double("funnel_beta", 0.9999);
+         options.set_double("funnel_gamma", 0.001);
+         options.set_double("switching_delta", 0.999);
+         options.set_double("funnel_kappa", 0.5);
+         options.set_double("funnel_ubd", 1.0);
+         options.set_double("funnel_fact", 1.5);
+         options.set_double("switching_infeasibility_exponent", 2);
+         options.set_integer("funnel_update_strategy", 2);
+      }
+      else if (preset == Preset::FILTERSLP) {
+         options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
+         options.set_string("inequality_handling_method", "inequality_constrained");
+         options.set_string("hessian_model", "zero");
+         options.set_string("inertia_correction_strategy", "none");
+         options.set_string("globalization_mechanism", "TR");
+         options.set_string("globalization_strategy", "fletcher_filter_method");
+         options.set_bool("filter_margin_uses_entry_infeasibility", false);
+         options.set_string("progress_norm", "L1");
+         options.set_string("residual_norm", "L2");
+         options.set_double("TR_radius", 10);
+         options.set_double("l1_constraint_violation_coefficient", 1.);
+         options.set_bool("use_proximal_term", false);
+         options.set_double("primal_tolerance", 1e-6);
+         options.set_double("dual_tolerance", 1e-5);
+         options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
+         options.set_bool("protect_actual_reduction_against_roundoff", false);
+      }
+      else {
+         throw std::runtime_error("The preset is not known");
       }
    }
 } // namespace

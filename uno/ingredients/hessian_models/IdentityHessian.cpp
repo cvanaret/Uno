@@ -2,32 +2,34 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "IdentityHessian.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "model/Model.hpp"
+#include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
-   bool IdentityHessian::has_implicit_representation() const {
+   IdentityHessian::IdentityHessian(size_t number_variables): HessianModel("identity"), number_variables(number_variables) {
+   }
+
+   bool IdentityHessian::has_hessian_operator() const {
       return true;
    }
 
-   bool IdentityHessian::has_explicit_representation() const {
+   bool IdentityHessian::has_hessian_matrix() const {
       return true;
    }
 
-   bool IdentityHessian::has_curvature(const Model& /*model*/) const {
+   bool IdentityHessian::has_curvature() const {
       return true;
    }
 
-   size_t IdentityHessian::number_nonzeros(const Model& model) const {
-      return model.number_variables;
+   size_t IdentityHessian::number_nonzeros() const {
+      return this->number_variables;
    }
 
-   void IdentityHessian::compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void IdentityHessian::compute_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
       // diagonal structure
-      for (size_t variable_index: Range(model.number_variables)) {
-         row_indices[variable_index] = variable_index + solver_indexing;
-         column_indices[variable_index] = variable_index + solver_indexing;
+      for (size_t variable_index: Range(this->number_variables)) {
+         row_indices[variable_index] = static_cast<uno_int>(variable_index) + solver_indexing;
+         column_indices[variable_index] = static_cast<uno_int>(variable_index) + solver_indexing;
       }
    }
 
@@ -35,26 +37,25 @@ namespace uno {
       return true;
    }
 
-   void IdentityHessian::initialize(const Model& /*model*/) {
-      // do nothing
+   void IdentityHessian::initialize_statistics(Statistics& /*statistics*/) const {
    }
 
-   void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
+   void IdentityHessian::notify_trial_iterate(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         const Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/) {
+   }
+
+   void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> hessian_values) {
       DEBUG << "Setting identity Hessian\n";
-      for (size_t variable_index: Range(model.number_variables)) {
+      for (size_t variable_index: Range(this->number_variables)) {
          hessian_values[variable_index] = 1.;
       }
    }
 
-   void IdentityHessian::compute_hessian_vector_product(const Model& model, const double* vector, double /*objective_multiplier*/,
-         const Vector<double>& /*constraint_multipliers*/, double* result) {
-      for (size_t variable_index: Range(model.number_variables)) {
+   void IdentityHessian::compute_hessian_vector_product(View<const double> /*x*/, View<const double> vector,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, View<double> result) {
+      for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = vector[variable_index];
       }
-   }
-
-   std::string IdentityHessian::get_name() const {
-      return "identity";
    }
 } // namespace

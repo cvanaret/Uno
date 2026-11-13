@@ -4,17 +4,29 @@
 #ifndef UNO_PRESETS_H
 #define UNO_PRESETS_H
 
-#include <optional>
 #include <string>
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   class Model;
    class Options;
+
+   enum class Preset {
+      FILTERSQP = 0,
+      IPOPT,
+      FUNNELSQP,
+      FILTERSLP,
+   };
 
    class Presets {
    public:
-      [[nodiscard]] static Options get_preset_options(const std::optional<std::string>& optional_preset);
-      static void set(Options& options, const std::string& preset_name);
+      static Preset from_string(const std::string& preset);
+      static void set(Options& options, const std::string& preset);
+      static void set(const Model& model, Options& options, const std::string& preset);
+
+   protected:
+      [[nodiscard]] static Preset pick_auto_preset(const Model& model);
+      static void set(Options& options, Preset preset);
    };
 } // namespace
 

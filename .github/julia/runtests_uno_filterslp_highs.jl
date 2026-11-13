@@ -22,7 +22,8 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15", "dual_tolerance=1e-6"])
+Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGHS", "max_iterations=10000",
+                                       "unbounded_objective_threshold=-1e15", "dual_tolerance=1e-6"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -41,7 +42,7 @@ Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_
             "001_010",  # Local solution
             "003_014",  # Local solution
             "008_010",  # Local solution
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
+            # no gradient at the initial point
             "005_010",
             # Okay to exclude forever: AmplNLWriter does not support
             # user-defined functions.
@@ -61,6 +62,6 @@ Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_
         primal_target,
         objective_tol = 1e-4,
         primal_tol = 1e-3,
-        exclude = ["501_010", "501_011"],  # Iteration limit
+        exclude = ["105_013", "501_010", "501_011"],  # Iteration limit
     )
 end

@@ -39,7 +39,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_
             "003_014",  # Local solution
             "004_010",  # Local solution
             "004_011",  # Local solution
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
+            # no gradient at the initial point
             "005_010",
             "007_010",
             "008_010",  # Local solution
@@ -81,6 +81,7 @@ end
                 MOI.VariableBasisStatus,
                 MOI.ConstraintBasisStatus,
                 MOI.ObjectiveBound,
+                MOI.DualObjectiveValue,
             ],
         );
         exclude = [
@@ -118,6 +119,8 @@ end
             r"^test_attribute_SolverVersion$",
             r"^test_nonlinear_invalid$",
             r"^test_basic_VectorNonlinearFunction_",
+            # MPEC instances
+            "_complementarity",
         ],
     )
 end

@@ -7,12 +7,23 @@
 #include <array>
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/Vector.hpp"
+#include "../COOLinearSystem.hpp"
+#include "../PivotingToleranceSchedule.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    // forward declaration
    template <typename ElementType>
    class Vector;
+
+   // settings taken from IPOPT
+   struct MA27Settings {
+      static constexpr double pivoting_threshold = 1e-8;
+      static constexpr double max_pivoting_threshold = 1e-4; // https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_ma27_pivtolmax
+      static constexpr double pivoting_threshold_increase_exponent = 0.75;
+      static constexpr int liw_init_factor = 5;
+      static constexpr int la_init_factor = 5;
+   };
 
    struct MA27Workspace {
       int n{};                         // dimension of current factorisation (maximal value here is <= max_dimension)
@@ -20,6 +31,7 @@ namespace uno {
       std::array<int, 30> icntl{};      // integer array of length 30; integer control values
       std::array<double, 5> cntl{};     // double array of length 5; double control values
 
+      int liw{};
       std::vector<int> iw{};           // integer workspace of length liw
       std::vector<int> ikeep{};        // integer array of 3*n; pivot sequence
       std::vector<int> iw1{};          // integer workspace array of length n
@@ -28,6 +40,7 @@ namespace uno {
       std::array<int, 20> info{};       // integer array of length 20
       double ops{};                    // double, operations count
 
+      int la{};
       std::vector<double> factor{};    // data array of length la;
       int maxfrt{};                    // integer, to be set by ma27
       std::vector<double> w{};         // double workspace
@@ -39,49 +52,36 @@ namespace uno {
       MA27Solver();
       ~MA27Solver() override = default;
 
-      void initialize_hessian(const Subproblem& subproblem) override;
-      void initialize_augmented_system(const Subproblem& subproblem) override;
+      void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(const double* matrix_values) override;
-      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
       // [[nodiscard]] bool matrix_is_positive_definite() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
+      [[nodiscard]] bool increase_pivoting_tolerance() override;
 
-      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] LinearSystem& get_linear_system() override;
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;
 
    private:
+      void factorize(bool is_matrix_positive_definite) override;
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override;
+
       MA27Workspace workspace{};
+      COOLinearSystem linear_system{Indexing::Fortran_indexing};
+      PivotingToleranceSchedule pivoting_tolerance_schedule{MA27Settings::max_pivoting_threshold, MA27Settings::pivoting_threshold_increase_exponent};
 
-      // evaluations
-      Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      bool analysis_performed{false};
+      bool factorization_performed{false};
 
-      // Jacobian
-      size_t number_jacobian_nonzeros{};
-      std::vector<size_t> jacobian_row_indices{};
-      std::vector<size_t> jacobian_column_indices{};
+      void check_factorization_status() const;
 
-      // augmented system
-      size_t number_hessian_nonzeros{};
-      std::vector<int> matrix_row_indices{};          // row index of input
-      std::vector<int> matrix_column_indices{};          // col index of input
-      Vector<double> matrix_values{};
-      Vector<double> rhs{};
-      Vector<double> solution{};
-
-      static constexpr size_t fortran_shift{1};
-
-      // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
-      void check_factorization_status();
+      [[nodiscard]] int& MA27_ICNTL(size_t index);
+      [[nodiscard]] double& MA27_CNTL(size_t index);
+      [[nodiscard]] int MA27_INFO(size_t index) const;
    };
 } // namespace
 

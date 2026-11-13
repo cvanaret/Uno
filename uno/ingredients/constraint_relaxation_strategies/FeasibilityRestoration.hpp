@@ -5,67 +5,101 @@
 #define UNO_FEASIBILITYRESTORATION_H
 
 #include <memory>
+#include <vector>
 #include "ConstraintRelaxationStrategy.hpp"
+#include "PhaseIngredients.hpp"
+#include "relaxed_problems/l1RelaxedProblem.hpp"
+#include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
+   // forward declaration
+   class InequalityHandlingMethod;
+
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
    class FeasibilityRestoration : public ConstraintRelaxationStrategy {
    public:
-      explicit FeasibilityRestoration(const Options& options);
-      ~FeasibilityRestoration() override = default;
+      FeasibilityRestoration(const Model& model, bool use_trust_region, const Options& options,
+         std::vector<OptionOverride>& option_overrides);
+      ~FeasibilityRestoration() override;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius, const Options& options) override;
+      void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) override;
+      void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      const Direction& compute_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
-      void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
+         WarmstartInformation& warmstart_information) override;
+
+      // second-order corrections
+      [[nodiscard]] bool has_second_order_corrections() const override;
+      void initialize_second_order_corrections(const Iterate& current_iterate, const Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
+      const Direction& compute_second_order_correction(Statistics& statistics, Iterate& current_iterate) override;
+      void update_second_order_corrections(const Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       // trial iterate acceptance
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
-      [[nodiscard]] IterateStatus check_termination(const Model& model, Iterate& iterate) override;
+      [[nodiscard]] PredictedReductionModels build_predicted_reduction_models(const Iterate& current_iterate,
+         const Direction& direction, Evaluations& current_evaluations) const override;
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region, Evaluations& current_evaluations,
+         Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
+      void notify_step_limited_by(RejectionReason sole_rejection_reason) override;
+      [[nodiscard]] bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
+      [[nodiscard]] bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
+         const Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
+      [[nodiscard]] double small_infeasibility_threshold() const override;
       [[nodiscard]] std::string get_name() const override;
-      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
-      [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
       Phase current_phase{Phase::OPTIMALITY};
-      const double constraint_violation_coefficient;
-      std::unique_ptr<HessianModel> optimality_hessian_model;
-      std::unique_ptr<HessianModel> feasibility_hessian_model;
-      std::unique_ptr<RegularizationStrategy<double>> optimality_regularization_strategy;
-      std::unique_ptr<RegularizationStrategy<double>> feasibility_regularization_strategy;
-      std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
-      std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
+      PhaseIngredients<const OptimizationProblem> optimality;
+      PhaseIngredients<l1RelaxedProblem> feasibility;
+      // strategy that tested the last trial iterate. Upon acceptance, the phase may change: the trial iterates of a step
+      // are nonetheless all tested by the same strategy
+      GlobalizationStrategy* trial_globalization_strategy{nullptr};
+      Vector<double> initial_point;
+
+      Iterate iterate_buffer{};
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
       // and vice versa). These multipliers and those of the iterate are swapped whenever we switch phases.
       Multipliers other_phase_multipliers;
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
-      ProgressMeasures reference_optimality_progress{};
-      Vector<double> reference_optimality_primals{};
+      double reference_infeasibility{};
+      Vector<double> pre_restoration_primals{};
       bool first_switch_to_feasibility{true};
+      bool first_test_of_switch_back{true};
+      const double least_square_multiplier_max_norm;
+      const double bound_multiplier_max_norm;
 
-      void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information);
-      void switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& trial_iterate);
+      mutable Vector<double> constraints_buffer;
 
-      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& iterate) const override;
-      [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
-         const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const;
+      [[nodiscard]] PhaseIngredientsView current() const;
+      using ConstraintRelaxationStrategy::is_iterate_acceptable;
+      using ConstraintRelaxationStrategy::accept_iterate_unconditionally;
+      const Direction& solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, double trust_region_radius,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
+      [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, Iterate& trial_iterate,
+         const Direction& direction, double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations);
+      void switch_back_to_optimality_phase(Iterate& trial_iterate, Evaluations& trial_evaluations);
+      void refresh_after_parameterization_update(const InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate);
+      void finalize_accepted_iterate(const Model& model, Iterate& trial_iterate, const Direction& direction, double step_length,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks);
    };
 } // namespace
 

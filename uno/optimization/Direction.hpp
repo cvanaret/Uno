@@ -17,19 +17,26 @@ namespace uno {
 
       size_t number_variables{};
       size_t number_constraints{};
-
+      
       Vector<double> primals{}; /*!< Primal variables */
       Multipliers multipliers{}; /*!< Multipliers */
+      double primal_dual_step_length{1.};
+      double bound_dual_step_length{1.};
 
       SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
-      double norm{INF<double>}; /*!< Norm of \f$x\f$ */
-      double subproblem_objective{INF<double>}; /*!< Objective value */
+      double norm{Inf}; /*!< Norm of \f$x\f$ */
+      double subproblem_objective{Inf}; /*!< Objective value */
 
       void set_dimensions(size_t new_number_variables, size_t new_number_constraints);
       void reset();
+      // whether all the primal and dual components are finite numbers
+      [[nodiscard]] bool is_finite() const;
 
       friend std::ostream& operator<<(std::ostream& stream, const Direction& direction);
+
+   protected:
+      [[nodiscard]] static std::string status_to_string(SubproblemStatus status);
    };
 } // namespace
 

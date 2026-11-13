@@ -1,0 +1,90 @@
+// Copyright (c) 2026 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#include "IQPSolver.hpp"
+#include "LPSolver.hpp"
+#include "QuadraticProgram.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
+#include "optimization/Direction.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
+
+namespace uno {
+   IQPSolver::IQPSolver(std::unique_ptr<LPSolver> qp_solver):
+      SubproblemSolver(), qp_solver(std::move(qp_solver)) {
+   }
+
+   IQPSolver::~IQPSolver() = default;
+
+   void IQPSolver::initialize_memory(const Subproblem& subproblem) {
+      this->direction = Direction(subproblem.number_variables, subproblem.number_constraints);
+      this->qp_solver->initialize_memory(subproblem);
+   }
+
+   void IQPSolver::compute_least_squares_multipliers(const Subproblem& /*subproblem*/, Iterate& /*iterate*/,
+         Evaluations& /*evaluations*/, double /*multipliers_threshold*/) {
+      DEBUG << "The IQP solver does not compute least-squares multipliers, keeping existing multipliers\n";
+   }
+
+   const Direction& IQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         double trust_region_radius, const Vector<double>& initial_point, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information) {
+      this->direction.reset();
+      // build the QuadraticProgram from the Subproblem at the current iterate
+      QuadraticProgram& quadratic_program = this->qp_solver->get_quadratic_program();
+      quadratic_program.fill(statistics, subproblem, current_iterate, trust_region_radius, current_evaluations, warmstart_information);
+
+      // solve the QP
+      this->qp_solver->solve(statistics, initial_point, this->direction, warmstart_information);
+      // a solution with non-finite components (e.g. after a breakdown of the QP solver) cannot be used
+      if (this->direction.status != SubproblemStatus::ERROR && !this->direction.is_finite()) {
+         DEBUG << "The subproblem solution has non-finite components\n";
+         this->direction.status = SubproblemStatus::ERROR;
+      }
+
+      // compute the dual direction
+      compute_dual_direction(subproblem, current_iterate, this->direction.multipliers);
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
+      return this->direction;
+   }
+
+   bool IQPSolver::requires_hessian_matrix(const Subproblem& subproblem) const {
+      return subproblem.has_curvature() && this->qp_solver->requires_hessian_matrix(subproblem);
+   }
+
+   bool IQPSolver::has_second_order_corrections() const {
+      return false;
+   }
+
+   void IQPSolver::initialize_second_order_corrections(const Subproblem& /*subproblem*/, const Iterate& /*current_iterate*/,
+         const Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/) {
+      throw std::runtime_error("No SOC implemented in IQPSolver");
+   }
+
+   const Direction& IQPSolver::compute_second_order_correction(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+         const Iterate& /*current_iterate*/) {
+      throw std::runtime_error("No SOC implemented in IQPSolver");
+   }
+
+   void IQPSolver::update_second_order_corrections(const Subproblem& /*subproblem*/, const Iterate& /*trial_iterate*/,
+         Evaluations& /*trial_evaluations*/) {
+      throw std::runtime_error("No SOC implemented in IQPSolver");
+   }
+
+   const SolverWorkspace& IQPSolver::get_workspace() const {
+      return this->qp_solver->get_workspace();
+   }
+
+   // protected member functions
+
+   // because of the way we form LPs/QPs, we get the new *multipliers* back from the solver. To get the dual
+   // displacements/direction, we need to subtract the current multipliers
+   void IQPSolver::compute_dual_direction(const Subproblem& subproblem, const Iterate& current_iterate, Multipliers& direction_multipliers) {
+      view(direction_multipliers.constraints, 0, subproblem.number_constraints) -=
+         view(current_iterate.multipliers.constraints, 0, subproblem.number_constraints);
+      view(direction_multipliers.lower_bounds, 0, subproblem.number_variables) -=
+         view(current_iterate.multipliers.lower_bounds, 0, subproblem.number_variables);
+      view(direction_multipliers.upper_bounds, 0, subproblem.number_variables) -=
+         view(current_iterate.multipliers.upper_bounds, 0, subproblem.number_variables);
+   }
+} // namespace

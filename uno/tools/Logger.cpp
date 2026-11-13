@@ -1,9 +1,11 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Logger.hpp"
 
 namespace uno {
+   Level Logger::level = INFO;
+
    void Logger::set_logger(const std::string& logger_level) {
       if (logger_level == "SILENT") {
          Logger::level = SILENT;
@@ -29,5 +31,20 @@ namespace uno {
       else {
          throw std::out_of_range("The logger level " + logger_level + " was not found");
       }
+   }
+
+   void Logger::set_stream(std::ostream& output_stream) {
+      Logger::stream = &output_stream;
+   }
+
+   void Logger::flush() {
+      Logger::stream->flush();
+   }
+
+   const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&)) {
+      if (level <= Logger::level) {
+         (*Logger::stream) << element;
+      }
+      return level;
    }
 } // namespace

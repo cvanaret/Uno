@@ -1,31 +1,39 @@
 name: JuliaCI
 on:
   push:
-    branches: [main]
+    branches: ["main", "develop"]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
   pull_request:
-    branches: [main]
+    branches: ["main", "develop"]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-    
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  # Allows manually validating the workflow despite the *.yml paths-ignore above.
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
   actions: write
   contents: read
+
 jobs:
-  test:
+  build:
+    name: Build Uno_jll.jl - ${{ github.event_name }}
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_ipopt_mumps, uno_filterslp_bqpd, uno_filterslp_highs]
-    name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
-    
     steps:
       - uses: actions/checkout@v4
       # Install Julia 1.7 for BinaryBuilder. Note that this is an old version of
@@ -35,8 +43,14 @@ jobs:
           version: "1.7"
           arch: x64
       - uses: julia-actions/cache@v2
-      # Set environment variables required by BinaryBuilder.
-      - name: Set the environment variables
+
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
+      - name: Set the environment variables for BinaryBuilder
         run: |
           git fetch --tags
           echo "UNO_RELEASE=$(git describe --tags $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
@@ -47,20 +61,109 @@ jobs:
             echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
             echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
           fi
+
       - name: Compile Uno_jll.jl
         run: |
-          julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
+          julia --color=yes -e 'using Pkg; Pkg.update(); Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
-      # Now install a newer version of Julia to actually test Uno_jll.jl.
+
+      # The local deploy writes the JLL wrapper to ~/.julia/dev/Uno_jll and
+      # installs the binary into ~/.julia/artifacts/<git-tree-sha1>. Both must
+      # travel together: artifact resolution is by hash, so without the
+      # artifacts/ dir the test jobs would try (and fail) to download it.
+      - name: Package the dev'd JLL and its artifact
+        run: |
+          HASH=$(julia --color=yes -e '
+            using TOML
+            f = joinpath(first(DEPOT_PATH), "dev", "Uno_jll", "Artifacts.toml")
+            entry = first(values(TOML.parsefile(f)))
+            print((entry isa AbstractVector ? entry[1] : entry)["git-tree-sha1"])')
+          echo "Uno_jll artifact hash: $HASH"
+          tar czf uno_jll.tar.gz -C "$HOME/.julia" dev/Uno_jll "artifacts/$HASH"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uno_jll
+          path: uno_jll.tar.gz
+          retention-days: 1
+
+  test:
+    name: Julia tests of ${{matrix.UNO_TEST}} ${{matrix.ARGS}} - ${{ github.event_name }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        UNO_TEST: [uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd, uno_filtersqp_highs,
+                   uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_lsr1, uno_filtersqp_bqpd_regularization_tr,
+                   uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs]
+        include:
+          - UNO_TEST: uno_ipopt
+            ARGS: MUMPS
+          - UNO_TEST: uno_ipopt
+            ARGS: SSIDS
+          - UNO_TEST: uno_ipopt_bfpc
+            ARGS: MUMPS
+          - UNO_TEST: uno_ipopt_bfpc
+            ARGS: SSIDS
+          - UNO_TEST: uno_ipopt_lbfgs
+            ARGS: MUMPS
+          - UNO_TEST: uno_ipopt_lbfgs
+            ARGS: SSIDS
+          - UNO_TEST: uno_pure_sqp
+            ARGS: MUMPS
+          - UNO_TEST: uno_pure_sqp
+            ARGS: SSIDS
+          - UNO_TEST: uno_unconstrained
+            ARGS: MUMPS
+          - UNO_TEST: uno_unconstrained
+            ARGS: SSIDS
+          - UNO_TEST: uno_unconstrained_lbfgs
+            ARGS: MUMPS
+          - UNO_TEST: uno_unconstrained_lbfgs
+            ARGS: SSIDS
+          - UNO_TEST: uno_charlies_instances
+            ARGS: filtersqp
+          - UNO_TEST: uno_charlies_instances
+            ARGS: ipopt
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install a newer version of Julia to actually test Uno_jll.jl.
       # We choose v1.10 because it is the current Long-Term Support (LTS).
       - uses: julia-actions/setup-julia@v2
         with:
           version: "1.10"
           arch: x64
-      - name: Test ${{matrix.UNO_PRESET}} preset on .github/julia/runtests.jl
+
+      - uses: julia-actions/cache@v3
+        with:
+          include-matrix: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: uno_jll
+
+      - name: Restore the dev'd JLL into the Julia depot
+        run: |
+          mkdir -p "$HOME/.julia"
+          tar xzf uno_jll.tar.gz -C "$HOME/.julia"
+
+      # OpenMP knobs affect the solver at run time, so they belong with the tests.
+      - name: Set the environment variables for OpenMP
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
+          echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
+
+      - name: Test ${{matrix.UNO_TEST}} ${{matrix.ARGS}}
+        env:
+          UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
-          include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_PRESET}}.jl")
+          test_args = "${{ matrix.ARGS }}"
+          isempty(test_args) || push!(ARGS, test_args)
+          include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_TEST}}.jl")

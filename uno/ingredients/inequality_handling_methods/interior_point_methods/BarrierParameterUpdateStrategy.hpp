@@ -1,17 +1,18 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_BARRIERPARAMETERUPDATESTRATEGY_H
 #define UNO_BARRIERPARAMETERUPDATESTRATEGY_H
 
-namespace uno {
-   // forward declarations
-   class DualResiduals;
-   class Iterate;
-   class Multipliers;
-   class Options;
-   class PrimalDualInteriorPointProblem;
+#include <algorithm>
+#include <limits>
+#include "optimization/Residuals.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/OptimizationProblem.hpp"
+#include "options/Options.hpp"
+#include "tools/Logger.hpp"
 
+namespace uno {
    struct UpdateParameters {
       double k_mu;
       double theta_mu;
@@ -19,19 +20,118 @@ namespace uno {
       double update_fraction;
    };
 
+   template <typename BarrierProblem>
    class BarrierParameterUpdateStrategy {
    public:
-      explicit BarrierParameterUpdateStrategy(const Options& options);
-      [[nodiscard]] double get_barrier_parameter() const;
+      // unscaled_complementarity_factor: ratio between the unscaled and the scaled complementarity (inverse of the
+      // objective scaling)
+      explicit BarrierParameterUpdateStrategy(const Options& options, double unscaled_complementarity_factor = 1.);
+      [[nodiscard]] const double& get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
-      [[nodiscard]] bool update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
-         const Iterate& current_iterate, const DualResiduals& residuals);
+      [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
+         Evaluations& evaluations);
+      [[nodiscard]] bool force_barrier_parameter_decrease();
 
    protected:
+      static constexpr double minimal_barrier_parameter_safeguard{std::numeric_limits<double>::min()};
       double barrier_parameter;
-      const double dual_tolerance;
+      const double minimal_barrier_parameter;
       const UpdateParameters parameters;
    };
+
+   // class template implementation
+
+   template <typename BarrierProblem>
+   BarrierParameterUpdateStrategy<BarrierProblem>::BarrierParameterUpdateStrategy(const Options& options,
+         double unscaled_complementarity_factor):
+      barrier_parameter(options.get_double("barrier_initial_parameter")),
+      // express the unscaled complementarity tolerance of the termination test in the scaled space
+      minimal_barrier_parameter(std::min(options.get_double("dual_tolerance"),
+         options.get_double("tight_unscaled_complementarity_tolerance") / unscaled_complementarity_factor)),
+      parameters({
+         options.get_double("barrier_k_mu"),
+         options.get_double("barrier_theta_mu"),
+         options.get_double("barrier_k_epsilon"),
+         options.get_double("barrier_update_fraction")
+      }) {
+   }
+
+   template <typename BarrierProblem>
+   const double& BarrierParameterUpdateStrategy<BarrierProblem>::get_barrier_parameter() const {
+      return this->barrier_parameter;
+   }
+
+   template <typename BarrierProblem>
+   void BarrierParameterUpdateStrategy<BarrierProblem>::set_barrier_parameter(double new_barrier_parameter) {
+      if (new_barrier_parameter <= 0.) {
+         throw std::runtime_error("The barrier parameter should be positive.");
+      }
+      this->barrier_parameter = new_barrier_parameter;
+   }
+
+   template <typename BarrierProblem>
+   bool BarrierParameterUpdateStrategy<BarrierProblem>::update_barrier_parameter(const BarrierProblem& barrier_problem,
+         const Iterate& current_iterate, Evaluations& evaluations) {
+      // primal-dual errors
+      Vector<double> lag(barrier_problem.number_variables);
+      barrier_problem.evaluate_lagrangian_gradient(current_iterate.primals, current_iterate.multipliers.constraints,
+         current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds, evaluations, lag.view());
+      const double stationarity_error = norm_inf(lag);
+      const double scaled_stationarity = stationarity_error / barrier_problem.compute_stationarity_scaling(current_iterate.multipliers);
+      Vector<double> constraints(barrier_problem.number_constraints);
+      barrier_problem.evaluate_constraints(current_iterate, constraints.view(), evaluations);
+      const double primal_feasibility = norm_inf(constraints);
+      const double complementarity_scaling = barrier_problem.compute_complementarity_scaling(current_iterate.multipliers);
+      double scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
+         current_iterate.multipliers, this->barrier_parameter) / complementarity_scaling;
+      double primal_dual_error = std::max({
+         scaled_stationarity,
+         primal_feasibility,
+         scaled_complementarity_error
+      });
+      DEBUG << "Max scaled primal-dual error for barrier subproblem is max{" << scaled_stationarity << ", " <<
+         primal_feasibility << ", " << scaled_complementarity_error << "} = " << primal_dual_error << '\n';
+
+      // update the barrier parameter (Eq. 7 in IPOPT paper)
+      // guard after division so that underflow cannot make the barrier parameter zero
+      const double barrier_parameter_threshold = std::max(minimal_barrier_parameter_safeguard,
+         this->minimal_barrier_parameter / this->parameters.update_fraction);
+
+      bool parameter_updated = false;
+      while (primal_dual_error <= this->parameters.k_epsilon * this->barrier_parameter) {
+         const double old_barrier_parameter = this->barrier_parameter;
+         this->barrier_parameter = std::max(barrier_parameter_threshold, std::min(this->parameters.k_mu * this->barrier_parameter,
+            std::pow(this->barrier_parameter, this->parameters.theta_mu)));
+         if (old_barrier_parameter <= this->barrier_parameter) {
+            break;
+         }
+         DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
+         // update complementarity error
+         scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
+            current_iterate.multipliers, this->barrier_parameter) / complementarity_scaling;
+         primal_dual_error = std::max({
+            scaled_stationarity,
+            primal_feasibility,
+            scaled_complementarity_error
+         });
+         DEBUG << "Max scaled primal-dual error for barrier subproblem is max{" << scaled_stationarity << ", " <<
+            primal_feasibility << ", " << scaled_complementarity_error << "} = " << primal_dual_error << '\n';
+         parameter_updated = true;
+      }
+      return parameter_updated;
+   }
+
+   // unconditional decrease (Eq. 7 in IPOPT paper), e.g. after consecutive tiny steps. Returns false if mu is already minimal
+   template <typename BarrierProblem>
+   bool BarrierParameterUpdateStrategy<BarrierProblem>::force_barrier_parameter_decrease() {
+      const double barrier_parameter_threshold = std::max(minimal_barrier_parameter_safeguard,
+         this->minimal_barrier_parameter / this->parameters.update_fraction);
+      const double old_barrier_parameter = this->barrier_parameter;
+      this->barrier_parameter = std::max(barrier_parameter_threshold, std::min(this->parameters.k_mu * this->barrier_parameter,
+         std::pow(this->barrier_parameter, this->parameters.theta_mu)));
+      DEBUG << "Barrier parameter mu forcefully updated to " << this->barrier_parameter << '\n';
+      return (this->barrier_parameter < old_barrier_parameter);
+   }
 } // namespace
 
 #endif // UNO_BARRIERPARAMETERUPDATESTRATEGY_H

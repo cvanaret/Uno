@@ -1,0 +1,318 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <functional>
+#include "PythonModel.hpp"
+#include "linear_algebra/View.hpp"
+#include "optimization/EvaluationErrors.hpp"
+#include "symbolic/Concatenation.hpp"
+#include "Uno.hpp"
+#include "tools/Infinity.hpp"
+
+namespace uno {
+   PythonModel::PythonModel(const PythonUserModel& user_model):
+      Model(user_model.name.empty() ? "Python model" : user_model.name,
+         static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
+         static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention), 0),
+         user_model(user_model),
+         nonlinear_constraints(this->number_constraints),
+         variables_lower_bounds(normalize_infinite_bounds(user_model.variables_lower_bounds)),
+         variables_upper_bounds(normalize_infinite_bounds(user_model.variables_upper_bounds)),
+         constraints_lower_bounds(normalize_infinite_bounds(user_model.constraints_lower_bounds)),
+         constraints_upper_bounds(normalize_infinite_bounds(user_model.constraints_upper_bounds)),
+         user_multipliers(user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE ? this->number_constraints : 0) {
+      // partition equality/inequality constraints
+      this->partition_constraints(this->equality_constraints, this->inequality_constraints);
+   }
+
+   ProblemType PythonModel::get_problem_type() const {
+      return this->user_model.problem_type;
+   }
+
+   bool PythonModel::has_jacobian_operator() const {
+      return this->user_model.jacobian_operator.has_value();
+   }
+
+   bool PythonModel::has_jacobian_transposed_operator() const {
+      return this->user_model.jacobian_transposed_operator.has_value();
+   }
+
+   bool PythonModel::has_hessian_operator() const {
+      return this->user_model.lagrangian_hessian_operator.has_value();
+   }
+
+   bool PythonModel::has_hessian_matrix() const {
+      return this->user_model.lagrangian_hessian.has_value();
+   }
+
+   double PythonModel::evaluate_objective(const Vector<double>& x) const {
+      double objective_value = 0.;
+      if (this->user_model.objective_function.has_value()) {
+         const auto x_py = input_view(x.data(), this->number_variables);
+
+         // evaluate objective
+         try {
+            objective_value = (*this->user_model.objective_function)(x_py);
+            objective_value *= this->optimization_sense;
+            ++this->number_model_evaluations.objective;
+         }
+         catch (const std::exception&) {
+            throw FunctionEvaluationError();
+         }
+      }
+      return objective_value;
+   }
+
+   void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
+      if (this->user_model.constraint_functions.has_value()) {
+         const auto x_py = input_view(x.data(), this->number_variables);
+         auto constraints_py = output_view(constraints.data(), this->number_constraints);
+
+         // evaluate constraints
+         try {
+            (*this->user_model.constraint_functions)(x_py, constraints_py);
+            ++this->number_model_evaluations.constraints;
+         }
+         catch (const std::exception&) {
+            throw FunctionEvaluationError();
+         }
+      }
+   }
+
+   void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      if (this->user_model.objective_gradient.has_value()) {
+         const auto x_py = input_view(x.data(), this->number_variables);
+         auto gradient_py = output_view(gradient.data(), this->number_variables);
+
+         // evaluate objective gradient
+         try {
+            (*this->user_model.objective_gradient)(x_py, gradient_py);
+            view(gradient, 0, this->number_variables).scale(this->optimization_sense);
+            ++this->number_model_evaluations.objective_gradient;
+         }
+         catch (const std::exception&) {
+            throw GradientEvaluationError();
+         }
+      }
+   }
+
+   View<const uno_int> PythonModel::get_jacobian_row_indices() const {
+      return view(this->user_model.jacobian_row_indices.data(), 0, this->number_jacobian_nonzeros());
+   }
+
+   View<const uno_int> PythonModel::get_jacobian_column_indices() const {
+      return view(this->user_model.jacobian_column_indices.data(), 0, this->number_jacobian_nonzeros());
+   }
+
+   void PythonModel::compute_hessian_sparsity(View<uno_int> row_indices, View<uno_int> column_indices, uno_int solver_indexing) const {
+      // copy the indices of the user sparsity patterns to the Uno vectors
+      const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
+      std::copy_n(this->user_model.hessian_row_indices.data(), number_hessian_nonzeros, row_indices.data());
+      std::copy_n(this->user_model.hessian_column_indices.data(), number_hessian_nonzeros, column_indices.data());
+
+      // handle the solver indexing
+      if (this->user_model.base_indexing != solver_indexing) {
+         const int indexing_difference = solver_indexing - this->user_model.base_indexing;
+         for (size_t index: Range(number_hessian_nonzeros)) {
+            row_indices[index] += indexing_difference;
+            column_indices[index] += indexing_difference;
+         }
+      }
+   }
+
+   void PythonModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
+      if (this->user_model.jacobian.has_value()) {
+         const auto x_py = input_view(x.data(), this->number_variables);
+         auto jacobian_py = output_view(jacobian_values, this->number_jacobian_nonzeros());
+
+         // evaluate Jacobian
+         try {
+            (*this->user_model.jacobian)(x_py, jacobian_py);
+            ++this->number_model_evaluations.jacobian;
+         }
+         catch (const std::exception&) {
+            throw GradientEvaluationError();
+         }
+      }
+   }
+
+   void PythonModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+         View<double> hessian_values) const {
+      if (this->user_model.lagrangian_hessian.has_value()) {
+         objective_multiplier *= this->optimization_sense;
+         const auto x_py = input_view(x.data(), this->number_variables);
+         const auto multipliers_py = input_view(this->to_user_sign_convention(multipliers), this->number_constraints);
+         auto hessian_py = output_view(hessian_values.data(), this->number_hessian_nonzeros());
+
+         // evaluate Lagrangian Hessian
+         try {
+            (*this->user_model.lagrangian_hessian)(x_py, objective_multiplier, multipliers_py, hessian_py);
+            ++this->number_model_evaluations.hessian;
+         }
+         catch (const std::exception&) {
+            throw HessianEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
+      }
+   }
+
+   void PythonModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+      if (this->user_model.jacobian_operator.has_value()) {
+         const auto x_py = input_view(x, this->number_variables);
+         const auto vector_py = input_view(vector, this->number_variables);
+         auto result_py = output_view(result, this->number_constraints);
+
+         // evaluate Jacobian-vector product
+         try {
+            (*this->user_model.jacobian_operator)(x_py, true, vector_py, result_py);
+         }
+         catch (const std::exception&) {
+            throw GradientEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_jacobian_vector_product not implemented");
+      }
+   }
+
+   void PythonModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
+      if (this->user_model.jacobian_transposed_operator.has_value()) {
+         const auto x_py = input_view(x, this->number_variables);
+         const auto vector_py = input_view(vector, this->number_constraints);
+         auto result_py = output_view(result, this->number_variables);
+
+         // evaluate Jacobian^T-vector product
+         try {
+            (*this->user_model.jacobian_transposed_operator)(x_py, true, vector_py, result_py);
+         }
+         catch (const std::exception&) {
+            throw GradientEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_jacobian_transposed_vector_product not implemented");
+      }
+   }
+
+   void PythonModel::compute_hessian_vector_product(View<const double> x, View<const double> vector, double objective_multiplier,
+         const Vector<double>& multipliers, View<double> result) const {
+      if (this->user_model.lagrangian_hessian_operator.has_value()) {
+         objective_multiplier *= this->optimization_sense;
+         const auto x_py = input_view(x.data(), this->number_variables);
+         const auto multipliers_py = input_view(this->to_user_sign_convention(multipliers), this->number_constraints);
+         const auto vector_py = input_view(vector.data(), this->number_variables);
+         auto result_py = output_view(result.data(), this->number_variables);
+
+         // evaluate Hessian-vector product
+         try {
+            (*this->user_model.lagrangian_hessian_operator)(x_py, true, objective_multiplier, multipliers_py, vector_py, result_py);
+         }
+         catch (const std::exception&) {
+            throw HessianEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_hessian_vector_product not implemented");
+      }
+   }
+
+   // returns the multipliers in the user's sign convention: Uno's multipliers if the conventions agree, otherwise a
+   // negated copy (Uno's multipliers are left untouched)
+   const double* PythonModel::to_user_sign_convention(const Vector<double>& multipliers) const {
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            this->user_multipliers[constraint_index] = -multipliers[constraint_index];
+         }
+         return this->user_multipliers.data();
+      }
+      return multipliers.data();
+   }
+
+   const std::vector<double>& PythonModel::get_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
+   }
+
+   const std::vector<double>& PythonModel::get_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
+   }
+
+   const std::vector<double>& PythonModel::get_constraints_lower_bounds() const {
+      return this->constraints_lower_bounds;
+   }
+
+   const std::vector<double>& PythonModel::get_constraints_upper_bounds() const {
+      return this->constraints_upper_bounds;
+   }
+
+   const std::vector<size_t>& PythonModel::get_equality_constraints() const {
+      return this->equality_constraints;
+   }
+
+   const std::vector<size_t>& PythonModel::get_inequality_constraints() const {
+      return this->inequality_constraints;
+   }
+
+   const Collection<size_t>& PythonModel::get_linear_constraints() const {
+      return this->linear_constraints;
+   }
+
+   const Collection<size_t>& PythonModel::get_nonlinear_constraints() const {
+      return this->nonlinear_constraints;
+   }
+
+   void PythonModel::initial_primal_point(Vector<double>& x) const {
+      std::copy_n(this->user_model.initial_primal_iterate.begin(), this->user_model.number_variables, x.begin());
+   }
+
+   void PythonModel::initial_dual_point(Vector<double>& multipliers) const {
+      std::copy_n(this->user_model.initial_dual_iterate.begin(), this->user_model.number_constraints, multipliers.begin());
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         multipliers.scale(-1.);
+      }
+   }
+
+   void PythonModel::postprocess_solution(Iterate& /*iterate*/, Evaluations& /*evaluations*/) const {
+      // do nothing
+   }
+
+   size_t PythonModel::number_jacobian_nonzeros() const {
+      return static_cast<size_t>(this->user_model.number_jacobian_nonzeros);
+   }
+
+   size_t PythonModel::number_hessian_nonzeros() const {
+      if (this->user_model.number_hessian_nonzeros.has_value()) {
+         return static_cast<size_t>(*this->user_model.number_hessian_nonzeros);
+      }
+      else {
+         throw std::runtime_error("The number of Hessian nonzeros is not available in UnoModel");
+      }
+   }
+
+   size_t PythonModel::number_model_objective_evaluations() const {
+      return this->number_model_evaluations.objective;
+   }
+
+   size_t PythonModel::number_model_constraints_evaluations() const {
+      return this->number_model_evaluations.constraints;
+   }
+
+   size_t PythonModel::number_model_objective_gradient_evaluations() const {
+      return this->number_model_evaluations.objective_gradient;
+   }
+
+   size_t PythonModel::number_model_jacobian_evaluations() const {
+      return this->number_model_evaluations.jacobian;
+   }
+
+   size_t PythonModel::number_model_hessian_evaluations() const {
+      return this->number_model_evaluations.hessian;
+   }
+
+   void PythonModel::reset_number_evaluations() const {
+      this->number_model_evaluations.reset();
+   }
+} // namespace

@@ -1,6 +1,9 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
+#include <stdexcept>
+#include <string>
 #include "Funnel.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
@@ -34,7 +37,7 @@ namespace uno {
       if (this->update_strategy == 1) {
          if (trial_infeasibility <= current_infeasibility) {
             this->width = std::max(this->margin * this->width,
-                  Funnel::convex_combination(current_infeasibility, trial_infeasibility, this->kappa));
+               convex_combination(current_infeasibility, trial_infeasibility, this->kappa));
          }
          else {
             DEBUG << "Trial infeasibility higher than current infeasibility" << '\n';
@@ -42,7 +45,7 @@ namespace uno {
          }
       }
       else if (this->update_strategy == 2) {
-         this->width = Funnel::convex_combination(this->width, trial_infeasibility, this->kappa);
+         this->width = convex_combination(this->width, trial_infeasibility, this->kappa);
       }
       else if (this->update_strategy == 3) {
          this->width = this->margin * this->width;
@@ -54,7 +57,7 @@ namespace uno {
    }
 
    void Funnel::update_restoration(double current_infeasibility) {
-      this->width = Funnel::convex_combination(this->width, current_infeasibility, this->kappa);
+      this->width = convex_combination(this->width, current_infeasibility, this->kappa);
       DEBUG << "\t\tNew funnel parameter is: " << this->width << '\n';
    }
 

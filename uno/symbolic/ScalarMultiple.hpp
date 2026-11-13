@@ -4,10 +4,12 @@
 #ifndef UNO_SCALARMULTIPLE_H
 #define UNO_SCALARMULTIPLE_H
 
+#include "symbolic_traits.hpp"
+
 namespace uno {
    // stores the expression (factor * expression) symbolically
    template <typename Expression>
-   class ScalarMultiple {
+   class ScalarMultiple: public SymbolicExpression {
    public:
       using value_type = typename std::remove_reference_t<Expression>::value_type;
 
@@ -18,15 +20,23 @@ namespace uno {
          return (this->factor == value_type(0)) ? value_type(0) : this->factor * this->expression[index];
       }
 
+      [[nodiscard]] value_type get_factor() const {
+         return this->factor;
+      }
+
+      UNO_FORWARD_ACCESSOR(get_expression, this->expression)
+
    protected:
       const value_type factor;
-      Expression expression;
+      storage_t<Expression> expression;
    };
 
    // free function
-   template <typename Expression, typename ElementType = typename Expression::value_type,
-         typename std::enable_if<std::is_arithmetic_v<ElementType>, int>::type = 0>
-   inline ScalarMultiple<Expression> operator*(ElementType factor, Expression&& expression) {
+   template <typename Expression, typename ElementType = typename std::remove_reference_t<Expression>::value_type,
+      // the first argument should be of arithmetic type, the second not
+      typename std::enable_if_t<std::is_arithmetic_v<std::remove_reference_t<ElementType>>, int> = 0,
+      typename std::enable_if_t<!std::is_arithmetic_v<std::remove_reference_t<Expression>>, int> = 0>
+   ScalarMultiple<Expression> operator*(ElementType factor, Expression&& expression) {
       return ScalarMultiple<Expression>(factor, std::forward<Expression>(expression));
    }
 } // namespace
