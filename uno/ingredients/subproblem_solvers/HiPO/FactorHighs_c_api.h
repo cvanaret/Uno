@@ -18,10 +18,6 @@
 extern "C" {
 #endif
 
-static const char* hipoVersion() {
-   return "1.16.0";
-}
-
 // Initialise and create/destroy objects
 HighsInt FactorHighs_initialise(HighsInt threads);
 void FactorHighs_terminate(void);
