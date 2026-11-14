@@ -1,0 +1,62 @@
+name: Check HiPO C API header
+
+# The HiPO C API header (FactorHighs_c_api.h) is not installed by HiGHS, so Uno vendors a copy.
+# This workflow checks that the vendored copy matches the header of the HiGHS version pinned in
+# dependencies/scripts/download_dependencies.sh, so that bumping HiGHS without updating the header fails.
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - 'dependencies/scripts/download_dependencies.sh'
+      - 'uno/ingredients/subproblem_solvers/HiPO/FactorHighs_c_api.h'
+      - '.github/workflows/check-hipo-header.yml'
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - 'dependencies/scripts/download_dependencies.sh'
+      - 'uno/ingredients/subproblem_solvers/HiPO/FactorHighs_c_api.h'
+      - '.github/workflows/check-hipo-header.yml'
+  workflow_dispatch:
+
+jobs:
+  check-hipo-header:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare the vendored header with that of the pinned HiGHS version
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=dependencies/scripts/download_dependencies.sh
+          VENDORED=uno/ingredients/subproblem_solvers/HiPO/FactorHighs_c_api.h
+          UPSTREAM_PATH=highs/ipm/hipo/factorhighs/FactorHighs_c_api.h
+
+          # HiGHS version: the last VERSION= assignment before the HiGHS source download URL
+          HIGHS_VERSION=$(awk '/^[[:space:]]*VERSION=/ { v = $0 } /ERGO-Code\/HiGHS\/archive/ { print v; exit }' "$SCRIPT" \
+            | sed -E 's/^[[:space:]]*VERSION=//; s/["'\'']//g; s/[[:space:]]+$//')
+          if [[ -z "$HIGHS_VERSION" ]]; then
+            echo "::error file=$SCRIPT::Could not extract the HiGHS version"
+            exit 1
+          fi
+          echo "HiGHS version pinned in $SCRIPT: $HIGHS_VERSION"
+
+          URL="https://raw.githubusercontent.com/ERGO-Code/HiGHS/${HIGHS_VERSION}/${UPSTREAM_PATH}"
+          if ! curl -fsSL --retry 3 -o upstream.h "$URL"; then
+            echo "::error::Could not download $URL (does HiGHS $HIGHS_VERSION ship $UPSTREAM_PATH?)"
+            exit 1
+          fi
+
+          # Uno prepends a comment block to its copy: compare both files from the include guard onward
+          strip_preamble() { sed -n '/^#ifndef FACTOR_HIGHS_C_API_H/,$p' "$1"; }
+          if [[ -z "$(strip_preamble "$VENDORED")" || -z "$(strip_preamble upstream.h)" ]]; then
+            echo "::error::Include guard FACTOR_HIGHS_C_API_H not found in one of the headers"
+            exit 1
+          fi
+          if ! diff -u <(strip_preamble upstream.h) <(strip_preamble "$VENDORED") \
+               --label "HiGHS ${HIGHS_VERSION}: ${UPSTREAM_PATH}" --label "$VENDORED"; then
+            echo "::error file=$VENDORED::The vendored HiPO header differs from that of HiGHS ${HIGHS_VERSION}. Update it from $URL"
+            exit 1
+          fi
+          echo "The vendored HiPO header matches HiGHS ${HIGHS_VERSION}"

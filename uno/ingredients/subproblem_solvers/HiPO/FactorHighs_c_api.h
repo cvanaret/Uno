@@ -1,7 +1,7 @@
 // Vendored copy of HiGHS's HiPO C API header (highs/ipm/hipo/factorhighs/FactorHighs_c_api.h).
 // HiGHS does not install this header, so Uno keeps a copy here. Keep it in sync with the HiGHS
-// version you link against (it depends only on the installed core header "util/HighsInt.h").
-// Source: HiGHS branch hipo-c, commit a7a2225.
+// version you link against (it depends only on the installed core header "util/HighsType.h").
+// Source: HiGHS v1.16.0 (see .github/workflows/check-hipo-header.yml).
 
 #ifndef FACTOR_HIGHS_C_API_H
 #define FACTOR_HIGHS_C_API_H
