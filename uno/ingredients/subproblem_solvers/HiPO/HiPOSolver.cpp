@@ -7,8 +7,6 @@
 #include <stdexcept>
 #include <vector>
 #include "HiPOSolver.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -154,7 +152,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void HiPOSolver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
+   void HiPOSolver::factorize(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       // scatter the COO values into the CSC values, summing duplicate entries
@@ -171,27 +169,14 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void HiPOSolver::solve_indefinite_system(double* result) {
-      assert(this->factorization_performed);
-
-      // copy rhs into result (overwritten by HiPO with the solution)
-      for (size_t index: Range(static_cast<size_t>(this->dimension))) {
-         result[index] = this->linear_system.rhs[index];
-      }
-      const HighsInt solve_status = FactorHighs_solve(this->solver, result, 1);
-      if (solve_status != 0) {
-         throw std::runtime_error("HiPO could not solve the linear system");
-      }
-   }
-
-   void HiPOSolver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+   void HiPOSolver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
       // HiPO solves in place, with the right-hand sides stored column-major (each column of length
-      // dimension); copy the rhs block into the solution block and solve all columns at once.
-      const size_t total_size = static_cast<size_t>(this->dimension) * number_of_rhs;
-      for (size_t index = 0; index < total_size; ++index) {
-         solution[index] = rhs[index];
+      // dimension); copy the rhs block into the solution block (unless they alias) and solve all columns at once.
+      if (solution != rhs) {
+         const size_t total_size = static_cast<size_t>(this->dimension) * number_of_rhs;
+         std::copy(rhs, rhs + total_size, solution);
       }
       const HighsInt solve_status = FactorHighs_solve(this->solver, solution, static_cast<HighsInt>(number_of_rhs));
       if (solve_status != 0) {
