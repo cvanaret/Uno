@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 static const char* hipoVersion() {
-   return "1.15.1";
+   return "1.16.0";
 }
 
 // Initialise and create/destroy objects
