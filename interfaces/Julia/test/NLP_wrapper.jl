@@ -157,7 +157,7 @@ end
 end
 
 @testset "preset = $preset" for preset in ("ipopt",)
-    for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57", "MA86")
+    for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57", "MA86", "HIPO")
         (linear_solver == "SSIDS") && (!haskey(ENV, "OMP_CANCELLATION") || !haskey(ENV, "OMP_PROC_BIND")) && continue
         (linear_solver in ("MA27", "MA57", "MA86")) && !(@ccall HSL_jll.libhsl.LIBHSL_isfunctional()::Bool) && continue
 
