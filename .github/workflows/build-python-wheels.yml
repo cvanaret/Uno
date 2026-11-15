@@ -27,6 +27,8 @@ concurrency:
 
 env:
   CIBW_TEST_EXTRAS: test
+  # the wheels bundle libkrylov (see dependencies/scripts/add_libkrylov_to_wheel.py): its tests must not be skipped
+  CIBW_TEST_ENVIRONMENT: UNOPY_REQUIRE_LIBKRYLOV=1
   CIBW_TEST_COMMAND: >-
     python -m pytest {project}/interfaces/Python/tests &&
     python {project}/interfaces/Python/examples/example_hs015.py &&
@@ -87,6 +89,9 @@ jobs:
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
           CIBW_BEFORE_ALL_LINUX:
             bash dependencies/scripts/download_dependencies.sh
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
+            auditwheel repair -w {dest_dir} {wheel} &&
+            python {package}/dependencies/scripts/add_libkrylov_to_wheel.py {package}/dependencies/libkrylov {dest_dir}
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -111,6 +116,9 @@ jobs:
             set(CMAKE_SHARED_LINKER_FLAGS "-L$LIBGFORTRAN_FOLDER -lgfortran -Wl,-rpath,$LIBGFORTRAN_FOLDER")
             EOF
             bash dependencies/scripts/download_dependencies.sh
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel} &&
+            python {package}/dependencies/scripts/add_libkrylov_to_wheel.py {package}/dependencies/libkrylov {dest_dir}
           CIBW_ENVIRONMENT_MACOS: >
             CC=clang
             CXX=clang++
@@ -136,7 +144,8 @@ jobs:
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
-            delvewheel repair --add-path 'C:/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}"
+            delvewheel repair --add-path 'C:/mingw64/bin;dependencies/bin' -w {dest_dir} {wheel}" &&
+            python {package}/dependencies/scripts/add_libkrylov_to_wheel.py {package}/dependencies/libkrylov {dest_dir}
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_BUILD_PARALLEL_LEVEL=$NUMBER_OF_PROCESSORS
             CMAKE_GENERATOR="MinGW Makefiles"

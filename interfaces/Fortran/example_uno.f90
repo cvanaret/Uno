@@ -19,6 +19,7 @@ program example_uno
     character(:), allocatable :: logger
     character(:), allocatable :: method_description
     character(len=32) :: preset = "filtersqp"  ! can be overridden by the first command-line argument
+    character(len=4096) :: libkrylov_path       ! optional second command-line argument
     character(len=*), parameter :: hessian_model = "exact"
     character(len=*), parameter :: problem_type = UNO_PROBLEM_NONLINEAR
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
@@ -226,6 +227,18 @@ program example_uno
     ! relative tolerance on the objective: an interior-point method stops close to, not at, the optimum
     if (abs(solution_objective - 306.5d0) > 1.0d-6 * 306.5d0) error stop 'Wrong solution objective'
     if (any(abs(primal_solution - [0.5d0, 2.0d0]) > 1.0d-6)) error stop 'Wrong primal solution'
+
+    !---------------------------------------------------
+    ! Optional: load libkrylov (C interface of Krylov.jl) at runtime
+    !---------------------------------------------------
+    if (command_argument_count() >= 2) then
+        call get_command_argument(2, libkrylov_path)
+        success = uno_set_solver_string_option(solver, "libkrylov_path", trim(libkrylov_path))
+        call check_success(success, "uno_set_solver_string_option")
+        success = uno_is_libkrylov_functional(solver)
+        print *, 'libkrylov functional: ', success
+        call check_success(success, "uno_is_libkrylov_functional")
+    end if
 
     !---------------------------------------------------
     ! Cleanup

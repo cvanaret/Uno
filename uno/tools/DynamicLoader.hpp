@@ -20,6 +20,8 @@ namespace uno {
    LibraryHandle open_library(const char* name);
    void close_library(LibraryHandle handle);
    void* raw_symbol(LibraryHandle handle, const char* symbol);
+   // description of the last open_library failure (dlerror, or the Windows error code)
+   [[nodiscard]] std::string last_library_error();
    void* resolve_symbol(LibraryHandle handle, const std::string& base);
 
    template <typename FunctionPointer>

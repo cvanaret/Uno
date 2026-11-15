@@ -195,7 +195,11 @@ jobs:
               # libspral.a uses libstdc++ internally (behind its C API), so link libstdc++ explicitly.
               # -l:libstdc++.so.6 rather than -lstdc++: under -stdlib=libc++, the clang driver
               # rewrites -lstdc++ into -lc++.
-              EXTRA_ARGS+=("-DAUXILIARY_LIBRARIES=-l:libstdc++.so.6")
+              # libc++ and libc++abi must precede libstdc++: both runtimes export the C++ ABI (__cxa_throw, ...),
+              # and the first one loaded provides these symbols to the whole process. If libstdc++ comes first,
+              # exceptions are allocated by libstdc++ while std::current_exception/std::rethrow_exception (libc++abi
+              # only) expect libc++abi's exception header, and a rethrown exception loses its type.
+              EXTRA_ARGS+=("-DAUXILIARY_LIBRARIES=-lc++;-lc++abi;-l:libstdc++.so.6")
               ;;
           esac
           if [ "${{ matrix.toolchain }}" != "clang-libcxx" ]; then
@@ -303,4 +307,12 @@ jobs:
 
       - name: Run tests
         working-directory: build
-        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
+        # the libkrylov tests (KrylovRuntimeLoadingTests) are skipped if UNO_KRYLOV_LIBRARY is not set
+        run: |
+          case "${{ runner.os }}" in
+            Linux) LIBKRYLOV=lib/libkrylov.so;;
+            macOS) LIBKRYLOV=lib/libkrylov.dylib;;
+            Windows) LIBKRYLOV=bin/libkrylov.dll;;
+          esac
+          export UNO_KRYLOV_LIBRARY="${{github.workspace}}/dependencies/libkrylov/${LIBKRYLOV}"
+          ctest --output-on-failure -C ${{env.BUILD_TYPE}}

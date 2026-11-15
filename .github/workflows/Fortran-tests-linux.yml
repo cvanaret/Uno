@@ -70,8 +70,12 @@ jobs:
                                    -L${{github.workspace}}/dependencies/lib \
                                    -Wl,-rpath,${{github.workspace}}/dependencies/lib \
                                    -lhighs -lhighs_extras -ldmumps -lmumps_common -lmpiseq -lpord -lmetis \
-                                   -lbqpd -lspral -llapack -lcblas -lblas -lstdc++
+                                   -lbqpd -lspral -llapack -lcblas -lblas -lstdc++ -ldl
 
       - name: Run Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
         run: ./example_uno
+
+      - name: Run Fortran tests with libkrylov
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: ./example_uno filtersqp ${{github.workspace}}/dependencies/libkrylov/lib/libkrylov.so

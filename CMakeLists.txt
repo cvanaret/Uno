@@ -230,6 +230,16 @@ if(_compile_ma86)
    endif()
 endif()
 
+# libkrylov (C interface of Krylov.jl): never linked, always loaded at runtime via dlopen
+# (option libkrylov_path, see uno/ingredients/subproblem_solvers/Krylov)
+target_sources(compiled_uno_files PRIVATE
+        uno/ingredients/subproblem_solvers/Krylov/KrylovLoader.cpp
+        uno/ingredients/subproblem_solvers/Krylov/KrylovSolver.cpp)
+target_link_libraries(uno_dependencies INTERFACE ${CMAKE_DL_LIBS})
+if(ENABLE_TESTS)
+   target_sources(run_unotest PRIVATE unotest/functional_tests/KrylovRuntimeLoadingTests.cpp)
+endif()
+
 # BQPD
 find_library(BQPD bqpd)
 if(BQPD)

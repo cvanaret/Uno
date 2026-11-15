@@ -55,9 +55,11 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -v
+        env:
+          UNO_KRYLOV_LIBRARY: ${{github.workspace}}/dependencies/libkrylov/lib/libkrylov.so
 
       - name: Run examples
         working-directory: ${{github.workspace}}/interfaces/Python/examples
         run: |
-          python example_hs015.py
+          python example_hs015.py ${{github.workspace}}/dependencies/libkrylov/lib/libkrylov.so
           python example_hs001.py

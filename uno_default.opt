@@ -38,6 +38,8 @@
 
 # path to the HSL shared library to dlopen for MA27/MA57/MA86 (empty = platform default libhsl.{so,dylib,dll}) (string)
 #libhsl_path /path/to/libhsl.{so,dylib,dll}
+# path to libkrylov (C interface of Krylov.jl) to dlopen at runtime (empty = UNO_KRYLOV_LIBRARY, then platform default libkrylov.{so,dylib,dll}) (string)
+#libkrylov_path /path/to/libkrylov.{so,dylib,dll}
 
 # ------------
 ## Termination

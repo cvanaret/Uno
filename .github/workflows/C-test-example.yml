@@ -81,3 +81,7 @@ jobs:
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/C/example/build
         run: ./example_hs015
+
+      - name: Run example with libkrylov
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
+        run: ./example_hs015 ${{github.workspace}}/dependencies/libkrylov/lib/libkrylov.so
