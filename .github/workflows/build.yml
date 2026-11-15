@@ -396,6 +396,7 @@ jobs:
             -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
             -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
             -DSPRAL=${DEPS}/lib/libspral.a \
+            -DHIGHS_WITH_HIPO=ON \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=ON
 

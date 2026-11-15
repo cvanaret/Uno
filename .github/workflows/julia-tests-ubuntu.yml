@@ -94,8 +94,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Add uno_ipopt_hipo below once Uno_jll ships a HiGHS_jll built with HiPO
-        # (the test file .github/julia/runtests_uno_ipopt_hipo.jl is already provided).
         UNO_TEST: [uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd, uno_filtersqp_highs,
                    uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_lsr1, uno_filtersqp_bqpd_regularization_tr,
                    uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs]
@@ -104,26 +102,38 @@ jobs:
             ARGS: MUMPS
           - UNO_TEST: uno_ipopt
             ARGS: SSIDS
+          - UNO_TEST: uno_ipopt
+            ARGS: HIPO
           - UNO_TEST: uno_ipopt_bfpc
             ARGS: MUMPS
           - UNO_TEST: uno_ipopt_bfpc
             ARGS: SSIDS
+          - UNO_TEST: uno_ipopt_bfpc
+            ARGS: HIPO
           - UNO_TEST: uno_ipopt_lbfgs
             ARGS: MUMPS
           - UNO_TEST: uno_ipopt_lbfgs
             ARGS: SSIDS
+          - UNO_TEST: uno_ipopt_lbfgs
+            ARGS: HIPO
           - UNO_TEST: uno_pure_sqp
             ARGS: MUMPS
           - UNO_TEST: uno_pure_sqp
             ARGS: SSIDS
+          - UNO_TEST: uno_pure_sqp
+            ARGS: HIPO
           - UNO_TEST: uno_unconstrained
             ARGS: MUMPS
           - UNO_TEST: uno_unconstrained
             ARGS: SSIDS
+          - UNO_TEST: uno_unconstrained
+            ARGS: HIPO
           - UNO_TEST: uno_unconstrained_lbfgs
             ARGS: MUMPS
           - UNO_TEST: uno_unconstrained_lbfgs
             ARGS: SSIDS
+          - UNO_TEST: uno_unconstrained_lbfgs
+            ARGS: HIPO
           - UNO_TEST: uno_charlies_instances
             ARGS: filtersqp
           - UNO_TEST: uno_charlies_instances
