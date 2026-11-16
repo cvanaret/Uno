@@ -45,6 +45,17 @@ integer(uno_int), parameter :: UNO_OPTION_TYPE_STRING    =  3
 integer(uno_int), parameter :: UNO_OPTION_TYPE_NOT_FOUND = -1
 
 !---------------------------------------------
+! Status codes returned by the functions that deal with options
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_OPTIONS_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_OPTIONS_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_OPTIONS_NOT_FOUND        = 2
+integer(uno_int), parameter :: UNO_OPTIONS_WRONG_TYPE       = 3
+integer(uno_int), parameter :: UNO_OPTIONS_INVALID_VALUE    = 4
+integer(uno_int), parameter :: UNO_OPTIONS_INVALID_FILE     = 5
+integer(uno_int), parameter :: UNO_OPTIONS_ERROR            = 6
+
+!---------------------------------------------
 ! Optimization status
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_SUCCESS           = 0

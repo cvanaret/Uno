@@ -231,25 +231,27 @@ call uno_destroy_solver(solver)
 Options can be passed individually:
 
 ```fortran
-logical(c_bool) :: success
+integer(uno_int) :: status
 integer(uno_int) :: max_iterations = 1000
 real(c_double) :: primal_tolerance = 1.0d-6
 logical(c_bool) :: print_solution = .true.
 character(len=*) :: hessian_model = "exact"
 
-success = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
-success = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
-success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
-success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
+status = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
+status = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
+status = uno_set_solver_bool_option(solver, "print_solution", print_solution)
+status = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
 ```
+
+The functions that set options return a status code: `UNO_OPTIONS_SUCCESS` if the option was set, otherwise `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND` (unknown option), `UNO_OPTIONS_WRONG_TYPE`, `UNO_OPTIONS_INVALID_VALUE` (e.g. a misspelled value of a string option), `UNO_OPTIONS_INVALID_FILE` or `UNO_OPTIONS_ERROR`. If the status is not `UNO_OPTIONS_SUCCESS`, the options are left unchanged.
 
 Options can also be loaded from a file that contains an `option value` pair per line (the example file `uno_default.opt` in the root directory contains Uno's default options). The options are set in this particular order. Anything that follows a `#` is treated as a comment and is ignored.
 
 ```fortran
-logical(c_bool) :: success
+integer(uno_int) :: status
 character(len=*) :: option_file = "uno.opt"
 
-success = uno_load_solver_option_file(solver, option_file)
+status = uno_load_solver_option_file(solver, option_file)
 ```
 
 Getting option values:
@@ -267,8 +269,8 @@ print_solution = uno_get_solver_bool_option(solver, "print_solution")
 Setting a preset:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_solver_preset(solver, "filtersqp")
+integer(uno_int) :: status
+status = uno_set_solver_preset(solver, "filtersqp")
 ```
 
 ### Solving the model
@@ -276,8 +278,11 @@ success = uno_set_solver_preset(solver, "filtersqp")
 Solve the optimization problem with:
 
 ```fortran
-call uno_optimize(solver, model)
+logical(c_bool) :: success
+success = uno_optimize(solver, model)
 ```
+
+`uno_optimize` returns `.true.` if the optimization was carried out, and `.false.` if it could not start or failed unexpectedly.
 
 ### Inspecting the result
 

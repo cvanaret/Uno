@@ -187,22 +187,22 @@ end
 
 function uno_set_solver_integer_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_integer_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                                option_value::Int32)::Bool
+                                                option_value::Int32)::Int32
 end
 
 function uno_set_solver_double_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_double_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                               option_value::Cdouble)::Bool
+                                               option_value::Cdouble)::Int32
 end
 
 function uno_set_solver_bool_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_bool_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                             option_value::Bool)::Bool
+                                             option_value::Bool)::Int32
 end
 
 function uno_set_solver_string_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_string_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                               option_value::Cstring)::Bool
+                                               option_value::Cstring)::Int32
 end
 
 function uno_get_solver_option_type(solver, option_name)
@@ -235,11 +235,11 @@ function uno_options_destroy_iterator(iterator)
 end
 
 function uno_load_solver_option_file(solver, file_name)
-    @ccall libuno.uno_load_solver_option_file(solver::Ptr{Cvoid}, file_name::Cstring)::Bool
+    @ccall libuno.uno_load_solver_option_file(solver::Ptr{Cvoid}, file_name::Cstring)::Int32
 end
 
 function uno_set_solver_preset(solver, preset_name)
-    @ccall libuno.uno_set_solver_preset(solver::Ptr{Cvoid}, preset_name::Cstring)::Bool
+    @ccall libuno.uno_set_solver_preset(solver::Ptr{Cvoid}, preset_name::Cstring)::Int32
 end
 
 function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
@@ -260,7 +260,7 @@ function uno_reset_logger_stream()
 end
 
 function uno_optimize(solver, model)
-    @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Cvoid
+    @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Bool
 end
 
 function uno_get_method_description(solver)
