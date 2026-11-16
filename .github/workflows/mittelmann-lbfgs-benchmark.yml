@@ -1,13 +1,16 @@
 name: Mittelmann L-BFGS benchmark
 
-# Runs uno_ampl with the ipopt preset, MA57 and an L-BFGS Hessian on all the
+# Runs uno_ampl with the ipopt preset, a given linear solver (default MA57) and
+# an L-BFGS Hessian on all the
 # Mittelmann instances (time_limit=600s per instance), via the reusable
 # Mittelmann benchmark workflow. Unlike mittelmann-lbfgs-benchmark.yml (NARX_CFy
 # and WM_CFy only), results are stored in the artifact
-# `mittelmann-lbfgs-full-results-pr-<pr_number>` and posted in their own sticky
-# PR comment; with `compare_pr`, as a before/after table against the latest
-# results of this workflow on that PR.
-#   gh workflow run "Full Mittelmann L-BFGS benchmark" -f pr_number=123 [-f compare_pr=118]
+# `mittelmann-lbfgs-full-[<linear_solver>-]results-pr-<pr_number>` (the solver
+# only when it is not MA57) and posted in their own sticky PR comment; with
+# `compare_pr`, as a before/after table against the latest results of this
+# workflow on that PR obtained with `compare_linear_solver` (default: the same).
+#   gh workflow run "Mittelmann L-BFGS benchmark" -f pr_number=123 [-f linear_solver=HIPO]
+#     [-f compare_pr=118] [-f compare_linear_solver=MA57]
 
 on:
   workflow_dispatch:
@@ -17,10 +20,22 @@ on:
         required: true
         type: string
       compare_pr:
-        description: 'PR number to compare against (optional; uses its latest full L-BFGS benchmark results)'
+        description: 'PR number to compare against (optional; uses its latest full L-BFGS benchmark results with compare_linear_solver)'
         required: false
         default: ''
         type: string
+      linear_solver:
+        description: 'Linear solver'
+        required: false
+        default: 'MA57'
+        type: choice
+        options: [MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
+      compare_linear_solver:
+        description: 'Linear solver of the compare_pr results'
+        required: false
+        default: 'same'
+        type: choice
+        options: [same, MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
 
 # a called workflow cannot be granted more than its caller
 permissions:
@@ -38,5 +53,7 @@ jobs:
       # fallback of benchmark_compare.py finds the reports by their title
       title: Full Mittelmann L-BFGS benchmark
       tag: lbfgs-full
-      options: preset=ipopt hessian_model=LBFGS linear_solver=MA57
+      options: preset=ipopt hessian_model=LBFGS
+      linear_solver: ${{ inputs.linear_solver }}
+      compare_linear_solver: ${{ inputs.compare_linear_solver }}
       time_limit: 600
