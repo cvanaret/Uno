@@ -13,56 +13,56 @@
 extern "C" {
 #endif
    // Optimization sense
-   const uno_int UNO_MINIMIZE =  1;
-   const uno_int UNO_MAXIMIZE = -1;
+   static const uno_int UNO_MINIMIZE =  1;
+   static const uno_int UNO_MAXIMIZE = -1;
 
    // Lagrange multiplier sign convention
-   const uno_int UNO_MULTIPLIER_POSITIVE =  1;
-   const uno_int UNO_MULTIPLIER_NEGATIVE = -1;
+   static const uno_int UNO_MULTIPLIER_POSITIVE =  1;
+   static const uno_int UNO_MULTIPLIER_NEGATIVE = -1;
 
    // Problem type: "LP" = Linear Problem, "Q" = Quadratic Problem, "NLP" = Nonlinear Problem
-   const char UNO_PROBLEM_LINEAR[]    = "LP";
-   const char UNO_PROBLEM_QUADRATIC[] = "QP";
-   const char UNO_PROBLEM_NONLINEAR[] = "NLP";
+   static const char UNO_PROBLEM_LINEAR[]    = "LP";
+   static const char UNO_PROBLEM_QUADRATIC[] = "QP";
+   static const char UNO_PROBLEM_NONLINEAR[] = "NLP";
 
    // Base indexing style: 0-based (C) or 1-based (Fortran)
-   const uno_int UNO_ZERO_BASED_INDEXING = 0;
-   const uno_int UNO_ONE_BASED_INDEXING  = 1;
+   static const uno_int UNO_ZERO_BASED_INDEXING = 0;
+   static const uno_int UNO_ONE_BASED_INDEXING  = 1;
 
    // Triangular part: 'L' = lower, 'U' = upper
-   const char UNO_LOWER_TRIANGLE = 'L';
-   const char UNO_UPPER_TRIANGLE = 'U';
+   static const char UNO_LOWER_TRIANGLE = 'L';
+   static const char UNO_UPPER_TRIANGLE = 'U';
 
    // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
-   const uno_int UNO_OPTION_TYPE_INTEGER = 0;
-   const uno_int UNO_OPTION_TYPE_DOUBLE = 1;
-   const uno_int UNO_OPTION_TYPE_BOOL = 2;
-   const uno_int UNO_OPTION_TYPE_STRING = 3;
-   const uno_int UNO_OPTION_TYPE_NOT_FOUND = -1;
+   static const uno_int UNO_OPTION_TYPE_INTEGER = 0;
+   static const uno_int UNO_OPTION_TYPE_DOUBLE = 1;
+   static const uno_int UNO_OPTION_TYPE_BOOL = 2;
+   static const uno_int UNO_OPTION_TYPE_STRING = 3;
+   static const uno_int UNO_OPTION_TYPE_NOT_FOUND = -1;
 
    // Optimization status
-   const uno_int UNO_SUCCESS = 0;
-   const uno_int UNO_ITERATION_LIMIT = 1;
-   const uno_int UNO_TIME_LIMIT = 2;
-   const uno_int UNO_EVALUATION_ERROR = 3;
-   const uno_int UNO_ALGORITHMIC_ERROR = 4;
-   const uno_int UNO_USER_TERMINATION = 5;
-   const uno_int UNO_USER_INTERRUPTION = 6;
+   static const uno_int UNO_SUCCESS = 0;
+   static const uno_int UNO_ITERATION_LIMIT = 1;
+   static const uno_int UNO_TIME_LIMIT = 2;
+   static const uno_int UNO_EVALUATION_ERROR = 3;
+   static const uno_int UNO_ALGORITHMIC_ERROR = 4;
+   static const uno_int UNO_USER_TERMINATION = 5;
+   static const uno_int UNO_USER_INTERRUPTION = 6;
 
    // Iterate status
-   const uno_int UNO_NOT_OPTIMAL = 0;
-   const uno_int UNO_FEASIBLE_KKT_POINT = 1; // feasible stationary point
-   const uno_int UNO_FEASIBLE_FJ_POINT = 2; // stationary point without constraint qualification
-   const uno_int UNO_INFEASIBLE_STATIONARY_POINT = 3; // infeasible stationary point of constraint violation
-   const uno_int UNO_FEASIBLE_SMALL_STEP = 4;
-   const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
-   const uno_int UNO_DIVERGING_ITERATE = 6;
-   const uno_int UNO_UNBOUNDED_OBJECTIVE = 7;
+   static const uno_int UNO_NOT_OPTIMAL = 0;
+   static const uno_int UNO_FEASIBLE_KKT_POINT = 1; // feasible stationary point
+   static const uno_int UNO_FEASIBLE_FJ_POINT = 2; // stationary point without constraint qualification
+   static const uno_int UNO_INFEASIBLE_STATIONARY_POINT = 3; // infeasible stationary point of constraint violation
+   static const uno_int UNO_FEASIBLE_SMALL_STEP = 4;
+   static const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
+   static const uno_int UNO_DIVERGING_ITERATE = 6;
+   static const uno_int UNO_UNBOUNDED_OBJECTIVE = 7;
 
    // current Uno version
-   const uno_int UNO_VERSION_MAJOR = 2;
-   const uno_int UNO_VERSION_MINOR = 9;
-   const uno_int UNO_VERSION_PATCH = 3;
+   static const uno_int UNO_VERSION_MAJOR = 2;
+   static const uno_int UNO_VERSION_MINOR = 9;
+   static const uno_int UNO_VERSION_PATCH = 3;
 
    // options iterator
    typedef void* uno_options_iterator;

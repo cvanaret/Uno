@@ -130,6 +130,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/SolveErrorBoundaryTests.cpp
    unotest/functional_tests/StagnationTests.cpp
    unotest/unit_tests/*.cpp
+   unotest/C_header/*.c
 )
 if(ENABLE_TESTS)
    target_sources(run_unotest PRIVATE ${TESTS})
