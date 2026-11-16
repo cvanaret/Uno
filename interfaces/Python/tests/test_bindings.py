@@ -158,3 +158,17 @@ def test_logger_stream(ipopt):
 	ipopt.set_option("logger", "SILENT")
 	ipopt.optimize(hs015())
 	assert stream.getvalue() == ""
+
+
+# https://github.com/cvanaret/Uno/issues/1070: a misspelled option value is rejected when it is set
+@pytest.mark.parametrize("option, value", [("logger", "SOLENT"), ("hessian_model", "BFGS"), ("linear_solver", "MA97")])
+def test_invalid_string_option_value(solver, option, value):
+	with pytest.raises(ValueError, match=value):
+		solver.set_option(option, value)
+
+
+def test_rejected_option_value_leaves_the_solver_usable(ipopt):
+	with pytest.raises(ValueError):
+		ipopt.set_option("logger", "SOLENT")
+	result = ipopt.optimize(hs015())
+	assert result.optimization_status == unopy.OptimizationStatus.SUCCESS
