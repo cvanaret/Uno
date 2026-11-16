@@ -835,132 +835,157 @@ void* uno_create_solver() {
    return solver;
 }
 
-bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) {
-   if (solver == nullptr) {
-      WARNING << "Please specify a valid solver."  << std::endl;
-      return false;
-   }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      uno_solver->user_options.set_integer(option_name, option_value);
-      uno_solver->options_consistent_with_solve = false;
-      return true;
-   }
-   catch (const std::exception& exception) {
-      WARNING << exception.what() << std::endl;
-      return false;
-   }
-}
-
-bool uno_set_solver_double_option(void* solver, const char* option_name, double option_value) {
-   if (solver == nullptr) {
-      WARNING << "Please specify a valid solver."  << std::endl;
-      return false;
-   }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      uno_solver->user_options.set_double(option_name, option_value);
-      uno_solver->options_consistent_with_solve = false;
-      return true;
-   }
-   catch (const std::exception& exception) {
-      WARNING << exception.what() << std::endl;
-      return false;
-   }
-}
-
-bool uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) {
-   if (solver == nullptr) {
-      WARNING << "Please specify a valid solver."  << std::endl;
-      return false;
-   }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      uno_solver->user_options.set_bool(option_name, option_value);
-      uno_solver->options_consistent_with_solve = false;
-      return true;
-   }
-   catch (const std::exception& exception) {
-      WARNING << exception.what() << std::endl;
-      return false;
-   }
-}
-
-// throws if the preset name is invalid
-void validate_preset(const std::string& preset) {
-   if (preset != "auto") {
-      Presets::from_string(preset);
-   }
-}
-
-static void refresh_preset_options(Solver& solver) {
-   solver.preset_options = Options{};
-   const std::string preset = solver.user_options.get_string_optional("preset").value_or(solver.default_options.get_string("preset"));
-   if (preset != "auto") {
-      Presets::set(solver.preset_options, preset);
-   }
-}
-
-bool uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) {
-   if (solver == nullptr) {
-      WARNING << "Please specify a valid solver." << std::endl;
-      return false;
-   }
-   if (option_name == nullptr || option_value == nullptr) {
-      WARNING << "Please specify a valid option name and value." << std::endl;
-      return false;
-   }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      const std::string name{option_name};
-      std::string value{option_value};
-      const bool is_preset = (name == "preset");
-      if (is_preset) {
-         validate_preset(value);
+namespace {
+   // reports an error without throwing
+   void report_error(const char* message) noexcept {
+      try {
+         WARNING << message << std::endl;
       }
-      uno_solver->user_options.set_string(name, std::move(value));
-      if (is_preset) {
-         refresh_preset_options(*uno_solver);
+      catch (...) {
       }
-      uno_solver->options_consistent_with_solve = false;
-      return true;
    }
-   catch (const std::exception& exception) {
-      WARNING << exception.what() << std::endl;
-      return false;
+
+   // runs a function that deals with options and converts its exceptions into a status code: no exception crosses the
+   // C interface
+   template <typename Function>
+   uno_int guard_options(Function&& function) noexcept {
+      try {
+         function();
+         return UNO_OPTIONS_SUCCESS;
+      }
+      catch (const OptionNotFound& exception) {
+         report_error(exception.what());
+         return UNO_OPTIONS_NOT_FOUND;
+      }
+      catch (const OptionWrongType& exception) {
+         report_error(exception.what());
+         return UNO_OPTIONS_WRONG_TYPE;
+      }
+      catch (const InvalidOptionValue& exception) {
+         report_error(exception.what());
+         return UNO_OPTIONS_INVALID_VALUE;
+      }
+      catch (const InvalidOptionFile& exception) {
+         report_error(exception.what());
+         return UNO_OPTIONS_INVALID_FILE;
+      }
+      catch (const std::exception& exception) {
+         report_error(exception.what());
+         return UNO_OPTIONS_ERROR;
+      }
+      catch (...) {
+         report_error("An unknown error occurred");
+         return UNO_OPTIONS_ERROR;
+      }
    }
+
+   // the options set by the preset (none for "auto", whose options depend on the model)
+   Options compute_preset_options(const Options& user_options, const Options& default_options) {
+      Options preset_options{};
+      const std::string preset = user_options.get_string_optional("preset").value_or(default_options.get_string("preset"));
+      if (preset != "auto") {
+         Presets::set(preset_options, preset);
+      }
+      return preset_options;
+   }
+
+   // modifies a copy of the user options, then commits it: if any step fails, the options of the solver are unchanged
+   template <typename Modifier>
+   uno_int modify_user_options(void* solver, Modifier&& modify) noexcept {
+      if (solver == nullptr) {
+         report_error("Please specify a valid solver.");
+         return UNO_OPTIONS_INVALID_ARGUMENT;
+      }
+      Solver* uno_solver = static_cast<Solver*>(solver);
+      return guard_options([&]() {
+         Options user_options = uno_solver->user_options;
+         modify(user_options);
+         Options preset_options = compute_preset_options(user_options, uno_solver->default_options);
+         // commit
+         uno_solver->user_options = std::move(user_options);
+         uno_solver->preset_options = std::move(preset_options);
+         uno_solver->options_consistent_with_solve = false;
+      });
+   }
+
+   // sets a particular option
+   template <typename Setter>
+   uno_int set_user_option(void* solver, const char* option_name, Setter&& setter) noexcept {
+      if (option_name == nullptr) {
+         report_error("Please specify a valid option name.");
+         return UNO_OPTIONS_INVALID_ARGUMENT;
+      }
+      return modify_user_options(solver, [&](Options& options) {
+         setter(options, std::string{option_name});
+      });
+   }
+} // namespace
+
+uno_int uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) UNO_NOEXCEPT {
+   return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
+      options.set_integer(name, option_value);
+   });
 }
 
-uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
-   if (solver == nullptr) {
-      WARNING << "Please specify a valid solver."  << std::endl;
-      return false;
+uno_int uno_set_solver_double_option(void* solver, const char* option_name, double option_value) UNO_NOEXCEPT {
+   return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
+      options.set_double(name, option_value);
+   });
+}
+
+uno_int uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) UNO_NOEXCEPT {
+   return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
+      options.set_bool(name, option_value);
+   });
+}
+
+uno_int uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) UNO_NOEXCEPT {
+   if (option_value == nullptr) {
+      report_error("Please specify a valid option value.");
+      return UNO_OPTIONS_INVALID_ARGUMENT;
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
+   return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
+      options.set_string(name, std::string{option_value});
+   });
+}
+
+uno_int uno_get_solver_option_type(void* solver, const char* option_name) UNO_NOEXCEPT {
+   if (solver == nullptr || option_name == nullptr) {
+      return UNO_OPTION_TYPE_NOT_FOUND;
+   }
    try {
-      return static_cast<uno_int>(uno_solver->user_options.get_option_type(option_name));
+      const auto type = Options::option_types.find(option_name);
+      if (type == Options::option_types.end()) {
+         return UNO_OPTION_TYPE_NOT_FOUND;
+      }
+      return static_cast<uno_int>(type->second);
    }
-   catch(const std::out_of_range&) {
+   catch (...) {
       return UNO_OPTION_TYPE_NOT_FOUND;
    }
 }
 
-uno_options_iterator uno_options_begin_iterator() {
+uno_options_iterator uno_options_begin_iterator() UNO_NOEXCEPT {
    if (Options::option_types.begin() == Options::option_types.end()) {
       // empty list
       return nullptr;
    }
-   return new OptionIterator(Options::option_types.begin());
+   try {
+      return new OptionIterator(Options::option_types.begin());
+   }
+   catch (...) {
+      return nullptr;
+   }
 }
 
-uno_options_iterator uno_options_end_iterator() {
+uno_options_iterator uno_options_end_iterator() UNO_NOEXCEPT {
    // nullptr is the sentinel for end iterator
    return nullptr;
 }
 
-void uno_options_next_iterator(uno_options_iterator* iterator) {
+void uno_options_next_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT {
    if (iterator == nullptr) {
-      WARNING << "Please specify a valid options iterator."  << std::endl;
+      report_error("Please specify a valid options iterator.");
       return;
    }
    if (*iterator == nullptr) {
@@ -972,10 +997,10 @@ void uno_options_next_iterator(uno_options_iterator* iterator) {
    if (uno_iterator == Options::option_types.end()) {
       // end reached: destroy
       uno_options_destroy_iterator(iterator);
-   }  
+   }
 }
 
-const char* uno_options_iterator_name(uno_options_iterator iterator) {
+const char* uno_options_iterator_name(uno_options_iterator iterator) UNO_NOEXCEPT {
    if (iterator == nullptr) {
       // nullptr if iterator is null
       return nullptr;
@@ -984,7 +1009,7 @@ const char* uno_options_iterator_name(uno_options_iterator iterator) {
    return uno_iterator->first.c_str();
 }
 
-uno_int uno_options_iterator_type(uno_options_iterator iterator) {
+uno_int uno_options_iterator_type(uno_options_iterator iterator) UNO_NOEXCEPT {
    if (iterator == nullptr) {
       // option not found if iterator is null
       return UNO_OPTION_TYPE_NOT_FOUND;
@@ -993,7 +1018,7 @@ uno_int uno_options_iterator_type(uno_options_iterator iterator) {
    return static_cast<uno_int>(uno_iterator->second);
 }
 
-void uno_options_destroy_iterator(uno_options_iterator* iterator) {
+void uno_options_destroy_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT {
    if (iterator == nullptr || *iterator == nullptr) {
       return;
    }
@@ -1001,55 +1026,24 @@ void uno_options_destroy_iterator(uno_options_iterator* iterator) {
    *iterator = nullptr;
 }
 
-bool uno_load_solver_option_file(void* solver, const char* file_name) {
-   if (solver == nullptr) {
-      WARNING << "Please specify a valid solver." << std::endl;
-      return false;
-   }
+uno_int uno_load_solver_option_file(void* solver, const char* file_name) UNO_NOEXCEPT {
    if (file_name == nullptr) {
-      WARNING << "Please specify a valid option file name." << std::endl;
-      return false;
+      report_error("Please specify a valid option file name.");
+      return UNO_OPTIONS_INVALID_ARGUMENT;
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      // load into a temporary so a malformed file leaves the solver untouched
-      Options file_options;
-      Options::load_option_file(file_options, file_name);
-      if (const auto preset = file_options.get_string_optional("preset")) {
-         validate_preset(*preset);
-      }
-      uno_solver->user_options.overwrite(file_options);
-      refresh_preset_options(*uno_solver);
-      return true;
-   }
-   catch (const std::exception& exception) {
-      WARNING << exception.what() << std::endl;
-      return false;
-   }
+   return modify_user_options(solver, [&](Options& options) {
+      Options::load_option_file(options, file_name);
+   });
 }
 
-bool uno_set_solver_preset(void* solver, const char* preset_name) {
-   if (solver == nullptr) {
-      WARNING << "Please specify a valid solver." << std::endl;
-      return false;
-   }
+uno_int uno_set_solver_preset(void* solver, const char* preset_name) UNO_NOEXCEPT {
    if (preset_name == nullptr) {
-      WARNING << "Please specify a valid preset." << std::endl;
-      return false;
+      report_error("Please specify a valid preset.");
+      return UNO_OPTIONS_INVALID_ARGUMENT;
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      std::string preset{preset_name};
-      validate_preset(preset);
-      uno_solver->user_options.set_string("preset", std::move(preset));
-      refresh_preset_options(*uno_solver);
-      uno_solver->options_consistent_with_solve = false;
-      return true;
-   }
-   catch (const std::exception& exception) {
-      WARNING << exception.what() << std::endl;
-      return false;
-   }
+   return modify_user_options(solver, [&](Options& options) {
+      options.set_string("preset", std::string{preset_name});
+   });
 }
 
 bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
@@ -1078,47 +1072,68 @@ bool uno_reset_logger_stream() {
    return true;
 }
 
-void uno_optimize(void* solver, void* model) {
-   if (model == nullptr) {
-      throw std::runtime_error("Please specify a valid model.");
-   }
+bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
    if (solver == nullptr) {
-      throw std::runtime_error("Please specify a valid solver.");
+      report_error("Please specify a valid solver.");
+      return false;
+   }
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   // the result of a previous optimization does not correspond to this optimization
+   delete uno_solver->result;
+   uno_solver->result = nullptr;
+   uno_solver->options_consistent_with_solve = false;
+
+   if (model == nullptr) {
+      report_error("Please specify a valid model.");
+      return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (!user_model->objective_function && !user_model->constraint_functions) {
-      WARNING << "Please specify at least an objective or constraints."  << std::endl;
-      return;
+      report_error("Please specify at least an objective or constraints.");
+      return false;
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
 
-   // create an instance of UnoModel, a subclass of Model
-   const UnoModel uno_model(*user_model);
+   try {
+      // create an instance of UnoModel, a subclass of Model
+      const UnoModel uno_model(*user_model);
 
-   // defaults -> preset -> user options
-   Options full_options = uno_solver->default_options;
-   const std::string preset = uno_solver->user_options.get_string_optional("preset").value_or(uno_solver->default_options.get_string("preset"));
-   if (preset == "auto") {
-      Presets::set(uno_model, full_options, preset);
+      // defaults -> preset -> user options
+      Options full_options = uno_solver->default_options;
+      const std::string preset = uno_solver->user_options.get_string_optional("preset").value_or(uno_solver->default_options.get_string("preset"));
+      if (preset == "auto") {
+         Presets::set(uno_model, full_options, preset);
+      }
+      else {
+         full_options.overwrite(uno_solver->preset_options);
+      }
+      full_options.overwrite(uno_solver->user_options);
+
+      // resolve logger
+      Logger::set_logger(full_options.get_string("logger"));
+
+      uno_solver->user_options.print("User options");
+
+      // solve the model
+      Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
+      // move the new result into uno_solver
+      uno_solver->result = new Result(std::move(result));
+      uno_solver->options_consistent_with_solve = true;
+      // flush the logger
+      Logger::flush();
+      return true;
    }
-   else {
-      full_options.overwrite(uno_solver->preset_options);
+   catch (const std::exception& exception) {
+      report_error(exception.what());
    }
-   full_options.overwrite(uno_solver->user_options);
-
-   // resolve logger
-   Logger::set_logger(full_options.get_string("logger"));
-
-   uno_solver->user_options.print("User options");
-
-   // solve the model
-   Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
-   // clean up the previous result (if any) and move the new result into uno_solver
-   delete uno_solver->result;
-   uno_solver->result = new Result(std::move(result));
-   uno_solver->options_consistent_with_solve = true;
-   // flush the logger
-   Logger::flush();
+   catch (...) {
+      report_error("An unknown error occurred");
+   }
+   try {
+      Logger::flush();
+   }
+   catch (...) {
+   }
+   return false;
 }
 
 const char* uno_get_method_description(void* solver) {

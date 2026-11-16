@@ -139,11 +139,14 @@ void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_conventi
 
 	// solver creation
 	void* solver = uno_create_solver();
-	uno_set_solver_preset(solver, "filtersqp");
-	uno_set_solver_string_option(solver, "logger", "INFO");
+	const uno_int preset_status = uno_set_solver_preset(solver, "filtersqp");
+	assert(preset_status == UNO_OPTIONS_SUCCESS);
+	const uno_int logger_status = uno_set_solver_string_option(solver, "logger", "INFO");
+	assert(logger_status == UNO_OPTIONS_SUCCESS);
 
 	// solve
-	uno_optimize(solver, model);
+	const bool optimized = uno_optimize(solver, model);
+	assert(optimized);
 	
 	// tests
 	const uno_int optimization_status = uno_get_optimization_status(solver);

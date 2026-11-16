@@ -151,11 +151,14 @@ int main() {
 
    // solver creation
    void* solver = uno_create_solver();
-   uno_set_solver_preset(solver, "filtersqp");
-   uno_set_solver_bool_option(solver, "print_solution", true);
+   uno_int option_status = uno_set_solver_preset(solver, "filtersqp");
+   assert(option_status == UNO_OPTIONS_SUCCESS);
+   option_status = uno_set_solver_bool_option(solver, "print_solution", true);
+   assert(option_status == UNO_OPTIONS_SUCCESS);
 
    // run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
-   uno_optimize(solver, model);
+   bool optimized = uno_optimize(solver, model);
+   assert(optimized);
    printf("Method used: %s\n", uno_get_method_description(solver));
    // get the solution
    uno_int optimization_status = uno_get_optimization_status(solver);
@@ -175,7 +178,8 @@ int main() {
    uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
       hessian_column_indices, lagrangian_hessian);
    uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
-   uno_optimize(solver, model);
+   optimized = uno_optimize(solver, model);
+   assert(optimized);
    
    printf("Method used: %s\n", uno_get_method_description(solver));
    // get the solution
@@ -211,10 +215,12 @@ int main() {
 #ifdef UNO_EXAMPLE_HIGHS
    // run 3: solve with the filterslp preset and HiGHS as LP solver
    printf("\n");
-   uno_set_solver_preset(solver, "filterslp");
-   bool option_set = uno_set_solver_string_option(solver, "LP_solver", "HIGHS");
-   assert(option_set);
-   uno_optimize(solver, model);
+   option_status = uno_set_solver_preset(solver, "filterslp");
+   assert(option_status == UNO_OPTIONS_SUCCESS);
+   option_status = uno_set_solver_string_option(solver, "LP_solver", "HIGHS");
+   assert(option_status == UNO_OPTIONS_SUCCESS);
+   optimized = uno_optimize(solver, model);
+   assert(optimized);
    printf("Method used: %s\n", uno_get_method_description(solver));
    optimization_status = uno_get_optimization_status(solver);
    assert(optimization_status == UNO_SUCCESS);
