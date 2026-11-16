@@ -8,6 +8,9 @@ those of the latest benchmark run on another PR, looked up in this order:
   2. with --comment-fallback, the last report posted in that PR's benchmark
      comment (this covers runs that predate the results artifact).
 
+The meta.json of runs that predate the `linear_solver` key, and the reports read
+from comments, are taken to be MA57 runs (the benchmarks' default).
+
 Each results.tsv row is <name> <solved|failed> <seconds>, optionally followed by
 <model read seconds> <solve seconds> (empty when unknown). When either run has
 this breakdown, the per-instance table has separate model read/solve columns.
@@ -125,7 +128,8 @@ ROW_PATTERN = re.compile(r"^\|\s*(✅|❌)\s*\|\s*`([^`]+)`\s*\|\s*(?:solved|fai
 
 
 def fetch_from_comments(repository, pr_number, token, title):
-    report_header = f"## {title}"
+    # "## <title> — ...": a longer title starting with <title> (e.g. "<title> (MUMPS)") is another report
+    report_header = f"## {title} — "
     comments = []
     page = 1
     while True:
@@ -253,6 +257,10 @@ def build_report(title, before, before_meta, before_pr, after, after_meta, after
         if before_meta.get(key) is not None and after_meta.get(key) is not None \
                 and before_meta[key] != after_meta[key]:
             lines += [f"> ⚠️ Different {label}: before `{before_meta[key]}`, after `{after_meta[key]}`.", ""]
+    # comparing two linear solvers is a legitimate use: stated, not flagged
+    if before_meta.get("linear_solver", "MA57") != after_meta.get("linear_solver", "MA57"):
+        lines += [f"> Linear solver: before `{before_meta.get('linear_solver', 'MA57')}`, "
+                  f"after `{after_meta.get('linear_solver', 'MA57')}`.", ""]
     lines += [
         f"| | before | after | after/before |",
         f"|:--|--:|--:|--:|",
@@ -369,7 +377,9 @@ def main():
                         help="comparison report posted as the PR comment")
     parser.add_argument("--full-output", default=None,
                         help="optional: full comparison report (all instances), e.g. for the run summary")
-    parser.add_argument("--title", default="Mittelmann benchmark", help="title of the benchmark reports")
+    parser.add_argument("--title", default="Mittelmann benchmark", help="title of the comparison report")
+    parser.add_argument("--compare-title", default=None,
+                        help="title of the 'before' reports, for --comment-fallback (default: --title)")
     parser.add_argument("--artifact-prefix", default="mittelmann-results-pr-",
                         help="results artifacts are named <prefix><PR number>")
     parser.add_argument("--comment-fallback", action="store_true",
@@ -397,7 +407,7 @@ def main():
     if fetched is None and args.comment_fallback:
         print(f"Looking at the comments of PR #{args.compare_pr}")
         try:
-            fetched = fetch_from_comments(repository, args.compare_pr, token, args.title)
+            fetched = fetch_from_comments(repository, args.compare_pr, token, args.compare_title or args.title)
         except Exception as error:  # noqa: BLE001 - any failure falls back to the plain report
             print(f"::warning title={args.title} comparison::Could not fetch results of PR #{args.compare_pr}: {error}")
             return 0

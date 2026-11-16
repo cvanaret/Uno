@@ -14,10 +14,17 @@ name: Mittelmann benchmark
 #    then the wall time minus the solve time.
 # Both are unknown when the run has no optimization summary (crash, timeout).
 #
+# The linear solver is given by `linear_solver` (default MA57). MA27/MA57/MA86
+# come from libhsl; MUMPS, SSIDS (SPRAL) and HIPO (HiGHS) are linked from the
+# downloaded dependencies only when requested, so the default build is unchanged.
+#
 # Each run uploads its results (results.tsv + meta.json) as the artifact
-# `mittelmann-[<tag>-]results-pr-<pr_number>`. If `compare_pr` is given, the PR
-# comment is a before/after table against the latest results of that PR with the
-# same tag (from its artifact or, for older runs, from its benchmark comment).
+# `mittelmann-[<tag>-][<linear_solver>-]results-pr-<pr_number>` (the solver only
+# when it is not MA57). If `compare_pr` is given, the PR comment is a before/after
+# table against the latest results of that PR with the same tag, obtained with
+# `compare_linear_solver` (default: the same linear solver), from its artifact
+# or, for older MA57 runs, from its benchmark comment. E.g. HIPO against MA57 on
+# the same PR: -f pr_number=123 -f linear_solver=HIPO -f compare_pr=123 -f compare_linear_solver=MA57
 #
 # The workflow is also reusable (workflow_call) to benchmark a configuration on a
 # subset of the instances, e.g. mittelmann-lbfgs-benchmark.yml. Such a run has its
@@ -35,10 +42,22 @@ on:
         required: true
         type: string
       compare_pr:
-        description: 'PR number to compare against (optional; uses its latest benchmark results)'
+        description: 'PR number to compare against (optional; uses its latest benchmark results with compare_linear_solver)'
         required: false
         default: ''
         type: string
+      linear_solver:
+        description: 'Linear solver'
+        required: false
+        default: 'MA57'
+        type: choice
+        options: [MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
+      compare_linear_solver:
+        description: 'Linear solver of the compare_pr results'
+        required: false
+        default: 'same'
+        type: choice
+        options: [same, MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
   workflow_call:
     inputs:
       pr_number:
@@ -64,7 +83,17 @@ on:
         default: ''
         type: string
       options:
-        description: 'Space-separated name=value Uno options, on top of uno_mittelmann.opt'
+        description: 'Space-separated name=value Uno options, on top of uno_mittelmann.opt (linear_solver excluded)'
+        required: false
+        default: ''
+        type: string
+      linear_solver:
+        description: 'Linear solver: MA57, MA27, MA86, MUMPS, SSIDS or HIPO'
+        required: false
+        default: 'MA57'
+        type: string
+      compare_linear_solver:
+        description: 'Linear solver of the compare_pr results (default: same as linear_solver)'
         required: false
         default: ''
         type: string
@@ -86,11 +115,13 @@ env:
   SCRATCH: /scratch/local/opt-008547/cvanaret
   OPENBLAS_NUM_THREADS: 1
   OMP_NUM_THREADS: 1
-  # configuration of the run (defaults: full benchmark, triggered via workflow_dispatch)
-  TITLE: ${{ inputs.title || 'Mittelmann benchmark' }}
-  ARTIFACT_PREFIX: ${{ inputs.tag && format('mittelmann-{0}-results-pr-', inputs.tag) || 'mittelmann-results-pr-' }}
-  COMMENT_HEADER: ${{ inputs.tag && format('mittelmann-{0}-benchmark', inputs.tag) || 'mittelmann-benchmark' }}
-  LOGS_ARTIFACT: ${{ inputs.tag && format('mittelmann-{0}-logs', inputs.tag) || 'mittelmann-logs' }}
+  # configuration of the run (defaults: full benchmark, triggered via workflow_dispatch).
+  # TITLE, ARTIFACT_PREFIX, COMMENT_HEADER and LOGS_ARTIFACT are derived from
+  # BASE_TITLE, TAG and LINEAR_SOLVER in the "Configure the run" step.
+  BASE_TITLE: ${{ inputs.title || 'Mittelmann benchmark' }}
+  TAG: ${{ inputs.tag }}
+  LINEAR_SOLVER: ${{ inputs.linear_solver || 'MA57' }}
+  COMPARE_LINEAR_SOLVER: ${{ inputs.compare_linear_solver }}
   INSTANCES: ${{ inputs.instances }}
   UNO_OPTIONS: ${{ inputs.options }}
   TIME_LIMIT: ${{ inputs.time_limit || 1200 }}
@@ -117,6 +148,46 @@ jobs:
       - name: Record the benchmarked commit
         run: echo "BENCHMARK_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
+      # Non-default linear solvers get their own title, artifacts and sticky
+      # comment, so that comparisons are made against the same linear solver.
+      - name: Configure the run
+        run: |
+          set -euo pipefail
+          SOLVERS="MA57 MA27 MA86 MUMPS SSIDS HIPO"
+          [ -n "$COMPARE_LINEAR_SOLVER" ] && [ "$COMPARE_LINEAR_SOLVER" != same ] || COMPARE_LINEAR_SOLVER=$LINEAR_SOLVER
+          for solver in "$LINEAR_SOLVER" "$COMPARE_LINEAR_SOLVER"; do
+            [[ " $SOLVERS " == *" $solver "* ]] \
+              || { echo "::error::linear solvers must be among ${SOLVERS}, got '$solver'"; exit 1; }
+          done
+          for option in $UNO_OPTIONS; do
+            if [[ "$option" == linear_solver=* ]]; then
+              echo "::error::pass the linear solver with the linear_solver input, not in options"; exit 1
+            fi
+          done
+          # <tag>[-<solver>] and <title>[ (<solver>)], the solver only when it is not MA57
+          config_of() { local config=$TAG; [ "$1" = MA57 ] || config=${config:+${config}-}$1; echo "${config:+${config}-}"; }
+          title_of() { if [ "$1" = MA57 ]; then echo "$BASE_TITLE"; else echo "$BASE_TITLE ($1)"; fi; }
+          if [ "$COMPARE_LINEAR_SOLVER" = "$LINEAR_SOLVER" ]; then
+            comparison_title=$(title_of "$LINEAR_SOLVER")
+          else
+            comparison_title="${BASE_TITLE} (${COMPARE_LINEAR_SOLVER} → ${LINEAR_SOLVER})"
+          fi
+          {
+            echo "TITLE=$(title_of "$LINEAR_SOLVER")"
+            echo "ARTIFACT_PREFIX=mittelmann-$(config_of "$LINEAR_SOLVER")results-pr-"
+            echo "COMMENT_HEADER=mittelmann-$(config_of "$LINEAR_SOLVER")benchmark"
+            echo "LOGS_ARTIFACT=mittelmann-$(config_of "$LINEAR_SOLVER")logs"
+            # results of compare_pr
+            echo "COMPARE_LINEAR_SOLVER=${COMPARE_LINEAR_SOLVER}"
+            echo "COMPARE_TITLE=$(title_of "$COMPARE_LINEAR_SOLVER")"
+            echo "COMPARE_ARTIFACT_PREFIX=mittelmann-$(config_of "$COMPARE_LINEAR_SOLVER")results-pr-"
+            echo "COMPARISON_TITLE=${comparison_title}"
+          } | tee -a "$GITHUB_ENV"
+          # SSIDS (SPRAL) refuses to run without OpenMP cancellation
+          if [ "$LINEAR_SOLVER" = SSIDS ]; then
+            echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          fi
+
       - name: Download Uno solver dependencies
         run: bash dependencies/scripts/download_dependencies.sh
 
@@ -127,7 +198,7 @@ jobs:
           ${{env.VENV}}/bin/pip install patchelf
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Configure Uno (ASL + libhsl)
+      - name: Configure Uno (ASL + libhsl [+ MUMPS, SPRAL or HiGHS])
         run: |
           set -euo pipefail
           LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
@@ -136,14 +207,38 @@ jobs:
           LIBAMPL_PATH="$HOME/ampl/amplsolver.a"
           DEPS="${{ github.workspace }}/dependencies"
 
+          # MUMPS, SPRAL and HiGHS (static, from UnoUtils) are only linked when requested
+          case "$LINEAR_SOLVER" in
+            MUMPS)
+              SOLVER_FLAGS=("-DMUMPS_INCLUDE_DIR=${DEPS}/include" "-DMETIS_INCLUDE_DIR=${DEPS}/include"
+                            "-DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a" "-DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a"
+                            "-DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a" "-DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a"
+                            "-DMETIS_LIBRARY=${DEPS}/lib/libmetis.a")
+              FOUND="Found MUMPS" ;;
+            SSIDS)
+              SOLVER_FLAGS=("-DSPRAL_INCLUDE_DIR=${DEPS}/include" "-DSPRAL=${DEPS}/lib/libspral.a" "-DMETIS=${DEPS}/lib/libmetis.a")
+              FOUND="Found SPRAL" ;;
+            HIPO)
+              SOLVER_FLAGS=("-DHIGHS_INCLUDE_DIR=${DEPS}/include/highs"
+                            "-DHIGHS=${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" -DHIGHS_WITH_HIPO=ON)
+              FOUND="HiPO linear solver enabled" ;;
+            *)
+              SOLVER_FLAGS=()
+              FOUND="Found hsl" ;;
+          esac
+
           cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
                                              -DHSL=${LIBHSL_PATH} \
                                              -DAMPLSOLVER=${LIBAMPL_PATH} \
                                              -DBQPD=${DEPS}/lib/libbqpd.a \
+                                             "${SOLVER_FLAGS[@]}" \
                                              -DBUILD_SHARED_LIBS=ON \
-                                             -DBUILD_STATIC_LIBS=OFF
+                                             -DBUILD_STATIC_LIBS=OFF | tee cmake-configure.log
+          # fail now rather than after hours of runs that all fail
+          grep -q -- "-- ${FOUND}" cmake-configure.log \
+            || { echo "::error::linear_solver=${LINEAR_SOLVER}: '${FOUND}' missing from the CMake output"; exit 1; }
 
       # uno_ampl is EXCLUDE_FROM_ALL, so it must be requested explicitly.
       - name: Build uno_ampl
@@ -193,8 +288,14 @@ jobs:
             # Uno enforces time_limit=$TIMELIMIT itself; the outer `timeout` is only a
             # safety net in case a run gets stuck past its own limit.
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Solving ${name}"
-            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" option_file="$OPTION_FILE" time_limit="$TIMELIMIT" "${EXTRA_OPTIONS[@]}" > "$log" 2>&1 || true
+            timeout $((TIMELIMIT + 30)) "$UNO" "$nl" option_file="$OPTION_FILE" time_limit="$TIMELIMIT" \
+              linear_solver="$LINEAR_SOLVER" "${EXTRA_OPTIONS[@]}" > "$log" 2>&1 || true
             end=$(date +%s.%N)
+            # an unusable linear solver makes every run fail: stop at the first one
+            if grep -Eq 'The linear solver [A-Za-z0-9]+ (was requested, but|is unknown)|HiPO is not available' "$log"; then
+              cat "$log"
+              echo "::error::linear_solver=${LINEAR_SOLVER} is not usable by this build"; exit 1
+            fi
             secs=$(awk "BEGIN{printf \"%.2f\", ${end} - ${start}}")
 
             # "Solve time:   <seconds>s" (optimization summary) and "Model read time:   <seconds>s" (uno_ampl)
@@ -228,6 +329,7 @@ jobs:
           # ---- machine-readable metadata, used by later comparisons ----
           cat > results/meta.json <<EOF
           {"sha": "${BENCHMARK_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT}, "options": "${UNO_OPTIONS}",
+           "linear_solver": "${LINEAR_SOLVER}",
            "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
           EOF
 
@@ -243,7 +345,7 @@ jobs:
           {
             echo "## ${TITLE} — uno_ampl (time_limit=${TIMELIMIT}s)"
             echo ""
-            echo "Commit \`${BENCHMARK_SHA:0:7}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo "Commit \`${BENCHMARK_SHA:0:7}\` · linear solver \`${LINEAR_SOLVER}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
             if [ -n "$UNO_OPTIONS" ]; then
               echo ""
               echo "Options: \`${UNO_OPTIONS}\`"
@@ -277,8 +379,11 @@ jobs:
           if ! [[ "$COMPARE_PR" =~ ^[0-9]+$ ]]; then
             echo "::error::compare_pr must be a PR number, got '$COMPARE_PR'"; exit 1
           fi
+          # the comment fallback only covers runs that predate the artifacts, all with MA57
+          FALLBACK=()
+          [ "$COMPARE_LINEAR_SOLVER" != MA57 ] || FALLBACK=(--comment-fallback --compare-title "$COMPARE_TITLE")
           ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
-            --title "$TITLE" --artifact-prefix "$ARTIFACT_PREFIX" --comment-fallback \
+            --title "$COMPARISON_TITLE" --artifact-prefix "$COMPARE_ARTIFACT_PREFIX" "${FALLBACK[@]}" \
             --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
             --results-dir results --output benchmark-comment.md
           if grep -q 'before/after' benchmark-comment.md; then

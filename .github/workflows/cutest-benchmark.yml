@@ -2,8 +2,9 @@ name: CUTEst benchmark
 
 # Builds Uno as a shared library (HSL, BQPD), compiles CUTEst (classic
 # ARCHDefs/make build, the one the `runcutest -p uno` interface relies on) and
-# solves test problems in their original SIF format with a given Uno `preset`,
-# giving each one a given `time_limit`. Prints a per-instance summary
+# solves test problems in their original SIF format with a given Uno `preset`
+# and `linear_solver` (default MA57; MUMPS, SSIDS and HIPO are linked from the
+# downloaded dependencies only when requested), giving each one a given `time_limit`. Prints a per-instance summary
 # (tickmark = solved, cross = failed) and the number of solved instances.
 #
 # The problems come from two collections:
@@ -21,13 +22,14 @@ name: CUTEst benchmark
 #    Optimization status:             Success
 #
 # Each run uploads its results (results.tsv + meta.json) as the artifact
-# `cutest-results-<preset>-pr-<pr_number>`. If `compare_pr` is given, the PR
-# comment is a before/after table against the latest results of that PR
-# obtained with the same preset.
+# `cutest-results-<preset>-[<linear_solver>-]pr-<pr_number>` (the solver only
+# when it is not MA57). If `compare_pr` is given, the PR comment is a
+# before/after table against the latest results of that PR obtained with the
+# same preset and `compare_linear_solver` (default: the same linear solver).
 
 on:
   # Manual trigger: from the Actions tab ("Run workflow") or with
-  # `gh workflow run "CUTEst benchmark" -f pr_number=123 [-f preset=ipopt] [-f compare_pr=118]`
+  # `gh workflow run "CUTEst benchmark" -f pr_number=123 [-f preset=ipopt] [-f linear_solver=HIPO] [-f compare_pr=118] [-f compare_linear_solver=MA57]`
   workflow_dispatch:
     inputs:
       pr_number:
@@ -39,11 +41,23 @@ on:
         required: false
         default: 'ipopt'
         type: string
+      linear_solver:
+        description: 'Linear solver'
+        required: false
+        default: 'MA57'
+        type: choice
+        options: [MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
       compare_pr:
-        description: 'PR number to compare against (optional; uses its latest CUTEst benchmark results with the same preset)'
+        description: 'PR number to compare against (optional; uses its latest CUTEst benchmark results with the same preset and compare_linear_solver)'
         required: false
         default: ''
         type: string
+      compare_linear_solver:
+        description: 'Linear solver of the compare_pr results'
+        required: false
+        default: 'same'
+        type: choice
+        options: [same, MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
       subset:
         description: 'Problems to solve: nlp (CUTEst nlpsif), qp (Maros-Meszaros), bc (no general constraints), lc (linear constraints), nlc (nonlinear constraints, not in nlpsif) or all'
         required: false
@@ -77,6 +91,10 @@ env:
   HOME: /home/optimi/cvanaret
   OPENBLAS_NUM_THREADS: 1
   OMP_NUM_THREADS: 1
+  LINEAR_SOLVER: ${{ inputs.linear_solver || 'MA57' }}
+  COMPARE_LINEAR_SOLVER: ${{ (inputs.compare_linear_solver && inputs.compare_linear_solver != 'same') && inputs.compare_linear_solver || inputs.linear_solver || 'MA57' }}
+  # results artifact: the linear solver only when it is not the default (keeps the MA57 names)
+  RESULTS_ARTIFACT: cutest-results-${{ inputs.preset }}-${{ (inputs.linear_solver && inputs.linear_solver != 'MA57') && format('{0}-', inputs.linear_solver) || '' }}pr-
   # CUTEst classic-install layout. The `runcutest -p uno` driver reads
   # packages/$ARCH/$PRECISION and objects/$ARCH/$PRECISION, so it needs the
   # ARCHDefs/make build (not the Meson build) plus SIFDecode + ARCHDefs.
@@ -129,6 +147,16 @@ jobs:
           [[ "$JOBS" =~ ^[1-9][0-9]*$ ]] || { echo "::error::jobs must be a positive integer"; exit 1; }
           [[ -z "$COMPARE_PR" || "$COMPARE_PR" =~ ^[0-9]+$ ]] || { echo "::error::compare_pr must be a PR number"; exit 1; }
           [[ "$PRESET" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "::error::preset must be a preset name (e.g. filtersqp)"; exit 1; }
+          for solver in "$LINEAR_SOLVER" "$COMPARE_LINEAR_SOLVER"; do
+            case "$solver" in
+              MA57|MA27|MA86|MUMPS|SSIDS|HIPO) ;;
+              *) echo "::error::linear solvers must be among MA57, MA27, MA86, MUMPS, SSIDS, HIPO, got '$solver'"; exit 1 ;;
+            esac
+          done
+          # SSIDS (SPRAL) refuses to run without OpenMP cancellation
+          if [ "$LINEAR_SOLVER" = SSIDS ]; then
+            echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          fi
           for tool in gcc gfortran make bunzip2; do
             command -v "$tool" > /dev/null || { echo "::error::$tool is required by CUTEst"; exit 1; }
           done
@@ -140,7 +168,7 @@ jobs:
       - name: Download Uno solver dependencies
         run: bash dependencies/scripts/download_dependencies.sh
 
-      - name: Configure Uno (libhsl, shared library)
+      - name: Configure Uno (libhsl [+ MUMPS, SPRAL or HiGHS], shared library)
         run: |
           set -euo pipefail
           LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
@@ -148,13 +176,37 @@ jobs:
           LIBHSL_PATH="$HOME/libhsl/builddir/libhsl.so"
           DEPS="${{ github.workspace }}/dependencies"
 
+          # MUMPS, SPRAL and HiGHS (static, from UnoUtils) are only linked when requested
+          case "$LINEAR_SOLVER" in
+            MUMPS)
+              SOLVER_FLAGS=("-DMUMPS_INCLUDE_DIR=${DEPS}/include" "-DMETIS_INCLUDE_DIR=${DEPS}/include"
+                            "-DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a" "-DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a"
+                            "-DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a" "-DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a"
+                            "-DMETIS_LIBRARY=${DEPS}/lib/libmetis.a")
+              FOUND="Found MUMPS" ;;
+            SSIDS)
+              SOLVER_FLAGS=("-DSPRAL_INCLUDE_DIR=${DEPS}/include" "-DSPRAL=${DEPS}/lib/libspral.a" "-DMETIS=${DEPS}/lib/libmetis.a")
+              FOUND="Found SPRAL" ;;
+            HIPO)
+              SOLVER_FLAGS=("-DHIGHS_INCLUDE_DIR=${DEPS}/include/highs"
+                            "-DHIGHS=${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" -DHIGHS_WITH_HIPO=ON)
+              FOUND="HiPO linear solver enabled" ;;
+            *)
+              SOLVER_FLAGS=()
+              FOUND="Found hsl" ;;
+          esac
+
           cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
                                              -DHSL=${LIBHSL_PATH} \
                                              -DBQPD=${DEPS}/lib/libbqpd.a \
+                                             "${SOLVER_FLAGS[@]}" \
                                              -DBUILD_SHARED_LIBS=ON \
-                                             -DBUILD_STATIC_LIBS=OFF
+                                             -DBUILD_STATIC_LIBS=OFF | tee cmake-configure.log
+          # fail now rather than after hours of runs that all fail
+          grep -q -- "-- ${FOUND}" cmake-configure.log \
+            || { echo "::error::linear_solver=${LINEAR_SOLVER}: '${FOUND}' missing from the CMake output"; exit 1; }
 
       - name: Build libuno
         run: cmake --build ${{ github.workspace }}/build --target uno_shared --config ${{ env.BUILD_TYPE }} --parallel
@@ -272,9 +324,9 @@ jobs:
           rm -rf "$WORK_DIR" "$LOG_DIR" "$ROWS_DIR"
           mkdir -p "$WORK_DIR" "$LOG_DIR" "$ROWS_DIR" results
 
-          # ---- Uno options: the preset only ----
+          # ---- Uno options: the preset and the linear solver (user options override the preset) ----
           export OPTION_FILE="${{ github.workspace }}/cutest-preset.opt"
-          printf 'preset %s\n' "$PRESET" > "$OPTION_FILE"
+          printf 'preset %s\nlinear_solver %s\n' "$PRESET" "$LINEAR_SOLVER" > "$OPTION_FILE"
 
           # ---- list of problems (from the manifest built when fetching the collections) ----
           MANIFEST="${{ github.workspace }}/cutest-tools/manifest.tsv"
@@ -299,7 +351,7 @@ jobs:
           for problem in "${INSTANCES[@]}"; do
             [ -n "${FILE_OF[$problem]:-}" ] || { echo "::error::$problem is in neither collection"; exit 1; }
           done
-          echo "Solving ${total} problems (${SELECTION}), preset=${PRESET}, time_limit=${TIMELIMIT}s, ${JOBS} in parallel"
+          echo "Solving ${total} problems (${SELECTION}), preset=${PRESET}, linear_solver=${LINEAR_SOLVER}, time_limit=${TIMELIMIT}s, ${JOBS} in parallel"
 
           # ---- solve ----
           for problem in "${INSTANCES[@]}"; do
@@ -346,7 +398,7 @@ jobs:
           MM_COMMIT=$(git -C "$MAROS_MESZAROS" rev-parse --short HEAD)
           cat > results/meta.json <<EOF
           {"sha": "${BENCHMARK_SHA}", "pr": "${PR_NUMBER}", "time_limit": ${TIMELIMIT},
-           "selection": "${SELECTION}", "preset": "${PRESET}",
+           "selection": "${SELECTION}", "preset": "${PRESET}", "linear_solver": "${LINEAR_SOLVER}",
            "mastsif_commit": "${MASTSIF_COMMIT}", "maros_meszaros_commit": "${MM_COMMIT}",
            "run_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
           EOF
@@ -371,9 +423,9 @@ jobs:
           echo "=========================================="
 
           header() {
-            echo "## CUTEst benchmark — Uno (preset=${PRESET}, time_limit=${TIMELIMIT}s)"
+            echo "## CUTEst benchmark — Uno (preset=${PRESET}, linear_solver=${LINEAR_SOLVER}, time_limit=${TIMELIMIT}s)"
             echo ""
-            echo "Commit \`${BENCHMARK_SHA:0:7}\` · ${SELECTION} · preset \`${PRESET}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo "Commit \`${BENCHMARK_SHA:0:7}\` · ${SELECTION} · preset \`${PRESET}\` · linear solver \`${LINEAR_SOLVER}\` · mastsif-mirror \`${MASTSIF_COMMIT}\` · maros-meszaros-mirror \`${MM_COMMIT}\` · [run details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
             echo ""
             echo "Times are Uno's solve time (wall-clock time of the whole run when Uno did not report it)."
             echo ""
@@ -402,13 +454,17 @@ jobs:
               echo "</details>"
             fi
             echo ""
-            echo "Per-instance results: run summary and \`cutest-results-${PRESET}-pr-${PR_NUMBER}\` artifact."
+            echo "Per-instance results: run summary and \`${RESULTS_ARTIFACT}${PR_NUMBER}\` artifact."
           } > benchmark-comment.md
 
-          echo "::notice title=CUTEst benchmark::Solved ${solved}/${total} instances (preset ${PRESET})"
+          echo "::notice title=CUTEst benchmark::Solved ${solved}/${total} instances (preset ${PRESET}, linear solver ${LINEAR_SOLVER})"
+          # an unusable linear solver makes every run fail: flag it instead of reporting 0 solved
+          if grep -qE 'The linear solver [A-Za-z0-9]+ (was requested, but|is unknown)|HiPO is not available' "$LOG_DIR"/*.log 2>/dev/null; then
+            echo "::error::linear_solver=${LINEAR_SOLVER} is not usable by this build (see the logs)"; exit 1
+          fi
 
       # Replaces the report with a before/after table against the latest results
-      # of `compare_pr` with the same preset (only the instances whose status or
+      # of `compare_pr` with the same preset and `compare_linear_solver` (only the instances whose status or
       # time changed; the full table goes to the run summary). If those results
       # cannot be found, a warning is emitted and the plain report is posted unchanged.
       - name: Compare against another PR
@@ -420,8 +476,17 @@ jobs:
           PRESET: ${{ inputs.preset }}
         run: |
           set -euo pipefail
+          if [ "$COMPARE_LINEAR_SOLVER" = "$LINEAR_SOLVER" ]; then
+            SOLVERS="linear solver ${LINEAR_SOLVER}"
+          else
+            SOLVERS="linear solver ${COMPARE_LINEAR_SOLVER} → ${LINEAR_SOLVER}"
+          fi
+          # same naming as RESULTS_ARTIFACT
+          COMPARE_RESULTS_ARTIFACT="cutest-results-${PRESET}-"
+          [ "$COMPARE_LINEAR_SOLVER" = MA57 ] || COMPARE_RESULTS_ARTIFACT+="${COMPARE_LINEAR_SOLVER}-"
+          COMPARE_RESULTS_ARTIFACT+="pr-"
           ${{ env.VENV }}/bin/python .github/scripts/benchmark_compare.py \
-            --title "CUTEst benchmark (preset ${PRESET})" --artifact-prefix "cutest-results-${PRESET}-pr-" --changed-only \
+            --title "CUTEst benchmark (preset ${PRESET}, ${SOLVERS})" --artifact-prefix "$COMPARE_RESULTS_ARTIFACT" --changed-only \
             --compare-pr "$COMPARE_PR" --current-pr "$PR_NUMBER" \
             --results-dir results --output benchmark-comment.md --full-output comparison-all.md
           if [ -f comparison-all.md ]; then
@@ -432,7 +497,7 @@ jobs:
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
-          name: cutest-results-${{ inputs.preset }}-pr-${{ inputs.pr_number }}
+          name: ${{ env.RESULTS_ARTIFACT }}${{ inputs.pr_number }}
           path: results/
           retention-days: 90
 
