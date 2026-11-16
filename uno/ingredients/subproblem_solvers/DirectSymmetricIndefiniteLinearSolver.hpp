@@ -65,6 +65,11 @@ namespace uno {
          }
       }
 
+      // hint, set before the symbolic analysis, for solvers that need the expected sign of each pivot
+      // (e.g. HiPO): the leading expected_inertia.positive pivots are positive, the next
+      // expected_inertia.negative ones are negative. No-op for solvers that do not need it.
+      virtual void set_expected_inertia(const Inertia& /*expected_inertia*/) { }
+
       [[nodiscard]] virtual Inertia get_inertia() const = 0;
       [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;
       // [[nodiscard]] virtual bool matrix_is_positive_definite() const = 0;

@@ -168,7 +168,7 @@ HiGHS can be used by setting the `LP_solver` attribute:
 ```julia
 using JuMP, UnoSolver
 model = Model(() -> UnoSolver.Optimizer(preset="filterslp"))
-set_attribute(model, "LP_solver", "HiGHS")
+set_attribute(model, "LP_solver", "HIGHS")
 ```
 
 ## BLAS and LAPACK demuxer

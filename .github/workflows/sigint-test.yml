@@ -99,6 +99,7 @@ jobs:
             -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
             -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DHIGHS_WITH_HIPO=ON \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
 
@@ -133,6 +134,7 @@ jobs:
             -DBLAS_LIBRARIES="${DEPS}/lib/libcblas.a;${DEPS}/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${DEPS}/lib/liblapack.a \
             -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DHIGHS_WITH_HIPO=ON \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 

@@ -64,6 +64,7 @@ cmake \
     -DMUMPS_PORD_LIBRARY="${libdir}/libpord.${dlext}" \
     -DMUMPS_MPISEQ_LIBRARY="${libdir}/libmpiseq.${dlext}" \
     -DSPRAL="${libdir}/libspral.${dlext}" \
+    -DHIGHS_WITH_HIPO=ON \
     -DBLAS_LIBRARIES="${libdir}/lib${LBT}.${dlext}" \
     -DLAPACK_LIBRARIES="${libdir}/lib${LBT}.${dlext}" \
     -DBUILD_STATIC_LIBS=ON \

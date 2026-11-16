@@ -184,6 +184,7 @@ cmake \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DSPRAL=${libdir}/libspral.${dlext} \
+    -DHIGHS_WITH_HIPO=ON \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
     -DHIGHS_INCLUDE_DIR=${includedir}/highs \
