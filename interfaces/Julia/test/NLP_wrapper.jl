@@ -1,5 +1,5 @@
 @testset "preset = $preset" for preset in ("filterslp",)
-    @testset "LP solver = $lp" for lp in ("BQPD", "HiGHS")
+    @testset "LP solver = $lp" for lp in ("BQPD", "HIGHS")
         @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS", "LSR1")
             nlp = CUTEstModel{Float64}("HS15")
             model = uno_model(nlp)

@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
 	# run 5: solve with the filterslp preset
 	uno_solver.set_preset("filterslp")
-	uno_solver.set_option("LP_solver", "HiGHS")
+	uno_solver.set_option("LP_solver", "HIGHS")
 	result = uno_solver.optimize(model)
 	print("Method used:", uno_solver.get_method_description())
 	print("Objective at solution:", result.solution_objective)

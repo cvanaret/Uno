@@ -212,7 +212,7 @@ int main() {
    // run 3: solve with the filterslp preset and HiGHS as LP solver
    printf("\n");
    uno_set_solver_preset(solver, "filterslp");
-   bool option_set = uno_set_solver_string_option(solver, "LP_solver", "HiGHS");
+   bool option_set = uno_set_solver_string_option(solver, "LP_solver", "HIGHS");
    assert(option_set);
    uno_optimize(solver, model);
    printf("Method used: %s\n", uno_get_method_description(solver));

@@ -23,7 +23,7 @@ namespace uno {
          "BQPD",
 #endif
 #ifdef HAS_HIGHS
-         "HiGHS",
+         "HIGHS",
 #endif
       };
    };

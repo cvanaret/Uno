@@ -12,6 +12,7 @@
 #endif
 #ifdef HAS_HIGHS
 #include "ingredients/subproblem_solvers/HiGHS/HiGHSSolver.hpp"
+#include "tools/Strings.hpp"
 #endif
 
 namespace uno {
@@ -24,7 +25,7 @@ namespace uno {
          }
 #endif
 #ifdef HAS_HIGHS
-         if (LP_solver_name == "HiGHS") {
+         if (case_insensitive_equals(LP_solver_name, "HIGHS")) {
             return std::make_unique<HiGHSSolver>(options);
          }
 #endif

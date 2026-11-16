@@ -22,7 +22,7 @@ HS015_METHODS = [
 	pytest.param("ipopt", "linear_solver", "HIPO", "matrix", "interior-point", "hessian", id="ipopt-HIPO"),
 	# a Hessian operator only cannot be used by the direct linear solver: Uno falls back to L-BFGS
 	pytest.param("ipopt", "linear_solver", "MUMPS", "operator", "L-BFGS Hessian", None, id="ipopt-MUMPS-operator"),
-	pytest.param("filterslp", "LP_solver", "HiGHS", "matrix", "zero Hessian", None, id="filterslp-HiGHS"),
+	pytest.param("filterslp", "LP_solver", "HIGHS", "matrix", "zero Hessian", None, id="filterslp-HiGHS"),
 ]
 
 
