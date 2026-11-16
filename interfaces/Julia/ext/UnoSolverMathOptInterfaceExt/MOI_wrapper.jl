@@ -1519,30 +1519,33 @@ function MOI.optimize!(model::Optimizer)
     end
 
     # The default logger is "INFO".
-    UnoSolver.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")
+    logger = model.silent ? "SILENT" : "INFO"
+    UnoSolver.uno_check_option_status(UnoSolver.uno_set_solver_string_option(solver, "logger", logger), "logger", logger)
 
     # If provided, set the preset before any other options.
     if haskey(model.options, "preset")
-        UnoSolver.uno_set_solver_preset(solver, model.options["preset"])
+        preset = model.options["preset"]
+        UnoSolver.uno_check_option_status(UnoSolver.uno_set_solver_preset(solver, preset), "preset", preset)
     end
 
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
         (name == "preset") && continue
         if value isa String
-            @assert UnoSolver.uno_set_solver_string_option(solver, name, value)
+            status = UnoSolver.uno_set_solver_string_option(solver, name, value)
         elseif value isa Float64
-            @assert UnoSolver.uno_set_solver_double_option(solver, name, value)
+            status = UnoSolver.uno_set_solver_double_option(solver, name, value)
         elseif value isa Bool
-            @assert UnoSolver.uno_set_solver_bool_option(solver, name, value)
+            status = UnoSolver.uno_set_solver_bool_option(solver, name, value)
         elseif value isa Integer
-            @assert UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
+            status = UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
                 "`$value::$(typeof(value))`. The value must be a `::String`, a `::Float64`, an `::Integer`, or a `::Bool`.",
             )
         end
+        UnoSolver.uno_check_option_status(status, name, value)
     end
 
     # Initialize the starting point, projecting variables from 0 onto their
@@ -1590,7 +1593,7 @@ function MOI.optimize!(model::Optimizer)
         s.eval_jacobian_timer = 0.0
         s.eval_hessian_lagrangian_timer = 0.0
     end
-    UnoSolver.uno_optimize(solver, inner)
+    UnoSolver.uno_optimize(solver, inner) || error("Uno could not optimize the model.")
     return
 end
 

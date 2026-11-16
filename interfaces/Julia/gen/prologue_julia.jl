@@ -26,6 +26,15 @@ const UNO_OPTION_TYPE_BOOL      = Cint(2)
 const UNO_OPTION_TYPE_STRING    = Cint(3)
 const UNO_OPTION_TYPE_NOT_FOUND = Cint(-1)
 
+# Status codes returned by the functions that deal with options
+const UNO_OPTIONS_SUCCESS          = Cint(0)
+const UNO_OPTIONS_INVALID_ARGUMENT = Cint(1)
+const UNO_OPTIONS_NOT_FOUND        = Cint(2)
+const UNO_OPTIONS_WRONG_TYPE       = Cint(3)
+const UNO_OPTIONS_INVALID_VALUE    = Cint(4)
+const UNO_OPTIONS_INVALID_FILE     = Cint(5)
+const UNO_OPTIONS_ERROR            = Cint(6)
+
 # Optimization status
 const UNO_SUCCESS           = Cint(0)
 const UNO_ITERATION_LIMIT   = Cint(1)

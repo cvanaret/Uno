@@ -567,6 +567,39 @@ function test_error_adding_option(; preset="filtersqp")
     return
 end
 
+# https://github.com/cvanaret/Uno/issues/1070: a typo in an option value used to abort the Julia process
+function test_invalid_option_value(; preset="filtersqp")
+    model = UnoSolver.Optimizer(preset=preset)
+    MOI.set(model, MOI.Silent(), true)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    MOI.set(model, MOI.RawOptimizerAttribute("logger"), "SOLENT")
+    @test_throws(
+        ErrorException(
+            "Unable to set the option `\"logger\"` to `\"SOLENT\"`: the value is not valid for this option.",
+        ),
+        MOI.optimize!(model),
+    )
+    return
+end
+
+function test_unknown_option(; preset="filtersqp")
+    model = UnoSolver.Optimizer(preset=preset)
+    MOI.set(model, MOI.Silent(), true)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    MOI.set(model, MOI.RawOptimizerAttribute("max_iteration"), 10)
+    @test_throws(
+        ErrorException(
+            "Unable to set the option `\"max_iteration\"` to `10`: the option does not exist.",
+        ),
+        MOI.optimize!(model),
+    )
+    return
+end
+
 function test_scalar_nonlinear_function_attributes(; preset="filtersqp")
     model = UnoSolver.Optimizer(preset=preset)
     x = MOI.add_variable(model)

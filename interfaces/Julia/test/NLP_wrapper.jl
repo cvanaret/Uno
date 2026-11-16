@@ -4,7 +4,7 @@
             nlp = CUTEstModel{Float64}("HS15")
             model = uno_model(nlp)
             solver = uno_solver(preset=preset, print_solution=true, LP_solver=lp, hessian_model=hessian_model)
-            uno_optimize(solver, model)
+            @test uno_optimize(solver, model)
 
             optimization_status = UnoSolver.uno_get_optimization_status(solver)
             solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -83,7 +83,7 @@ end
             nlp = CUTEstModel{Float64}("HS15")
             model = uno_model(nlp)
             solver = uno_solver(preset=preset, print_solution=true, QP_solver=qp, hessian_model=hessian_model)
-            uno_optimize(solver, model)
+            @test uno_optimize(solver, model)
 
             optimization_status = UnoSolver.uno_get_optimization_status(solver)
             solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -166,7 +166,7 @@ end
                 nlp = CUTEstModel{Float64}("HS15")
                 model = uno_model(nlp)
                 solver = uno_solver(preset=preset, print_solution=true, linear_solver=linear_solver, hessian_model=hessian_model)
-                uno_optimize(solver, model)
+                @test uno_optimize(solver, model)
 
                 optimization_status = UnoSolver.uno_get_optimization_status(solver)
                 solution_status = UnoSolver.uno_get_solution_status(solver)
