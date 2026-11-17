@@ -24,6 +24,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+
 jobs:
   build:
     name: ${{ matrix.os }} (${{ matrix.toolchain }}, ${{ matrix.build_type }})
