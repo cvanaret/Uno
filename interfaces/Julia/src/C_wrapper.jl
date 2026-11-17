@@ -384,11 +384,78 @@ function uno_destroy_solver(solver::Solver)
   end
 end
 
+# value of an option given the status returned by a getter: `nothing` if the option has no value (yet)
+function _uno_option_value(status::Integer, option_name, value)
+  status == UNO_OPTIONS_SUCCESS && return value
+  status == UNO_OPTIONS_NOT_SET && return nothing
+  error("Unable to get the option `\"$option_name\"`: $(uno_options_status_message(status)).")
+end
+
+"""
+    uno_get_solver_integer_option(solver::Solver, option_name::String)
+
+Return the value of an integer option, or `nothing` if the option has no value (yet). Throw an `ErrorException` if
+the option does not exist or has a different type.
+"""
+function uno_get_solver_integer_option(solver::Solver, option_name::String)
+  value = Ref{Cint}(0)
+  status = GC.@preserve solver uno_get_solver_integer_option(solver.c_solver, option_name, value)
+  return _uno_option_value(status, option_name, value[])
+end
+
+"""
+    uno_get_solver_double_option(solver::Solver, option_name::String)
+
+Return the value of a double option, or `nothing` if the option has no value (yet). Throw an `ErrorException` if
+the option does not exist or has a different type.
+"""
+function uno_get_solver_double_option(solver::Solver, option_name::String)
+  value = Ref{Cdouble}(0.0)
+  status = GC.@preserve solver uno_get_solver_double_option(solver.c_solver, option_name, value)
+  return _uno_option_value(status, option_name, value[])
+end
+
+"""
+    uno_get_solver_bool_option(solver::Solver, option_name::String)
+
+Return the value of a bool option, or `nothing` if the option has no value (yet). Throw an `ErrorException` if the
+option does not exist or has a different type.
+"""
+function uno_get_solver_bool_option(solver::Solver, option_name::String)
+  value = Ref{Bool}(false)
+  status = GC.@preserve solver uno_get_solver_bool_option(solver.c_solver, option_name, value)
+  return _uno_option_value(status, option_name, value[])
+end
+
+"""
+    uno_get_solver_string_option(solver::Solver, option_name::String)
+
+Return the value of a string option, or `nothing` if the option has no value (yet), e.g. an option set by the `auto`
+preset before the solve. Throw an `ErrorException` if the option does not exist or has a different type.
+"""
 function uno_get_solver_string_option(solver::Solver, option_name::String)
+  value = Ref{Ptr{Cchar}}(C_NULL)
   GC.@preserve solver begin
-    option_value = uno_get_solver_string_option(solver.c_solver, option_name)
+    status = uno_get_solver_string_option(solver.c_solver, option_name, value)
+    # copy the string while the solver is alive
+    string_value = (status == UNO_OPTIONS_SUCCESS) ? unsafe_string(value[]) : ""
   end
-  return unsafe_string(option_value)
+  return _uno_option_value(status, option_name, string_value)
+end
+
+"""
+    uno_get_solver_option(solver::Solver, option_name::String)
+
+Return the value of an option of any type, or `nothing` if the option has no value (yet). Throw an `ErrorException`
+if the option does not exist.
+"""
+function uno_get_solver_option(solver::Solver, option_name::String)
+  type = GC.@preserve solver uno_get_solver_option_type(solver.c_solver, option_name)
+  type == UNO_OPTION_TYPE_INTEGER && return uno_get_solver_integer_option(solver, option_name)
+  type == UNO_OPTION_TYPE_DOUBLE && return uno_get_solver_double_option(solver, option_name)
+  type == UNO_OPTION_TYPE_BOOL && return uno_get_solver_bool_option(solver, option_name)
+  type == UNO_OPTION_TYPE_STRING && return uno_get_solver_string_option(solver, option_name)
+  error("Unable to get the option `\"$option_name\"`: $(uno_options_status_message(UNO_OPTIONS_NOT_FOUND)).")
 end
 
 function uno_get_method_description(solver::Solver)
@@ -410,6 +477,7 @@ function uno_options_status_message(status::Integer)
   status == UNO_OPTIONS_WRONG_TYPE && return "the option has a different type"
   status == UNO_OPTIONS_INVALID_VALUE && return "the value is not valid for this option"
   status == UNO_OPTIONS_INVALID_FILE && return "the option file cannot be opened or is malformed"
+  status == UNO_OPTIONS_NOT_SET && return "the option has no value"
   return "an error occurred"
 end
 

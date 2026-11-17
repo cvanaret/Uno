@@ -632,3 +632,47 @@ end
   solver = uno_solver(logger="SILENT", max_iterations=100)
   @test UnoSolver.uno_get_solver_string_option(solver, "logger") == "SILENT"
 end
+
+# https://github.com/cvanaret/Uno/issues/925: the getters used to throw for the options without a value
+@testset "Options -- getters (issue 925)" begin
+  solver = uno_solver()
+  @test uno_set_solver_integer_option(solver, "max_iterations", Cint(50)) == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test UnoSolver.uno_get_solver_integer_option(solver, "max_iterations") == 50
+  @test UnoSolver.uno_get_solver_double_option(solver, "primal_tolerance") > 0.0
+  @test UnoSolver.uno_get_solver_bool_option(solver, "print_solution") isa Bool
+  @test UnoSolver.uno_get_solver_string_option(solver, "logger") == "INFO"
+  @test UnoSolver.uno_get_solver_option(solver, "max_iterations") == 50
+
+  # the options set by the "auto" preset have no value before the solve
+  @test UnoSolver.uno_get_solver_string_option(solver, "globalization_mechanism") === nothing
+  @test UnoSolver.uno_get_solver_string_option(solver, "option_file") === nothing
+  @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test UnoSolver.uno_get_solver_string_option(solver, "globalization_mechanism") == "TR"
+
+  # errors
+  @test_throws ErrorException UnoSolver.uno_get_solver_integer_option(solver, "max_iteration")
+  @test_throws ErrorException UnoSolver.uno_get_solver_double_option(solver, "max_iterations")
+  @test_throws ErrorException UnoSolver.uno_get_solver_option(solver, "max_iteration")
+
+  # every option can be queried
+  iterator = Ref(UnoSolver.uno_options_begin_iterator())
+  number_options = 0
+  while iterator[] != UnoSolver.uno_options_end_iterator()
+    name = unsafe_string(UnoSolver.uno_options_iterator_name(iterator[]))
+    UnoSolver.uno_get_solver_option(solver, name)
+    number_options += 1
+    UnoSolver.uno_options_next_iterator(iterator)
+  end
+  @test number_options > 0
+
+  # low-level status codes: the value is untouched if the getter fails
+  value = Ref{Cint}(-1)
+  @test UnoSolver.uno_get_solver_integer_option(C_NULL, "max_iterations", value) == UnoSolver.UNO_OPTIONS_INVALID_ARGUMENT
+  @test UnoSolver.uno_get_solver_integer_option(solver, "max_iteration", value) == UnoSolver.UNO_OPTIONS_NOT_FOUND
+  @test UnoSolver.uno_get_solver_integer_option(solver, "primal_tolerance", value) == UnoSolver.UNO_OPTIONS_WRONG_TYPE
+  @test value[] == -1
+  string_value = Ref{Ptr{Cchar}}(C_NULL)
+  solver_auto = uno_solver()
+  @test UnoSolver.uno_get_solver_string_option(solver_auto, "hessian_model", string_value) == UnoSolver.UNO_OPTIONS_NOT_SET
+  @test string_value[] == C_NULL
+end

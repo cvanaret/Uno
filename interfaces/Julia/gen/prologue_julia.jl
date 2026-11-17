@@ -34,6 +34,7 @@ const UNO_OPTIONS_WRONG_TYPE       = Cint(3)
 const UNO_OPTIONS_INVALID_VALUE    = Cint(4)
 const UNO_OPTIONS_INVALID_FILE     = Cint(5)
 const UNO_OPTIONS_ERROR            = Cint(6)
+const UNO_OPTIONS_NOT_SET          = Cint(7)
 
 # Optimization status
 const UNO_SUCCESS           = Cint(0)
