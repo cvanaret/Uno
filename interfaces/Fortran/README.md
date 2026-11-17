@@ -269,7 +269,7 @@ status = uno_get_solver_bool_option(solver, "print_solution", print_solution)
 status = uno_get_solver_string_option(solver, "hessian_model", hessian_model)
 ```
 
-The getters return `UNO_OPTIONS_SUCCESS` and write the value if the option has a value, and `UNO_OPTIONS_NOT_SET` if the option exists but has no value (yet), e.g. an option set by the `auto` preset before the solve. Otherwise, they return `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND`, `UNO_OPTIONS_WRONG_TYPE` or `UNO_OPTIONS_ERROR`. The value is written only if the status is `UNO_OPTIONS_SUCCESS`.
+The getters return `UNO_OPTIONS_SUCCESS` and write the value if the option has a value, and `UNO_OPTIONS_NOT_SET` if the option exists but has no value, e.g. an option set by the `auto` preset before the solve. After a successful solve, and until the options are modified, the getters return the values used by the solve, including the values picked by the `auto` preset and the options overridden by the solver. Otherwise, they return `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND`, `UNO_OPTIONS_WRONG_TYPE` or `UNO_OPTIONS_ERROR`. The value is written only if the status is `UNO_OPTIONS_SUCCESS`.
 
 Setting a preset:
 

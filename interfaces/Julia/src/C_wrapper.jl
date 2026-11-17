@@ -384,7 +384,7 @@ function uno_destroy_solver(solver::Solver)
   end
 end
 
-# value of an option given the status returned by a getter: `nothing` if the option has no value (yet)
+# value of an option given the status returned by a getter: `nothing` if the option has no value
 function _uno_option_value(status::Integer, option_name, value)
   status == UNO_OPTIONS_SUCCESS && return value
   status == UNO_OPTIONS_NOT_SET && return nothing
@@ -394,7 +394,7 @@ end
 """
     uno_get_solver_integer_option(solver::Solver, option_name::String)
 
-Return the value of an integer option, or `nothing` if the option has no value (yet). Throw an `ErrorException` if
+Return the value of an integer option, or `nothing` if the option has no value. Throw an `ErrorException` if
 the option does not exist or has a different type.
 """
 function uno_get_solver_integer_option(solver::Solver, option_name::String)
@@ -406,7 +406,7 @@ end
 """
     uno_get_solver_double_option(solver::Solver, option_name::String)
 
-Return the value of a double option, or `nothing` if the option has no value (yet). Throw an `ErrorException` if
+Return the value of a double option, or `nothing` if the option has no value. Throw an `ErrorException` if
 the option does not exist or has a different type.
 """
 function uno_get_solver_double_option(solver::Solver, option_name::String)
@@ -418,7 +418,7 @@ end
 """
     uno_get_solver_bool_option(solver::Solver, option_name::String)
 
-Return the value of a bool option, or `nothing` if the option has no value (yet). Throw an `ErrorException` if the
+Return the value of a bool option, or `nothing` if the option has no value. Throw an `ErrorException` if the
 option does not exist or has a different type.
 """
 function uno_get_solver_bool_option(solver::Solver, option_name::String)
@@ -430,8 +430,9 @@ end
 """
     uno_get_solver_string_option(solver::Solver, option_name::String)
 
-Return the value of a string option, or `nothing` if the option has no value (yet), e.g. an option set by the `auto`
-preset before the solve. Throw an `ErrorException` if the option does not exist or has a different type.
+Return the value of a string option, or `nothing` if the option has no value, e.g. an option set by the `auto`
+preset before the solve. After a successful solve, and until the options are modified, the getters return the values
+used by the solve (including the values picked by the `auto` preset and the options overridden by the solver). Throw an `ErrorException` if the option does not exist or has a different type.
 """
 function uno_get_solver_string_option(solver::Solver, option_name::String)
   value = Ref{Cstring}(C_NULL)
@@ -446,7 +447,7 @@ end
 """
     uno_get_solver_option(solver::Solver, option_name::String)
 
-Return the value of an option of any type, or `nothing` if the option has no value (yet). Throw an `ErrorException`
+Return the value of an option of any type, or `nothing` if the option has no value. Throw an `ErrorException`
 if the option does not exist.
 """
 function uno_get_solver_option(solver::Solver, option_name::String)

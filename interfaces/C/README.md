@@ -165,9 +165,9 @@ status = uno_get_solver_bool_option(solver, "print_solution", &print_solution);
 const char* hessian_model;
 status = uno_get_solver_string_option(solver, "hessian_model", &hessian_model);
 ```
-The getters return `UNO_OPTIONS_SUCCESS` and write the value if the option has a value. They return `UNO_OPTIONS_NOT_SET` if the option exists but has no value (yet): some options have no default value and are set by the preset, which is picked at runtime when the preset is `auto` (e.g. `globalization_mechanism`, `hessian_model`). Otherwise, they return `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND`, `UNO_OPTIONS_WRONG_TYPE` or `UNO_OPTIONS_ERROR`. The value is written only if the status is `UNO_OPTIONS_SUCCESS`.
+The getters return `UNO_OPTIONS_SUCCESS` and write the value if the option has a value. They return `UNO_OPTIONS_NOT_SET` if the option exists but has no value: some options have no default value and are set by the preset (e.g. `globalization_mechanism`, `hessian_model`). With the `auto` preset, Uno picks them in `uno_optimize` depending on the model, so they have no value before the solve. Otherwise, they return `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND`, `UNO_OPTIONS_WRONG_TYPE` or `UNO_OPTIONS_ERROR`. The value is written only if the status is `UNO_OPTIONS_SUCCESS`.
 
-The value is the one set by the user, otherwise by the preset, otherwise the default value. After the solve, a string option may contain the value overridden by the solver (e.g., `hessian_model` may contain `LBFGS` if no Hessian is available), until the options are modified.
+The value is the one set by the user, otherwise by the preset, otherwise the default value. After a successful solve, and until the options are modified (or `uno_optimize` is called again), the getters return the values used by the solve: these include the values picked by the `auto` preset (e.g. `globalization_mechanism`) and the string options overridden by the solver (e.g., `hessian_model` may contain `LBFGS` if no Hessian is available).
 Note: the user-specified options are persistent between consecutive solves (the possibly overridden options are stored separately).
 The string returned by `uno_get_solver_string_option` is owned by the solver: it remains valid until the options of the solver are modified, the next call to `uno_optimize`, or `uno_destroy_solver`.
 

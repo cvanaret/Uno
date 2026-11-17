@@ -238,6 +238,17 @@ end
 
     @test UnoSolver.uno_get_method_description(solver) == "TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction"
 
+    # with the "auto" preset, the options picked by the preset can be read after the solve, until an option is modified
+    uno_set_initial_primal_iterate(model, x0)
+    uno_set_initial_dual_iterate(model, y0)
+    solver_auto = uno_solver(logger="SILENT")
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") === nothing
+    @test uno_optimize(solver_auto, model)
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") in ("LS", "TR")
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "hessian_model") == "exact"
+    @test uno_set_solver_integer_option(solver_auto, "max_iterations", 100) == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") === nothing
+
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
     solution_objective = UnoSolver.uno_get_solution_objective(solver)

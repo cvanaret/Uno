@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <iostream>
 #include <streambuf>
@@ -443,6 +444,9 @@ struct Solver {
    UserCallbacks* user_callbacks;
    Result* result;
    bool options_consistent_with_solve{false}; // is true only after the solve, false whenever new options are set
+   // the options used by the last solve (defaults -> preset, including the values picked by the "auto" preset -> user).
+   // Valid only if options_consistent_with_solve
+   Options solve_options{};
 };
 
 void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) {
@@ -905,6 +909,7 @@ namespace {
          uno_solver->user_options = std::move(user_options);
          uno_solver->preset_options = std::move(preset_options);
          uno_solver->options_consistent_with_solve = false;
+         uno_solver->solve_options = Options{};
       });
    }
 
@@ -1082,6 +1087,7 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
    delete uno_solver->result;
    uno_solver->result = nullptr;
    uno_solver->options_consistent_with_solve = false;
+   uno_solver->solve_options = Options{};
 
    if (model == nullptr) {
       report_error("Please specify a valid model.");
@@ -1117,6 +1123,9 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
       Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
       // move the new result into uno_solver
       uno_solver->result = new Result(std::move(result));
+      // keep the options used by the solve, so that the getters can return them (including the values picked by the
+      // "auto" preset)
+      uno_solver->solve_options = std::move(full_options);
       uno_solver->options_consistent_with_solve = true;
       // flush the logger
       Logger::flush();
@@ -1169,8 +1178,13 @@ namespace {
          if (Options::get_option_type(name) != type) {
             throw OptionWrongType("The option with name " + name + " has a different type");
          }
-         for (const Options* options: {&uno_solver->user_options, &uno_solver->preset_options, &uno_solver->default_options}) {
-            if (options->contains(name)) {
+         // after a solve (and until the options are modified), the options used by the solve. Otherwise, the user
+         // options, then the preset options, then the default options
+         const std::array<const Options*, 3> sources = uno_solver->options_consistent_with_solve ?
+            std::array<const Options*, 3>{&uno_solver->solve_options, nullptr, nullptr} :
+            std::array<const Options*, 3>{&uno_solver->user_options, &uno_solver->preset_options, &uno_solver->default_options};
+         for (const Options* options: sources) {
+            if (options != nullptr && options->contains(name)) {
                *option_value = read(*options, name);
                status = UNO_OPTIONS_SUCCESS;
                return;
