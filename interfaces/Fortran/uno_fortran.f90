@@ -387,38 +387,40 @@ end function uno_set_solver_preset
 !---------------------------------------------
 ! uno_get_method_description
 !---------------------------------------------
-function uno_get_method_description(solver) &
-   result(method_description)
+function uno_get_method_description(solver, method_description) result(status)
    type(c_ptr), value :: solver
-   character(:), allocatable :: method_description
+   character(:), allocatable, intent(inout) :: method_description
+   integer(uno_int) :: status
    type(c_ptr) :: ptr_method_description_c
    integer :: i, n
    character(c_char), pointer :: method_description_c(:)
 
    interface
-      function uno_get_method_description_c(solver) &
-         result(method_description) &
+      function uno_get_method_description_c(solver, method_description) &
+         result(status) &
          bind(C, name="uno_get_method_description")
-         import :: c_ptr
+         import :: c_ptr, uno_int
          type(c_ptr), value :: solver
          type(c_ptr) :: method_description
+         integer(uno_int) :: status
       end function uno_get_method_description_c
    end interface
 
-   ptr_method_description_c = uno_get_method_description_c(solver)
-   if (.not. c_associated(ptr_method_description_c)) then
-      method_description = ""
-      return
+   ptr_method_description_c = c_null_ptr
+   status = uno_get_method_description_c(solver, ptr_method_description_c)
+   ! method_description is assigned only if the C function wrote it
+   if (c_associated(ptr_method_description_c)) then
+      call c_f_pointer(ptr_method_description_c, method_description_c, [huge(0)])
+      n = 0
+      do while (method_description_c(n+1) /= c_null_char)
+         n = n + 1
+      end do
+      if (allocated(method_description)) deallocate(method_description)
+      allocate(character(len=n)::method_description)
+      do i = 1, n
+         method_description(i:i) = method_description_c(i)
+      end do
    end if
-   call c_f_pointer(ptr_method_description_c, method_description_c, [huge(0)])
-   n = 0
-   do while (method_description_c(n+1) /= c_null_char)
-      n = n + 1
-   end do
-   allocate(character(len=n)::method_description)
-   do i = 1, n
-      method_description(i:i) = method_description_c(i)
-   end do
 end function uno_get_method_description
 
 !---------------------------------------------
