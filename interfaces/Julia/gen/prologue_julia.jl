@@ -36,6 +36,13 @@ const UNO_OPTIONS_INVALID_FILE     = Cint(5)
 const UNO_OPTIONS_ERROR            = Cint(6)
 const UNO_OPTIONS_NOT_SET          = Cint(7)
 
+# Status codes returned by the functions that get the result of an optimization
+const UNO_RESULT_SUCCESS          = Cint(0)
+const UNO_RESULT_INVALID_ARGUMENT = Cint(1)
+const UNO_RESULT_NOT_AVAILABLE    = Cint(2)
+const UNO_RESULT_INVALID_INDEX    = Cint(3)
+const UNO_RESULT_ERROR            = Cint(4)
+
 # Optimization status
 const UNO_SUCCESS           = Cint(0)
 const UNO_ITERATION_LIMIT   = Cint(1)
