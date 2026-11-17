@@ -1496,8 +1496,10 @@ end
 
 function _setup_solver(model::Optimizer)::UnoSolver.Solver
     # We could reuse the C++ workspace in the future
-    model.solver = UnoSolver.uno_solver()
-    return model.solver
+    # model.solver is assigned by optimize! only once the optimization was carried out: if setting an option or the
+    # optimization fails, model.solver stays nothing and the attributes report OPTIMIZE_NOT_CALLED instead of querying
+    # a result that does not exist
+    return UnoSolver.uno_solver()
 end
 
 function MOI.optimize!(model::Optimizer)
@@ -1509,6 +1511,8 @@ function MOI.optimize!(model::Optimizer)
     end
 
     inner = _setup_inner(model)
+    # discard the solver of a previous optimize!, whose result no longer corresponds to this optimization
+    model.solver = nothing
     solver = _setup_solver(model)
 
     if model.nlp_model !== nothing
@@ -1594,6 +1598,7 @@ function MOI.optimize!(model::Optimizer)
         s.eval_hessian_lagrangian_timer = 0.0
     end
     UnoSolver.uno_optimize(solver, inner) || error("Uno could not optimize the model.")
+    model.solver = solver
     return
 end
 
