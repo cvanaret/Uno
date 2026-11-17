@@ -16,7 +16,7 @@ program example_uno
     logical(c_bool) :: success, print_solution = .true.
     integer(uno_int) :: number_iterations, max_iterations = 1000
     real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
-    character(:), allocatable :: logger
+    character(:), allocatable :: logger, option_file
     character(:), allocatable :: method_description
     character(len=32) :: preset = "filtersqp"  ! can be overridden by the first command-line argument
     character(len=*), parameter :: hessian_model = "exact"
@@ -176,19 +176,32 @@ program example_uno
     !---------------------------------------------------
     ! Get options
     !---------------------------------------------------
-    max_iterations = uno_get_solver_integer_option(solver, "max_iterations")
+    status = uno_get_solver_integer_option(solver, "max_iterations", max_iterations)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_integer_option")
     print *, 'max_iterations = ', max_iterations
     if (max_iterations /= 1000) error stop 'max_iterations was modified by a rejected option'
 
-    dual_tolerance = uno_get_solver_double_option(solver, "dual_tolerance")
+    status = uno_get_solver_double_option(solver, "dual_tolerance", dual_tolerance)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_double_option")
     print *, 'dual_tolerance = ', dual_tolerance
 
-    print_solution = uno_get_solver_bool_option(solver, "print_solution")
+    status = uno_get_solver_bool_option(solver, "print_solution", print_solution)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_bool_option")
     print *, 'print_solution = ', print_solution
 
-    logger = uno_get_solver_string_option(solver, "logger")
+    status = uno_get_solver_string_option(solver, "logger", logger)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_string_option")
     print *, 'logger = ', logger
     if (logger /= "INFO") error stop 'logger was modified by a rejected option'
+
+    ! errors of the getters
+    status = uno_get_solver_integer_option(solver, "max_iteration", max_iterations)
+    call check_status(status, UNO_OPTIONS_NOT_FOUND, "uno_get_solver_integer_option (unknown option)")
+    status = uno_get_solver_double_option(solver, "max_iterations", dual_tolerance)
+    call check_status(status, UNO_OPTIONS_WRONG_TYPE, "uno_get_solver_double_option (wrong type)")
+    status = uno_get_solver_string_option(solver, "option_file", option_file)
+    call check_status(status, UNO_OPTIONS_NOT_SET, "uno_get_solver_string_option (option without value)")
+    if (allocated(option_file)) error stop 'option_file was written although it has no value'
 
     option_type = uno_get_solver_option_type(solver, "linear_solver")
     print *, 'option_type for the option linear_solver = ', option_type

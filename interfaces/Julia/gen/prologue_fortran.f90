@@ -54,6 +54,7 @@ integer(uno_int), parameter :: UNO_OPTIONS_WRONG_TYPE       = 3
 integer(uno_int), parameter :: UNO_OPTIONS_INVALID_VALUE    = 4
 integer(uno_int), parameter :: UNO_OPTIONS_INVALID_FILE     = 5
 integer(uno_int), parameter :: UNO_OPTIONS_ERROR            = 6
+integer(uno_int), parameter :: UNO_OPTIONS_NOT_SET          = 7
 
 !---------------------------------------------
 ! Optimization status

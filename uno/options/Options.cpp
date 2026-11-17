@@ -356,7 +356,11 @@ namespace uno {
       return this->get_optional<std::string>(option_name);
    }
 
-   OptionType Options::get_option_type(const std::string& option_name) const {
+   bool Options::contains(const std::string& option_name) const {
+      return this->values.find(option_name) != this->values.end();
+   }
+
+   OptionType Options::get_option_type(const std::string& option_name) {
       try {
          return option_types.at(option_name);
       }

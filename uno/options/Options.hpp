@@ -81,7 +81,9 @@ namespace uno {
       [[nodiscard]] std::optional<bool> get_bool_optional(const std::string& option_name) const;
       [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
 
-      [[nodiscard]] OptionType get_option_type(const std::string& option_name) const;
+      [[nodiscard]] static OptionType get_option_type(const std::string& option_name);
+      // whether a value was set for the option
+      [[nodiscard]] bool contains(const std::string& option_name) const;
 
       // possible values of a string option. Empty if the option accepts any string (e.g. a path)
       [[nodiscard]] static std::vector<std::string> get_possible_values(const std::string& option_name);
