@@ -301,7 +301,7 @@ jobs:
       # =========================================================
 
       - name: Build
-        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}} --parallel
+        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
 
       # =========================================================
       # TEST
