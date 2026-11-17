@@ -1,7 +1,7 @@
 ! THIS VERSION: CUTEST 2.7 - 2026-06-02 AT 11:10 GMT.
 ! Adapted to the status codes of the Uno C API: the option setters (including
-! uno_load_solver_option_file and uno_set_solver_preset) return a status code,
-! and uno_optimize returns a logical.
+! uno_load_solver_option_file and uno_set_solver_preset) and the option getters
+! return a status code, and uno_optimize returns a logical.
 
 #include "cutest_modules.h"
 #include "cutest_routines.h"
@@ -311,8 +311,10 @@
     cpu_time = uno_get_cpu_time( solver )
     WRITE( out, "( ' CPU time (secs) ', 13X, F9.3 ) ") cpu_time
 
-    write_solution_to_file                                                     &
-      = uno_get_solver_bool_option( solver, "write_solution_to_file" )
+    uno_status = uno_get_solver_bool_option( solver, "write_solution_to_file", &
+                                             write_solution_to_file )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_OPTIONS_SUCCESS,                    &
+                           'uno_get_solver_bool_option' )
 
 !  if required, write the solution to a file
 
