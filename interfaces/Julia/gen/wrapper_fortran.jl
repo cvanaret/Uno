@@ -31,11 +31,14 @@ const CALLBACKS = String[
 # Pre-computed type info structs (must be defined before any use)
 # ----------------------------------------------------------------
 struct ArgInfo
-  name      :: String
-  ftype     :: String   # e.g. "real(c_double)"
-  suffix    :: String   # e.g. ", value" or "(*)" or ""
-  is_string :: Bool     # true if original C type is char*
+  name             :: String
+  ftype            :: String   # e.g. "real(c_double)"
+  suffix           :: String   # e.g. ", value" or "(*)" or ""
+  is_string        :: Bool     # true if original C type is char*
+  is_output        :: Bool     # true if non-const pointer to a number, written by the C function
+  is_output_string :: Bool     # true if original C type is const char** (string written by the C function)
 end
+ArgInfo(name, ftype, suffix, is_string) = ArgInfo(name, ftype, suffix, is_string, false, false)
 
 struct FuncInfo
   name          :: String
@@ -77,6 +80,27 @@ function extract_uno_int_kind(include_dir)
   haskey(C_TO_FORTRAN_KIND, c_type) || error("Unknown C type '$c_type' for uno_int")
   return C_TO_FORTRAN_KIND[c_type]
 end
+
+# libclang reports a typedef name (uno_int, the callbacks) as CXType_Elaborated up to LLVM 21, and as
+# CXType_Typedef from LLVM 22 (ElaboratedType was removed from Clang)
+is_typedef_kind(k) = k == Clang.CXType_Elaborated || k == Clang.CXType_Typedef
+
+# names of the double* arguments that are scalar outputs (the other double* arguments are arrays)
+const DOUBLE_SCALAR_OUTPUTS = String[
+  "option_value",
+  "solution_objective",
+  "primal_component",
+  "constraint_dual_component",
+  "lower_bound_dual_component",
+  "upper_bound_dual_component",
+  "primal_feasibility",
+  "stationarity",
+  "complementarity",
+  "cpu_time",
+]
+
+# whether a function has an output argument (filled by collect_funcs)
+const HAS_OUTPUTS = Dict{String,Bool}()
 
 function is_string_arg(t)
   k = Clang.kind(t)
@@ -139,6 +163,8 @@ end
 
 function name_to_result(fname, ret_ftype="")
   r = replace(fname, r"^uno_" => "")
+  # functions that write their result into output arguments return a status code
+  ret_ftype == "integer(uno_int)" && get(HAS_OUTPUTS, fname, false) && return "status"
   # uno_get_xxx → strip get_ prefix (takes priority over success naming)
   r2 = replace(r, r"^get_" => "")
   r2 != r && return r2
@@ -185,7 +211,7 @@ function cltype_to_fortran(t)
   k = Clang.kind(t)
   spell = Clang.spelling(t)
 
-  if k == Clang.CXType_Elaborated
+  if is_typedef_kind(k)
     if spell in CALLBACKS
       return ("type(c_funptr)", true)
     end
@@ -225,7 +251,7 @@ function cltype_to_fortran(t)
       return ("character(c_char)", false)
     end
     if pk == Clang.CXType_FunctionProto; return ("type(c_funptr)", true); end
-    if pk == Clang.CXType_Elaborated
+    if is_typedef_kind(pk)
       ptspell = Clang.spelling(pt)
       if ptspell in CALLBACKS; return ("type(c_funptr)", true); end
       ct = Clang.getCanonicalType(pt)
@@ -288,7 +314,7 @@ function make_arg_info(arg_cursor, arg_type)
     "real(c_double)", ", value"
   elseif k in (Clang.CXType_Int, Clang.CXType_UInt)
     "integer(c_int)", ", value"
-  elseif k == Clang.CXType_Elaborated
+  elseif is_typedef_kind(k)
     if spell in CALLBACKS
       "type(c_funptr)", ", value"
     else
@@ -322,7 +348,12 @@ function make_arg_info(arg_cursor, arg_type)
       "character(c_char)", ""
     elseif pk == Clang.CXType_FunctionProto
       "type(c_funptr)", ", value"
-    elseif pk == Clang.CXType_Elaborated
+    elseif pk == Clang.CXType_Bool
+      "logical(c_bool)", ""
+    elseif pk == Clang.CXType_Pointer && Clang.kind(Clang.getPointeeType(pt)) in (Clang.CXType_Char_S, Clang.CXType_Char_U)
+      # const char** output argument: pointer to the string, passed by reference
+      return ArgInfo(aname, "type(c_ptr)", "(scalar)", false, false, true)
+    elseif is_typedef_kind(pk)
       ptspell = Clang.spelling(pt)
       if ptspell in CALLBACKS
         "type(c_funptr)", ", value"
@@ -351,13 +382,19 @@ function make_arg_info(arg_cursor, arg_type)
   # For pointer-to-int: const → array, non-const → scalar
   final_suffix = if ftype == "integer(uno_int)" && suffix == "" && k == Clang.CXType_Pointer
     occursin("const", spell) ? "(array)" : "(scalar)"
+  elseif ftype == "logical(c_bool)" && suffix == "" && k == Clang.CXType_Pointer
+    "(scalar)"
+  elseif ftype == "real(c_double)" && suffix == "" && k == Clang.CXType_Pointer && aname in DOUBLE_SCALAR_OUTPUTS
+    "(scalar)"
   elseif suffix == ""
     "(*)"
   else
     suffix
   end
 
-  ArgInfo(aname, ftype, final_suffix, is_str)
+  # output: non-const pointer to a number (not a string)
+  is_output = k == Clang.CXType_Pointer && final_suffix in ("(scalar)", "(*)") && !is_str && !occursin("const", spell)
+  ArgInfo(aname, ftype, final_suffix, is_str, is_output, false)
 end
 
 function collect_funcs(root)
@@ -376,6 +413,7 @@ function collect_funcs(root)
       clang_types = [Clang.getCursorType(a) for a in clang_args]
       args = [make_arg_info(clang_args[i], clang_types[i]) for i in eachindex(clang_args)]
       push!(funcs, FuncInfo(name, ret_ftype, is_void, ret_is_string, args))
+      HAS_OUTPUTS[name] = any(a.is_output || a.is_output_string for a in args)
     end
   end
   return funcs
@@ -413,8 +451,8 @@ function gen_uno_c(io, include_dir, funcs)
   print(io, prologue)
   println(io, "")
 
-  # C bind(C) interfaces — skip functions that have string args or return char*
-  non_string = [f for f in funcs if !any(a.is_string for a in f.args) && !f.ret_is_string]
+  # C bind(C) interfaces — skip functions that have string args (input or output) or return char*
+  non_string = [f for f in funcs if !any(a.is_string || a.is_output_string for a in f.args) && !f.ret_is_string]
   for (i, f) in enumerate(non_string)
     gen_one_c_interface(io, f, i < length(non_string))
   end
@@ -462,6 +500,8 @@ function gen_uno_fortran(io, funcs)
   for f in funcs
     if f.ret_is_string
       gen_char_ptr_return_wrapper(io, f)
+    elseif any(a.is_output_string for a in f.args)
+      gen_string_output_wrapper(io, f)
     elseif any(a.is_string for a in f.args)
       gen_one_string_wrapper(io, f, [a.name for a in f.args if a.is_string])
     end
@@ -639,6 +679,96 @@ function gen_char_ptr_return_wrapper(io, f::FuncInfo)
 
   for sarg in string_arg_names
     println(io, "   deallocate($(sarg)_c)")
+  end
+  println(io, "end function $name")
+end
+
+# Wrapper of a function with a const char** output argument (and possibly string input arguments): the Fortran argument
+# is a character(:), allocatable, intent(inout) that is assigned only if the C function wrote the string
+function gen_string_output_wrapper(io, f::FuncInfo)
+  name             = f.name
+  joined           = join((a.name for a in f.args), ", ")
+  result_name      = name_to_result(name, f.ret_ftype)
+  c_name           = name * "_c"
+  string_arg_names = [a.name for a in f.args if a.is_string]
+  output_names     = [a.name for a in f.args if a.is_output_string]
+  imports          = build_import(f.args, f.ret_ftype, f.is_void)
+
+  println(io, "")
+  println(io, "!---------------------------------------------")
+  println(io, "! $name")
+  println(io, "!---------------------------------------------")
+  emit_subprogram_header(io, "", name, joined, result_name, "   "; with_amp=false)
+
+  for a in f.args
+    if a.is_string
+      println(io, "   character(len=*) :: $(a.name)")
+    elseif a.is_output_string
+      println(io, "   character(:), allocatable, intent(inout) :: $(a.name)")
+    else
+      emit_wrapper_arg(io, a)
+    end
+  end
+  println(io, "   $(f.ret_ftype) :: $result_name")
+  for sarg in string_arg_names
+    println(io, "   character(c_char), allocatable :: $(sarg)_c(:)")
+  end
+  for out in output_names
+    println(io, "   type(c_ptr) :: ptr_$(out)_c")
+  end
+  println(io, "   integer :: i, n")
+  for out in output_names
+    println(io, "   character(c_char), pointer :: $(out)_c(:)")
+  end
+  println(io, "")
+
+  println(io, "   interface")
+  emit_subprogram_header(io, "      ", c_name, joined, result_name, "         ")
+  println(io, "         bind(C, name=\"$name\")")
+  !isempty(imports) && println(io, "         import :: $imports")
+  for a in f.args
+    a.is_string ? println(io, "         character(c_char) :: $(a.name)(*)") : emit_bind_c_arg(io, "         ", a)
+  end
+  println(io, "         $(f.ret_ftype) :: $result_name")
+  println(io, "      end function $c_name")
+  println(io, "   end interface")
+  println(io, "")
+
+  # Convert string args to C
+  for sarg in string_arg_names
+    println(io, "   n = len_trim($sarg)")
+    println(io, "   allocate($(sarg)_c(n+1))")
+    println(io, "   do i = 1, n")
+    println(io, "      $(sarg)_c(i) = $sarg(i:i)")
+    println(io, "   end do")
+    println(io, "   $(sarg)_c(n+1) = c_null_char")
+  end
+  for out in output_names
+    println(io, "   ptr_$(out)_c = c_null_ptr")
+  end
+
+  c_args   = [a.is_string ? "$(a.name)_c" : (a.is_output_string ? "ptr_$(a.name)_c" : a.name) for a in f.args]
+  c_joined = join(c_args, ", ")
+  println_wrapped(io, "   $result_name = $c_name($c_joined)", " " ^ (length("   $result_name = $c_name(")))
+  for sarg in string_arg_names
+    println(io, "   deallocate($(sarg)_c)")
+  end
+
+  # Copy each output string if it was written
+  for out in output_names
+    println(io, "   ! $out is assigned only if the C function wrote it")
+    println(io, "   if (c_associated(ptr_$(out)_c)) then")
+    println(io, "      call c_f_pointer(ptr_$(out)_c, $(out)_c, [huge(0)])")
+    println(io, "      n = 0")
+    println(io, "      do while ($(out)_c(n+1) /= c_null_char)")
+    println(io, "         n = n + 1")
+    println(io, "      end do")
+    println(io, "      if (allocated($out)) deallocate($out)")
+    println(io, "      allocate(character(len=n)::$out)")
+    println(io, "      do i = 1, n")
+    println(io, "         $out(i:i) = $(out)_c(i)")
+    println(io, "      end do")
+    println(io, "   end if")
   end
   println(io, "end function $name")
 end
