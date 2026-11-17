@@ -434,7 +434,7 @@ Return the value of a string option, or `nothing` if the option has no value (ye
 preset before the solve. Throw an `ErrorException` if the option does not exist or has a different type.
 """
 function uno_get_solver_string_option(solver::Solver, option_name::String)
-  value = Ref{Ptr{Cchar}}(C_NULL)
+  value = Ref{Cstring}(C_NULL)
   GC.@preserve solver begin
     status = uno_get_solver_string_option(solver.c_solver, option_name, value)
     # copy the string while the solver is alive

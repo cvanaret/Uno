@@ -671,7 +671,7 @@ end
   @test UnoSolver.uno_get_solver_integer_option(solver, "max_iteration", value) == UnoSolver.UNO_OPTIONS_NOT_FOUND
   @test UnoSolver.uno_get_solver_integer_option(solver, "primal_tolerance", value) == UnoSolver.UNO_OPTIONS_WRONG_TYPE
   @test value[] == -1
-  string_value = Ref{Ptr{Cchar}}(C_NULL)
+  string_value = Ref{Cstring}(C_NULL)
   solver_auto = uno_solver()
   @test UnoSolver.uno_get_solver_string_option(solver_auto, "hessian_model", string_value) == UnoSolver.UNO_OPTIONS_NOT_SET
   @test string_value[] == C_NULL
