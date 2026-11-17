@@ -1165,11 +1165,8 @@ namespace {
       uno_int status = UNO_OPTIONS_NOT_SET;
       const uno_int guard_status = guard_options([&]() {
          const std::string name{option_name};
-         const auto option_type = Options::option_types.find(name);
-         if (option_type == Options::option_types.end()) {
-            throw OptionNotFound("The option with name " + name + " does not exist");
-         }
-         if (option_type->second != type) {
+         // throws OptionNotFound if the option does not exist
+         if (Options::get_option_type(name) != type) {
             throw OptionWrongType("The option with name " + name + " has a different type");
          }
          for (const Options* options: {&uno_solver->user_options, &uno_solver->preset_options, &uno_solver->default_options}) {
@@ -1199,22 +1196,33 @@ uno_int uno_get_solver_bool_option(void* solver, const char* option_name, bool* 
       [](const Options& options, const std::string& name) { return options.get_bool(name); });
 }
 
-uno_int uno_get_solver_string_option(void* solver, const char* option_name, const char** option_value) UNO_NOEXCEPT {
-   // after a solve, an option overridden by the solver has the value used by the solver
-   if (solver != nullptr && option_name != nullptr && option_value != nullptr) {
-      const Solver* uno_solver = static_cast<const Solver*>(solver);
-      if (uno_solver->result != nullptr && uno_solver->options_consistent_with_solve) {
-         for (const auto& option_override: uno_solver->result->option_overrides) {
-            if (strcmp(option_override.option_name.c_str(), option_name) == 0) {
-               *option_value = option_override.new_value.c_str();
-               return UNO_OPTIONS_SUCCESS;
+namespace {
+   // after a solve, the value of a string option overridden by the solver, otherwise nullptr
+   const char* find_option_override(const Solver& solver, const char* option_name) {
+      if (solver.result != nullptr && solver.options_consistent_with_solve) {
+         for (const auto& option_override: solver.result->option_overrides) {
+            if (option_override.option_name == option_name) {
+               return option_override.new_value.c_str();
             }
          }
       }
+      return nullptr;
    }
+} // namespace
+
+uno_int uno_get_solver_string_option(void* solver, const char* option_name, const char** option_value) UNO_NOEXCEPT {
    // the pointer to the stored string (not a copy)
-   return get_solver_option(solver, option_name, option_value, OptionType::STRING,
+   const uno_int status = get_solver_option(solver, option_name, option_value, OptionType::STRING,
       [](const Options& options, const std::string& name) { return options.get_string(name).c_str(); });
+   // after a solve, an option overridden by the solver has the value used by the solver. The arguments are valid if
+   // the status is UNO_OPTIONS_SUCCESS or UNO_OPTIONS_NOT_SET
+   if (status == UNO_OPTIONS_SUCCESS || status == UNO_OPTIONS_NOT_SET) {
+      if (const char* overridden_value = find_option_override(*static_cast<const Solver*>(solver), option_name)) {
+         *option_value = overridden_value;
+         return UNO_OPTIONS_SUCCESS;
+      }
+   }
+   return status;
 }
 
 // auxiliary function

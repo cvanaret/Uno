@@ -360,7 +360,7 @@ namespace uno {
       return this->values.find(option_name) != this->values.end();
    }
 
-   OptionType Options::get_option_type(const std::string& option_name) const {
+   OptionType Options::get_option_type(const std::string& option_name) {
       try {
          return option_types.at(option_name);
       }
