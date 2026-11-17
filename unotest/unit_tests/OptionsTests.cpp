@@ -212,3 +212,11 @@ TEST(Options, ExceptionsDeriveFromTheStandardExceptions) {
    EXPECT_THROW(options.set_string("logger", "SOLENT"), std::invalid_argument);
    EXPECT_THROW(Options::load_option_file(options, "this_option_file_does_not_exist.opt"), std::invalid_argument);
 }
+
+TEST(Options, Contains) {
+   Options options;
+   EXPECT_FALSE(options.contains("logger"));
+   options.set_string("logger", "INFO");
+   EXPECT_TRUE(options.contains("logger"));
+   EXPECT_FALSE(options.contains("loger"));
+}

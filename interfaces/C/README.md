@@ -154,16 +154,22 @@ if (uno_set_solver_string_option(solver, "logger", "SOLENT") != UNO_OPTIONS_SUCC
 }
 ```
 
-Getting typed value of an option from the Uno solver:
+Getting the value of an option from the Uno solver:
 ```c
-uno_int uno_get_solver_integer_option(solver, "max_iterations");
-size_t uno_get_solver_unsigned_integer_option(solver, "max_iterations");
-double uno_set_solver_double_option(solver, "primal_tolerance");
-bool uno_get_solver_bool_option(solver, "print_solution");
-const char* uno_get_solver_string_option(solver, "hessian_model");
+uno_int max_iterations;
+uno_int status = uno_get_solver_integer_option(solver, "max_iterations", &max_iterations);
+double primal_tolerance;
+status = uno_get_solver_double_option(solver, "primal_tolerance", &primal_tolerance);
+bool print_solution;
+status = uno_get_solver_bool_option(solver, "print_solution", &print_solution);
+const char* hessian_model;
+status = uno_get_solver_string_option(solver, "hessian_model", &hessian_model);
 ```
-Before the solve, the getters return the options specified by the user. After the solve, they may return options overridden by the solver (e.g., `hessian_model` may contain `LBFGS` if no Hessian is available).
+The getters return `UNO_OPTIONS_SUCCESS` and write the value if the option has a value. They return `UNO_OPTIONS_NOT_SET` if the option exists but has no value (yet): some options have no default value and are set by the preset, which is picked at runtime when the preset is `auto` (e.g. `globalization_mechanism`, `hessian_model`). Otherwise, they return `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND`, `UNO_OPTIONS_WRONG_TYPE` or `UNO_OPTIONS_ERROR`. The value is written only if the status is `UNO_OPTIONS_SUCCESS`.
+
+The value is the one set by the user, otherwise by the preset, otherwise the default value. After the solve, a string option may contain the value overridden by the solver (e.g., `hessian_model` may contain `LBFGS` if no Hessian is available), until the options are modified.
 Note: the user-specified options are persistent between consecutive solves (the possibly overridden options are stored separately).
+The string returned by `uno_get_solver_string_option` is owned by the solver: it remains valid until the options of the solver are modified, the next call to `uno_optimize`, or `uno_destroy_solver`.
 
 Setting a preset has Uno mimic an existing solver:
 ```c
@@ -192,7 +198,13 @@ Example of iterating over Uno options:
 for (uno_options_iterator it = uno_options_begin_iterator(); it != uno_options_end_iterator(); uno_options_next_iterator(&it)) {
    const char* name = uno_options_iterator_name(it);
    uno_int type = uno_options_iterator_type(it);
-   // user's code ...
+   if (type == UNO_OPTION_TYPE_DOUBLE) {
+      double value;
+      if (uno_get_solver_double_option(solver, name, &value) == UNO_OPTIONS_SUCCESS) {
+         // user's code ...
+      }
+   }
+   // ...
 }
 ```
 

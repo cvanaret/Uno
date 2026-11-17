@@ -73,30 +73,46 @@ void print_vector(const double* vector, uno_int size) {
 }
 
 void print_uno_options() {
-    // temporary solver for default options
+   // temporary solver for default options
    void* solver = uno_create_solver();
    printf("Uno options:\n");
    for (uno_options_iterator it = uno_options_begin_iterator(); it != uno_options_end_iterator(); uno_options_next_iterator(&it)) {
       const char* name = uno_options_iterator_name(it);
       uno_int type = uno_options_iterator_type(it);
+      uno_int status = UNO_OPTIONS_ERROR;
       if (type == UNO_OPTION_TYPE_DOUBLE) {
-         const double value = uno_get_solver_double_option(solver, name);
-         printf("\t%s: %f\n", name, value);
+         double value;
+         status = uno_get_solver_double_option(solver, name, &value);
+         if (status == UNO_OPTIONS_SUCCESS) {
+            printf("\t%s: %g\n", name, value);
+         }
       }
       else if (type == UNO_OPTION_TYPE_INTEGER) {
-         const int value = uno_get_solver_integer_option(solver, name);
-         printf("\t%s: %d\n", name, value);
+         uno_int value;
+         status = uno_get_solver_integer_option(solver, name, &value);
+         if (status == UNO_OPTIONS_SUCCESS) {
+            printf("\t%s: %d\n", name, value);
+         }
       }
       else if (type == UNO_OPTION_TYPE_STRING) {
-         const char* value = uno_get_solver_string_option(solver, name);
-         if (value) {
+         const char* value;
+         status = uno_get_solver_string_option(solver, name, &value);
+         if (status == UNO_OPTIONS_SUCCESS) {
             printf("\t%s: %s\n", name, value);
          }
       }
       else if (type == UNO_OPTION_TYPE_BOOL) {
-         const bool value = uno_get_solver_bool_option(solver, name);
-         printf("\t%s: %d\n", name, value);
+         bool value;
+         status = uno_get_solver_bool_option(solver, name, &value);
+         if (status == UNO_OPTIONS_SUCCESS) {
+            printf("\t%s: %s\n", name, value ? "true" : "false");
+         }
       }
+      // some options have no value before the solve (e.g. the options set by the "auto" preset)
+      if (status == UNO_OPTIONS_NOT_SET) {
+         printf("\t%s: (not set)\n", name);
+      }
+      assert(status == UNO_OPTIONS_SUCCESS || status == UNO_OPTIONS_NOT_SET);
    }
    uno_destroy_solver(solver);
 }
@@ -106,10 +122,8 @@ int main() {
    uno_get_version(&uno_major, &uno_minor, &uno_patch);
    printf("Uno v%d.%d.%d\n", uno_major, uno_minor, uno_patch);
 
-/*
    // print all options
    print_uno_options();
-*/
 
    // model creation
    const uno_int base_indexing = UNO_ZERO_BASED_INDEXING;
@@ -167,7 +181,9 @@ int main() {
    assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
    double solution_objective = uno_get_solution_objective(solver);
    printf("Solution objective = %g\n", solution_objective);
-   const char* hessian_model = uno_get_solver_string_option(solver, "hessian_model");
+   const char* hessian_model = NULL;
+   option_status = uno_get_solver_string_option(solver, "hessian_model", &hessian_model);
+   assert(option_status == UNO_OPTIONS_SUCCESS);
    if (hessian_model != NULL) {
       printf("Hessian model picked by Uno = %s\n", hessian_model);
       assert(strcmp(hessian_model, "LBFGS") == 0);

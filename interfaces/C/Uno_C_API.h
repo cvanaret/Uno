@@ -55,6 +55,8 @@ extern "C" {
    static const uno_int UNO_OPTIONS_INVALID_VALUE = 4; // the value is not valid for this option
    static const uno_int UNO_OPTIONS_INVALID_FILE = 5; // the option file cannot be opened or is malformed
    static const uno_int UNO_OPTIONS_ERROR = 6; // any other error
+   static const uno_int UNO_OPTIONS_NOT_SET = 7; // the option has no value (yet): no default, and set neither by the
+   // user nor by the preset (e.g. globalization_mechanism with the "auto" preset, which is resolved during the solve)
 
    // Optimization status
    static const uno_int UNO_SUCCESS = 0;
@@ -373,13 +375,20 @@ extern "C" {
    // example: TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction
    const char* uno_get_method_description(void* solver);
 
-   // gets the value of a given double option.
-   // takes as inputs the name of the option.
+   // gets the value of a particular option in the Uno solver.
+   // takes as inputs the name of the option and a pointer to the value.
    // the possible types are integer, double, bool and string.
-   uno_int uno_get_solver_integer_option(void* solver, const char* option_name);
-   double uno_get_solver_double_option(void* solver, const char* option_name);
-   bool uno_get_solver_bool_option(void* solver, const char* option_name);
-   const char* uno_get_solver_string_option(void* solver, const char* option_name);
+   // the value is the one set by the user, otherwise by the preset, otherwise the default value. After a solve, a string
+   // option overridden by the solver (e.g. hessian_model) has the value used by the solver.
+   // returns UNO_OPTIONS_SUCCESS if it succeeded, UNO_OPTIONS_NOT_SET if the option has no value (yet), otherwise
+   // UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_NOT_FOUND, UNO_OPTIONS_WRONG_TYPE or UNO_OPTIONS_ERROR. The value is
+   // written only if the status is UNO_OPTIONS_SUCCESS.
+   // the string is owned by the solver: it remains valid until the options of the solver are modified, the next
+   // uno_optimize, or uno_destroy_solver.
+   uno_int uno_get_solver_integer_option(void* solver, const char* option_name, uno_int* option_value) UNO_NOEXCEPT;
+   uno_int uno_get_solver_double_option(void* solver, const char* option_name, double* option_value) UNO_NOEXCEPT;
+   uno_int uno_get_solver_bool_option(void* solver, const char* option_name, bool* option_value) UNO_NOEXCEPT;
+   uno_int uno_get_solver_string_option(void* solver, const char* option_name, const char** option_value) UNO_NOEXCEPT;
 
    // gets the optimization status (once the model was solved)
    uno_int uno_get_optimization_status(void* solver);

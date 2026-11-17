@@ -1144,112 +1144,77 @@ const char* uno_get_method_description(void* solver) {
    return uno_solver->solver->get_method_description().c_str();
 }
 
-double uno_get_solver_double_option(void* solver, const char* option_name) {
-   if (solver == nullptr) {
-      throw std::runtime_error("Please specify a valid solver.");
+namespace {
+   // gets the value of an option of type "type": the value set by the user, otherwise by the preset, otherwise the default
+   // value. "read" reads the value from a set of options that contains it
+   template <typename T, typename Reader>
+   uno_int get_solver_option(void* solver, const char* option_name, T* option_value, OptionType type, Reader&& read) noexcept {
+      if (solver == nullptr) {
+         report_error("Please specify a valid solver.");
+         return UNO_OPTIONS_INVALID_ARGUMENT;
+      }
+      if (option_name == nullptr) {
+         report_error("Please specify a valid option name.");
+         return UNO_OPTIONS_INVALID_ARGUMENT;
+      }
+      if (option_value == nullptr) {
+         report_error("Please specify a valid pointer to the option value.");
+         return UNO_OPTIONS_INVALID_ARGUMENT;
+      }
+      const Solver* uno_solver = static_cast<const Solver*>(solver);
+      uno_int status = UNO_OPTIONS_NOT_SET;
+      const uno_int guard_status = guard_options([&]() {
+         const std::string name{option_name};
+         const auto option_type = Options::option_types.find(name);
+         if (option_type == Options::option_types.end()) {
+            throw OptionNotFound("The option with name " + name + " does not exist");
+         }
+         if (option_type->second != type) {
+            throw OptionWrongType("The option with name " + name + " has a different type");
+         }
+         for (const Options* options: {&uno_solver->user_options, &uno_solver->preset_options, &uno_solver->default_options}) {
+            if (options->contains(name)) {
+               *option_value = read(*options, name);
+               status = UNO_OPTIONS_SUCCESS;
+               return;
+            }
+         }
+      });
+      return (guard_status == UNO_OPTIONS_SUCCESS) ? status : guard_status;
    }
-   if (option_name == nullptr) {
-      throw std::runtime_error("Please specify a valid option name.");
-   }
-   const Solver* uno_solver = static_cast<const Solver*>(solver);
-   const std::optional<double> user_value = uno_solver->user_options.get_double_optional(option_name);
-   if (user_value.has_value()) {
-      return *user_value;
-   }
-   const std::optional<double> preset_value = uno_solver->preset_options.get_double_optional(option_name);
-   if (preset_value.has_value()) {
-      return *preset_value;
-   }
-   // falls back to the default; throws if the option has no default (e.g. preset-dependent)
-   return uno_solver->default_options.get_double(option_name);
+} // namespace
+
+uno_int uno_get_solver_integer_option(void* solver, const char* option_name, uno_int* option_value) UNO_NOEXCEPT {
+   return get_solver_option(solver, option_name, option_value, OptionType::INTEGER,
+      [](const Options& options, const std::string& name) { return options.get_int(name); });
 }
 
-uno_int uno_get_solver_integer_option(void* solver, const char* option_name) {
-   if (solver == nullptr) {
-      throw std::runtime_error("Please specify a valid solver.");
-   }
-   if (option_name == nullptr) {
-      throw std::runtime_error("Please specify a valid option name.");
-   }
-   const Solver* uno_solver = static_cast<const Solver*>(solver);
-   const std::optional<uno_int> user_value = uno_solver->user_options.get_int_optional(option_name);
-   if (user_value.has_value()) {
-      return *user_value;
-   }
-   const std::optional<uno_int> preset_value = uno_solver->preset_options.get_int_optional(option_name);
-   if (preset_value.has_value()) {
-      return *preset_value;
-   }
-   // falls back to the default; throws if the option has no default (e.g. preset-dependent)
-   return uno_solver->default_options.get_int(option_name);
+uno_int uno_get_solver_double_option(void* solver, const char* option_name, double* option_value) UNO_NOEXCEPT {
+   return get_solver_option(solver, option_name, option_value, OptionType::DOUBLE,
+      [](const Options& options, const std::string& name) { return options.get_double(name); });
 }
 
-bool uno_get_solver_bool_option(void* solver, const char* option_name) {
-   if (solver == nullptr) {
-      throw std::runtime_error("Please specify a valid solver.");
-   }
-   if (option_name == nullptr) {
-      throw std::runtime_error("Please specify a valid option name.");
-   }
-   const Solver* uno_solver = static_cast<const Solver*>(solver);
-   const std::optional<bool> user_value = uno_solver->user_options.get_bool_optional(option_name);
-   if (user_value.has_value()) {
-      return *user_value;
-   }
-   const std::optional<bool> preset_value = uno_solver->preset_options.get_bool_optional(option_name);
-   if (preset_value.has_value()) {
-      return *preset_value;
-   }
-   // falls back to the default; throws if the option has no default (e.g. preset-dependent)
-   return uno_solver->default_options.get_bool(option_name);
+uno_int uno_get_solver_bool_option(void* solver, const char* option_name, bool* option_value) UNO_NOEXCEPT {
+   return get_solver_option(solver, option_name, option_value, OptionType::BOOL,
+      [](const Options& options, const std::string& name) { return options.get_bool(name); });
 }
 
-const char* uno_get_solver_string_option(void* solver, const char* option_name) {
-   if (solver == nullptr) {
-      throw std::runtime_error("Please specify a valid solver.");
-   }
-   if (option_name == nullptr) {
-      throw std::runtime_error("Please specify a valid option name.");
-   }
-   const Solver* uno_solver = static_cast<const Solver*>(solver);
-
-   // first look into options overridden by the solver
-   if (uno_solver->result != nullptr && uno_solver->options_consistent_with_solve) {
-      for (const auto& override: uno_solver->result->option_overrides) {
-         if (strcmp(override.option_name.c_str(), option_name) == 0) {
-            return override.new_value.c_str();
+uno_int uno_get_solver_string_option(void* solver, const char* option_name, const char** option_value) UNO_NOEXCEPT {
+   // after a solve, an option overridden by the solver has the value used by the solver
+   if (solver != nullptr && option_name != nullptr && option_value != nullptr) {
+      const Solver* uno_solver = static_cast<const Solver*>(solver);
+      if (uno_solver->result != nullptr && uno_solver->options_consistent_with_solve) {
+         for (const auto& option_override: uno_solver->result->option_overrides) {
+            if (strcmp(option_override.option_name.c_str(), option_name) == 0) {
+               *option_value = option_override.new_value.c_str();
+               return UNO_OPTIONS_SUCCESS;
+            }
          }
       }
    }
-
-   // then look in the user options, the preset options, and the default options
-   // pointer to the stored string (not a copy), or nullptr if the option is not set
-   const auto find_string = [&](const Options& options) -> const std::string* {
-      try {
-         return &options.get_string(option_name);
-      }
-      catch (const std::out_of_range&) {
-         return nullptr;
-      }
-   };
-
-   const std::string* user_value = find_string(uno_solver->user_options);
-   if (user_value != nullptr) {
-      return user_value->c_str();
-   }
-   const std::string* preset_value = find_string(uno_solver->preset_options);
-   if (preset_value != nullptr) {
-      return preset_value->c_str();
-   }
-   const std::string* default_value = find_string(uno_solver->default_options);
-   if (default_value != nullptr) {
-      return default_value->c_str();
-   }
-   // option_file (and preset, if it ever loses its default) may legitimately be unset
-   if (strcmp(option_name, "option_file") == 0 || strcmp(option_name, "preset") == 0) {
-      return nullptr;
-   }
-   throw std::out_of_range(std::string("The string option ") + option_name + " is not available");
+   // the pointer to the stored string (not a copy)
+   return get_solver_option(solver, option_name, option_value, OptionType::STRING,
+      [](const Options& options, const std::string& name) { return options.get_string(name).c_str(); });
 }
 
 // auxiliary function
