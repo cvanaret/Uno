@@ -1,0 +1,226 @@
+// Copyright (c) 2026 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+// Tests of the functions of the C API that get the result of an optimization and of the model functions: they report
+// errors with status codes (or false/nullptr) and never throw
+
+#include <gtest/gtest.h>
+#include <cmath>
+#include <string>
+#include <vector>
+#include "CAPITestProblem.hpp"
+
+using namespace uno;
+using namespace uno::capi_test;
+
+// the declarations are noexcept for C++ callers
+static_assert(noexcept(uno_get_version(nullptr, nullptr, nullptr)));
+static_assert(noexcept(uno_create_model(nullptr, 0, nullptr, nullptr, 0)));
+static_assert(noexcept(uno_create_unconstrained_model(nullptr, 0, 0)));
+static_assert(noexcept(uno_set_constraints(nullptr, 0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr)));
+static_assert(noexcept(uno_set_lagrangian_hessian(nullptr, 0, 'L', nullptr, nullptr, nullptr)));
+static_assert(noexcept(uno_create_solver()));
+static_assert(noexcept(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr)));
+static_assert(noexcept(uno_set_logger_stream_callback(nullptr, nullptr)));
+static_assert(noexcept(uno_reset_logger_stream()));
+static_assert(noexcept(uno_get_method_description(nullptr, nullptr)));
+static_assert(noexcept(uno_get_optimization_status(nullptr, nullptr)));
+static_assert(noexcept(uno_get_primal_solution_component(nullptr, 0, nullptr)));
+static_assert(noexcept(uno_get_primal_solution(nullptr, nullptr)));
+static_assert(noexcept(uno_get_number_iterations(nullptr, nullptr)));
+static_assert(noexcept(uno_destroy_model(nullptr)));
+static_assert(noexcept(uno_destroy_solver(nullptr)));
+
+namespace {
+   // owns a C API model of hs015 and a solver
+   class CAPIResultTests: public ::testing::Test {
+   protected:
+      void SetUp() override {
+         this->model = create_hs015_model();
+         this->solver = uno_create_solver();
+         ASSERT_NE(this->model, nullptr);
+         ASSERT_NE(this->solver, nullptr);
+         ASSERT_EQ(uno_set_solver_string_option(this->solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
+      }
+
+      void TearDown() override {
+         uno_destroy_solver(this->solver);
+         uno_destroy_model(this->model);
+      }
+
+      void optimize() const {
+         if (available_preset() == nullptr) {
+            GTEST_SKIP() << "no subproblem solver available";
+         }
+         ASSERT_EQ(uno_set_solver_preset(this->solver, available_preset()), UNO_OPTIONS_SUCCESS);
+         ASSERT_TRUE(uno_optimize(this->solver, this->model));
+      }
+
+      // checks that all the getters of the result return "expected_status"
+      void expect_all_getters(uno_int expected_status) const {
+         uno_int integer_value{-1};
+         double double_value{-1.};
+         std::vector<double> vector(2, -1.);
+         EXPECT_EQ(uno_get_optimization_status(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_solution_status(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_solution_objective(this->solver, &double_value), expected_status);
+         EXPECT_EQ(uno_get_primal_solution_component(this->solver, 0, &double_value), expected_status);
+         EXPECT_EQ(uno_get_constraint_dual_solution_component(this->solver, 0, &double_value), expected_status);
+         EXPECT_EQ(uno_get_lower_bound_dual_solution_component(this->solver, 0, &double_value), expected_status);
+         EXPECT_EQ(uno_get_upper_bound_dual_solution_component(this->solver, 0, &double_value), expected_status);
+         EXPECT_EQ(uno_get_primal_solution(this->solver, vector.data()), expected_status);
+         EXPECT_EQ(uno_get_constraint_dual_solution(this->solver, vector.data()), expected_status);
+         EXPECT_EQ(uno_get_lower_bound_dual_solution(this->solver, vector.data()), expected_status);
+         EXPECT_EQ(uno_get_upper_bound_dual_solution(this->solver, vector.data()), expected_status);
+         EXPECT_EQ(uno_get_solution_constraints(this->solver, vector.data()), expected_status);
+         EXPECT_EQ(uno_get_solution_primal_feasibility(this->solver, &double_value), expected_status);
+         EXPECT_EQ(uno_get_solution_stationarity(this->solver, &double_value), expected_status);
+         EXPECT_EQ(uno_get_solution_complementarity(this->solver, &double_value), expected_status);
+         EXPECT_EQ(uno_get_number_iterations(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_cpu_time(this->solver, &double_value), expected_status);
+         EXPECT_EQ(uno_get_number_objective_evaluations(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_number_constraint_evaluations(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_number_objective_gradient_evaluations(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_number_jacobian_evaluations(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_number_hessian_evaluations(this->solver, &integer_value), expected_status);
+         EXPECT_EQ(uno_get_number_subproblem_solved_evaluations(this->solver, &integer_value), expected_status);
+         if (expected_status != UNO_RESULT_SUCCESS) {
+            // the values are untouched
+            EXPECT_EQ(integer_value, -1);
+            EXPECT_EQ(double_value, -1.);
+            EXPECT_EQ(vector, std::vector<double>(2, -1.));
+         }
+      }
+
+      void* model{nullptr};
+      void* solver{nullptr};
+   };
+} // namespace
+
+TEST_F(CAPIResultTests, ResultIsNotAvailableBeforeTheSolve) {
+   this->expect_all_getters(UNO_RESULT_NOT_AVAILABLE);
+}
+
+TEST_F(CAPIResultTests, ResultIsAvailableAfterTheSolve) {
+   this->optimize();
+   this->expect_all_getters(UNO_RESULT_SUCCESS);
+}
+
+TEST_F(CAPIResultTests, ResultIsDiscardedByAFailedOptimization) {
+   this->optimize();
+   EXPECT_FALSE(uno_optimize(this->solver, nullptr));
+   this->expect_all_getters(UNO_RESULT_NOT_AVAILABLE);
+}
+
+TEST_F(CAPIResultTests, NullArgumentsAreInvalid) {
+   this->optimize();
+   uno_int integer_value{-1};
+   double double_value{-1.};
+   EXPECT_EQ(uno_get_optimization_status(nullptr, &integer_value), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_optimization_status(this->solver, nullptr), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_solution_objective(nullptr, &double_value), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_solution_objective(this->solver, nullptr), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_primal_solution_component(nullptr, 0, &double_value), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_primal_solution_component(this->solver, 0, nullptr), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_primal_solution(nullptr, &double_value), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_primal_solution(this->solver, nullptr), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_number_iterations(this->solver, nullptr), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(integer_value, -1);
+   EXPECT_EQ(double_value, -1.);
+}
+
+TEST_F(CAPIResultTests, SolutionValues) {
+   this->optimize();
+   uno_int optimization_status{-1};
+   uno_int solution_status{-1};
+   double objective{};
+   EXPECT_EQ(uno_get_optimization_status(this->solver, &optimization_status), UNO_RESULT_SUCCESS);
+   EXPECT_EQ(optimization_status, UNO_SUCCESS);
+   EXPECT_EQ(uno_get_solution_status(this->solver, &solution_status), UNO_RESULT_SUCCESS);
+   EXPECT_EQ(solution_status, UNO_FEASIBLE_KKT_POINT);
+   EXPECT_EQ(uno_get_solution_objective(this->solver, &objective), UNO_RESULT_SUCCESS);
+   EXPECT_NEAR(objective, 306.5, 1e-6 * 306.5);
+
+   // the vectors and their components agree
+   std::vector<double> primal_solution(number_variables);
+   ASSERT_EQ(uno_get_primal_solution(this->solver, primal_solution.data()), UNO_RESULT_SUCCESS);
+   EXPECT_NEAR(primal_solution[0], 0.5, 1e-6);
+   EXPECT_NEAR(primal_solution[1], 2., 1e-6);
+   for (uno_int index = 0; index < number_variables; ++index) {
+      double component{};
+      EXPECT_EQ(uno_get_primal_solution_component(this->solver, index, &component), UNO_RESULT_SUCCESS);
+      EXPECT_EQ(component, primal_solution[static_cast<size_t>(index)]);
+   }
+   std::vector<double> constraint_dual_solution(number_constraints);
+   ASSERT_EQ(uno_get_constraint_dual_solution(this->solver, constraint_dual_solution.data()), UNO_RESULT_SUCCESS);
+   for (uno_int index = 0; index < number_constraints; ++index) {
+      double component{};
+      EXPECT_EQ(uno_get_constraint_dual_solution_component(this->solver, index, &component), UNO_RESULT_SUCCESS);
+      EXPECT_EQ(component, constraint_dual_solution[static_cast<size_t>(index)]);
+   }
+
+   uno_int number_iterations{};
+   EXPECT_EQ(uno_get_number_iterations(this->solver, &number_iterations), UNO_RESULT_SUCCESS);
+   EXPECT_GT(number_iterations, 0);
+   uno_int number_evaluations{};
+   EXPECT_EQ(uno_get_number_objective_evaluations(this->solver, &number_evaluations), UNO_RESULT_SUCCESS);
+   EXPECT_GT(number_evaluations, 0);
+   double cpu_time{-1.};
+   EXPECT_EQ(uno_get_cpu_time(this->solver, &cpu_time), UNO_RESULT_SUCCESS);
+   EXPECT_GE(cpu_time, 0.);
+}
+
+TEST_F(CAPIResultTests, InvalidIndicesAreRejected) {
+   this->optimize();
+   double value{-1.};
+   EXPECT_EQ(uno_get_primal_solution_component(this->solver, -1, &value), UNO_RESULT_INVALID_INDEX);
+   EXPECT_EQ(uno_get_primal_solution_component(this->solver, number_variables, &value), UNO_RESULT_INVALID_INDEX);
+   EXPECT_EQ(uno_get_constraint_dual_solution_component(this->solver, number_constraints, &value), UNO_RESULT_INVALID_INDEX);
+   EXPECT_EQ(uno_get_lower_bound_dual_solution_component(this->solver, number_variables, &value), UNO_RESULT_INVALID_INDEX);
+   EXPECT_EQ(uno_get_upper_bound_dual_solution_component(this->solver, -1, &value), UNO_RESULT_INVALID_INDEX);
+   EXPECT_EQ(value, -1.);
+}
+
+TEST_F(CAPIResultTests, MethodDescription) {
+   const char* description{nullptr};
+   EXPECT_EQ(uno_get_method_description(this->solver, &description), UNO_RESULT_SUCCESS);
+   EXPECT_NE(description, nullptr);
+   EXPECT_EQ(uno_get_method_description(nullptr, &description), UNO_RESULT_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_get_method_description(this->solver, nullptr), UNO_RESULT_INVALID_ARGUMENT);
+   this->optimize();
+   ASSERT_EQ(uno_get_method_description(this->solver, &description), UNO_RESULT_SUCCESS);
+   const std::string method{description};
+   EXPECT_TRUE(method.find("SQP") != std::string::npos || method.find("interior-point") != std::string::npos) << method;
+}
+
+TEST(CAPIModel, InvalidArgumentsAreRejected) {
+   uno_int major{-1};
+   uno_get_version(&major, nullptr, nullptr);
+   EXPECT_EQ(major, UNO_VERSION_MAJOR);
+   EXPECT_EQ(uno_create_unconstrained_model(nullptr, 2, UNO_ZERO_BASED_INDEXING), nullptr);
+   EXPECT_EQ(uno_create_unconstrained_model("MINLP", 2, UNO_ZERO_BASED_INDEXING), nullptr);
+   EXPECT_EQ(uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 0, UNO_ZERO_BASED_INDEXING), nullptr);
+   EXPECT_EQ(uno_create_model(nullptr, 2, nullptr, nullptr, UNO_ZERO_BASED_INDEXING), nullptr);
+   EXPECT_EQ(uno_create_model(UNO_PROBLEM_NONLINEAR, 2, nullptr, nullptr, 2), nullptr);
+
+   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
+   ASSERT_NE(model, nullptr);
+   // null sparsity patterns
+   EXPECT_FALSE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, 4, nullptr, nullptr, jacobian));
+   EXPECT_FALSE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, -1, nullptr, nullptr, jacobian));
+   EXPECT_FALSE(uno_set_lagrangian_hessian(model, 3, UNO_LOWER_TRIANGLE, nullptr, nullptr, lagrangian_hessian));
+   EXPECT_FALSE(uno_set_variable_lower_bound(model, 2, 0.));
+   EXPECT_FALSE(uno_set_objective(nullptr, UNO_MINIMIZE, objective_function, objective_gradient));
+   EXPECT_TRUE(uno_set_objective(model, UNO_MINIMIZE, objective_function, objective_gradient));
+   uno_destroy_model(model);
+}
+
+TEST(CAPISolver, CallbacksAndLoggerStream) {
+   void* solver = uno_create_solver();
+   ASSERT_NE(solver, nullptr);
+   EXPECT_FALSE(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr));
+   EXPECT_TRUE(uno_set_solver_callbacks(solver, nullptr, nullptr, nullptr));
+   EXPECT_TRUE(uno_set_logger_stream_callback(nullptr, nullptr));
+   EXPECT_TRUE(uno_reset_logger_stream());
+   uno_destroy_solver(solver);
+}

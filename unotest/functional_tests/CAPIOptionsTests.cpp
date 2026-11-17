@@ -486,8 +486,12 @@ TEST(CAPIOptimize, SolveAfterRejectedOption) {
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    EXPECT_EQ(uno_set_solver_string_option(solver, "logger", "SOLENT"), UNO_OPTIONS_INVALID_VALUE);
    EXPECT_TRUE(uno_optimize(solver, model));
-   EXPECT_EQ(uno_get_optimization_status(solver), UNO_SUCCESS);
-   EXPECT_EQ(uno_get_solution_status(solver), UNO_FEASIBLE_KKT_POINT);
+   uno_int optimization_status{-1};
+   uno_int solution_status{-1};
+   EXPECT_EQ(uno_get_optimization_status(solver, &optimization_status), UNO_RESULT_SUCCESS);
+   EXPECT_EQ(optimization_status, UNO_SUCCESS);
+   EXPECT_EQ(uno_get_solution_status(solver, &solution_status), UNO_RESULT_SUCCESS);
+   EXPECT_EQ(solution_status, UNO_FEASIBLE_KKT_POINT);
    uno_destroy_model(model);
    uno_destroy_solver(solver);
 }

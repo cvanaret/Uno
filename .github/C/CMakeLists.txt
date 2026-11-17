@@ -21,7 +21,7 @@ endif()
 
 find_library(UNO REQUIRED)
 get_filename_component(UNO_DIRECTORY ${UNO} DIRECTORY)
-foreach(test_name tests_hs015 tests_options)
+foreach(test_name tests_hs015 tests_options tests_results)
    add_executable(${test_name} ${test_name}.c)
    # link the math library and Uno
    target_link_libraries(${test_name} PUBLIC m ${UNO})
