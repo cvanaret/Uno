@@ -149,6 +149,21 @@ jobs:
             CCACHE_BASEDIR=${{ github.workspace }}
             CCACHE_NOHASHDIR=true
 
+      - name: HiGHS cache key (Windows)
+        if: runner.os == 'Windows'
+        id: highs-key
+        shell: pwsh
+        run: |
+          "gxx=$(& C:/mingw64/bin/g++.exe -dumpfullversion)" >> $env:GITHUB_OUTPUT
+          "UNO_HIGHS_CACHE=$($env:GITHUB_WORKSPACE -replace '\\','/')/.highs-mingw" >> $env:GITHUB_ENV
+
+      - name: Restore MinGW HiGHS build (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: .highs-mingw
+          key: highs-mingw-${{ steps.highs-key.outputs.gxx }}-${{ hashFiles('dependencies/scripts/download_dependencies.sh') }}
+
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
@@ -177,6 +192,8 @@ jobs:
             CMAKE_CXX_COMPILER_LAUNCHER=$UNO_CCACHE
             CCACHE_BASEDIR=$UNO_PROJECT_DIR
             CCACHE_NOHASHDIR=true
+            CCACHE_DEBUG=1
+            CCACHE_DEBUGDIR=$UNO_PROJECT_DIR/ccache-debug
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
 
