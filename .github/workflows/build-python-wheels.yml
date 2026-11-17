@@ -79,8 +79,10 @@ jobs:
         shell: pwsh
         run: |
           choco install ccache -y --no-progress
-          # forward-slash project path for CCACHE_BASEDIR (cibuildwheel's env parser treats '\' as an escape)
+          # forward-slash paths (cibuildwheel's env parser treats '\' as an escape)
           "UNO_PROJECT_DIR=$($env:GITHUB_WORKSPACE -replace '\\','/')" >> $env:GITHUB_ENV
+          # absolute path: the MSYS2 login shell used by CIBW_BEFORE_ALL drops chocolatey from PATH
+          "UNO_CCACHE=$((Get-Command ccache).Source -replace '\\','/')" >> $env:GITHUB_ENV
 
       - name: Install libomp and ccache (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -171,8 +173,8 @@ jobs:
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
             SKBUILD_BUILD_DIR=build/{wheel_tag}
-            CMAKE_C_COMPILER_LAUNCHER=ccache
-            CMAKE_CXX_COMPILER_LAUNCHER=ccache
+            CMAKE_C_COMPILER_LAUNCHER=$UNO_CCACHE
+            CMAKE_CXX_COMPILER_LAUNCHER=$UNO_CCACHE
             CCACHE_BASEDIR=$UNO_PROJECT_DIR
             CCACHE_NOHASHDIR=true
           CIBW_CONFIG_SETTINGS_WINDOWS: >
