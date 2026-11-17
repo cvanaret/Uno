@@ -1,6 +1,7 @@
 ! THIS VERSION: CUTEST 2.7 - 2026-06-02 AT 11:10 GMT.
-! Adapted to the status codes of the Uno C API (Uno 3.0): the option setters, the option getters and the
-! result getters return a status code, and uno_optimize returns a logical.
+! Adapted to the status codes of the Uno C API: the option setters (including
+! uno_load_solver_option_file and uno_set_solver_preset) return a status code,
+! and uno_optimize returns a logical.
 
 #include "cutest_modules.h"
 #include "cutest_routines.h"

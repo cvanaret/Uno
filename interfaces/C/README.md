@@ -138,7 +138,7 @@ Options can also be loaded from a file that contains an `option value` pair per 
 uno_load_solver_option_file(solver, "uno.opt");
 ```
 
-The functions of the C API never throw. The functions that set options (including `uno_load_solver_option_file` and `uno_set_solver_preset`) return a status code:
+The option setters and `uno_optimize` never throw. The functions that set options (including `uno_load_solver_option_file` and `uno_set_solver_preset`) return a status code:
 - `UNO_OPTIONS_SUCCESS`: the option was set;
 - `UNO_OPTIONS_INVALID_ARGUMENT`: the solver, the option name, the option value or the file name is null;
 - `UNO_OPTIONS_NOT_FOUND`: no option has this name;
