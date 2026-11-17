@@ -24,6 +24,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -350,7 +353,7 @@ jobs:
 
     - name: Build (not MSVC)
       if: matrix.toolchain != 'msvc'
-      run: cmake --build build --config ${{env.BUILD_TYPE}} --parallel
+      run: cmake --build build --config ${{env.BUILD_TYPE}}
 
     - name: Build (MSVC)
       if: matrix.toolchain == 'msvc'
@@ -401,7 +404,7 @@ jobs:
             -DBUILD_SHARED_LIBS=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build
 
   # Compile-check both HSL modes: linked (OFF) and IPOPT-style dlopen runtime loading (ON).
   # No HSL library is needed — OFF builds without HSL, ON compiles the loader + MA27/MA57.
@@ -431,7 +434,7 @@ jobs:
             -DHSL_RUNTIME_LOADING=${{ matrix.mode }} \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
-          cmake --build build --parallel
+          cmake --build build
 
       # A native Linux build never compiles the loader's Windows branch (LoadLibraryA/
       # GetProcAddress). Syntax-check it with MinGW so ON stays buildable on Windows.
