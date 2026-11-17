@@ -57,6 +57,15 @@ integer(uno_int), parameter :: UNO_OPTIONS_ERROR            = 6
 integer(uno_int), parameter :: UNO_OPTIONS_NOT_SET          = 7
 
 !---------------------------------------------
+! Status codes returned by the functions that get the result of an optimization
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_RESULT_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_RESULT_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_RESULT_NOT_AVAILABLE    = 2
+integer(uno_int), parameter :: UNO_RESULT_INVALID_INDEX    = 3
+integer(uno_int), parameter :: UNO_RESULT_ERROR            = 4
+
+!---------------------------------------------
 ! Optimization status
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_SUCCESS           = 0

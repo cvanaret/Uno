@@ -144,12 +144,17 @@ program example_uno
     status = uno_load_solver_option_file(solver, "this_option_file_does_not_exist.opt")
     call check_status(status, UNO_OPTIONS_INVALID_FILE, "uno_load_solver_option_file (missing file)")
 
+    ! no result before the solve
+    status = uno_get_optimization_status(solver, optimization_status)
+    call check_status(status, UNO_RESULT_NOT_AVAILABLE, "uno_get_optimization_status (before the solve)")
+
     !---------------------------------------------------
     ! Run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
     !---------------------------------------------------
     success = uno_optimize(solver, model)
     call check_success(success, "uno_optimize")
-    solution_objective = uno_get_solution_objective(solver)
+    status = uno_get_solution_objective(solver, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_objective")
     print *, 'Solution objective = ', solution_objective
 
     !---------------------------------------------------
@@ -166,7 +171,8 @@ program example_uno
     !---------------------------------------------------
     ! Get method description
     !---------------------------------------------------
-    method_description = uno_get_method_description(solver)
+    status = uno_get_method_description(solver, method_description)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_method_description")
     print *, 'method description = ', method_description
     ! the second run must use the exact Hessian set above (not fall back to L-BFGS)
     if (index(method_description, 'exact Hessian') == 0) then
@@ -209,43 +215,65 @@ program example_uno
     !---------------------------------------------------
     ! Get solution
     !---------------------------------------------------
-    number_iterations = uno_get_number_iterations(solver)
+    status = uno_get_number_iterations(solver, number_iterations)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_number_iterations")
     print *, 'number_iterations = ', number_iterations
 
-    cpu_time = uno_get_cpu_time(solver)
+    status = uno_get_cpu_time(solver, cpu_time)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_cpu_time")
     print *, 'cpu_time = ', cpu_time
 
-    optimization_status = uno_get_optimization_status(solver)
+    status = uno_get_optimization_status(solver, optimization_status)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_optimization_status")
     print *, 'optimization_status = ', optimization_status
 
-    iterate_status = uno_get_solution_status(solver)
+    status = uno_get_solution_status(solver, iterate_status)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_status")
     print *, 'iterate_status = ', iterate_status
 
-    solution_objective = uno_get_solution_objective(solver)
+    status = uno_get_solution_objective(solver, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_objective")
     print *, 'Solution objective = ', solution_objective
 
-    call uno_get_primal_solution(solver, primal_solution)
+    status = uno_get_primal_solution(solver, primal_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_primal_solution")
     print *, 'Primal solution = ', primal_solution
 
-    call uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+    status = uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_constraint_dual_solution")
     print *, 'Constraint dual solution = ', constraint_dual_solution
 
-    call uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+    status = uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_lower_bound_dual_solution")
     print *, 'Lower bound dual solution = ', lower_bound_dual_solution
 
-    call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+    status = uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_upper_bound_dual_solution")
     print *, 'Upper bound dual solution = ', upper_bound_dual_solution
     
-    call uno_get_solution_constraints(solver, solution_constraints)
+    status = uno_get_solution_constraints(solver, solution_constraints)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_constraints")
     print *, 'Solution constraints = ', solution_constraints
 
-    solution_primal_feasibility = uno_get_solution_primal_feasibility(solver)
+    status = uno_get_solution_primal_feasibility(solver, solution_primal_feasibility)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_primal_feasibility")
     print *, 'Primal feasibility at solution = ', solution_primal_feasibility
 
-    solution_stationarity = uno_get_solution_stationarity(solver)
+    status = uno_get_solution_stationarity(solver, solution_stationarity)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_stationarity")
     print *, 'Stationarity at solution = ', solution_stationarity
 
-    solution_complementarity = uno_get_solution_complementarity(solver)
+    status = uno_get_solution_complementarity(solver, solution_complementarity)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_complementarity")
+
+    ! components of the solution (1-based indexing)
+    status = uno_get_primal_solution_component(solver, 2, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_primal_solution_component")
+    if (solution_objective /= primal_solution(2)) error stop 'Wrong primal solution component'
+    status = uno_get_primal_solution_component(solver, 3, solution_objective)
+    call check_status(status, UNO_RESULT_INVALID_INDEX, "uno_get_primal_solution_component (invalid index)")
+    status = uno_get_solution_objective(solver, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_objective")
     print *, 'Complementarity at solution = ', solution_complementarity
 
     !---------------------------------------------------
