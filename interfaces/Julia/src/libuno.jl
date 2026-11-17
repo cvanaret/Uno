@@ -30,6 +30,7 @@ const UNO_OPTIONS_WRONG_TYPE = Cint(3)
 const UNO_OPTIONS_INVALID_VALUE = Cint(4)
 const UNO_OPTIONS_INVALID_FILE = Cint(5)
 const UNO_OPTIONS_ERROR = Cint(6)
+const UNO_OPTIONS_NOT_SET = Cint(7)
 
 const UNO_SUCCESS = Cint(0)
 const UNO_ITERATION_LIMIT = Cint(1)
@@ -275,23 +276,24 @@ function uno_get_method_description(solver)
     @ccall libuno.uno_get_method_description(solver::Ptr{Cvoid})::Cstring
 end
 
-function uno_get_solver_integer_option(solver, option_name)
-    @ccall libuno.uno_get_solver_integer_option(solver::Ptr{Cvoid},
-                                                option_name::Cstring)::Int32
+function uno_get_solver_integer_option(solver, option_name, option_value)
+    @ccall libuno.uno_get_solver_integer_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                                option_value::Ptr{Int32})::Int32
 end
 
-function uno_get_solver_double_option(solver, option_name)
-    @ccall libuno.uno_get_solver_double_option(solver::Ptr{Cvoid},
-                                               option_name::Cstring)::Cdouble
+function uno_get_solver_double_option(solver, option_name, option_value)
+    @ccall libuno.uno_get_solver_double_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                               option_value::Ptr{Cdouble})::Int32
 end
 
-function uno_get_solver_bool_option(solver, option_name)
-    @ccall libuno.uno_get_solver_bool_option(solver::Ptr{Cvoid}, option_name::Cstring)::Bool
+function uno_get_solver_bool_option(solver, option_name, option_value)
+    @ccall libuno.uno_get_solver_bool_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                             option_value::Ptr{Bool})::Int32
 end
 
-function uno_get_solver_string_option(solver, option_name)
-    @ccall libuno.uno_get_solver_string_option(solver::Ptr{Cvoid},
-                                               option_name::Cstring)::Cstring
+function uno_get_solver_string_option(solver, option_name, option_value)
+    @ccall libuno.uno_get_solver_string_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                               option_value::Ptr{Cstring})::Int32
 end
 
 function uno_get_optimization_status(solver)
