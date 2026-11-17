@@ -512,6 +512,13 @@ if(SKBUILD)
       interfaces/Python/unopy.cpp
    )
 
+   # pybind11_add_module enables LTO in Release unless CMAKE_INTERPROCEDURAL_OPTIMIZATION is defined.
+   # LTO only covers the binding glue here (compiled_uno_files is not built with -flto) and makes the
+   # final link expensive for every wheel, so disable it unless the user explicitly asked for IPO
+   if(NOT DEFINED CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+   endif()
+
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC uno_dependencies)
@@ -522,6 +529,26 @@ if(SKBUILD)
 
    if(UNO_PYBIND11_DETAILED_ERRORS)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
+   endif()
+
+   # The binding TUs are dominated by pybind11 template instantiation and must be recompiled for each
+   # Python version (they cannot be shared via ccache), so make them cheap:
+   # - precompile the pybind11 headers once per build
+   # - compile the binding glue at a lower optimization level. This only affects the binding sources:
+   #   the solver itself (compiled_uno_files, linked in via $<TARGET_OBJECTS>) keeps the build type's flags
+   if(NOT CMAKE_VERSION VERSION_LESS 3.16)
+      target_precompile_headers(unopy PRIVATE
+         <pybind11/pybind11.h>
+         <pybind11/numpy.h>
+         <pybind11/stl.h>
+         <pybind11/functional.h>
+      )
+   endif()
+   set(UNO_PYTHON_BINDINGS_OPT_FLAG "-O1" CACHE STRING
+      "Optimization flag for the pybind11 binding sources (empty: use the build type's flags)")
+   if(UNO_PYTHON_BINDINGS_OPT_FLAG AND NOT MSVC)
+      # target options come after CMAKE_CXX_FLAGS_<CONFIG> on the command line, so this overrides -O3
+      target_compile_options(unopy PRIVATE ${UNO_PYTHON_BINDINGS_OPT_FLAG})
    endif()
 
    install(TARGETS unopy
