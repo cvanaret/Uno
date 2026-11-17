@@ -20,6 +20,32 @@ namespace uno {
 
    using OptionValue = std::variant<uno_int, double, bool, std::string>;
 
+   // errors raised when options are set. They derive from the standard exceptions previously thrown, so that existing
+   // handlers keep working
+   // no option has this name
+   class OptionNotFound: public std::out_of_range {
+   public:
+      using std::out_of_range::out_of_range;
+   };
+
+   // the option exists, but has a different type
+   class OptionWrongType: public std::invalid_argument {
+   public:
+      using std::invalid_argument::invalid_argument;
+   };
+
+   // the value is not valid for this option (e.g. not a number, or not one of the possible values of a string option)
+   class InvalidOptionValue: public std::invalid_argument {
+   public:
+      using std::invalid_argument::invalid_argument;
+   };
+
+   // the option file cannot be opened or is malformed
+   class InvalidOptionFile: public std::invalid_argument {
+   public:
+      using std::invalid_argument::invalid_argument;
+   };
+
    class OptionOverride {
    public:
       std::string option_name;
@@ -57,6 +83,9 @@ namespace uno {
 
       [[nodiscard]] OptionType get_option_type(const std::string& option_name) const;
 
+      // possible values of a string option. Empty if the option accepts any string (e.g. a path)
+      [[nodiscard]] static std::vector<std::string> get_possible_values(const std::string& option_name);
+
       [[nodiscard]] static std::vector<std::pair<std::string, std::string>> get_command_line_options(int argc, char* argv[],
          size_t offset);
       static void load_option_file(Options& options, const std::string& file_name);
@@ -73,6 +102,7 @@ namespace uno {
 
       static std::string to_string(const OptionValue& value);
       static void check_option_type(const std::string& option_name, OptionType expected_type);
+      static void check_string_option_value(const std::string& option_name, const std::string& option_value);
 
       template <typename T>
       static constexpr const char* option_type_name() {

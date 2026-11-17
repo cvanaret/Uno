@@ -53,6 +53,17 @@ integer(uno_int), parameter :: UNO_OPTION_TYPE_STRING    =  3
 integer(uno_int), parameter :: UNO_OPTION_TYPE_NOT_FOUND = -1
 
 !---------------------------------------------
+! Status codes returned by the functions that deal with options
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_OPTIONS_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_OPTIONS_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_OPTIONS_NOT_FOUND        = 2
+integer(uno_int), parameter :: UNO_OPTIONS_WRONG_TYPE       = 3
+integer(uno_int), parameter :: UNO_OPTIONS_INVALID_VALUE    = 4
+integer(uno_int), parameter :: UNO_OPTIONS_INVALID_FILE     = 5
+integer(uno_int), parameter :: UNO_OPTIONS_ERROR            = 6
+
+!---------------------------------------------
 ! Optimization status
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_SUCCESS           = 0
@@ -743,12 +754,14 @@ end interface
 ! uno_optimize
 !---------------------------------------------
 interface
-   subroutine uno_optimize(solver, model) &
+   function uno_optimize(solver, model) &
+      result(success) &
       bind(C, name="uno_optimize")
-      import :: c_ptr
+      import :: c_ptr, c_bool
       type(c_ptr), value :: solver
       type(c_ptr), value :: model
-   end subroutine uno_optimize
+      logical(c_bool) :: success
+   end function uno_optimize
 end interface
 
 !---------------------------------------------

@@ -138,6 +138,22 @@ Options can also be loaded from a file that contains an `option value` pair per 
 uno_load_solver_option_file(solver, "uno.opt");
 ```
 
+The option setters and `uno_optimize` never throw. The functions that set options (including `uno_load_solver_option_file` and `uno_set_solver_preset`) return a status code:
+- `UNO_OPTIONS_SUCCESS`: the option was set;
+- `UNO_OPTIONS_INVALID_ARGUMENT`: the solver, the option name, the option value or the file name is null;
+- `UNO_OPTIONS_NOT_FOUND`: no option has this name;
+- `UNO_OPTIONS_WRONG_TYPE`: the option exists, but has a different type;
+- `UNO_OPTIONS_INVALID_VALUE`: the value is not valid for this option. The value of a string option with enumerated values (e.g. `logger`, `hessian_model`, `linear_solver`, `preset`) must be one of its possible values. Whether a solver (e.g. `MA57`) is available in your build is only checked by `uno_optimize`;
+- `UNO_OPTIONS_INVALID_FILE`: the option file cannot be opened or is malformed;
+- `UNO_OPTIONS_ERROR`: any other error.
+
+If the status is not `UNO_OPTIONS_SUCCESS`, the options are left unchanged and a warning is printed by the logger.
+```c
+if (uno_set_solver_string_option(solver, "logger", "SOLENT") != UNO_OPTIONS_SUCCESS) {
+   // handle the error
+}
+```
+
 Getting typed value of an option from the Uno solver:
 ```c
 uno_int uno_get_solver_integer_option(solver, "max_iterations");
@@ -201,8 +217,9 @@ uno_reset_logger_stream();
 
 The model can then be solved by Uno:
 ```c
-uno_optimize(solver, model);
+bool success = uno_optimize(solver, model);
 ```
+`uno_optimize` returns `true` if the optimization was carried out (its outcome is described by the optimization status below), and `false` if it could not start or failed unexpectedly (null solver or model, model without objective and constraints, inconsistent options...). In both cases, the result of a previous optimization is discarded.
 
 ### Inspecting the result
 

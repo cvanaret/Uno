@@ -9,6 +9,13 @@
 #include <stddef.h>
 #include "uno_int.h"
 
+// the functions of the C API do not throw exceptions: their declarations are "noexcept" for C++ callers
+#ifdef __cplusplus
+#define UNO_NOEXCEPT noexcept
+#else
+#define UNO_NOEXCEPT
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,6 +46,15 @@ extern "C" {
    static const uno_int UNO_OPTION_TYPE_BOOL = 2;
    static const uno_int UNO_OPTION_TYPE_STRING = 3;
    static const uno_int UNO_OPTION_TYPE_NOT_FOUND = -1;
+
+   // Status codes returned by the functions that deal with options
+   static const uno_int UNO_OPTIONS_SUCCESS = 0;
+   static const uno_int UNO_OPTIONS_INVALID_ARGUMENT = 1; // null solver, option name, option value or file name
+   static const uno_int UNO_OPTIONS_NOT_FOUND = 2; // no option has this name
+   static const uno_int UNO_OPTIONS_WRONG_TYPE = 3; // the option exists, but has a different type
+   static const uno_int UNO_OPTIONS_INVALID_VALUE = 4; // the value is not valid for this option
+   static const uno_int UNO_OPTIONS_INVALID_FILE = 5; // the option file cannot be opened or is malformed
+   static const uno_int UNO_OPTIONS_ERROR = 6; // any other error
 
    // Optimization status
    static const uno_int UNO_SUCCESS = 0;
@@ -297,34 +313,39 @@ extern "C" {
 
    // sets a particular option in the Uno solver.
    // takes as inputs the name of the option and the value to which it should be set.
-   // the possible types are integer, double, bool and string.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value);
-   bool uno_set_solver_double_option(void* solver, const char* option_name, double option_value);
-   bool uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value);
-   bool uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value);
+   // the possible types are integer, double, bool and string. The value of a string option with enumerated values
+   // (e.g. logger, hessian_model, linear_solver) is checked against the possible values.
+   // returns UNO_OPTIONS_SUCCESS if it succeeded, otherwise UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_NOT_FOUND,
+   // UNO_OPTIONS_WRONG_TYPE, UNO_OPTIONS_INVALID_VALUE or UNO_OPTIONS_ERROR. If it failed, the options are unchanged.
+   uno_int uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) UNO_NOEXCEPT;
+   uno_int uno_set_solver_double_option(void* solver, const char* option_name, double option_value) UNO_NOEXCEPT;
+   uno_int uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) UNO_NOEXCEPT;
+   uno_int uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) UNO_NOEXCEPT;
 
    // gets the type of a particular option in the Uno solver.
    // takes as input the name of the option.
-   // the possible types are integer, double, bool and string.
-   uno_int uno_get_solver_option_type(void* solver, const char* option_name);
+   // returns UNO_OPTION_TYPE_INTEGER, UNO_OPTION_TYPE_DOUBLE, UNO_OPTION_TYPE_BOOL or UNO_OPTION_TYPE_STRING, or
+   // UNO_OPTION_TYPE_NOT_FOUND if the option does not exist (or the solver or the option name is null).
+   uno_int uno_get_solver_option_type(void* solver, const char* option_name) UNO_NOEXCEPT;
 
    // iterate over the Uno option types and names
-   uno_options_iterator uno_options_begin_iterator();
-   uno_options_iterator uno_options_end_iterator();
-   void uno_options_next_iterator(uno_options_iterator* iterator);
-   const char* uno_options_iterator_name(uno_options_iterator iterator);
-   uno_int uno_options_iterator_type(uno_options_iterator iterator);
-   void uno_options_destroy_iterator(uno_options_iterator* iterator);
+   uno_options_iterator uno_options_begin_iterator() UNO_NOEXCEPT;
+   uno_options_iterator uno_options_end_iterator() UNO_NOEXCEPT;
+   void uno_options_next_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT;
+   const char* uno_options_iterator_name(uno_options_iterator iterator) UNO_NOEXCEPT;
+   uno_int uno_options_iterator_type(uno_options_iterator iterator) UNO_NOEXCEPT;
+   void uno_options_destroy_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT;
 
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.
-   // returns true if it succeeded, false otherwise.
-   bool uno_load_solver_option_file(void* solver, const char* file_name);
+   // returns UNO_OPTIONS_SUCCESS if it succeeded, otherwise UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_INVALID_FILE,
+   // UNO_OPTIONS_NOT_FOUND, UNO_OPTIONS_INVALID_VALUE or UNO_OPTIONS_ERROR. If it failed, the options are unchanged.
+   uno_int uno_load_solver_option_file(void* solver, const char* file_name) UNO_NOEXCEPT;
 
    // sets a particular preset in the Uno solver.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_solver_preset(void* solver, const char* preset_name);
+   // returns UNO_OPTIONS_SUCCESS if it succeeded, otherwise UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_INVALID_VALUE
+   // or UNO_OPTIONS_ERROR. If it failed, the options are unchanged.
+   uno_int uno_set_solver_preset(void* solver, const char* preset_name) UNO_NOEXCEPT;
 
    // [optional]
    // sets the user callbacks for solver.
@@ -343,7 +364,10 @@ extern "C" {
    bool uno_reset_logger_stream();
 
    // optimizes a given model using the Uno solver and given options.
-   void uno_optimize(void* solver, void* model);
+   // returns true if the optimization was carried out (its outcome is given by uno_get_optimization_status), false if
+   // it could not start or failed unexpectedly (invalid solver or model, model without objective and constraints,
+   // inconsistent options...). The result of a previous optimization is discarded in both cases.
+   bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT;
 
    // gets the description of the optimization method used by Uno to solve the model
    // example: TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction

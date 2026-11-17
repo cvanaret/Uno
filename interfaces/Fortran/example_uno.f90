@@ -12,7 +12,7 @@ program example_uno
     real(c_double), dimension(number_variables) :: primal_solution, lower_bound_dual_solution, upper_bound_dual_solution
     real(c_double), dimension(number_constraints) :: constraint_dual_solution, solution_constraints
     real(c_double) :: solution_primal_feasibility, solution_stationarity, solution_complementarity
-    integer(uno_int) :: optimization_status, iterate_status, option_type
+    integer(uno_int) :: optimization_status, iterate_status, option_type, status
     logical(c_bool) :: success, print_solution = .true.
     integer(uno_int) :: number_iterations, max_iterations = 1000
     real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
@@ -117,25 +117,38 @@ program example_uno
     ! Solver creation
     !---------------------------------------------------
     solver = uno_create_solver()
-    success = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
-    call check_success(success, "uno_set_solver_integer_option")
-    success = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
-    call check_success(success, "uno_set_solver_double_option")
-    success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
-    call check_success(success, "uno_set_solver_bool_option")
-    success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
-    call check_success(success, "uno_set_solver_string_option")
+    status = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_integer_option")
+    status = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_double_option")
+    status = uno_set_solver_bool_option(solver, "print_solution", print_solution)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_bool_option")
+    status = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_string_option")
     if (command_argument_count() >= 1) then
         call get_command_argument(1, preset)
     end if
     print *, 'preset = ', trim(preset)
-    success = uno_set_solver_preset(solver, trim(preset))
-    call check_success(success, "uno_set_solver_preset")
+    status = uno_set_solver_preset(solver, trim(preset))
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_preset")
+
+    ! invalid options are reported with status codes and leave the options unchanged
+    status = uno_set_solver_string_option(solver, "logger", "SOLENT")
+    call check_status(status, UNO_OPTIONS_INVALID_VALUE, "uno_set_solver_string_option (invalid value)")
+    status = uno_set_solver_integer_option(solver, "max_iteration", max_iterations)
+    call check_status(status, UNO_OPTIONS_NOT_FOUND, "uno_set_solver_integer_option (unknown option)")
+    status = uno_set_solver_double_option(solver, "max_iterations", primal_tolerance)
+    call check_status(status, UNO_OPTIONS_WRONG_TYPE, "uno_set_solver_double_option (wrong type)")
+    status = uno_set_solver_preset(solver, "snopt")
+    call check_status(status, UNO_OPTIONS_INVALID_VALUE, "uno_set_solver_preset (invalid preset)")
+    status = uno_load_solver_option_file(solver, "this_option_file_does_not_exist.opt")
+    call check_status(status, UNO_OPTIONS_INVALID_FILE, "uno_load_solver_option_file (missing file)")
 
     !---------------------------------------------------
     ! Run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
     !---------------------------------------------------
-    call uno_optimize(solver, model)
+    success = uno_optimize(solver, model)
+    call check_success(success, "uno_optimize")
     solution_objective = uno_get_solution_objective(solver)
     print *, 'Solution objective = ', solution_objective
 
@@ -147,7 +160,8 @@ program example_uno
     call check_success(success, "uno_set_lagrangian_hessian")
     success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
     call check_success(success, "uno_set_lagrangian_sign_convention")
-    call uno_optimize(solver, model)
+    success = uno_optimize(solver, model)
+    call check_success(success, "uno_optimize")
 
     !---------------------------------------------------
     ! Get method description
@@ -164,6 +178,7 @@ program example_uno
     !---------------------------------------------------
     max_iterations = uno_get_solver_integer_option(solver, "max_iterations")
     print *, 'max_iterations = ', max_iterations
+    if (max_iterations /= 1000) error stop 'max_iterations was modified by a rejected option'
 
     dual_tolerance = uno_get_solver_double_option(solver, "dual_tolerance")
     print *, 'dual_tolerance = ', dual_tolerance
@@ -173,6 +188,7 @@ program example_uno
 
     logger = uno_get_solver_string_option(solver, "logger")
     print *, 'logger = ', logger
+    if (logger /= "INFO") error stop 'logger was modified by a rejected option'
 
     option_type = uno_get_solver_option_type(solver, "linear_solver")
     print *, 'option_type for the option linear_solver = ', option_type
@@ -247,6 +263,15 @@ contains
             error stop 1
         end if
     end subroutine check_success
+
+    subroutine check_status(status, expected_status, function_name)
+        integer(uno_int), intent(in) :: status, expected_status
+        character(len=*), intent(in) :: function_name
+        if (status /= expected_status) then
+            print *, 'Error: ', function_name, ' returned ', status, ' instead of ', expected_status
+            error stop 1
+        end if
+    end subroutine check_status
 
     ! Objective
     function objective_hs15(number_variables, x, objective_value, user_data) result(res) &

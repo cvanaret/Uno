@@ -398,31 +398,59 @@ function uno_get_method_description(solver::Solver)
   return unsafe_string(method_description)
 end
 
+"""
+    uno_options_status_message(status::Integer)
+
+Return a description of a status code returned by the functions of the C API that deal with options.
+"""
+function uno_options_status_message(status::Integer)
+  status == UNO_OPTIONS_SUCCESS && return "success"
+  status == UNO_OPTIONS_INVALID_ARGUMENT && return "invalid argument"
+  status == UNO_OPTIONS_NOT_FOUND && return "the option does not exist"
+  status == UNO_OPTIONS_WRONG_TYPE && return "the option has a different type"
+  status == UNO_OPTIONS_INVALID_VALUE && return "the value is not valid for this option"
+  status == UNO_OPTIONS_INVALID_FILE && return "the option file cannot be opened or is malformed"
+  return "an error occurred"
+end
+
+"""
+    uno_check_option_status(status::Integer, option_name, option_value)
+
+Throw an `ErrorException` if `status`, returned when setting the option `option_name` to `option_value`, is not
+`UNO_OPTIONS_SUCCESS`.
+"""
+function uno_check_option_status(status::Integer, option_name, option_value)
+  status == UNO_OPTIONS_SUCCESS && return nothing
+  error("Unable to set the option `\"$option_name\"` to `$(repr(option_value))`: $(uno_options_status_message(status)).")
+end
+
 function uno_solver(; kwargs...)
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
   solver = Solver(c_solver)
+  # register the finalizer first: the solver is destroyed even if an option is rejected
+  finalizer(uno_destroy_solver, solver)
 
   # pass options to Uno
   if haskey(kwargs, :preset)
-    uno_set_solver_preset(solver, kwargs[:preset])
+    uno_check_option_status(uno_set_solver_preset(solver, kwargs[:preset]), :preset, kwargs[:preset])
   end
   for (k, v) in kwargs
     (k == :preset) && continue
     if v isa String
-      @assert uno_set_solver_string_option(c_solver, string(k), v)
+      status = uno_set_solver_string_option(c_solver, string(k), v)
     elseif v isa Float64
-      @assert uno_set_solver_double_option(c_solver, string(k), v)
+      status = uno_set_solver_double_option(c_solver, string(k), v)
     elseif v isa Bool
-      @assert uno_set_solver_bool_option(c_solver, string(k), v)
+      status = uno_set_solver_bool_option(c_solver, string(k), v)
     elseif v isa Integer
-      @assert uno_set_solver_integer_option(c_solver, string(k), Cint(v))
+      status = uno_set_solver_integer_option(c_solver, string(k), Cint(v))
     else
       @warn "$k does not seem to be a valid Uno option."
+      continue
     end
+    uno_check_option_status(status, k, v)
   end
-
-  finalizer(uno_destroy_solver, solver)
   return solver
 end
 
@@ -558,7 +586,7 @@ function uno(
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
                     eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
   solver = uno_solver(; kwargs...)
-  uno_optimize(solver, model)
+  uno_optimize(solver, model) || error("Uno could not optimize the model.")
   stats = uno_statistics(model, solver)
   return stats
 end
