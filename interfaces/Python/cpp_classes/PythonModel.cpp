@@ -133,7 +133,7 @@ namespace uno {
             ++this->number_model_evaluations.jacobian;
          }
          catch (const std::exception&) {
-            throw GradientEvaluationError();
+            throw JacobianEvaluationError();
          }
       }
    }
@@ -171,7 +171,7 @@ namespace uno {
             (*this->user_model.jacobian_operator)(x_py, true, vector_py, result_py);
          }
          catch (const std::exception&) {
-            throw GradientEvaluationError();
+            throw JacobianEvaluationError();
          }
       }
       else {
@@ -190,7 +190,7 @@ namespace uno {
             (*this->user_model.jacobian_transposed_operator)(x_py, true, vector_py, result_py);
          }
          catch (const std::exception&) {
-            throw GradientEvaluationError();
+            throw JacobianEvaluationError();
          }
       }
       else {

@@ -552,6 +552,9 @@ if(SKBUILD)
       target_compile_options(unopy PRIVATE ${UNO_PYTHON_BINDINGS_OPT_FLAG})
    endif()
 
+   # also installs the optional subpackages unopy.scipy and unopy.gemseo
+   install(DIRECTORY interfaces/Python/unopy/ DESTINATION unopy
+           PATTERN "__pycache__" EXCLUDE)
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd

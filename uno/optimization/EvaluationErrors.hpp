@@ -20,6 +20,12 @@ namespace uno {
          return "A numerical error was encountered while evaluating a gradient\n";
       }
    };
+   
+   struct JacobianEvaluationError : EvaluationError {
+      [[nodiscard]] const char* what() const noexcept override {
+         return "A numerical error was encountered while evaluating a Jacobian\n";
+      }
+   };
 
    struct HessianEvaluationError : EvaluationError {
       [[nodiscard]] const char* what() const noexcept override {

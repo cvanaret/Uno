@@ -25,6 +25,14 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+# the scipy.optimize.minimize-like interface unopy.scipy
+scipy = ["scipy>=1.8"]
+# the GEMSEO plugin unopy.gemseo
+gemseo = ["gemseo>=6.3", "scipy>=1.8"]
+
+[project.entry-points.gemseo_plugins]
+# the GEMSEO factories import the modules of this package to find the Uno algorithms
+unopy = "unopy.gemseo"
 
 [project.urls]
 Repository = "https://github.com/cvanaret/Uno"
@@ -37,7 +45,6 @@ testpaths = ["interfaces/Python/tests"]
 cmake.source-dir = "."
 build.verbose = true
 wheel.cmake = true
-wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init__.py
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
