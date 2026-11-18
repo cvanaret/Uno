@@ -31,7 +31,6 @@ print(res.message)  # Optimization status: SUCCESS; solution status: FEASIBLE_KK
 
 The arguments are those of `scipy.optimize.minimize`:
 `fun`, `x0`, `args`, `method`, `jac`, `hess`, `bounds`, `constraints`, `tol`, `callback` and `options`.
-Uno only uses Hessian-vector products, so the Lagrangian Hessian is never built as a dense matrix.
 
 ## Derivatives of the objective
 
@@ -48,8 +47,7 @@ The objective Hessian `hess` can be:
   L-BFGS or L-SR1 (the option `quasi_newton_memory_size` sets the memory size);
 - `None` (the default): Uno uses its L-BFGS model.
 
-A callable `hess` is used by `filtersqp`, unless the option `hessian_model` is not `"exact"`.
-It is not supported by `ipopt`, which needs an explicit Hessian matrix: use `BFGS()` with this method.
+A callable `hess` is used unless the option `hessian_model` is not `"exact"`.
 
 ## Bounds and constraints
 
