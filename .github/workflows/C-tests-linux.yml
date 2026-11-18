@@ -85,3 +85,4 @@ jobs:
         run: |
           ./tests_hs015
           ./tests_options
+          ./tests_results

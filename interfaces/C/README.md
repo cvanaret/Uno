@@ -235,48 +235,73 @@ bool success = uno_optimize(solver, model);
 
 ### Inspecting the result
 
-A set of functions allows you to inspect the result of the optimization:
-- the optimization status (`UNO_SUCCESS`, `UNO_ITERATION_LIMIT`, `UNO_TIME_LIMIT`, `UNO_EVALUATION_ERROR`, `UNO_ALGORITHMIC_ERROR`):
+A set of functions allows you to inspect the result of the optimization. They write the value into their last argument and return a status code:
+- `UNO_RESULT_SUCCESS`: the value was written;
+- `UNO_RESULT_INVALID_ARGUMENT`: the solver or the pointer to the value is null;
+- `UNO_RESULT_NOT_AVAILABLE`: there is no result (no optimization yet, or `uno_optimize` returned `false`). No message is printed in this case;
+- `UNO_RESULT_INVALID_INDEX`: the index of a component is not valid (the indices follow the base indexing of the model);
+- `UNO_RESULT_ERROR`: any other error.
+
+The value is written only if the status is `UNO_RESULT_SUCCESS`.
+
+- the optimization status (`UNO_SUCCESS`, `UNO_ITERATION_LIMIT`, `UNO_TIME_LIMIT`, `UNO_EVALUATION_ERROR`, `UNO_ALGORITHMIC_ERROR`, `UNO_USER_TERMINATION`, `UNO_USER_INTERRUPTION`):
 ```c
-uno_get_optimization_status(solver);
+uno_int optimization_status;
+uno_int status = uno_get_optimization_status(solver, &optimization_status);
 ```
 - the solution status (`UNO_NOT_OPTIMAL`, `UNO_FEASIBLE_KKT_POINT`, `UNO_FEASIBLE_FJ_POINT`, `UNO_INFEASIBLE_STATIONARY_POINT`, `UNO_FEASIBLE_SMALL_STEP`, `UNO_INFEASIBLE_SMALL_STEP`, `UNO_DIVERGING_ITERATE`, `UNO_UNBOUNDED_OBJECTIVE`):
 ```c
-uno_int uno_get_solution_status(solver);
+uno_int solution_status;
+status = uno_get_solution_status(solver, &solution_status);
 ```
 - the objective value of the solution:
 ```c
-double uno_get_solution_objective(solver);
+double solution_objective;
+status = uno_get_solution_objective(solver, &solution_objective);
 ```
-- the primal solution:
+- the primal solution, or one of its components:
 ```c
-void uno_get_primal_solution(solver, primal_solution);
+status = uno_get_primal_solution(solver, primal_solution); // array of size number_variables
+status = uno_get_primal_solution_component(solver, index, &primal_component);
 ```
-- the dual solution associated with the general constraints:
+- the dual solution associated with the general constraints, or one of its components:
 ```c
-void uno_get_constraint_dual_solution(solver, constraint_dual_solution);
+status = uno_get_constraint_dual_solution(solver, constraint_dual_solution); // array of size number_constraints
+status = uno_get_constraint_dual_solution_component(solver, index, &constraint_dual_component);
 ```
-- the dual solution associated with the lower bounds:
+- the dual solution associated with the lower bounds, or one of its components:
 ```c
-void uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution);
+status = uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution); // array of size number_variables
+status = uno_get_lower_bound_dual_solution_component(solver, index, &lower_bound_dual_component);
 ```
-- the dual solution associated with the upper bounds:
+- the dual solution associated with the upper bounds, or one of its components:
 ```c
-void uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
+status = uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution); // array of size number_variables
+status = uno_get_upper_bound_dual_solution_component(solver, index, &upper_bound_dual_component);
 ```
 - the constraint values at the solution:
 ```c
-void uno_get_solution_constraints(solver, constraint_values);
+status = uno_get_solution_constraints(solver, constraint_values); // array of size number_constraints
 ```
-- the primal feasibility measure at the solution:
+- the primal feasibility, stationarity and complementarity measures at the solution:
 ```c
-double uno_get_solution_primal_feasibility(solver);
+double primal_feasibility, stationarity, complementarity;
+status = uno_get_solution_primal_feasibility(solver, &primal_feasibility);
+status = uno_get_solution_stationarity(solver, &stationarity);
+status = uno_get_solution_complementarity(solver, &complementarity);
 ```
-- the stationarity measure at the solution:
+- the statistics of the solve:
 ```c
-double uno_get_solution_stationarity(solver);
+uno_int number_iterations, number_evaluations;
+double cpu_time;
+status = uno_get_number_iterations(solver, &number_iterations);
+status = uno_get_cpu_time(solver, &cpu_time);
+status = uno_get_number_objective_evaluations(solver, &number_evaluations);
+// also: uno_get_number_constraint_evaluations, uno_get_number_objective_gradient_evaluations,
+// uno_get_number_jacobian_evaluations, uno_get_number_hessian_evaluations, uno_get_number_subproblem_solved_evaluations
 ```
-- the complementarity measure at the solution:
+- the description of the method used by Uno (the string is owned by the solver). Like the other getters, it returns `UNO_RESULT_NOT_AVAILABLE` if there is no result:
 ```c
-double uno_get_solution_complementarity(solver);
+const char* method_description;
+status = uno_get_method_description(solver, &method_description);
 ```

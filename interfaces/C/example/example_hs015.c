@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "uno/Uno_C_API.h"
@@ -63,6 +64,20 @@ uno_int lagrangian_hessian_operator(uno_int number_variables, uno_int number_con
    result[0] = hessian00*vector[0] + hessian10*vector[1];
    result[1] = hessian10*vector[0] + hessian11*vector[1];
    return 0;
+}
+
+// stops if the result of the optimization could not be retrieved
+void check_result(uno_int status, const char* function_name) {
+   if (status != UNO_RESULT_SUCCESS) {
+      fprintf(stderr, "%s failed with status %d\n", function_name, (int)status);
+      exit(EXIT_FAILURE);
+   }
+}
+
+const char* method_description(void* solver) {
+   const char* description = NULL;
+   check_result(uno_get_method_description(solver, &description), "uno_get_method_description");
+   return description;
 }
 
 void print_vector(const double* vector, uno_int size) {
@@ -173,13 +188,16 @@ int main() {
    // run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
    bool optimized = uno_optimize(solver, model);
    assert(optimized);
-   printf("Method used: %s\n", uno_get_method_description(solver));
+   printf("Method used: %s\n", method_description(solver));
    // get the solution
-   uno_int optimization_status = uno_get_optimization_status(solver);
+   uno_int optimization_status;
+   check_result(uno_get_optimization_status(solver, &optimization_status), "uno_get_optimization_status");
    assert(optimization_status == UNO_SUCCESS);
-   uno_int iterate_status = uno_get_solution_status(solver);
+   uno_int iterate_status;
+   check_result(uno_get_solution_status(solver, &iterate_status), "uno_get_solution_status");
    assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
-   double solution_objective = uno_get_solution_objective(solver);
+   double solution_objective;
+   check_result(uno_get_solution_objective(solver, &solution_objective), "uno_get_solution_objective");
    printf("Solution objective = %g\n", solution_objective);
    const char* hessian_model = NULL;
    option_status = uno_get_solver_string_option(solver, "hessian_model", &hessian_model);
@@ -197,35 +215,38 @@ int main() {
    optimized = uno_optimize(solver, model);
    assert(optimized);
    
-   printf("Method used: %s\n", uno_get_method_description(solver));
+   printf("Method used: %s\n", method_description(solver));
    // get the solution
-   optimization_status = uno_get_optimization_status(solver);
+   check_result(uno_get_optimization_status(solver, &optimization_status), "uno_get_optimization_status");
    assert(optimization_status == UNO_SUCCESS);
-   iterate_status = uno_get_solution_status(solver);
+   check_result(uno_get_solution_status(solver, &iterate_status), "uno_get_solution_status");
    assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
-   solution_objective = uno_get_solution_objective(solver);
+   check_result(uno_get_solution_objective(solver, &solution_objective), "uno_get_solution_objective");
    printf("Solution objective = %g\n", solution_objective);
    double primal_solution[number_variables];
-   uno_get_primal_solution(solver, primal_solution);
+   check_result(uno_get_primal_solution(solver, primal_solution), "uno_get_primal_solution");
    printf("Primal solution: "); print_vector(primal_solution, number_variables);
    double constraint_dual_solution[number_constraints];
-   uno_get_constraint_dual_solution(solver, constraint_dual_solution);
+   check_result(uno_get_constraint_dual_solution(solver, constraint_dual_solution), "uno_get_constraint_dual_solution");
    printf("Constraint dual solution: "); print_vector(constraint_dual_solution, number_constraints);
    double lower_bound_dual_solution[number_variables];
-   uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution);
+   check_result(uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution), "uno_get_lower_bound_dual_solution");
    printf("Lower bound dual solution: "); print_vector(lower_bound_dual_solution, number_variables);
    double upper_bound_dual_solution[number_variables];
-   uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
+   check_result(uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution), "uno_get_upper_bound_dual_solution");
    printf("Upper bound dual solution: "); print_vector(upper_bound_dual_solution, number_variables);
    double solution_constraints[number_constraints];
-   uno_get_solution_constraints(solver, solution_constraints);
+   check_result(uno_get_solution_constraints(solver, solution_constraints), "uno_get_solution_constraints");
    printf("Solution constraints: "); print_vector(solution_constraints, number_constraints);
    
-   const double solution_primal_feasibility = uno_get_solution_primal_feasibility(solver);
+   double solution_primal_feasibility;
+   check_result(uno_get_solution_primal_feasibility(solver, &solution_primal_feasibility), "uno_get_solution_primal_feasibility");
    printf("Primal feasibility at solution = %e\n", solution_primal_feasibility);
-   const double solution_stationarity = uno_get_solution_stationarity(solver);
+   double solution_stationarity;
+   check_result(uno_get_solution_stationarity(solver, &solution_stationarity), "uno_get_solution_stationarity");
    printf("Stationarity at solution = %e\n", solution_stationarity);
-   const double solution_complementarity = uno_get_solution_complementarity(solver);
+   double solution_complementarity;
+   check_result(uno_get_solution_complementarity(solver, &solution_complementarity), "uno_get_solution_complementarity");
    printf("Complementarity at solution = %e\n", solution_complementarity);
 
 #ifdef UNO_EXAMPLE_HIGHS
@@ -237,12 +258,12 @@ int main() {
    assert(option_status == UNO_OPTIONS_SUCCESS);
    optimized = uno_optimize(solver, model);
    assert(optimized);
-   printf("Method used: %s\n", uno_get_method_description(solver));
-   optimization_status = uno_get_optimization_status(solver);
+   printf("Method used: %s\n", method_description(solver));
+   check_result(uno_get_optimization_status(solver, &optimization_status), "uno_get_optimization_status");
    assert(optimization_status == UNO_SUCCESS);
-   iterate_status = uno_get_solution_status(solver);
+   check_result(uno_get_solution_status(solver, &iterate_status), "uno_get_solution_status");
    assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
-   solution_objective = uno_get_solution_objective(solver);
+   check_result(uno_get_solution_objective(solver, &solution_objective), "uno_get_solution_objective");
    printf("Solution objective = %g\n", solution_objective);
 #endif
 

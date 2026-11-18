@@ -1,7 +1,7 @@
 ! THIS VERSION: CUTEST 2.7 - 2026-06-02 AT 11:10 GMT.
 ! Adapted to the status codes of the Uno C API: the option setters (including
-! uno_load_solver_option_file and uno_set_solver_preset) and the option getters
-! return a status code, and uno_optimize returns a logical.
+! uno_load_solver_option_file and uno_set_solver_preset), the option getters and
+! the result getters return a status code, and uno_optimize returns a logical.
 
 #include "cutest_modules.h"
 #include "cutest_routines.h"
@@ -252,63 +252,74 @@
 
     WRITE( out, "( /, ' Solved CUTEst problem ', A, ' with Uno version ',     &
    &  I0, '.', I0, '.', I0, ' using a' )" ) TRIM( p_name ), major, minor, patch
-    method_description = uno_get_method_description( solver )
+    uno_status = uno_get_method_description( solver, method_description )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_method_description' )
     WRITE( 6, "( 1X, A )" ) method_description
 
 !  recover solution statistics
 
-    optimization_status = uno_get_optimization_status( solver )
+    uno_status = uno_get_optimization_status( solver, optimization_status )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_optimization_status' )
     WRITE( out, "( /, ' Optimization status:  ', 11X, A )" )                   &
       OPT_STAT( optimization_status )
 
-    iterate_status = uno_get_solution_status( solver )
+    uno_status = uno_get_solution_status( solver, iterate_status )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_solution_status' )
     WRITE( out, "( ' Iterate status: ', 17X, A )" ) ITER_STAT( iterate_status )
 
-    solution_objective = uno_get_solution_objective( solver )
+    uno_status = uno_get_solution_objective( solver, solution_objective )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_solution_objective' )
     WRITE( out, "( ' Solution objective: ', 11X, ES22.14 )" ) solution_objective
 
-    solution_primal_feasibility = uno_get_solution_primal_feasibility( solver )
+    uno_status = uno_get_solution_primal_feasibility( solver, solution_primal_feasibility )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_solution_primal_feasibility' )
     WRITE( out, "( ' Primal feasibility at solution:', ES22.14 )" )            &
       solution_primal_feasibility
 
-    solution_stationarity = uno_get_solution_stationarity( solver )
+    uno_status = uno_get_solution_stationarity( solver, solution_stationarity )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_solution_stationarity' )
     WRITE( out, "( ' Stationarity at solution:      ', ES22.14 )" )            &
       solution_stationarity
 
-    solution_complementarity = uno_get_solution_complementarity( solver )
+    uno_status = uno_get_solution_complementarity( solver, solution_complementarity )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_solution_complementarity' )
     WRITE( out, "( ' Complementarity at solution:   ', ES22.14 )" )            &
       solution_complementarity
 
-    number_iterations = uno_get_number_iterations( solver )
+    uno_status = uno_get_number_iterations( solver, number_iterations )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_number_iterations' )
     WRITE( out, "( ' Number iterations ', 15X, I0 )" ) number_iterations
 
-    number_objective_evaluations                                               &
-      = uno_get_number_objective_evaluations( solver )
+    uno_status = uno_get_number_objective_evaluations( solver, number_objective_evaluations )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_number_objective_evaluations' )
     WRITE( out, "( ' Objective evaluations: ', 10X, I0 )" )                    &
       number_objective_evaluations                                            
 
-    number_constraint_evaluations                                              &
-      = uno_get_number_constraint_evaluations( solver )
+    uno_status = uno_get_number_constraint_evaluations( solver, number_constraint_evaluations )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_number_constraint_evaluations' )
     WRITE( out, "( ' Constraints evaluations: ', 8X, I0 )" )                   &
       number_constraint_evaluations
 
-    number_objective_gradient_evaluations                                      &
-      = uno_get_number_objective_gradient_evaluations( solver )
+    uno_status = uno_get_number_objective_gradient_evaluations( solver, number_objective_gradient_evaluations )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_number_objective_gradient_evaluations' )
     WRITE( out, "( ' Objective gradient evaluations: ', 1X, I0 )" )           &
       number_objective_gradient_evaluations
 
-    number_jacobian_evaluations = uno_get_number_jacobian_evaluations( solver )
+    uno_status = uno_get_number_jacobian_evaluations( solver, number_jacobian_evaluations )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_number_jacobian_evaluations' )
     WRITE( out, "( ' Jacobian evaluations: ', 11X, I0 )" )                     &
       number_jacobian_evaluations
 
-    number_hessian_evaluations = uno_get_number_hessian_evaluations( solver )
+    uno_status = uno_get_number_hessian_evaluations( solver, number_hessian_evaluations )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_number_hessian_evaluations' )
     WRITE( out, "( ' Hessian evaluations: ', 12X, I0 )" )                      &
       number_hessian_evaluations
-    number_subproblems_solved                                                  &
-      = uno_get_number_subproblem_solved_evaluations( solver )
+    uno_status = uno_get_number_subproblem_solved_evaluations( solver, number_subproblems_solved )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_number_subproblem_solved_evaluations' )
     WRITE( out, "( ' Number of subproblems solved: ', 3X, I0 )" )              &
       number_subproblems_solved
-    cpu_time = uno_get_cpu_time( solver )
+    uno_status = uno_get_cpu_time( solver, cpu_time )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_cpu_time' )
     WRITE( out, "( ' CPU time (secs) ', 13X, F9.3 ) ") cpu_time
 
     uno_status = uno_get_solver_bool_option( solver, "write_solution_to_file", &
@@ -354,9 +365,12 @@
       tool = 'varname'
       CALL CUTEST_varnames( status, n, X_names )
       IF ( status /= 0 ) GO TO 10
-      CALL uno_get_primal_solution( solver, X )
-      CALL uno_get_lower_bound_dual_solution( solver, Z_l )
-      CALL uno_get_upper_bound_dual_solution( solver, Z_u )
+      uno_status = uno_get_primal_solution( solver, X )
+      CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_primal_solution' )
+      uno_status = uno_get_lower_bound_dual_solution( solver, Z_l )
+      CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_lower_bound_dual_solution' )
+      uno_status = uno_get_upper_bound_dual_solution( solver, Z_u )
+      CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_upper_bound_dual_solution' )
 
       WRITE( output_sol, "( /, ' Solution: ', /,                               &
      & '                                       ',                              &
@@ -390,8 +404,10 @@
 !       tool = 'ccf    '
 !       CALL CUTEST_ccf( status, n, m, X, C )
 !       IF ( status /= 0 ) GO TO 10
-        call uno_get_solution_constraints( solver, C )
-        CALL uno_get_constraint_dual_solution( solver, Y )
+        uno_status = uno_get_solution_constraints( solver, C )
+        CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_solution_constraints' )
+        uno_status = uno_get_constraint_dual_solution( solver, Y )
+        CALL CHECK_UNO_STATUS( uno_status, UNO_RESULT_SUCCESS, 'uno_get_constraint_dual_solution' )
         WRITE( output_sol, "( /, ' Constraints: ', /,                          &
        & '                                       ',                            &
        & '   <---------------- Bounds ----------------> ', /                   &

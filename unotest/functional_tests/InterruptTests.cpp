@@ -125,6 +125,19 @@ namespace {
       void* solver{nullptr};
    };
 
+   // results of the last optimization
+   uno_int optimization_status(void* solver) {
+      uno_int status{-1};
+      EXPECT_EQ(uno_get_optimization_status(solver, &status), UNO_RESULT_SUCCESS);
+      return status;
+   }
+
+   uno_int number_iterations(void* solver) {
+      uno_int iterations{-1};
+      EXPECT_EQ(uno_get_number_iterations(solver, &iterations), UNO_RESULT_SUCCESS);
+      return iterations;
+   }
+
    volatile std::sig_atomic_t sentinel_calls = 0;
    extern "C" void interrupt_tests_sentinel_handler(int /*signal*/) {
       sentinel_calls = sentinel_calls + 1;
@@ -148,15 +161,17 @@ TEST_F(InterruptTests, TerminatesAtEndOfOuterIteration) {
    problem.optimize();
 
    ASSERT_TRUE(data.raised);
-   EXPECT_EQ(uno_get_optimization_status(problem.solver), UNO_USER_INTERRUPTION);
-   EXPECT_EQ(uno_get_number_iterations(problem.solver), 1);
+   EXPECT_EQ(optimization_status(problem.solver), UNO_USER_INTERRUPTION);
+   EXPECT_EQ(number_iterations(problem.solver), 1);
 
    std::vector<double> primals(number_variables);
-   uno_get_primal_solution(problem.solver, primals.data());
+   EXPECT_EQ(uno_get_primal_solution(problem.solver, primals.data()), UNO_RESULT_SUCCESS);
    for (double primal: primals) {
       EXPECT_TRUE(std::isfinite(primal));
    }
-   EXPECT_TRUE(std::isfinite(uno_get_solution_objective(problem.solver)));
+   double objective{};
+   EXPECT_EQ(uno_get_solution_objective(problem.solver, &objective), UNO_RESULT_SUCCESS);
+   EXPECT_TRUE(std::isfinite(objective));
 }
 
 // the inner loop is not aborted: evaluations continue after the signal until the outer loop polls the flag
@@ -167,8 +182,8 @@ TEST_F(InterruptTests, InnerLoopRunsToCompletion) {
    problem.optimize();
 
    ASSERT_TRUE(data.raised);
-   EXPECT_EQ(uno_get_optimization_status(problem.solver), UNO_USER_INTERRUPTION);
-   EXPECT_EQ(uno_get_number_iterations(problem.solver), 1);
+   EXPECT_EQ(optimization_status(problem.solver), UNO_USER_INTERRUPTION);
+   EXPECT_EQ(number_iterations(problem.solver), 1);
    EXPECT_GT(data.objective_evaluations, 1);
 }
 
@@ -178,13 +193,13 @@ TEST_F(InterruptTests, FlagIsResetBetweenSolves) {
    data.raise_at_evaluation = 2;
    HS015 problem(data);
    problem.optimize();
-   ASSERT_EQ(uno_get_optimization_status(problem.solver), UNO_USER_INTERRUPTION);
+   ASSERT_EQ(optimization_status(problem.solver), UNO_USER_INTERRUPTION);
 
    // same solver and model, no signal this time
    data.raise_at_evaluation = 0;
    problem.optimize();
-   EXPECT_NE(uno_get_optimization_status(problem.solver), UNO_USER_INTERRUPTION);
-   EXPECT_GT(uno_get_number_iterations(problem.solver), 1);
+   EXPECT_NE(optimization_status(problem.solver), UNO_USER_INTERRUPTION);
+   EXPECT_GT(number_iterations(problem.solver), 1);
 }
 
 // the host's SIGINT handler is restored after the solve, even after an interrupt
@@ -198,7 +213,7 @@ TEST_F(InterruptTests, RestoresHostHandler) {
       data.raise_at_evaluation = 2;
       HS015 problem(data);
       problem.optimize();
-      ASSERT_EQ(uno_get_optimization_status(problem.solver), UNO_USER_INTERRUPTION);
+      ASSERT_EQ(optimization_status(problem.solver), UNO_USER_INTERRUPTION);
    }
    EXPECT_EQ(sentinel_calls, 0); // the solver's handler intercepted the signal
 

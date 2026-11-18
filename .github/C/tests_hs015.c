@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "uno/Uno_C_API.h"
 
@@ -71,6 +72,20 @@ uno_int lagrangian_hessian_max_positive_sign(uno_int /*number_variables*/, uno_i
 	hessian_values[1] = -400.*-objective_multiplier*x[0] + multipliers[0];
 	hessian_values[2] = 200.*-objective_multiplier + 2.*multipliers[1];
 	return 0;
+}
+
+// stops if the result of the optimization could not be retrieved
+void check_result(uno_int status, const char* function_name) {
+	if (status != UNO_RESULT_SUCCESS) {
+		fprintf(stderr, "%s failed with status %d\n", function_name, (int)status);
+		exit(EXIT_FAILURE);
+	}
+}
+
+const char* method_description(void* solver) {
+	const char* description = NULL;
+	check_result(uno_get_method_description(solver, &description), "uno_get_method_description");
+	return description;
 }
 
 void print_vector(const double* vector, uno_int size) {
@@ -149,34 +164,37 @@ void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_conventi
 	assert(optimized);
 	
 	// tests
-	const uno_int optimization_status = uno_get_optimization_status(solver);
+	uno_int optimization_status;
+	check_result(uno_get_optimization_status(solver, &optimization_status), "uno_get_optimization_status");
 	assert(optimization_status == UNO_SUCCESS);
-	const uno_int iterate_status = uno_get_solution_status(solver);
+	uno_int iterate_status;
+	check_result(uno_get_solution_status(solver, &iterate_status), "uno_get_solution_status");
 	assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
 	// objective
-	const double solution_objective = uno_get_solution_objective(solver);
+	double solution_objective;
+	check_result(uno_get_solution_objective(solver, &solution_objective), "uno_get_solution_objective");
 	assert(solution_objective == reference_objective);
 	// primal solution
 	double primal_solution[number_variables];
-	uno_get_primal_solution(solver, primal_solution);
+	check_result(uno_get_primal_solution(solver, primal_solution), "uno_get_primal_solution");
 	for (size_t variable_index = 0; variable_index < number_variables; ++variable_index) {
 		assert(primal_solution[variable_index] == reference_primal_solution[variable_index]);
 	}
 	// constraint dual solution
 	double constraint_dual_solution[number_constraints];
-	uno_get_constraint_dual_solution(solver, constraint_dual_solution);
+	check_result(uno_get_constraint_dual_solution(solver, constraint_dual_solution), "uno_get_constraint_dual_solution");
 	for (size_t constraint_index = 0; constraint_index < number_constraints; ++constraint_index) {
 		assert(constraint_dual_solution[constraint_index] == reference_constraint_dual_solution[constraint_index]);
 	}
 	// lower bound dual solution
 	double lower_bound_dual_solution[number_variables];
-	uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution);
+	check_result(uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution), "uno_get_lower_bound_dual_solution");
 	for (size_t variable_index = 0; variable_index < number_variables; ++variable_index) {
 		assert(lower_bound_dual_solution[variable_index] == reference_lower_bound_dual_solution[variable_index]);
 	}
 	// upper bound dual solution
 	double upper_bound_dual_solution[number_variables];
-	uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
+	check_result(uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution), "uno_get_upper_bound_dual_solution");
 	for (size_t variable_index = 0; variable_index < number_variables; ++variable_index) {
 		assert(upper_bound_dual_solution[variable_index] == reference_upper_bound_dual_solution[variable_index]);
 	}

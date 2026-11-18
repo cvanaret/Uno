@@ -687,3 +687,45 @@ end
   @test UnoSolver.uno_get_solver_string_option(solver_auto, "hessian_model", string_value) == UnoSolver.UNO_OPTIONS_NOT_SET
   @test string_value[] == C_NULL
 end
+
+@testset "Result -- status codes" begin
+  # min (x1 - 1)^2 + (x2 - 2)^2
+  objective(userdata, x) = (x[1] - 1.0)^2 + (x[2] - 2.0)^2
+  function gradient(userdata, g, x)
+    g[1] = 2.0 * (x[1] - 1.0)
+    g[2] = 2.0 * (x[2] - 2.0)
+    return g
+  end
+  function hessian(userdata, hvals, x, multipliers, objective_multiplier)
+    hvals[1] = 2.0 * objective_multiplier
+    hvals[2] = 2.0 * objective_multiplier
+    return hvals
+  end
+  model = uno_model("NLP", true, 2, [-Inf, -Inf], [Inf, Inf], Cint[1, 2], Cint[1, 2], 2, objective, gradient, hessian,
+                    nothing)
+  solver = uno_solver(logger="SILENT", preset="filtersqp")
+
+  # no result before the solve
+  @test !UnoSolver.uno_has_result(solver)
+  @test_throws ErrorException UnoSolver.uno_get_solution_objective(solver)
+  @test_throws ErrorException UnoSolver.uno_get_primal_solution(solver, zeros(2))
+  @test_throws ErrorException uno_get_method_description(solver)
+  value = Ref{Cdouble}(-1.0)
+  @test UnoSolver.uno_get_solution_objective(solver.c_solver, value) == UnoSolver.UNO_RESULT_NOT_AVAILABLE
+  @test value[] == -1.0
+  @test UnoSolver.uno_get_solution_objective(C_NULL, value) == UnoSolver.UNO_RESULT_INVALID_ARGUMENT
+
+  # successful solve
+  @test uno_optimize(solver, model)
+  @test UnoSolver.uno_has_result(solver)
+  @test UnoSolver.uno_get_optimization_status(solver) == UnoSolver.UNO_SUCCESS
+  @test UnoSolver.uno_get_solution_objective(solver) ≈ 0.0 atol = 1e-8
+  x = UnoSolver.uno_get_primal_solution(solver, zeros(2))
+  @test x ≈ [1.0, 2.0] atol = 1e-6
+  # 1-based indexing in Julia
+  @test UnoSolver.uno_get_primal_solution_component(solver, 2) == x[2]
+  @test_throws ErrorException UnoSolver.uno_get_primal_solution_component(solver, 3)
+  @test UnoSolver.uno_get_primal_solution_component(solver.c_solver, Cint(3), value) == UnoSolver.UNO_RESULT_INVALID_INDEX
+  @test UnoSolver.uno_get_number_iterations(solver) > 0
+  @test !isempty(uno_get_method_description(solver))
+end

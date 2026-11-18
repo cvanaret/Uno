@@ -291,34 +291,34 @@ success = uno_optimize(solver, model)
 
 ### Inspecting the result
 
-The following routines allow you to inspect the solution:
+The following functions allow you to inspect the solution. They write the value into their last argument and return an `integer(uno_int)` status: `UNO_RESULT_SUCCESS` if the value was written, otherwise `UNO_RESULT_INVALID_ARGUMENT`, `UNO_RESULT_NOT_AVAILABLE` (no optimization yet, or `uno_optimize` returned `.false.`), `UNO_RESULT_INVALID_INDEX` or `UNO_RESULT_ERROR`. The value is written only if the status is `UNO_RESULT_SUCCESS`.
 
 * optimization status:
 
 ```fortran
-integer(uno_int) :: optimization_status
-optimization_status = uno_get_optimization_status(solver)
+integer(uno_int) :: status, optimization_status
+status = uno_get_optimization_status(solver, optimization_status)
 ```
 
 * solution status:
 
 ```fortran
 integer(uno_int) :: solution_status
-solution_status = uno_get_solution_status(solver)
+status = uno_get_solution_status(solver, solution_status)
 ```
 
 * objective value:
 
 ```fortran
 real(c_double) :: objective
-objective = uno_get_solution_objective(solver)
+status = uno_get_solution_objective(solver, objective)
 ```
 
-* primal solution:
+* primal solution (or one of its components, with `uno_get_primal_solution_component(solver, index, component)`):
 
 ```fortran
 real(c_double), dimension(number_variables) :: primal_solution
-call uno_get_primal_solution(solver, primal_solution)
+status = uno_get_primal_solution(solver, primal_solution)
 ```
 
 * dual solutions:
@@ -327,9 +327,9 @@ call uno_get_primal_solution(solver, primal_solution)
 real(c_double), dimension(number_variables) :: lower_bound_dual_solution, upper_bound_dual_solution
 real(c_double), dimension(number_constraints) :: constraint_dual_solution
 
-call uno_get_constraint_dual_solution(solver, constraint_dual_solution)
-call uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
-call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+status = uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+status = uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+status = uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```
 
 * constraint values:
@@ -337,16 +337,16 @@ call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```fortran
 real(c_double), dimension(number_constraints) :: constraint_values
 
-call uno_get_solution_constraints(solver, constraint_values)
+status = uno_get_solution_constraints(solver, constraint_values)
 ```
 
 * optimality measures:
 
 ```fortran
 real(c_double) :: primal_feasibility, stationarity, complementarity
-primal_feasibility = uno_get_solution_primal_feasibility(solver)
-stationarity = uno_get_solution_stationarity(solver)
-complementarity = uno_get_solution_complementarity(solver)
+status = uno_get_solution_primal_feasibility(solver, primal_feasibility)
+status = uno_get_solution_stationarity(solver, stationarity)
+status = uno_get_solution_complementarity(solver, complementarity)
 ```
 
 * solver statistics:
@@ -355,6 +355,13 @@ complementarity = uno_get_solution_complementarity(solver)
 integer(uno_int) :: number_iterations
 real(c_double) :: cpu_time
 
-number_iterations  = uno_get_number_iterations(solver)
-cpu_time = uno_get_cpu_time(solver)
+status = uno_get_number_iterations(solver, number_iterations)
+status = uno_get_cpu_time(solver, cpu_time)
+```
+
+* description of the method:
+
+```fortran
+character(:), allocatable :: method_description
+status = uno_get_method_description(solver, method_description)
 ```

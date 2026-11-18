@@ -113,6 +113,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/BarrierProblemTests.cpp
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/CAPIOptionsTests.cpp
+   unotest/functional_tests/CAPIResultTests.cpp
    unotest/functional_tests/BoundRelaxationTests.cpp
    unotest/functional_tests/BoundRelaxationScalingTests.cpp
    unotest/functional_tests/FinalEvaluationTests.cpp
