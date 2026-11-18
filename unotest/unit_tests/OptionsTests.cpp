@@ -220,3 +220,63 @@ TEST(Options, Contains) {
    EXPECT_TRUE(options.contains("logger"));
    EXPECT_FALSE(options.contains("loger"));
 }
+
+// the message of an exception thrown by "function", or an empty string if it does not throw
+template <typename Exception, typename Function>
+std::string exception_message(Function&& function) {
+   try {
+      function();
+   }
+   catch (const Exception& exception) {
+      return exception.what();
+   }
+   return "";
+}
+
+TEST(Options, StringValuesHaveABoundedLength) {
+   Options options;
+   const std::string longest(Options::max_string_length, 'a');
+   const std::string too_long(Options::max_string_length + 1, 'a');
+   EXPECT_NO_THROW(options.set_string("libhsl_path", longest));
+   EXPECT_THROW(options.set_string("libhsl_path", too_long), InvalidOptionValue);
+   EXPECT_EQ(options.get_string("libhsl_path"), longest); // unchanged
+   EXPECT_THROW(options.set_string("logger", too_long), InvalidOptionValue);
+   // setter for an option with unknown type (option files, AMPL command line)
+   EXPECT_THROW(options.set("libhsl_path", too_long), InvalidOptionValue);
+   EXPECT_THROW(options.set("max_iterations", too_long), InvalidOptionValue);
+}
+
+TEST(Options, StringValuesWithANullCharacterAreRejected) {
+   Options options;
+   // would be silently truncated when passed to a C function (e.g. dlopen)
+   EXPECT_THROW(options.set_string("libhsl_path", std::string("lib\0hsl.so", 10)), InvalidOptionValue);
+   EXPECT_THROW(options.set("libhsl_path", std::string("lib\0hsl.so", 10)), InvalidOptionValue);
+}
+
+TEST(Options, ErrorMessagesDoNotEchoLongStrings) {
+   Options options;
+   const std::string huge(1000000, 'a');
+   for (const std::string& message: {
+         exception_message<InvalidOptionValue>([&]() { options.set_string("logger", huge); }),
+         exception_message<InvalidOptionValue>([&]() { options.set("max_iterations", huge); }),
+         exception_message<OptionNotFound>([&]() { options.set_string(huge, "INFO"); }),
+         exception_message<OptionNotFound>([&]() { options.set(huge, "INFO"); }),
+         exception_message<OptionNotFound>([&]() { (void)Options::get_option_type(huge); })}) {
+      EXPECT_FALSE(message.empty());
+      EXPECT_LT(message.size(), 200u) << message.substr(0, 200);
+   }
+}
+
+TEST(Options, OptionFileWithTooLongValueIsRejected) {
+   const TemporaryFile file("unotest_too_long_value_options.opt",
+      "libhsl_path " + std::string(Options::max_string_length + 1, 'a') + "\n");
+   Options options;
+   EXPECT_THROW(Options::load_option_file(options, file.name), InvalidOptionValue);
+}
+
+// the C API guarantees that every string it returns (e.g. by the option iterator) fits the maximum length
+TEST(Options, OptionNamesFitTheMaximumLength) {
+   for (const auto& [option_name, type]: Options::option_types) {
+      EXPECT_LE(option_name.size(), Options::max_string_length) << option_name;
+   }
+}

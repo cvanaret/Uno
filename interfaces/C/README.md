@@ -177,6 +177,8 @@ The value is the one set by the user, otherwise by the preset, otherwise the def
 Note: the user-specified options are persistent between consecutive solves (the possibly overridden options are stored separately).
 The string returned by `uno_get_solver_string_option` is owned by the solver: it remains valid until the options of the solver are modified, the next call to `uno_optimize`, or `uno_destroy_solver`.
 
+The strings passed to and returned by Uno (option names and values, option file names, preset names, model names, method description) have at most `UNO_MAX_STRING_LENGTH` (4095) characters, excluding the null terminator. A longer string is rejected (`UNO_OPTIONS_INVALID_VALUE` for an option value or a preset, `UNO_OPTIONS_NOT_FOUND` for an option name, `UNO_OPTIONS_INVALID_FILE` for an option file name, `false` for a model name), and Uno reads at most `UNO_MAX_STRING_LENGTH + 1` characters of it.
+
 Setting a preset has Uno mimic an existing solver:
 ```c
 uno_set_solver_preset(solver, "filtersqp");

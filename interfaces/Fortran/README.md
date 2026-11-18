@@ -12,6 +12,8 @@ Functions whose signatures contain `char *` arguments or return values are inten
 
 The file `uno_fortran.f90` complements this layer by providing Fortran-friendly wrappers for all string-based C API routines.
 These wrappers handle the conversion between Fortran `character` variables and null-terminated C strings, as well as the associated memory management.
+Trailing blanks are removed from the strings passed to Uno. A string longer than `UNO_MAX_STRING_LENGTH` (4095) characters, or that contains `c_null_char`, is rejected without being passed to the C API (e.g. `UNO_OPTIONS_INVALID_VALUE` for an option value, `UNO_OPTIONS_NOT_FOUND` for an option name).
+The strings returned by Uno have at most `UNO_MAX_STRING_LENGTH` characters: the wrappers never read more than `UNO_MAX_STRING_LENGTH + 1` characters.
 
 Used together, `uno_c.f90` and `uno_fortran.f90` provide complete access to the Uno C API.
 Both files must be included when using Uno from Fortran and linked against the Uno library (`libuno`).
