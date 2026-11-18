@@ -653,28 +653,42 @@ bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraint
          return false;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
-      user_model->number_constraints = number_constraints;
-      user_model->constraint_functions = constraint_functions;
-      // copy the bounds internally
+      // build the new data first: if an allocation fails, the model is left untouched
       const size_t unsigned_number_constraints = static_cast<size_t>(number_constraints);
-      user_model->constraints_lower_bounds.resize(unsigned_number_constraints);
-      user_model->constraints_upper_bounds.resize(unsigned_number_constraints);
-      uno_set_constraints_lower_bounds(model, constraints_lower_bounds);
-      uno_set_constraints_upper_bounds(model, constraints_upper_bounds);
-      user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
-      // copy the Jacobian sparsity (in C indexing) to allow the calling code to dispose of its vectors
-      user_model->jacobian_row_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
-      user_model->jacobian_column_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
-      for (size_t index: Range(static_cast<size_t>(number_jacobian_nonzeros))) {
-         user_model->jacobian_row_indices[index] = jacobian_row_indices[index] - user_model->base_indexing;
-         user_model->jacobian_column_indices[index] = jacobian_column_indices[index] - user_model->base_indexing;
-      }
-      user_model->jacobian = jacobian;
-      // create the initial dual point
-      user_model->initial_dual_iterate.resize(unsigned_number_constraints);
+      const size_t unsigned_number_jacobian_nonzeros = static_cast<size_t>(number_jacobian_nonzeros);
+      // copy the bounds internally
+      std::vector<double> lower_bounds = user_model->constraints_lower_bounds;
+      std::vector<double> upper_bounds = user_model->constraints_upper_bounds;
+      lower_bounds.resize(unsigned_number_constraints);
+      upper_bounds.resize(unsigned_number_constraints);
       for (size_t constraint_index: Range(unsigned_number_constraints)) {
-         user_model->initial_dual_iterate[constraint_index] = 0.;
+         if (constraints_lower_bounds != nullptr) {
+            lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];
+         }
+         if (constraints_upper_bounds != nullptr) {
+            upper_bounds[constraint_index] = constraints_upper_bounds[constraint_index];
+         }
       }
+      // copy the Jacobian sparsity (in C indexing) to allow the calling code to dispose of its vectors
+      std::vector<uno_int> row_indices(unsigned_number_jacobian_nonzeros);
+      std::vector<uno_int> column_indices(unsigned_number_jacobian_nonzeros);
+      for (size_t index: Range(unsigned_number_jacobian_nonzeros)) {
+         row_indices[index] = jacobian_row_indices[index] - user_model->base_indexing;
+         column_indices[index] = jacobian_column_indices[index] - user_model->base_indexing;
+      }
+      // the initial dual point
+      std::vector<double> initial_dual_iterate(unsigned_number_constraints, 0.);
+
+      // commit the new data (cannot throw). The counts are set last
+      user_model->constraint_functions = constraint_functions;
+      user_model->constraints_lower_bounds = std::move(lower_bounds);
+      user_model->constraints_upper_bounds = std::move(upper_bounds);
+      user_model->jacobian_row_indices = std::move(row_indices);
+      user_model->jacobian_column_indices = std::move(column_indices);
+      user_model->jacobian = jacobian;
+      user_model->initial_dual_iterate = std::move(initial_dual_iterate);
+      user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
+      user_model->number_constraints = number_constraints;
       return true;
    });
 }
@@ -794,24 +808,30 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
          return false;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
-      user_model->number_hessian_nonzeros = number_hessian_nonzeros;
       // if the Hessian is empty, the problem is an LP
       if (number_hessian_nonzeros == 0) {
          user_model->problem_type = ProblemType::LINEAR;
       }
       else {
-         // copy the Hessian sparsity to allow the calling code to dispose of its vectors
+         // copy the Hessian sparsity to allow the calling code to dispose of its vectors. They are built first: if an
+         // allocation fails, the model is left untouched
          // from now on, we only maintain the lower triangle
-         user_model->hessian_row_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
-         user_model->hessian_column_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
+         const size_t unsigned_number_hessian_nonzeros = static_cast<size_t>(number_hessian_nonzeros);
+         std::vector<uno_int> row_indices(unsigned_number_hessian_nonzeros);
+         std::vector<uno_int> column_indices(unsigned_number_hessian_nonzeros);
          const bool lower_triangle = (hessian_triangular_part == UNO_LOWER_TRIANGLE);
-         for (size_t index: Range(static_cast<size_t>(number_hessian_nonzeros))) {
-            user_model->hessian_row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
-            user_model->hessian_column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
+         for (size_t index: Range(unsigned_number_hessian_nonzeros)) {
+            row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
+            column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
          }
+         // commit the new data (cannot throw)
+         user_model->hessian_row_indices = std::move(row_indices);
+         user_model->hessian_column_indices = std::move(column_indices);
          user_model->hessian_triangular_part = UNO_LOWER_TRIANGLE;
          user_model->lagrangian_hessian = lagrangian_hessian;
       }
+      // the count is set last
+      user_model->number_hessian_nonzeros = number_hessian_nonzeros;
       return true;
    });
 }
