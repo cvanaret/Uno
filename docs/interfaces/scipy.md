@@ -31,6 +31,7 @@ print(res.message)  # Optimization status: SUCCESS; solution status: FEASIBLE_KK
 
 The arguments are those of `scipy.optimize.minimize`:
 `fun`, `x0`, `args`, `method`, `jac`, `hess`, `bounds`, `constraints`, `tol`, `callback` and `options`.
+Uno only uses Hessian-vector products, so the Lagrangian Hessian is never built as a dense matrix;
 
 ## Derivatives of the objective
 
@@ -42,12 +43,7 @@ The objective gradient `jac` can be:
 
 The objective Hessian `hess` can be:
 
-- a callable `hess(x, *args)` returning the Hessian of the objective as a dense array, a `scipy.sparse` matrix or a `LinearOperator`.
-  The Hessian of each `NonlinearConstraint` is then read from its `hess` attribute,
-  `hess(x, v)`, returning the sum of the Hessians of its components weighted by the multipliers `v`;
-  every nonlinear constraint must then be a `NonlinearConstraint` with a callable `hess`
-  (a `LinearConstraint` has a zero Hessian), otherwise a `ValueError` is raised before the optimization.
-  Uno only uses Hessian-vector products, so the Lagrangian Hessian is never built as a dense matrix;
+- a callable `hess(x, *args)` returning the Hessian of the objective as a dense array, a `scipy.sparse` matrix or a `LinearOperator`;
 - a `scipy.optimize.BFGS()` or `SR1()` instance: Uno then uses its limited-memory quasi-Newton model,
   L-BFGS or L-SR1 (the option `quasi_newton_memory_size` sets the memory size);
 - `None` (the default): Uno uses its L-BFGS model.
@@ -60,6 +56,7 @@ It is not supported by `ipopt`, which needs an explicit Hessian matrix: use `BFG
 The bounds are a `scipy.optimize.Bounds` instance or a sequence of `(min, max)` pairs, where `None` means no bound.
 The constraints are `NonlinearConstraint` and `LinearConstraint` instances or dictionaries,
 alone or in a list.
+The Hessian of each `NonlinearConstraint` is read from its `hess` attribute, `hess(x, v)`, returning the sum of the Hessians of its components weighted by the multipliers `v`; every nonlinear constraint must then be a `NonlinearConstraint` with a callable `hess` (a `LinearConstraint` has a zero Hessian), otherwise a `ValueError` is raised before the optimization.
 
 ```python
 import numpy as np
