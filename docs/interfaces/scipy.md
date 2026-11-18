@@ -2,7 +2,7 @@
 
 `unopy.scipy.minimize` solves an optimization problem with Uno through the API of
 [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html):
-the objective, its derivatives, the bounds and the constraints are given as in SciPy,
+the objective, its derivatives, the bounds and the constraints are provided as with SciPy,
 and the result is a SciPy `OptimizeResult`.
 Code written for `scipy.optimize.minimize` therefore runs with Uno by changing the import and the method,
 except for the `options` dictionary, which holds [Uno options](../options.md) instead of the options of the SciPy methods
@@ -32,15 +32,15 @@ print(res.message)  # Optimization status: SUCCESS; solution status: FEASIBLE_KK
 The arguments are those of `scipy.optimize.minimize`:
 `fun`, `x0`, `args`, `method`, `jac`, `hess`, `bounds`, `constraints`, `tol`, `callback` and `options`.
 
-## Derivatives
+## Derivatives of the objective
 
-The gradient `jac` can be:
+The objective gradient `jac` can be:
 
-- a callable `jac(x, *args)` returning the gradient;
+- a callable `jac(x, *args)` returning the objective gradient;
 - `True`, if `fun` returns both the objective and its gradient;
 - a finite-difference scheme: `"2-point"` (the default when `jac` is not given), `"3-point"` or `"cs"` (complex step).
 
-The Hessian `hess` can be:
+The objective Hessian `hess` can be:
 
 - a callable `hess(x, *args)` returning the Hessian of the objective as a dense array, a `scipy.sparse` matrix or a `LinearOperator`.
   The Hessian of each `NonlinearConstraint` is then read from its `hess` attribute,
@@ -49,11 +49,11 @@ The Hessian `hess` can be:
   (a `LinearConstraint` has a zero Hessian), otherwise a `ValueError` is raised before the optimization.
   Uno only uses Hessian-vector products, so the Lagrangian Hessian is never built as a dense matrix;
 - a `scipy.optimize.BFGS()` or `SR1()` instance: Uno then uses its limited-memory quasi-Newton model,
-  L-BFGS or L-SR1 (the option `quasi_newton_memory_size` sets the memory);
+  L-BFGS or L-SR1 (the option `quasi_newton_memory_size` sets the memory size);
 - `None` (the default): Uno uses its L-BFGS model.
 
-A callable `hess` is used by `"filtersqp"`, unless the option `hessian_model` is not `"exact"`.
-It is not supported by `"ipopt"`, which needs an explicit Hessian matrix: use `BFGS()` with this method.
+A callable `hess` is used by `filtersqp`, unless the option `hessian_model` is not `"exact"`.
+It is not supported by `ipopt`, which needs an explicit Hessian matrix: use `BFGS()` with this method.
 
 ## Bounds and constraints
 
@@ -89,7 +89,7 @@ print(res.x)  # [0.41494432 0.17011137]
 ```
 
 A similar problem with dictionary constraints, whose Jacobians are approximated by finite differences,
-solved with the IPOPT preset:
+solved with the `ipopt` preset:
 
 ```python
 constraints = [
@@ -112,13 +112,13 @@ its `"jac"` entry is optional, and its `"args"` entry gives extra arguments to `
 
 ### Sparse Jacobians
 
-The Jacobian of a constraint, and the matrix `A` of a `LinearConstraint`,
+The Jacobian of a nonlinear constraint $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$, and the matrix `A` of a `LinearConstraint`,
 can be a `scipy.sparse` matrix: it is passed to Uno without being converted to a dense array.
 The sparsity pattern is fixed for the whole optimization:
 
 - for a `LinearConstraint`, it is the stored entries of a sparse `A` or the nonzero entries of a dense `A`;
-- for a Jacobian computed by a function, the Jacobian at `x0` is evaluated before the optimization,
-  and the pattern is all its entries if it is dense, or its stored entries if it is sparse;
+- for a Jacobian callback, the Jacobian at `x0` is evaluated before the optimization,
+  and the pattern is composed of all its entries if it is dense, or its stored entries if it is sparse;
 - for a Jacobian approximated by finite differences, the pattern is dense.
 
 A sparse Jacobian must therefore store every entry that can be nonzero during the optimization,
@@ -155,7 +155,7 @@ A nonzero entry outside the pattern raises a `ValueError`.
 ## Options
 
 `tol` sets both the `primal_tolerance` and `dual_tolerance` options of Uno.
-The other [Uno options](../options.md) are passed in the `options` dictionary,
+The other [Uno options](../options.md) are passed via the `options` dictionary,
 with `"maxiter"` and `"max_iter"` as aliases of `"max_iterations"`:
 
 ```python
@@ -172,11 +172,9 @@ An unknown option or a value of the wrong type raises an error before the optimi
 
 ## Callback
 
-The callback is called on each iterate accepted by Uno.
-With a parameter named `intermediate_result`, it is passed an `OptimizeResult` with
-the current point `x`, the objective `fun`, the iteration number `nit` and the current multipliers;
-otherwise, it is passed a copy of the current point.
-Raising `StopIteration` in the callback stops Uno cleanly:
+An optional callback is called on each accepted iterate by Uno.
+If a parameter `intermediate_result` of type `OptimizeResult` is provided, it contains the current primal iterate `x`, its objective value `fun`, the iteration number `nit` and the current Lagrange multipliers; otherwise, it is passed a copy of the current point.
+Raising `StopIteration` in the callback terminates Uno cleanly:
 
 ```python
 def callback(intermediate_result):
@@ -192,7 +190,7 @@ print(res.message)              # `callback` raised `StopIteration`.
 ## Errors in the user functions
 
 An exception raised by `fun`, `jac`, `hess`, a constraint function or the callback (other than `StopIteration`)
-stops Uno, and the same exception is raised by `minimize`:
+terminates Uno, and the same exception is raised by `minimize`:
 
 ```python
 def fun(x):
@@ -227,9 +225,9 @@ and the following ones:
 | Attribute | Description |
 |-----------|-------------|
 | `optimization_status`, `solution_status` | the Uno statuses, as `unopy.OptimizationStatus` and `unopy.SolutionStatus` |
-| `constr` | the values of the constraints at `x`, one array per constraint |
-| `v` | the Lagrange multipliers of the constraints, one array per constraint, followed by those of the bounds if `bounds` is given |
-| `lower_bound_multipliers`, `upper_bound_multipliers` | the multipliers of the lower and upper bounds of the variables |
+| `constr` | the constraint values at `x`, one array per constraint |
+| `v` | the Lagrange multipliers associated to the constraints, one array per constraint, followed by those of the bounds if `bounds` is given |
+| `lower_bound_multipliers`, `upper_bound_multipliers` | the multipliers associated to the lower and upper bounds of the variables |
 
 The multipliers follow the convention of SciPy's `trust-constr` method:
 the Lagrangian is $L(x, v, z) = f(x) + \sum_i v_i^T c_i(x) + z^T x$ and its gradient is zero at a KKT point.

@@ -21,9 +21,9 @@ the algorithms below are then listed among the optimization algorithms available
 
 Both handle equality and inequality constraints and use the gradients provided by GEMSEO.
 The functions are only evaluated inside the design space:
-Uno can try points slightly outside the bounds (e.g. the IPOPT preset relaxes them),
+Uno can try points slightly outside the bounds (e.g., the `ipopt` preset relaxes them),
 which are projected onto the bounds before GEMSEO evaluates the functions.
-They approximate the Hessian of the Lagrangian with Uno's L-BFGS model.
+They approximate the Hessian of the Lagrangian with Uno's L-BFGS Hessian model.
 
 ## Settings
 
@@ -64,12 +64,12 @@ UNO_Filter_SQP_Settings(TR_radius="big")  # ValidationError: Input should be a v
 The stopping criteria are mainly left to GEMSEO (`max_iter`, `max_time`, `ftol_rel`, `xtol_rel`, ...).
 To this end, the plugin sets the Uno options `max_iterations` to the largest integer
 and `primal_tolerance` and `dual_tolerance` to 1e-15,
-so that Uno's own convergence test only stops it once the problem is solved to machine precision.
+so that Uno's own convergence criteria pass once the problem is solved to machine precision.
 Setting `primal_tolerance` or `dual_tolerance` overrides these values.
-Uno can still stop before GEMSEO with its acceptable test:
+Uno may still terminate independently of GEMSEO thanks to its acceptable termination criteria:
 after `acceptable_iteration_threshold` (15 by default) consecutive iterates satisfying its looser acceptable tolerances
 (`acceptable_tolerance`, 1e-6 by default, and the `acceptable_unscaled_*` options).
-This is what stops the IPOPT preset once it no longer makes progress.
+This guarantees that the `ipopt` preset terminates when it no longer makes progress.
 
 ## Example: the Power2 problem
 
@@ -97,7 +97,7 @@ print(result.f_opt)        # 2.1920908016810308
 print(result.is_feasible)  # True
 ```
 
-The same problem with the IPOPT preset:
+The same problem solved with the `ipopt` preset:
 
 ```python
 from unopy.gemseo.settings.ipopt import UNO_IPOPT_Settings
@@ -108,8 +108,8 @@ result = execute_algo(problem, settings_model=UNO_IPOPT_Settings(max_iter=50, lo
 
 ## Example: the supersonic business jet (SSBJ)
 
-The SSBJ problem of Sobieski is a classical MDO benchmark of GEMSEO:
-four coupled disciplines (propulsion, aerodynamics, structure and mission) and the range of the aircraft to maximize
+The SSBJ problem of Sobieski is a classical MDO benchmark implemented in GEMSEO:
+four coupled disciplines (propulsion, aerodynamics, structure and mission) and the range of the aircraft to be maximized
 under structural, aerodynamic and propulsion constraints.
 Here it is solved with the MDF formulation, where GEMSEO solves the coupling between the disciplines at each iteration
 and computes the coupled derivatives passed to Uno:
@@ -143,5 +143,5 @@ print(-result.f_opt)       # 3963.38 (the range is maximized)
 print(result.is_feasible)  # True
 ```
 
-Uno finds the optimal range of 3963.38 in a few iterations.
-Another algorithm is used by changing the settings class, e.g. `UNO_IPOPT_Settings`.
+Uno finds the optimal range of 3963.38 within a few iterations.
+Another algorithm may be used by changing the settings class, e.g. `UNO_IPOPT_Settings`.

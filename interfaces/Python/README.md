@@ -32,7 +32,7 @@ from unopy.scipy import minimize
 result = minimize(rosen, [1.3, 0.7, 0.8], jac=rosen_der, method="filtersqp")
 ```
 
-`unopy.gemseo` is a [GEMSEO](https://gemseo.readthedocs.io) plugin discovered automatically by GEMSEO: the algorithms `UNO_Filter_SQP`, `UNO_Filter_SLP`, `UNO_Funnel_SQP` and `UNO_IPOPT` can be used as any GEMSEO optimization algorithm, with their settings models `UNO_Filter_SQP_Settings`, `UNO_Filter_SLP_Settings`, `UNO_Funnel_SQP_Settings` and `UNO_IPOPT_Settings`:
+`unopy.gemseo` is a [GEMSEO](https://gemseo.readthedocs.io) plugin discovered automatically by GEMSEO: the algorithms `UNO_Filter_SQP` and `UNO_IPOPT` can be used as any GEMSEO optimization algorithm, with their settings models `UNO_Filter_SQP_Settings` and `UNO_IPOPT_Settings`:
 
 ```python
 from unopy.gemseo.settings.filter_sqp import UNO_Filter_SQP_Settings
