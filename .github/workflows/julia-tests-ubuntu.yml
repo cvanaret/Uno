@@ -102,26 +102,38 @@ jobs:
             ARGS: MUMPS
           - UNO_TEST: uno_ipopt
             ARGS: SSIDS
+          - UNO_TEST: uno_ipopt
+            ARGS: HIPO
           - UNO_TEST: uno_ipopt_bfpc
             ARGS: MUMPS
           - UNO_TEST: uno_ipopt_bfpc
             ARGS: SSIDS
+          - UNO_TEST: uno_ipopt_bfpc
+            ARGS: HIPO
           - UNO_TEST: uno_ipopt_lbfgs
             ARGS: MUMPS
           - UNO_TEST: uno_ipopt_lbfgs
             ARGS: SSIDS
+          - UNO_TEST: uno_ipopt_lbfgs
+            ARGS: HIPO
           - UNO_TEST: uno_pure_sqp
             ARGS: MUMPS
           - UNO_TEST: uno_pure_sqp
             ARGS: SSIDS
+          - UNO_TEST: uno_pure_sqp
+            ARGS: HIPO
           - UNO_TEST: uno_unconstrained
             ARGS: MUMPS
           - UNO_TEST: uno_unconstrained
             ARGS: SSIDS
+          - UNO_TEST: uno_unconstrained
+            ARGS: HIPO
           - UNO_TEST: uno_unconstrained_lbfgs
             ARGS: MUMPS
           - UNO_TEST: uno_unconstrained_lbfgs
             ARGS: SSIDS
+          - UNO_TEST: uno_unconstrained_lbfgs
+            ARGS: HIPO
           - UNO_TEST: uno_charlies_instances
             ARGS: filtersqp
           - UNO_TEST: uno_charlies_instances

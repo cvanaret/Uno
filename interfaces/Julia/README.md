@@ -85,9 +85,9 @@ nlp = MathOptNLPModel(jump_model)
 
 model = uno_model(nlp)
 solver = uno_solver()
-uno_set_solver_preset(solver, "filtersqp")
-uno_set_solver_bool_option(solver, "print_solution", true)
-uno_optimize(solver, model)
+@assert uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
+@assert uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
+@assert uno_optimize(solver, model)
 stats = uno_statistics(solver, model)
 ```
 
@@ -168,7 +168,7 @@ HiGHS can be used by setting the `LP_solver` attribute:
 ```julia
 using JuMP, UnoSolver
 model = Model(() -> UnoSolver.Optimizer(preset="filterslp"))
-set_attribute(model, "LP_solver", "HiGHS")
+set_attribute(model, "LP_solver", "HIGHS")
 ```
 
 ## BLAS and LAPACK demuxer

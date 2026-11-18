@@ -8,6 +8,7 @@
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Timer.hpp"
 #include "Uno.hpp"
 
 /*
@@ -21,9 +22,12 @@ void* operator new(size_t size) {
 */
 
 namespace uno {
-   void run_uno_ampl(const AMPLModel& model, Options& options) {
+   void run_uno_ampl(const AMPLModel& model, const Timer& model_read_timer, Options& options) {
       Uno uno{};
       Result result = uno.solve(model, options);
+      // the model was read before the solve (not part of the optimization summary)
+      result.timers.model_read = model_read_timer;
+      DISCRETE << "Model read time:\t\t\t" << result.timers.model_read.get_duration() << "s\n";
       if (options.get_bool("write_solution_to_file")) {
          model.write_solution_to_file(result);
       }
@@ -76,14 +80,17 @@ int main(int argc, char* argv[]) {
 
          // create the model
          const char* model_name = argv[1];
+         Timer model_read_timer;
+         model_read_timer.start();
          const AMPLModel model(model_name);
+         model_read_timer.stop();
 
          const std::string preset = user_options.get_string_optional("preset").value_or(options.get_string("preset"));
          Presets::set(model, options, preset);
          options.overwrite(user_options);
 
          // solve the model
-         run_uno_ampl(model, options);
+         run_uno_ampl(model, model_read_timer, options);
       }
       catch (const std::exception& e) {
          std::cout << "uno_ampl failed with the following error: " << e.what() << '\n';

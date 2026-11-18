@@ -48,6 +48,7 @@ jobs:
                 -DBQPD=$D/lib/libbqpd.a \
                 -DMETIS=$D/lib/libmetis.a \
                 -DSPRAL=$D/lib/libspral.a \
+                -DHIGHS_WITH_HIPO=ON \
                 -DLAPACK_LIBRARIES=$D/lib/liblapack.a \
                 -DBLAS_LIBRARIES="$D/lib/libcblas.a;$D/lib/libblas.a" \
                 -DBUILD_STATIC_LIBS=OFF \

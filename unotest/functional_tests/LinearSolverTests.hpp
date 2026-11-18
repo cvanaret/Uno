@@ -109,6 +109,33 @@ TYPED_TEST_P(LinearSolverTest, MultipleRHS) {
    }
 }
 
+// the composition of the split solves (lower, middle, upper factors) is the full solve
+TYPED_TEST_P(LinearSolverTest, SplitSolves) {
+   TypeParam solver;
+   COOLinearSystem& linear_system = solver.get_coo_linear_system();
+   constexpr size_t dimension = 5;
+   linear_system.dimension = dimension;
+   linear_system.number_nonzeros = 7;
+   linear_system.rhs.resize(dimension);
+   linear_system.matrix_row_indices = {1, 1, 2, 2, 3, 3, 5};
+   linear_system.matrix_column_indices = {1, 2, 3, 5, 3, 4, 5};
+   linear_system.matrix_values = {2., 3., 4., 6., 1., 5., 1.};
+   solver.initialize_memory();
+   solver.do_symbolic_analysis();
+   solver.do_numerical_factorization(false);
+
+   std::array<double, 2 * dimension> solution{8., 45., 31., 15., 17.,  5., 13., 10., 5., 7.};
+   solver.solve_lower_factor(solution.data(), 2);
+   solver.solve_middle_factor(solution.data(), 2);
+   solver.solve_upper_factor(solution.data(), 2);
+
+   const std::array<double, 2 * dimension> reference{1., 2., 3., 4., 5.,  1., 1., 1., 1., 1.};
+   const double tolerance = 1e-8;
+   for (size_t index: Range(2 * dimension)) {
+      EXPECT_NEAR(solution[index], reference[index], tolerance);
+   }
+}
+
 TYPED_TEST_P(LinearSolverTest, MatrixVectorProduct) {
    TypeParam solver;
    COOLinearSystem& linear_system = solver.get_coo_linear_system();
@@ -162,7 +189,7 @@ TYPED_TEST_P(LinearSolverTest, PivotingToleranceIncrease) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(LinearSolverTest,
-   SystemSize5, Inertia, SingularMatrix, MultipleRHS, MatrixVectorProduct, PivotingToleranceIncrease);
+   SystemSize5, Inertia, SingularMatrix, MultipleRHS, SplitSolves, MatrixVectorProduct, PivotingToleranceIncrease);
 
 } // namespace uno
 

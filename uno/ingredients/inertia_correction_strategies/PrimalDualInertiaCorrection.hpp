@@ -58,7 +58,8 @@ namespace uno {
       void regularize_until_correct_inertia(Statistics& statistics, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix& block_augmented_matrix, Range<> primal_regularization_variables, bool assume_singular);
-      void increase_primal_regularization(size_t number_attempts);
+      [[nodiscard]] bool increase_primal_regularization(size_t number_attempts);
+      void rescue_with_scaling(DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, size_t& number_attempts);
    };
 } // namespace
 

@@ -52,7 +52,19 @@ pwd
 if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 	# delete UnoUtils' HiGHS
 	rm -rf lib/libhighs* include/highs include/Highs*.h bin/highs*
-	
+
+	# optional persistent cache of the MinGW HiGHS install (set by CI, e.g. restored with actions/cache)
+	HIGHS_CACHE_U=""
+	if [[ -n "${UNO_HIGHS_CACHE:-}" ]]; then
+		HIGHS_CACHE_U="$(cygpath -u "$UNO_HIGHS_CACHE")"
+	fi
+
+	if [[ -n "$HIGHS_CACHE_U" && -f "${HIGHS_CACHE_U}/lib/libhighs.a" ]]; then
+		echo "Using cached HiGHS build from ${HIGHS_CACHE_U}"
+		cp -a "${HIGHS_CACHE_U}/lib/."     lib
+		cp -a "${HIGHS_CACHE_U}/include/." include
+	else
+
 	# The toolchain is C:/mingw64 via the pinned CMAKE_*_COMPILER/CC/CXX;
 	# /mingw64/bin supplies only cmake/make
 	export PATH="$PATH:/mingw64/bin"
@@ -112,12 +124,17 @@ if [[ "$OS" == "w64-mingw32" && "${UNO_TOOLCHAIN:-mingw}" == "mingw" ]]; then
 		-DBUILD_SHARED_EXTRAS_LIB=OFF \
 		-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-	cmake --build "$BLD_W" --config Release --parallel 2
+	cmake --build "$BLD_W" --config Release --parallel "$(nproc)"
 	cmake --install "$BLD_W" --config Release
 
 	cp -a "${BUILD_ROOT}/install/lib/."     lib
 	cp -a "${BUILD_ROOT}/install/include/." include
+	if [[ -n "$HIGHS_CACHE_U" ]]; then
+		mkdir -p "$HIGHS_CACHE_U"
+		cp -a "${BUILD_ROOT}/install/." "$HIGHS_CACHE_U"
+	fi
 	rm -rf "${BUILD_ROOT}"
+	fi # HiGHS cache
 fi
 
 # delete unwanted directories

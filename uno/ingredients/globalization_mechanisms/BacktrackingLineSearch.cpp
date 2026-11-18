@@ -116,7 +116,7 @@ namespace uno {
       // switch to the feasibility problem from there. Instead, revert to the watchdog iterate and backtrack along the
       // watchdog direction, skipping the full step (already rejected) (IPOPT)
       if (direction_failed && this->in_watchdog) {
-         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
          if (Logger::level == INFO) {
             statistics.print_current_line();
          }
@@ -141,7 +141,7 @@ namespace uno {
          statistics.set("Status", "acceptable");
          set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          set_dual_residuals_statistics(statistics, trial_iterate);
-         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
          if (Logger::level == INFO) {
             statistics.print_current_line();
          }
@@ -312,7 +312,7 @@ namespace uno {
             // the residuals of a rejected trial iterate are not computed
             statistics.set("Objective", evaluation_cache.trial_evaluations.objective);
          }
-         statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
          if ((is_acceptable || this->print_minor_iterations) && Logger::level == INFO) {
             statistics.print_current_line();
          }
@@ -376,7 +376,7 @@ namespace uno {
       }
       set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
       set_dual_residuals_statistics(statistics, trial_iterate);
-      statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+      statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
       if (Logger::level == INFO) {
          statistics.print_current_line();
       }
@@ -477,7 +477,7 @@ namespace uno {
             if (trial_iterate_accepted) {
                set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                set_dual_residuals_statistics(statistics, trial_iterate);
-               statistics.set("Time", Timer::format_to_seconds(statistics.timers.wallclock.get_elapsed_time()));
+               statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
                if (Logger::level == INFO) {
                   statistics.print_current_line();
                }

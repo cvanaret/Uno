@@ -384,45 +384,214 @@ function uno_destroy_solver(solver::Solver)
   end
 end
 
+# value of an option given the status returned by a getter: `nothing` if the option has no value
+function _uno_option_value(status::Integer, option_name, value)
+  status == UNO_OPTIONS_SUCCESS && return value
+  status == UNO_OPTIONS_NOT_SET && return nothing
+  error("Unable to get the option `\"$option_name\"`: $(uno_options_status_message(status)).")
+end
+
+"""
+    uno_get_solver_integer_option(solver::Solver, option_name::String)
+
+Return the value of an integer option, or `nothing` if the option has no value. Throw an `ErrorException` if
+the option does not exist or has a different type.
+"""
+function uno_get_solver_integer_option(solver::Solver, option_name::String)
+  value = Ref{Cint}(0)
+  status = GC.@preserve solver uno_get_solver_integer_option(solver.c_solver, option_name, value)
+  return _uno_option_value(status, option_name, value[])
+end
+
+"""
+    uno_get_solver_double_option(solver::Solver, option_name::String)
+
+Return the value of a double option, or `nothing` if the option has no value. Throw an `ErrorException` if
+the option does not exist or has a different type.
+"""
+function uno_get_solver_double_option(solver::Solver, option_name::String)
+  value = Ref{Cdouble}(0.0)
+  status = GC.@preserve solver uno_get_solver_double_option(solver.c_solver, option_name, value)
+  return _uno_option_value(status, option_name, value[])
+end
+
+"""
+    uno_get_solver_bool_option(solver::Solver, option_name::String)
+
+Return the value of a bool option, or `nothing` if the option has no value. Throw an `ErrorException` if the
+option does not exist or has a different type.
+"""
+function uno_get_solver_bool_option(solver::Solver, option_name::String)
+  value = Ref{Bool}(false)
+  status = GC.@preserve solver uno_get_solver_bool_option(solver.c_solver, option_name, value)
+  return _uno_option_value(status, option_name, value[])
+end
+
+"""
+    uno_get_solver_string_option(solver::Solver, option_name::String)
+
+Return the value of a string option, or `nothing` if the option has no value, e.g. an option set by the `auto`
+preset before the solve. After a successful solve, and until the options are modified, the getters return the values
+used by the solve (including the values picked by the `auto` preset and the options overridden by the solver). Throw an `ErrorException` if the option does not exist or has a different type.
+"""
 function uno_get_solver_string_option(solver::Solver, option_name::String)
+  value = Ref{Cstring}(C_NULL)
   GC.@preserve solver begin
-    option_value = uno_get_solver_string_option(solver.c_solver, option_name)
+    status = uno_get_solver_string_option(solver.c_solver, option_name, value)
+    # copy the string while the solver is alive
+    string_value = (status == UNO_OPTIONS_SUCCESS) ? unsafe_string(value[]) : ""
   end
-  return unsafe_string(option_value)
+  return _uno_option_value(status, option_name, string_value)
+end
+
+"""
+    uno_get_solver_option(solver::Solver, option_name::String)
+
+Return the value of an option of any type, or `nothing` if the option has no value. Throw an `ErrorException`
+if the option does not exist.
+"""
+function uno_get_solver_option(solver::Solver, option_name::String)
+  type = GC.@preserve solver uno_get_solver_option_type(solver.c_solver, option_name)
+  type == UNO_OPTION_TYPE_INTEGER && return uno_get_solver_integer_option(solver, option_name)
+  type == UNO_OPTION_TYPE_DOUBLE && return uno_get_solver_double_option(solver, option_name)
+  type == UNO_OPTION_TYPE_BOOL && return uno_get_solver_bool_option(solver, option_name)
+  type == UNO_OPTION_TYPE_STRING && return uno_get_solver_string_option(solver, option_name)
+  error("Unable to get the option `\"$option_name\"`: $(uno_options_status_message(UNO_OPTIONS_NOT_FOUND)).")
+end
+
+"""
+    uno_result_status_message(status::Integer)
+
+Return a description of a status code returned by the functions of the C API that get the result of an optimization.
+"""
+function uno_result_status_message(status::Integer)
+  status == UNO_RESULT_SUCCESS && return "success"
+  status == UNO_RESULT_INVALID_ARGUMENT && return "invalid argument"
+  status == UNO_RESULT_NOT_AVAILABLE && return "the result is not available"
+  status == UNO_RESULT_INVALID_INDEX && return "the index is not valid"
+  return "an error occurred"
+end
+
+function _uno_check_result_status(status::Integer, function_name)
+  status == UNO_RESULT_SUCCESS && return nothing
+  error("$function_name failed: $(uno_result_status_message(status)).")
+end
+
+"""
+    uno_has_result(solver::Solver)
+
+Return whether the result of an optimization is available: `false` before the first optimization, or if the last call
+to `uno_optimize` was unsuccessful.
+"""
+function uno_has_result(solver::Solver)
+  optimization_status = Ref{Cint}(0)
+  status = GC.@preserve solver uno_get_optimization_status(solver.c_solver, optimization_status)
+  return status == UNO_RESULT_SUCCESS
 end
 
 function uno_get_method_description(solver::Solver)
+  method_description = Ref{Cstring}(C_NULL)
   GC.@preserve solver begin
-    method_description = uno_get_method_description(solver.c_solver)
+    status = uno_get_method_description(solver.c_solver, method_description)
+    _uno_check_result_status(status, "uno_get_method_description")
+    # copy the string while the solver is alive
+    description = unsafe_string(method_description[])
   end
-  return unsafe_string(method_description)
+  return description
+end
+
+# getters of the result of the last optimization: they return the value, and throw an ErrorException if the result is
+# not available
+for (getter, T) in ((:uno_get_optimization_status, Cint), (:uno_get_solution_status, Cint),
+                    (:uno_get_solution_objective, Cdouble), (:uno_get_solution_primal_feasibility, Cdouble),
+                    (:uno_get_solution_stationarity, Cdouble), (:uno_get_solution_complementarity, Cdouble),
+                    (:uno_get_number_iterations, Cint), (:uno_get_cpu_time, Cdouble),
+                    (:uno_get_number_objective_evaluations, Cint), (:uno_get_number_constraint_evaluations, Cint),
+                    (:uno_get_number_objective_gradient_evaluations, Cint), (:uno_get_number_jacobian_evaluations, Cint),
+                    (:uno_get_number_hessian_evaluations, Cint), (:uno_get_number_subproblem_solved_evaluations, Cint))
+  @eval function $getter(solver::Solver)
+    value = Ref{$T}()
+    status = GC.@preserve solver $getter(solver.c_solver, value)
+    _uno_check_result_status(status, $(string(getter)))
+    return value[]
+  end
+end
+
+# components of the solution (the index follows the base indexing of the model)
+for getter in (:uno_get_primal_solution_component, :uno_get_constraint_dual_solution_component,
+               :uno_get_lower_bound_dual_solution_component, :uno_get_upper_bound_dual_solution_component)
+  @eval function $getter(solver::Solver, index::Integer)
+    value = Ref{Cdouble}()
+    status = GC.@preserve solver $getter(solver.c_solver, Cint(index), value)
+    _uno_check_result_status(status, $(string(getter)))
+    return value[]
+  end
+end
+
+# vectors of the solution, copied into "values"
+for getter in (:uno_get_primal_solution, :uno_get_constraint_dual_solution, :uno_get_lower_bound_dual_solution,
+               :uno_get_upper_bound_dual_solution, :uno_get_solution_constraints)
+  @eval function $getter(solver::Solver, values::Vector{Float64})
+    status = GC.@preserve solver values $getter(solver.c_solver, values)
+    _uno_check_result_status(status, $(string(getter)))
+    return values
+  end
+end
+
+"""
+    uno_options_status_message(status::Integer)
+
+Return a description of a status code returned by the functions of the C API that deal with options.
+"""
+function uno_options_status_message(status::Integer)
+  status == UNO_OPTIONS_SUCCESS && return "success"
+  status == UNO_OPTIONS_INVALID_ARGUMENT && return "invalid argument"
+  status == UNO_OPTIONS_NOT_FOUND && return "the option does not exist"
+  status == UNO_OPTIONS_WRONG_TYPE && return "the option has a different type"
+  status == UNO_OPTIONS_INVALID_VALUE && return "the value is not valid for this option"
+  status == UNO_OPTIONS_INVALID_FILE && return "the option file cannot be opened or is malformed"
+  status == UNO_OPTIONS_NOT_SET && return "the option has no value"
+  return "an error occurred"
+end
+
+"""
+    uno_check_option_status(status::Integer, option_name, option_value)
+
+Throw an `ErrorException` if `status`, returned when setting the option `option_name` to `option_value`, is not
+`UNO_OPTIONS_SUCCESS`.
+"""
+function uno_check_option_status(status::Integer, option_name, option_value)
+  status == UNO_OPTIONS_SUCCESS && return nothing
+  error("Unable to set the option `\"$option_name\"` to `$(repr(option_value))`: $(uno_options_status_message(status)).")
 end
 
 function uno_solver(; kwargs...)
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
   solver = Solver(c_solver)
+  # register the finalizer first: the solver is destroyed even if an option is rejected
+  finalizer(uno_destroy_solver, solver)
 
   # pass options to Uno
   if haskey(kwargs, :preset)
-    uno_set_solver_preset(solver, kwargs[:preset])
+    uno_check_option_status(uno_set_solver_preset(solver, kwargs[:preset]), :preset, kwargs[:preset])
   end
   for (k, v) in kwargs
     (k == :preset) && continue
     if v isa String
-      @assert uno_set_solver_string_option(c_solver, string(k), v)
+      status = uno_set_solver_string_option(c_solver, string(k), v)
     elseif v isa Float64
-      @assert uno_set_solver_double_option(c_solver, string(k), v)
+      status = uno_set_solver_double_option(c_solver, string(k), v)
     elseif v isa Bool
-      @assert uno_set_solver_bool_option(c_solver, string(k), v)
+      status = uno_set_solver_bool_option(c_solver, string(k), v)
     elseif v isa Integer
-      @assert uno_set_solver_integer_option(c_solver, string(k), Cint(v))
+      status = uno_set_solver_integer_option(c_solver, string(k), Cint(v))
     else
       @warn "$k does not seem to be a valid Uno option."
+      continue
     end
+    uno_check_option_status(status, k, v)
   end
-
-  finalizer(uno_destroy_solver, solver)
   return solver
 end
 
@@ -558,7 +727,7 @@ function uno(
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
                     eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
   solver = uno_solver(; kwargs...)
-  uno_optimize(solver, model)
+  uno_optimize(solver, model) || error("Uno could not optimize the model.")
   stats = uno_statistics(model, solver)
   return stats
 end

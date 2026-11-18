@@ -72,6 +72,7 @@ jobs:
             -DBLAS_LIBRARIES="${{ github.workspace }}/dependencies/lib/libcblas.a;${{ github.workspace }}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{ github.workspace }}/dependencies/lib/liblapack.a \
             -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
+            -DHIGHS_WITH_HIPO=ON \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
 
@@ -99,6 +100,14 @@ jobs:
           # Answers: Linux / 64-bit / gfortran / no modifications.
           printf '1\n1\nN1\nNyy' > install_sifdecode_config
           ./install_sifdecode < install_sifdecode_config
+
+      # CUTEst's src/uno contains a copy of Uno's Fortran interface and a driver written for the C API of
+      # Uno 2.x. Until it is updated for the status codes of the C API (Uno 3.0), compile CUTEst with the
+      # Fortran interface of this commit and the adapted driver .github/CUTEst/uno_main.F90.
+      - name: Use Uno's Fortran interface and the adapted CUTEst driver
+        run: |
+          cp -v interfaces/Fortran/uno_c.f90 interfaces/Fortran/uno_fortran.f90 "$CUTEST/src/uno/"
+          cp -v .github/CUTEst/uno_main.F90 "$CUTEST/src/uno/"
 
       - name: Compile CUTEst (double precision)
         run: |

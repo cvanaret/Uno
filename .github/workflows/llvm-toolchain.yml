@@ -148,6 +148,7 @@ jobs:
             -DMETIS_LIBRARY=${DEPS}/lib/libmetis.a \
             -DHIGHS_INCLUDE_DIR=${DEPS}/include/highs \
             -DHIGHS="${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" \
+            -DHIGHS_WITH_HIPO=ON \
             -DBUILD_STATIC_LIBS=OFF \
             -DBUILD_SHARED_LIBS=ON
           grep -E "CMAKE_Fortran_COMPILER_ID |CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES" build/CMakeFiles/*/CMakeFortranCompiler.cmake

@@ -10,8 +10,10 @@
 #include <sstream>
 #include "Options.hpp"
 #include "DefaultOptions.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Strings.hpp"
 
 namespace uno {
    const std::unordered_map<std::string, OptionType> Options::option_types = {
@@ -143,9 +145,71 @@ namespace uno {
       {"SOC_infeasibility_fraction", OptionType::DOUBLE},
       {"libhsl_path", OptionType::STRING},
       {"MA57_use_scaling", OptionType::BOOL},
+      {"MUMPS_use_scaling", OptionType::BOOL},
       {"dump_kkt_path", OptionType::STRING},
       {"dump_kkt_frequency", OptionType::INTEGER},
+      {"linear_system_scaling", OptionType::STRING},
+      {"linear_system_scaling_on_demand", OptionType::BOOL},
+      {"linear_system_scaling_delayed_pivots_threshold", OptionType::DOUBLE},
    };
+
+   namespace {
+      struct PossibleValue {
+         std::string value;
+         bool case_sensitive{true};
+      };
+
+      // possible values of the string options whose values are enumerated. The other string options (option_file,
+      // libhsl_path, dump_kkt_path) accept any string. The values are the ones known to Uno, regardless of whether they
+      // are available in this build (e.g. a solver that was not compiled in, or an HSL library loaded at runtime from
+      // libhsl_path): availability is checked when the solver is created. The matching follows the factories: a value is
+      // case-sensitive unless the factory compares it case-insensitively
+      const std::unordered_map<std::string, std::vector<PossibleValue>> possible_string_values = {
+         {"logger", {{"SILENT"}, {"DISCRETE"}, {"WARNING"}, {"INFO"}, {"DEBUG"}, {"DEBUG2"}, {"DEBUG3"}}},
+         {"constraint_relaxation_strategy", {{"feasibility_restoration"}}},
+         {"inequality_handling_method", {{"inequality_constrained"}, {"interior_point"}}},
+         {"globalization_mechanism", {{"TR"}, {"LS"}}},
+         {"globalization_strategy", {{"merit_function"}, {"fletcher_filter_method"}, {"waechter_filter_method"},
+            {"funnel_method"}}},
+         {"hessian_model", {{"exact"}, {"LBFGS"}, {"LSR1"}, {"identity"}, {"zero"}}},
+         {"inertia_correction_strategy", {{"primal"}, {"primal_dual"}, {"none"}}},
+         {"progress_norm", {{"L1"}, {"L2"}, {"L2_squared"}, {"INF"}}},
+         {"residual_norm", {{"L1"}, {"L2"}, {"L2_squared"}, {"INF"}}},
+         {"barrier_function", {{"log"}}},
+         {"BQPD_kmax_heuristic", {{"filtersqp"}, {"minotaur"}}},
+         {"QP_solver", {{"BQPD"}, {"HIGHS", false}}},
+         {"LP_solver", {{"BQPD"}, {"HIGHS", false}}},
+         {"linear_solver", {{"MA57"}, {"MA27"}, {"MA86"}, {"MUMPS"}, {"SSIDS"}, {"HIPO", false}}},
+         {"preset", {{"auto"}, {"filtersqp"}, {"ipopt"}, {"funnelsqp"}, {"filterslp"}}},
+         {"linear_system_scaling", {{"none"}, {"ruiz"}}},
+      };
+   }
+
+   std::vector<std::string> Options::get_possible_values(const std::string& option_name) {
+      std::vector<std::string> values{};
+      const auto possible_values = possible_string_values.find(option_name);
+      if (possible_values != possible_string_values.end()) {
+         for (const PossibleValue& possible_value: possible_values->second) {
+            values.push_back(possible_value.value);
+         }
+      }
+      return values;
+   }
+
+   void Options::check_string_option_value(const std::string& option_name, const std::string& option_value) {
+      const auto possible_values = possible_string_values.find(option_name);
+      if (possible_values == possible_string_values.end()) {
+         return; // any string is accepted
+      }
+      for (const PossibleValue& possible_value: possible_values->second) {
+         if (possible_value.case_sensitive ? (option_value == possible_value.value) :
+               case_insensitive_equals(option_value, possible_value.value)) {
+            return;
+         }
+      }
+      throw InvalidOptionValue("The value " + option_value + " of option " + option_name + " is not valid. Possible values: " +
+         join(Options::get_possible_values(option_name), ", "));
+   }
 
    // setters
    void Options::set_integer(const std::string& option_name, uno_int option_value) {
@@ -165,6 +229,7 @@ namespace uno {
 
    void Options::set_string(const std::string& option_name, std::string option_value) {
       check_option_type(option_name, OptionType::STRING);
+      check_string_option_value(option_name, option_value);
       this->values[option_name] = std::move(option_value);
    }
 
@@ -174,10 +239,10 @@ namespace uno {
          stream.imbue(std::locale::classic());
          long long value{};
          if (!(stream >> value) || !(stream >> std::ws).eof()) {
-            throw std::invalid_argument("The value " + option_value + " of option " + option_name + " is not an integer");
+            throw InvalidOptionValue("The value " + option_value + " of option " + option_name + " is not an integer");
          }
          if (value < std::numeric_limits<uno_int>::min() || std::numeric_limits<uno_int>::max() < value) {
-            throw std::out_of_range("The value " + option_value + " of option " + option_name + " is out of range");
+            throw InvalidOptionValue("The value " + option_value + " of option " + option_name + " is out of range");
          }
          return static_cast<uno_int>(value);
       }
@@ -193,7 +258,7 @@ namespace uno {
          stream.imbue(std::locale::classic());
          double value{};
          if (!(stream >> value) || !(stream >> std::ws).eof()) {
-            throw std::invalid_argument("The value " + option_value + " of option " + option_name + " is not a number");
+            throw InvalidOptionValue("The value " + option_value + " of option " + option_name + " is not a number");
          }
          return value;
       }
@@ -205,7 +270,7 @@ namespace uno {
          if (option_value == "no" || option_value == "false") {
             return false;
          }
-         throw std::invalid_argument("The value " + option_value + " of option " + option_name +
+         throw InvalidOptionValue("The value " + option_value + " of option " + option_name +
             " is not a boolean (expected yes/no/true/false)");
       }
    }
@@ -214,7 +279,7 @@ namespace uno {
    void Options::set(const std::string& option_name, std::string option_value) {
       const auto type = option_types.find(option_name);
       if (type == option_types.end()) {
-         throw std::out_of_range("The option with name " + option_name + " does not exist");
+         throw OptionNotFound("The option with name " + option_name + " does not exist");
       }
       switch (type->second) {
          case OptionType::INTEGER:
@@ -291,12 +356,16 @@ namespace uno {
       return this->get_optional<std::string>(option_name);
    }
 
-   OptionType Options::get_option_type(const std::string& option_name) const {
+   bool Options::contains(const std::string& option_name) const {
+      return this->values.find(option_name) != this->values.end();
+   }
+
+   OptionType Options::get_option_type(const std::string& option_name) {
       try {
          return option_types.at(option_name);
       }
       catch (const std::out_of_range&) {
-         throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
+         throw OptionNotFound("The type of the option with name " + option_name + " could not be found");
       }
    }
 
@@ -329,7 +398,7 @@ namespace uno {
    void Options::load_option_file(Options& options, const std::string& file_name) {
       std::ifstream file(file_name);
       if (!file) {
-         throw std::invalid_argument("The option file " + file_name + " was not found");
+         throw InvalidOptionFile("The option file " + file_name + " was not found");
       }
       std::string line;
       size_t line_number = 0;
@@ -347,7 +416,7 @@ namespace uno {
          std::istringstream stream(line);
          std::string option_name, option_value, extra_token;
          if (!(stream >> option_name >> option_value) || (stream >> extra_token)) {
-            throw std::invalid_argument("Malformed line " + std::to_string(line_number) + " in option file " + file_name + ": " + line);
+            throw InvalidOptionFile("Malformed line " + std::to_string(line_number) + " in option file " + file_name + ": " + line);
          }
          options.set(option_name, std::move(option_value));
       }
@@ -375,10 +444,10 @@ namespace uno {
    void Options::check_option_type(const std::string& option_name, OptionType expected_type) {
       const auto type = option_types.find(option_name);
       if (type == option_types.end()) {
-         throw std::out_of_range("The option with name " + option_name + " does not exist");
+         throw OptionNotFound("The option with name " + option_name + " does not exist");
       }
       if (type->second != expected_type) {
-         throw std::invalid_argument("The option with name " + option_name + " has a different type");
+         throw OptionWrongType("The option with name " + option_name + " has a different type");
       }
    }
 

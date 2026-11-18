@@ -38,6 +38,12 @@ env:
     python -m pytest -rs {project}/interfaces/Python/tests &&
     python {project}/interfaces/Python/examples/example_hs015.py &&
     python {project}/interfaces/Python/examples/example_hs001.py
+  # ccache: the Uno core (compiled_uno_files) does not depend on the Python version, so every wheel
+  # after the first one of a job gets cache hits; only the pybind11 binding TUs are recompiled.
+  # The per-wheel build dir lives under the project root, and CCACHE_BASEDIR rewrites absolute paths
+  # (sources, -I<build>/include) relative to it, so the compile commands are identical across wheels.
+  # Printing the stats before each wheel build shows the hit rate growing.
+  CIBW_BEFORE_BUILD: ccache --show-stats
 
 jobs:
   build_wheels:
@@ -75,10 +81,20 @@ jobs:
         run: pip install delvewheel
         shell: pwsh
 
-      - name: Install libomp (macOS)
+      - name: Install ccache (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ccache -y --no-progress
+          # forward-slash paths (cibuildwheel's env parser treats '\' as an escape)
+          "UNO_PROJECT_DIR=$($env:GITHUB_WORKSPACE -replace '\\','/')" >> $env:GITHUB_ENV
+          # absolute path: the MSYS2 login shell used by CIBW_BEFORE_ALL drops chocolatey from PATH
+          "UNO_CCACHE=$((Get-Command ccache).Source -replace '\\','/')" >> $env:GITHUB_ENV
+
+      - name: Install libomp and ccache (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         run: |
-          brew install libomp
+          brew install libomp ccache
           LIBGFORTRAN_FOLDER=$(dirname "$(gfortran-15 -print-file-name=libgfortran.dylib)")
           echo "LIBGFORTRAN_FOLDER=$LIBGFORTRAN_FOLDER" >> $GITHUB_ENV
           echo "OPENMP_LIB=$(brew --prefix libomp)/lib/libomp.dylib" >> $GITHUB_ENV
@@ -89,10 +105,19 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.sys.build }}
           CIBW_SKIP: cp*-*_i686 *-win32
-          CIBW_ENVIRONMENT_LINUX:
+          # the project is copied to /project inside the manylinux container
+          CIBW_ENVIRONMENT_LINUX: >
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
-          CIBW_BEFORE_ALL_LINUX:
+            SKBUILD_BUILD_DIR=build/{wheel_tag}
+            CMAKE_C_COMPILER_LAUNCHER=ccache
+            CMAKE_CXX_COMPILER_LAUNCHER=ccache
+            CCACHE_BASEDIR=/project
+            CCACHE_NOHASHDIR=true
+          # ccache is in EPEL on the AlmaLinux-based manylinux images
+          CIBW_BEFORE_ALL_LINUX: |
+            if command -v dnf >/dev/null; then PM=dnf; else PM=yum; fi
+            $PM install -y ccache || ($PM install -y epel-release && $PM install -y ccache)
             bash dependencies/scripts/download_dependencies.sh
 
       - name: Build wheels (macOS)
@@ -125,6 +150,26 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_GENERATOR=Ninja
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
+            SKBUILD_BUILD_DIR=build/{wheel_tag}
+            CMAKE_C_COMPILER_LAUNCHER=ccache
+            CMAKE_CXX_COMPILER_LAUNCHER=ccache
+            CCACHE_BASEDIR=${{ github.workspace }}
+            CCACHE_NOHASHDIR=true
+
+      - name: HiGHS cache key (Windows)
+        if: runner.os == 'Windows'
+        id: highs-key
+        shell: pwsh
+        run: |
+          "gxx=$(& C:/mingw64/bin/g++.exe -dumpfullversion)" >> $env:GITHUB_OUTPUT
+          "UNO_HIGHS_CACHE=$($env:GITHUB_WORKSPACE -replace '\\','/')/.highs-mingw" >> $env:GITHUB_ENV
+
+      - name: Restore MinGW HiGHS build (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: .highs-mingw
+          key: highs-mingw-${{ steps.highs-key.outputs.gxx }}-${{ hashFiles('dependencies/scripts/download_dependencies.sh') }}
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -149,6 +194,13 @@ jobs:
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
+            SKBUILD_BUILD_DIR=build/{wheel_tag}
+            CMAKE_C_COMPILER_LAUNCHER=$UNO_CCACHE
+            CMAKE_CXX_COMPILER_LAUNCHER=$UNO_CCACHE
+            CCACHE_BASEDIR=$UNO_PROJECT_DIR
+            CCACHE_NOHASHDIR=true
+            CCACHE_DEBUG=1
+            CCACHE_DEBUGDIR=$UNO_PROJECT_DIR/ccache-debug
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
 

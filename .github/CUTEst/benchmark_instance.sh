@@ -60,6 +60,14 @@ fi
 printf '%s\t%s\t%s\n' "$problem" "$result" "$secs" > "$ROWS_DIR/$problem.tsv"
 echo "${problem}: ${result} in ${secs}s"
 
+# an unusable linear solver makes every run fail: exit status 255 makes xargs
+# stop launching problems (the workflow then reports the error)
+if grep -qE 'The linear solver [A-Za-z0-9]+ (was requested, but|is unknown)|HiPO is not available' "$log"; then
+  echo "::error::${problem}: the linear solver is not usable by this build"
+  cd "$WORK_DIR" && rm -rf "$dir"
+  exit 255
+fi
+
 # the decoded sources and the executable take a lot of space over hundreds of problems
 cd "$WORK_DIR" && rm -rf "$dir"
 exit 0

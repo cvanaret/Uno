@@ -12,11 +12,11 @@ program example_uno
     real(c_double), dimension(number_variables) :: primal_solution, lower_bound_dual_solution, upper_bound_dual_solution
     real(c_double), dimension(number_constraints) :: constraint_dual_solution, solution_constraints
     real(c_double) :: solution_primal_feasibility, solution_stationarity, solution_complementarity
-    integer(uno_int) :: optimization_status, iterate_status, option_type
+    integer(uno_int) :: optimization_status, iterate_status, option_type, status
     logical(c_bool) :: success, print_solution = .true.
     integer(uno_int) :: number_iterations, max_iterations = 1000
     real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
-    character(:), allocatable :: logger
+    character(:), allocatable :: logger, option_file
     character(:), allocatable :: method_description
     character(len=32) :: preset = "filtersqp"  ! can be overridden by the first command-line argument
     character(len=*), parameter :: hessian_model = "exact"
@@ -117,26 +117,44 @@ program example_uno
     ! Solver creation
     !---------------------------------------------------
     solver = uno_create_solver()
-    success = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
-    call check_success(success, "uno_set_solver_integer_option")
-    success = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
-    call check_success(success, "uno_set_solver_double_option")
-    success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
-    call check_success(success, "uno_set_solver_bool_option")
-    success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
-    call check_success(success, "uno_set_solver_string_option")
+    status = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_integer_option")
+    status = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_double_option")
+    status = uno_set_solver_bool_option(solver, "print_solution", print_solution)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_bool_option")
+    status = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_string_option")
     if (command_argument_count() >= 1) then
         call get_command_argument(1, preset)
     end if
     print *, 'preset = ', trim(preset)
-    success = uno_set_solver_preset(solver, trim(preset))
-    call check_success(success, "uno_set_solver_preset")
+    status = uno_set_solver_preset(solver, trim(preset))
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_set_solver_preset")
+
+    ! invalid options are reported with status codes and leave the options unchanged
+    status = uno_set_solver_string_option(solver, "logger", "SOLENT")
+    call check_status(status, UNO_OPTIONS_INVALID_VALUE, "uno_set_solver_string_option (invalid value)")
+    status = uno_set_solver_integer_option(solver, "max_iteration", max_iterations)
+    call check_status(status, UNO_OPTIONS_NOT_FOUND, "uno_set_solver_integer_option (unknown option)")
+    status = uno_set_solver_double_option(solver, "max_iterations", primal_tolerance)
+    call check_status(status, UNO_OPTIONS_WRONG_TYPE, "uno_set_solver_double_option (wrong type)")
+    status = uno_set_solver_preset(solver, "snopt")
+    call check_status(status, UNO_OPTIONS_INVALID_VALUE, "uno_set_solver_preset (invalid preset)")
+    status = uno_load_solver_option_file(solver, "this_option_file_does_not_exist.opt")
+    call check_status(status, UNO_OPTIONS_INVALID_FILE, "uno_load_solver_option_file (missing file)")
+
+    ! no result before the solve
+    status = uno_get_optimization_status(solver, optimization_status)
+    call check_status(status, UNO_RESULT_NOT_AVAILABLE, "uno_get_optimization_status (before the solve)")
 
     !---------------------------------------------------
     ! Run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
     !---------------------------------------------------
-    call uno_optimize(solver, model)
-    solution_objective = uno_get_solution_objective(solver)
+    success = uno_optimize(solver, model)
+    call check_success(success, "uno_optimize")
+    status = uno_get_solution_objective(solver, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_objective")
     print *, 'Solution objective = ', solution_objective
 
     !---------------------------------------------------
@@ -147,12 +165,14 @@ program example_uno
     call check_success(success, "uno_set_lagrangian_hessian")
     success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
     call check_success(success, "uno_set_lagrangian_sign_convention")
-    call uno_optimize(solver, model)
+    success = uno_optimize(solver, model)
+    call check_success(success, "uno_optimize")
 
     !---------------------------------------------------
     ! Get method description
     !---------------------------------------------------
-    method_description = uno_get_method_description(solver)
+    status = uno_get_method_description(solver, method_description)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_method_description")
     print *, 'method description = ', method_description
     ! the second run must use the exact Hessian set above (not fall back to L-BFGS)
     if (index(method_description, 'exact Hessian') == 0) then
@@ -162,17 +182,32 @@ program example_uno
     !---------------------------------------------------
     ! Get options
     !---------------------------------------------------
-    max_iterations = uno_get_solver_integer_option(solver, "max_iterations")
+    status = uno_get_solver_integer_option(solver, "max_iterations", max_iterations)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_integer_option")
     print *, 'max_iterations = ', max_iterations
+    if (max_iterations /= 1000) error stop 'max_iterations was modified by a rejected option'
 
-    dual_tolerance = uno_get_solver_double_option(solver, "dual_tolerance")
+    status = uno_get_solver_double_option(solver, "dual_tolerance", dual_tolerance)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_double_option")
     print *, 'dual_tolerance = ', dual_tolerance
 
-    print_solution = uno_get_solver_bool_option(solver, "print_solution")
+    status = uno_get_solver_bool_option(solver, "print_solution", print_solution)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_bool_option")
     print *, 'print_solution = ', print_solution
 
-    logger = uno_get_solver_string_option(solver, "logger")
+    status = uno_get_solver_string_option(solver, "logger", logger)
+    call check_status(status, UNO_OPTIONS_SUCCESS, "uno_get_solver_string_option")
     print *, 'logger = ', logger
+    if (logger /= "INFO") error stop 'logger was modified by a rejected option'
+
+    ! errors of the getters
+    status = uno_get_solver_integer_option(solver, "max_iteration", max_iterations)
+    call check_status(status, UNO_OPTIONS_NOT_FOUND, "uno_get_solver_integer_option (unknown option)")
+    status = uno_get_solver_double_option(solver, "max_iterations", dual_tolerance)
+    call check_status(status, UNO_OPTIONS_WRONG_TYPE, "uno_get_solver_double_option (wrong type)")
+    status = uno_get_solver_string_option(solver, "option_file", option_file)
+    call check_status(status, UNO_OPTIONS_NOT_SET, "uno_get_solver_string_option (option without value)")
+    if (allocated(option_file)) error stop 'option_file was written although it has no value'
 
     option_type = uno_get_solver_option_type(solver, "linear_solver")
     print *, 'option_type for the option linear_solver = ', option_type
@@ -180,43 +215,65 @@ program example_uno
     !---------------------------------------------------
     ! Get solution
     !---------------------------------------------------
-    number_iterations = uno_get_number_iterations(solver)
+    status = uno_get_number_iterations(solver, number_iterations)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_number_iterations")
     print *, 'number_iterations = ', number_iterations
 
-    cpu_time = uno_get_cpu_time(solver)
+    status = uno_get_cpu_time(solver, cpu_time)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_cpu_time")
     print *, 'cpu_time = ', cpu_time
 
-    optimization_status = uno_get_optimization_status(solver)
+    status = uno_get_optimization_status(solver, optimization_status)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_optimization_status")
     print *, 'optimization_status = ', optimization_status
 
-    iterate_status = uno_get_solution_status(solver)
+    status = uno_get_solution_status(solver, iterate_status)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_status")
     print *, 'iterate_status = ', iterate_status
 
-    solution_objective = uno_get_solution_objective(solver)
+    status = uno_get_solution_objective(solver, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_objective")
     print *, 'Solution objective = ', solution_objective
 
-    call uno_get_primal_solution(solver, primal_solution)
+    status = uno_get_primal_solution(solver, primal_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_primal_solution")
     print *, 'Primal solution = ', primal_solution
 
-    call uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+    status = uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_constraint_dual_solution")
     print *, 'Constraint dual solution = ', constraint_dual_solution
 
-    call uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+    status = uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_lower_bound_dual_solution")
     print *, 'Lower bound dual solution = ', lower_bound_dual_solution
 
-    call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+    status = uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_upper_bound_dual_solution")
     print *, 'Upper bound dual solution = ', upper_bound_dual_solution
     
-    call uno_get_solution_constraints(solver, solution_constraints)
+    status = uno_get_solution_constraints(solver, solution_constraints)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_constraints")
     print *, 'Solution constraints = ', solution_constraints
 
-    solution_primal_feasibility = uno_get_solution_primal_feasibility(solver)
+    status = uno_get_solution_primal_feasibility(solver, solution_primal_feasibility)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_primal_feasibility")
     print *, 'Primal feasibility at solution = ', solution_primal_feasibility
 
-    solution_stationarity = uno_get_solution_stationarity(solver)
+    status = uno_get_solution_stationarity(solver, solution_stationarity)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_stationarity")
     print *, 'Stationarity at solution = ', solution_stationarity
 
-    solution_complementarity = uno_get_solution_complementarity(solver)
+    status = uno_get_solution_complementarity(solver, solution_complementarity)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_complementarity")
+
+    ! components of the solution (1-based indexing)
+    status = uno_get_primal_solution_component(solver, 2, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_primal_solution_component")
+    if (solution_objective /= primal_solution(2)) error stop 'Wrong primal solution component'
+    status = uno_get_primal_solution_component(solver, 3, solution_objective)
+    call check_status(status, UNO_RESULT_INVALID_INDEX, "uno_get_primal_solution_component (invalid index)")
+    status = uno_get_solution_objective(solver, solution_objective)
+    call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_objective")
     print *, 'Complementarity at solution = ', solution_complementarity
 
     !---------------------------------------------------
@@ -247,6 +304,15 @@ contains
             error stop 1
         end if
     end subroutine check_success
+
+    subroutine check_status(status, expected_status, function_name)
+        integer(uno_int), intent(in) :: status, expected_status
+        character(len=*), intent(in) :: function_name
+        if (status /= expected_status) then
+            print *, 'Error: ', function_name, ' returned ', status, ' instead of ', expected_status
+            error stop 1
+        end if
+    end subroutine check_status
 
     ! Objective
     function objective_hs15(number_variables, x, objective_value, user_data) result(res) &

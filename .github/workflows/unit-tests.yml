@@ -24,6 +24,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+
 jobs:
   build:
     name: ${{ matrix.os }} (${{ matrix.toolchain }}, ${{ matrix.build_type }})
@@ -202,6 +205,7 @@ jobs:
             EXTRA_ARGS+=(
               "-DHIGHS_INCLUDE_DIR=${{github.workspace}}/dependencies/include/highs"
               "-DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a"
+              "-DHIGHS_WITH_HIPO=ON"
             )
           fi
           cmake -B build \
@@ -258,6 +262,7 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS="${{github.workspace}}/dependencies/lib/libhighs.a;${{github.workspace}}/dependencies/lib/libhighs_extras.a" \
+            -DHIGHS_WITH_HIPO=ON \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -287,6 +292,7 @@ jobs:
             -DBLAS_LIBRARIES="${GITHUB_WORKSPACE}/dependencies/lib/libcblas.a;${GITHUB_WORKSPACE}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${GITHUB_WORKSPACE}/dependencies/lib/liblapack.a \
             -DHIGHS="${GITHUB_WORKSPACE}/dependencies/lib/libhighs.a;${GITHUB_WORKSPACE}/dependencies/lib/libhighs_extras.a" \
+            -DHIGHS_WITH_HIPO=ON \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -295,7 +301,7 @@ jobs:
       # =========================================================
 
       - name: Build
-        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}} --parallel
+        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
 
       # =========================================================
       # TEST

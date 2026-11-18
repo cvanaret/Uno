@@ -112,6 +112,8 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/unotest.cpp
    unotest/functional_tests/BarrierProblemTests.cpp
    unotest/functional_tests/BLASTests.cpp
+   unotest/functional_tests/CAPIOptionsTests.cpp
+   unotest/functional_tests/CAPIResultTests.cpp
    unotest/functional_tests/BoundRelaxationTests.cpp
    unotest/functional_tests/BoundRelaxationScalingTests.cpp
    unotest/functional_tests/FinalEvaluationTests.cpp
@@ -130,6 +132,7 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/SolveErrorBoundaryTests.cpp
    unotest/functional_tests/StagnationTests.cpp
    unotest/unit_tests/*.cpp
+   unotest/C_header/*.c
 )
 if(ENABLE_TESTS)
    target_sources(run_unotest PRIVATE ${TESTS})
@@ -273,6 +276,22 @@ if(HIGHS)
    endif()
 
    message(STATUS "Found HIGHS")
+
+   # HiPO: optional sparse symmetric indefinite linear solver that ships inside libhighs when HiGHS is
+   # built with HiPO. It cannot be auto-detected reliably (HiGHS does not install the FactorHighs C API
+   # header, and HConfig.h defines HIPO even in HiGHS builds that do not expose the FactorHighs C API),
+   # so it is enabled explicitly with -DHIGHS_WITH_HIPO=ON. The C API header is vendored in Uno
+   # (uno/ingredients/subproblem_solvers/HiPO/FactorHighs_c_api.h); the FactorHighs_* symbols are
+   # resolved from the linked libhighs.
+   option(HIGHS_WITH_HIPO "Enable the HiPO linear solver (requires a HiGHS built with HiPO support)" OFF)
+   if(HIGHS_WITH_HIPO)
+      target_compile_definitions(uno_dependencies INTERFACE HAS_HIPO)
+      target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/HiPO/HiPOSolver.cpp)
+      if(ENABLE_TESTS)
+         target_sources(run_unotest PRIVATE unotest/functional_tests/HiPOSolverTests.cpp)
+      endif()
+      message(STATUS "HiPO linear solver enabled (HIGHS_WITH_HIPO=ON)")
+   endif()
 endif()
 
 # MUMPS
@@ -494,6 +513,13 @@ if(SKBUILD)
       interfaces/Python/unopy.cpp
    )
 
+   # pybind11_add_module enables LTO in Release unless CMAKE_INTERPROCEDURAL_OPTIMIZATION is defined.
+   # LTO only covers the binding glue here (compiled_uno_files is not built with -flto) and makes the
+   # final link expensive for every wheel, so disable it unless the user explicitly asked for IPO
+   if(NOT DEFINED CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+   endif()
+
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC uno_dependencies)
@@ -504,6 +530,26 @@ if(SKBUILD)
 
    if(UNO_PYBIND11_DETAILED_ERRORS)
       target_compile_definitions(unopy PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
+   endif()
+
+   # The binding TUs are dominated by pybind11 template instantiation and must be recompiled for each
+   # Python version (they cannot be shared via ccache), so make them cheap:
+   # - precompile the pybind11 headers once per build
+   # - compile the binding glue at a lower optimization level. This only affects the binding sources:
+   #   the solver itself (compiled_uno_files, linked in via $<TARGET_OBJECTS>) keeps the build type's flags
+   if(NOT CMAKE_VERSION VERSION_LESS 3.16)
+      target_precompile_headers(unopy PRIVATE
+         <pybind11/pybind11.h>
+         <pybind11/numpy.h>
+         <pybind11/stl.h>
+         <pybind11/functional.h>
+      )
+   endif()
+   set(UNO_PYTHON_BINDINGS_OPT_FLAG "-O1" CACHE STRING
+      "Optimization flag for the pybind11 binding sources (empty: use the build type's flags)")
+   if(UNO_PYTHON_BINDINGS_OPT_FLAG AND NOT MSVC)
+      # target options come after CMAKE_CXX_FLAGS_<CONFIG> on the command line, so this overrides -O3
+      target_compile_options(unopy PRIVATE ${UNO_PYTHON_BINDINGS_OPT_FLAG})
    endif()
 
    # also installs the optional subpackages unopy.scipy and unopy.gemseo
@@ -544,8 +590,8 @@ if(ENABLE_TESTS)
    include(GoogleTest)
    gtest_discover_tests(run_unotest DISCOVERY_MODE PRE_TEST)
 
-   # end-to-end check of iterative refinement (pivoting tolerance increased at the first iteration) on Mittelmann's
-   # NARX_CFy instance. Requires the AMPL interface and the path to NARX_CFy.nl
+   # end-to-end check of iterative refinement (pivoting tolerance increased, or scaling switched on, at the first
+   # iteration) on Mittelmann's NARX_CFy instance. Requires the AMPL interface and the path to NARX_CFy.nl
    set(UNO_NARX_CFY_NL "" CACHE FILEPATH "Path to Mittelmann's NARX_CFy.nl instance (optional end-to-end test)")
    set(UNO_NARX_CFY_LINEAR_SOLVERS "MA57" CACHE STRING "Linear solvers tested on NARX_CFy (among MA27, MA57, MUMPS)")
    if(AMPLSOLVER AND UNO_NARX_CFY_NL)
@@ -554,9 +600,14 @@ if(ENABLE_TESTS)
          if((linear_solver STREQUAL "MA57" AND _compile_ma57) OR (linear_solver STREQUAL "MA27" AND _compile_ma27) OR
                (linear_solver STREQUAL "MUMPS" AND MUMPS_LIBRARY))
             add_dependencies(run_unotest uno_ampl)
+            # without scaling: the pivoting tolerance is increased
             add_test(NAME NARX_CFy_iterative_refinement_${linear_solver}
                COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/unotest/scripts/check_iterative_refinement_first_iteration.sh
-                  $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver})
+                  $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver} pivoting)
+            # with on-demand scaling: the scaling is switched on first
+            add_test(NAME NARX_CFy_iterative_refinement_scaling_${linear_solver}
+               COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/unotest/scripts/check_iterative_refinement_first_iteration.sh
+                  $<TARGET_FILE:uno_ampl> ${UNO_NARX_CFY_NL} ${linear_solver} scaling)
          else()
             message(STATUS "NARX_CFy iterative refinement test skipped for ${linear_solver} (solver not available)")
          endif()

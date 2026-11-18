@@ -24,6 +24,14 @@ namespace uno {
    class Statistics;
    class Subproblem;
 
+   // JOB parameter of MA57CD for the factorization A = P L D Lᵀ Pᵀ
+   enum class MA57Job: int {
+      FULL = 1, // A⁻¹
+      LOWER = 2, // (P L Pᵀ)⁻¹
+      DIAGONAL = 3, // (P D Pᵀ)⁻¹
+      UPPER = 4 // (P Lᵀ Pᵀ)⁻¹
+   };
+
    struct MA57Workspace {
       int n{};
       int nnz{};
@@ -44,8 +52,6 @@ namespace uno {
       std::array<double, 20> rinfo{};
       std::array<int, 40> info{};
 
-      const int job{1};
-
       MA57Workspace() = default;
    };
 
@@ -57,20 +63,26 @@ namespace uno {
       void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(double* solution) override;
-      void solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
       [[nodiscard]] bool increase_pivoting_tolerance() override;
+      [[nodiscard]] std::optional<size_t> number_delayed_pivots() const override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
-      [[nodiscard]] COOLinearSystem& get_coo_linear_system();
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;
+      // whether MA57 scales the matrix itself (MC64)
+      [[nodiscard]] bool uses_internal_scaling() const { return this->workspace.icntl[14] != 0; }
 
    private:
+      void factorize(bool is_matrix_positive_definite) override;
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override;
+      void solve_with_lower_factor(double* rhs, size_t number_of_rhs) override;
+      void solve_with_middle_factor(double* rhs, size_t number_of_rhs) override;
+      void solve_with_upper_factor(double* rhs, size_t number_of_rhs) override;
+
       MA57Workspace workspace{};
       COOLinearSystem linear_system{Indexing::Fortran_indexing};
       PivotingToleranceSchedule pivoting_tolerance_schedule{MA57Settings::max_pivoting_threshold, MA57Settings::pivoting_threshold_increase_exponent};
@@ -78,6 +90,7 @@ namespace uno {
       bool analysis_performed{false};
       bool factorization_performed{false};
 
+      void solve(MA57Job job, double* rhs, size_t number_of_rhs);
       [[nodiscard]] int& MA57_ICNTL(size_t index);
       [[nodiscard]] double& MA57_CNTL(size_t index);
       [[nodiscard]] int MA57_INFO(size_t index) const;

@@ -231,44 +231,51 @@ call uno_destroy_solver(solver)
 Options can be passed individually:
 
 ```fortran
-logical(c_bool) :: success
+integer(uno_int) :: status
 integer(uno_int) :: max_iterations = 1000
 real(c_double) :: primal_tolerance = 1.0d-6
 logical(c_bool) :: print_solution = .true.
 character(len=*) :: hessian_model = "exact"
 
-success = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
-success = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
-success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
-success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
+status = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
+status = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
+status = uno_set_solver_bool_option(solver, "print_solution", print_solution)
+status = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
 ```
+
+The functions that set options return a status code: `UNO_OPTIONS_SUCCESS` if the option was set, otherwise `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND` (unknown option), `UNO_OPTIONS_WRONG_TYPE`, `UNO_OPTIONS_INVALID_VALUE` (e.g. a misspelled value of a string option), `UNO_OPTIONS_INVALID_FILE` or `UNO_OPTIONS_ERROR`. If the status is not `UNO_OPTIONS_SUCCESS`, the options are left unchanged.
 
 Options can also be loaded from a file that contains an `option value` pair per line (the example file `uno_default.opt` in the root directory contains Uno's default options). The options are set in this particular order. Anything that follows a `#` is treated as a comment and is ignored.
 
 ```fortran
-logical(c_bool) :: success
+integer(uno_int) :: status
 character(len=*) :: option_file = "uno.opt"
 
-success = uno_load_solver_option_file(solver, option_file)
+status = uno_load_solver_option_file(solver, option_file)
 ```
 
 Getting option values:
 
 ```fortran
+integer(uno_int) :: status
 integer(uno_int) :: max_iterations
 real(c_double) :: primal_tolerance
 logical(c_bool) :: print_solution
+character(:), allocatable :: hessian_model
 
-max_iterations = uno_get_solver_integer_option(solver, "max_iterations")
-primal_tolerance = uno_get_solver_double_option(solver, "primal_tolerance")
-print_solution = uno_get_solver_bool_option(solver, "print_solution")
+status = uno_get_solver_integer_option(solver, "max_iterations", max_iterations)
+status = uno_get_solver_double_option(solver, "primal_tolerance", primal_tolerance)
+status = uno_get_solver_bool_option(solver, "print_solution", print_solution)
+status = uno_get_solver_string_option(solver, "hessian_model", hessian_model)
 ```
+
+The getters return `UNO_OPTIONS_SUCCESS` and write the value if the option has a value, and `UNO_OPTIONS_NOT_SET` if the option exists but has no value, e.g. an option set by the `auto` preset before the solve. After a successful solve, and until the options are modified, the getters return the values used by the solve, including the values picked by the `auto` preset and the options overridden by the solver. Otherwise, they return `UNO_OPTIONS_INVALID_ARGUMENT`, `UNO_OPTIONS_NOT_FOUND`, `UNO_OPTIONS_WRONG_TYPE` or `UNO_OPTIONS_ERROR`. The value is written only if the status is `UNO_OPTIONS_SUCCESS`.
 
 Setting a preset:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_solver_preset(solver, "filtersqp")
+integer(uno_int) :: status
+status = uno_set_solver_preset(solver, "filtersqp")
 ```
 
 ### Solving the model
@@ -276,39 +283,42 @@ success = uno_set_solver_preset(solver, "filtersqp")
 Solve the optimization problem with:
 
 ```fortran
-call uno_optimize(solver, model)
+logical(c_bool) :: success
+success = uno_optimize(solver, model)
 ```
+
+`uno_optimize` returns `.true.` if the optimization was carried out, and `.false.` if it could not start or failed unexpectedly.
 
 ### Inspecting the result
 
-The following routines allow you to inspect the solution:
+The following functions allow you to inspect the solution. They write the value into their last argument and return an `integer(uno_int)` status: `UNO_RESULT_SUCCESS` if the value was written, otherwise `UNO_RESULT_INVALID_ARGUMENT`, `UNO_RESULT_NOT_AVAILABLE` (no optimization yet, or `uno_optimize` returned `.false.`), `UNO_RESULT_INVALID_INDEX` or `UNO_RESULT_ERROR`. The value is written only if the status is `UNO_RESULT_SUCCESS`.
 
 * optimization status:
 
 ```fortran
-integer(uno_int) :: optimization_status
-optimization_status = uno_get_optimization_status(solver)
+integer(uno_int) :: status, optimization_status
+status = uno_get_optimization_status(solver, optimization_status)
 ```
 
 * solution status:
 
 ```fortran
 integer(uno_int) :: solution_status
-solution_status = uno_get_solution_status(solver)
+status = uno_get_solution_status(solver, solution_status)
 ```
 
 * objective value:
 
 ```fortran
 real(c_double) :: objective
-objective = uno_get_solution_objective(solver)
+status = uno_get_solution_objective(solver, objective)
 ```
 
-* primal solution:
+* primal solution (or one of its components, with `uno_get_primal_solution_component(solver, index, component)`):
 
 ```fortran
 real(c_double), dimension(number_variables) :: primal_solution
-call uno_get_primal_solution(solver, primal_solution)
+status = uno_get_primal_solution(solver, primal_solution)
 ```
 
 * dual solutions:
@@ -317,9 +327,9 @@ call uno_get_primal_solution(solver, primal_solution)
 real(c_double), dimension(number_variables) :: lower_bound_dual_solution, upper_bound_dual_solution
 real(c_double), dimension(number_constraints) :: constraint_dual_solution
 
-call uno_get_constraint_dual_solution(solver, constraint_dual_solution)
-call uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
-call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+status = uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+status = uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+status = uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```
 
 * constraint values:
@@ -327,16 +337,16 @@ call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```fortran
 real(c_double), dimension(number_constraints) :: constraint_values
 
-call uno_get_solution_constraints(solver, constraint_values)
+status = uno_get_solution_constraints(solver, constraint_values)
 ```
 
 * optimality measures:
 
 ```fortran
 real(c_double) :: primal_feasibility, stationarity, complementarity
-primal_feasibility = uno_get_solution_primal_feasibility(solver)
-stationarity = uno_get_solution_stationarity(solver)
-complementarity = uno_get_solution_complementarity(solver)
+status = uno_get_solution_primal_feasibility(solver, primal_feasibility)
+status = uno_get_solution_stationarity(solver, stationarity)
+status = uno_get_solution_complementarity(solver, complementarity)
 ```
 
 * solver statistics:
@@ -345,6 +355,13 @@ complementarity = uno_get_solution_complementarity(solver)
 integer(uno_int) :: number_iterations
 real(c_double) :: cpu_time
 
-number_iterations  = uno_get_number_iterations(solver)
-cpu_time = uno_get_cpu_time(solver)
+status = uno_get_number_iterations(solver, number_iterations)
+status = uno_get_cpu_time(solver, cpu_time)
+```
+
+* description of the method:
+
+```fortran
+character(:), allocatable :: method_description
+status = uno_get_method_description(solver, method_description)
 ```

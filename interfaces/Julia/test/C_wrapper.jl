@@ -232,11 +232,22 @@ end
     end
 
     solver = uno_solver()
-    uno_set_solver_preset(solver, "filtersqp")
-    uno_set_solver_bool_option(solver, "print_solution", true)
-    uno_optimize(solver, model)
+    @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_optimize(solver, model)
 
     @test UnoSolver.uno_get_method_description(solver) == "TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction"
+
+    # with the "auto" preset, the options picked by the preset can be read after the solve, until an option is modified
+    uno_set_initial_primal_iterate(model, x0)
+    uno_set_initial_dual_iterate(model, y0)
+    solver_auto = uno_solver(logger="SILENT")
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") === nothing
+    @test uno_optimize(solver_auto, model)
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") in ("LS", "TR")
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "hessian_model") == "exact"
+    @test uno_set_solver_integer_option(solver_auto, "max_iterations", 100) == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") === nothing
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -301,10 +312,10 @@ end
     uno_set_initial_dual_iterate(model, y0)
 
     solver = uno_solver()
-    uno_set_solver_preset(solver, "filtersqp")
-    uno_set_solver_bool_option(solver, "print_solution", true)
-    uno_set_solver_string_option(solver, "hessian_model", "LBFGS")
-    uno_optimize(solver, model)
+    @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_set_solver_string_option(solver, "hessian_model", "LBFGS") == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_optimize(solver, model)
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -488,9 +499,9 @@ end
     end
 
     solver = uno_solver()
-    uno_set_solver_preset(solver, "filtersqp")
-    uno_set_solver_bool_option(solver, "print_solution", true)
-    uno_optimize(solver, model)
+    @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_optimize(solver, model)
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -542,10 +553,10 @@ end
     uno_set_initial_primal_iterate(model, x0)
 
     solver = uno_solver()
-    uno_set_solver_preset(solver, "filtersqp")
-    uno_set_solver_bool_option(solver, "print_solution", true)
-    uno_set_solver_string_option(solver, "hessian_model", "LBFGS")
-    uno_optimize(solver, model)
+    @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_set_solver_string_option(solver, "hessian_model", "LBFGS") == UnoSolver.UNO_OPTIONS_SUCCESS
+    @test uno_optimize(solver, model)
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -606,4 +617,115 @@ end
     @test stats.dual_feas ≈ 0.0 atol = 1e-5
     @test stats.complementarity_feas ≈ 0.0 atol = 1e-5
   end
+end
+
+@testset "Options -- status codes" begin
+  solver = uno_solver()
+  @test uno_set_solver_integer_option(solver, "max_iterations", Cint(50)) == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test uno_set_solver_double_option(solver, "primal_tolerance", 1e-6) == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test uno_set_solver_string_option(solver, "hessian_model", "LBFGS") == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test uno_set_solver_integer_option(solver, "max_iteration", Cint(50)) == UnoSolver.UNO_OPTIONS_NOT_FOUND
+  @test uno_set_solver_double_option(solver, "max_iterations", 50.0) == UnoSolver.UNO_OPTIONS_WRONG_TYPE
+  @test uno_set_solver_string_option(solver, "logger", "SOLENT") == UnoSolver.UNO_OPTIONS_INVALID_VALUE
+  @test uno_set_solver_preset(solver, "snopt") == UnoSolver.UNO_OPTIONS_INVALID_VALUE
+  @test UnoSolver.uno_load_solver_option_file(solver, "this_option_file_does_not_exist.opt") == UnoSolver.UNO_OPTIONS_INVALID_FILE
+  @test uno_set_solver_integer_option(C_NULL, "max_iterations", Cint(50)) == UnoSolver.UNO_OPTIONS_INVALID_ARGUMENT
+  @test UnoSolver.uno_get_solver_option_type(C_NULL, "logger") == UnoSolver.UNO_OPTION_TYPE_NOT_FOUND
+end
+
+# https://github.com/cvanaret/Uno/issues/1070: a typo in an option value used to abort the Julia process
+@testset "Options -- invalid value (issue 1070)" begin
+  @test_throws ErrorException uno_solver(logger="SOLENT")
+  @test_throws ErrorException uno_solver(loger="SILENT")
+  @test_throws ErrorException uno_solver(preset="snopt")
+  @test_throws ErrorException uno_solver(max_iterations=1.5)
+  solver = uno_solver(logger="SILENT", max_iterations=100)
+  @test UnoSolver.uno_get_solver_string_option(solver, "logger") == "SILENT"
+end
+
+# https://github.com/cvanaret/Uno/issues/925: the getters used to throw for the options without a value
+@testset "Options -- getters (issue 925)" begin
+  solver = uno_solver()
+  @test uno_set_solver_integer_option(solver, "max_iterations", Cint(50)) == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test UnoSolver.uno_get_solver_integer_option(solver, "max_iterations") == 50
+  @test UnoSolver.uno_get_solver_double_option(solver, "primal_tolerance") > 0.0
+  @test UnoSolver.uno_get_solver_bool_option(solver, "print_solution") isa Bool
+  @test UnoSolver.uno_get_solver_string_option(solver, "logger") == "INFO"
+  @test UnoSolver.uno_get_solver_option(solver, "max_iterations") == 50
+
+  # the options set by the "auto" preset have no value before the solve
+  @test UnoSolver.uno_get_solver_string_option(solver, "globalization_mechanism") === nothing
+  @test UnoSolver.uno_get_solver_string_option(solver, "option_file") === nothing
+  @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test UnoSolver.uno_get_solver_string_option(solver, "globalization_mechanism") == "TR"
+
+  # errors
+  @test_throws ErrorException UnoSolver.uno_get_solver_integer_option(solver, "max_iteration")
+  @test_throws ErrorException UnoSolver.uno_get_solver_double_option(solver, "max_iterations")
+  @test_throws ErrorException UnoSolver.uno_get_solver_option(solver, "max_iteration")
+
+  # every option can be queried
+  iterator = Ref(UnoSolver.uno_options_begin_iterator())
+  number_options = 0
+  while iterator[] != UnoSolver.uno_options_end_iterator()
+    name = unsafe_string(UnoSolver.uno_options_iterator_name(iterator[]))
+    UnoSolver.uno_get_solver_option(solver, name)
+    number_options += 1
+    UnoSolver.uno_options_next_iterator(iterator)
+  end
+  @test number_options > 0
+
+  # low-level status codes: the value is untouched if the getter fails
+  value = Ref{Cint}(-1)
+  @test UnoSolver.uno_get_solver_integer_option(C_NULL, "max_iterations", value) == UnoSolver.UNO_OPTIONS_INVALID_ARGUMENT
+  @test UnoSolver.uno_get_solver_integer_option(solver, "max_iteration", value) == UnoSolver.UNO_OPTIONS_NOT_FOUND
+  @test UnoSolver.uno_get_solver_integer_option(solver, "primal_tolerance", value) == UnoSolver.UNO_OPTIONS_WRONG_TYPE
+  @test value[] == -1
+  string_value = Ref{Cstring}(C_NULL)
+  solver_auto = uno_solver()
+  @test UnoSolver.uno_get_solver_string_option(solver_auto, "hessian_model", string_value) == UnoSolver.UNO_OPTIONS_NOT_SET
+  @test string_value[] == C_NULL
+end
+
+@testset "Result -- status codes" begin
+  # min (x1 - 1)^2 + (x2 - 2)^2
+  objective(userdata, x) = (x[1] - 1.0)^2 + (x[2] - 2.0)^2
+  function gradient(userdata, g, x)
+    g[1] = 2.0 * (x[1] - 1.0)
+    g[2] = 2.0 * (x[2] - 2.0)
+    return g
+  end
+  function hessian(userdata, hvals, x, multipliers, objective_multiplier)
+    hvals[1] = 2.0 * objective_multiplier
+    hvals[2] = 2.0 * objective_multiplier
+    return hvals
+  end
+  model = uno_model("NLP", true, 2, [-Inf, -Inf], [Inf, Inf], Cint[1, 2], Cint[1, 2], 2, objective, gradient, hessian,
+                    nothing)
+  solver = uno_solver(logger="SILENT", preset="filtersqp")
+
+  # no result before the solve
+  @test !UnoSolver.uno_has_result(solver)
+  @test_throws ErrorException UnoSolver.uno_get_solution_objective(solver)
+  @test_throws ErrorException UnoSolver.uno_get_primal_solution(solver, zeros(2))
+  @test_throws ErrorException uno_get_method_description(solver)
+  value = Ref{Cdouble}(-1.0)
+  @test UnoSolver.uno_get_solution_objective(solver.c_solver, value) == UnoSolver.UNO_RESULT_NOT_AVAILABLE
+  @test value[] == -1.0
+  @test UnoSolver.uno_get_solution_objective(C_NULL, value) == UnoSolver.UNO_RESULT_INVALID_ARGUMENT
+
+  # successful solve
+  @test uno_optimize(solver, model)
+  @test UnoSolver.uno_has_result(solver)
+  @test UnoSolver.uno_get_optimization_status(solver) == UnoSolver.UNO_SUCCESS
+  @test UnoSolver.uno_get_solution_objective(solver) ≈ 0.0 atol = 1e-8
+  x = UnoSolver.uno_get_primal_solution(solver, zeros(2))
+  @test x ≈ [1.0, 2.0] atol = 1e-6
+  # 1-based indexing in Julia
+  @test UnoSolver.uno_get_primal_solution_component(solver, 2) == x[2]
+  @test_throws ErrorException UnoSolver.uno_get_primal_solution_component(solver, 3)
+  @test UnoSolver.uno_get_primal_solution_component(solver.c_solver, Cint(3), value) == UnoSolver.UNO_RESULT_INVALID_INDEX
+  @test UnoSolver.uno_get_number_iterations(solver) > 0
+  @test !isempty(uno_get_method_description(solver))
 end

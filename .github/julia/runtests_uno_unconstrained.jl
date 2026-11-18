@@ -27,7 +27,7 @@ length(ARGS) == 1 || error("The linear solver name is missing or you supplied mo
 linear_solver = ARGS[1]
 println("Solving with linear solver ", linear_solver)
 
-Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "hessian_model=exact", "linear_solver=$linear_solver"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "hessian_model=exact", "linear_solver=$linear_solver", "max_iterations=10000"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 

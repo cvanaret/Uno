@@ -41,7 +41,7 @@ namespace uno {
       })
       .def_readonly("number_iterations", &Result::number_iterations)
       .def_property_readonly("cpu_time", [](const Result& result) {
-         return result.timers.wallclock.get_duration();
+         return result.timers.solve.get_duration();
       })
       .def_readonly("number_objective_evaluations", &Result::number_objective_evaluations)
       .def_readonly("number_constraint_evaluations", &Result::number_constraint_evaluations)

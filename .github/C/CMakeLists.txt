@@ -20,9 +20,10 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 find_library(UNO REQUIRED)
-add_executable(tests_hs015 tests_hs015.c)
-
-# link the math library and Uno
-target_link_libraries(tests_hs015 PUBLIC m ${UNO})
 get_filename_component(UNO_DIRECTORY ${UNO} DIRECTORY)
-target_include_directories(tests_hs015 SYSTEM PUBLIC ${UNO_DIRECTORY}/../include)
+foreach(test_name tests_hs015 tests_options tests_results)
+   add_executable(${test_name} ${test_name}.c)
+   # link the math library and Uno
+   target_link_libraries(${test_name} PUBLIC m ${UNO})
+   target_include_directories(${test_name} SYSTEM PUBLIC ${UNO_DIRECTORY}/../include)
+endforeach()

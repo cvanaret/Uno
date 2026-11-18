@@ -14,6 +14,7 @@
 #include "ingredients/inequality_handling_methods/interior_point_methods/InteriorPointParameters.hpp"
 #include "ingredients/inequality_handling_methods/interior_point_methods/barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/inertia_correction_strategies/PrimalDualInertiaCorrection.hpp"
+#include "ingredients/inertia_correction_strategies/UnstableInertiaCorrection.hpp"
 #include "ingredients/subproblem/NewtonSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/EQPSolver.hpp"
@@ -21,6 +22,7 @@
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/ScalingStrategy.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
@@ -156,6 +158,22 @@ namespace {
 
    bool supports_pivoting_tolerance_increase(const std::string& linear_solver) {
       return linear_solver == "MA27" || linear_solver == "MA57" || linear_solver == "MUMPS";
+   }
+
+   // the linear system scaling is switched on when iterative refinement fails (before the pivoting tolerance is increased)
+   bool scales_on_demand(const Options& options) {
+      return options.get_string("linear_system_scaling") != "none" && options.get_bool("linear_system_scaling_on_demand");
+   }
+
+   // opt into the linear system scaling (none by default)
+   Options with_scaling(Options options, const std::string& method = "ruiz", bool on_demand = true) {
+      options.set_string("linear_system_scaling", method);
+      options.set_bool("linear_system_scaling_on_demand", on_demand);
+      return options;
+   }
+
+   const ScalingStrategy* strategy_of(DirectSymmetricIndefiniteLinearSolver<double>* linear_solver) {
+      return linear_solver->get_scaling_strategy();
    }
 
    // primal-dual inertia correction that counts the inertia-checked refactorizations
@@ -376,8 +394,8 @@ TEST_P(IterativeRefinement, FailureIncreasesPivotingToleranceThenRegularizes) {
    EQPSolver<NoLowRankCorrection> solver(scenario.options);
    const Direction& direction = scenario.solve(solver);
    ASSERT_GT(solver.get_residual_ratio(), 0.) << "the residual ratio is exactly zero: the failure path cannot be tested";
-   const size_t expected_increases = supports_pivoting_tolerance_increase(GetParam()) ? 1 : 0;
-   // the refactorization with the increased pivoting tolerance goes through the inertia correction strategy
+   const size_t expected_increases = (scales_on_demand(scenario.options) ? 1 : 0) + (supports_pivoting_tolerance_increase(GetParam()) ? 1 : 0);
+   // the refactorizations with scaling and with the increased pivoting tolerance go through the inertia correction strategy
    EXPECT_EQ(scenario.inertia_correction.number_refactorizations, expected_increases);
    EXPECT_TRUE(solver.is_matrix_deemed_singular());
    // pretend singular: the dual regularization is added first. The dual regularization block ends the matrix values
@@ -471,7 +489,8 @@ TEST_P(IterativeRefinement, InaccurateSolutionIsAcceptedBelowSingularThreshold) 
    ASSERT_GT(solver.get_residual_ratio(), 0.) << "the residual ratio is exactly zero: the failure path cannot be tested";
    EXPECT_FALSE(solver.is_matrix_deemed_singular());
    const std::string summary = solver.iteration_summary();
-   const std::string expected_flags = supports_pivoting_tolerance_increase(GetParam()) ? "piv,inac" : "inac";
+   const std::string expected_flags = std::string(scales_on_demand(scenario.options) ? "scal," : "") +
+      (supports_pivoting_tolerance_increase(GetParam()) ? "piv," : "") + "inac";
    EXPECT_EQ(summary.substr(summary.size() - expected_flags.size()), expected_flags);
    EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
    EXPECT_TRUE(std::isfinite(direction.norm));
@@ -487,6 +506,207 @@ TEST_P(IterativeRefinement, StagnationStopsRefinement) {
    BarrierScenario scenario(options);
    InspectableEQPSolver solver(scenario.options);
    (void)scenario.solve(solver);
-   const size_t number_solves = supports_pivoting_tolerance_increase(GetParam()) ? 2 : 1; // + refactorization
+   // + refactorizations (scaling, pivoting tolerance)
+   const size_t number_solves = 1 + (scales_on_demand(scenario.options) ? 1 : 0) + (supports_pivoting_tolerance_increase(GetParam()) ? 1 : 0);
    EXPECT_EQ(solver.get_number_refinement_steps(), 2 * number_solves);
+}
+
+// failed refinement switches the linear system scaling on first (then kept), then increases the pivoting tolerance
+TEST_P(IterativeRefinement, FailureSwitchesScalingOnBeforePivotingTolerance) {
+   Options options = make_options(GetParam(), 1, 10);
+   options.set_double("iterative_refinement_residual_ratio_max", 0.);
+   options.set_double("iterative_refinement_residual_ratio_singular", 1.);
+   options = with_scaling(options);
+   ASSERT_TRUE(scales_on_demand(options));
+   BarrierScenario scenario(options);
+   InspectableEQPSolver solver(scenario.options);
+   (void)scenario.solve(solver);
+   const ScalingStrategy* scaled_solver = strategy_of(solver.linear_solver_pointer());
+   ASSERT_NE(scaled_solver, nullptr);
+   EXPECT_TRUE(scaled_solver->is_active());
+   EXPECT_TRUE(scaled_solver->is_last_factorization_scaled());
+   EXPECT_EQ(scaled_solver->get_number_scaling_computations(), 1);
+   const std::string summary = solver.iteration_summary();
+   EXPECT_NE(summary.find("scal"), std::string::npos);
+   if (supports_pivoting_tolerance_increase(GetParam())) {
+      EXPECT_LT(summary.find("scal"), summary.find("piv"));
+   }
+   // next iteration (new matrix): the scaling is still on and recomputed once
+   (void)scenario.solve(solver);
+   EXPECT_TRUE(scaled_solver->is_last_factorization_scaled());
+   EXPECT_EQ(scaled_solver->get_number_scaling_computations(), 2);
+}
+
+// performance guard: when refinement succeeds, the scaling is never computed
+TEST_P(IterativeRefinement, NoScalingWhenRefinementSucceeds) {
+   BarrierScenario scenario(with_scaling(make_options(GetParam(), 1, 10)));
+   ASSERT_TRUE(scales_on_demand(scenario.options));
+   InspectableEQPSolver solver(scenario.options);
+   for (size_t iteration = 0; iteration < 3; ++iteration) {
+      (void)scenario.solve(solver);
+   }
+   const ScalingStrategy* scaled_solver = strategy_of(solver.linear_solver_pointer());
+   ASSERT_NE(scaled_solver, nullptr);
+   EXPECT_FALSE(scaled_solver->is_active());
+   EXPECT_EQ(scaled_solver->get_number_scaling_computations(), 0);
+}
+
+// no linear system scaling (default): no strategy, and the solvers' own scalings are kept
+TEST_P(IterativeRefinement, ScalingDisabled) {
+   Options options = make_failing_options(GetParam());
+   options.set_string("linear_system_scaling", "none");
+   BarrierScenario scenario(options);
+   InspectableEQPSolver solver(scenario.options);
+   (void)scenario.solve(solver);
+   EXPECT_EQ(strategy_of(solver.linear_solver_pointer()), nullptr);
+   EXPECT_EQ(solver.iteration_summary().find("scal"), std::string::npos);
+}
+
+// scaling all the matrices does not change the direction
+TEST_P(IterativeRefinement, ScaledDirectionEqualsUnscaledDirection) {
+   Options reference_options = make_options(GetParam(), 1, 10);
+   reference_options.set_string("linear_system_scaling", "none");
+   BarrierScenario reference_scenario(reference_options);
+   EQPSolver<NoLowRankCorrection> reference_solver(reference_scenario.options);
+   const Direction& reference = reference_scenario.solve(reference_solver);
+   Options options = make_options(GetParam(), 1, 10);
+   options.set_string("linear_system_scaling", "ruiz");
+   options.set_bool("linear_system_scaling_on_demand", false);
+   BarrierScenario scenario(options);
+   InspectableEQPSolver solver(scenario.options);
+   const Direction& direction = scenario.solve(solver);
+   const ScalingStrategy* scaled_solver = strategy_of(solver.linear_solver_pointer());
+   ASSERT_NE(scaled_solver, nullptr);
+   EXPECT_TRUE(scaled_solver->is_last_factorization_scaled());
+   EXPECT_LE(solver.get_residual_ratio(), 1e-10);
+   for (size_t index: Range(scenario.barrier_problem.number_variables)) {
+      EXPECT_NEAR(direction.primals[index], reference.primals[index], 1e-9 * (1. + std::abs(reference.primals[index]))) << "ruiz";
+   }
+   for (size_t index: Range(scenario.barrier_problem.number_constraints)) {
+      EXPECT_NEAR(direction.multipliers.constraints[index], reference.multipliers.constraints[index],
+         1e-9 * (1. + std::abs(reference.multipliers.constraints[index]))) << "ruiz";
+   }
+}
+
+// second-order corrections reuse the scaled factorization: no scaling computation, no activation
+TEST_P(IterativeRefinement, SecondOrderCorrectionDoesNotComputeScaling) {
+   // the scaling is switched on during the direction computation
+   Options options = with_scaling(make_failing_options(GetParam()));
+   BarrierScenario scenario(options);
+   InspectableEQPSolver solver(scenario.options);
+   (void)scenario.solve(solver);
+   const ScalingStrategy* scaled_solver = strategy_of(solver.linear_solver_pointer());
+   ASSERT_NE(scaled_solver, nullptr);
+   ASSERT_TRUE(scaled_solver->is_active());
+   const size_t number_computations = scaled_solver->get_number_scaling_computations();
+
+   Iterate trial_iterate = scenario.iterate;
+   Evaluations trial_evaluations{scenario.model};
+   solver.initialize_second_order_corrections(scenario.subproblem, scenario.iterate, trial_iterate, scenario.evaluations,
+      trial_evaluations);
+   const Direction& direction = solver.compute_second_order_correction(scenario.statistics, scenario.subproblem, scenario.iterate);
+   EXPECT_EQ(scaled_solver->get_number_scaling_computations(), number_computations);
+   EXPECT_TRUE(scaled_solver->is_last_factorization_scaled());
+   for (size_t variable_index: Range(scenario.barrier_problem.number_variables)) {
+      EXPECT_TRUE(std::isfinite(direction.primals[variable_index]));
+   }
+}
+
+// SOC before any activation: the scaling stays off even if refinement fails in the SOC solve
+TEST_P(IterativeRefinement, SecondOrderCorrectionNeverActivatesScaling) {
+   BarrierScenario scenario(with_scaling(make_options(GetParam(), 1, 10)));
+   InspectableEQPSolver solver(scenario.options);
+   (void)scenario.solve(solver);
+   solver.set_residual_ratio_max(0.); // refinement fails from now on
+   Iterate trial_iterate = scenario.iterate;
+   Evaluations trial_evaluations{scenario.model};
+   solver.initialize_second_order_corrections(scenario.subproblem, scenario.iterate, trial_iterate, scenario.evaluations,
+      trial_evaluations);
+   (void)solver.compute_second_order_correction(scenario.statistics, scenario.subproblem, scenario.iterate);
+   const ScalingStrategy* scaled_solver = strategy_of(solver.linear_solver_pointer());
+   ASSERT_NE(scaled_solver, nullptr);
+   EXPECT_FALSE(scaled_solver->is_active());
+   EXPECT_EQ(scaled_solver->get_number_scaling_computations(), 0);
+}
+
+namespace {
+   // linear solver whose inertia is wrong until the scaling is switched on (e.g. badly scaled matrix with an unreliable
+   // inertia): forwards to an unscaled solver
+   class UnreliableInertiaSolver: public DirectSymmetricIndefiniteLinearSolver<double> {
+   public:
+      // supports_scaling: a scaling strategy (on demand) is attached
+      UnreliableInertiaSolver(std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> solver, bool supports_scaling):
+            solver(std::move(solver)) {
+         if (supports_scaling) {
+            this->set_scaling_strategy(std::make_unique<ScalingStrategy>(LinearSystemScalingParameters{}));
+         }
+      }
+
+      void initialize_memory() override { this->solver->initialize_memory(); }
+      void do_symbolic_analysis() override { this->solver->do_symbolic_analysis(); }
+      [[nodiscard]] Inertia get_inertia() const override {
+         if (this->scaling_strategy != nullptr && this->scaling_strategy->is_last_factorization_scaled()) {
+            return this->solver->get_inertia();
+         }
+         return {this->solver->get_linear_system().dimension, 0, 0}; // wrong whatever the regularization
+      }
+      [[nodiscard]] size_t number_negative_eigenvalues() const override { return this->get_inertia().negative; }
+      [[nodiscard]] bool matrix_is_singular() const override { return this->solver->matrix_is_singular(); }
+      [[nodiscard]] size_t rank() const override { return this->solver->rank(); }
+      [[nodiscard]] LinearSystem& get_linear_system() override { return this->solver->get_linear_system(); }
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override { return this->solver->get_coo_linear_system(); }
+
+   protected:
+      void factorize(bool is_matrix_positive_definite) override {
+         this->solver->do_numerical_factorization(is_matrix_positive_definite); // (scaled) values set by the base class
+      }
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override {
+         this->solver->solve_indefinite_system(rhs, solution, number_of_rhs);
+      }
+
+   private:
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> solver;
+   };
+
+   void regularize(BarrierScenario& scenario, UnreliableInertiaSolver& linear_solver) {
+      auto& linear_system = linear_solver.get_linear_system();
+      linear_system.initialize_augmented_system(scenario.subproblem);
+      linear_solver.initialize_memory();
+      auto block_augmented_matrix = scenario.subproblem.compute_block_augmented_matrix(linear_system);
+      scenario.subproblem.evaluate_lagrangian_hessian(scenario.statistics, scenario.iterate, block_augmented_matrix.hessian);
+      scenario.subproblem.evaluate_jacobian(scenario.iterate, block_augmented_matrix.jacobian, scenario.evaluations);
+      linear_solver.do_symbolic_analysis();
+      scenario.subproblem.regularize_augmented_matrix(scenario.statistics, scenario.subproblem.dual_regularization_factor(),
+         linear_solver, block_augmented_matrix);
+   }
+} // namespace
+
+// last resort of the inertia correction: when the regularization exceeds its threshold, the scaling is switched on once
+// and the inertia correction restarts from the initial regularization
+TEST_P(IterativeRefinement, FailedInertiaCorrectionSwitchesScalingOn) {
+   BarrierScenario scenario(make_options(GetParam(), 1, 10));
+   UnreliableInertiaSolver linear_solver(SymmetricIndefiniteLinearSolverFactory::create(scenario.options, false), true);
+   EXPECT_NO_THROW(regularize(scenario, linear_solver));
+   ASSERT_NE(linear_solver.get_scaling_strategy(), nullptr);
+   EXPECT_TRUE(linear_solver.get_scaling_strategy()->is_active());
+   EXPECT_TRUE(linear_solver.get_scaling_strategy()->is_last_factorization_scaled());
+   // the inertia is correct without regularization once scaled
+   EXPECT_EQ(scenario.inertia_correction.get_primal_regularization_factor(), 0.);
+}
+
+TEST_P(IterativeRefinement, FailedInertiaCorrectionWithoutScalingThrows) {
+   BarrierScenario scenario(make_options(GetParam(), 1, 10));
+   UnreliableInertiaSolver linear_solver(SymmetricIndefiniteLinearSolverFactory::create(scenario.options, false), false);
+   EXPECT_THROW(regularize(scenario, linear_solver), UnstableInertiaCorrection);
+   EXPECT_EQ(linear_solver.get_scaling_strategy(), nullptr);
+}
+
+// options without the defaults (e.g. a standalone linear solver): the factory does not require the scaling options and
+// attaches no strategy
+TEST_P(IterativeRefinement, FactoryWithoutScalingOptions) {
+   Options options;
+   options.set_string("linear_solver", GetParam());
+   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
+   ASSERT_NO_THROW(linear_solver = SymmetricIndefiniteLinearSolverFactory::create(options));
+   EXPECT_EQ(linear_solver->get_scaling_strategy(), nullptr);
 }

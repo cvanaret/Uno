@@ -564,6 +564,69 @@ function test_error_adding_option(; preset="filtersqp")
         ),
         MOI.optimize!(model),
     )
+    _test_no_result(model)
+    return
+end
+
+# after a failed MOI.optimize!, querying the status must not abort the Julia process (the C API has no result)
+function _test_no_result(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    @test MOI.get(model, MOI.RawStatusString()) == "Optimize not called"
+    @test MOI.get(model, MOI.ResultCount()) == 0
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
+    @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
+    return
+end
+
+# https://github.com/cvanaret/Uno/issues/1070: a typo in an option value used to abort the Julia process
+function test_invalid_option_value(; preset="filtersqp")
+    model = UnoSolver.Optimizer(preset=preset)
+    MOI.set(model, MOI.Silent(), true)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    MOI.set(model, MOI.RawOptimizerAttribute("logger"), "SOLENT")
+    @test_throws(
+        ErrorException(
+            "Unable to set the option `\"logger\"` to `\"SOLENT\"`: the value is not valid for this option.",
+        ),
+        MOI.optimize!(model),
+    )
+    _test_no_result(model)
+    return
+end
+
+function test_unknown_option(; preset="filtersqp")
+    model = UnoSolver.Optimizer(preset=preset)
+    MOI.set(model, MOI.Silent(), true)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    MOI.set(model, MOI.RawOptimizerAttribute("max_iteration"), 10)
+    @test_throws(
+        ErrorException(
+            "Unable to set the option `\"max_iteration\"` to `10`: the option does not exist.",
+        ),
+        MOI.optimize!(model),
+    )
+    _test_no_result(model)
+    return
+end
+
+# a failed MOI.optimize! discards the result of a previous successful one
+function test_failed_optimize_discards_the_previous_result(; preset="filtersqp")
+    model = UnoSolver.Optimizer(preset=preset)
+    MOI.set(model, MOI.Silent(), true)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
+    @test MOI.get(model, MOI.ResultCount()) == 1
+    MOI.set(model, MOI.RawOptimizerAttribute("logger"), "SOLENT")
+    @test_throws ErrorException MOI.optimize!(model)
+    _test_no_result(model)
     return
 end
 

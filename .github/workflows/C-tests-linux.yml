@@ -82,4 +82,7 @@ jobs:
       - name: Run example
         working-directory: ${{github.workspace}}/.github/C/build
         # Execute tests
-        run: ./tests_hs015
+        run: |
+          ./tests_hs015
+          ./tests_options
+          ./tests_results

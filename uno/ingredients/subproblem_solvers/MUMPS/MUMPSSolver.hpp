@@ -27,15 +27,12 @@ namespace uno {
 
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
-      MUMPSSolver();
+      explicit MUMPSSolver(bool use_scaling = true); // MUMPS's internal scaling (ICNTL(8))
       ~MUMPSSolver() override;
 
       void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(double* solution) override;
-      void solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -44,12 +41,19 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
       [[nodiscard]] bool increase_pivoting_tolerance() override;
+      [[nodiscard]] std::optional<size_t> number_delayed_pivots() const override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
-      [[nodiscard]] COOLinearSystem& get_coo_linear_system();
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;
+      // whether MUMPS scales the matrix itself (ICNTL(8))
+      [[nodiscard]] bool uses_internal_scaling() const { return this->use_scaling; }
 
    protected:
+      void factorize(bool is_matrix_positive_definite) override;
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override;
+
       DMUMPS_STRUC_C workspace{};
+      const bool use_scaling;
       COOLinearSystem linear_system{Indexing::Fortran_indexing};
       PivotingToleranceSchedule pivoting_tolerance_schedule{MUMPSSettings::max_pivtol, MUMPSSettings::pivtol_increase_exponent};
 

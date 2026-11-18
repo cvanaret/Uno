@@ -5,6 +5,7 @@
 #include <string>
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ScalingStrategy.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
 
@@ -40,9 +41,39 @@ namespace uno {
 #include "ingredients/subproblem_solvers/SSIDS/SSIDSSolver.hpp"
 #endif
 
+#ifdef HAS_HIPO
+#include "ingredients/subproblem_solvers/HiPO/HiPOSolver.hpp"
+#include "tools/Strings.hpp"
+#endif
+
 namespace uno {
+   namespace {
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create_solver(const Options& options);
+
+      // options without the defaults (e.g. a standalone linear solver): no scaling
+      LinearSystemScalingParameters read_scaling_parameters(const Options& options) {
+         LinearSystemScalingParameters parameters;
+         parameters.method = linear_system_scaling_method_from_string(options.get_string_optional("linear_system_scaling").value_or("none"));
+         parameters.on_demand = options.get_bool_optional("linear_system_scaling_on_demand").value_or(parameters.on_demand);
+         parameters.delayed_pivots_threshold = options.get_double_optional("linear_system_scaling_delayed_pivots_threshold")
+            .value_or(parameters.delayed_pivots_threshold);
+         return parameters;
+      }
+   } // namespace
+
    std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(
-         const Options& options) {
+         const Options& options, bool allow_scaling) {
+      const LinearSystemScalingParameters parameters = read_scaling_parameters(options);
+      // the solvers' own scalings (MA57_use_scaling, MUMPS_use_scaling) are independent of Uno's scaling
+      auto linear_solver = create_solver(options);
+      if (allow_scaling && parameters.method != LinearSystemScalingMethod::NONE) {
+         linear_solver->set_scaling_strategy(std::make_unique<ScalingStrategy>(parameters));
+      }
+      return linear_solver;
+   }
+
+   namespace {
+   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create_solver(const Options& options) {
       const auto& linear_solver = options.get_string("linear_solver");
 #ifdef HSL_RUNTIME_LOADING
       // honor the requested HSL library name before LIBHSL_isfunctional() triggers the (cached) load
@@ -56,7 +87,7 @@ namespace uno {
          && LIBHSL_isfunctional()
    #endif
             ) {
-         return std::make_unique<MA57Solver>(options.get_bool("MA57_use_scaling"));
+         return std::make_unique<MA57Solver>(options.get_bool_optional("MA57_use_scaling").value_or(false));
       }
 #endif
 
@@ -86,12 +117,17 @@ namespace uno {
 
 #ifdef HAS_MUMPS
       if (linear_solver == "MUMPS") {
-         return std::make_unique<MUMPSSolver>();
+         return std::make_unique<MUMPSSolver>(options.get_bool_optional("MUMPS_use_scaling").value_or(true));
       }
 #endif
 #ifdef HAS_SPRAL
       if (linear_solver == "SSIDS") {
          return std::make_unique<SSIDSSolver>();
+      }
+#endif
+#ifdef HAS_HIPO
+      if (case_insensitive_equals(linear_solver, "HIPO")) {
+         return std::make_unique<HiPOSolver>();
       }
 #endif
       // the HSL solver is supported by this build, but the HSL library is not functional
@@ -114,6 +150,7 @@ namespace uno {
             .append(join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", "));
       throw std::invalid_argument(message);
    }
+   } // namespace
 
    // return the list of available solvers
    std::vector<std::string> SymmetricIndefiniteLinearSolverFactory::available_solvers() {
@@ -160,6 +197,10 @@ namespace uno {
 
 #ifdef HAS_SPRAL
       solvers.emplace_back("SSIDS");
+#endif
+
+#ifdef HAS_HIPO
+      solvers.emplace_back("HIPO");
 #endif
       return solvers;
    }

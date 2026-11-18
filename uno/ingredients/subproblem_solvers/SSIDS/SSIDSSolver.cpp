@@ -35,7 +35,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void SSIDSSolver::do_numerical_factorization(bool is_matrix_positive_definite) {
+   void SSIDSSolver::factorize(bool is_matrix_positive_definite) {
       assert(this->analysis_performed);
 
       spral_ssids_factor(is_matrix_positive_definite, nullptr, nullptr, this->linear_system.matrix_values.data(), nullptr,
@@ -48,22 +48,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void SSIDSSolver::solve_indefinite_system(double* solution) {
-      assert(this->factorization_performed);
-
-      // copy rhs into solution (overwritten by SSIDS)
-      const size_t dimension = static_cast<size_t>(this->workspace.n);
-      view(solution, dimension) = this->linear_system.rhs.view();
-
-      spral_ssids_solve1(0, solution, this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
-         &this->workspace.inform);
-      if (this->workspace.inform.flag < 0) {
-         spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
-         throw std::runtime_error("SSIDS could not solve the linear system");
-      }
-   }
-
-   void SSIDSSolver::solve_indefinite_system(const double* rhs, double* solution, size_t number_of_rhs) {
+   void SSIDSSolver::solve(const double* rhs, double* solution, size_t number_of_rhs) {
       assert(this->factorization_performed);
 
       // copy the rhs block into the solution block (overwritten by SSIDS); both are column-major with leading dimension n
@@ -76,6 +61,10 @@ namespace uno {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
          throw std::runtime_error("SSIDS could not solve the linear system");
       }
+   }
+
+   std::optional<size_t> SSIDSSolver::number_delayed_pivots() const {
+      return static_cast<size_t>(this->workspace.inform.num_delay);
    }
 
    Inertia SSIDSSolver::get_inertia() const {

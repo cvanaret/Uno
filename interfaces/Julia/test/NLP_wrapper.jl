@@ -1,10 +1,10 @@
 @testset "preset = $preset" for preset in ("filterslp",)
-    @testset "LP solver = $lp" for lp in ("BQPD", "HiGHS")
+    @testset "LP solver = $lp" for lp in ("BQPD", "HIGHS")
         @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS", "LSR1")
             nlp = CUTEstModel{Float64}("HS15")
             model = uno_model(nlp)
             solver = uno_solver(preset=preset, print_solution=true, LP_solver=lp, hessian_model=hessian_model)
-            uno_optimize(solver, model)
+            @test uno_optimize(solver, model)
 
             optimization_status = UnoSolver.uno_get_optimization_status(solver)
             solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -83,7 +83,7 @@ end
             nlp = CUTEstModel{Float64}("HS15")
             model = uno_model(nlp)
             solver = uno_solver(preset=preset, print_solution=true, QP_solver=qp, hessian_model=hessian_model)
-            uno_optimize(solver, model)
+            @test uno_optimize(solver, model)
 
             optimization_status = UnoSolver.uno_get_optimization_status(solver)
             solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -157,7 +157,7 @@ end
 end
 
 @testset "preset = $preset" for preset in ("ipopt",)
-    for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57", "MA86")
+    for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57", "MA86", "HIPO")
         (linear_solver == "SSIDS") && (!haskey(ENV, "OMP_CANCELLATION") || !haskey(ENV, "OMP_PROC_BIND")) && continue
         (linear_solver in ("MA27", "MA57", "MA86")) && !(@ccall HSL_jll.libhsl.LIBHSL_isfunctional()::Bool) && continue
 
@@ -166,7 +166,7 @@ end
                 nlp = CUTEstModel{Float64}("HS15")
                 model = uno_model(nlp)
                 solver = uno_solver(preset=preset, print_solution=true, linear_solver=linear_solver, hessian_model=hessian_model)
-                uno_optimize(solver, model)
+                @test uno_optimize(solver, model)
 
                 optimization_status = UnoSolver.uno_get_optimization_status(solver)
                 solution_status = UnoSolver.uno_get_solution_status(solver)

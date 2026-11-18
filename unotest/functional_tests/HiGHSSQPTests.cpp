@@ -44,7 +44,7 @@ TEST(HiGHSSQP, PrimalRegularizationOfIndefiniteHessian) {
    Presets::set(options, "filtersqp");
    options.set_string("globalization_mechanism", "LS");
    options.set_string("inertia_correction_strategy", "primal");
-   options.set_string("QP_solver", "HiGHS");
+   options.set_string("QP_solver", "HIGHS");
    Logger::level = SILENT;
 
    Uno uno;

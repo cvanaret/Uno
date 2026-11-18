@@ -55,10 +55,6 @@ namespace uno {
       void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(double* solution) override;
-      // solve_indefinite_system for multiple RHS is that of the base class
-      using DirectSymmetricIndefiniteLinearSolver::solve_indefinite_system;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -68,9 +64,12 @@ namespace uno {
       [[nodiscard]] bool increase_pivoting_tolerance() override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
-      [[nodiscard]] COOLinearSystem& get_coo_linear_system();
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;
 
    private:
+      void factorize(bool is_matrix_positive_definite) override;
+      void solve(const double* rhs, double* solution, size_t number_of_rhs) override;
+
       MA27Workspace workspace{};
       COOLinearSystem linear_system{Indexing::Fortran_indexing};
       PivotingToleranceSchedule pivoting_tolerance_schedule{MA27Settings::max_pivoting_threshold, MA27Settings::pivoting_threshold_increase_exponent};

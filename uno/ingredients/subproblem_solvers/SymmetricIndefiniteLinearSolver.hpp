@@ -25,35 +25,10 @@ namespace uno {
 
       // solve with `number_of_rhs` right-hand sides stored column-major (each column has length
       // get_linear_system().dimension): `rhs` is the block of right-hand sides and `solution` receives
-      // the corresponding solutions (the two blocks may alias).
-      // The default implementation loops over single right-hand side solves; solvers with native
-      // multiple-RHS support (e.g. MA57, MUMPS, SSIDS) override this for efficiency
-      virtual void solve_indefinite_system(const ElementType* rhs, ElementType* solution, size_t number_of_rhs) {
-         LinearSystem& linear_system = this->get_linear_system();
-         // linear_system.rhs is used as a buffer: preserve its content (unless it is the right-hand side). The saved copy
-         // lives in a member buffer to avoid an allocation per call
-         const bool preserve_rhs = (rhs != linear_system.rhs.data());
-         if (preserve_rhs) {
-            this->saved_rhs = linear_system.rhs;
-         }
-         // solve for each right-hand side
-         for (size_t column_index: Range(number_of_rhs)) {
-            const size_t column_offset = column_index * linear_system.dimension;
-            const auto rhs_column = view(rhs, column_offset, column_offset + linear_system.dimension);
-            // copy the column into linear_system.rhs, then solve into the matching solution column
-            linear_system.rhs.view() = rhs_column;
-            double* rhs_solution = solution + column_offset;
-            this->solve_indefinite_system(rhs_solution);
-         }
-         if (preserve_rhs) {
-            linear_system.rhs = this->saved_rhs;
-         }
-      }
+      // the corresponding solutions (the two blocks may alias)
+      virtual void solve_indefinite_system(const ElementType* rhs, ElementType* solution, size_t number_of_rhs) = 0;
 
       [[nodiscard]] virtual LinearSystem& get_linear_system() = 0;
-
-   protected:
-      Vector<double> saved_rhs{}; // copy of linear_system.rhs in the default multiple-RHS solve
    };
 } // namespace
 

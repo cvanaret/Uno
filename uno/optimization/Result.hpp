@@ -30,7 +30,7 @@ namespace uno {
       Vector<double> upper_bound_dual_solution;
       Vector<double> constraint_values;
       const size_t number_iterations;
-      const Timers timers;
+      Timers timers;
       const size_t number_objective_evaluations;
       const size_t number_constraint_evaluations;
       const size_t number_objective_gradient_evaluations;

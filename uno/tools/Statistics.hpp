@@ -15,7 +15,10 @@
 namespace uno {
    class Timers {
    public:
-      Timer wallclock{};
+      // reading/building the model: measured by the interface (e.g. uno_ampl), set in the Result after the solve. Zero otherwise
+      Timer model_read{};
+      // wall clock of the solve (also used for the time limit)
+      Timer solve{};
    };
 
    static constexpr size_t header_print_frequency = 10;

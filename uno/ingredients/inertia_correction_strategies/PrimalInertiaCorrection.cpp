@@ -29,9 +29,10 @@ namespace uno {
          const Inertia& expected_inertia, View<double> hessian_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
-         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options);
+         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->options, /* allow_scaling = */ false); // inertia only
          this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
          this->optional_linear_solver->initialize_memory();
+         this->optional_linear_solver->set_expected_inertia(expected_inertia);
          this->optional_linear_solver->do_symbolic_analysis();
       }
       // copy the Hessian into the linear system
@@ -76,6 +77,12 @@ namespace uno {
             this->regularization_factor = (this->regularization_factor == 0.) ? this->regularization_initial_factor :
                this->regularization_increase_factor * this->regularization_factor;
             if (this->regularization_factor > this->regularization_failure_threshold) {
+               // last resort (at most once per solve): switch on the linear system scaling and restart
+               if (linear_solver.activate_scaling()) {
+                  DEBUG << "The inertia correction failed: retrying with the linear system scaling\n";
+                  this->regularization_factor = 0.;
+                  continue;
+               }
                throw UnstableInertiaCorrection();
             }
          }
@@ -86,6 +93,7 @@ namespace uno {
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          BlockAugmentedMatrix block_augmented_matrix, Range<> /*primal_regularization_variables*/) {
+      linear_solver.set_expected_inertia(expected_inertia);
       this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, block_augmented_matrix.primal_inertia_correction);
       block_augmented_matrix.dual_inertia_correction.fill(0.);
    }
