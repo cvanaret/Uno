@@ -5,6 +5,7 @@
 #include <array>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <streambuf>
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
@@ -437,12 +438,12 @@ private:
 COStream* c_ostream = nullptr;
 
 struct Solver {
-   Uno* solver;
-   Options user_options;
-   Options preset_options; // empty for "auto"
-   Options default_options;
-   UserCallbacks* user_callbacks;
-   Result* result;
+   std::unique_ptr<Uno> solver{std::make_unique<Uno>()};
+   Options user_options{};
+   Options preset_options{}; // empty for "auto"
+   Options default_options{};
+   std::unique_ptr<UserCallbacks> user_callbacks{std::make_unique<NoUserCallbacks>()};
+   std::unique_ptr<Result> result{}; // the result of the last optimization, if it succeeded
    bool options_consistent_with_solve{false}; // is true only after the solve, false whenever new options are set
    // the options used by the last solve (defaults -> preset, including the values picked by the "auto" preset -> user).
    // Valid only if options_consistent_with_solve
@@ -949,12 +950,8 @@ bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterat
 
 void* uno_create_solver() UNO_NOEXCEPT {
    return guard(static_cast<void*>(nullptr), [&]() -> void* {
-      auto uno = std::make_unique<Uno>();
-      auto user_callbacks = std::make_unique<NoUserCallbacks>();
-      auto solver = std::make_unique<Solver>(Solver{nullptr, {}, {}, {}, nullptr, nullptr});
+      auto solver = std::make_unique<Solver>();
       DefaultOptions::load(solver->default_options);
-      solver->solver = uno.release();
-      solver->user_callbacks = user_callbacks.release();
       return solver.release();
    });
 }
@@ -1170,9 +1167,9 @@ bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callba
          return false;
       }
       Solver* uno_solver = static_cast<Solver*>(solver);
-      UserCallbacks* user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, termination_callback, user_data);
-      delete uno_solver->user_callbacks; // delete the previous callbacks
-      uno_solver->user_callbacks = user_callbacks;
+      // replaces (and deletes) the previous callbacks
+      uno_solver->user_callbacks = std::make_unique<CUserCallbacks>(notify_acceptable_iterate_callback,
+         termination_callback, user_data);
       return true;
    });
 }
@@ -1204,8 +1201,7 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    // the result of a previous optimization does not correspond to this optimization
-   delete uno_solver->result;
-   uno_solver->result = nullptr;
+   uno_solver->result.reset();
    uno_solver->options_consistent_with_solve = false;
    uno_solver->solve_options = Options{};
 
@@ -1242,7 +1238,7 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
       // solve the model
       Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
       // move the new result into uno_solver
-      uno_solver->result = new Result(std::move(result));
+      uno_solver->result = std::make_unique<Result>(std::move(result));
       // keep the options used by the solve, so that the getters can return them (including the values picked by the
       // "auto" preset)
       uno_solver->solve_options = std::move(full_options);
@@ -1366,7 +1362,7 @@ uno_int uno_get_solver_string_option(void* solver, const char* option_name, cons
 namespace {
    // the result of the last optimization, or nullptr
    const Result* get_result(void* solver) {
-      return static_cast<const Solver*>(solver)->result;
+      return static_cast<const Solver*>(solver)->result.get();
    }
 
    // gets a value of the result of the last optimization. "read" reads the value from the result
@@ -1581,13 +1577,5 @@ void uno_destroy_model(void* model) UNO_NOEXCEPT {
 }
 
 void uno_destroy_solver(void* solver) UNO_NOEXCEPT {
-   if (solver != nullptr) {
-      Solver* uno_solver = static_cast<Solver*>(solver);
-      delete uno_solver->solver;
-      delete uno_solver->user_callbacks;
-      if (uno_solver->result != nullptr) {
-         delete uno_solver->result;
-      }
-      delete uno_solver;
-   }
+   delete static_cast<Solver*>(solver);
 }
