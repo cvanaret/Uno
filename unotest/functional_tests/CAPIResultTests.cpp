@@ -56,7 +56,7 @@ namespace {
       // to be called as ASSERT_TRUE(this->optimize()): a failed assertion in a helper does not stop the test
       [[nodiscard]] bool optimize() const {
          return uno_set_solver_preset(this->solver, available_preset()) == UNO_OPTIONS_SUCCESS &&
-            uno_optimize(this->solver, this->model);
+            uno_optimize(this->solver, this->model) == UNO_OPTIMIZE_SUCCESS;
       }
 
       // checks that all the getters of the result return "expected_status"
@@ -114,7 +114,7 @@ TEST_F(CAPIResultTests, ResultIsAvailableAfterTheSolve) {
 
 TEST_F(CAPIResultTests, ResultIsDiscardedByAFailedOptimization) {
    ASSERT_TRUE(this->optimize());
-   EXPECT_FALSE(uno_optimize(this->solver, nullptr));
+   EXPECT_EQ(uno_optimize(this->solver, nullptr), UNO_OPTIMIZE_INVALID_ARGUMENT);
    this->expect_all_getters(UNO_RESULT_NOT_AVAILABLE);
 }
 

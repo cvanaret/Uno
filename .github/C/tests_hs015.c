@@ -160,8 +160,8 @@ void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_conventi
 	assert(logger_status == UNO_OPTIONS_SUCCESS);
 
 	// solve
-	const bool optimized = uno_optimize(solver, model);
-	assert(optimized);
+	const uno_int optimize_status = uno_optimize(solver, model);
+	assert(optimize_status == UNO_OPTIMIZE_SUCCESS);
 	
 	// tests
 	uno_int optimization_status;

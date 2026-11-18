@@ -1,7 +1,7 @@
 ! THIS VERSION: CUTEST 2.7 - 2026-06-02 AT 11:10 GMT.
 ! Adapted to the status codes of the Uno C API: the option setters (including
 ! uno_load_solver_option_file and uno_set_solver_preset), the option getters and
-! the result getters return a status code, and uno_optimize returns a logical.
+! the result getters and uno_optimize return a status code.
 
 #include "cutest_modules.h"
 #include "cutest_routines.h"
@@ -245,8 +245,8 @@
 
 !  call the optimizer
 
-    success = uno_optimize( solver, model )
-    IF ( .NOT. success ) ERROR STOP 'uno_optimize failed'
+    uno_status = uno_optimize( solver, model )
+    CALL CHECK_UNO_STATUS( uno_status, UNO_OPTIMIZE_SUCCESS, 'uno_optimize' )
 
 !  recover method description
 

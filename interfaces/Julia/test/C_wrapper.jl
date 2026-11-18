@@ -234,7 +234,7 @@ end
     solver = uno_solver()
     @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
     @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
-    @test uno_optimize(solver, model)
+    @test uno_optimize(solver, model) == UnoSolver.UNO_OPTIMIZE_SUCCESS
 
     @test UnoSolver.uno_get_method_description(solver) == "TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction"
 
@@ -243,7 +243,7 @@ end
     uno_set_initial_dual_iterate(model, y0)
     solver_auto = uno_solver(logger="SILENT")
     @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") === nothing
-    @test uno_optimize(solver_auto, model)
+    @test uno_optimize(solver_auto, model) == UnoSolver.UNO_OPTIMIZE_SUCCESS
     @test UnoSolver.uno_get_solver_string_option(solver_auto, "globalization_mechanism") in ("LS", "TR")
     @test UnoSolver.uno_get_solver_string_option(solver_auto, "hessian_model") == "exact"
     @test uno_set_solver_integer_option(solver_auto, "max_iterations", 100) == UnoSolver.UNO_OPTIONS_SUCCESS
@@ -315,7 +315,7 @@ end
     @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
     @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
     @test uno_set_solver_string_option(solver, "hessian_model", "LBFGS") == UnoSolver.UNO_OPTIONS_SUCCESS
-    @test uno_optimize(solver, model)
+    @test uno_optimize(solver, model) == UnoSolver.UNO_OPTIMIZE_SUCCESS
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -501,7 +501,7 @@ end
     solver = uno_solver()
     @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
     @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
-    @test uno_optimize(solver, model)
+    @test uno_optimize(solver, model) == UnoSolver.UNO_OPTIMIZE_SUCCESS
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -556,7 +556,7 @@ end
     @test uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
     @test uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
     @test uno_set_solver_string_option(solver, "hessian_model", "LBFGS") == UnoSolver.UNO_OPTIONS_SUCCESS
-    @test uno_optimize(solver, model)
+    @test uno_optimize(solver, model) == UnoSolver.UNO_OPTIMIZE_SUCCESS
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)
@@ -715,8 +715,18 @@ end
   @test value[] == -1.0
   @test UnoSolver.uno_get_solution_objective(C_NULL, value) == UnoSolver.UNO_RESULT_INVALID_ARGUMENT
 
+  # uno_optimize returns a status code
+  @test uno_optimize(C_NULL, model) == UnoSolver.UNO_OPTIMIZE_INVALID_ARGUMENT
+  @test uno_optimize(solver, C_NULL) == UnoSolver.UNO_OPTIMIZE_INVALID_ARGUMENT
+  @test !UnoSolver.uno_has_result(solver)
+  @test UnoSolver.uno_optimize_status_message(UnoSolver.UNO_OPTIMIZE_INVALID_MODEL) ==
+    "the model has neither an objective nor constraints"
+  @test_throws ErrorException("Uno could not optimize the model: invalid argument.") UnoSolver._uno_check_optimize_status(
+    UnoSolver.UNO_OPTIMIZE_INVALID_ARGUMENT)
+  @test UnoSolver._uno_check_optimize_status(UnoSolver.UNO_OPTIMIZE_SUCCESS) === nothing
+
   # successful solve
-  @test uno_optimize(solver, model)
+  @test uno_optimize(solver, model) == UnoSolver.UNO_OPTIMIZE_SUCCESS
   @test UnoSolver.uno_has_result(solver)
   @test UnoSolver.uno_get_optimization_status(solver) == UnoSolver.UNO_SUCCESS
   @test UnoSolver.uno_get_solution_objective(solver) ≈ 0.0 atol = 1e-8

@@ -1597,7 +1597,7 @@ function MOI.optimize!(model::Optimizer)
         s.eval_jacobian_timer = 0.0
         s.eval_hessian_lagrangian_timer = 0.0
     end
-    UnoSolver.uno_optimize(solver, inner) || error("Uno could not optimize the model.")
+    UnoSolver._uno_check_optimize_status(UnoSolver.uno_optimize(solver, inner))
     model.solver = solver
     return
 end

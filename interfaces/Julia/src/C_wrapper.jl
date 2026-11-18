@@ -478,10 +478,30 @@ function _uno_check_result_status(status::Integer, function_name)
 end
 
 """
+    uno_optimize_status_message(status::Integer)
+
+Return a description of a status code returned by `uno_optimize`. `UNO_OPTIMIZE_SUCCESS` means that the optimization
+was carried out: its outcome is given by the optimization status.
+"""
+function uno_optimize_status_message(status::Integer)
+  status == UNO_OPTIMIZE_SUCCESS && return "success"
+  status == UNO_OPTIMIZE_INVALID_ARGUMENT && return "invalid argument"
+  status == UNO_OPTIMIZE_INVALID_MODEL && return "the model has neither an objective nor constraints"
+  status == UNO_OPTIMIZE_INVALID_OPTIONS && return "the options cannot be resolved"
+  return "an error occurred"
+end
+
+# throws an error if uno_optimize could not carry out the optimization
+function _uno_check_optimize_status(status::Integer)
+  status == UNO_OPTIMIZE_SUCCESS && return nothing
+  error("Uno could not optimize the model: $(uno_optimize_status_message(status)).")
+end
+
+"""
     uno_has_result(solver::Solver)
 
 Return whether the result of an optimization is available: `false` before the first optimization, or if the last call
-to `uno_optimize` was unsuccessful.
+to `uno_optimize` did not return `UNO_OPTIMIZE_SUCCESS`.
 """
 function uno_has_result(solver::Solver)
   optimization_status = Ref{Cint}(0)
@@ -727,7 +747,7 @@ function uno(
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
                     eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
   solver = uno_solver(; kwargs...)
-  uno_optimize(solver, model) || error("Uno could not optimize the model.")
+  _uno_check_optimize_status(uno_optimize(solver, model))
   stats = uno_statistics(model, solver)
   return stats
 end
