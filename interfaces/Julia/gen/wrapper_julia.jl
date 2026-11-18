@@ -22,7 +22,8 @@ function main_julia()
                "uno_termination_callback",
                "uno_logger_stream_callback"]
 
-  options["general"]["output_ignorelist"] = [callbacks; "uno_int"]
+  # uno_string_limits: UNO_MAX_STRING_LENGTH is defined in the prologue (as a Cint, like the other constants)
+  options["general"]["output_ignorelist"] = [callbacks; "uno_int"; "uno_string_limits"]
 
   args = get_default_args()
   push!(args, "-I$include_dir")

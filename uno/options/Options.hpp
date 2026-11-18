@@ -109,7 +109,7 @@ namespace uno {
 
       static std::string to_string(const OptionValue& value);
       static void check_option_type(const std::string& option_name, OptionType expected_type);
-      static void check_string_length(const std::string& option_name, const std::string& option_value);
+      static void check_string_value(const std::string& option_name, const std::string& option_value);
       static void check_string_option_value(const std::string& option_name, const std::string& option_value);
 
       template <typename T>

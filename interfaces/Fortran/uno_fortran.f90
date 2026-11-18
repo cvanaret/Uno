@@ -37,6 +37,10 @@ function uno_create_model(problem_type, number_variables, variables_lower_bounds
    end interface
 
    n = len_trim(problem_type)
+   if (index(problem_type(1:n), c_null_char) > 0) then
+      model = c_null_ptr
+      return
+   end if
    allocate(problem_type_c(n+1))
    do i = 1, n
       problem_type_c(i) = problem_type(i:i)
@@ -73,6 +77,10 @@ function uno_create_unconstrained_model(problem_type, number_variables, base_ind
    end interface
 
    n = len_trim(problem_type)
+   if (index(problem_type(1:n), c_null_char) > 0) then
+      model = c_null_ptr
+      return
+   end if
    allocate(problem_type_c(n+1))
    do i = 1, n
       problem_type_c(i) = problem_type(i:i)
@@ -105,6 +113,10 @@ function uno_set_model_name(model, name) result(success)
    end interface
 
    n = len_trim(name)
+   if (index(name(1:n), c_null_char) > 0) then
+      success = .false.
+      return
+   end if
    allocate(name_c(n+1))
    do i = 1, n
       name_c(i) = name(i:i)
@@ -138,6 +150,10 @@ function uno_set_solver_integer_option(solver, option_name, option_value) result
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -171,6 +187,10 @@ function uno_set_solver_double_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -204,6 +224,10 @@ function uno_set_solver_bool_option(solver, option_name, option_value) result(st
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -238,12 +262,20 @@ function uno_set_solver_string_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
    end do
    option_name_c(n+1) = c_null_char
    n = len_trim(option_value)
+   if (index(option_value(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_INVALID_VALUE
+      return
+   end if
    allocate(option_value_c(n+1))
    do i = 1, n
       option_value_c(i) = option_value(i:i)
@@ -276,6 +308,10 @@ function uno_get_solver_option_type(solver, option_name) result(solver_option_ty
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      solver_option_type = UNO_OPTION_TYPE_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -311,9 +347,10 @@ function uno_options_iterator_name(iterator) &
       options_iterator_name = ""
       return
    end if
-   call c_f_pointer(ptr_options_iterator_name_c, options_iterator_name_c, [huge(0)])
+   call c_f_pointer(ptr_options_iterator_name_c, options_iterator_name_c, [UNO_MAX_STRING_LENGTH + 1])
    n = 0
-   do while (options_iterator_name_c(n+1) /= c_null_char)
+   do while (n < UNO_MAX_STRING_LENGTH)
+      if (options_iterator_name_c(n+1) == c_null_char) exit
       n = n + 1
    end do
    allocate(character(len=n)::options_iterator_name)
@@ -344,6 +381,10 @@ function uno_load_solver_option_file(solver, file_name) result(status)
    end interface
 
    n = len_trim(file_name)
+   if (index(file_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_INVALID_FILE
+      return
+   end if
    allocate(file_name_c(n+1))
    do i = 1, n
       file_name_c(i) = file_name(i:i)
@@ -375,6 +416,10 @@ function uno_set_solver_preset(solver, preset_name) result(status)
    end interface
 
    n = len_trim(preset_name)
+   if (index(preset_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_INVALID_VALUE
+      return
+   end if
    allocate(preset_name_c(n+1))
    do i = 1, n
       preset_name_c(i) = preset_name(i:i)
@@ -410,9 +455,10 @@ function uno_get_method_description(solver, method_description) result(status)
    status = uno_get_method_description_c(solver, ptr_method_description_c)
    ! method_description is assigned only if the C function wrote it
    if (c_associated(ptr_method_description_c)) then
-      call c_f_pointer(ptr_method_description_c, method_description_c, [huge(0)])
+      call c_f_pointer(ptr_method_description_c, method_description_c, [UNO_MAX_STRING_LENGTH + 1])
       n = 0
-      do while (method_description_c(n+1) /= c_null_char)
+      do while (n < UNO_MAX_STRING_LENGTH)
+         if (method_description_c(n+1) == c_null_char) exit
          n = n + 1
       end do
       if (allocated(method_description)) deallocate(method_description)
@@ -447,6 +493,10 @@ function uno_get_solver_integer_option(solver, option_name, option_value) result
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -480,6 +530,10 @@ function uno_get_solver_double_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -513,6 +567,10 @@ function uno_get_solver_bool_option(solver, option_name, option_value) result(st
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -548,6 +606,10 @@ function uno_get_solver_string_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (index(option_name(1:n), c_null_char) > 0) then
+      status = UNO_OPTIONS_NOT_FOUND
+      return
+   end if
    allocate(option_name_c(n+1))
    do i = 1, n
       option_name_c(i) = option_name(i:i)
@@ -558,9 +620,10 @@ function uno_get_solver_string_option(solver, option_name, option_value) result(
    deallocate(option_name_c)
    ! option_value is assigned only if the C function wrote it
    if (c_associated(ptr_option_value_c)) then
-      call c_f_pointer(ptr_option_value_c, option_value_c, [huge(0)])
+      call c_f_pointer(ptr_option_value_c, option_value_c, [UNO_MAX_STRING_LENGTH + 1])
       n = 0
-      do while (option_value_c(n+1) /= c_null_char)
+      do while (n < UNO_MAX_STRING_LENGTH)
+         if (option_value_c(n+1) == c_null_char) exit
          n = n + 1
       end do
       if (allocated(option_value)) deallocate(option_value)

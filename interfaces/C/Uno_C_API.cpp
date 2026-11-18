@@ -1466,13 +1466,8 @@ uno_int uno_get_method_description(void* solver, const char** method_description
    const Result* result{nullptr};
    const uno_int status = get_result(solver, method_description != nullptr, result);
    if (status == UNO_RESULT_SUCCESS) {
-      const std::string& description = static_cast<const Solver*>(solver)->solver->get_method_description();
-      // guaranteed by the C API, so that the interfaces can read the string safely
-      if (Options::max_string_length < description.size()) {
-         report_error("The method description is too long.");
-         return UNO_RESULT_ERROR;
-      }
-      *method_description = description.c_str();
+      // built from the names of the components: shorter than UNO_MAX_STRING_LENGTH
+      *method_description = static_cast<const Solver*>(solver)->solver->get_method_description().c_str();
    }
    return status;
 }
