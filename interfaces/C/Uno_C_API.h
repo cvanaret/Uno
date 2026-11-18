@@ -41,11 +41,13 @@ extern "C" {
    static const char UNO_UPPER_TRIANGLE = 'U';
 
    // Maximum number of characters (excluding the null terminator) of a string passed to or returned by Uno: option
-   // names and values, option file names, preset names and model names. A longer string is rejected (Uno reads at
-   // most UNO_MAX_STRING_LENGTH + 1 characters of it, so it is safe even if the string is not null-terminated), and
-   // every string returned by Uno has at most UNO_MAX_STRING_LENGTH characters: a buffer of UNO_MAX_STRING_LENGTH + 1
-   // characters can hold any of them
-   static const uno_int UNO_MAX_STRING_LENGTH = 4095;
+   // names and values, option file names, preset names, model names and the method description. A longer string is
+   // rejected (Uno reads at most UNO_MAX_STRING_LENGTH + 1 characters of it, so it is safe even if the string is not
+   // null-terminated), and every string returned by Uno has at most UNO_MAX_STRING_LENGTH characters: a buffer of
+   // UNO_MAX_STRING_LENGTH + 1 characters can hold any of them.
+   // An enumerator rather than a static const object, so that it is a constant expression in C (e.g. the size of a
+   // file-scope array) and defines no symbol
+   enum uno_string_limits { UNO_MAX_STRING_LENGTH = 4095 };
 
    // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
    static const uno_int UNO_OPTION_TYPE_INTEGER = 0;

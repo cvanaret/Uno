@@ -20,6 +20,7 @@
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
+#include "tools/Strings.hpp"
 
 using namespace uno;
 
@@ -279,4 +280,14 @@ TEST(Options, OptionNamesFitTheMaximumLength) {
    for (const auto& [option_name, type]: Options::option_types) {
       EXPECT_LE(option_name.size(), Options::max_string_length) << option_name;
    }
+}
+
+TEST(Strings, AbbreviateDoesNotCutAUTF8Character) {
+   EXPECT_EQ(abbreviate("short"), "short");
+   // 63 ASCII characters, then "é" (2 bytes) across the 64-byte boundary
+   const std::string string = std::string(63, 'a') + "\xC3\xA9" + std::string(100, 'b');
+   const std::string abbreviated = abbreviate(string);
+   EXPECT_EQ(abbreviated.substr(0, 63), std::string(63, 'a'));
+   EXPECT_EQ(abbreviated.substr(63, 4), "... ");
+   EXPECT_NE(abbreviated.find("(165 characters)"), std::string::npos);
 }

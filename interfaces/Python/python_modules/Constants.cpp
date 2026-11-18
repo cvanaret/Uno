@@ -30,7 +30,8 @@ namespace uno {
       module.attr("UPPER_TRIANGLE") = UNO_UPPER_TRIANGLE;
 
       // Maximum number of characters of a string passed to or returned by Uno
-      module.attr("MAX_STRING_LENGTH") = UNO_MAX_STRING_LENGTH;
+      // an enumerator: cast, since pybind11 cannot convert an unregistered enum type
+      module.attr("MAX_STRING_LENGTH") = static_cast<uno_int>(UNO_MAX_STRING_LENGTH);
 
       // Optimization status
       module.attr("SUCCESS") = UNO_SUCCESS;

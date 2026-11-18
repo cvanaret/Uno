@@ -6,6 +6,9 @@
 
 #include "../../interfaces/C/Uno_C_API.h"
 
+// UNO_MAX_STRING_LENGTH is a constant expression: it can size a file-scope array (compile-time check)
+typedef char uno_string_buffer[UNO_MAX_STRING_LENGTH + 1];
+
 uno_int uno_header_linkage_a(void) {
    return UNO_MINIMIZE + UNO_ONE_BASED_INDEXING + UNO_VERSION_MAJOR + (uno_int)(UNO_PROBLEM_NONLINEAR[0] == 'N');
 }

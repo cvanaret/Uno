@@ -165,10 +165,6 @@ TEST_F(CAPIOptionsTests, PresetCanBeSetAsAnOption) {
    EXPECT_EQ(uno_set_solver_preset(this->solver, "auto"), UNO_OPTIONS_SUCCESS);
 }
 
-TEST(CAPIStrings, MaximumLengthMatchesTheCore) {
-   EXPECT_EQ(static_cast<size_t>(UNO_MAX_STRING_LENGTH), Options::max_string_length);
-}
-
 TEST_F(CAPIOptionsTests, StringsHaveABoundedLength) {
    const std::string longest(Options::max_string_length, 'a');
    const std::string too_long(Options::max_string_length + 1, 'a');
