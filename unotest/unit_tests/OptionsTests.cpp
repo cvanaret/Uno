@@ -289,5 +289,5 @@ TEST(Strings, AbbreviateDoesNotCutAUTF8Character) {
    const std::string abbreviated = abbreviate(string);
    EXPECT_EQ(abbreviated.substr(0, 63), std::string(63, 'a'));
    EXPECT_EQ(abbreviated.substr(63, 4), "... ");
-   EXPECT_NE(abbreviated.find("(165 characters)"), std::string::npos);
+   EXPECT_NE(abbreviated.find("(165 bytes)"), std::string::npos);
 }
