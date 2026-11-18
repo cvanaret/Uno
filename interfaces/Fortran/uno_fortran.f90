@@ -37,6 +37,9 @@ function uno_create_model(problem_type, number_variables, variables_lower_bounds
    end interface
 
    n = len_trim(problem_type)
+   if (n > 0) then
+      if (problem_type(n:n) == c_null_char) n = n - 1
+   end if
    if (index(problem_type(1:n), c_null_char) > 0) then
       model = c_null_ptr
       return
@@ -77,6 +80,9 @@ function uno_create_unconstrained_model(problem_type, number_variables, base_ind
    end interface
 
    n = len_trim(problem_type)
+   if (n > 0) then
+      if (problem_type(n:n) == c_null_char) n = n - 1
+   end if
    if (index(problem_type(1:n), c_null_char) > 0) then
       model = c_null_ptr
       return
@@ -113,6 +119,9 @@ function uno_set_model_name(model, name) result(success)
    end interface
 
    n = len_trim(name)
+   if (n > 0) then
+      if (name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(name(1:n), c_null_char) > 0) then
       success = .false.
       return
@@ -150,6 +159,9 @@ function uno_set_solver_integer_option(solver, option_name, option_value) result
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return
@@ -187,6 +199,9 @@ function uno_set_solver_double_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return
@@ -224,6 +239,9 @@ function uno_set_solver_bool_option(solver, option_name, option_value) result(st
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return
@@ -262,6 +280,9 @@ function uno_set_solver_string_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return
@@ -272,6 +293,9 @@ function uno_set_solver_string_option(solver, option_name, option_value) result(
    end do
    option_name_c(n+1) = c_null_char
    n = len_trim(option_value)
+   if (n > 0) then
+      if (option_value(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_value(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_INVALID_VALUE
       return
@@ -308,6 +332,9 @@ function uno_get_solver_option_type(solver, option_name) result(solver_option_ty
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       solver_option_type = UNO_OPTION_TYPE_NOT_FOUND
       return
@@ -381,6 +408,9 @@ function uno_load_solver_option_file(solver, file_name) result(status)
    end interface
 
    n = len_trim(file_name)
+   if (n > 0) then
+      if (file_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(file_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_INVALID_FILE
       return
@@ -416,6 +446,9 @@ function uno_set_solver_preset(solver, preset_name) result(status)
    end interface
 
    n = len_trim(preset_name)
+   if (n > 0) then
+      if (preset_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(preset_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_INVALID_VALUE
       return
@@ -493,6 +526,9 @@ function uno_get_solver_integer_option(solver, option_name, option_value) result
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return
@@ -530,6 +566,9 @@ function uno_get_solver_double_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return
@@ -567,6 +606,9 @@ function uno_get_solver_bool_option(solver, option_name, option_value) result(st
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return
@@ -606,6 +648,9 @@ function uno_get_solver_string_option(solver, option_name, option_value) result(
    end interface
 
    n = len_trim(option_name)
+   if (n > 0) then
+      if (option_name(n:n) == c_null_char) n = n - 1
+   end if
    if (index(option_name(1:n), c_null_char) > 0) then
       status = UNO_OPTIONS_NOT_FOUND
       return

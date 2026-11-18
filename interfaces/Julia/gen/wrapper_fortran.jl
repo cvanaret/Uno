@@ -490,9 +490,11 @@ end
 # Generate uno_fortran.f90: Fortran-friendly wrappers for string arguments
 # ----------------------------------------------------------------
 
-# A Fortran string that contains c_null_char would be silently truncated by the C layer, so the wrappers reject it. The
-# wrapper then returns the value that the C function returns when that argument is invalid. The length is checked by
-# the C layer (at most UNO_MAX_STRING_LENGTH characters). Every string argument of the C API must have an entry
+# A Fortran string that contains c_null_char followed by other characters would be silently truncated by the C layer,
+# so the wrappers reject it. The wrapper then returns the value that the C function returns when that argument is
+# invalid. A single trailing c_null_char (e.g. 'logger'//c_null_char, a common Fortran habit) is accepted and dropped.
+# The length is checked by the C layer (at most UNO_MAX_STRING_LENGTH characters). Every string argument of the C API
+# must have an entry
 const NULL_CHARACTER_FAILURE = Dict(
   ("uno_create_model", "problem_type")               => "c_null_ptr",
   ("uno_create_unconstrained_model", "problem_type") => "c_null_ptr",
@@ -511,12 +513,16 @@ const NULL_CHARACTER_FAILURE = Dict(
   ("uno_get_solver_string_option", "option_name")    => "UNO_OPTIONS_NOT_FOUND",
 )
 
-# converts the Fortran string argument "sarg" (without its trailing blanks) into the null-terminated array "sarg"_c.
-# If "sarg" contains c_null_char, assigns the failure value to "result_name" and returns
+# converts the Fortran string argument "sarg" (without its trailing blanks and a single trailing c_null_char) into the
+# null-terminated array "sarg"_c. If "sarg" contains another c_null_char, assigns the failure value to "result_name" and
+# returns. The two "if" are nested since Fortran does not short-circuit: sarg(n:n) is invalid for n = 0
 function emit_to_c_string(io, f_name, sarg, result_name)
   key = (f_name, sarg)
   haskey(NULL_CHARACTER_FAILURE, key) || error("No failure value for the string argument $sarg of $f_name in NULL_CHARACTER_FAILURE")
   println(io, "   n = len_trim($sarg)")
+  println(io, "   if (n > 0) then")
+  println(io, "      if ($sarg(n:n) == c_null_char) n = n - 1")
+  println(io, "   end if")
   println(io, "   if (index($sarg(1:n), c_null_char) > 0) then")
   println(io, "      $result_name = $(NULL_CHARACTER_FAILURE[key])")
   println(io, "      return")

@@ -23,6 +23,6 @@ namespace uno {
       while (0 < length && (static_cast<unsigned char>(string[length]) & 0xC0) == 0x80) {
          --length;
       }
-      return std::string(string.substr(0, length)) + "... (" + std::to_string(string.size()) + " characters)";
+      return std::string(string.substr(0, length)) + "... (" + std::to_string(string.size()) + " bytes)";
    }
 } // namespace
