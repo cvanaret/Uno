@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include "CAPITestProblem.hpp"
+#include "tools/Logger.hpp"
 
 using namespace uno;
 using namespace uno::capi_test;
@@ -36,6 +37,10 @@ namespace {
    class CAPIResultTests: public ::testing::Test {
    protected:
       void SetUp() override {
+         // a skip in SetUp skips the whole test
+         if (available_preset() == nullptr) {
+            GTEST_SKIP() << "no subproblem solver available";
+         }
          this->model = create_hs015_model();
          this->solver = uno_create_solver();
          ASSERT_NE(this->model, nullptr);
@@ -48,12 +53,10 @@ namespace {
          uno_destroy_model(this->model);
       }
 
-      void optimize() const {
-         if (available_preset() == nullptr) {
-            GTEST_SKIP() << "no subproblem solver available";
-         }
-         ASSERT_EQ(uno_set_solver_preset(this->solver, available_preset()), UNO_OPTIONS_SUCCESS);
-         ASSERT_TRUE(uno_optimize(this->solver, this->model));
+      // to be called as ASSERT_TRUE(this->optimize()): a failed assertion in a helper does not stop the test
+      [[nodiscard]] bool optimize() const {
+         return uno_set_solver_preset(this->solver, available_preset()) == UNO_OPTIONS_SUCCESS &&
+            uno_optimize(this->solver, this->model);
       }
 
       // checks that all the getters of the result return "expected_status"
@@ -84,11 +87,14 @@ namespace {
          EXPECT_EQ(uno_get_number_jacobian_evaluations(this->solver, &integer_value), expected_status);
          EXPECT_EQ(uno_get_number_hessian_evaluations(this->solver, &integer_value), expected_status);
          EXPECT_EQ(uno_get_number_subproblem_solved_evaluations(this->solver, &integer_value), expected_status);
+         const char* description{nullptr};
+         EXPECT_EQ(uno_get_method_description(this->solver, &description), expected_status);
          if (expected_status != UNO_RESULT_SUCCESS) {
             // the values are untouched
             EXPECT_EQ(integer_value, -1);
             EXPECT_EQ(double_value, -1.);
             EXPECT_EQ(vector, std::vector<double>(2, -1.));
+            EXPECT_EQ(description, nullptr);
          }
       }
 
@@ -102,18 +108,18 @@ TEST_F(CAPIResultTests, ResultIsNotAvailableBeforeTheSolve) {
 }
 
 TEST_F(CAPIResultTests, ResultIsAvailableAfterTheSolve) {
-   this->optimize();
+   ASSERT_TRUE(this->optimize());
    this->expect_all_getters(UNO_RESULT_SUCCESS);
 }
 
 TEST_F(CAPIResultTests, ResultIsDiscardedByAFailedOptimization) {
-   this->optimize();
+   ASSERT_TRUE(this->optimize());
    EXPECT_FALSE(uno_optimize(this->solver, nullptr));
    this->expect_all_getters(UNO_RESULT_NOT_AVAILABLE);
 }
 
 TEST_F(CAPIResultTests, NullArgumentsAreInvalid) {
-   this->optimize();
+   ASSERT_TRUE(this->optimize());
    uno_int integer_value{-1};
    double double_value{-1.};
    EXPECT_EQ(uno_get_optimization_status(nullptr, &integer_value), UNO_RESULT_INVALID_ARGUMENT);
@@ -130,7 +136,7 @@ TEST_F(CAPIResultTests, NullArgumentsAreInvalid) {
 }
 
 TEST_F(CAPIResultTests, SolutionValues) {
-   this->optimize();
+   ASSERT_TRUE(this->optimize());
    uno_int optimization_status{-1};
    uno_int solution_status{-1};
    double objective{};
@@ -171,7 +177,7 @@ TEST_F(CAPIResultTests, SolutionValues) {
 }
 
 TEST_F(CAPIResultTests, InvalidIndicesAreRejected) {
-   this->optimize();
+   ASSERT_TRUE(this->optimize());
    double value{-1.};
    EXPECT_EQ(uno_get_primal_solution_component(this->solver, -1, &value), UNO_RESULT_INVALID_INDEX);
    EXPECT_EQ(uno_get_primal_solution_component(this->solver, number_variables, &value), UNO_RESULT_INVALID_INDEX);
@@ -183,14 +189,42 @@ TEST_F(CAPIResultTests, InvalidIndicesAreRejected) {
 
 TEST_F(CAPIResultTests, MethodDescription) {
    const char* description{nullptr};
-   EXPECT_EQ(uno_get_method_description(this->solver, &description), UNO_RESULT_SUCCESS);
-   EXPECT_NE(description, nullptr);
+   // like the other getters, no description before the solve
+   EXPECT_EQ(uno_get_method_description(this->solver, &description), UNO_RESULT_NOT_AVAILABLE);
+   EXPECT_EQ(description, nullptr);
    EXPECT_EQ(uno_get_method_description(nullptr, &description), UNO_RESULT_INVALID_ARGUMENT);
    EXPECT_EQ(uno_get_method_description(this->solver, nullptr), UNO_RESULT_INVALID_ARGUMENT);
-   this->optimize();
+   ASSERT_TRUE(this->optimize());
    ASSERT_EQ(uno_get_method_description(this->solver, &description), UNO_RESULT_SUCCESS);
    const std::string method{description};
    EXPECT_TRUE(method.find("SQP") != std::string::npos || method.find("interior-point") != std::string::npos) << method;
+}
+
+namespace {
+   // appends the messages of the logger to a string
+   uno_int append_to_string(const char* buffer, uno_int length, void* user_data) {
+      static_cast<std::string*>(user_data)->append(buffer, static_cast<size_t>(length));
+      return length;
+   }
+} // namespace
+
+// an unavailable result is not an error: no message is printed, so that the getters can be used to check whether a
+// result is available
+TEST_F(CAPIResultTests, NotAvailableResultPrintsNothing) {
+   const Level level = Logger::level;
+   Logger::set_logger("WARNING");
+   std::string messages{};
+   ASSERT_TRUE(uno_set_logger_stream_callback(append_to_string, &messages));
+   double value{-1.};
+   EXPECT_EQ(uno_get_solution_objective(this->solver, &value), UNO_RESULT_NOT_AVAILABLE);
+   const std::string messages_not_available = messages;
+   // an invalid argument is reported
+   EXPECT_EQ(uno_get_solution_objective(nullptr, &value), UNO_RESULT_INVALID_ARGUMENT);
+   const std::string messages_invalid_argument = messages;
+   EXPECT_TRUE(uno_reset_logger_stream());
+   Logger::level = level;
+   EXPECT_EQ(messages_not_available, "");
+   EXPECT_NE(messages_invalid_argument, "");
 }
 
 TEST(CAPIModel, InvalidArgumentsAreRejected) {

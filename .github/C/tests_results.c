@@ -58,6 +58,8 @@ static void check_not_available(void* solver) {
    CHECK(uno_get_primal_solution(solver, vector) == UNO_RESULT_NOT_AVAILABLE);
    CHECK(uno_get_number_iterations(solver, &integer_value) == UNO_RESULT_NOT_AVAILABLE);
    CHECK(uno_get_cpu_time(solver, &double_value) == UNO_RESULT_NOT_AVAILABLE);
+   const char* description = NULL;
+   CHECK(uno_get_method_description(solver, &description) == UNO_RESULT_NOT_AVAILABLE && description == NULL);
    CHECK(integer_value == -1 && double_value == -1. && vector[0] == -1. && vector[1] == -1.);
 }
 

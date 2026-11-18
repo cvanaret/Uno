@@ -62,7 +62,8 @@ extern "C" {
    // Status codes returned by the functions that get the result of an optimization
    static const uno_int UNO_RESULT_SUCCESS = 0;
    static const uno_int UNO_RESULT_INVALID_ARGUMENT = 1; // null solver or null pointer to the value
-   static const uno_int UNO_RESULT_NOT_AVAILABLE = 2; // no result: no optimization yet, or uno_optimize returned false
+   static const uno_int UNO_RESULT_NOT_AVAILABLE = 2; // no result: no optimization yet, or uno_optimize returned false.
+   // This is not an error: no message is printed, so this status can be used to check whether a result is available
    static const uno_int UNO_RESULT_INVALID_INDEX = 3; // the index of the component is not valid
    static const uno_int UNO_RESULT_ERROR = 4; // any other error
 
@@ -381,8 +382,9 @@ extern "C" {
 
    // gets the description of the optimization method used by Uno to solve the model
    // example: TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction
-   // returns UNO_RESULT_SUCCESS if it succeeded, otherwise UNO_RESULT_INVALID_ARGUMENT or UNO_RESULT_ERROR. The string
-   // is owned by the solver: it remains valid until the next uno_optimize or uno_destroy_solver.
+   // like the other result getters, returns UNO_RESULT_SUCCESS if it succeeded, otherwise UNO_RESULT_INVALID_ARGUMENT or
+   // UNO_RESULT_NOT_AVAILABLE (no optimization yet, or uno_optimize returned false). The string is owned by the solver:
+   // it remains valid until the next uno_optimize or uno_destroy_solver.
    uno_int uno_get_method_description(void* solver, const char** method_description) UNO_NOEXCEPT;
 
    // gets the value of a particular option in the Uno solver.

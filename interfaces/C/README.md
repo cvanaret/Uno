@@ -238,7 +238,7 @@ bool success = uno_optimize(solver, model);
 A set of functions allows you to inspect the result of the optimization. They write the value into their last argument and return a status code:
 - `UNO_RESULT_SUCCESS`: the value was written;
 - `UNO_RESULT_INVALID_ARGUMENT`: the solver or the pointer to the value is null;
-- `UNO_RESULT_NOT_AVAILABLE`: there is no result (no optimization yet, or `uno_optimize` returned `false`);
+- `UNO_RESULT_NOT_AVAILABLE`: there is no result (no optimization yet, or `uno_optimize` returned `false`). No message is printed in this case;
 - `UNO_RESULT_INVALID_INDEX`: the index of a component is not valid (the indices follow the base indexing of the model);
 - `UNO_RESULT_ERROR`: any other error.
 
@@ -300,7 +300,7 @@ status = uno_get_number_objective_evaluations(solver, &number_evaluations);
 // also: uno_get_number_constraint_evaluations, uno_get_number_objective_gradient_evaluations,
 // uno_get_number_jacobian_evaluations, uno_get_number_hessian_evaluations, uno_get_number_subproblem_solved_evaluations
 ```
-- the description of the method used by Uno (the string is owned by the solver):
+- the description of the method used by Uno (the string is owned by the solver). Like the other getters, it returns `UNO_RESULT_NOT_AVAILABLE` if there is no result:
 ```c
 const char* method_description;
 status = uno_get_method_description(solver, &method_description);

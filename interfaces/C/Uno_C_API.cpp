@@ -1261,18 +1261,6 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
    return false;
 }
 
-uno_int uno_get_method_description(void* solver, const char** method_description) UNO_NOEXCEPT {
-   if (solver == nullptr || method_description == nullptr) {
-      report_error("Please specify a valid solver and a valid pointer to the method description.");
-      return UNO_RESULT_INVALID_ARGUMENT;
-   }
-   return guard(UNO_RESULT_ERROR, [&]() {
-      const Solver* uno_solver = static_cast<const Solver*>(solver);
-      *method_description = uno_solver->solver->get_method_description().c_str();
-      return UNO_RESULT_SUCCESS;
-   });
-}
-
 namespace {
    // gets the value of an option of type "type": the value set by the user, otherwise by the preset, otherwise the default
    // value. "read" reads the value from a set of options that contains it
@@ -1360,214 +1348,181 @@ uno_int uno_get_solver_string_option(void* solver, const char* option_name, cons
 }
 
 namespace {
-   // the result of the last optimization, or nullptr
-   const Result* get_result(void* solver) {
-      return static_cast<const Solver*>(solver)->result.get();
-   }
-
-   // gets a value of the result of the last optimization. "read" reads the value from the result
-   template <typename T, typename Reader>
-   uno_int get_result_value(void* solver, T* value, Reader&& read) noexcept {
+   // checks the arguments and gets the result of the last optimization. If there is no result (e.g. before the first
+   // optimization), returns UNO_RESULT_NOT_AVAILABLE without a message: this is a state, not an error
+   uno_int get_result(void* solver, bool valid_output, const Result*& result) noexcept {
       if (solver == nullptr) {
          report_error("Please specify a valid solver.");
          return UNO_RESULT_INVALID_ARGUMENT;
       }
-      if (value == nullptr) {
+      if (!valid_output) {
          report_error("Please specify a valid pointer to the value.");
          return UNO_RESULT_INVALID_ARGUMENT;
       }
-      const Result* result = get_result(solver);
-      if (result == nullptr) {
-         report_error("The result is not available.");
-         return UNO_RESULT_NOT_AVAILABLE;
-      }
-      return guard(UNO_RESULT_ERROR, [&]() {
-         *value = read(*result);
-         return UNO_RESULT_SUCCESS;
-      });
+      result = static_cast<const Solver*>(solver)->result.get();
+      return (result != nullptr) ? UNO_RESULT_SUCCESS : UNO_RESULT_NOT_AVAILABLE;
    }
 
-   // gets one component of a vector of the result. "vector" reads the vector from the result and "size" its size
-   template <typename Vector, typename Size>
-   uno_int get_result_component(void* solver, uno_int index, double* value, Vector&& vector, Size&& size) noexcept {
-      if (solver == nullptr) {
-         report_error("Please specify a valid solver.");
-         return UNO_RESULT_INVALID_ARGUMENT;
+   // gets a member of the result of the last optimization
+   template <typename T, typename Member>
+   uno_int get_result_value(void* solver, T* value, const Member Result::* member) noexcept {
+      const Result* result{nullptr};
+      const uno_int status = get_result(solver, value != nullptr, result);
+      if (status == UNO_RESULT_SUCCESS) {
+         *value = static_cast<T>(result->*member);
       }
-      if (value == nullptr) {
-         report_error("Please specify a valid pointer to the value.");
-         return UNO_RESULT_INVALID_ARGUMENT;
-      }
-      const Result* result = get_result(solver);
-      if (result == nullptr) {
-         report_error("The result is not available.");
-         return UNO_RESULT_NOT_AVAILABLE;
+      return status;
+   }
+
+   // gets one component of a vector of the result, whose size is "size"
+   uno_int get_result_component(void* solver, uno_int index, double* value, Vector<double> Result::* vector,
+         const size_t Result::* size) noexcept {
+      const Result* result{nullptr};
+      const uno_int status = get_result(solver, value != nullptr, result);
+      if (status != UNO_RESULT_SUCCESS) {
+         return status;
       }
       // shift the index with the base indexing
       index -= result->base_indexing;
-      if (index < 0 || size(*result) <= static_cast<size_t>(index)) {
+      if (index < 0 || result->*size <= static_cast<size_t>(index)) {
          report_error("The index is not valid.");
          return UNO_RESULT_INVALID_INDEX;
       }
-      return guard(UNO_RESULT_ERROR, [&]() {
-         *value = vector(*result)[static_cast<size_t>(index)];
-         return UNO_RESULT_SUCCESS;
-      });
+      *value = (result->*vector)[static_cast<size_t>(index)];
+      return UNO_RESULT_SUCCESS;
    }
 
-   // copies a vector of the result
-   template <typename Vector, typename Size>
-   uno_int get_result_vector(void* solver, double* values, Vector&& vector, Size&& size) noexcept {
-      if (solver == nullptr) {
-         report_error("Please specify a valid solver.");
-         return UNO_RESULT_INVALID_ARGUMENT;
+   // copies a vector of the result, whose size is "size". A null pointer is allowed for an empty vector
+   uno_int get_result_vector(void* solver, double* values, Vector<double> Result::* vector,
+         const size_t Result::* size) noexcept {
+      const Result* result{nullptr};
+      const uno_int status = get_result(solver, true, result);
+      if (status != UNO_RESULT_SUCCESS) {
+         return status;
       }
-      const Result* result = get_result(solver);
-      if (result == nullptr) {
-         report_error("The result is not available.");
-         return UNO_RESULT_NOT_AVAILABLE;
-      }
-      const size_t number_values = size(*result);
-      // a null pointer is allowed for an empty vector
+      const size_t number_values = result->*size;
       if (values == nullptr && 0 < number_values) {
          report_error("Please specify a valid pointer to the values.");
          return UNO_RESULT_INVALID_ARGUMENT;
       }
-      return guard(UNO_RESULT_ERROR, [&]() {
-         const auto& result_vector = vector(*result);
-         for (size_t index: Range(number_values)) {
-            values[index] = result_vector[index];
-         }
-         return UNO_RESULT_SUCCESS;
-      });
-   }
-
-   size_t number_variables(const Result& result) {
-      return result.number_variables;
-   }
-
-   size_t number_constraints(const Result& result) {
-      return result.number_constraints;
+      const Vector<double>& result_vector = result->*vector;
+      for (size_t index: Range(number_values)) {
+         values[index] = result_vector[index];
+      }
+      return UNO_RESULT_SUCCESS;
    }
 } // namespace
 
+uno_int uno_get_method_description(void* solver, const char** method_description) UNO_NOEXCEPT {
+   const Result* result{nullptr};
+   const uno_int status = get_result(solver, method_description != nullptr, result);
+   if (status == UNO_RESULT_SUCCESS) {
+      *method_description = static_cast<const Solver*>(solver)->solver->get_method_description().c_str();
+   }
+   return status;
+}
+
 uno_int uno_get_optimization_status(void* solver, uno_int* optimization_status) UNO_NOEXCEPT {
-   return get_result_value(solver, optimization_status, [](const Result& result) {
-      return static_cast<uno_int>(result.optimization_status);
-   });
+   return get_result_value(solver, optimization_status, &Result::optimization_status);
 }
 
 uno_int uno_get_solution_status(void* solver, uno_int* solution_status) UNO_NOEXCEPT {
-   return get_result_value(solver, solution_status, [](const Result& result) {
-      return static_cast<uno_int>(result.solution_status);
-   });
+   return get_result_value(solver, solution_status, &Result::solution_status);
 }
 
 uno_int uno_get_solution_objective(void* solver, double* solution_objective) UNO_NOEXCEPT {
-   return get_result_value(solver, solution_objective, [](const Result& result) { return result.solution_objective; });
+   return get_result_value(solver, solution_objective, &Result::solution_objective);
 }
 
 uno_int uno_get_primal_solution_component(void* solver, uno_int index, double* primal_component) UNO_NOEXCEPT {
-   return get_result_component(solver, index, primal_component,
-      [](const Result& result) -> const auto& { return result.primal_solution; }, number_variables);
+   return get_result_component(solver, index, primal_component, &Result::primal_solution, &Result::number_variables);
 }
 
 uno_int uno_get_constraint_dual_solution_component(void* solver, uno_int index, double* constraint_dual_component) UNO_NOEXCEPT {
-   return get_result_component(solver, index, constraint_dual_component,
-      [](const Result& result) -> const auto& { return result.constraint_dual_solution; }, number_constraints);
+   return get_result_component(solver, index, constraint_dual_component, &Result::constraint_dual_solution,
+      &Result::number_constraints);
 }
 
 uno_int uno_get_lower_bound_dual_solution_component(void* solver, uno_int index, double* lower_bound_dual_component) UNO_NOEXCEPT {
-   return get_result_component(solver, index, lower_bound_dual_component,
-      [](const Result& result) -> const auto& { return result.lower_bound_dual_solution; }, number_variables);
+   return get_result_component(solver, index, lower_bound_dual_component, &Result::lower_bound_dual_solution,
+      &Result::number_variables);
 }
 
 uno_int uno_get_upper_bound_dual_solution_component(void* solver, uno_int index, double* upper_bound_dual_component) UNO_NOEXCEPT {
-   return get_result_component(solver, index, upper_bound_dual_component,
-      [](const Result& result) -> const auto& { return result.upper_bound_dual_solution; }, number_variables);
+   return get_result_component(solver, index, upper_bound_dual_component, &Result::upper_bound_dual_solution,
+      &Result::number_variables);
 }
 
 uno_int uno_get_primal_solution(void* solver, double* primal_solution) UNO_NOEXCEPT {
-   return get_result_vector(solver, primal_solution,
-      [](const Result& result) -> const auto& { return result.primal_solution; }, number_variables);
+   return get_result_vector(solver, primal_solution, &Result::primal_solution, &Result::number_variables);
 }
 
 uno_int uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution) UNO_NOEXCEPT {
-   return get_result_vector(solver, constraint_dual_solution,
-      [](const Result& result) -> const auto& { return result.constraint_dual_solution; }, number_constraints);
+   return get_result_vector(solver, constraint_dual_solution, &Result::constraint_dual_solution,
+      &Result::number_constraints);
 }
 
 uno_int uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution) UNO_NOEXCEPT {
-   return get_result_vector(solver, lower_bound_dual_solution,
-      [](const Result& result) -> const auto& { return result.lower_bound_dual_solution; }, number_variables);
+   return get_result_vector(solver, lower_bound_dual_solution, &Result::lower_bound_dual_solution,
+      &Result::number_variables);
 }
 
 uno_int uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution) UNO_NOEXCEPT {
-   return get_result_vector(solver, upper_bound_dual_solution,
-      [](const Result& result) -> const auto& { return result.upper_bound_dual_solution; }, number_variables);
+   return get_result_vector(solver, upper_bound_dual_solution, &Result::upper_bound_dual_solution,
+      &Result::number_variables);
 }
 
 uno_int uno_get_solution_constraints(void* solver, double* constraint_values) UNO_NOEXCEPT {
-   return get_result_vector(solver, constraint_values,
-      [](const Result& result) -> const auto& { return result.constraint_values; }, number_constraints);
+   return get_result_vector(solver, constraint_values, &Result::constraint_values, &Result::number_constraints);
 }
 
 uno_int uno_get_solution_primal_feasibility(void* solver, double* primal_feasibility) UNO_NOEXCEPT {
-   return get_result_value(solver, primal_feasibility, [](const Result& result) { return result.solution_primal_feasibility; });
+   return get_result_value(solver, primal_feasibility, &Result::solution_primal_feasibility);
 }
 
 uno_int uno_get_solution_stationarity(void* solver, double* stationarity) UNO_NOEXCEPT {
-   return get_result_value(solver, stationarity, [](const Result& result) { return result.solution_stationarity; });
+   return get_result_value(solver, stationarity, &Result::solution_stationarity);
 }
 
 uno_int uno_get_solution_complementarity(void* solver, double* complementarity) UNO_NOEXCEPT {
-   return get_result_value(solver, complementarity, [](const Result& result) { return result.solution_complementarity; });
+   return get_result_value(solver, complementarity, &Result::solution_complementarity);
 }
 
 uno_int uno_get_number_iterations(void* solver, uno_int* number_iterations) UNO_NOEXCEPT {
-   return get_result_value(solver, number_iterations, [](const Result& result) {
-      return static_cast<uno_int>(result.number_iterations);
-   });
+   return get_result_value(solver, number_iterations, &Result::number_iterations);
 }
 
 uno_int uno_get_cpu_time(void* solver, double* cpu_time) UNO_NOEXCEPT {
-   return get_result_value(solver, cpu_time, [](const Result& result) { return result.timers.solve.get_duration(); });
+   const Result* result{nullptr};
+   const uno_int status = get_result(solver, cpu_time != nullptr, result);
+   if (status == UNO_RESULT_SUCCESS) {
+      *cpu_time = result->timers.solve.get_duration();
+   }
+   return status;
 }
 
 uno_int uno_get_number_objective_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
-   return get_result_value(solver, number_evaluations, [](const Result& result) {
-      return static_cast<uno_int>(result.number_objective_evaluations);
-   });
+   return get_result_value(solver, number_evaluations, &Result::number_objective_evaluations);
 }
 
 uno_int uno_get_number_constraint_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
-   return get_result_value(solver, number_evaluations, [](const Result& result) {
-      return static_cast<uno_int>(result.number_constraint_evaluations);
-   });
+   return get_result_value(solver, number_evaluations, &Result::number_constraint_evaluations);
 }
 
 uno_int uno_get_number_objective_gradient_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
-   return get_result_value(solver, number_evaluations, [](const Result& result) {
-      return static_cast<uno_int>(result.number_objective_gradient_evaluations);
-   });
+   return get_result_value(solver, number_evaluations, &Result::number_objective_gradient_evaluations);
 }
 
 uno_int uno_get_number_jacobian_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
-   return get_result_value(solver, number_evaluations, [](const Result& result) {
-      return static_cast<uno_int>(result.number_jacobian_evaluations);
-   });
+   return get_result_value(solver, number_evaluations, &Result::number_jacobian_evaluations);
 }
 
 uno_int uno_get_number_hessian_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
-   return get_result_value(solver, number_evaluations, [](const Result& result) {
-      return static_cast<uno_int>(result.number_hessian_evaluations);
-   });
+   return get_result_value(solver, number_evaluations, &Result::number_hessian_evaluations);
 }
 
 uno_int uno_get_number_subproblem_solved_evaluations(void* solver, uno_int* number_subproblems) UNO_NOEXCEPT {
-   return get_result_value(solver, number_subproblems, [](const Result& result) {
-      return static_cast<uno_int>(result.number_subproblems_solved);
-   });
+   return get_result_value(solver, number_subproblems, &Result::number_subproblems_solved);
 }
 
 void uno_destroy_model(void* model) UNO_NOEXCEPT {

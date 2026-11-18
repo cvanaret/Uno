@@ -709,6 +709,7 @@ end
   @test !UnoSolver.uno_has_result(solver)
   @test_throws ErrorException UnoSolver.uno_get_solution_objective(solver)
   @test_throws ErrorException UnoSolver.uno_get_primal_solution(solver, zeros(2))
+  @test_throws ErrorException uno_get_method_description(solver)
   value = Ref{Cdouble}(-1.0)
   @test UnoSolver.uno_get_solution_objective(solver.c_solver, value) == UnoSolver.UNO_RESULT_NOT_AVAILABLE
   @test value[] == -1.0
