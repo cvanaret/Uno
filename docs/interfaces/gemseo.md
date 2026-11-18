@@ -58,6 +58,7 @@ a misspelled setting or a value of the wrong type raises a `pydantic.ValidationE
 UNO_Filter_SQP_Settings(TR_radiuss=0.5)   # ValidationError: Extra inputs are not permitted
 UNO_Filter_SQP_Settings(TR_radius="big")  # ValidationError: Input should be a valid number
 ```
+The string settings are typed `str`, so pydantic does not check their values: a value that is not one of the possible values of the Uno option (e.g. `hessian_model="BFGS"`) raises a `ValueError` that lists them when the scenario is executed, before Uno runs. The values are case-sensitive, except `HIGHS` and `HIPO`.
 
 ### Stopping criteria
 

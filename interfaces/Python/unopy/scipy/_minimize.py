@@ -351,6 +351,7 @@ def minimize(
 
         The available options and their types are listed below.
         An int value is accepted for a float option.
+        The value of a `str` option must be one of its possible values, which are case-sensitive (except "HIGHS" and "HIPO").
 
         "primal_tolerance" : float
         "dual_tolerance" : float
@@ -539,9 +540,12 @@ def minimize(
 
     Raises
     ------
+    KeyError
+        If an option is unknown.
     TypeError
         If the Jacobian of a constraint is neither a callable
-        nor a finite-difference scheme.
+        nor a finite-difference scheme,
+        or if an option has a value of the wrong type.
     ValueError
         If "jac" is neither a callable, a boolean, None
         nor a finite-difference scheme,
@@ -550,7 +554,8 @@ def minimize(
         and a nonlinear constraint has no callable Hessian,
         if the method is 'ipopt' and "hess" or a constraint Hessian
         returns a "LinearOperator",
-        or if a constraint Jacobian at "x0" has a wrong shape.
+        if a constraint Jacobian at "x0" has a wrong shape,
+        or if a str option has a value that is not one of its possible values.
     NotImplementedError
         If "hess" is a finite-difference scheme
         or a Hessian update strategy other than "BFGS" and "SR1".
