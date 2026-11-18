@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <new>
+#include <optional>
 #include <streambuf>
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
@@ -28,6 +29,9 @@
 using namespace uno;
 
 using OptionIterator = decltype(Options::option_types)::const_iterator;
+
+static_assert(static_cast<size_t>(UNO_MAX_STRING_LENGTH) == Options::max_string_length,
+   "UNO_MAX_STRING_LENGTH and Options::max_string_length must match");
 
 using CUserModel = UserModel<uno_objective_callback, uno_objective_gradient_callback, uno_constraints_callback,
    uno_constraints_jacobian_callback, uno_constraints_jacobian_operator_callback, uno_constraints_jacobian_transposed_operator_callback,
@@ -475,6 +479,28 @@ namespace {
       }
       return failure_value;
    }
+
+   // reads a null-terminated string passed by the user. Returns std::nullopt if it has more than UNO_MAX_STRING_LENGTH
+   // characters. At most UNO_MAX_STRING_LENGTH + 1 characters are read, even if the string is not null-terminated:
+   // std::memchr stops at the first null character (C11 7.24.5.1)
+   std::optional<std::string> read_c_string(const char* string) {
+      const void* terminator = std::memchr(string, '\0', Options::max_string_length + 1);
+      if (terminator == nullptr) {
+         return std::nullopt;
+      }
+      return std::string(string, static_cast<const char*>(terminator));
+   }
+
+   // same, but throws an exception of type "Exception" if the string is too long
+   template <typename Exception>
+   std::string read_c_string(const char* string, const char* description) {
+      std::optional<std::string> result = read_c_string(string);
+      if (!result.has_value()) {
+         throw Exception(std::string("The ") + description + " has more than " +
+            std::to_string(Options::max_string_length) + " characters");
+      }
+      return std::move(*result);
+   }
 } // namespace
 
 void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) UNO_NOEXCEPT {
@@ -539,7 +565,16 @@ bool uno_set_model_name(void* model, const char* name) UNO_NOEXCEPT {
          return false;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
-      user_model->name = (name != nullptr) ? name : "";
+      if (name == nullptr) {
+         user_model->name.clear();
+         return true;
+      }
+      std::optional<std::string> model_name = read_c_string(name);
+      if (!model_name.has_value()) {
+         WARNING << "The model name has more than " << Options::max_string_length << " characters." << std::endl;
+         return false;
+      }
+      user_model->name = std::move(*model_name);
       return true;
    });
 }
@@ -1030,7 +1065,7 @@ namespace {
          return UNO_OPTIONS_INVALID_ARGUMENT;
       }
       return modify_user_options(solver, [&](Options& options) {
-         setter(options, std::string{option_name});
+         setter(options, read_c_string<OptionNotFound>(option_name, "option name"));
       });
    }
 } // namespace
@@ -1059,7 +1094,7 @@ uno_int uno_set_solver_string_option(void* solver, const char* option_name, cons
       return UNO_OPTIONS_INVALID_ARGUMENT;
    }
    return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
-      options.set_string(name, std::string{option_value});
+      options.set_string(name, read_c_string<InvalidOptionValue>(option_value, "option value"));
    });
 }
 
@@ -1068,7 +1103,11 @@ uno_int uno_get_solver_option_type(void* solver, const char* option_name) UNO_NO
       return UNO_OPTION_TYPE_NOT_FOUND;
    }
    try {
-      const auto type = Options::option_types.find(option_name);
+      const std::optional<std::string> name = read_c_string(option_name);
+      if (!name.has_value()) {
+         return UNO_OPTION_TYPE_NOT_FOUND;
+      }
+      const auto type = Options::option_types.find(*name);
       if (type == Options::option_types.end()) {
          return UNO_OPTION_TYPE_NOT_FOUND;
       }
@@ -1146,7 +1185,7 @@ uno_int uno_load_solver_option_file(void* solver, const char* file_name) UNO_NOE
       return UNO_OPTIONS_INVALID_ARGUMENT;
    }
    return modify_user_options(solver, [&](Options& options) {
-      Options::load_option_file(options, file_name);
+      Options::load_option_file(options, read_c_string<InvalidOptionFile>(file_name, "option file name"));
    });
 }
 
@@ -1156,7 +1195,7 @@ uno_int uno_set_solver_preset(void* solver, const char* preset_name) UNO_NOEXCEP
       return UNO_OPTIONS_INVALID_ARGUMENT;
    }
    return modify_user_options(solver, [&](Options& options) {
-      options.set_string("preset", std::string{preset_name});
+      options.set_string("preset", read_c_string<InvalidOptionValue>(preset_name, "preset name"));
    });
 }
 
@@ -1291,7 +1330,7 @@ namespace {
       const Solver* uno_solver = static_cast<const Solver*>(solver);
       uno_int status = UNO_OPTIONS_NOT_SET;
       const uno_int guard_status = guard_options([&]() {
-         const std::string name{option_name};
+         const std::string name = read_c_string<OptionNotFound>(option_name, "option name");
          // throws OptionNotFound if the option does not exist
          if (Options::get_option_type(name) != type) {
             throw OptionWrongType("The option with name " + name + " has a different type");
@@ -1346,8 +1385,8 @@ uno_int uno_get_solver_string_option(void* solver, const char* option_name, cons
    // the pointer to the stored string (not a copy)
    const uno_int status = get_solver_option(solver, option_name, option_value, OptionType::STRING,
       [](const Options& options, const std::string& name) { return options.get_string(name).c_str(); });
-   // after a solve, an option overridden by the solver has the value used by the solver. The arguments are valid if
-   // the status is UNO_OPTIONS_SUCCESS or UNO_OPTIONS_NOT_SET
+   // after a solve, an option overridden by the solver has the value used by the solver. The arguments are valid (and
+   // option_name has at most UNO_MAX_STRING_LENGTH characters) if the status is UNO_OPTIONS_SUCCESS or UNO_OPTIONS_NOT_SET
    if (status == UNO_OPTIONS_SUCCESS || status == UNO_OPTIONS_NOT_SET) {
       if (const char* overridden_value = find_option_override(*static_cast<const Solver*>(solver), option_name)) {
          *option_value = overridden_value;
@@ -1427,6 +1466,7 @@ uno_int uno_get_method_description(void* solver, const char** method_description
    const Result* result{nullptr};
    const uno_int status = get_result(solver, method_description != nullptr, result);
    if (status == UNO_RESULT_SUCCESS) {
+      // built from the names of the components: shorter than UNO_MAX_STRING_LENGTH
       *method_description = static_cast<const Solver*>(solver)->solver->get_method_description().c_str();
    }
    return status;

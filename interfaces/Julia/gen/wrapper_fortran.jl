@@ -489,6 +489,61 @@ end
 # ----------------------------------------------------------------
 # Generate uno_fortran.f90: Fortran-friendly wrappers for string arguments
 # ----------------------------------------------------------------
+
+# A Fortran string that contains c_null_char followed by other characters would be silently truncated by the C layer,
+# so the wrappers reject it. The wrapper then returns the value that the C function returns when that argument is
+# invalid. A single trailing c_null_char (e.g. 'logger'//c_null_char, a common Fortran habit) is accepted and dropped.
+# The length is checked by the C layer (at most UNO_MAX_STRING_LENGTH characters). Every string argument of the C API
+# must have an entry
+const NULL_CHARACTER_FAILURE = Dict(
+  ("uno_create_model", "problem_type")               => "c_null_ptr",
+  ("uno_create_unconstrained_model", "problem_type") => "c_null_ptr",
+  ("uno_set_model_name", "name")                     => ".false.",
+  ("uno_set_solver_integer_option", "option_name")   => "UNO_OPTIONS_NOT_FOUND",
+  ("uno_set_solver_double_option", "option_name")    => "UNO_OPTIONS_NOT_FOUND",
+  ("uno_set_solver_bool_option", "option_name")      => "UNO_OPTIONS_NOT_FOUND",
+  ("uno_set_solver_string_option", "option_name")    => "UNO_OPTIONS_NOT_FOUND",
+  ("uno_set_solver_string_option", "option_value")   => "UNO_OPTIONS_INVALID_VALUE",
+  ("uno_get_solver_option_type", "option_name")      => "UNO_OPTION_TYPE_NOT_FOUND",
+  ("uno_load_solver_option_file", "file_name")       => "UNO_OPTIONS_INVALID_FILE",
+  ("uno_set_solver_preset", "preset_name")           => "UNO_OPTIONS_INVALID_VALUE",
+  ("uno_get_solver_integer_option", "option_name")   => "UNO_OPTIONS_NOT_FOUND",
+  ("uno_get_solver_double_option", "option_name")    => "UNO_OPTIONS_NOT_FOUND",
+  ("uno_get_solver_bool_option", "option_name")      => "UNO_OPTIONS_NOT_FOUND",
+  ("uno_get_solver_string_option", "option_name")    => "UNO_OPTIONS_NOT_FOUND",
+)
+
+# converts the Fortran string argument "sarg" (without its trailing blanks and a single trailing c_null_char) into the
+# null-terminated array "sarg"_c. If "sarg" contains another c_null_char, assigns the failure value to "result_name" and
+# returns. The two "if" are nested since Fortran does not short-circuit: sarg(n:n) is invalid for n = 0
+function emit_to_c_string(io, f_name, sarg, result_name)
+  key = (f_name, sarg)
+  haskey(NULL_CHARACTER_FAILURE, key) || error("No failure value for the string argument $sarg of $f_name in NULL_CHARACTER_FAILURE")
+  println(io, "   n = len_trim($sarg)")
+  println(io, "   if (n > 0) then")
+  println(io, "      if ($sarg(n:n) == c_null_char) n = n - 1")
+  println(io, "   end if")
+  println(io, "   if (index($sarg(1:n), c_null_char) > 0) then")
+  println(io, "      $result_name = $(NULL_CHARACTER_FAILURE[key])")
+  println(io, "      return")
+  println(io, "   end if")
+  println(io, "   allocate($(sarg)_c(n+1))")
+  println(io, "   do i = 1, n")
+  println(io, "      $(sarg)_c(i) = $sarg(i:i)")
+  println(io, "   end do")
+  println(io, "   $(sarg)_c(n+1) = c_null_char")
+end
+
+# computes in "n" the length of the null-terminated string pointed to by "ptr" (associated to the array "arr"). The C
+# API guarantees at most UNO_MAX_STRING_LENGTH characters: at most UNO_MAX_STRING_LENGTH + 1 characters are read
+function emit_bounded_length(io, indent, ptr, arr)
+  println(io, "$(indent)call c_f_pointer($ptr, $arr, [UNO_MAX_STRING_LENGTH + 1])")
+  println(io, "$(indent)n = 0")
+  println(io, "$(indent)do while (n < UNO_MAX_STRING_LENGTH)")
+  println(io, "$(indent)   if ($arr(n+1) == c_null_char) exit")
+  println(io, "$(indent)   n = n + 1")
+  println(io, "$(indent)end do")
+end
 function gen_uno_fortran(io, funcs)
   println(io, "! Copyright (c) 2026 Alexis Montoison and Charlie Vanaret")
   println(io, "! Licensed under the MIT license. See LICENSE file in the project directory for details.")
@@ -571,12 +626,7 @@ function gen_one_string_wrapper(io, f::FuncInfo, string_arg_names)
 
   # Convert each string arg to C char array
   for sarg in string_arg_names
-    println(io, "   n = len_trim($sarg)")
-    println(io, "   allocate($(sarg)_c(n+1))")
-    println(io, "   do i = 1, n")
-    println(io, "      $(sarg)_c(i) = $sarg(i:i)")
-    println(io, "   end do")
-    println(io, "   $(sarg)_c(n+1) = c_null_char")
+    emit_to_c_string(io, name, sarg, result_name)
   end
 
   c_args   = [a.is_string ? "$(a.name)_c" : a.name for a in f.args]
@@ -645,12 +695,7 @@ function gen_char_ptr_return_wrapper(io, f::FuncInfo)
 
   # Convert string args to C
   for sarg in string_arg_names
-    println(io, "   n = len_trim($sarg)")
-    println(io, "   allocate($(sarg)_c(n+1))")
-    println(io, "   do i = 1, n")
-    println(io, "      $(sarg)_c(i) = $sarg(i:i)")
-    println(io, "   end do")
-    println(io, "   $(sarg)_c(n+1) = c_null_char")
+    emit_to_c_string(io, name, sarg, result_name)
   end
 
   c_args   = [a.is_string ? "$(a.name)_c" : a.name for a in f.args]
@@ -667,11 +712,7 @@ function gen_char_ptr_return_wrapper(io, f::FuncInfo)
   println(io, "   end if")
 
   # Scan length then copy
-  println(io, "   call c_f_pointer($ptr_name, $arr_name, [huge(0)])")
-  println(io, "   n = 0")
-  println(io, "   do while ($arr_name(n+1) /= c_null_char)")
-  println(io, "      n = n + 1")
-  println(io, "   end do")
+  emit_bounded_length(io, "   ", ptr_name, arr_name)
   println(io, "   allocate(character(len=n)::$result_name)")
   println(io, "   do i = 1, n")
   println(io, "      $result_name(i:i) = $arr_name(i)")
@@ -736,12 +777,7 @@ function gen_string_output_wrapper(io, f::FuncInfo)
 
   # Convert string args to C
   for sarg in string_arg_names
-    println(io, "   n = len_trim($sarg)")
-    println(io, "   allocate($(sarg)_c(n+1))")
-    println(io, "   do i = 1, n")
-    println(io, "      $(sarg)_c(i) = $sarg(i:i)")
-    println(io, "   end do")
-    println(io, "   $(sarg)_c(n+1) = c_null_char")
+    emit_to_c_string(io, name, sarg, result_name)
   end
   for out in output_names
     println(io, "   ptr_$(out)_c = c_null_ptr")
@@ -758,11 +794,7 @@ function gen_string_output_wrapper(io, f::FuncInfo)
   for out in output_names
     println(io, "   ! $out is assigned only if the C function wrote it")
     println(io, "   if (c_associated(ptr_$(out)_c)) then")
-    println(io, "      call c_f_pointer(ptr_$(out)_c, $(out)_c, [huge(0)])")
-    println(io, "      n = 0")
-    println(io, "      do while ($(out)_c(n+1) /= c_null_char)")
-    println(io, "         n = n + 1")
-    println(io, "      end do")
+    emit_bounded_length(io, "      ", "ptr_$(out)_c", "$(out)_c")
     println(io, "      if (allocated($out)) deallocate($out)")
     println(io, "      allocate(character(len=n)::$out)")
     println(io, "      do i = 1, n")

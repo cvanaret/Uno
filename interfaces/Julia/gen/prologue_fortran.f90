@@ -36,6 +36,11 @@ character(c_char), parameter :: UNO_LOWER_TRIANGLE = 'L'
 character(c_char), parameter :: UNO_UPPER_TRIANGLE = 'U'
 
 !---------------------------------------------
+! Maximum number of characters of a string passed to or returned by Uno
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_MAX_STRING_LENGTH = 4095
+
+!---------------------------------------------
 ! Option type
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_OPTION_TYPE_INTEGER   =  0

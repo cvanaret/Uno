@@ -58,6 +58,11 @@ namespace uno {
 
    class Options {
    public:
+      // maximum number of characters of a string option value. Longer values (and values that contain a null character)
+      // are rejected by the setters, so that all interfaces (C, Fortran, Julia, Python, AMPL, option files) store and
+      // return strings of bounded length. Must match UNO_MAX_STRING_LENGTH in the C API
+      static constexpr size_t max_string_length = 4095;
+
       Options() = default;
 
       void set_integer(const std::string& option_name, uno_int option_value);
@@ -104,6 +109,7 @@ namespace uno {
 
       static std::string to_string(const OptionValue& value);
       static void check_option_type(const std::string& option_name, OptionType expected_type);
+      static void check_string_value(const std::string& option_name, const std::string& option_value);
       static void check_string_option_value(const std::string& option_name, const std::string& option_value);
 
       template <typename T>
