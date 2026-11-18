@@ -154,5 +154,9 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     SOC_infeasibility_fraction: float | None = None
     libhsl_path: str | None = None
     MA57_use_scaling: bool | None = None
+    MUMPS_use_scaling: bool | None = None
     dump_kkt_path: str | None = None
     dump_kkt_frequency: int | None = None
+    linear_system_scaling: str | None = None
+    linear_system_scaling_on_demand: bool | None = None
+    linear_system_scaling_delayed_pivots_threshold: float | None = None

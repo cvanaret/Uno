@@ -474,8 +474,12 @@ def minimize(
         "SOC_infeasibility_fraction" : float
         "libhsl_path" : str
         "MA57_use_scaling" : bool
+        "MUMPS_use_scaling" : bool
         "dump_kkt_path" : str
         "dump_kkt_frequency" : int
+        "linear_system_scaling" : str
+        "linear_system_scaling_on_demand" : bool
+        "linear_system_scaling_delayed_pivots_threshold" : float
 
 
     Returns
