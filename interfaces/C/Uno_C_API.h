@@ -40,6 +40,13 @@ extern "C" {
    static const char UNO_LOWER_TRIANGLE = 'L';
    static const char UNO_UPPER_TRIANGLE = 'U';
 
+   // Maximum number of characters (excluding the null terminator) of a string passed to or returned by Uno: option
+   // names and values, option file names, preset names and model names. A longer string is rejected (Uno reads at
+   // most UNO_MAX_STRING_LENGTH + 1 characters of it, so it is safe even if the string is not null-terminated), and
+   // every string returned by Uno has at most UNO_MAX_STRING_LENGTH characters: a buffer of UNO_MAX_STRING_LENGTH + 1
+   // characters can hold any of them
+   static const uno_int UNO_MAX_STRING_LENGTH = 4095;
+
    // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
    static const uno_int UNO_OPTION_TYPE_INTEGER = 0;
    static const uno_int UNO_OPTION_TYPE_DOUBLE = 1;
@@ -205,7 +212,7 @@ extern "C" {
    // [optional]
    // sets the name of a given model (used e.g. in logs and KKT system dumps).
    // an empty name falls back to the interface default.
-   // returns true if it succeeded, false otherwise.
+   // returns true if it succeeded, false otherwise (including if the name is longer than UNO_MAX_STRING_LENGTH).
    bool uno_set_model_name(void* model, const char* name) UNO_NOEXCEPT;
 
    // [optional]
@@ -335,7 +342,8 @@ extern "C" {
    // sets a particular option in the Uno solver.
    // takes as inputs the name of the option and the value to which it should be set.
    // the possible types are integer, double, bool and string. The value of a string option with enumerated values
-   // (e.g. logger, hessian_model, linear_solver) is checked against the possible values.
+   // (e.g. logger, hessian_model, linear_solver) is checked against the possible values. A string value longer than
+   // UNO_MAX_STRING_LENGTH is invalid (UNO_OPTIONS_INVALID_VALUE), and so is an option name (UNO_OPTIONS_NOT_FOUND).
    // returns UNO_OPTIONS_SUCCESS if it succeeded, otherwise UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_NOT_FOUND,
    // UNO_OPTIONS_WRONG_TYPE, UNO_OPTIONS_INVALID_VALUE or UNO_OPTIONS_ERROR. If it failed, the options are unchanged.
    uno_int uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) UNO_NOEXCEPT;
@@ -349,7 +357,7 @@ extern "C" {
    // UNO_OPTION_TYPE_NOT_FOUND if the option does not exist (or the solver or the option name is null).
    uno_int uno_get_solver_option_type(void* solver, const char* option_name) UNO_NOEXCEPT;
 
-   // iterate over the Uno option types and names
+   // iterate over the Uno option types and names. An option name has at most UNO_MAX_STRING_LENGTH characters
    uno_options_iterator uno_options_begin_iterator() UNO_NOEXCEPT;
    uno_options_iterator uno_options_end_iterator() UNO_NOEXCEPT;
    void uno_options_next_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT;
@@ -358,12 +366,14 @@ extern "C" {
    void uno_options_destroy_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT;
 
    // [optional] loads the options from a given option file.
-   // takes as input the name of the option file.
+   // takes as input the name of the option file. A name longer than UNO_MAX_STRING_LENGTH is invalid
+   // (UNO_OPTIONS_INVALID_FILE).
    // returns UNO_OPTIONS_SUCCESS if it succeeded, otherwise UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_INVALID_FILE,
    // UNO_OPTIONS_NOT_FOUND, UNO_OPTIONS_INVALID_VALUE or UNO_OPTIONS_ERROR. If it failed, the options are unchanged.
    uno_int uno_load_solver_option_file(void* solver, const char* file_name) UNO_NOEXCEPT;
 
-   // sets a particular preset in the Uno solver.
+   // sets a particular preset in the Uno solver. A preset name longer than UNO_MAX_STRING_LENGTH is invalid
+   // (UNO_OPTIONS_INVALID_VALUE).
    // returns UNO_OPTIONS_SUCCESS if it succeeded, otherwise UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_INVALID_VALUE
    // or UNO_OPTIONS_ERROR. If it failed, the options are unchanged.
    uno_int uno_set_solver_preset(void* solver, const char* preset_name) UNO_NOEXCEPT;
@@ -396,7 +406,8 @@ extern "C" {
    // example: TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction
    // like the other result getters, returns UNO_RESULT_SUCCESS if it succeeded, otherwise UNO_RESULT_INVALID_ARGUMENT or
    // UNO_RESULT_NOT_AVAILABLE (no optimization yet, or uno_optimize failed). The string is owned by the solver:
-   // it remains valid until the next uno_optimize or uno_destroy_solver.
+   // it remains valid until the next uno_optimize or uno_destroy_solver. It has at most UNO_MAX_STRING_LENGTH
+   // characters.
    uno_int uno_get_method_description(void* solver, const char** method_description) UNO_NOEXCEPT;
 
    // gets the value of a particular option in the Uno solver.
@@ -409,7 +420,7 @@ extern "C" {
    // UNO_OPTIONS_INVALID_ARGUMENT, UNO_OPTIONS_NOT_FOUND, UNO_OPTIONS_WRONG_TYPE or UNO_OPTIONS_ERROR. The value is
    // written only if the status is UNO_OPTIONS_SUCCESS.
    // the string is owned by the solver: it remains valid until the options of the solver are modified, the next
-   // uno_optimize, or uno_destroy_solver.
+   // uno_optimize, or uno_destroy_solver. It has at most UNO_MAX_STRING_LENGTH characters.
    uno_int uno_get_solver_integer_option(void* solver, const char* option_name, uno_int* option_value) UNO_NOEXCEPT;
    uno_int uno_get_solver_double_option(void* solver, const char* option_name, double* option_value) UNO_NOEXCEPT;
    uno_int uno_get_solver_bool_option(void* solver, const char* option_name, bool* option_value) UNO_NOEXCEPT;

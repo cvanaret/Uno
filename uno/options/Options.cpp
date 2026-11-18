@@ -154,6 +154,16 @@ namespace uno {
    };
 
    namespace {
+      // a string that comes from the user (e.g. the name of an unknown option) in an error message: it may be arbitrarily
+      // long, so only its beginning is shown
+      std::string abbreviate(const std::string& string) {
+         constexpr size_t max_printed_length = 64;
+         if (string.size() <= max_printed_length) {
+            return string;
+         }
+         return string.substr(0, max_printed_length) + "... (" + std::to_string(string.size()) + " characters)";
+      }
+
       struct PossibleValue {
          std::string value;
          bool case_sensitive{true};
@@ -229,6 +239,7 @@ namespace uno {
 
    void Options::set_string(const std::string& option_name, std::string option_value) {
       check_option_type(option_name, OptionType::STRING);
+      check_string_length(option_name, option_value);
       check_string_option_value(option_name, option_value);
       this->values[option_name] = std::move(option_value);
    }
@@ -279,8 +290,10 @@ namespace uno {
    void Options::set(const std::string& option_name, std::string option_value) {
       const auto type = option_types.find(option_name);
       if (type == option_types.end()) {
-         throw OptionNotFound("The option with name " + option_name + " does not exist");
+         throw OptionNotFound("The option with name " + abbreviate(option_name) + " does not exist");
       }
+      // before parsing, so that the error messages of the parsers echo a value of bounded length
+      check_string_length(option_name, option_value);
       switch (type->second) {
          case OptionType::INTEGER:
             this->set_integer(option_name, parse_integer(option_name, option_value));
@@ -365,7 +378,8 @@ namespace uno {
          return option_types.at(option_name);
       }
       catch (const std::out_of_range&) {
-         throw OptionNotFound("The type of the option with name " + option_name + " could not be found");
+         throw OptionNotFound("The type of the option with name " + abbreviate(option_name) +
+            " could not be found");
       }
    }
 
@@ -416,7 +430,8 @@ namespace uno {
          std::istringstream stream(line);
          std::string option_name, option_value, extra_token;
          if (!(stream >> option_name >> option_value) || (stream >> extra_token)) {
-            throw InvalidOptionFile("Malformed line " + std::to_string(line_number) + " in option file " + file_name + ": " + line);
+            throw InvalidOptionFile("Malformed line " + std::to_string(line_number) + " in option file " + file_name + ": " +
+               abbreviate(line));
          }
          options.set(option_name, std::move(option_value));
       }
@@ -444,10 +459,22 @@ namespace uno {
    void Options::check_option_type(const std::string& option_name, OptionType expected_type) {
       const auto type = option_types.find(option_name);
       if (type == option_types.end()) {
-         throw OptionNotFound("The option with name " + option_name + " does not exist");
+         throw OptionNotFound("The option with name " + abbreviate(option_name) + " does not exist");
       }
       if (type->second != expected_type) {
          throw OptionWrongType("The option with name " + option_name + " has a different type");
+      }
+   }
+
+   // rejects values longer than max_string_length or that contain a null character (which would silently truncate them
+   // when passed to C functions, e.g. a path passed to dlopen). Checked before the value is echoed in any error message
+   void Options::check_string_length(const std::string& option_name, const std::string& option_value) {
+      if (Options::max_string_length < option_value.size()) {
+         throw InvalidOptionValue("The value of option " + option_name + " has " + std::to_string(option_value.size()) +
+            " characters, more than the maximum " + std::to_string(Options::max_string_length));
+      }
+      if (option_value.find('\0') != std::string::npos) {
+         throw InvalidOptionValue("The value of option " + option_name + " contains a null character");
       }
    }
 

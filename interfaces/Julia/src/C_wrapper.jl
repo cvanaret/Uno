@@ -253,6 +253,10 @@ function uno_model(
   @assert nnzh == length(hrows) == length(hcols)
   @assert isnothing(x0) || nvar == length(x0)
   @assert isnothing(y0) || ncon == length(y0)
+  # checked before the C model is created
+  ncodeunits(name) <= UNO_MAX_STRING_LENGTH ||
+    throw(ArgumentError("The model name has more than $UNO_MAX_STRING_LENGTH characters."))
+  occursin('\0', name) && throw(ArgumentError("The model name contains a null character."))
 
   # "LP" for linear problem, "QP" for quadratic problem, "NLP" for nonlinear problem
   @assert problem_type == "LP" || problem_type == "QP" || problem_type == "NLP"
@@ -582,8 +586,13 @@ Throw an `ErrorException` if `status`, returned when setting the option `option_
 """
 function uno_check_option_status(status::Integer, option_name, option_value)
   status == UNO_OPTIONS_SUCCESS && return nothing
-  error("Unable to set the option `\"$option_name\"` to `$(repr(option_value))`: $(uno_options_status_message(status)).")
+  value = option_value isa AbstractString ? _uno_abbreviate(option_value) : option_value
+  error("Unable to set the option `\"$(_uno_abbreviate(string(option_name)))\"` to `$(repr(value))`: " *
+    "$(uno_options_status_message(status)).")
 end
+
+# a string in an error message: it may be arbitrarily long, so only its beginning is shown
+_uno_abbreviate(s::AbstractString) = ncodeunits(s) <= 64 ? s : string(first(s, 64), "... (", ncodeunits(s), " bytes)")
 
 function uno_solver(; kwargs...)
   c_solver = uno_create_solver()

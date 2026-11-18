@@ -19,6 +19,8 @@ const UNO_ONE_BASED_INDEXING  = Cint(1)
 const UNO_LOWER_TRIANGLE = Cchar('L')
 const UNO_UPPER_TRIANGLE = Cchar('U')
 
+const UNO_MAX_STRING_LENGTH = Cint(4095)
+
 # Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
 const UNO_OPTION_TYPE_INTEGER   = Cint(0)
 const UNO_OPTION_TYPE_DOUBLE    = Cint(1)

@@ -29,6 +29,9 @@ namespace uno {
       module.attr("LOWER_TRIANGLE") = UNO_LOWER_TRIANGLE;
       module.attr("UPPER_TRIANGLE") = UNO_UPPER_TRIANGLE;
 
+      // Maximum number of characters of a string passed to or returned by Uno
+      module.attr("MAX_STRING_LENGTH") = UNO_MAX_STRING_LENGTH;
+
       // Optimization status
       module.attr("SUCCESS") = UNO_SUCCESS;
       module.attr("ITERATION_LIMIT") = UNO_ITERATION_LIMIT;
