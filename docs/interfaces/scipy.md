@@ -31,7 +31,7 @@ print(res.message)  # Optimization status: SUCCESS; solution status: FEASIBLE_KK
 
 The arguments are those of `scipy.optimize.minimize`:
 `fun`, `x0`, `args`, `method`, `jac`, `hess`, `bounds`, `constraints`, `tol`, `callback` and `options`.
-Uno only uses Hessian-vector products, so the Lagrangian Hessian is never built as a dense matrix;
+Uno only uses Hessian-vector products, so the Lagrangian Hessian is never built as a dense matrix.
 
 ## Derivatives of the objective
 
