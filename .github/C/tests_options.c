@@ -127,10 +127,10 @@ static void test_iterate_over_options(const char* preset) {
 static void test_optimize_with_invalid_arguments(void) {
    void* solver = uno_create_solver();
    void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
-   CHECK(!uno_optimize(NULL, model));
-   CHECK(!uno_optimize(solver, NULL));
+   CHECK(uno_optimize(NULL, model) == UNO_OPTIMIZE_INVALID_ARGUMENT);
+   CHECK(uno_optimize(solver, NULL) == UNO_OPTIMIZE_INVALID_ARGUMENT);
    // neither objective nor constraints
-   CHECK(!uno_optimize(solver, model));
+   CHECK(uno_optimize(solver, model) == UNO_OPTIMIZE_INVALID_MODEL);
    uno_destroy_model(model);
    uno_destroy_solver(solver);
 }

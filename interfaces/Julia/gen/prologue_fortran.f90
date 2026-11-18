@@ -66,6 +66,15 @@ integer(uno_int), parameter :: UNO_RESULT_INVALID_INDEX    = 3
 integer(uno_int), parameter :: UNO_RESULT_ERROR            = 4
 
 !---------------------------------------------
+! Status codes returned by uno_optimize
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_OPTIMIZE_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_OPTIMIZE_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_OPTIMIZE_INVALID_MODEL    = 2
+integer(uno_int), parameter :: UNO_OPTIMIZE_INVALID_OPTIONS  = 3
+integer(uno_int), parameter :: UNO_OPTIMIZE_ERROR            = 4
+
+!---------------------------------------------
 ! Optimization status
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_SUCCESS           = 0

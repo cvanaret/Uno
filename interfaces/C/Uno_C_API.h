@@ -62,10 +62,20 @@ extern "C" {
    // Status codes returned by the functions that get the result of an optimization
    static const uno_int UNO_RESULT_SUCCESS = 0;
    static const uno_int UNO_RESULT_INVALID_ARGUMENT = 1; // null solver or null pointer to the value
-   static const uno_int UNO_RESULT_NOT_AVAILABLE = 2; // no result: no optimization yet, or uno_optimize returned false.
+   static const uno_int UNO_RESULT_NOT_AVAILABLE = 2; // no result: no optimization yet, or uno_optimize failed.
    // This is not an error: no message is printed, so this status can be used to check whether a result is available
    static const uno_int UNO_RESULT_INVALID_INDEX = 3; // the index of the component is not valid
    static const uno_int UNO_RESULT_ERROR = 4; // any other error
+
+   // Status codes returned by uno_optimize. UNO_OPTIMIZE_SUCCESS means that the optimization was carried out and a
+   // result is available: its outcome (success, iteration limit, evaluation error...) is given by
+   // uno_get_optimization_status. The other codes mean that the optimization could not be carried out (no result)
+   static const uno_int UNO_OPTIMIZE_SUCCESS = 0;
+   static const uno_int UNO_OPTIMIZE_INVALID_ARGUMENT = 1; // null solver or model
+   static const uno_int UNO_OPTIMIZE_INVALID_MODEL = 2; // the model has neither an objective nor constraints
+   static const uno_int UNO_OPTIMIZE_INVALID_OPTIONS = 3; // the options cannot be resolved (e.g. the "auto" preset
+   // without any subproblem solver available)
+   static const uno_int UNO_OPTIMIZE_ERROR = 4; // any other error (e.g. out of memory)
 
    // Optimization status
    static const uno_int UNO_SUCCESS = 0;
@@ -375,15 +385,17 @@ extern "C" {
    bool uno_reset_logger_stream() UNO_NOEXCEPT;
 
    // optimizes a given model using the Uno solver and given options.
-   // returns true if the optimization was carried out (its outcome is given by uno_get_optimization_status), false if
-   // it could not start or failed unexpectedly (invalid solver or model, model without objective and constraints,
-   // inconsistent options...). The result of a previous optimization is discarded in both cases.
-   bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT;
+   // returns UNO_OPTIMIZE_SUCCESS if the optimization was carried out (its outcome is given by
+   // uno_get_optimization_status), otherwise UNO_OPTIMIZE_INVALID_ARGUMENT, UNO_OPTIMIZE_INVALID_MODEL,
+   // UNO_OPTIMIZE_INVALID_OPTIONS or UNO_OPTIMIZE_ERROR. An error raised during the optimization itself (including the
+   // construction of the subproblem solvers, e.g. an unavailable linear solver) is reported by the optimization status
+   // UNO_ALGORITHMIC_ERROR. The result of a previous optimization is discarded in all cases.
+   uno_int uno_optimize(void* solver, void* model) UNO_NOEXCEPT;
 
    // gets the description of the optimization method used by Uno to solve the model
    // example: TR Fletcher-filter restoration inequality-constrained SQP method with exact Hessian and no inertia correction
    // like the other result getters, returns UNO_RESULT_SUCCESS if it succeeded, otherwise UNO_RESULT_INVALID_ARGUMENT or
-   // UNO_RESULT_NOT_AVAILABLE (no optimization yet, or uno_optimize returned false). The string is owned by the solver:
+   // UNO_RESULT_NOT_AVAILABLE (no optimization yet, or uno_optimize failed). The string is owned by the solver:
    // it remains valid until the next uno_optimize or uno_destroy_solver.
    uno_int uno_get_method_description(void* solver, const char** method_description) UNO_NOEXCEPT;
 
@@ -405,7 +417,7 @@ extern "C" {
 
    // the following functions get the result of the last optimization (once the model was solved).
    // they write the value into their last argument and return UNO_RESULT_SUCCESS if it succeeded, otherwise
-   // UNO_RESULT_INVALID_ARGUMENT, UNO_RESULT_NOT_AVAILABLE (no optimization yet, or uno_optimize returned false),
+   // UNO_RESULT_INVALID_ARGUMENT, UNO_RESULT_NOT_AVAILABLE (no optimization yet, or uno_optimize failed),
    // UNO_RESULT_INVALID_INDEX (for the components) or UNO_RESULT_ERROR. The value is written only if the status is
    // UNO_RESULT_SUCCESS. The indices of the components follow the base indexing of the model.
 

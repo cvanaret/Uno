@@ -91,7 +91,7 @@ int main(void) {
    CHECK(uno_get_method_description(NULL, &description) == UNO_RESULT_INVALID_ARGUMENT);
 
    // successful solve
-   CHECK(uno_optimize(solver, model));
+   CHECK(uno_optimize(solver, model) == UNO_OPTIMIZE_SUCCESS);
    uno_int optimization_status = -1;
    CHECK(uno_get_optimization_status(solver, &optimization_status) == UNO_RESULT_SUCCESS);
    CHECK(optimization_status == UNO_SUCCESS);
@@ -108,7 +108,7 @@ int main(void) {
    CHECK(uno_get_method_description(solver, &description) == UNO_RESULT_SUCCESS && description != NULL);
 
    // a failed optimization discards the result
-   CHECK(!uno_optimize(solver, NULL));
+   CHECK(uno_optimize(solver, NULL) == UNO_OPTIMIZE_INVALID_ARGUMENT);
    check_not_available(solver);
 
    uno_destroy_solver(solver);

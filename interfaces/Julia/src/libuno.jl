@@ -38,6 +38,12 @@ const UNO_RESULT_NOT_AVAILABLE = Cint(2)
 const UNO_RESULT_INVALID_INDEX = Cint(3)
 const UNO_RESULT_ERROR = Cint(4)
 
+const UNO_OPTIMIZE_SUCCESS = Cint(0)
+const UNO_OPTIMIZE_INVALID_ARGUMENT = Cint(1)
+const UNO_OPTIMIZE_INVALID_MODEL = Cint(2)
+const UNO_OPTIMIZE_INVALID_OPTIONS = Cint(3)
+const UNO_OPTIMIZE_ERROR = Cint(4)
+
 const UNO_SUCCESS = Cint(0)
 const UNO_ITERATION_LIMIT = Cint(1)
 const UNO_TIME_LIMIT = Cint(2)
@@ -275,7 +281,7 @@ function uno_reset_logger_stream()
 end
 
 function uno_optimize(solver, model)
-    @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Bool
+    @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Int32
 end
 
 function uno_get_method_description(solver, method_description)

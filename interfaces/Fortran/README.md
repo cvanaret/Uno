@@ -283,15 +283,15 @@ status = uno_set_solver_preset(solver, "filtersqp")
 Solve the optimization problem with:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_optimize(solver, model)
+integer(uno_int) :: status
+status = uno_optimize(solver, model)
 ```
 
-`uno_optimize` returns `.true.` if the optimization was carried out, and `.false.` if it could not start or failed unexpectedly.
+`uno_optimize` returns `UNO_OPTIMIZE_SUCCESS` if the optimization was carried out (its outcome is given by the optimization status below), otherwise `UNO_OPTIMIZE_INVALID_ARGUMENT` (the solver or the model is not valid), `UNO_OPTIMIZE_INVALID_MODEL` (neither an objective nor constraints), `UNO_OPTIMIZE_INVALID_OPTIONS` (the options cannot be resolved, e.g. the `auto` preset without any subproblem solver available) or `UNO_OPTIMIZE_ERROR`. An error raised during the optimization itself (e.g. a linear solver that is not available in your build) is reported by the optimization status `UNO_ALGORITHMIC_ERROR`.
 
 ### Inspecting the result
 
-The following functions allow you to inspect the solution. They write the value into their last argument and return an `integer(uno_int)` status: `UNO_RESULT_SUCCESS` if the value was written, otherwise `UNO_RESULT_INVALID_ARGUMENT`, `UNO_RESULT_NOT_AVAILABLE` (no optimization yet, or `uno_optimize` returned `.false.`), `UNO_RESULT_INVALID_INDEX` or `UNO_RESULT_ERROR`. The value is written only if the status is `UNO_RESULT_SUCCESS`.
+The following functions allow you to inspect the solution. They write the value into their last argument and return an `integer(uno_int)` status: `UNO_RESULT_SUCCESS` if the value was written, otherwise `UNO_RESULT_INVALID_ARGUMENT`, `UNO_RESULT_NOT_AVAILABLE` (no optimization yet, or `uno_optimize` failed), `UNO_RESULT_INVALID_INDEX` or `UNO_RESULT_ERROR`. The value is written only if the status is `UNO_RESULT_SUCCESS`.
 
 * optimization status:
 

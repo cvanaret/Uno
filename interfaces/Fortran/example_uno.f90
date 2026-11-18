@@ -151,8 +151,8 @@ program example_uno
     !---------------------------------------------------
     ! Run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
     !---------------------------------------------------
-    success = uno_optimize(solver, model)
-    call check_success(success, "uno_optimize")
+    status = uno_optimize(solver, model)
+    call check_status(status, UNO_OPTIMIZE_SUCCESS, "uno_optimize")
     status = uno_get_solution_objective(solver, solution_objective)
     call check_status(status, UNO_RESULT_SUCCESS, "uno_get_solution_objective")
     print *, 'Solution objective = ', solution_objective
@@ -165,8 +165,8 @@ program example_uno
     call check_success(success, "uno_set_lagrangian_hessian")
     success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
     call check_success(success, "uno_set_lagrangian_sign_convention")
-    success = uno_optimize(solver, model)
-    call check_success(success, "uno_optimize")
+    status = uno_optimize(solver, model)
+    call check_status(status, UNO_OPTIMIZE_SUCCESS, "uno_optimize")
 
     !---------------------------------------------------
     ! Get method description

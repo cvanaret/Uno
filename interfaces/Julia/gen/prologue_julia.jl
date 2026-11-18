@@ -43,6 +43,13 @@ const UNO_RESULT_NOT_AVAILABLE    = Cint(2)
 const UNO_RESULT_INVALID_INDEX    = Cint(3)
 const UNO_RESULT_ERROR            = Cint(4)
 
+# Status codes returned by uno_optimize
+const UNO_OPTIMIZE_SUCCESS          = Cint(0)
+const UNO_OPTIMIZE_INVALID_ARGUMENT = Cint(1)
+const UNO_OPTIMIZE_INVALID_MODEL    = Cint(2)
+const UNO_OPTIMIZE_INVALID_OPTIONS  = Cint(3)
+const UNO_OPTIMIZE_ERROR            = Cint(4)
+
 # Optimization status
 const UNO_SUCCESS           = Cint(0)
 const UNO_ITERATION_LIMIT   = Cint(1)

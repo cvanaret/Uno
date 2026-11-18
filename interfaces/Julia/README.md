@@ -87,7 +87,7 @@ model = uno_model(nlp)
 solver = uno_solver()
 @assert uno_set_solver_preset(solver, "filtersqp") == UnoSolver.UNO_OPTIONS_SUCCESS
 @assert uno_set_solver_bool_option(solver, "print_solution", true) == UnoSolver.UNO_OPTIONS_SUCCESS
-@assert uno_optimize(solver, model)
+@assert uno_optimize(solver, model) == UnoSolver.UNO_OPTIMIZE_SUCCESS
 stats = uno_statistics(solver, model)
 ```
 

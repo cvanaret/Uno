@@ -6,6 +6,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <new>
 #include <streambuf>
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
@@ -1194,10 +1195,10 @@ bool uno_reset_logger_stream() UNO_NOEXCEPT {
    });
 }
 
-bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
+uno_int uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
    if (solver == nullptr) {
       report_error("Please specify a valid solver.");
-      return false;
+      return UNO_OPTIMIZE_INVALID_ARGUMENT;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    // the result of a previous optimization does not correspond to this optimization
@@ -1207,19 +1208,22 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
 
    if (model == nullptr) {
       report_error("Please specify a valid model.");
-      return false;
+      return UNO_OPTIMIZE_INVALID_ARGUMENT;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (!user_model->objective_function && !user_model->constraint_functions) {
       report_error("Please specify at least an objective or constraints.");
-      return false;
+      return UNO_OPTIMIZE_INVALID_MODEL;
    }
 
+   // the status returned if an exception is raised: it depends on the current stage
+   uno_int failure_status = UNO_OPTIMIZE_ERROR;
    try {
       // create an instance of UnoModel, a subclass of Model
       const UnoModel uno_model(*user_model);
 
       // defaults -> preset -> user options
+      failure_status = UNO_OPTIMIZE_INVALID_OPTIONS;
       Options full_options = uno_solver->default_options;
       const std::string preset = uno_solver->user_options.get_string_optional("preset").value_or(uno_solver->default_options.get_string("preset"));
       if (preset == "auto") {
@@ -1235,7 +1239,8 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
 
       uno_solver->user_options.print("User options");
 
-      // solve the model
+      // solve the model. Uno::solve reports its errors in the result
+      failure_status = UNO_OPTIMIZE_ERROR;
       Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
       // move the new result into uno_solver
       uno_solver->result = std::make_unique<Result>(std::move(result));
@@ -1245,20 +1250,25 @@ bool uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
       uno_solver->options_consistent_with_solve = true;
       // flush the logger
       Logger::flush();
-      return true;
+      return UNO_OPTIMIZE_SUCCESS;
+   }
+   catch (const std::bad_alloc& exception) {
+      report_error(exception.what());
+      failure_status = UNO_OPTIMIZE_ERROR;
    }
    catch (const std::exception& exception) {
       report_error(exception.what());
    }
    catch (...) {
       report_error("An unknown error occurred");
+      failure_status = UNO_OPTIMIZE_ERROR;
    }
    try {
       Logger::flush();
    }
    catch (...) {
    }
-   return false;
+   return failure_status;
 }
 
 namespace {

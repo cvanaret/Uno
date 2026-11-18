@@ -186,8 +186,8 @@ int main() {
    assert(option_status == UNO_OPTIONS_SUCCESS);
 
    // run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
-   bool optimized = uno_optimize(solver, model);
-   assert(optimized);
+   uno_int optimize_status = uno_optimize(solver, model);
+   assert(optimize_status == UNO_OPTIMIZE_SUCCESS);
    printf("Method used: %s\n", method_description(solver));
    // get the solution
    uno_int optimization_status;
@@ -212,8 +212,8 @@ int main() {
    uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
       hessian_column_indices, lagrangian_hessian);
    uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
-   optimized = uno_optimize(solver, model);
-   assert(optimized);
+   optimize_status = uno_optimize(solver, model);
+   assert(optimize_status == UNO_OPTIMIZE_SUCCESS);
    
    printf("Method used: %s\n", method_description(solver));
    // get the solution
@@ -256,8 +256,8 @@ int main() {
    assert(option_status == UNO_OPTIONS_SUCCESS);
    option_status = uno_set_solver_string_option(solver, "LP_solver", "HIGHS");
    assert(option_status == UNO_OPTIONS_SUCCESS);
-   optimized = uno_optimize(solver, model);
-   assert(optimized);
+   optimize_status = uno_optimize(solver, model);
+   assert(optimize_status == UNO_OPTIMIZE_SUCCESS);
    printf("Method used: %s\n", method_description(solver));
    check_result(uno_get_optimization_status(solver, &optimization_status), "uno_get_optimization_status");
    assert(optimization_status == UNO_SUCCESS);

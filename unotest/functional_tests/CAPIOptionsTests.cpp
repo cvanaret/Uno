@@ -10,10 +10,12 @@
 #include <fstream>
 #include <set>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include "CAPITestProblem.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 using namespace uno;
 using namespace uno::capi_test;
@@ -28,6 +30,7 @@ static_assert(noexcept(uno_load_solver_option_file(nullptr, nullptr)));
 static_assert(noexcept(uno_set_solver_preset(nullptr, nullptr)));
 static_assert(noexcept(uno_options_begin_iterator()));
 static_assert(noexcept(uno_optimize(nullptr, nullptr)));
+static_assert(std::is_same_v<decltype(uno_optimize(nullptr, nullptr)), uno_int>);
 static_assert(noexcept(uno_get_solver_integer_option(nullptr, nullptr, nullptr)));
 static_assert(noexcept(uno_get_solver_double_option(nullptr, nullptr, nullptr)));
 static_assert(noexcept(uno_get_solver_bool_option(nullptr, nullptr, nullptr)));
@@ -359,7 +362,7 @@ TEST_F(CAPIOptionsTests, StringOverriddenBySolverIsReportedAfterTheSolve) {
    ASSERT_EQ(uno_set_solver_preset(this->solver, available_preset()), UNO_OPTIONS_SUCCESS);
    ASSERT_EQ(uno_set_solver_string_option(this->solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    ASSERT_EQ(this->string_option("hessian_model"), "exact");
-   ASSERT_TRUE(uno_optimize(this->solver, model));
+   ASSERT_EQ(uno_optimize(this->solver, model), UNO_OPTIMIZE_SUCCESS);
    EXPECT_EQ(this->string_option("hessian_model"), "LBFGS");
    // after a change of options, the value of the user/preset/default options is reported again
    ASSERT_EQ(uno_set_solver_integer_option(this->solver, "max_iterations", 100), UNO_OPTIONS_SUCCESS);
@@ -386,7 +389,7 @@ TEST(CAPIOptimize, AutoPresetValuesCanBeReadAfterTheSolve) {
    }
    EXPECT_EQ(value, nullptr);
 
-   ASSERT_TRUE(uno_optimize(solver, model));
+   ASSERT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_SUCCESS);
    // the values picked by the "auto" preset
    for (const char* option_name: {"globalization_mechanism", "globalization_strategy", "inequality_handling_method",
          "constraint_relaxation_strategy", "inertia_correction_strategy"}) {
@@ -421,9 +424,9 @@ TEST(CAPIOptimize, AutoPresetValuesCanBeReadAfterTheSolve) {
    EXPECT_EQ(uno_get_solver_integer_option(solver, "max_iterations", &max_iterations), UNO_OPTIONS_SUCCESS);
    EXPECT_EQ(max_iterations, 50);
    // so does a failed optimization
-   ASSERT_TRUE(uno_optimize(solver, model));
+   ASSERT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_SUCCESS);
    EXPECT_EQ(uno_get_solver_string_option(solver, "globalization_mechanism", &value), UNO_OPTIONS_SUCCESS);
-   EXPECT_FALSE(uno_optimize(solver, nullptr));
+   EXPECT_EQ(uno_optimize(solver, nullptr), UNO_OPTIMIZE_INVALID_ARGUMENT);
    EXPECT_EQ(uno_get_solver_string_option(solver, "globalization_mechanism", &value), UNO_OPTIONS_NOT_SET);
    uno_destroy_model(model);
    uno_destroy_solver(solver);
@@ -450,7 +453,7 @@ TEST(CAPIOptimize, OverrideOfAnOptionWithoutValueIsReportedAfterTheSolve) {
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    const char* value{nullptr};
    ASSERT_EQ(uno_get_solver_string_option(solver, "hessian_model", &value), UNO_OPTIONS_NOT_SET);
-   ASSERT_TRUE(uno_optimize(solver, model));
+   ASSERT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_SUCCESS);
    ASSERT_EQ(uno_get_solver_string_option(solver, "hessian_model", &value), UNO_OPTIONS_SUCCESS);
    EXPECT_STREQ(value, "LBFGS");
    uno_destroy_solver(solver);
@@ -460,9 +463,9 @@ TEST(CAPIOptimize, OverrideOfAnOptionWithoutValueIsReportedAfterTheSolve) {
 TEST(CAPIOptimize, NullArgumentsAreRejected) {
    void* solver = uno_create_solver();
    void* model = create_hs015_model();
-   EXPECT_FALSE(uno_optimize(nullptr, model));
-   EXPECT_FALSE(uno_optimize(solver, nullptr));
-   EXPECT_FALSE(uno_optimize(nullptr, nullptr));
+   EXPECT_EQ(uno_optimize(nullptr, model), UNO_OPTIMIZE_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_optimize(solver, nullptr), UNO_OPTIMIZE_INVALID_ARGUMENT);
+   EXPECT_EQ(uno_optimize(nullptr, nullptr), UNO_OPTIMIZE_INVALID_ARGUMENT);
    uno_destroy_model(model);
    uno_destroy_solver(solver);
 }
@@ -470,7 +473,51 @@ TEST(CAPIOptimize, NullArgumentsAreRejected) {
 TEST(CAPIOptimize, ModelWithoutObjectiveAndConstraintsIsRejected) {
    void* solver = uno_create_solver();
    void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
-   EXPECT_FALSE(uno_optimize(solver, model));
+   EXPECT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_INVALID_MODEL);
+   uno_destroy_model(model);
+   uno_destroy_solver(solver);
+}
+
+// without any subproblem solver, the "auto" preset cannot be resolved
+TEST(CAPIOptimize, AutoPresetWithoutSubproblemSolverIsRejected) {
+   if (available_preset() != nullptr) {
+      GTEST_SKIP() << "a subproblem solver is available";
+   }
+   void* solver = uno_create_solver();
+   void* model = create_hs015_model();
+   ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
+   EXPECT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_INVALID_OPTIONS);
+   uno_int optimization_status{-1};
+   EXPECT_EQ(uno_get_optimization_status(solver, &optimization_status), UNO_RESULT_NOT_AVAILABLE);
+   uno_destroy_model(model);
+   uno_destroy_solver(solver);
+}
+
+// an error raised during the optimization (here, an unavailable linear solver) is reported by the optimization status
+TEST(CAPIOptimize, UnavailableLinearSolverIsReportedByTheOptimizationStatus) {
+   const std::vector<std::string> available_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
+   if (available_solvers.empty()) {
+      GTEST_SKIP() << "no linear solver available for the ipopt preset";
+   }
+   const char* unavailable_solver{nullptr};
+   for (const char* linear_solver: {"MA57", "MA27", "MA86", "SSIDS", "MUMPS"}) {
+      if (std::find(available_solvers.begin(), available_solvers.end(), linear_solver) == available_solvers.end()) {
+         unavailable_solver = linear_solver;
+         break;
+      }
+   }
+   if (unavailable_solver == nullptr) {
+      GTEST_SKIP() << "all the linear solvers are available";
+   }
+   void* solver = uno_create_solver();
+   void* model = create_hs015_model();
+   ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
+   ASSERT_EQ(uno_set_solver_preset(solver, "ipopt"), UNO_OPTIONS_SUCCESS);
+   ASSERT_EQ(uno_set_solver_string_option(solver, "linear_solver", unavailable_solver), UNO_OPTIONS_SUCCESS);
+   EXPECT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_SUCCESS);
+   uno_int optimization_status{-1};
+   EXPECT_EQ(uno_get_optimization_status(solver, &optimization_status), UNO_RESULT_SUCCESS);
+   EXPECT_EQ(optimization_status, UNO_ALGORITHMIC_ERROR);
    uno_destroy_model(model);
    uno_destroy_solver(solver);
 }
@@ -485,7 +532,7 @@ TEST(CAPIOptimize, SolveAfterRejectedOption) {
    ASSERT_EQ(uno_set_solver_preset(solver, available_preset()), UNO_OPTIONS_SUCCESS);
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    EXPECT_EQ(uno_set_solver_string_option(solver, "logger", "SOLENT"), UNO_OPTIONS_INVALID_VALUE);
-   EXPECT_TRUE(uno_optimize(solver, model));
+   EXPECT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_SUCCESS);
    uno_int optimization_status{-1};
    uno_int solution_status{-1};
    EXPECT_EQ(uno_get_optimization_status(solver, &optimization_status), UNO_RESULT_SUCCESS);

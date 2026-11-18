@@ -74,6 +74,15 @@ integer(uno_int), parameter :: UNO_RESULT_INVALID_INDEX    = 3
 integer(uno_int), parameter :: UNO_RESULT_ERROR            = 4
 
 !---------------------------------------------
+! Status codes returned by uno_optimize
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_OPTIMIZE_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_OPTIMIZE_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_OPTIMIZE_INVALID_MODEL    = 2
+integer(uno_int), parameter :: UNO_OPTIMIZE_INVALID_OPTIONS  = 3
+integer(uno_int), parameter :: UNO_OPTIMIZE_ERROR            = 4
+
+!---------------------------------------------
 ! Optimization status
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_SUCCESS           = 0
@@ -765,12 +774,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_optimize(solver, model) &
-      result(success) &
+      result(optimize) &
       bind(C, name="uno_optimize")
-      import :: c_ptr, c_bool
+      import :: c_ptr, uno_int
       type(c_ptr), value :: solver
       type(c_ptr), value :: model
-      logical(c_bool) :: success
+      integer(uno_int) :: optimize
    end function uno_optimize
 end interface
 

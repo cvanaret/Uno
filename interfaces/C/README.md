@@ -143,7 +143,7 @@ The option setters and `uno_optimize` never throw. The functions that set option
 - `UNO_OPTIONS_INVALID_ARGUMENT`: the solver, the option name, the option value or the file name is null;
 - `UNO_OPTIONS_NOT_FOUND`: no option has this name;
 - `UNO_OPTIONS_WRONG_TYPE`: the option exists, but has a different type;
-- `UNO_OPTIONS_INVALID_VALUE`: the value is not valid for this option. The value of a string option with enumerated values (e.g. `logger`, `hessian_model`, `linear_solver`, `preset`) must be one of its possible values. Whether a solver (e.g. `MA57`) is available in your build is only checked by `uno_optimize`;
+- `UNO_OPTIONS_INVALID_VALUE`: the value is not valid for this option. The value of a string option with enumerated values (e.g. `logger`, `hessian_model`, `linear_solver`, `preset`) must be one of its possible values. Whether a solver (e.g. `MA57`) is available in your build is only checked during the optimization (optimization status `UNO_ALGORITHMIC_ERROR`);
 - `UNO_OPTIONS_INVALID_FILE`: the option file cannot be opened or is malformed;
 - `UNO_OPTIONS_ERROR`: any other error.
 
@@ -229,16 +229,23 @@ uno_reset_logger_stream();
 
 The model can then be solved by Uno:
 ```c
-bool success = uno_optimize(solver, model);
+uno_int status = uno_optimize(solver, model);
 ```
-`uno_optimize` returns `true` if the optimization was carried out (its outcome is described by the optimization status below), and `false` if it could not start or failed unexpectedly (null solver or model, model without objective and constraints, inconsistent options...). In both cases, the result of a previous optimization is discarded.
+`uno_optimize` returns a status code:
+- `UNO_OPTIMIZE_SUCCESS`: the optimization was carried out and a result is available. Its outcome (success, iteration limit, evaluation error...) is described by the optimization status below;
+- `UNO_OPTIMIZE_INVALID_ARGUMENT`: the solver or the model is null;
+- `UNO_OPTIMIZE_INVALID_MODEL`: the model has neither an objective nor constraints;
+- `UNO_OPTIMIZE_INVALID_OPTIONS`: the options cannot be resolved (e.g. the `auto` preset without any subproblem solver available);
+- `UNO_OPTIMIZE_ERROR`: any other error (e.g. out of memory).
+
+In all cases, the result of a previous optimization is discarded. An error raised during the optimization itself, including the construction of the subproblem solvers (e.g. a linear solver that is not available in your build), is reported by the optimization status `UNO_ALGORITHMIC_ERROR`.
 
 ### Inspecting the result
 
 A set of functions allows you to inspect the result of the optimization. They write the value into their last argument and return a status code:
 - `UNO_RESULT_SUCCESS`: the value was written;
 - `UNO_RESULT_INVALID_ARGUMENT`: the solver or the pointer to the value is null;
-- `UNO_RESULT_NOT_AVAILABLE`: there is no result (no optimization yet, or `uno_optimize` returned `false`). No message is printed in this case;
+- `UNO_RESULT_NOT_AVAILABLE`: there is no result (no optimization yet, or `uno_optimize` failed). No message is printed in this case;
 - `UNO_RESULT_INVALID_INDEX`: the index of a component is not valid (the indices follow the base indexing of the model);
 - `UNO_RESULT_ERROR`: any other error.
 
