@@ -167,7 +167,7 @@ def test_user_exception(method, failing):
     assert len(calls) == 4
 
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp"])
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_user_exception_hess(method):
     """Check that an exception raised by the Hessian stops Uno and is re-raised."""
     hess, calls = raise_after(rosen_hess, 2)
@@ -183,7 +183,7 @@ def test_user_exception_hess(method):
     assert len(calls) == 3
 
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp"])
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_rosen_constr2_hess(method):
     res = minimize(
         rosen,
@@ -270,7 +270,7 @@ def test_several_constraint_blocks(method):
     assert np.allclose(res.x, _reference_blocks_solution(), atol=1e-5)
 
 
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp"])
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "ipopt"])
 def test_several_constraint_blocks_hess(method):
     """Check a problem with several constraint blocks and the Lagrangian Hessian."""
     res = minimize(
@@ -861,8 +861,16 @@ _HESSIAN_FORMATS = {
 }
 
 
-@pytest.mark.parametrize("hessian_format", sorted(_HESSIAN_FORMATS))
-@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp"])
+@pytest.mark.parametrize(
+    ("method", "hessian_format"),
+    [
+        (method, hessian_format)
+        for method in ["filtersqp", "funnelsqp", "ipopt"]
+        for hessian_format in sorted(_HESSIAN_FORMATS)
+        # 'ipopt' requires a Hessian matrix (see test_hess_linear_operator_with_ipopt).
+        if (method, hessian_format) != ("ipopt", "LinearOperator")
+    ],
+)
 def test_hessian_formats(method, hessian_format):
     """Check that sparse and LinearOperator Hessians give the dense solution.
 
@@ -1692,10 +1700,36 @@ def test_callback_uninspectable_signature():
     assert np.allclose(callback.calls[-1][0], res.x)
 
 
-def test_hess_with_ipopt():
-    """Check that a callable Hessian with 'ipopt' raises before the optimization."""
+def test_hess_linear_operator_with_ipopt():
+    """Check that a LinearOperator Hessian with 'ipopt' raises before the optimization.
+
+    'ipopt' requires a Hessian matrix, which cannot be computed from a LinearOperator.
+    """
     with pytest.raises(ValueError, match="requires an explicit Hessian matrix"):
-        minimize(rosen, np.zeros(2), jac=rosen_der, hess=rosen_hess, method="ipopt")
+        minimize(
+            rosen,
+            np.zeros(2),
+            jac=rosen_der,
+            hess=lambda x: _NoDenseOperator(rosen_hess(x)),
+            method="ipopt",
+        )
+
+
+@pytest.mark.parametrize("hessian_format", ["dense", "sparse"])
+def test_hess_with_ipopt(hessian_format):
+    """Check that 'ipopt' uses a dense or sparse Hessian as a matrix."""
+    to_format = _HESSIAN_FORMATS[hessian_format]
+    calls = []
+
+    def hess(x):
+        calls.append(x)
+        return to_format(rosen_hess(x))
+
+    x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
+    res = minimize(rosen, x0, jac=rosen_der, hess=hess, method="ipopt")
+    assert res.success
+    assert np.allclose(res.x, np.ones(5), atol=1e-6)
+    assert res.nhev == len(calls) > 1
 
 
 @pytest.mark.parametrize(
@@ -1863,3 +1897,96 @@ def test_documented_options_are_uno_options():
     )
     del uno_options["preset"]
     assert documented_options == uno_options
+
+
+def _create_hessian_matrix(constraint_hess, x0):
+    """Create a Lagrangian Hessian with an objective and one constraint of size 2.
+
+    The objective Hessian is a sparse diagonal matrix.
+
+    Args:
+        constraint_hess: The Hessian of the constraint ``hess(x, v)``.
+        x0: The initial point.
+
+    Returns:
+        The Lagrangian Hessian and whether it can be computed as a matrix.
+    """
+    constraints = _normalize_constraints(
+        NonlinearConstraint(
+            fun=lambda x: np.array([x[0] * x[1], x[1] * x[2]]),
+            jac=lambda x: np.array([[x[1], x[0], 0.0], [0.0, x[2], x[1]]]),
+            hess=constraint_hess,
+            lb=-np.inf,
+            ub=1.0,
+        ),
+        x0,
+        rosen_hess,
+    )
+    hessian = _LagrangianHessianOperator(
+        lambda x: sp.diags_array([1.0, 2.0, 3.0]).tocsr(), (), constraints
+    )
+    return hessian, hessian.create_sparsity_pattern(x0)
+
+
+def _bilinear_hess(x, v):
+    """Return the Hessian of [x0 * x1, x1 * x2] weighted by v."""
+    return np.array([[0.0, v[0], 0.0], [v[0], 0.0, v[1]], [0.0, v[1], 0.0]])
+
+
+def test_lagrangian_hessian_matrix():
+    """Check the sparsity pattern and the values of the Lagrangian Hessian matrix.
+
+    The sparsity pattern is the union of the lower triangles of the terms,
+    and a term with zero multipliers is not computed.
+    """
+    x0 = np.ones(3)
+    hessian, is_matrix = _create_hessian_matrix(_bilinear_hess, x0)
+    assert is_matrix
+    # The diagonal of the objective Hessian
+    # and the lower triangle of the dense constraint Hessian.
+    rows_and_columns = list(zip(hessian.hessian_rows, hessian.hessian_columns))
+    assert rows_and_columns == [(0, 0), (1, 0), (1, 1), (2, 0), (2, 1), (2, 2)]
+
+    values = np.empty(6)
+    hessian.evaluate_matrix(x0, 2.0, np.array([3.0, 4.0]), values)
+    assert values.tolist() == [2.0, 3.0, 4.0, 0.0, 4.0, 6.0]
+    evaluations = hessian.evaluations
+    hessian.evaluate_matrix(x0, 0.0, np.array([3.0, 4.0]), values)
+    assert values.tolist() == [0.0, 3.0, 0.0, 0.0, 4.0, 0.0]
+    assert hessian.evaluations == evaluations
+
+
+def test_lagrangian_hessian_matrix_cancelling_components():
+    """Check that Hessians of components cancelling out with unit multipliers are kept.
+
+    The Hessians of the components of the constraint are A and -A,
+    so the constraint Hessian is zero when evaluated with the multipliers [1, 1].
+    """
+    x0 = np.ones(3)
+
+    a = np.zeros((3, 3))
+    a[2, 0] = 1.0
+
+    def constraint_hess(x, v):
+        return sp.csr_matrix((v[0] - v[1]) * a)
+
+    hessian, _ = _create_hessian_matrix(constraint_hess, x0)
+    assert (2, 0) in zip(hessian.hessian_rows, hessian.hessian_columns)
+
+
+def test_lagrangian_hessian_matrix_entry_outside_pattern():
+    """Check that an entry outside the sparsity pattern raises an error."""
+    x0 = np.zeros(3)
+    hessian, _ = _create_hessian_matrix(
+        lambda x, v: sp.csr_matrix(_bilinear_hess(x, v * x[0])), x0
+    )
+    with pytest.raises(ValueError, match=r"nonzero entry at \(1, 0\) outside"):
+        hessian.evaluate_matrix(np.ones(3), 1.0, np.ones(2), np.empty(3))
+
+
+def test_lagrangian_hessian_matrix_linear_operator():
+    """Check that a LinearOperator term prevents the computation as a matrix."""
+    _, is_matrix = _create_hessian_matrix(
+        lambda x, v: _NoDenseOperator(_bilinear_hess(x, v)), np.ones(3)
+    )
+    assert not is_matrix

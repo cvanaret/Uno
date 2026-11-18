@@ -227,9 +227,14 @@ def minimize(
         and so does any method when the option "hessian_model" is set
         to a value other than "exact";
         the Hessians of the constraints are then not required.
-        A callable ``hess`` is not supported by the method 'ipopt',
-        which requires an explicit Hessian matrix, and raises a "ValueError";
-        use a quasi-Newton model with this method.
+        When ``hess`` and the constraint Hessians return dense arrays
+        or sparse matrices, Uno is also given the Lagrangian Hessian as a sparse matrix,
+        whose sparsity pattern is the union of their lower triangles at ``x0``
+        (all the entries of a dense one, the stored entries of a sparse one);
+        the method 'ipopt' requires this matrix,
+        whereas 'filtersqp' uses the Hessian-vector products.
+        A "LinearOperator" Hessian is thus not supported by 'ipopt'
+        and raises a "ValueError".
         Without ``hess``, Uno uses its L-BFGS model.
         The finite-difference schemes ('2-point', '3-point', 'cs')
         are not supported for ``hess`` and raise a "NotImplementedError":
@@ -543,7 +548,8 @@ def minimize(
         if "hess" is not valid, if the bounds are ill-shaped or inconsistent,
         if "hess" is a callable used by the method
         and a nonlinear constraint has no callable Hessian,
-        if "hess" is a callable and the method is 'ipopt',
+        if the method is 'ipopt' and "hess" or a constraint Hessian
+        returns a "LinearOperator",
         or if a constraint Jacobian at "x0" has a wrong shape.
     NotImplementedError
         If "hess" is a finite-difference scheme
@@ -592,13 +598,6 @@ def minimize(
         and method_lower != "filterslp"
         and options.get("hessian_model", "exact") == "exact"
     )
-    if uses_hessian_operator and method_lower == "ipopt":
-        raise ValueError(
-            "The method 'ipopt' requires an explicit Hessian matrix, "
-            "which cannot be computed from 'hess': "
-            "use a quasi-Newton model (e.g. hess=BFGS()) "
-            "or the method 'filtersqp' or 'funnelsqp'."
-        )
 
     # Step 2: Process bounds
     var_lb, var_ub = _get_variable_bounds(bounds, n)
@@ -642,7 +641,25 @@ def minimize(
     hessian_operator = None
     if uses_hessian_operator:
         hessian_operator = _LagrangianHessianOperator(hess, args, normalized)
+        # BQPD uses Hessian-vector products,
+        # the direct linear solvers (e.g. of 'ipopt') an explicit Hessian matrix.
         model.set_lagrangian_hessian_operator(guard.wrap_inplace(hessian_operator))
+        if hessian_operator.create_sparsity_pattern(x0):
+            model.set_lagrangian_hessian(
+                len(hessian_operator.hessian_rows),
+                unopy.LOWER_TRIANGLE,
+                hessian_operator.hessian_rows,
+                hessian_operator.hessian_columns,
+                guard.wrap_inplace(hessian_operator.evaluate_matrix),
+            )
+        elif method_lower == "ipopt":
+            raise ValueError(
+                "The method 'ipopt' requires an explicit Hessian matrix, "
+                "which cannot be computed from a LinearOperator: "
+                "return dense arrays or sparse matrices from 'hess' "
+                "and the Hessians of the constraints, "
+                "or use a quasi-Newton model (e.g. hess=BFGS())."
+            )
 
     # Step 6: Configure and run solver
     uno_solver = unopy.UnoSolver()
