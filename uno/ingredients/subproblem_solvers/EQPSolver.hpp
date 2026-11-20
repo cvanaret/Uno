@@ -59,6 +59,8 @@ namespace uno {
          Evaluations& trial_evaluations) override;
 
       [[nodiscard]] const SolverWorkspace& get_workspace() const override;
+      [[nodiscard]] const Direction& resolve(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         Evaluations& current_evaluations) override;
 
       [[nodiscard]] const NewtonSystem& get_newton_system() const { return *this->newton_system; }
 
@@ -103,6 +105,8 @@ namespace uno {
       size_t iteration_refinement_steps{0};
       std::vector<std::string_view> iteration_refinement_flags{};
 
+      void solve_assembled_system(Statistics& statistics, const Subproblem& subproblem, const Iterate& current_iterate,
+         bool allow_refactorization);
       void solve_with_iterative_refinement(Statistics& statistics, const Subproblem& subproblem,
          bool allow_refactorization);
       [[nodiscard]] bool refine_uncondensed_solution();

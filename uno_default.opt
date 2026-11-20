@@ -397,6 +397,9 @@ use_proximal_term false
 # Type of the barrier function (log)
 barrier_function log
 
+# Barrier parameter update strategy (monotone|adaptive)
+barrier_update_strategy monotone
+
 # Initial value of the barrier parameter (double)
 barrier_initial_parameter 0.1
 
@@ -438,6 +441,27 @@ barrier_damping_factor 1e-5
 
 # Factor in the small infeasibility test (double)
 barrier_small_infeasibility_factor 1e-4
+
+# Lower bound of the centering parameter in the adaptive barrier update (double)
+adaptive_mu_sigma_min 1e-6
+
+# Upper bound of the centering parameter in the adaptive barrier update (double)
+adaptive_mu_sigma_max 1e2
+
+# Lower bound of the barrier parameter in the adaptive barrier update (double)
+adaptive_mu_min 1e-11
+
+# Upper bound of the adaptive barrier parameter, relative to the initial average complementarity (double)
+adaptive_mu_max_factor 10
+
+# Barrier parameter (relative to the average complementarity) when switching to the fixed mode (double)
+adaptive_mu_monotone_init_factor 0.8
+
+# Margin factor of the filter that decides the free mode of the adaptive barrier update (double)
+adaptive_mu_filter_margin_factor 1e-5
+
+# Maximum margin of the filter that decides the free mode of the adaptive barrier update (double)
+adaptive_mu_filter_max_margin 1
 
 # Maximum accepted norm of the least-square multipliers (double)
 least_square_multiplier_max_norm 1e3
