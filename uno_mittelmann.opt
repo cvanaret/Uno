@@ -1,3 +1,4 @@
 preset ipopt
 #MA57_use_scaling true
 max_iterations 20000
+barrier_theta_mu 1.1
