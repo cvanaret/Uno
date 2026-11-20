@@ -28,6 +28,7 @@ nav:
     - 'SciPy': 'interfaces/scipy.md'
     - 'GEMSEO': 'interfaces/gemseo.md'
     - 'Julia': 'interfaces/julia.md'
+    - 'R': 'interfaces/r.md'
     - 'C': 'interfaces/c.md'
     - 'AMPL': 'interfaces/ampl.md'
     - 'Fortran': 'interfaces/fortran.md'
