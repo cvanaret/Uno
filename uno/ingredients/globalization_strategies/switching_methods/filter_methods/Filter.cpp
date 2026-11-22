@@ -86,8 +86,10 @@ namespace uno {
             this->margin_uses_entry_infeasibility ? current_infeasibility : trial_infeasibility);
    }
 
+   // strict inequality (as in filterSQP): a zero infeasibility cannot be sufficiently reduced. Otherwise, a feasible
+   // trial iterate would be acceptable wrt any feasible point (current iterate or filter entry), whatever its objective
    bool Filter::infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const {
-      return (trial_infeasibility <= this->parameters.beta * current_infeasibility);
+      return (trial_infeasibility < this->parameters.beta * current_infeasibility);
    }
 
    static std::string to_string(double number) {
@@ -130,7 +132,7 @@ namespace uno {
       this->objective.insert(this->objective.begin() + start, current_objective);
 
       // fixed capacity exceeded: drop the pair (existing or new) with the largest infeasibility h_max and lower the upper
-      // bound to h_max. Since the bound test is h <= beta*ub, every point with h > beta*h_max is rejected, which
+      // bound to h_max. Since the bound test is h < beta*ub, every point with h >= beta*h_max is rejected, which
       // includes the whole region dominated by the dropped pair
       if (0 < this->capacity && this->capacity < this->infeasibility.size()) {
          this->infeasibility_upper_bound = std::min(this->infeasibility_upper_bound, this->infeasibility.back());
