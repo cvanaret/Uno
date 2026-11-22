@@ -27,6 +27,8 @@ namespace uno {
          activity_tolerance(options.get_double("TR_activity_tolerance")),
          minimum_radius(options.get_double("TR_min_radius")),
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
+         h_type_step_factor(options.get_double("TR_h_type_step_factor")),
+         h_type_step_exponent(options.get_double("TR_h_type_step_exponent")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
       if (!(0. < this->radius)) {
          throw std::runtime_error("The trust-region radius should be positive");
@@ -39,6 +41,12 @@ namespace uno {
       }
       if (this->aggressive_decrease_factor <= 1.) {
          throw std::runtime_error("The trust-region aggressive decrease factor should be > 1");
+      }
+      if (!(0. < this->h_type_step_factor)) {
+         throw std::runtime_error("The trust-region h-type step factor should be positive");
+      }
+      if (!(0.5 < this->h_type_step_exponent && this->h_type_step_exponent < 1.)) {
+         throw std::runtime_error("The trust-region h-type step exponent should be in (0.5, 1)");
       }
    }
 
@@ -135,8 +143,9 @@ namespace uno {
                evaluation_cache.trial_evaluations.reset();
                this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
-                  evaluation_cache, warmstart_information, user_callbacks);
+               const Decision decision = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate,
+                  direction, evaluation_cache, warmstart_information, user_callbacks);
+               is_acceptable = decision.accepted;
                set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                if (is_acceptable) {
                   // possibly increase the radius if trust region is active
@@ -145,7 +154,14 @@ namespace uno {
                   termination = true;
                }
                else {
-                  this->decrease_radius(direction.norm);
+                  if (decision.reason == RejectionReason::H_TYPE_STEP_TOO_LONG) {
+                     // jump into the range of radii in which an h-type step is allowed (strictly smaller radius)
+                     this->radius = this->h_type_step_bound(current_iterate.progress.infeasibility);
+                     DEBUG << "Trust-region radius decreased to " << this->radius << " (h-type step bound)\n";
+                  }
+                  else {
+                     this->decrease_radius(direction.norm);
+                  }
                   warmstart_information.trust_region_changed = true;
                   // rejected step and small radius: try to terminate with a small step. The residuals of the rejected
                   // trial iterate were not computed: test (and terminate at) the current iterate instead, from which the
@@ -207,8 +223,20 @@ namespace uno {
       }
    }
 
+   // FLT (Theorem 7, h-type case) relies on the monotonicity of the predicted reduction in the radius, a consequence of the
+   // global optimality of the QP solution. With KKT points of nonconvex QPs, a long h-type step at a large radius could be
+   // accepted near a feasible non-KKT point, infinitely often. Any KKT point of the QP is f-type and acceptable for radii
+   // in FLT's window [mu h, min(sqrt(2 beta tau / (mnM)), kappa)] (Lemma 5, with q(d) <= q(d_hat) + 2nM rho^2 instead of
+   // global optimality). Since mu h << h^nu << sqrt(h) for nu in (1/2, 1) and small h, the radii [factor h^nu,
+   // 2 factor h^nu] lie in the window: forbidding longer h-type steps (and jumping to the bound) lets the inner loop
+   // sample an f-type step first. A KKT point d with ||d||_inf <= bound is also a KKT point for the radius bound
+   // (the trust-region constraints are inactive), hence the test on the step norm rather than the radius
+   double TrustRegionStrategy::h_type_step_bound(double infeasibility) const {
+      return std::max(this->h_type_step_factor * std::pow(infeasibility, this->h_type_step_exponent), this->minimum_radius);
+   }
+
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
-   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   Decision TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const PredictedReductionModels predicted_reduction_models =
@@ -216,9 +244,13 @@ namespace uno {
          evaluation_cache.current_evaluations);
       const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.,
          /* use_curvature_information = */ true);
-      return this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-         trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
-         predicted_reductions, warmstart_information, user_callbacks).accepted;
+      this->constraint_relaxation_strategy->set_h_type_iterates_allowed(
+         direction.norm <= this->h_type_step_bound(current_iterate.progress.infeasibility));
+      const Decision decision = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model,
+         current_iterate, trial_iterate, direction, 1., true, evaluation_cache.current_evaluations,
+         evaluation_cache.trial_evaluations, predicted_reductions, warmstart_information, user_callbacks);
+      this->constraint_relaxation_strategy->set_h_type_iterates_allowed(true);
+      return decision;
    }
 
    // check whether the algorithm can terminate at an iterate (with computed residuals) after a rejected step with very

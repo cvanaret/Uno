@@ -410,6 +410,11 @@ namespace uno {
          trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
    }
 
+   void FeasibilityRestoration::set_h_type_iterates_allowed(bool allowed) {
+      this->optimality.globalization_strategy->set_h_type_iterates_allowed(allowed);
+      this->feasibility.globalization_strategy->set_h_type_iterates_allowed(allowed);
+   }
+
    double FeasibilityRestoration::small_infeasibility_threshold() const {
       return this->current().globalization_strategy.small_infeasibility_threshold();
    }

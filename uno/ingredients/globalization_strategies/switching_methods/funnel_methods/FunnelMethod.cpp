@@ -71,6 +71,11 @@ namespace uno {
                scenario = "h-type at h=0";
                decision = Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
             }
+            else if (!this->h_type_iterates_allowed) {
+               DEBUG << "\t\tTrial iterate REJECTED: h-type step too long wrt the infeasibility\n";
+               scenario = "h-type, long step";
+               decision = Decision::reject(RejectionReason::H_TYPE_STEP_TOO_LONG);
+            }
             // h-type step
             else if (this->funnel.sufficient_decrease_condition(trial_progress.infeasibility)) {
                DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";

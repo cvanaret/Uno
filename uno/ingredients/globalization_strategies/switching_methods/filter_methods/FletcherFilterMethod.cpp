@@ -69,6 +69,11 @@ namespace uno {
          scenario = "h-type at h=0";
          decision = Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
       }
+      else if (!this->h_type_iterates_allowed) {
+         DEBUG << "Trial iterate rejected: h-type step too long wrt the infeasibility\n";
+         scenario = "h-type, long step";
+         decision = Decision::reject(RejectionReason::H_TYPE_STEP_TOO_LONG);
+      }
       // switching condition violated: predicted reduction is not promising (h-type)
       else {
          DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";

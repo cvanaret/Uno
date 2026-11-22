@@ -79,6 +79,12 @@ namespace uno {
          this->last_rejection_due_to_filter = false;
          return Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
       }
+      else if (!this->h_type_iterates_allowed) {
+         DEBUG << "Trial iterate rejected: h-type step too long wrt the infeasibility\n";
+         statistics.set("Status", std::string(symbols::fail) + " (h-type, long step)");
+         this->last_rejection_due_to_filter = false;
+         return Decision::reject(RejectionReason::H_TYPE_STEP_TOO_LONG);
+      }
       else {
          DEBUG << "Switching condition violated\n";
          // IPOPT (obj_max_inc): reject a merit that increases by too many orders of magnitude, otherwise a reduction of

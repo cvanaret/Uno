@@ -59,6 +59,8 @@ namespace uno {
          UserCallbacks& user_callbacks) = 0;
       // forwarded to the globalization strategy that tested the trial iterates of the step
       virtual void notify_step_limited_by(RejectionReason sole_rejection_reason) = 0;
+      // forwarded to the globalization strategies (see GlobalizationStrategy::set_h_type_iterates_allowed)
+      virtual void set_h_type_iterates_allowed(bool allowed) = 0;
       // accept a trial step without globalization test (IPOPT, Section 3.9), possibly after forcing an update of the
       // parameterization (e.g. a decrease of the barrier parameter). Returns true if the parameterization was updated
       [[nodiscard]] virtual bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,

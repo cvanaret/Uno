@@ -13,6 +13,7 @@ namespace uno {
       CURRENT_ITERATE, // not acceptable wrt the current iterate
       FILTER,
       FUNNEL,
+      H_TYPE_STEP_TOO_LONG, // h-type iterate whose step is too long wrt the infeasibility (trust region)
       INVALID_TRIAL_ITERATE // e.g. infinite progress measure
    };
 

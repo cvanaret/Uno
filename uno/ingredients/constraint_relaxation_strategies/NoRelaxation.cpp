@@ -166,6 +166,10 @@ namespace uno {
          current_evaluations, trial_evaluations);
    }
 
+   void NoRelaxation::set_h_type_iterates_allowed(bool allowed) {
+      this->globalization_strategy.set_h_type_iterates_allowed(allowed);
+   }
+
    double NoRelaxation::small_infeasibility_threshold() const {
       return this->globalization_strategy.small_infeasibility_threshold();
    }
