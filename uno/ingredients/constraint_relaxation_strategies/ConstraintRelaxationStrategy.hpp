@@ -74,6 +74,8 @@ namespace uno {
 
       // threshold theta_min of the globalization strategy of the current phase
       [[nodiscard]] virtual double small_infeasibility_threshold() const = 0;
+      // small-infeasibility threshold of the optimality phase, whatever the current phase
+      [[nodiscard]] virtual double optimality_small_infeasibility_threshold() const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;

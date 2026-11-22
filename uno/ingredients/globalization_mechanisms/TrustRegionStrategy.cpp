@@ -48,6 +48,11 @@ namespace uno {
       if (!(0.5 < this->h_type_step_exponent && this->h_type_step_exponent < 1.)) {
          throw std::runtime_error("The trust-region h-type step exponent should be in (0.5, 1)");
       }
+      // the h-type step bound applies below the small-infeasibility threshold, which must be positive (h -> 0 along the
+      // subsequence of FLT's Theorem 7 must eventually drop below it)
+      if (!(0. < options.get_double("barrier_small_infeasibility_factor"))) {
+         throw std::runtime_error("The small infeasibility factor should be positive with a trust region");
+      }
    }
 
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -223,6 +228,7 @@ namespace uno {
       }
    }
 
+   // h-type step bound b = factor h^nu, applied to the optimality phase if h <= theta (small-infeasibility threshold).
    // FLT (Theorem 7, h-type case) relies on the monotonicity of the predicted reduction in the radius, a consequence of the
    // global optimality of the QP solution. With KKT points of nonconvex QPs, a long h-type step at a large radius could be
    // accepted near a feasible non-KKT point, infinitely often. Any KKT point of the QP is f-type and acceptable for radii
@@ -234,7 +240,11 @@ namespace uno {
    // After such a rejection, the radius decreases geometrically with b as a floor. A rejected step at a radius larger than
    // rho_bar has ||d|| > rho_bar (otherwise, d would be an acceptable f-type KKT point for a radius in the window), so the
    // next radius exceeds rho_bar/2: the accepted radii stay bounded away from 0, as required when the number of h-type
-   // iterations is finite. Jumping straight to b (-> 0) would skip the window
+   // iterations is finite. Jumping straight to b (-> 0) would skip the window.
+   // The threshold theta > 0 is fixed: along the subsequence of Theorem 7, h -> 0 eventually drops below it, and the case
+   // of finitely many h-type iterations only relies on the radius update. Likewise, the proof only uses b for h -> 0, so
+   // the factor is arbitrary: theta and factor = 100 avoid shortening h-type steps far from feasibility (at h = theta,
+   // b = 0.1), where they are legitimate
    double TrustRegionStrategy::h_type_step_bound(double infeasibility) const {
       return std::max(this->h_type_step_factor * std::pow(infeasibility, this->h_type_step_exponent), this->minimum_radius);
    }
@@ -248,9 +258,12 @@ namespace uno {
          evaluation_cache.current_evaluations);
       const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.,
          /* use_curvature_information = */ true);
-      // the bound only applies to the optimality phase (FLT treat restoration as a black box)
+      // the bound only applies to the optimality phase (FLT treat restoration as a black box), below the small-infeasibility
+      // threshold theta > 0 of that phase
+      const double infeasibility = current_iterate.progress.infeasibility;
       const bool h_type_iterates_allowed = this->constraint_relaxation_strategy->solving_feasibility_problem() ||
-         direction.norm <= this->h_type_step_bound(current_iterate.progress.infeasibility);
+         this->constraint_relaxation_strategy->optimality_small_infeasibility_threshold() < infeasibility ||
+         direction.norm <= this->h_type_step_bound(infeasibility);
       // restore the default (allowed) even if the acceptance test throws (e.g. evaluation error)
       struct HTypeIteratesFlagGuard {
          ConstraintRelaxationStrategy& strategy;

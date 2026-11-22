@@ -416,6 +416,10 @@ namespace uno {
       this->optimality.globalization_strategy->set_h_type_iterates_allowed(allowed);
    }
 
+   double FeasibilityRestoration::optimality_small_infeasibility_threshold() const {
+      return this->optimality.globalization_strategy->small_infeasibility_threshold();
+   }
+
    double FeasibilityRestoration::small_infeasibility_threshold() const {
       return this->current().globalization_strategy.small_infeasibility_threshold();
    }

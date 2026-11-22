@@ -61,6 +61,7 @@ namespace uno {
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       [[nodiscard]] double small_infeasibility_threshold() const override;
+      [[nodiscard]] double optimality_small_infeasibility_threshold() const override;
       [[nodiscard]] std::string get_name() const override;
 
    private:
