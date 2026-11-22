@@ -73,6 +73,12 @@ namespace uno {
             return Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
          }
       }
+      else if (!SwitchingMethod::allows_h_type_iterate(current_progress.infeasibility)) {
+         DEBUG << "Trial iterate rejected: nonpositive predicted reduction at a feasible iterate\n";
+         statistics.set("Status", std::string(symbols::fail) + " (h-type at h=0)");
+         this->last_rejection_due_to_filter = false;
+         return Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
+      }
       else {
          DEBUG << "Switching condition violated\n";
          // IPOPT (obj_max_inc): reject a merit that increases by too many orders of magnitude, otherwise a reduction of

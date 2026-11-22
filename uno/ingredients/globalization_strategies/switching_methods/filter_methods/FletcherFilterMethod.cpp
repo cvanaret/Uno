@@ -63,6 +63,12 @@ namespace uno {
          }
          scenario = "f-type";
       }
+      // switching condition violated at a feasible iterate: the predicted reduction is nonpositive
+      else if (!SwitchingMethod::allows_h_type_iterate(current_progress.infeasibility)) {
+         DEBUG << "Trial iterate rejected: nonpositive predicted reduction at a feasible iterate\n";
+         scenario = "h-type at h=0";
+         decision = Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
+      }
       // switching condition violated: predicted reduction is not promising (h-type)
       else {
          DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
