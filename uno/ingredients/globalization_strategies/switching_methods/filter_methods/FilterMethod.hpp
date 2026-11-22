@@ -24,6 +24,7 @@ namespace uno {
       void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
       void reset() override;
       void avoid_cycling_back_to(const ProgressMeasures& current_progress) override;
+      [[nodiscard]] double h_type_reference_infeasibility() const override;
 
    protected:
       Filter filter;

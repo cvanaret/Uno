@@ -223,7 +223,7 @@ See [Linear system scaling](methods.md#linear-system-scaling) for how and when t
 | `TR_activity_tolerance`         | double | 1e-6    | Tolerance with which the trust-region constraint is considered active |
 | `TR_min_radius`                 | double | 1e-12   | Minimum radius acceptable before failure is reported |
 | `TR_radius_reset_threshold`     | double | 1e-4    | Smallest value to which the radius is reset at the beginning of an iteration |
-| `TR_h_type_step_factor` | double | 100 | If the infeasibility is at most the small-infeasibility threshold (`barrier_small_infeasibility_factor`, which must be positive with a trust region), an h-type iterate is accepted only if the step norm is at most factor * infeasibility^exponent |
+| `TR_h_type_step_factor` | double | 100 | If the infeasibility is at most the small-infeasibility threshold (`barrier_small_infeasibility_factor`, which must be positive with a trust region), an h-type iterate is accepted only if the step norm is at most factor * tau^exponent, tau being the smallest infeasibility of the filter (width of the funnel) |
 | `TR_h_type_step_exponent` | double | 0.75 | Exponent of the h-type step bound, in (1/2, 1) |
 
 ## Feasibility restoration options

@@ -36,7 +36,7 @@ namespace uno {
       const double h_type_step_exponent;
       const bool print_minor_iterations;
 
-      [[nodiscard]] double h_type_step_bound(double infeasibility) const;
+      [[nodiscard]] double h_type_step_bound(double reference_infeasibility) const;
       [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);

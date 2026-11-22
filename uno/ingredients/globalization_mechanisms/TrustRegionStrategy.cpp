@@ -164,7 +164,8 @@ namespace uno {
                      // geometric decrease with the bound b < ||d|| as a floor: the radii between b and the radius are
                      // sampled (jumping to b would skip FLT's window when the number of h-type iterations is finite), and
                      // the QP is solved again with a radius for which an h-type step is allowed
-                     this->radius = std::max(this->radius, this->h_type_step_bound(current_iterate.progress.infeasibility));
+                     this->radius = std::max(this->radius,
+                        this->h_type_step_bound(this->constraint_relaxation_strategy->optimality_h_type_reference_infeasibility()));
                      DEBUG << "Trust-region radius set to " << this->radius << " (h-type step bound as a floor)\n";
                   }
                   warmstart_information.trust_region_changed = true;
@@ -228,25 +229,30 @@ namespace uno {
       }
    }
 
-   // h-type step bound b = factor h^nu, applied to the optimality phase if h <= theta (small-infeasibility threshold).
+   // h-type step bound b = factor tau^nu, applied to the optimality phase if h <= theta (small-infeasibility threshold),
+   // where tau is FLT's reference infeasibility (smallest infeasibility of the filter, width of the funnel).
    // FLT (Theorem 7, h-type case) relies on the monotonicity of the predicted reduction in the radius, a consequence of the
    // global optimality of the QP solution. With KKT points of nonconvex QPs, a long h-type step at a large radius could be
    // accepted near a feasible non-KKT point, infinitely often. Any KKT point of the QP is f-type and acceptable for radii
    // in FLT's window [mu h, rho_bar] with rho_bar = min(sqrt(2 beta tau / (mnM)), kappa) (Lemma 5, with
-   // q(d) <= q(d_hat) + 2nM rho^2 instead of global optimality). Since mu h << h^nu << sqrt(h) for nu in (1/2, 1) and small
-   // h, the radii [b, 2b] with b = factor h^nu lie in the window: forbidding h-type steps longer than b lets the inner loop
-   // sample an f-type step first. A KKT point d with ||d||_inf <= b is also a KKT point for the radius b (the trust-region
-   // constraints are inactive), hence the test on the step norm rather than the radius.
+   // q(d) <= q(d_hat) + 2nM rho^2 instead of global optimality). Since h < tau, mu h << tau^nu << sqrt(tau) for nu in
+   // (1/2, 1) and tau -> 0 along the subsequence of Theorem 7 (tau is the infeasibility of the previous h-type iterate):
+   // the radii [b, 2b] lie in the window, and forbidding h-type steps longer than b lets the inner loop sample an f-type
+   // step first. A KKT point d with ||d||_inf <= b is also a KKT point for the radius b (the trust-region constraints are
+   // inactive), hence the test on the step norm rather than the radius.
+   // tau rather than h: near a KKT point on a curved constraint, a step of length s changes the infeasibility by O(s^2),
+   // so the Newton steps of the end game have length ~ sqrt(h) >> h^nu and a bound in terms of h rejects them (and cuts
+   // the radius, which breaks the fast local convergence). In a quadratically convergent end game, tau ~ sqrt(h).
    // After such a rejection, the radius decreases geometrically with b as a floor. A rejected step at a radius larger than
    // rho_bar has ||d|| > rho_bar (otherwise, d would be an acceptable f-type KKT point for a radius in the window), so the
    // next radius exceeds rho_bar/2: the accepted radii stay bounded away from 0, as required when the number of h-type
    // iterations is finite. Jumping straight to b (-> 0) would skip the window.
    // The threshold theta > 0 is fixed: along the subsequence of Theorem 7, h -> 0 eventually drops below it, and the case
-   // of finitely many h-type iterations only relies on the radius update. Likewise, the proof only uses b for h -> 0, so
-   // the factor is arbitrary: theta and factor = 100 avoid shortening h-type steps far from feasibility (at h = theta,
-   // b = 0.1), where they are legitimate
-   double TrustRegionStrategy::h_type_step_bound(double infeasibility) const {
-      return std::max(this->h_type_step_factor * std::pow(infeasibility, this->h_type_step_exponent), this->minimum_radius);
+   // of finitely many h-type iterations only relies on the radius update. Likewise, the proof only uses b for tau -> 0,
+   // so the factor is arbitrary: theta and factor = 100 avoid shortening h-type steps far from feasibility, where they are
+   // legitimate
+   double TrustRegionStrategy::h_type_step_bound(double reference_infeasibility) const {
+      return std::max(this->h_type_step_factor * std::pow(reference_infeasibility, this->h_type_step_exponent), this->minimum_radius);
    }
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
@@ -260,10 +266,9 @@ namespace uno {
          /* use_curvature_information = */ true);
       // the bound only applies to the optimality phase (FLT treat restoration as a black box), below the small-infeasibility
       // threshold theta > 0 of that phase
-      const double infeasibility = current_iterate.progress.infeasibility;
       const bool h_type_iterates_allowed = this->constraint_relaxation_strategy->solving_feasibility_problem() ||
-         this->constraint_relaxation_strategy->optimality_small_infeasibility_threshold() < infeasibility ||
-         direction.norm <= this->h_type_step_bound(infeasibility);
+         this->constraint_relaxation_strategy->optimality_small_infeasibility_threshold() < current_iterate.progress.infeasibility ||
+         direction.norm <= this->h_type_step_bound(this->constraint_relaxation_strategy->optimality_h_type_reference_infeasibility());
       // restore the default (allowed) even if the acceptance test throws (e.g. evaluation error)
       struct HTypeIteratesFlagGuard {
          ConstraintRelaxationStrategy& strategy;

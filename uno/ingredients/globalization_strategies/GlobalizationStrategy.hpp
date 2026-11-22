@@ -5,6 +5,7 @@
 #define UNO_GLOBALIZATIONSTRATEGY_H
 
 #include <string>
+#include "tools/Infinity.hpp"
 #include "Decision.hpp"
 
 namespace uno {
@@ -39,6 +40,9 @@ namespace uno {
       // set by the globalization mechanism before testing a trial iterate (trust region: h-type iterates are allowed
       // only if the step is short wrt the current infeasibility). Strategies without h-type iterates ignore it
       void set_h_type_iterates_allowed(bool allowed) { this->h_type_iterates_allowed = allowed; }
+      // reference infeasibility tau of FLT's Lemma 4 (smallest infeasibility of the filter, width of the funnel): the
+      // trust region bounds the length of h-type steps by factor tau^nu. Infinite for strategies without h-type iterates
+      [[nodiscard]] virtual double h_type_reference_infeasibility() const { return Inf; }
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 

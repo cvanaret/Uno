@@ -31,6 +31,7 @@ namespace uno {
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const override;
       void reset() override;
       void avoid_cycling_back_to(const ProgressMeasures& current_progress_measures) override;
+      [[nodiscard]] double h_type_reference_infeasibility() const override;
 
       [[nodiscard]] bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
          double trial_objective) const;

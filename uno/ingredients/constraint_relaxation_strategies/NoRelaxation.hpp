@@ -54,6 +54,7 @@ namespace uno {
 
       [[nodiscard]] double small_infeasibility_threshold() const override;
       [[nodiscard]] double optimality_small_infeasibility_threshold() const override;
+      [[nodiscard]] double optimality_h_type_reference_infeasibility() const override;
       [[nodiscard]] std::string get_name() const override;
 
    private:

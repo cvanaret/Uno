@@ -123,6 +123,11 @@ namespace uno {
       // do nothing
    }
 
+   // the width of the funnel plays the role of FLT's tau (trial iterates satisfy h <= width)
+   double FunnelMethod::h_type_reference_infeasibility() const {
+      return this->funnel.current_width();
+   }
+
    void FunnelMethod::avoid_cycling_back_to(const ProgressMeasures& current_progress_measures) {
       DEBUG << "Funnel is reduced\n";
       this->funnel.update_restoration(current_progress_measures.infeasibility);

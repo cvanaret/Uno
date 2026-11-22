@@ -170,6 +170,10 @@ namespace uno {
       this->globalization_strategy.set_h_type_iterates_allowed(allowed);
    }
 
+   double NoRelaxation::optimality_h_type_reference_infeasibility() const {
+      return this->globalization_strategy.h_type_reference_infeasibility();
+   }
+
    double NoRelaxation::optimality_small_infeasibility_threshold() const {
       return this->globalization_strategy.small_infeasibility_threshold();
    }

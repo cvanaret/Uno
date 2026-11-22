@@ -377,7 +377,7 @@ TR_min_radius 1e-12
 # Smallest value to which the radius is reset at the beginning of an iteration (double)
 TR_radius_reset_threshold 1e-4
 
-# If the infeasibility is at most the small-infeasibility threshold, an h-type iterate is accepted only if the step norm is at most factor * infeasibility^exponent (double)
+# If the infeasibility is at most the small-infeasibility threshold, an h-type iterate is accepted only if the step norm is at most factor * tau^exponent, tau being the smallest infeasibility of the filter (width of the funnel) (double)
 TR_h_type_step_factor 100
 
 # Exponent of the h-type step bound, in (1/2, 1) (double)
