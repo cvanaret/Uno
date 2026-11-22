@@ -410,9 +410,10 @@ namespace uno {
          trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
    }
 
+   // FLT treat the restoration phase as a black box: the step-length bound of h-type iterates only applies to the
+   // optimality phase (in the restoration phase, the infeasibility of the relaxed constraints is about zero)
    void FeasibilityRestoration::set_h_type_iterates_allowed(bool allowed) {
       this->optimality.globalization_strategy->set_h_type_iterates_allowed(allowed);
-      this->feasibility.globalization_strategy->set_h_type_iterates_allowed(allowed);
    }
 
    double FeasibilityRestoration::small_infeasibility_threshold() const {

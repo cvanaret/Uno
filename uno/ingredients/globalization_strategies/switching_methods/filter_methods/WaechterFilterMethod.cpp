@@ -79,12 +79,6 @@ namespace uno {
          this->last_rejection_due_to_filter = false;
          return Decision::reject(RejectionReason::SUFFICIENT_DECREASE);
       }
-      else if (!this->h_type_iterates_allowed) {
-         DEBUG << "Trial iterate rejected: h-type step too long wrt the infeasibility\n";
-         statistics.set("Status", std::string(symbols::fail) + " (h-type, long step)");
-         this->last_rejection_due_to_filter = false;
-         return Decision::reject(RejectionReason::H_TYPE_STEP_TOO_LONG);
-      }
       else {
          DEBUG << "Switching condition violated\n";
          // IPOPT (obj_max_inc): reject a merit that increases by too many orders of magnitude, otherwise a reduction of
@@ -119,6 +113,16 @@ namespace uno {
          return Decision::reject(RejectionReason::FILTER);
       }
       // now filter acceptable
+
+      // trust region: an h-type step (switching condition violated, as in FLT) must be short wrt the infeasibility. Steps
+      // that satisfy the switching condition at a non-small infeasibility are not concerned: FLT's argument only involves
+      // infeasibilities h -> 0, which are eventually small
+      if (!switching && !this->h_type_iterates_allowed) {
+         DEBUG << "Trial iterate rejected: h-type step too long wrt the infeasibility\n";
+         statistics.set("Status", std::string(symbols::fail) + " (h-type, long step)");
+         this->last_rejection_due_to_filter = false;
+         return Decision::reject(RejectionReason::H_TYPE_STEP_TOO_LONG);
+      }
 
       // filter reset heuristic
       if (this->number_filter_resets < this->max_number_filter_resets) {
