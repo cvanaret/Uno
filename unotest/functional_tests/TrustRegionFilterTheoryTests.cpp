@@ -215,3 +215,30 @@ TEST(TrustRegionFilterTheory, NdSphereWithConvexQPSolver) {
    }
 }
 #endif
+
+// Bug: at an infeasible iterate of the optimality phase, a radius below TR_min_radius threw "Small radius" (algorithmic
+// error). In FLT's algorithm, reducing the radius at an infeasible point always ends with an incompatible QP (Lemma 6),
+// that is, an h-type iteration via the restoration phase, never with a failure. In floating-point arithmetic, the QP
+// may remain compatible for tiny radii (e.g. when the feasibility tolerance of the QP solver accepts a tiny box). The
+// method should switch to the feasibility problem instead.
+// Here: min x  s.t.  x^2 = 1, from x = 0.1 with radius 10 and a large TR_min_radius (3) that triggers the small-radius
+// logic deterministically: the linearized constraint requires d = 4.95, the trial iterate 5.05 increases both the
+// objective and the infeasibility and is rejected, and the radius becomes 4.95/2 < 3
+TEST(TrustRegionFilterTheory, SmallRadiusAtInfeasibleIterateSwitchesToRestoration) {
+   const DenseTestModel model("small_radius_infeasible", 1, 1, ProblemType::NONLINEAR,
+      [](const Vector<double>& x) { return x[0]; },
+      [](const Vector<double>&, Vector<double>& g) { g[0] = 1.; },
+      [](const Vector<double>& x, Vector<double>& c) { c[0] = x[0]*x[0]; },
+      [](const Vector<double>& x, double* J) { J[0] = 2.*x[0]; },
+      [](const Vector<double>&, double, const Vector<double>& y, double* H) { H[0] = -2.*y[0]; },
+      {-Inf}, {Inf}, {1.}, {1.}, {0.1});
+   Options options = filtersqp_options();
+   options.set_double("TR_radius", 10.);
+   options.set_double("TR_min_radius", 3.);
+
+   Uno uno;
+   const Result result = uno.solve(model, options);
+   ASSERT_EQ(result.optimization_status, OptimizationStatus::SUCCESS);
+   EXPECT_LE(result.solution_primal_feasibility, 1e-6);
+   EXPECT_NEAR(std::abs(result.primal_solution[0]), 1., 1e-6);
+}
