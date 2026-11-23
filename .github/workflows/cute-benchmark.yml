@@ -26,13 +26,17 @@ name: CUTE-AMPL benchmark
 #
 # Two jobs, so that the PR code never runs with a token that can push:
 #  - benchmark (self-hosted, read-only token): builds and runs the PR, writes the report;
-#  - publish (GitHub-hosted, checks out nothing): pushes the profile and posts the comment.
+#  - publish (GitHub-hosted, checks out nothing): pushes the profiles and posts the comment.
 #  - without `compare_pr`: the number of solved instances and the shifted
-#    geometric means of the objective evaluations and of the solve time;
+#    geometric means of the objective evaluations and of the solve time, and a
+#    comparison against the reference solver of the preset, if any, with a
+#    performance profile with respect to the objective evaluations;
 #  - with `compare_pr`: a before/after comparison against the latest results of
 #    that PR with the same preset and `compare_linear_solver` (default: the same
-#    linear solver), with a performance profile with respect to the objective
-#    evaluations. The profile (PNG) is committed to the `benchmark-plots` branch
+#    linear solver), with two performance profiles with respect to the objective
+#    evaluations: before vs after, and before vs after vs the reference solver of
+#    the preset, if any (.github/CUTE/reference/<preset>.tsv: IPOPT for ipopt,
+#    filterSQP for filtersqp). The profiles (PNG) are committed to the `benchmark-plots` branch
 #    (created on first use) and embedded in the comment via its raw URL at that
 #    commit. Deleting or squashing that branch breaks the images of older comments.
 #
@@ -119,8 +123,8 @@ jobs:
       title: ${{ steps.configure.outputs.title }}
       comment_header: ${{ steps.configure.outputs.comment_header }}
       report_artifact: ${{ steps.configure.outputs.report_artifact }}
-      plot_file: ${{ steps.configure.outputs.plot_file }}
-      profile: ${{ steps.report.outputs.profile }}
+      plot_dir: ${{ steps.configure.outputs.plot_dir }}
+      plots: ${{ steps.report.outputs.plots }}
     steps:
       # All workflows share the runner's workspace: a CUTEst benchmark that died
       # before its cleanup leaves read-only files that would make the checkout fail
@@ -189,7 +193,11 @@ jobs:
             echo "title=${TITLE}"
             echo "comment_header=cute-benchmark-${CONFIG}"
             echo "report_artifact=cute-report-${CONFIG}-pr-${PR_NUMBER}"
-            echo "plot_file=cute/pr-${PR_NUMBER}/${CONFIG}-vs-pr-${COMPARE_PR}-${COMPARE_LINEAR_SOLVER}-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.png"
+            if [ -n "$COMPARE_PR" ]; then
+              echo "plot_dir=cute/pr-${PR_NUMBER}/${CONFIG}-vs-pr-${COMPARE_PR}-${COMPARE_LINEAR_SOLVER}-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            else
+              echo "plot_dir=cute/pr-${PR_NUMBER}/${CONFIG}-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            fi
           } | tee -a "$GITHUB_OUTPUT"
           # SSIDS (SPRAL) refuses to run without OpenMP cancellation
           if [ "$LINEAR_SOLVER" = SSIDS ]; then
@@ -225,7 +233,7 @@ jobs:
               *) echo "Ignoring ${relative}"; continue ;;
             esac
             extracted=$((extracted + 1))
-          done < <(find "$SOURCE" -type f -print0 | sort -z)
+          done < <(find "$SOURCE" -path "$SOURCE/reference" -prune -o -type f -print0 | sort -z)
           [ "$extracted" -gt 0 ] || { echo "::error::No archive or .nl file in .github/CUTE"; exit 1; }
 
           # results are keyed by instance name: names must be unique
@@ -237,8 +245,9 @@ jobs:
           fi
           count=$(find "$INSTANCE_DIR" -type f -name '*.nl' | wc -l)
           [ "$count" -gt 0 ] || { echo "::error::The archives of .github/CUTE contain no .nl file"; exit 1; }
-          # identifies the instance set, to flag comparisons between different sets
-          echo "INSTANCES_TREE=$(git -C "$TOOLS" rev-parse HEAD:.github/CUTE)" >> "$GITHUB_ENV"
+          # identifies the instance set (the reference results excluded), to flag comparisons between different sets
+          tree=$(git -C "$TOOLS" ls-tree HEAD:.github/CUTE | grep -v $'\treference$' | git -C "$TOOLS" mktree)
+          echo "INSTANCES_TREE=${tree}" >> "$GITHUB_ENV"
           echo "${count} instances extracted from ${extracted} file(s)"
 
       # ----------------------------------------------------------------
@@ -403,9 +412,12 @@ jobs:
       # matplotlib goes into a venv of this job, not into the venv shared by the
       # runners, and its caches stay out of the NFS home
       - name: Install matplotlib
-        if: inputs.compare_pr != ''
         run: |
           set -euo pipefail
+          # needed for the profiles: before/after, or against the reference solver of the preset
+          if [ -z "$COMPARE_PR" ] && [ ! -f "$TOOLS/.github/CUTE/reference/${PRESET}.tsv" ]; then
+            echo "No profile to draw"; exit 0
+          fi
           "$VENV/bin/python" -m venv "$RUNNER_TEMP/cute-plot-venv"
           "$RUNNER_TEMP/cute-plot-venv/bin/pip" install --quiet --disable-pip-version-check --no-cache-dir matplotlib
           echo "REPORT_PYTHON=$RUNNER_TEMP/cute-plot-venv/bin/python" >> "$GITHUB_ENV"
@@ -419,13 +431,16 @@ jobs:
           set -euo pipefail
           rm -rf report
           mkdir -p report
+          # reference solver of the preset (e.g. IPOPT for ipopt), if any
+          REFERENCE="$TOOLS/.github/CUTE/reference/${PRESET}.tsv"
+          [ -f "$REFERENCE" ] || REFERENCE=""
           "${REPORT_PYTHON:-$VENV/bin/python}" "$TOOLS/.github/scripts/cute_benchmark_report.py" \
             --title "$TITLE" --results-dir results \
             --output report/benchmark-comment.md --full-output report/benchmark-full.md \
             --compare-pr "$COMPARE_PR" --compare-artifact "$COMPARE_ARTIFACT" \
-            --profile report/performance-profile.png
+            --profile-dir report --reference "$REFERENCE"
 
-      # comment, run summary and profile, published by the publish job
+      # comment, run summary and profiles, published by the publish job
       - name: Upload the report
         uses: actions/upload-artifact@v4
         with:
@@ -441,17 +456,17 @@ jobs:
           if-no-files-found: ignore
 
   # Separate job, on a GitHub-hosted runner, without the PR code: the only one
-  # whose token can push (the profile) and comment.
+  # whose token can push (the profiles) and comment.
   publish:
     needs: benchmark
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write       # to commit the performance profile to the benchmark-plots branch
+      contents: write       # to commit the performance profiles to the benchmark-plots branch
       pull-requests: write  # to post the report
     env:
       REPORT_ARTIFACT: ${{ needs.benchmark.outputs.report_artifact }}
-      PLOT_FILE: ${{ needs.benchmark.outputs.plot_file }}
+      PLOT_DIR: ${{ needs.benchmark.outputs.plot_dir }}
     steps:
       - name: Download the report
         uses: actions/download-artifact@v4
@@ -459,33 +474,37 @@ jobs:
           name: ${{ needs.benchmark.outputs.report_artifact }}
           path: report
 
-      # Commits the profile to the PLOTS_BRANCH branch (an orphan branch, created on
-      # first use) under a unique name, and embeds it via its raw URL at that commit.
+      # Commits the profiles to the PLOTS_BRANCH branch (an orphan branch, created on
+      # first use) in a directory of this run, and embeds them via their raw URLs at
+      # that commit: the report refers to each image as PLOT:<file name>.
       # Runs of other presets may push concurrently: retried on rejection.
-      - name: Publish the performance profile
-        if: needs.benchmark.outputs.profile == 'true'
+      - name: Publish the performance profiles
+        if: needs.benchmark.outputs.plots == 'true'
         working-directory: report
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
-          # the image is alone on its line: replaced by a pointer to the artifact
+          # each image is alone on its line: replaced by a pointer to the artifact
           fallback() {
-            echo "::warning title=CUTE benchmark::Could not publish the performance profile ($1)"
-            NOTE="_Performance profile: \`performance-profile.png\` in the \`${REPORT_ARTIFACT}\` artifact of the [run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})._"
-            sed -i "/PROFILE_URL_PLACEHOLDER/c\\${NOTE}" benchmark-comment.md benchmark-full.md
+            echo "::warning title=CUTE benchmark::Could not publish the performance profiles ($1)"
+            NOTE="_Performance profiles: PNG files of the \`${REPORT_ARTIFACT}\` artifact of the [run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})._"
+            # one note for the first image, the other image lines are removed
+            sed -i -e "0,/](PLOT:/{/](PLOT:/c\\${NOTE}" -e "}" -e "/](PLOT:/d" benchmark-comment.md benchmark-full.md
             exit 0
           }
-          [ -f performance-profile.png ] || fallback "no profile in the report"
-          export PR_NUMBER COMPARE_PR PLOTS_BRANCH PLOT_FILE
-          export PROFILE="$PWD/performance-profile.png"
+          shopt -s nullglob
+          images=(*.png)
+          [ "${#images[@]}" -gt 0 ] || fallback "no profile in the report"
+          export PR_NUMBER COMPARE_PR PLOTS_BRANCH PLOT_DIR
+          export IMAGES_DIR="$PWD"
           export REMOTE="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
           # the credential goes through the environment, never on a command line
           GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
           export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraheader GIT_CONFIG_VALUE_0
           # one attempt, in a fresh repository; prints the pushed commit. A separate
           # process: errexit is ignored by functions called in an `if` condition
-          cat > "$RUNNER_TEMP/push_profile.sh" <<'EOF'
+          cat > "$RUNNER_TEMP/push_profiles.sh" <<'EOF'
           set -euo pipefail
           REPO_DIR="$RUNNER_TEMP/benchmark-plots"
           rm -rf "$REPO_DIR"
@@ -507,17 +526,17 @@ jobs:
           else
             exit 1
           fi
-          mkdir -p "$(dirname "$PLOT_FILE")"
-          cp "$PROFILE" "$PLOT_FILE"
-          git add "$PLOT_FILE"
-          git commit -q -m "CUTE profile: PR #${PR_NUMBER} vs PR #${COMPARE_PR}" \
+          mkdir -p "$PLOT_DIR"
+          cp "$IMAGES_DIR"/*.png "$PLOT_DIR/"
+          git add "$PLOT_DIR"
+          git commit -q -m "CUTE profiles: PR #${PR_NUMBER}${COMPARE_PR:+ vs PR #${COMPARE_PR}}" \
             -m "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           git push -q "$REMOTE" "HEAD:refs/heads/${PLOTS_BRANCH}"
           git rev-parse HEAD
           EOF
           pushed=""
           for attempt in 1 2 3 4 5; do
-            if pushed=$(bash "$RUNNER_TEMP/push_profile.sh"); then
+            if pushed=$(bash "$RUNNER_TEMP/push_profiles.sh"); then
               break
             fi
             pushed=""
@@ -525,9 +544,9 @@ jobs:
             [ "$attempt" -eq 5 ] || sleep $((attempt * 5))
           done
           [ -n "$pushed" ] || fallback "push to ${PLOTS_BRANCH} failed"
-          URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${pushed}/${PLOT_FILE}"
-          sed -i "s|PROFILE_URL_PLACEHOLDER|${URL}|g" benchmark-comment.md benchmark-full.md
-          echo "Performance profile: ${URL}"
+          URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${pushed}/${PLOT_DIR}/"
+          sed -i "s|](PLOT:|](${URL}|g" benchmark-comment.md benchmark-full.md
+          echo "Performance profiles: ${URL}"
 
       - name: Write the run summary
         run: cat report/benchmark-full.md >> "$GITHUB_STEP_SUMMARY"

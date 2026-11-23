@@ -8,18 +8,27 @@ results.tsv is
 the last four fields being empty when unknown (no optimization summary in the log).
 
 Without --compare-pr, the report gives the number of solved instances and the
-shifted geometric means of the objective evaluations and of the solve time.
+shifted geometric means of the objective evaluations and of the solve time and,
+with a --reference, compares the run against the reference solver, with a
+performance profile (reference-profile.png) with respect to the objective evaluations.
 
 With --compare-pr, the "before" results are those of the latest
 `<artifact-prefix><compare-pr>` artifact (another run of the same preset). The
-report then compares both runs on their common instances and a Dolan-Moré
-performance profile with respect to the number of objective evaluations is
-written to --profile. The report embeds it as ![...](PROFILE_URL_PLACEHOLDER),
-which the workflow substitutes with the URL of the published image. If the
-"before" results cannot be found, a warning is printed and the plain report is
-written instead.
+report then compares both runs on their common instances, with Dolan-Moré
+performance profiles with respect to the number of objective evaluations,
+written to --profile-dir:
+  - performance-profile.png: before vs after;
+  - reference-profile.png: before, after and the --reference solver (if given),
+    e.g. IPOPT for the ipopt preset, on the instances common to the three.
+Matplotlib is needed as soon as a profile is drawn.
+The report embeds each image as ![...](PLOT:<file name>); the workflow replaces
+"PLOT:" with the URL of the published images. If the "before" results cannot be
+found, a warning is printed and the plain report is written instead.
 
-"comparison=true|false" and "profile=true|false" (whether a profile was drawn) are
+--reference is a table in the results.tsv format (times may be empty) whose
+first line is "# Reference results ...: <solver label>".
+
+"comparison=true|false" and "plots=true|false" (whether a profile was drawn) are
 appended to $GITHUB_OUTPUT (if set).
 
 Standard library only, except matplotlib for the profile (imported only then).
@@ -38,7 +47,10 @@ from typing import NamedTuple, Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from benchmark_compare import github_request, download_artifact_zip  # noqa: E402
 
-PROFILE_URL_PLACEHOLDER = "PROFILE_URL_PLACEHOLDER"
+# images are embedded as ![...](PLOT:<file name>), "PLOT:" being replaced by the URL of the published images
+PLOT_PREFIX = "PLOT:"
+PROFILE_FILE = "performance-profile.png"
+REFERENCE_PROFILE_FILE = "reference-profile.png"
 # GitHub rejects comments longer than 65536 characters
 MAX_COMMENT_LENGTH = 60000
 # shifts of the shifted geometric means
@@ -53,7 +65,7 @@ EVALUATIONS_RATIO_THRESHOLD = 1.25
 
 class Result(NamedTuple):
     solved: bool
-    wall: float
+    wall: Optional[float]
     read: Optional[float]
     solve: Optional[float]
     objective_evaluations: Optional[int]
@@ -70,12 +82,22 @@ def parse_results_tsv(text):
     for line in text.splitlines():
         # not strip(): it would drop the trailing empty fields
         fields = line.rstrip("\r\n").split("\t")
-        if len(fields) != 7:
+        if line.startswith("#") or len(fields) != 7:
             continue
         name, status, wall, read, solve, evaluations, iterations = fields
-        results[name.strip()] = Result(status.strip() == "solved", float(wall), optional(read, float),
+        results[name.strip()] = Result(status.strip() == "solved", optional(wall, float), optional(read, float),
                                        optional(solve, float), optional(evaluations, int), optional(iterations, int))
     return results
+
+
+def read_reference(path):
+    """(results, solver label) of a reference table."""
+    with open(path) as file:
+        text = file.read()
+    first_line = text.splitlines()[0] if text else ""
+    label = first_line.split(":", 1)[1].strip() if first_line.startswith("#") and ":" in first_line \
+        else os.path.splitext(os.path.basename(path))[0]
+    return parse_results_tsv(text), label
 
 
 def fetch_from_artifact(repository, artifact_name, token, current_run_id):
@@ -143,8 +165,9 @@ def configuration(meta):
             f"time_limit={meta.get('time_limit')}s · {meta.get('selection')}")
 
 
-def build_summary(title, results, meta, with_table=False):
-    """Plain report of a single run (with_table: one row per instance, for the run summary)."""
+def build_summary(title, results, meta, with_table=False, reference=None, reference_label=None, images=()):
+    """Report of a single run, against the reference solver if any (with_table: one row per instance,
+    for the run summary)."""
     solved = [name for name, result in results.items() if result.solved]
     counted = [name for name in solved if has_counts(results[name])]
     timed = [name for name in solved if results[name].solve is not None]
@@ -168,6 +191,8 @@ def build_summary(title, results, meta, with_table=False):
         f"<sub>shifts: {EVALUATIONS_SHIFT:g} evaluations, {TIME_SHIFT:g}s</sub>",
         "",
     ]
+    if reference is not None:
+        lines += reference_section([results], ["this PR"], reference, reference_label, images)
     if with_table:
         lines += [f"<details><summary>Per-instance results ({len(results)} instances)</summary>", "",
                   "| | instance | objective evaluations | iterations | solve time | wall time |",
@@ -190,35 +215,40 @@ def build_summary(title, results, meta, with_table=False):
     return "\n".join(lines), console
 
 
-def performance_profile(before, after, names):
-    """Dolan-Moré profile on the objective evaluations: (taus, rho_before, rho_after).
-    A failed instance has an infinite ratio; an instance failed by both is never reached."""
+def performance_profile(runs, names):
+    """Dolan-Moré profile on the objective evaluations of several runs: (taus, [rho of each run]).
+    A failed instance has an infinite ratio; an instance failed by all runs is never reached."""
     def cost(result):
         return max(result.objective_evaluations, 1) if has_counts(result) else math.inf
 
-    ratios_before, ratios_after = [], []
+    ratios = [[] for _ in runs]
     for name in names:
-        b, a = cost(before[name]), cost(after[name])
-        best = min(b, a)
-        ratios_before.append(b / best if best < math.inf else math.inf)
-        ratios_after.append(a / best if best < math.inf else math.inf)
-    finite = [ratio for ratio in ratios_before + ratios_after if ratio < math.inf]
+        costs = [cost(run[name]) for run in runs]
+        best = min(costs)
+        for run_ratios, run_cost in zip(ratios, costs):
+            run_ratios.append(run_cost / best if best < math.inf else math.inf)
+    finite = [ratio for run_ratios in ratios for ratio in run_ratios if ratio < math.inf]
     tau_max = max(2.0, 1.1 * max(finite, default=1.0))
     taus = sorted(set([1.0, tau_max] + finite))
-    def rho(ratios):
-        return [sum(1 for ratio in ratios if ratio <= tau) / len(ratios) for tau in taus]
-    return taus, rho(ratios_before), rho(ratios_after)
+    return taus, [[sum(1 for ratio in run_ratios if ratio <= tau) / len(run_ratios) for tau in taus]
+                  for run_ratios in ratios]
 
 
-def plot_profile(path, taus, rho_before, rho_after, label_before, label_after, title):
+# one style per role, the same in every profile
+BEFORE_STYLE = dict(color="#4269d0", linestyle="-")
+AFTER_STYLE = dict(color="#ef8a0c", linestyle="--")  # also this PR, without comparison
+REFERENCE_STYLE = dict(color="#3ca951", linestyle=":")
+
+
+def plot_profile(path, taus, rhos, labels, styles, title):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.ticker import FuncFormatter
 
     figure, axes = plt.subplots(figsize=(8, 5), dpi=120)
-    axes.step(taus, rho_before, where="post", label=label_before, color="#4269d0", linewidth=2)
-    axes.step(taus, rho_after, where="post", label=label_after, color="#ef8a0c", linewidth=2, linestyle="--")
+    for rho, label, style in zip(rhos, labels, styles):
+        axes.step(taus, rho, where="post", label=label, linewidth=2, **style)
     axes.set_xscale("log", base=2)
     axes.set_xlim(1.0, taus[-1])
     axes.xaxis.set_major_formatter(FuncFormatter(lambda tau, _: f"{tau:g}"))
@@ -233,10 +263,69 @@ def plot_profile(path, taus, rho_before, rho_after, label_before, label_after, t
     plt.close(figure)
 
 
-def build_comparison(title, before, before_meta, after, after_meta, profile_path, changed_only, max_length=None,
-                     embed_profile=None):
-    """Before/after report; the profile is drawn to profile_path (if any) and embedded when embed_profile
-    (default: whether it was drawn)."""
+def run_label(prefix, meta):
+    label = (f"{prefix}: " if prefix else "") + f"PR #{meta.get('pr', '?')}"
+    return label + (f" ({meta['sha'][:7]})" if meta.get("sha") else "")
+
+
+def common_names(*runs):
+    return sorted(set.intersection(*(set(run) for run in runs)), key=lambda name: (name.casefold(), name))
+
+
+def draw_profiles(directory, title, runs, labels, reference=None, reference_label=None):
+    """Draws in directory the profile of the runs (if there are several: before/after) and, with a reference,
+    the profile of the runs and the reference. Returns the file names of the drawn profiles."""
+    drawn = []
+    styles = [BEFORE_STYLE, AFTER_STYLE] if len(runs) > 1 else [AFTER_STYLE]
+    names = common_names(*runs)
+    if len(runs) > 1 and names:
+        taus, rhos = performance_profile(runs, names)
+        plot_profile(os.path.join(directory, PROFILE_FILE), taus, rhos, labels, styles,
+                     f"{title}: objective evaluations ({len(names)} instances)")
+        drawn.append(PROFILE_FILE)
+    if reference is not None:
+        names = common_names(*runs, reference)
+        if names:
+            taus, rhos = performance_profile([*runs, reference], names)
+            plot_profile(os.path.join(directory, REFERENCE_PROFILE_FILE), taus, rhos, [*labels, reference_label],
+                         [*styles, REFERENCE_STYLE], f"{title} vs {reference_label} ({len(names)} instances)")
+            drawn.append(REFERENCE_PROFILE_FILE)
+    return drawn
+
+
+def reference_section(runs, headers, reference, reference_label, images):
+    """The runs (this PR, or before and after) against the reference solver, on their common instances."""
+    names = common_names(*runs, reference)
+    if not names:
+        return []
+    columns = [*runs, reference]
+    solved = [sum(1 for name in names if column[name].solved) for column in columns]
+    counted = [name for name in names if all(has_counts(column[name]) for column in columns)]
+    sgms = [shifted_geometric_mean([column[name].objective_evaluations for name in counted], EVALUATIONS_SHIFT)
+            for column in columns]
+    solved_by = "both" if len(columns) == 2 else f"the {len(columns)}"
+    lines = [f"### Against {reference_label}", ""]
+    if REFERENCE_PROFILE_FILE in images:
+        lines += [f"![Performance profile against {reference_label} (objective evaluations)]"
+                  f"({PLOT_PREFIX}{REFERENCE_PROFILE_FILE})", ""]
+    lines += [
+        "| | " + " | ".join([*headers, reference_label]) + " |",
+        "|:--|" + "--:|" * len(columns),
+        f"| solved ({len(names)} common instances) | " + " | ".join(str(count) for count in solved) + " |",
+        f"| shifted geo. mean objective evaluations, solved by {solved_by} ({len(counted)}) | "
+        + " | ".join(format_number(sgm) for sgm in sgms) + " |",
+        "",
+        f"<sub>{reference_label}: reference results from "
+        f"[nonlinear_optimization_solver_benchmark](https://github.com/cvanaret/nonlinear_optimization_solver_benchmark), "
+        f"obtained with its own tolerances and limits (times not comparable).</sub>",
+        "",
+    ]
+    return lines
+
+
+def build_comparison(title, before, before_meta, after, after_meta, images, changed_only, max_length=None,
+                     reference=None, reference_label=None):
+    """Before/after report (and against the reference solver, if any), embedding the profiles in images."""
     all_names = sorted(set(before) | set(after), key=lambda name: (name.casefold(), name))
     common = [name for name in all_names if name in before and name in after]
     both_solved = [name for name in common if before[name].solved and after[name].solved]
@@ -257,21 +346,6 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
     sgm_time_before = shifted_geometric_mean([before[name].solve for name in timed], TIME_SHIFT)
     sgm_time_after = shifted_geometric_mean([after[name].solve for name in timed], TIME_SHIFT)
 
-    label_before = f"before: PR #{before_meta.get('pr', '?')}"
-    if before_meta.get("sha"):
-        label_before += f" ({before_meta['sha'][:7]})"
-    label_after = f"after: PR #{after_meta.get('pr', '?')}"
-    if after_meta.get("sha"):
-        label_after += f" ({after_meta['sha'][:7]})"
-    profile_drawn = False
-    if profile_path and common:
-        taus, rho_before, rho_after = performance_profile(before, after, common)
-        plot_profile(profile_path, taus, rho_before, rho_after, label_before, label_after,
-                     f"{title}: objective evaluations ({len(common)} instances)")
-        profile_drawn = True
-    if embed_profile is None:
-        embed_profile = profile_drawn
-
     lines = [
         f"## {title} — before/after",
         "",
@@ -287,8 +361,8 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
     if before_meta.get("linear_solver") != after_meta.get("linear_solver"):
         lines += [f"> Linear solver: before `{before_meta.get('linear_solver')}`, "
                   f"after `{after_meta.get('linear_solver')}`.", ""]
-    if embed_profile:
-        lines += [f"![Performance profile (objective evaluations)]({PROFILE_URL_PLACEHOLDER})", ""]
+    if PROFILE_FILE in images:
+        lines += [f"![Performance profile (objective evaluations)]({PLOT_PREFIX}{PROFILE_FILE})", ""]
     lines += [
         "| | before | after | after/before |",
         "|:--|--:|--:|--:|",
@@ -321,6 +395,8 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
         lines += [f"Only in before run ({len(only_before)}): " + format_names(only_before), ""]
     if only_after:
         lines += [f"Only in after run ({len(only_after)}): " + format_names(only_after), ""]
+    if reference is not None:
+        lines += reference_section([before, after], ["before", "after"], reference, reference_label, images)
 
     def cell(result):
         if result is None:
@@ -357,7 +433,7 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
                f"Newly solved: {len(newly_solved)}, newly failed: {len(newly_failed)}",
                f"Different objective evaluations (solved by both): {len(different_counts)} of {len(counted)}"]
     if not rows:
-        return "\n".join(lines), console, profile_drawn
+        return "\n".join(lines), console
 
     summary = (f"Instances whose status or objective evaluations changed ({len(rows)} of {len(all_names)})"
                if changed_only else f"Per-instance objective evaluations ({len(all_names)} instances)")
@@ -374,7 +450,7 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
             kept = kept[:max(0, len(kept) - max(1, len(kept) // 10))]
             note = f"| | … {len(rows) - len(kept)} more rows, see the run summary or the results artifact | | | |"
         report = "\n".join(lines + header + kept + [note] + footer)
-    return report, console, profile_drawn
+    return report, console
 
 
 def set_output(name, value):
@@ -394,7 +470,8 @@ def main():
     parser.add_argument("--compare-pr", default="", help="PR whose latest results are the 'before' (optional)")
     parser.add_argument("--compare-artifact", default="",
                         help="name of the results artifact of --compare-pr, e.g. cute-results-ipopt-pr-123")
-    parser.add_argument("--profile", default="performance-profile.png", help="path of the performance profile")
+    parser.add_argument("--profile-dir", default=".", help="directory of the performance profiles")
+    parser.add_argument("--reference", default="", help="reference results of another solver (optional)")
     args = parser.parse_args()
 
     with open(os.path.join(args.results_dir, "results.tsv")) as file:
@@ -405,7 +482,7 @@ def main():
         print("::error::No results to report")
         return 1
 
-    summary, console = build_summary(args.title, after, after_meta)
+    _, console = build_summary(args.title, after, after_meta)
 
     fetched = None
     if args.compare_pr:
@@ -418,18 +495,31 @@ def main():
             print(f"::warning title={annotation_title(args.title)}::No results artifact {args.compare_artifact} "
                   f"found for PR #{args.compare_pr}; posting the plain report instead")
 
+    reference, reference_label = (None, None)
+    if args.reference:
+        reference, reference_label = read_reference(args.reference)
+        print(f"Reference: {reference_label} ({len(reference)} instances)")
+
     if fetched is None:
-        report, compared, drawn = summary, False, False
-        full_report, _ = build_summary(args.title, after, after_meta, with_table=True)
+        compared = False
+        drawn = draw_profiles(args.profile_dir, args.title, [after], [run_label(None, after_meta)],
+                              reference, reference_label)
+        report, console = build_summary(args.title, after, after_meta, reference=reference,
+                                        reference_label=reference_label, images=drawn)
+        full_report, _ = build_summary(args.title, after, after_meta, with_table=True, reference=reference,
+                                       reference_label=reference_label, images=drawn)
     else:
         before, before_meta = fetched
         before_meta.setdefault("pr", args.compare_pr)
         print(f"Comparing against PR #{args.compare_pr} ({len(before)} instances)")
-        report, console, drawn = build_comparison(args.title, before, before_meta, after, after_meta, args.profile,
-                                                  changed_only=True, max_length=MAX_COMMENT_LENGTH)
-        # the full report (run summary) embeds the same image
-        full_report, _, _ = build_comparison(args.title, before, before_meta, after, after_meta, None,
-                                             changed_only=False, embed_profile=drawn)
+        drawn = draw_profiles(args.profile_dir, args.title, [before, after],
+                              [run_label("before", before_meta), run_label("after", after_meta)],
+                              reference, reference_label)
+        report, console = build_comparison(args.title, before, before_meta, after, after_meta, drawn,
+                                           changed_only=True, max_length=MAX_COMMENT_LENGTH,
+                                           reference=reference, reference_label=reference_label)
+        full_report, _ = build_comparison(args.title, before, before_meta, after, after_meta, drawn,
+                                          changed_only=False, reference=reference, reference_label=reference_label)
         compared = True
 
     with open(args.output, "w") as file:
@@ -443,7 +533,7 @@ def main():
         print(line)
     print("===========================================")
     set_output("comparison", "true" if compared else "false")
-    set_output("profile", "true" if drawn else "false")
+    set_output("plots", "true" if drawn else "false")
     return 0
 
 
