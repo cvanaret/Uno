@@ -333,7 +333,7 @@ jobs:
             # (the step runs with bash -e: a failing run must not stop the loop)
             status=0
             timeout -k 10 $((TIME_LIMIT + 30)) "$UNO" "${FILE_OF[$name]}" preset="$PRESET" \
-              linear_solver="$LINEAR_SOLVER" time_limit="$TIME_LIMIT" > "$log" 2>&1 || status=$?
+              linear_solver="$LINEAR_SOLVER" time_limit="$TIME_LIMIT" max_iterations=10000 print_extended_statistics=true > "$log" 2>&1 || status=$?
             end=$(date +%s.%N)
             wall=$(awk -v t="$end" -v s="$start" 'BEGIN{printf "%.4f", t - s}')
 
