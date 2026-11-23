@@ -402,6 +402,7 @@ def minimize(
         "filter_fact" : float
         "filter_capacity" : int
         "filter_sufficient_infeasibility_decrease_factor" : float
+        "filter_switch_back_infeasibility_threshold" : float
         "filter_reset_iteration_threshold" : int
         "max_number_filter_resets" : int
         "filter_ubd_raise_trigger" : int

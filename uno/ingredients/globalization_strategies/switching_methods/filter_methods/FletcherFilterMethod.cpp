@@ -13,7 +13,8 @@
 namespace uno {
    FletcherFilterMethod::FletcherFilterMethod(const Options& options):
          FilterMethod(options),
-         sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")) {
+         sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")),
+         switch_back_infeasibility_threshold(options.get_double("filter_switch_back_infeasibility_threshold")) {
    }
 
    Decision FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
@@ -88,9 +89,20 @@ namespace uno {
 
    bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const {
-      // if the trial infeasibility improves upon the best known infeasibility
-      return trial_iterate.scaled_residuals.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
-         this->filter.infeasibility_sufficient_reduction(this->filter.get_smallest_infeasibility(), trial_iterate.progress.infeasibility);
+      if (this->sufficient_infeasibility_decrease_factor * reference_infeasibility < trial_iterate.scaled_residuals.primal_infeasibility) {
+         return false;
+      }
+      // the trial infeasibility improves upon the best known infeasibility. This test is stronger than FLT's (acceptable
+      // to the filter) and avoids switching phases too often
+      const double trial_infeasibility = trial_iterate.progress.infeasibility;
+      if (this->filter.infeasibility_sufficient_reduction(this->filter.get_smallest_infeasibility(), trial_infeasibility)) {
+         return true;
+      }
+      // the smallest infeasibility of the filter may be at roundoff level: once the trial iterate is essentially feasible,
+      // acceptability to the filter (FLT) suffices
+      return trial_infeasibility <= this->switch_back_infeasibility_threshold &&
+         this->filter.acceptable_wrt_infeasibility_upper_bound(trial_infeasibility) &&
+         this->filter.filter_acceptable(trial_infeasibility, unconstrained_merit_function(trial_iterate.progress));
    }
 
    std::string FletcherFilterMethod::get_name() const {
