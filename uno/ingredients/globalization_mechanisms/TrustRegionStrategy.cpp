@@ -71,6 +71,7 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
       this->reset_radius();
+      const double initial_radius = this->radius;
 
       size_t number_iterations = 0;
       size_t number_consecutive_solver_errors = 0;
@@ -197,7 +198,20 @@ namespace uno {
 
          // written so that a NaN radius also terminates the loop
          if (!is_acceptable && !(this->minimum_radius <= this->radius)) {
-            throw std::runtime_error("Small radius");
+            // at an infeasible iterate of the optimality phase, reducing the radius ends with an incompatible QP in exact
+            // arithmetic (FLT, Lemma 6): h-type iteration via the feasibility problem, solved with the initial radius
+            if (!std::isnan(this->radius) && this->minimum_radius <= initial_radius && 0 < model.number_constraints &&
+                  !this->constraint_relaxation_strategy->solving_feasibility_problem() &&
+                  this->primal_tolerance < current_iterate.scaled_residuals.primal_infeasibility) {
+               DEBUG << "/!\\ Small radius at an infeasible iterate, switching to the feasibility problem\n";
+               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+                  evaluation_cache.current_evaluations, warmstart_information);
+               this->radius = initial_radius;
+               warmstart_information.trust_region_changed = true;
+            }
+            else {
+               throw std::runtime_error("Small radius");
+            }
          }
       }
    }
