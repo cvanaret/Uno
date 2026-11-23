@@ -293,6 +293,19 @@ jobs:
       - name: Build uno_ampl
         run: cmake --build ${{ github.workspace }}/build --target uno_ampl --config ${{ env.BUILD_TYPE }} --parallel
 
+      # uno_ampl links the shared libuno: LD_LIBRARY_PATH takes precedence over its
+      # RUNPATH, so another libuno on the machine would silently replace the PR's code
+      - name: Check that uno_ampl uses the libuno just built
+        run: |
+          set -euo pipefail
+          BUILD="${{ github.workspace }}/build"
+          library=$(ldd "$BUILD/uno_ampl" | awk '$1 ~ /^libuno\.so/ {print $3}')
+          echo "libuno: ${library:-linked statically}"
+          if [ -n "$library" ] && [ "$(realpath "$library")" != "$(realpath -m "$BUILD/${library##*/}")" ]; then
+            echo "::error::uno_ampl loads ${library}, not the libuno of this build (LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-})"
+            exit 1
+          fi
+
       # ----------------------------------------------------------------
       # 3) Solve the instances (one at a time)
       # ----------------------------------------------------------------
