@@ -36,7 +36,7 @@ name: CUTE-AMPL benchmark
 #    (created on first use) and embedded in the comment via its raw URL at that
 #    commit. Deleting or squashing that branch breaks the images of older comments.
 #
-#   gh workflow run "CUTE benchmark" -f pr_number=123 [-f preset=filtersqp] [-f compare_pr=118]
+#   gh workflow run cute-benchmark.yml -f pr_number=123 [-f preset=filtersqp] [-f compare_pr=118]
 #     [-f linear_solver=MUMPS] [-f compare_linear_solver=MA57] [-f time_limit=60] [-f instances="hs071 rosenbr"]
 
 on:
