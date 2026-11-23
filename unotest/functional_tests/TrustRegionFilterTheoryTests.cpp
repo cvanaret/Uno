@@ -128,11 +128,12 @@ TEST(TrustRegionFilterTheory, HTypeStepAboveThresholdIsNotShortened) {
 }
 
 // The Waechter filter treats a trial iterate that satisfies the switching condition at a non-small infeasibility
-// (h > small_infeasibility_threshold) as h-type. That is not an FLT h-type step (Delta q > 0), and FLT's argument only
-// concerns infeasibilities h -> 0, where the infeasibility is small: the step-length bound only applies if the
-// switching condition is violated.
+// (h > small_infeasibility_threshold) as h-type. That is not an FLT h-type step (Delta q > 0), and it must not be
+// shortened. The step-length bound only applies below the small-infeasibility threshold theta, which for the Waechter
+// filter is its own small-infeasibility threshold: the threshold alone excludes such steps (the restriction of the bound
+// to steps violating the switching condition is then implied).
 // Here: min x - 0.01 z  s.t.  x = 0, from (0.1, 0) with radius 1.5 (trust region with the Waechter filter): Delta q =
-// 0.1 + 0.015 > 0 satisfies the switching condition and h = 0.1 is not small. The step z = 1.5 is accepted
+// 0.1 + 0.015 > 0 satisfies the switching condition, and h = 0.1 > theta. The step z = 1.5 is accepted
 TEST(TrustRegionFilterTheory, WaechterFilterLongSwitchingStepIsNotShortened) {
    const DenseTestModel model("long_switching_step", 2, 1, ProblemType::NONLINEAR,
       [](const Vector<double>& x) { return x[0] - 0.01*x[1]; },
@@ -208,7 +209,9 @@ TEST(TrustRegionFilterTheory, NdSphereWithConvexQPSolver) {
       Uno uno;
       const Result result = uno.solve(model, options);
       EXPECT_EQ(result.optimization_status, OptimizationStatus::SUCCESS) << "n = " << n;
-      EXPECT_NEAR(result.solution_objective, -std::sqrt(static_cast<double>(n)), 1e-6) << "n = " << n;
+      // |f(x) - f*| <= ||grad f|| dist(x, x*) ~ sqrt(n) primal_tolerance
+      const double tolerance = std::sqrt(static_cast<double>(n))*options.get_double("primal_tolerance");
+      EXPECT_NEAR(result.solution_objective, -std::sqrt(static_cast<double>(n)), tolerance) << "n = " << n;
    }
 }
 #endif
