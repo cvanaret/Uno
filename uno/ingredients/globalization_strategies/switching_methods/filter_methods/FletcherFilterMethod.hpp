@@ -21,6 +21,7 @@ namespace uno {
 
    protected:
       const double sufficient_infeasibility_decrease_factor;
+      const double switch_back_infeasibility_threshold;
    };
 } // namespace
 

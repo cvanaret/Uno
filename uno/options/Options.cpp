@@ -66,6 +66,7 @@ namespace uno {
       {"filter_fact", OptionType::DOUBLE},
       {"filter_capacity", OptionType::INTEGER},
       {"filter_sufficient_infeasibility_decrease_factor", OptionType::DOUBLE},
+      {"filter_switch_back_infeasibility_threshold", OptionType::DOUBLE},
       {"filter_reset_iteration_threshold", OptionType::INTEGER},
       {"max_number_filter_resets", OptionType::INTEGER},
       {"filter_ubd_raise_trigger", OptionType::INTEGER},

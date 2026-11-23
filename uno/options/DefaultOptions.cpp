@@ -98,6 +98,8 @@ namespace uno {
       options.set_integer("filter_capacity", 50); // 0: unlimited
       // used by Waechter filter method
       options.set_double("filter_sufficient_infeasibility_decrease_factor", 0.9);
+      // below this infeasibility, a restoration iterate acceptable to the optimality filter leaves restoration (Fletcher filter)
+      options.set_double("filter_switch_back_infeasibility_threshold", 1e-8);
       options.set_integer("filter_reset_iteration_threshold", 5); // >= 1
       options.set_integer("max_number_filter_resets", 5); // >= 0
       options.set_integer("filter_ubd_raise_trigger", 0); // 0: disabled

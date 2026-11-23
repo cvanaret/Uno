@@ -205,6 +205,9 @@ filter_capacity 50
 # Infeasibility decrease factor in the infeasibility sufficient decrease condition (double)
 filter_sufficient_infeasibility_decrease_factor 0.9
 
+# Below this infeasibility, a restoration iterate acceptable to the optimality filter leaves restoration (Fletcher filter) (double)
+filter_switch_back_infeasibility_threshold 1e-8
+
 # Number of consecutive filter rejections before the filter is reset (integer)
 filter_reset_iteration_threshold 5
 

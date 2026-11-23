@@ -76,6 +76,7 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     filter_fact: float | None = None
     filter_capacity: int | None = None
     filter_sufficient_infeasibility_decrease_factor: float | None = None
+    filter_switch_back_infeasibility_threshold: float | None = None
     filter_reset_iteration_threshold: int | None = None
     max_number_filter_resets: int | None = None
     filter_ubd_raise_trigger: int | None = None
