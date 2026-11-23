@@ -433,7 +433,11 @@ jobs:
           mkdir -p report
           # reference solver of the preset (e.g. IPOPT for ipopt), if any
           REFERENCE="$TOOLS/.github/CUTE/reference/${PRESET}.tsv"
-          [ -f "$REFERENCE" ] || REFERENCE=""
+          if [ ! -f "$REFERENCE" ]; then
+            available=$(find "$TOOLS/.github/CUTE/reference" -name '*.tsv' -printf '%f ' 2>/dev/null || true)
+            echo "::notice title=${ANNOTATION_TITLE}::No reference results for preset ${PRESET} (.github/CUTE/reference/${PRESET}.tsv on ${GITHUB_REF_NAME}); available: ${available:-none}"
+            REFERENCE=""
+          fi
           "${REPORT_PYTHON:-$VENV/bin/python}" "$TOOLS/.github/scripts/cute_benchmark_report.py" \
             --title "$TITLE" --results-dir results \
             --output report/benchmark-comment.md --full-output report/benchmark-full.md \
