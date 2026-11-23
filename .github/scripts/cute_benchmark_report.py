@@ -246,6 +246,9 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
     solved_after = sum(1 for name in common if after[name].solved)
 
     counted = [name for name in both_solved if has_counts(before[name]) and has_counts(after[name])]
+    different_counts = [name for name in counted
+                        if before[name].objective_evaluations != after[name].objective_evaluations]
+    fewer = sum(1 for name in different_counts if after[name].objective_evaluations < before[name].objective_evaluations)
     sgm_evaluations_before = shifted_geometric_mean([before[name].objective_evaluations for name in counted],
                                                     EVALUATIONS_SHIFT)
     sgm_evaluations_after = shifted_geometric_mean([after[name].objective_evaluations for name in counted],
@@ -307,6 +310,11 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
         lines += [f"🔴 **Newly failed ({len(newly_failed)}):** " + format_names(newly_failed), ""]
     if not newly_solved and not newly_failed:
         lines += ["No change in solved/failed status.", ""]
+    if different_counts:
+        lines += [f"**Objective evaluations changed on {len(different_counts)} of the {len(counted)} instances "
+                  f"solved by both:** fewer on {fewer}, more on {len(different_counts) - fewer}.", ""]
+    else:
+        lines += [f"Identical objective evaluations on all {len(counted)} instances solved by both.", ""]
     only_before = [name for name in all_names if name not in after]
     only_after = [name for name in all_names if name not in before]
     if only_before:
@@ -324,27 +332,30 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
     rows = []
     for name in all_names:
         b, a = before.get(name), after.get(name)
-        flag, ratio = "", "—"
+        flag, ratio, changed = "", "—", False
         if b is not None and a is not None:
             if a.solved and not b.solved:
-                flag = "🟢"
+                flag, changed = "🟢", True
             elif b.solved and not a.solved:
-                flag = "🔴"
+                flag, changed = "🔴", True
             elif has_counts(a) and has_counts(b):
                 count_before, count_after = max(b.objective_evaluations, 1), max(a.objective_evaluations, 1)
                 ratio = f"{count_after / count_before:.2f}×"
+                # any change in the number of objective evaluations is listed; large ones are flagged
+                changed = b.objective_evaluations != a.objective_evaluations
                 if count_after / count_before >= EVALUATIONS_RATIO_THRESHOLD:
                     flag = "📈"
                 elif count_before / count_after >= EVALUATIONS_RATIO_THRESHOLD:
                     flag = "📉"
-        if changed_only and not flag:
+        if changed_only and not changed:
             continue
         rows.append(f"| {flag} | `{name}` | {cell(b)} | {cell(a)} | {ratio} |")
 
     console = [f"Solved before: {solved_before} / {len(common)}, after: {solved_after} / {len(common)}",
                f"Shifted geometric mean of the objective evaluations ({len(counted)} solved by both): "
                f"before {format_number(sgm_evaluations_before)}, after {format_number(sgm_evaluations_after)}",
-               f"Newly solved: {len(newly_solved)}, newly failed: {len(newly_failed)}"]
+               f"Newly solved: {len(newly_solved)}, newly failed: {len(newly_failed)}",
+               f"Different objective evaluations (solved by both): {len(different_counts)} of {len(counted)}"]
     if not rows:
         return "\n".join(lines), console, profile_drawn
 
@@ -353,7 +364,8 @@ def build_comparison(title, before, before_meta, after, after_meta, profile_path
     header = [f"<details><summary>{summary}</summary>", "",
               "| | instance | before | after | after/before |", "|:-:|:--|--:|--:|--:|"]
     footer = ["", f"<sub>🟢 newly solved · 🔴 newly failed · 📉/📈 at least {EVALUATIONS_RATIO_THRESHOLD:g}× "
-                  f"fewer/more objective evaluations (both solved)</sub>", "", "</details>", ""]
+                  f"fewer/more objective evaluations (both solved); unflagged rows changed by less</sub>",
+              "", "</details>", ""]
     report = "\n".join(lines + header + rows + footer)
     if max_length is not None and len(report) > max_length:
         # keep the report postable: drop table rows until it fits
