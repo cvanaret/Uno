@@ -1,0 +1,529 @@
+name: CUTE-AMPL benchmark
+
+# Compiles uno_ampl on the fly (ASL + libhsl [+ MUMPS, SPRAL or HiGHS]) and solves
+# the CUTE .nl instances with a given Uno `preset` and `linear_solver` (default
+# MA57), one instance at a time, giving each one a given `time_limit`.
+#
+# The instances are the compressed archives of .github/CUTE (.tar.gz, .tgz,
+# .tar.xz, .txz, .tar.bz2, .tbz2, .tar, .zip, or single .nl[.gz|.bz2|.xz]
+# files), taken from the ref the workflow is run from (normally main) rather
+# than from the benchmarked PR, so that PRs that predate them can be benchmarked
+# on the same instances. Instances are identified by the name of their .nl file.
+#
+# Success/failure and the counters are read from each run's log (optimization summary):
+#    Optimization status:            Success
+#    Iterations:                     <n>
+#    Solve time:                     <seconds>s
+#    Objective evaluations:          <n>
+#
+# Each run uploads its results (results.tsv + meta.json) as the artifact
+# `cute-results-<preset>-[<linear_solver>-]pr-<pr_number>` (the solver only when
+# it is not MA57), and posts its report in a sticky PR comment of its own
+# (`cute-benchmark-<preset>[-<linear_solver>]`): runs of the same PR with
+# different presets (or linear solvers) do not overwrite each other. A run on an
+# explicit `instances` list gets a `-subset` configuration of its own, so that it
+# neither cancels nor replaces the full results of the same configuration.
+#
+# Two jobs, so that the PR code never runs with a token that can push:
+#  - benchmark (self-hosted, read-only token): builds and runs the PR, writes the report;
+#  - publish (GitHub-hosted, checks out nothing): pushes the profile and posts the comment.
+#  - without `compare_pr`: the number of solved instances and the shifted
+#    geometric means of the objective evaluations and of the solve time;
+#  - with `compare_pr`: a before/after comparison against the latest results of
+#    that PR with the same preset and `compare_linear_solver` (default: the same
+#    linear solver), with a performance profile with respect to the objective
+#    evaluations. The profile (PNG) is committed to the `benchmark-plots` branch
+#    (created on first use) and embedded in the comment via its raw URL at that
+#    commit. Deleting or squashing that branch breaks the images of older comments.
+#
+#   gh workflow run "CUTE benchmark" -f pr_number=123 [-f preset=filtersqp] [-f compare_pr=118]
+#     [-f linear_solver=MUMPS] [-f compare_linear_solver=MA57] [-f time_limit=60] [-f instances="hs071 rosenbr"]
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to benchmark and comment on'
+        required: true
+        type: string
+      preset:
+        description: 'Uno preset (e.g. ipopt, filtersqp, funnelsqp, filterslp)'
+        required: false
+        default: 'ipopt'
+        type: string
+      compare_pr:
+        description: 'PR number to compare against (optional; uses its latest CUTE results with the same preset and compare_linear_solver)'
+        required: false
+        default: ''
+        type: string
+      linear_solver:
+        description: 'Linear solver'
+        required: false
+        default: 'MA57'
+        type: choice
+        options: [MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
+      compare_linear_solver:
+        description: 'Linear solver of the compare_pr results'
+        required: false
+        default: 'same'
+        type: choice
+        options: [same, MA57, MA27, MA86, MUMPS, SSIDS, HIPO]
+      time_limit:
+        description: 'Time limit per instance (seconds)'
+        required: false
+        default: '60'
+        type: string
+      instances:
+        description: 'Explicit space-separated instance list (optional; default: all the instances), e.g. "hs071 rosenbr"'
+        required: false
+        default: ''
+        type: string
+
+# granted per job
+permissions: {}
+
+env:
+  PR_NUMBER: ${{ inputs.pr_number }}
+  PRESET: ${{ inputs.preset || 'ipopt' }}
+  COMPARE_PR: ${{ inputs.compare_pr }}
+  LINEAR_SOLVER: ${{ inputs.linear_solver || 'MA57' }}
+  COMPARE_LINEAR_SOLVER: ${{ inputs.compare_linear_solver || 'same' }}
+  TIME_LIMIT: ${{ inputs.time_limit || '60' }}
+  INSTANCES: ${{ inputs.instances }}
+  PLOTS_BRANCH: benchmark-plots
+
+# a new run of the same configuration on the same PR replaces the running one;
+# other presets/linear solvers, and runs on an explicit instance list, run independently
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.pr_number }}-${{ inputs.preset || 'ipopt' }}-${{ inputs.linear_solver || 'MA57' }}-${{ inputs.instances != '' && 'subset' || 'all' }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: self-hosted
+    # The artifact downloads use the job token, which expires after 24 hours
+    timeout-minutes: 1380
+    permissions:
+      contents: read  # checkouts
+      actions: read   # to download the results artifact of the PR we compare against
+    env:
+      BUILD_TYPE: Release
+      VENV: /home/optimi/cvanaret/myenv
+      HOME: /home/optimi/cvanaret
+      OPENBLAS_NUM_THREADS: 1
+      OMP_NUM_THREADS: 1
+      # workflow-side files (instance archives, report script), from the ref the workflow runs from
+      TOOLS: ${{ github.workspace }}/cute-tools
+      INSTANCE_DIR: ${{ github.workspace }}/cute-instances
+    outputs:
+      title: ${{ steps.configure.outputs.title }}
+      comment_header: ${{ steps.configure.outputs.comment_header }}
+      report_artifact: ${{ steps.configure.outputs.report_artifact }}
+      plot_file: ${{ steps.configure.outputs.plot_file }}
+      profile: ${{ steps.report.outputs.profile }}
+    steps:
+      # All workflows share the runner's workspace: a CUTEst benchmark that died
+      # before its cleanup leaves read-only files that would make the checkout fail
+      - name: Restore write permissions on leftovers of other benchmarks
+        run: chmod -R u+w "${{ github.workspace }}/cutest-tools" 2>/dev/null || true
+
+      # Benchmark the head of PR `pr_number`, whichever branch the workflow is run
+      # from: refs/pull/<N>/head also exists for PRs from forks.
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/head
+          persist-credentials: false
+
+      - name: Record the benchmarked commit
+        run: echo "BENCHMARK_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      # The instances and the report script come from the workflow's own ref, not
+      # from the PR: an older PR may have neither.
+      - name: Check out the instances and the report script
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: cute-tools
+          persist-credentials: false
+          sparse-checkout: |
+            .github/CUTE
+            .github/scripts
+
+      - name: Configure the run
+        id: configure
+        run: |
+          set -euo pipefail
+          [[ "$PR_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::pr_number must be a PR number, got '$PR_NUMBER'"; exit 1; }
+          [[ -z "$COMPARE_PR" || "$COMPARE_PR" =~ ^[0-9]+$ ]] || { echo "::error::compare_pr must be a PR number, got '$COMPARE_PR'"; exit 1; }
+          [[ "$PRESET" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "::error::preset must be a preset name (e.g. filtersqp), got '$PRESET'"; exit 1; }
+          [[ "$TIME_LIMIT" =~ ^[1-9][0-9]*$ ]] || { echo "::error::time_limit must be a positive number of seconds, got '$TIME_LIMIT'"; exit 1; }
+          [ "$COMPARE_LINEAR_SOLVER" != same ] || COMPARE_LINEAR_SOLVER=$LINEAR_SOLVER
+          for solver in "$LINEAR_SOLVER" "$COMPARE_LINEAR_SOLVER"; do
+            case "$solver" in
+              MA57|MA27|MA86|MUMPS|SSIDS|HIPO) ;;
+              *) echo "::error::linear solvers must be among MA57, MA27, MA86, MUMPS, SSIDS, HIPO, got '$solver'"; exit 1 ;;
+            esac
+          done
+          # <preset>[-<solver>], the solver only when it is not MA57
+          config_of() { if [ "$1" = MA57 ]; then echo "$PRESET"; else echo "${PRESET}-$1"; fi; }
+          CONFIG=$(config_of "$LINEAR_SOLVER")
+          TITLE="CUTE benchmark (preset ${PRESET}, ${LINEAR_SOLVER})"
+          # a run on an explicit instance list must not replace the full results of its configuration
+          # (comparisons are always against full results)
+          if [ -n "$INSTANCES" ]; then
+            CONFIG="${CONFIG}-subset"
+            TITLE="${TITLE} — instance subset"
+          fi
+          {
+            echo "COMPARE_LINEAR_SOLVER=${COMPARE_LINEAR_SOLVER}"
+            echo "CONFIG=${CONFIG}"
+            echo "TITLE=${TITLE}"
+            # workflow-command properties are split on ',' and ':'
+            echo "ANNOTATION_TITLE=$(printf '%s' "$TITLE" | sed 's/%/%25/g; s/,/%2C/g; s/:/%3A/g')"
+            echo "RESULTS_ARTIFACT=cute-results-${CONFIG}-pr-${PR_NUMBER}"
+            echo "COMPARE_ARTIFACT=cute-results-$(config_of "$COMPARE_LINEAR_SOLVER")-pr-${COMPARE_PR}"
+            echo "LOGS_ARTIFACT=cute-logs-${CONFIG}-pr-${PR_NUMBER}"
+          } | tee -a "$GITHUB_ENV"
+          # for the publish job
+          {
+            echo "title=${TITLE}"
+            echo "comment_header=cute-benchmark-${CONFIG}"
+            echo "report_artifact=cute-report-${CONFIG}-pr-${PR_NUMBER}"
+            echo "plot_file=cute/pr-${PR_NUMBER}/${CONFIG}-vs-pr-${COMPARE_PR}-${COMPARE_LINEAR_SOLVER}-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.png"
+          } | tee -a "$GITHUB_OUTPUT"
+          # SSIDS (SPRAL) refuses to run without OpenMP cancellation
+          if [ "$LINEAR_SOLVER" = SSIDS ]; then
+            echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          fi
+
+      # ----------------------------------------------------------------
+      # 1) Extract the instances
+      # ----------------------------------------------------------------
+      - name: Extract the CUTE instances
+        run: |
+          set -euo pipefail
+          SOURCE="$TOOLS/.github/CUTE"
+          [ -d "$SOURCE" ] || { echo "::error::.github/CUTE not found on ${GITHUB_REF_NAME} (${GITHUB_SHA:0:7})"; exit 1; }
+          rm -rf "$INSTANCE_DIR"
+          mkdir -p "$INSTANCE_DIR"
+          need() { command -v "$1" > /dev/null || { echo "::error::$1 is required to extract $2"; exit 1; }; }
+          extracted=0
+          # each archive (or file) is extracted into its own directory: no file can overwrite another
+          while IFS= read -r -d '' file; do
+            relative=${file#"$SOURCE"/}
+            destination="$INSTANCE_DIR/$(echo "$relative" | tr '/' '_')"
+            case "$file" in
+              *.tar.gz|*.tgz)   need gzip "$relative";  mkdir -p "$destination"; tar -xzf "$file" -C "$destination" ;;
+              *.tar.xz|*.txz)   need xz "$relative";    mkdir -p "$destination"; tar -xJf "$file" -C "$destination" ;;
+              *.tar.bz2|*.tbz2) need bzip2 "$relative"; mkdir -p "$destination"; tar -xjf "$file" -C "$destination" ;;
+              *.tar)                                    mkdir -p "$destination"; tar -xf  "$file" -C "$destination" ;;
+              *.zip)            need unzip "$relative"; mkdir -p "$destination"; unzip -q "$file" -d "$destination" ;;
+              *.nl.gz)          need gzip "$relative";  mkdir -p "$destination"; gzip  -dc "$file" > "$destination/$(basename "$file" .gz)" ;;
+              *.nl.bz2)         need bzip2 "$relative"; mkdir -p "$destination"; bzip2 -dc "$file" > "$destination/$(basename "$file" .bz2)" ;;
+              *.nl.xz)          need xz "$relative";    mkdir -p "$destination"; xz    -dc "$file" > "$destination/$(basename "$file" .xz)" ;;
+              *.nl)                                     mkdir -p "$destination"; cp "$file" "$destination/" ;;
+              *) echo "Ignoring ${relative}"; continue ;;
+            esac
+            extracted=$((extracted + 1))
+          done < <(find "$SOURCE" -type f -print0 | sort -z)
+          [ "$extracted" -gt 0 ] || { echo "::error::No archive or .nl file in .github/CUTE"; exit 1; }
+
+          # results are keyed by instance name: names must be unique
+          # macOS archives may contain AppleDouble metadata files (._name.nl): not instances
+          find "$INSTANCE_DIR" -type f -name '._*' -delete
+          duplicates=$(find "$INSTANCE_DIR" -type f -name '*.nl' -printf '%f\n' | sort | uniq -d)
+          if [ -n "$duplicates" ]; then
+            echo "::error::Instances present several times in .github/CUTE: $(echo "$duplicates" | tr "\n" " ")"; exit 1
+          fi
+          count=$(find "$INSTANCE_DIR" -type f -name '*.nl' | wc -l)
+          [ "$count" -gt 0 ] || { echo "::error::The archives of .github/CUTE contain no .nl file"; exit 1; }
+          # identifies the instance set, to flag comparisons between different sets
+          echo "INSTANCES_TREE=$(git -C "$TOOLS" rev-parse HEAD:.github/CUTE)" >> "$GITHUB_ENV"
+          echo "${count} instances extracted from ${extracted} file(s)"
+
+      # ----------------------------------------------------------------
+      # 2) Build uno_ampl (same configuration as the Mittelmann benchmark)
+      # ----------------------------------------------------------------
+      - name: Download Uno solver dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Configure Uno (ASL + libhsl [+ MUMPS, SPRAL or HiGHS])
+        run: |
+          set -euo pipefail
+          LIBBLAS_PATH="/usr/lib/x86_64-linux-gnu/libblas.so"
+          LIBLAPACK_PATH="/usr/lib/x86_64-linux-gnu/liblapack.so"
+          LIBHSL_PATH="$HOME/libhsl/builddir/libhsl.so"
+          LIBAMPL_PATH="$HOME/ampl/amplsolver.a"
+          DEPS="${{ github.workspace }}/dependencies"
+
+          # MUMPS, SPRAL and HiGHS (static, from UnoUtils) are only linked when requested
+          case "$LINEAR_SOLVER" in
+            MUMPS)
+              SOLVER_FLAGS=("-DMUMPS_INCLUDE_DIR=${DEPS}/include" "-DMETIS_INCLUDE_DIR=${DEPS}/include"
+                            "-DMUMPS_LIBRARY=${DEPS}/lib/libdmumps.a" "-DMUMPS_COMMON_LIBRARY=${DEPS}/lib/libmumps_common.a"
+                            "-DMUMPS_PORD_LIBRARY=${DEPS}/lib/libpord.a" "-DMUMPS_MPISEQ_LIBRARY=${DEPS}/lib/libmpiseq.a"
+                            "-DMETIS_LIBRARY=${DEPS}/lib/libmetis.a")
+              FOUND="Found MUMPS" ;;
+            SSIDS)
+              SOLVER_FLAGS=("-DSPRAL_INCLUDE_DIR=${DEPS}/include" "-DSPRAL=${DEPS}/lib/libspral.a" "-DMETIS=${DEPS}/lib/libmetis.a")
+              FOUND="Found SPRAL" ;;
+            HIPO)
+              SOLVER_FLAGS=("-DHIGHS_INCLUDE_DIR=${DEPS}/include/highs"
+                            "-DHIGHS=${DEPS}/lib/libhighs.a;${DEPS}/lib/libhighs_extras.a" -DHIGHS_WITH_HIPO=ON)
+              FOUND="HiPO linear solver enabled" ;;
+            *)
+              SOLVER_FLAGS=()
+              FOUND="Found hsl" ;;
+          esac
+
+          cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" \
+                                             -DBLAS_LIBRARIES="${LIBBLAS_PATH}" \
+                                             -DLAPACK_LIBRARIES="${LIBLAPACK_PATH}" \
+                                             -DHSL="${LIBHSL_PATH}" \
+                                             -DAMPLSOLVER="${LIBAMPL_PATH}" \
+                                             -DBQPD="${DEPS}/lib/libbqpd.a" \
+                                             "${SOLVER_FLAGS[@]}" \
+                                             -DBUILD_SHARED_LIBS=ON \
+                                             -DBUILD_STATIC_LIBS=OFF | tee cmake-configure.log
+          # fail now rather than after hours of runs that all fail
+          grep -q -- "-- ${FOUND}" cmake-configure.log \
+            || { echo "::error::linear_solver=${LINEAR_SOLVER}: '${FOUND}' missing from the CMake output"; exit 1; }
+
+      # uno_ampl is EXCLUDE_FROM_ALL, so it must be requested explicitly.
+      - name: Build uno_ampl
+        run: cmake --build ${{ github.workspace }}/build --target uno_ampl --config ${{ env.BUILD_TYPE }} --parallel
+
+      # ----------------------------------------------------------------
+      # 3) Solve the instances (one at a time)
+      # ----------------------------------------------------------------
+      - name: Run CUTE instances
+        run: |
+          set -uo pipefail
+          UNO="${{ github.workspace }}/build/uno_ampl"
+
+          mapfile -t ALL_FILES < <(find "$INSTANCE_DIR" -type f -name '*.nl' | sort)
+          declare -A FILE_OF
+          for file in "${ALL_FILES[@]}"; do FILE_OF[$(basename "$file" .nl)]=$file; done
+          if [ -z "$INSTANCES" ]; then
+            mapfile -t NAMES < <(printf '%s\n' "${!FILE_OF[@]}" | sort)
+            SELECTION="all (${#NAMES[@]} instances)"
+          else
+            read -ra REQUESTED <<< "$INSTANCES"
+            # deduplicated, in the given order
+            mapfile -t NAMES < <(printf '%s\n' "${REQUESTED[@]}" | awk '!seen[$0]++')
+            for name in "${NAMES[@]}"; do
+              [ -n "${FILE_OF[$name]:-}" ] || { echo "::error::Instance '${name}' not found in .github/CUTE"; exit 1; }
+            done
+            SELECTION="custom list (${#NAMES[@]} instances)"
+          fi
+          echo "SELECTION=${SELECTION}" >> "$GITHUB_ENV"
+          echo "Solving ${#NAMES[@]} instances, preset=${PRESET}, linear_solver=${LINEAR_SOLVER}, time_limit=${TIME_LIMIT}s"
+
+          rm -rf logs results
+          mkdir -p logs results
+          : > results/results.tsv
+          solved=0
+          # last value of "<label>:   <value>" in the optimization summary
+          summary_value() { sed -nE "s/^[[:space:]]*$1:[[:space:]]+([0-9.eE+-]+)s?[[:space:]]*\$/\\1/p" "$2" | tail -n 1; }
+
+          for name in "${NAMES[@]}"; do
+            log="logs/${name}.log"
+            start=$(date +%s.%N)
+            # Uno enforces time_limit itself; the outer `timeout` is only a safety net.
+            # (the step runs with bash -e: a failing run must not stop the loop)
+            status=0
+            timeout -k 10 $((TIME_LIMIT + 30)) "$UNO" "${FILE_OF[$name]}" preset="$PRESET" \
+              linear_solver="$LINEAR_SOLVER" time_limit="$TIME_LIMIT" > "$log" 2>&1 || status=$?
+            end=$(date +%s.%N)
+            wall=$(awk -v t="$end" -v s="$start" 'BEGIN{printf "%.4f", t - s}')
+
+            # a configuration error makes every run fail: stop at the first one
+            if grep -Eq 'The linear solver [A-Za-z0-9]+ (was requested, but|is unknown)|HiPO is not available' "$log"; then
+              cat "$log"; echo "::error::linear_solver=${LINEAR_SOLVER} is not usable by this build"; exit 1
+            fi
+            if grep -q 'Unknown preset' "$log"; then
+              cat "$log"; echo "::error::Unknown preset '${PRESET}'"; exit 1
+            fi
+
+            # as printed by Uno (most CUTE solves take milliseconds: no rounding)
+            solve=$(summary_value 'Solve time' "$log")
+            read_time=$(summary_value 'Model read time' "$log")
+            evaluations=$(summary_value 'Objective evaluations' "$log")
+            iterations=$(summary_value 'Iterations' "$log")
+            if [ "$status" -eq 0 ] && grep -Eq '^[[:space:]]*Optimization status:[[:space:]]+Success' "$log"; then
+              result=solved; solved=$((solved + 1)); icon=✓
+            else
+              result=failed; icon=✗
+            fi
+            if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+              echo "${name}: killed by the safety timeout" >> "$log"
+            fi
+            # <name> <solved|failed> <wall> <model read> <solve> <objective evaluations> <iterations>
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$result" "$wall" "$read_time" "$solve" \
+              "$evaluations" "$iterations" >> results/results.tsv
+            echo "${icon} ${name}: ${result} in ${wall}s (${evaluations:-?} objective evaluations, ${iterations:-?} iterations)"
+          done
+
+          # ---- machine-readable metadata, used by later comparisons ----
+          SELECTION="$SELECTION" "$VENV/bin/python" -I - > results/meta.json <<'EOF'
+          import json, os, sys
+          env = os.environ
+          json.dump({"sha": env["BENCHMARK_SHA"], "pr": env["PR_NUMBER"], "preset": env["PRESET"],
+                     "linear_solver": env["LINEAR_SOLVER"], "time_limit": int(env["TIME_LIMIT"]),
+                     "selection": env["SELECTION"], "instances_tree": env["INSTANCES_TREE"],
+                     "run_url": f"{env['GITHUB_SERVER_URL']}/{env['GITHUB_REPOSITORY']}/actions/runs/{env['GITHUB_RUN_ID']}"},
+                    sys.stdout, indent=1)
+          EOF
+          echo "::notice title=${ANNOTATION_TITLE}::Solved ${solved}/${#NAMES[@]} instances"
+
+      # Results of this run, so that future runs can compare against this PR.
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.RESULTS_ARTIFACT }}
+          path: results/
+          retention-days: 90
+
+      # ----------------------------------------------------------------
+      # 4) Report: summary, or comparison + performance profile
+      # ----------------------------------------------------------------
+      # matplotlib goes into a venv of this job, not into the venv shared by the
+      # runners, and its caches stay out of the NFS home
+      - name: Install matplotlib
+        if: inputs.compare_pr != ''
+        run: |
+          set -euo pipefail
+          "$VENV/bin/python" -m venv "$RUNNER_TEMP/cute-plot-venv"
+          "$RUNNER_TEMP/cute-plot-venv/bin/pip" install --quiet --disable-pip-version-check --no-cache-dir matplotlib
+          echo "REPORT_PYTHON=$RUNNER_TEMP/cute-plot-venv/bin/python" >> "$GITHUB_ENV"
+
+      - name: Build the report
+        id: report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MPLCONFIGDIR: ${{ runner.temp }}/matplotlib
+        run: |
+          set -euo pipefail
+          rm -rf report
+          mkdir -p report
+          "${REPORT_PYTHON:-$VENV/bin/python}" "$TOOLS/.github/scripts/cute_benchmark_report.py" \
+            --title "$TITLE" --results-dir results \
+            --output report/benchmark-comment.md --full-output report/benchmark-full.md \
+            --compare-pr "$COMPARE_PR" --compare-artifact "$COMPARE_ARTIFACT" \
+            --profile report/performance-profile.png
+
+      # comment, run summary and profile, published by the publish job
+      - name: Upload the report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.configure.outputs.report_artifact }}
+          path: report/
+
+      - name: Upload run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.LOGS_ARTIFACT }}
+          path: logs/
+          if-no-files-found: ignore
+
+  # Separate job, on a GitHub-hosted runner, without the PR code: the only one
+  # whose token can push (the profile) and comment.
+  publish:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write       # to commit the performance profile to the benchmark-plots branch
+      pull-requests: write  # to post the report
+    env:
+      REPORT_ARTIFACT: ${{ needs.benchmark.outputs.report_artifact }}
+      PLOT_FILE: ${{ needs.benchmark.outputs.plot_file }}
+    steps:
+      - name: Download the report
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.benchmark.outputs.report_artifact }}
+          path: report
+
+      # Commits the profile to the PLOTS_BRANCH branch (an orphan branch, created on
+      # first use) under a unique name, and embeds it via its raw URL at that commit.
+      # Runs of other presets may push concurrently: retried on rejection.
+      - name: Publish the performance profile
+        if: needs.benchmark.outputs.profile == 'true'
+        working-directory: report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          # the image is alone on its line: replaced by a pointer to the artifact
+          fallback() {
+            echo "::warning title=CUTE benchmark::Could not publish the performance profile ($1)"
+            NOTE="_Performance profile: \`performance-profile.png\` in the \`${REPORT_ARTIFACT}\` artifact of the [run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})._"
+            sed -i "/PROFILE_URL_PLACEHOLDER/c\\${NOTE}" benchmark-comment.md benchmark-full.md
+            exit 0
+          }
+          [ -f performance-profile.png ] || fallback "no profile in the report"
+          export PR_NUMBER COMPARE_PR PLOTS_BRANCH PLOT_FILE
+          export PROFILE="$PWD/performance-profile.png"
+          export REMOTE="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          # the credential goes through the environment, never on a command line
+          GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraheader GIT_CONFIG_VALUE_0
+          # one attempt, in a fresh repository; prints the pushed commit. A separate
+          # process: errexit is ignored by functions called in an `if` condition
+          cat > "$RUNNER_TEMP/push_profile.sh" <<'EOF'
+          set -euo pipefail
+          REPO_DIR="$RUNNER_TEMP/benchmark-plots"
+          rm -rf "$REPO_DIR"
+          git init -q "$REPO_DIR"
+          cd "$REPO_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # exit code 2: the branch does not exist yet (any other failure aborts the attempt)
+          exists=0
+          git ls-remote --exit-code "$REMOTE" "refs/heads/$PLOTS_BRANCH" > /dev/null || exists=$?
+          if [ "$exists" -eq 0 ]; then
+            git fetch -q --depth=1 "$REMOTE" "refs/heads/$PLOTS_BRANCH"
+            git checkout -q -b "$PLOTS_BRANCH" FETCH_HEAD
+          elif [ "$exists" -eq 2 ]; then
+            git checkout -q --orphan "$PLOTS_BRANCH"
+            printf '%s\n' "Performance profiles of the benchmark workflows, embedded in PR comments by commit." \
+              "Deleting or squashing this branch breaks the images of older comments." > README.md
+            git add README.md
+          else
+            exit 1
+          fi
+          mkdir -p "$(dirname "$PLOT_FILE")"
+          cp "$PROFILE" "$PLOT_FILE"
+          git add "$PLOT_FILE"
+          git commit -q -m "CUTE profile: PR #${PR_NUMBER} vs PR #${COMPARE_PR}" \
+            -m "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          git push -q "$REMOTE" "HEAD:refs/heads/${PLOTS_BRANCH}"
+          git rev-parse HEAD
+          EOF
+          pushed=""
+          for attempt in 1 2 3 4 5; do
+            if pushed=$(bash "$RUNNER_TEMP/push_profile.sh"); then
+              break
+            fi
+            pushed=""
+            echo "Could not push to ${PLOTS_BRANCH} (attempt ${attempt})"
+            [ "$attempt" -eq 5 ] || sleep $((attempt * 5))
+          done
+          [ -n "$pushed" ] || fallback "push to ${PLOTS_BRANCH} failed"
+          URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${pushed}/${PLOT_FILE}"
+          sed -i "s|PROFILE_URL_PLACEHOLDER|${URL}|g" benchmark-comment.md benchmark-full.md
+          echo "Performance profile: ${URL}"
+
+      - name: Write the run summary
+        run: cat report/benchmark-full.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Sticky comment of this configuration: each run replaces the previous
+      # report of the same configuration (the image is specific to each run).
+      - name: Post benchmark results as a PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: ${{ needs.benchmark.outputs.comment_header }}
+          number: ${{ inputs.pr_number }}
+          path: report/benchmark-comment.md
