@@ -73,13 +73,21 @@ namespace uno {
             }
             // h-type step
             else if (this->funnel.sufficient_decrease_condition(trial_progress.infeasibility)) {
-               DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
-               decision = Decision::accept();
+               // trust region: the h-type step must be short wrt the infeasibility
+               if (!this->h_type_iterates_allowed) {
+                  DEBUG << "\t\tTrial iterate REJECTED: h-type step too long wrt the infeasibility\n";
+                  scenario = "h-type, long step";
+                  decision = Decision::reject(RejectionReason::H_TYPE_STEP_TOO_LONG);
+               }
+               else {
+                  DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
+                  decision = Decision::accept();
 
-               DEBUG << "\t\tEntering funnel reduction mechanism\n";
-               this->funnel.update(current_progress.infeasibility, trial_progress.infeasibility);
-               statistics.set("Funnel", this->funnel.current_width());
-               scenario = "h-type";
+                  DEBUG << "\t\tEntering funnel reduction mechanism\n";
+                  this->funnel.update(current_progress.infeasibility, trial_progress.infeasibility);
+                  statistics.set("Funnel", this->funnel.current_width());
+                  scenario = "h-type";
+               }
             }
             else {
                DEBUG << "\t\tTrial iterate REJECTED by violating switching and funnel sufficient decrease condition\n";
@@ -113,6 +121,11 @@ namespace uno {
 
    void FunnelMethod::reset() {
       // do nothing
+   }
+
+   // the width of the funnel plays the role of FLT's tau (trial iterates satisfy h <= width)
+   double FunnelMethod::h_type_reference_infeasibility() const {
+      return this->funnel.current_width();
    }
 
    void FunnelMethod::avoid_cycling_back_to(const ProgressMeasures& current_progress_measures) {

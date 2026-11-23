@@ -181,6 +181,11 @@ namespace uno {
       options.set_double("TR_min_radius", 1e-12);
       // threshold below which the TR radius is reset
       options.set_double("TR_radius_reset_threshold", 1e-4);
+      // if the infeasibility h is at most the small-infeasibility threshold (barrier_small_infeasibility_factor), an h-type
+      // iterate is accepted only if ||d||_inf <= factor * tau^exponent (exponent in (1/2, 1)), where tau is the smallest
+      // infeasibility of the filter (width of the funnel), see TrustRegionStrategy::h_type_step_bound
+      options.set_double("TR_h_type_step_factor", 100.);
+      options.set_double("TR_h_type_step_exponent", 0.75);
 
       /** feasibility restoration options **/
       // test linearized feasibility when switching back to the optimality phase

@@ -244,7 +244,8 @@ if(BQPD)
       target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp
          unotest/functional_tests/BQPDQuadraticProgramTests.cpp
          unotest/functional_tests/BQPDHessianErrorTests.cpp
-         unotest/functional_tests/SQPPathTests.cpp)
+         unotest/functional_tests/SQPPathTests.cpp
+         unotest/functional_tests/TrustRegionFilterTheoryTests.cpp)
    endif()
 endif()
 

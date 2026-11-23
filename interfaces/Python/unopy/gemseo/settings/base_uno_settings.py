@@ -122,6 +122,8 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     TR_activity_tolerance: float | None = None
     TR_min_radius: float | None = None
     TR_radius_reset_threshold: float | None = None
+    TR_h_type_step_factor: float | None = None
+    TR_h_type_step_exponent: float | None = None
     switch_to_optimality_requires_linearized_feasibility: bool | None = None
     l1_constraint_violation_coefficient: float | None = None
     use_proximal_term: bool | None = None

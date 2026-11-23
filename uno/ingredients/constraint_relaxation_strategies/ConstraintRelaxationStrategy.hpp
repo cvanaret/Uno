@@ -59,6 +59,8 @@ namespace uno {
          UserCallbacks& user_callbacks) = 0;
       // forwarded to the globalization strategy that tested the trial iterates of the step
       virtual void notify_step_limited_by(RejectionReason sole_rejection_reason) = 0;
+      // forwarded to the globalization strategy of the optimality phase (see GlobalizationStrategy::set_h_type_iterates_allowed)
+      virtual void set_h_type_iterates_allowed(bool allowed) = 0;
       // accept a trial step without globalization test (IPOPT, Section 3.9), possibly after forcing an update of the
       // parameterization (e.g. a decrease of the barrier parameter). Returns true if the parameterization was updated
       [[nodiscard]] virtual bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -72,6 +74,10 @@ namespace uno {
 
       // threshold theta_min of the globalization strategy of the current phase
       [[nodiscard]] virtual double small_infeasibility_threshold() const = 0;
+      // small-infeasibility threshold of the optimality phase, whatever the current phase
+      [[nodiscard]] virtual double optimality_small_infeasibility_threshold() const = 0;
+      // reference infeasibility tau of the optimality phase (see GlobalizationStrategy::h_type_reference_infeasibility)
+      [[nodiscard]] virtual double optimality_h_type_reference_infeasibility() const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;

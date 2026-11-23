@@ -4,6 +4,8 @@
 #ifndef UNO_TRUSTREGIONSTRATEGY_H
 #define UNO_TRUSTREGIONSTRATEGY_H
 
+#include "ingredients/globalization_strategies/Decision.hpp"
+
 #include "GlobalizationMechanism.hpp"
 
 namespace uno {
@@ -30,9 +32,12 @@ namespace uno {
       const double activity_tolerance;
       const double minimum_radius;
       const double radius_reset_threshold;
+      const double h_type_step_factor;
+      const double h_type_step_exponent;
       const bool print_minor_iterations;
 
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      [[nodiscard]] double h_type_step_bound(double reference_infeasibility) const;
+      [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);

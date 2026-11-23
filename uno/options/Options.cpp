@@ -112,6 +112,8 @@ namespace uno {
       {"TR_activity_tolerance", OptionType::DOUBLE},
       {"TR_min_radius", OptionType::DOUBLE},
       {"TR_radius_reset_threshold", OptionType::DOUBLE},
+      {"TR_h_type_step_factor", OptionType::DOUBLE},
+      {"TR_h_type_step_exponent", OptionType::DOUBLE},
       {"switch_to_optimality_requires_linearized_feasibility", OptionType::BOOL},
       {"l1_constraint_violation_coefficient", OptionType::DOUBLE},
       {"use_proximal_term", OptionType::BOOL},

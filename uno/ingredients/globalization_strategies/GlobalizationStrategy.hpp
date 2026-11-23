@@ -5,6 +5,7 @@
 #define UNO_GLOBALIZATIONSTRATEGY_H
 
 #include <string>
+#include "tools/Infinity.hpp"
 #include "Decision.hpp"
 
 namespace uno {
@@ -36,6 +37,13 @@ namespace uno {
 
       virtual void avoid_cycling_back_to(const ProgressMeasures& current_progress) = 0;
 
+      // set by the globalization mechanism before testing a trial iterate (trust region: h-type iterates are allowed
+      // only if the step is short wrt the current infeasibility). Strategies without h-type iterates ignore it
+      void set_h_type_iterates_allowed(bool allowed) { this->h_type_iterates_allowed = allowed; }
+      // reference infeasibility tau of FLT's Lemma 4 (smallest infeasibility of the filter, width of the funnel): the
+      // trust region bounds the length of h-type steps by factor tau^nu. Infinite for strategies without h-type iterates
+      [[nodiscard]] virtual double h_type_reference_infeasibility() const { return Inf; }
+
       [[nodiscard]] virtual std::string get_name() const = 0;
 
    protected:
@@ -44,6 +52,7 @@ namespace uno {
       const bool protect_actual_reduction_against_roundoff;
       const double protected_actual_reduction_macheps_coefficient;
       const double small_infeasibility_factor;
+      bool h_type_iterates_allowed{true};
 
       [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
       [[nodiscard]] double compute_actual_reduction(double current_measure, double trial_measure) const;

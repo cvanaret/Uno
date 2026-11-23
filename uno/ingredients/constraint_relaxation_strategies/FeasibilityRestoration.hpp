@@ -52,6 +52,7 @@ namespace uno {
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) override;
       void notify_step_limited_by(RejectionReason sole_rejection_reason) override;
+      void set_h_type_iterates_allowed(bool allowed) override;
       [[nodiscard]] bool accept_iterate_unconditionally(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, bool force_parameterization_update,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
@@ -60,6 +61,8 @@ namespace uno {
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       [[nodiscard]] double small_infeasibility_threshold() const override;
+      [[nodiscard]] double optimality_small_infeasibility_threshold() const override;
+      [[nodiscard]] double optimality_h_type_reference_infeasibility() const override;
       [[nodiscard]] std::string get_name() const override;
 
    private:

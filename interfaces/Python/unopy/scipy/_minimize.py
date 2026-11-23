@@ -448,6 +448,8 @@ def minimize(
         "TR_activity_tolerance" : float
         "TR_min_radius" : float
         "TR_radius_reset_threshold" : float
+        "TR_h_type_step_factor" : float
+        "TR_h_type_step_exponent" : float
         "switch_to_optimality_requires_linearized_feasibility" : bool
         "l1_constraint_violation_coefficient" : float
         "use_proximal_term" : bool

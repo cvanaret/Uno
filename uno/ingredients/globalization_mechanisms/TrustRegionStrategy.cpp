@@ -27,6 +27,8 @@ namespace uno {
          activity_tolerance(options.get_double("TR_activity_tolerance")),
          minimum_radius(options.get_double("TR_min_radius")),
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
+         h_type_step_factor(options.get_double("TR_h_type_step_factor")),
+         h_type_step_exponent(options.get_double("TR_h_type_step_exponent")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
       if (!(0. < this->radius)) {
          throw std::runtime_error("The trust-region radius should be positive");
@@ -39,6 +41,17 @@ namespace uno {
       }
       if (this->aggressive_decrease_factor <= 1.) {
          throw std::runtime_error("The trust-region aggressive decrease factor should be > 1");
+      }
+      if (!(0. < this->h_type_step_factor)) {
+         throw std::runtime_error("The trust-region h-type step factor should be positive");
+      }
+      if (!(0.5 < this->h_type_step_exponent && this->h_type_step_exponent < 1.)) {
+         throw std::runtime_error("The trust-region h-type step exponent should be in (0.5, 1)");
+      }
+      // the h-type step bound applies below the small-infeasibility threshold, which must be positive (h -> 0 along the
+      // subsequence of FLT's Theorem 7 must eventually drop below it)
+      if (!(0. < options.get_double("barrier_small_infeasibility_factor"))) {
+         throw std::runtime_error("The small infeasibility factor should be positive with a trust region");
       }
    }
 
@@ -135,8 +148,9 @@ namespace uno {
                evaluation_cache.trial_evaluations.reset();
                this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
-                  evaluation_cache, warmstart_information, user_callbacks);
+               const Decision decision = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate,
+                  direction, evaluation_cache, warmstart_information, user_callbacks);
+               is_acceptable = decision.accepted;
                set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                if (is_acceptable) {
                   // possibly increase the radius if trust region is active
@@ -146,6 +160,14 @@ namespace uno {
                }
                else {
                   this->decrease_radius(direction.norm);
+                  if (decision.reason == RejectionReason::H_TYPE_STEP_TOO_LONG) {
+                     // geometric decrease with the bound b < ||d|| as a floor: the radii between b and the radius are
+                     // sampled (jumping to b would skip FLT's window when the number of h-type iterations is finite), and
+                     // the QP is solved again with a radius for which an h-type step is allowed
+                     this->radius = std::max(this->radius,
+                        this->h_type_step_bound(this->constraint_relaxation_strategy->optimality_h_type_reference_infeasibility()));
+                     DEBUG << "Trust-region radius set to " << this->radius << " (h-type step bound as a floor)\n";
+                  }
                   warmstart_information.trust_region_changed = true;
                   // rejected step and small radius: try to terminate with a small step. The residuals of the rejected
                   // trial iterate were not computed: test (and terminate at) the current iterate instead, from which the
@@ -207,8 +229,34 @@ namespace uno {
       }
    }
 
+   // h-type step bound b = factor tau^nu, applied to the optimality phase if h <= theta (small-infeasibility threshold),
+   // where tau is FLT's reference infeasibility (smallest infeasibility of the filter, width of the funnel).
+   // FLT (Theorem 7, h-type case) relies on the monotonicity of the predicted reduction in the radius, a consequence of the
+   // global optimality of the QP solution. With KKT points of nonconvex QPs, a long h-type step at a large radius could be
+   // accepted near a feasible non-KKT point, infinitely often. Any KKT point of the QP is f-type and acceptable for radii
+   // in FLT's window [mu h, rho_bar] with rho_bar = min(sqrt(2 beta tau / (mnM)), kappa) (Lemma 5, with
+   // q(d) <= q(d_hat) + 2nM rho^2 instead of global optimality). Since h < tau, mu h << tau^nu << sqrt(tau) for nu in
+   // (1/2, 1) and tau -> 0 along the subsequence of Theorem 7 (tau is the infeasibility of the previous h-type iterate):
+   // the radii [b, 2b] lie in the window, and forbidding h-type steps longer than b lets the inner loop sample an f-type
+   // step first. A KKT point d with ||d||_inf <= b is also a KKT point for the radius b (the trust-region constraints are
+   // inactive), hence the test on the step norm rather than the radius.
+   // tau rather than h: near a KKT point on a curved constraint, a step of length s changes the infeasibility by O(s^2),
+   // so the Newton steps of the end game have length ~ sqrt(h) >> h^nu and a bound in terms of h rejects them (and cuts
+   // the radius, which breaks the fast local convergence). In a quadratically convergent end game, tau ~ sqrt(h).
+   // After such a rejection, the radius decreases geometrically with b as a floor. A rejected step at a radius larger than
+   // rho_bar has ||d|| > rho_bar (otherwise, d would be an acceptable f-type KKT point for a radius in the window), so the
+   // next radius exceeds rho_bar/2: the accepted radii stay bounded away from 0, as required when the number of h-type
+   // iterations is finite. Jumping straight to b (-> 0) would skip the window.
+   // The threshold theta > 0 is fixed: along the subsequence of Theorem 7, h -> 0 eventually drops below it, and the case
+   // of finitely many h-type iterations only relies on the radius update. Likewise, the proof only uses b for tau -> 0,
+   // so the factor is arbitrary: theta and factor = 100 avoid shortening h-type steps far from feasibility, where they are
+   // legitimate
+   double TrustRegionStrategy::h_type_step_bound(double reference_infeasibility) const {
+      return std::max(this->h_type_step_factor * std::pow(reference_infeasibility, this->h_type_step_exponent), this->minimum_radius);
+   }
+
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
-   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   Decision TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const PredictedReductionModels predicted_reduction_models =
@@ -216,9 +264,20 @@ namespace uno {
          evaluation_cache.current_evaluations);
       const ProgressMeasures predicted_reductions = predicted_reduction_models(/* step_length = */ 1.,
          /* use_curvature_information = */ true);
+      // the bound only applies to the optimality phase (FLT treat restoration as a black box), below the small-infeasibility
+      // threshold theta > 0 of that phase
+      const bool h_type_iterates_allowed = this->constraint_relaxation_strategy->solving_feasibility_problem() ||
+         this->constraint_relaxation_strategy->optimality_small_infeasibility_threshold() < current_iterate.progress.infeasibility ||
+         direction.norm <= this->h_type_step_bound(this->constraint_relaxation_strategy->optimality_h_type_reference_infeasibility());
+      // restore the default (allowed) even if the acceptance test throws (e.g. evaluation error)
+      struct HTypeIteratesFlagGuard {
+         ConstraintRelaxationStrategy& strategy;
+         ~HTypeIteratesFlagGuard() { this->strategy.set_h_type_iterates_allowed(true); }
+      } guard{*this->constraint_relaxation_strategy};
+      this->constraint_relaxation_strategy->set_h_type_iterates_allowed(h_type_iterates_allowed);
       return this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
-         predicted_reductions, warmstart_information, user_callbacks).accepted;
+         predicted_reductions, warmstart_information, user_callbacks);
    }
 
    // check whether the algorithm can terminate at an iterate (with computed residuals) after a rejected step with very

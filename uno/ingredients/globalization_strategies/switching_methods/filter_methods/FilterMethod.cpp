@@ -28,6 +28,12 @@ namespace uno {
       this->filter.reset();
    }
 
+   // FLT's tau: smallest infeasibility of the filter (the upper bound if the filter is empty, like FLT's initial entry
+   // (u, -inf))
+   double FilterMethod::h_type_reference_infeasibility() const {
+      return this->filter.get_smallest_infeasibility();
+   }
+
    void FilterMethod::avoid_cycling_back_to(const ProgressMeasures& current_progress) {
       const double current_objective_measure = unconstrained_merit_function(current_progress);
       this->filter.add(current_progress.infeasibility, current_objective_measure);
