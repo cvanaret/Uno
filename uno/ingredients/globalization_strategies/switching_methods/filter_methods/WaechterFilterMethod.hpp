@@ -26,6 +26,8 @@ namespace uno {
    protected:
       double initial_infeasibility{Inf};
       const double sufficient_infeasibility_decrease_factor;
+      // the restoration phase hands back points that are feasible wrt the primal tolerance
+      const double primal_tolerance;
       bool last_rejection_due_to_filter{false};
       // filter resets
       size_t number_successive_filter_rejections{0};

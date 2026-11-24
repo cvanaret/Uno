@@ -16,6 +16,7 @@ namespace uno {
    WaechterFilterMethod::WaechterFilterMethod(const Options& options):
          FilterMethod(options),
          sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")),
+         primal_tolerance(options.get_double("primal_tolerance")),
          filter_reset_iteration_threshold(options.get_unsigned_int("filter_reset_iteration_threshold")),
          max_number_filter_resets(options.get_unsigned_int("max_number_filter_resets")),
          upper_bound_raise_trigger(options.get_unsigned_int("filter_ubd_raise_trigger")),
@@ -183,11 +184,21 @@ namespace uno {
          " consecutive steps limited by the upper bound\n";
    }
 
+   // the restoration iterate is handed back to the optimality phase if
+   // - its primal infeasibility (residual norm, the same measure as the reference infeasibility) is sufficiently reduced,
+   //   or below the primal tolerance: inf_pr <= max(kappa_resto inf_pr_ref, min(tol, constr_viol_tol)) (IPOPT,
+   //   RestoConvergenceCheck; kappa_resto = 0 disables the test);
+   // - its infeasibility does not exceed theta_max: in the theory (Wächter & Biegler), the initial filter is
+   //   F_0 = {theta >= theta_max} and the new iterate must lie outside the filter. IPOPT does not test theta_max here;
+   // - it is acceptable to the optimality filter (IPOPT, RestoFilterConvergenceCheck)
    bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate, double reference_infeasibility) const {
-      // primal infeasibility (residual norm), the same measure as the reference infeasibility
-      DEBUG << "Testing whether " << trial_iterate.scaled_residuals.primal_infeasibility << " <= " << this->sufficient_infeasibility_decrease_factor
-         << "*" << reference_infeasibility << " = " << this->sufficient_infeasibility_decrease_factor * reference_infeasibility << '\n';
-      return trial_iterate.scaled_residuals.primal_infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_infeasibility &&
+      const double maximum_infeasibility = (this->sufficient_infeasibility_decrease_factor == 0.) ? 0. :
+         std::max(this->sufficient_infeasibility_decrease_factor * reference_infeasibility, this->primal_tolerance);
+      DEBUG << "Testing whether " << trial_iterate.scaled_residuals.primal_infeasibility << " <= max(" <<
+         this->sufficient_infeasibility_decrease_factor << "*" << reference_infeasibility << ", " << this->primal_tolerance <<
+         ") = " << maximum_infeasibility << '\n';
+      return trial_iterate.scaled_residuals.primal_infeasibility <= maximum_infeasibility &&
+         this->filter.acceptable_wrt_infeasibility_upper_bound(trial_iterate.progress.infeasibility) &&
          this->filter.filter_acceptable(trial_iterate.progress.infeasibility, unconstrained_merit_function(trial_iterate.progress));
    }
 
