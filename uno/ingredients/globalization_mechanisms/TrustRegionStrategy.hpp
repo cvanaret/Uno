@@ -34,10 +34,15 @@ namespace uno {
       const double radius_reset_threshold;
       const double h_type_step_factor;
       const double h_type_step_exponent;
+      const size_t SOC_max_iterations;
+      const double SOC_infeasibility_fraction;
       const bool print_minor_iterations;
 
       [[nodiscard]] double h_type_step_bound(double reference_infeasibility) const;
       [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+      [[nodiscard]] bool try_second_order_corrections(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);

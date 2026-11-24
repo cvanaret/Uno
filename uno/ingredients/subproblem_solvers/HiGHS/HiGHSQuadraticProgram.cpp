@@ -48,8 +48,16 @@ namespace uno {
       }
       // constraint bounds
       if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
-         subproblem.set_constraints_bounds(this->model.lp_.row_lower_, this->model.lp_.row_upper_, this->constraints);
+         this->restore_constraint_constants(subproblem);
       }
+   }
+
+   void HiGHSQuadraticProgram::set_constraint_constants(const Subproblem& subproblem, Vector<double>& constraint_constants) {
+      subproblem.set_constraints_bounds(this->model.lp_.row_lower_, this->model.lp_.row_upper_, constraint_constants);
+   }
+
+   void HiGHSQuadraticProgram::restore_constraint_constants(const Subproblem& subproblem) {
+      this->set_constraint_constants(subproblem, this->constraints);
    }
 
    void HiGHSQuadraticProgram::fill(const Vector<double>& linear_objective,

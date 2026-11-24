@@ -73,6 +73,8 @@ namespace uno {
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
          const Vector<double>& vector) const override;
+      void set_constraint_constants(const Subproblem& subproblem, Vector<double>& constraint_constants) override;
+      void restore_constraint_constants(const Subproblem& subproblem) override;
 
       void evaluate_functions(const OptimizationProblem& problem, const Iterate& current_iterate, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);

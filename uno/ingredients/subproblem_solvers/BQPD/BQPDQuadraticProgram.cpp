@@ -84,11 +84,7 @@ namespace uno {
       }
       // constraint bounds
       if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
-         auto constraints_lower_bounds = view(this->lower_bounds, this->number_variables,
-            this->number_variables + this->number_constraints);
-         auto constraints_upper_bounds = view(this->upper_bounds, this->number_variables,
-            this->number_variables + this->number_constraints);
-         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->constraints);
+         this->restore_constraint_constants(subproblem);
       }
       // replace INFs with large finite values (TODO: is that really useful?)
       for (size_t index: Range(this->number_variables + this->number_constraints)) {
@@ -118,6 +114,23 @@ namespace uno {
             subproblem.compute_hessian_vector_product(current_iterate, current_iterate.primals.view(), vector, result);
          };
       }
+   }
+
+   void BQPDQuadraticProgram::set_constraint_constants(const Subproblem& subproblem, Vector<double>& constraint_constants) {
+      auto constraints_lower_bounds = view(this->lower_bounds, this->number_variables,
+         this->number_variables + this->number_constraints);
+      auto constraints_upper_bounds = view(this->upper_bounds, this->number_variables,
+         this->number_variables + this->number_constraints);
+      subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, constraint_constants);
+      // replace INFs with large finite values
+      for (size_t index: Range(this->number_variables, this->number_variables + this->number_constraints)) {
+         this->lower_bounds[index] = std::max(-BQPD_infinite_bound, this->lower_bounds[index]);
+         this->upper_bounds[index] = std::min(BQPD_infinite_bound, this->upper_bounds[index]);
+      }
+   }
+
+   void BQPDQuadraticProgram::restore_constraint_constants(const Subproblem& subproblem) {
+      this->set_constraint_constants(subproblem, this->constraints);
    }
 
    void BQPDQuadraticProgram::fill(const Vector<double>& linear_objective,

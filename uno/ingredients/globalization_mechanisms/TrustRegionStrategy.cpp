@@ -29,6 +29,8 @@ namespace uno {
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
          h_type_step_factor(options.get_double("TR_h_type_step_factor")),
          h_type_step_exponent(options.get_double("TR_h_type_step_exponent")),
+         SOC_max_iterations(options.get_unsigned_int("SOC_max_iterations")),
+         SOC_infeasibility_fraction(options.get_double("SOC_infeasibility_fraction")),
          print_minor_iterations(options.get_bool("print_minor_iterations")) {
       if (!(0. < this->radius)) {
          throw std::runtime_error("The trust-region radius should be positive");
@@ -152,6 +154,15 @@ namespace uno {
                const Decision decision = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate,
                   direction, evaluation_cache, warmstart_information, user_callbacks);
                is_acceptable = decision.accepted;
+               // second-order corrections if the step was rejected and increased the infeasibility (Maratos effect). The
+               // increase must be strict: otherwise, SOCs are computed (and evaluated) at feasible points, where the SOC
+               // constants equal c(x_k) and the SOC step is the rejected step
+               if (!is_acceptable && decision.reason != RejectionReason::H_TYPE_STEP_TOO_LONG &&
+                     1 <= this->SOC_max_iterations && this->constraint_relaxation_strategy->has_second_order_corrections() &&
+                     current_iterate.progress.infeasibility < trial_iterate.progress.infeasibility) {
+                  is_acceptable = this->try_second_order_corrections(statistics, model, current_iterate, trial_iterate,
+                     direction, evaluation_cache, warmstart_information, user_callbacks);
+               }
                set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                if (is_acceptable) {
                   // possibly increase the radius if trust region is active
@@ -292,6 +303,50 @@ namespace uno {
       return this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., true, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
          predicted_reductions, warmstart_information, user_callbacks);
+   }
+
+   // second-order corrections (filterSQP): the trial iterate x + d_soc is tested with the predicted reductions of the
+   // original step d. The SOCs stop when one is accepted, after SOC_max_iterations, or when the infeasibility is not
+   // reduced by the factor SOC_infeasibility_fraction. The radius is unchanged by the SOCs
+   bool TrustRegionStrategy::try_second_order_corrections(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      DEBUG << "\nEntering second-order corrections\n";
+      try {
+         this->constraint_relaxation_strategy->initialize_second_order_corrections(current_iterate, trial_iterate,
+            evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
+         double previous_infeasibility = trial_iterate.progress.infeasibility;
+         for (size_t SOC_iteration = 1; SOC_iteration <= this->SOC_max_iterations; ++SOC_iteration) {
+            DEBUG << "\n\tSOC iteration " << SOC_iteration << '\n';
+            const Direction& direction_SOC = this->constraint_relaxation_strategy->compute_second_order_correction(statistics,
+               current_iterate);
+            if (direction_SOC.status != SubproblemStatus::OPTIMAL || !direction_SOC.is_finite()) {
+               DEBUG << "The SOC direction could not be computed\n";
+               return false;
+            }
+            assemble_trial_iterate(current_iterate, trial_iterate, direction_SOC, direction_SOC.primal_dual_step_length,
+               direction_SOC.primal_dual_step_length, direction_SOC.bound_dual_step_length);
+            evaluation_cache.trial_evaluations.reset();
+            this->reset_active_trust_region_multipliers(model, direction_SOC, trial_iterate);
+            const Decision decision = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate,
+               direction, evaluation_cache, warmstart_information, user_callbacks);
+            if (decision.accepted) {
+               DEBUG << "SOC direction acceptable\n";
+               statistics.set("Status", "SOC");
+               return true;
+            }
+            if (this->SOC_infeasibility_fraction * previous_infeasibility < trial_iterate.progress.infeasibility) {
+               DEBUG << "The SOC did not reduce the infeasibility sufficiently\n";
+               return false;
+            }
+            previous_infeasibility = trial_iterate.progress.infeasibility;
+            this->constraint_relaxation_strategy->update_second_order_corrections(trial_iterate, evaluation_cache.trial_evaluations);
+         }
+      }
+      catch (const EvaluationError&) {
+         DEBUG << "An evaluation error occurred during the SOCs\n";
+      }
+      return false;
    }
 
    // check whether the algorithm can terminate at an iterate (with computed residuals) after a rejected step with very
