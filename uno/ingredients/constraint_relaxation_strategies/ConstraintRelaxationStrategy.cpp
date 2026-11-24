@@ -63,9 +63,14 @@ namespace uno {
    }
 
    Decision ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const OptimizationProblem& problem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const {
+      // the postprocessing may relax bounds (interior-point methods), which changes the auxiliary (barrier) measure. The
+      // current and trial iterates must be measured with the same function: measure the trial iterate after the
+      // postprocessing, and refresh the auxiliary measure of the current iterate
       problem.postprocess_iterate(trial_iterate, trial_evaluations);
+      problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
+      problem.set_auxiliary_measure(current_iterate);
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
 

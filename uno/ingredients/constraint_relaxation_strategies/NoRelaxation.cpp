@@ -112,7 +112,7 @@ namespace uno {
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
       const auto& reformulated_problem = this->inequality_handling_method->reformulated_problem();
-      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
+      // the progress measures of the trial iterate are evaluated after its postprocessing
       const Decision decision = is_iterate_acceptable(statistics, this->globalization_strategy, reformulated_problem,
          current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (decision.accepted) {

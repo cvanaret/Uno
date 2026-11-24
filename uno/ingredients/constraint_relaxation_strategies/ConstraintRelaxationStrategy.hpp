@@ -123,7 +123,7 @@ namespace uno {
 
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const OptimizationProblem& problem, const Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;
       [[nodiscard]] bool is_roundoff_feasible_monotone_step(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Iterate& trial_iterate, Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const;

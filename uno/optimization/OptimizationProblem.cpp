@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include "OptimizationProblem.hpp"
 #include "ingredients/subproblem/SymbolicNewtonSystem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
@@ -8,6 +9,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
 #include "symbolic/UnaryNegation.hpp"
@@ -41,9 +43,23 @@ namespace uno {
       // do nothing
    }
 
-   void OptimizationProblem::postprocess_iterate(Iterate& iterate, Evaluations& /*evaluations*/) const {
+   void OptimizationProblem::postprocess_iterate(Iterate& iterate, Evaluations& evaluations) const {
       // project the trial iterate onto the bounds to avoid numerical errors
-      this->model.project_onto_variable_bounds(iterate.primals);
+      const auto& variables_lower_bounds = this->model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->model.get_variables_upper_bounds();
+      bool is_projected = false;
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         const double projected_value = std::max(std::min(iterate.primals[variable_index],
+            variables_upper_bounds[variable_index]), variables_lower_bounds[variable_index]);
+         if (projected_value != iterate.primals[variable_index]) {
+            iterate.primals[variable_index] = projected_value;
+            is_projected = true;
+         }
+      }
+      // the evaluations of the unprojected point (if any) are stale
+      if (is_projected) {
+         evaluations.reset();
+      }
    }
 
    void OptimizationProblem::postprocess_solution(Iterate& iterate, Evaluations& evaluations) const {

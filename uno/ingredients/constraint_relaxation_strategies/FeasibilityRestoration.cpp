@@ -325,7 +325,7 @@ namespace uno {
       // determine acceptability, depending on the current phase
       this->trial_globalization_strategy = &current_ingredients.globalization_strategy;
       const auto& reformulated_problem = current_ingredients.inequality_handling_method.reformulated_problem();
-      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
+      // the progress measures of the trial iterate are evaluated after its postprocessing
       const Decision decision = is_iterate_acceptable(statistics, current_ingredients.globalization_strategy,
          reformulated_problem, current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
       if (uses_trust_region || decision.accepted) {
