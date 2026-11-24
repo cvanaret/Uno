@@ -242,3 +242,31 @@ TEST(TrustRegionFilterTheory, SmallRadiusAtInfeasibleIterateSwitchesToRestoratio
    EXPECT_LE(result.solution_primal_feasibility, 1e-6);
    EXPECT_NEAR(std::abs(result.primal_solution[0]), 1., 1e-6);
 }
+
+
+// Maratos effect: at a feasible point close to the solution, the full SQP step increases both the objective and the
+// constraint violation and is rejected (FLT, Section 4: second-order convergence not addressed), and the radius is
+// cut. Without second-order corrections (SOC), the trust-region method takes a shorter step: the superlinear
+// convergence is lost and the method may look like it stalls. filterSQP (Fletcher & Leyffer) computes SOCs. The SOC
+// step solves the QP with the constants of the linearized constraints replaced with c(x + d) - J d.
+// Here (Nocedal & Wright, Example 15.4): min 2 (x0^2 + x1^2 - 1) - x0  s.t.  x0^2 + x1^2 = 1, solution (1, 0) with
+// multiplier 3/2 (the Hessian is that of the Lagrangian at the solution). From (cos theta, sin theta), the full step
+// is rejected; with an SOC, the first iterate is within O(theta^2) of the solution
+TEST(TrustRegionFilterTheory, MaratosEffectIsCorrectedBySOC) {
+   const double theta = 0.05;
+   const DenseTestModel model("maratos", 2, 1, ProblemType::NONLINEAR,
+      [](const Vector<double>& x) { return 2.*(x[0]*x[0] + x[1]*x[1] - 1.) - x[0]; },
+      [](const Vector<double>& x, Vector<double>& g) { g[0] = 4.*x[0] - 1.; g[1] = 4.*x[1]; },
+      [](const Vector<double>& x, Vector<double>& c) { c[0] = x[0]*x[0] + x[1]*x[1]; },
+      [](const Vector<double>& x, double* J) { J[0] = 2.*x[0]; J[1] = 2.*x[1]; },
+      [](const Vector<double>&, double rho, const Vector<double>&, double* H) { H[0] = 4.*rho - 3.; H[1] = 0.; H[2] = 4.*rho - 3.; },
+      {-Inf, -Inf}, {Inf, Inf}, {1.}, {1.}, {std::cos(theta), std::sin(theta)});
+   Options options = filtersqp_options();
+   options.set_integer("max_iterations", 1);
+
+   Uno uno;
+   const Result result = uno.solve(model, options);
+   ASSERT_EQ(result.number_iterations, 1);
+   const double distance = std::hypot(result.primal_solution[0] - 1., result.primal_solution[1]);
+   EXPECT_LE(distance, theta*theta);
+}
