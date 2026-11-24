@@ -56,3 +56,18 @@ TEST(ArmijoTolerance, IpoptPresetRejectsStepWithoutDecrease) {
 TEST(ArmijoTolerance, IpoptPresetRejectsInsufficientDecrease) {
    EXPECT_FALSE(f_type_step_is_accepted(1e-20));
 }
+
+// a decrease of eta * pred (up to roundoff) is accepted
+TEST(ArmijoTolerance, IpoptPresetAcceptsSufficientDecrease) {
+   EXPECT_TRUE(f_type_step_is_accepted(1e-17));
+}
+
+// the SQP presets keep the absolute tolerance
+TEST(ArmijoTolerance, SQPPresetsKeepTheirTolerance) {
+   for (const char* preset: {"filtersqp", "funnelsqp", "filterslp"}) {
+      Options options;
+      DefaultOptions::load(options);
+      Presets::set(options, preset);
+      EXPECT_EQ(options.get_double("armijo_tolerance"), 1e-9) << preset;
+   }
+}
