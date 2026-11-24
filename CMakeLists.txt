@@ -111,6 +111,7 @@ target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
 file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/unotest.cpp
    unotest/functional_tests/BacktrackingTerminationTests.cpp
+   unotest/functional_tests/SecondLevelRestorationTests.cpp
    unotest/functional_tests/BarrierProblemTests.cpp
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/CAPIOptionsTests.cpp
