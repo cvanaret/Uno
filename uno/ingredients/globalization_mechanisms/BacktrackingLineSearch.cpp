@@ -14,6 +14,7 @@
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "symbolic/Range.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "tools/Logger.hpp"
@@ -276,7 +277,16 @@ namespace uno {
          try {
             // take a step as a fraction of the direction
             assemble_trial_iterate(current_iterate, trial_iterate, direction, step_length);
-            evaluation_cache.trial_evaluations.reset();
+            if (BacktrackingLineSearch::coincide(current_iterate.primals, trial_iterate.primals)) {
+               // the step is below the resolution of the primals: the trial iterate is the current iterate, whose
+               // evaluations are reused. Backtracking goes on: the acceptance test still depends on the step length
+               // through the predicted reductions (Wächter & Biegler, Remark 1: at a feasible iterate, a step is
+               // eventually accepted)
+               evaluation_cache.trial_evaluations = evaluation_cache.current_evaluations;
+            }
+            else {
+               evaluation_cache.trial_evaluations.reset();
+            }
             statistics.set("||Step||", total_step_length * direction.norm);
 
             const Decision decision = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model,
@@ -572,6 +582,15 @@ namespace uno {
          SOC_termination = true;
       }
       return is_acceptable;
+   }
+
+   bool BacktrackingLineSearch::coincide(const Vector<double>& current_primals, const Vector<double>& trial_primals) {
+      for (size_t variable_index: Range(current_primals.size())) {
+         if (trial_primals[variable_index] != current_primals[variable_index]) {
+            return false;
+         }
+      }
+      return true;
    }
 
    void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {

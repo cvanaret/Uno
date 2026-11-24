@@ -91,6 +91,7 @@ namespace uno {
          const ProgressMeasures& predicted_reductions, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks,
          RejectionHistory& rejection_history) const;
       static void check_unboundedness(const Direction& direction);
+      [[nodiscard]] static bool coincide(const Vector<double>& current_primals, const Vector<double>& trial_primals);
    };
 } // namespace
 
