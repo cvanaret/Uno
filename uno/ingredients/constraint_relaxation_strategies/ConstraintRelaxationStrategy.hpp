@@ -71,6 +71,14 @@ namespace uno {
       // the last acceptable iterate) instead of switching to (or failing in) the feasibility problem
       [[nodiscard]] virtual bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
+      // the line search failed in the feasibility problem: second-level restoration (IPOPT). Returns true if the trial
+      // iterate was set to the current iterate with reset elastic variables, which reduces the infeasibility of the
+      // feasibility problem. By default, there is no second-level restoration
+      [[nodiscard]] virtual bool reset_elastic_variables(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
+            Iterate& /*trial_iterate*/, Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/,
+            WarmstartInformation& /*warmstart_information*/, UserCallbacks& /*user_callbacks*/) {
+         return false;
+      }
 
       // threshold theta_min of the globalization strategy of the current phase
       [[nodiscard]] virtual double small_infeasibility_threshold() const = 0;

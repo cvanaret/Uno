@@ -59,6 +59,9 @@ namespace uno {
          UserCallbacks& user_callbacks) override;
       [[nodiscard]] bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
+      [[nodiscard]] bool reset_elastic_variables(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] double small_infeasibility_threshold() const override;
       [[nodiscard]] double optimality_small_infeasibility_threshold() const override;
