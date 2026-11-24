@@ -10,9 +10,14 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include "Uno.hpp"
+#include "ingredients/constraint_relaxation_strategies/NoRelaxation.hpp"
+#include "ingredients/globalization_strategies/Decision.hpp"
+#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "ingredients/globalization_strategies/switching_methods/filter_methods/WaechterFilterMethod.hpp"
 #include "ingredients/inequality_handling_methods/interior_point_methods/InteriorPointParameters.hpp"
 #include "ingredients/inequality_handling_methods/interior_point_methods/barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "model/Model.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -22,6 +27,7 @@
 #include "options/Presets.hpp"
 #include "symbolic/IntegerRange.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Statistics.hpp"
 #include "tools/Logger.hpp"
 #include "tools/UserCallbacks.hpp"
 #include "BoundActiveModel.hpp"
@@ -206,4 +212,101 @@ TEST(BoundRelaxation, SolveWithActiveBounds) {
    // the solution may lie on a relaxed bound, but no further than the relaxation allows
    EXPECT_GE(result.primal_solution[0], -1e-8);
    EXPECT_LE(result.primal_solution[1], 1. + 1e-8);
+}
+
+// Wächter & Biegler compare all the trial iterates of a barrier subproblem with the same barrier function phi_mu.
+// Relaxing a bound changes phi_mu: the trial iterate must be measured after the relaxation, and the barrier measure of
+// the current iterate must be refreshed, otherwise the current and trial iterates are compared with different functions
+namespace {
+   // exposes the shared acceptance test of the constraint relaxation strategies
+   class AcceptanceTester: public NoRelaxation {
+   public:
+      using NoRelaxation::NoRelaxation;
+
+      [[nodiscard]] Decision test(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+            const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+            Evaluations& trial_evaluations, const ProgressMeasures& predicted_reductions) const {
+         return ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy, problem,
+            current_iterate, trial_iterate, direction, trial_evaluations, predicted_reductions);
+      }
+   };
+
+   struct AcceptanceScenario {
+      AcceptanceScenario() {
+         DefaultOptions::load(this->options);
+         Presets::set(this->options, "ipopt");
+         this->statistics.add_column("Status", Statistics::string_width, 0);
+         this->direction.primals[0] = -1e-2;
+         this->direction.norm = 1e-2;
+      }
+
+      Options options{};
+      BarrierScenario barrier{0.1};
+      Statistics statistics{};
+      Direction direction{3, 1};
+      Evaluations current_evaluations{barrier.model};
+      Evaluations trial_evaluations{barrier.model};
+
+      // the caller measures the current iterate, then the trial iterate (FeasibilityRestoration, NoRelaxation)
+      Decision test_trial_on_bound(Iterate& current_iterate, Iterate& trial_iterate) {
+         return this->test_trial(this->barrier.barrier_problem, current_iterate, trial_iterate);
+      }
+
+      Decision test_trial(const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate) {
+         problem.evaluate_progress_measures(current_iterate, this->current_evaluations, Norm::L1);
+         WaechterFilterMethod strategy(this->options);
+         strategy.initialize(this->statistics, current_iterate);
+         problem.evaluate_progress_measures(trial_iterate, this->trial_evaluations, Norm::L1);
+         const AcceptanceTester tester(this->barrier.model, this->options);
+         const ProgressMeasures predicted_reductions{0., [](double) { return 1e-3; }, 0., 1.};
+         return tester.test(this->statistics, strategy, problem, current_iterate, trial_iterate, this->direction,
+            this->trial_evaluations, predicted_reductions);
+      }
+   };
+} // namespace
+
+// x0 = 0 lies on its bound: the bound is relaxed upon postprocessing, after which the barrier measure is finite. The
+// trial iterate must be judged by the globalization strategy, not rejected for an infinite barrier measure
+TEST(BoundRelaxation, TrialIterateIsMeasuredAfterBoundRelaxation) {
+   Logger::level = SILENT;
+   AcceptanceScenario scenario;
+   Iterate current_iterate = scenario.barrier.make_iterate(1e-2, 0.5, 1.5);
+   Iterate trial_iterate = scenario.barrier.make_iterate(0., 0.5, 1.5);
+   const Decision decision = scenario.test_trial_on_bound(current_iterate, trial_iterate);
+   EXPECT_EQ(scenario.barrier.barrier_problem.get_number_bound_relaxations(), 1u);
+   EXPECT_NE(decision.reason, RejectionReason::INVALID_TRIAL_ITERATE);
+   EXPECT_TRUE(std::isfinite(trial_iterate.progress.auxiliary));
+}
+
+// after the relaxation, the barrier measure of the current iterate is that of the relaxed barrier function
+TEST(BoundRelaxation, CurrentBarrierMeasureIsRefreshedAfterBoundRelaxation) {
+   Logger::level = SILENT;
+   AcceptanceScenario scenario;
+   Iterate current_iterate = scenario.barrier.make_iterate(1e-2, 0.5, 1.5);
+   Iterate trial_iterate = scenario.barrier.make_iterate(0., 0.5, 1.5);
+   const double unrelaxed_measure = scenario.barrier.barrier_measure(current_iterate);
+   (void) scenario.test_trial_on_bound(current_iterate, trial_iterate);
+   Iterate reference = current_iterate;
+   const double relaxed_measure = scenario.barrier.barrier_measure(reference);
+   ASSERT_NE(relaxed_measure, unrelaxed_measure);
+   EXPECT_EQ(current_iterate.progress.auxiliary, relaxed_measure);
+}
+
+// SQP presets (and the l1 relaxed problem): the base postprocessing projects the trial iterate onto the variable bounds.
+// The trial iterate must be measured (and its functions evaluated) at the projected point, which is the point kept if
+// the trial iterate is accepted. x = (-0.1, 0.5) is projected onto (0, 0.5), where f = (0 + 1)^2 + (0.5 - 2)^2 = 3.25
+TEST(TrialIterateProjection, ProjectedTrialIterateIsMeasuredAtTheProjection) {
+   Logger::level = SILENT;
+   AcceptanceScenario scenario;
+   const OptimizationProblem& problem = scenario.barrier.problem;
+   Iterate current_iterate(problem.number_variables, problem.number_constraints);
+   current_iterate.primals[0] = 0.5;
+   current_iterate.primals[1] = 0.5;
+   Iterate trial_iterate(problem.number_variables, problem.number_constraints);
+   trial_iterate.primals[0] = -0.1;
+   trial_iterate.primals[1] = 0.5;
+   (void) scenario.test_trial(problem, current_iterate, trial_iterate);
+   ASSERT_EQ(trial_iterate.primals[0], 0.);
+   EXPECT_DOUBLE_EQ(scenario.trial_evaluations.objective, 3.25);
+   EXPECT_DOUBLE_EQ(trial_iterate.progress.objective(1.), 3.25);
 }
