@@ -128,7 +128,7 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 | `filter_gamma`                                    | double  | 0.001   | Slope in the objective sufficient reduction condition                                  |
 | `filter_ubd`                                      | double  | 1e2     | Minimum value for the initial upper bound on the infeasibility                         |
 | `filter_fact`                                     | double  | 1.25    | Multiple of the initial infeasibility for the initial upper bound on the infeasibility |
-| `filter_capacity`                                 | integer | 50      | Maximum number of filter entries, 0 for an unlimited (growing) filter                  |
+| `filter_capacity`                                 | integer | 0       | Maximum number of filter entries, 0 for an unlimited (growing) filter                  |
 | `filter_sufficient_infeasibility_decrease_factor` | double  | 0.9     | Infeasibility decrease factor in the infeasibility sufficient decrease condition       |
 | `filter_switch_back_infeasibility_threshold` | double | 1e-8 | Below this infeasibility, a restoration iterate acceptable to the optimality filter leaves restoration (Fletcher filter) |
 | `filter_reset_iteration_threshold`                | integer | 5       | Number of consecutive filter rejections before the filter is reset                     |

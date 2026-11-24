@@ -95,7 +95,7 @@ namespace uno {
       options.set_double("filter_gamma", 0.001);
       options.set_double("filter_ubd", 1e2);
       options.set_double("filter_fact", 1.25);
-      options.set_integer("filter_capacity", 50); // 0: unlimited
+      options.set_integer("filter_capacity", 0); // 0: unlimited, as in the convergence theory
       // used by Waechter filter method
       options.set_double("filter_sufficient_infeasibility_decrease_factor", 0.9);
       // below this infeasibility, a restoration iterate acceptable to the optimality filter leaves restoration (Fletcher filter)

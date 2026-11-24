@@ -96,3 +96,51 @@ TEST(FilterCapacity, UnlimitedCapacity) {
    EXPECT_FALSE(is_acceptable(limited_filter, 500., -1e6)); // upper bound lowered by the dropped entries
    EXPECT_TRUE(is_acceptable(unlimited_filter, 0.5, 1e6)); // left of all entries
 }
+
+// Wächter & Biegler (and Fletcher, Leyffer & Toint) analyze a filter of unbounded size, so the default filter is unlimited.
+// With a fixed capacity, the only way to drop an entry while keeping F_k included in F_{k+1} is to lower the upper bound
+// to its infeasibility, which can reject the iterate that was just accepted (x_{k+1} must not belong to F_{k+1})
+namespace {
+   Options default_filter_options() {
+      Options options;
+      DefaultOptions::load(options);
+      return options; // beta = 0.999, gamma = 0.001
+   }
+} // namespace
+
+// more pairs than the former default capacity (50): every entry is kept and the upper bound is never lowered
+TEST(FilterCapacity, DefaultFilterIsUnlimited) {
+   constexpr size_t number_pairs = 60;
+   Filter filter(default_filter_options());
+   filter.set_infeasibility_upper_bound(1000.);
+   for (size_t index = 1; index <= number_pairs; ++index) {
+      filter.add(static_cast<double>(index), static_cast<double>(number_pairs - index));
+   }
+   for (size_t index = 1; index < number_pairs; ++index) {
+      const double infeasibility = static_cast<double>(index) + 0.5;
+      const double objective = static_cast<double>(number_pairs - index) + 0.1;
+      EXPECT_FALSE(is_acceptable(filter, infeasibility, objective)); // slightly dominated by entry index
+   }
+   EXPECT_TRUE(is_acceptable(filter, 500., -1e6)); // upper bound untouched
+}
+
+// the current iterate (60, 0) is added to a filter of 50 entries after the trial iterate (60, -1) was accepted by
+// sufficient decrease of the objective. The trial iterate is acceptable to the new filter: it lies outside the taboo
+// region of every pair added so far
+TEST(FilterCapacity, DefaultFilterKeepsAcceptedIterateAcceptable) {
+   const Options options = default_filter_options();
+   Filter filter(options);
+   filter.set_infeasibility_upper_bound(1000.);
+   for (size_t index = 1; index <= 50; ++index) {
+      filter.add(static_cast<double>(index), 100. - static_cast<double>(index));
+   }
+   constexpr double current_infeasibility = 60.;
+   constexpr double current_objective = 0.;
+   constexpr double trial_infeasibility = current_infeasibility;
+   constexpr double trial_objective = -1.;
+   ASSERT_TRUE(is_acceptable(filter, trial_infeasibility, trial_objective));
+   // sufficient decrease of the objective wrt the current iterate (both margins coincide since the infeasibilities are equal)
+   ASSERT_LE(trial_objective, current_objective - options.get_double("filter_gamma") * trial_infeasibility);
+   filter.add(current_infeasibility, current_objective);
+   EXPECT_TRUE(is_acceptable(filter, trial_infeasibility, trial_objective));
+}
