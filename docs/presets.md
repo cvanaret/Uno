@@ -51,6 +51,7 @@ If not provided, the QP solver is chosen automatically from the available QP sol
 | `filter_fact`                                          | double | 1e4                       |
 | `filter_switching_infeasibility_exponent`              | double | 1.1                       |
 | `armijo_decrease_fraction`                             | double | 1e-8                      |
+| `armijo_tolerance`                                     | double | 0                         |
 | `LS_backtracking_ratio`                                | double | 0.5                       |
 | `LS_min_step_length`                                   | double | 5e-7                      |
 | `barrier_tau_min`                                      | double | 0.99                      |
