@@ -148,6 +148,19 @@ namespace uno {
          }
          return;
       }
+      // in the feasibility problem: second-level restoration (reset the elastic variables), if it makes progress
+      if (this->constraint_relaxation_strategy->solving_feasibility_problem() &&
+            this->constraint_relaxation_strategy->reset_elastic_variables(statistics, current_iterate, trial_iterate,
+               evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations, warmstart_information, user_callbacks)) {
+         this->stop_watchdog();
+         set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+         set_dual_residuals_statistics(statistics, trial_iterate);
+         statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
+         if (Logger::level == INFO) {
+            statistics.print_current_line();
+         }
+         return;
+      }
       // otherwise, switch to solving the feasibility problem (test first if we can)
       if (model.number_constraints == 0 || this->constraint_relaxation_strategy->solving_feasibility_problem()) {
          throw std::runtime_error("Line search failed");

@@ -381,6 +381,40 @@ namespace uno {
          current_evaluations, trial_evaluations);
    }
 
+   // second-level restoration (IPOPT, RestoRestorationPhase): the line search failed in the restoration phase. Keep the
+   // primals (x, s) and reset the elastic variables (and their duals) to their closed-form values at x, which reduces the
+   // infeasibility of the restoration problem, e.g. when the elastics were frozen by a large primal regularization.
+   // The current iterate is first added to the restoration filter, as when entering a restoration phase
+   bool FeasibilityRestoration::reset_elastic_variables(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) {
+      if (this->current_phase != Phase::FEASIBILITY_RESTORATION) {
+         return false;
+      }
+      trial_iterate = current_iterate;
+      trial_evaluations = current_evaluations;
+      this->feasibility.inequality_handling_method->set_elastic_variable_values(this->feasibility.problem, trial_iterate,
+         trial_evaluations);
+      const auto& reformulated_problem = this->feasibility.inequality_handling_method->reformulated_problem();
+      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
+      DEBUG << "Second-level restoration: the infeasibility of the restoration problem goes from " <<
+         current_iterate.progress.infeasibility << " to " << trial_iterate.progress.infeasibility << '\n';
+      // the reset must make progress, otherwise the line search would fail again from the same iterate
+      if (!(trial_iterate.progress.infeasibility < current_iterate.progress.infeasibility)) {
+         return false;
+      }
+      this->feasibility.globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
+      statistics.set("Status", "elastic reset");
+      // the primals are unchanged: the iterate cannot leave the restoration phase. Compute the residuals and check termination
+      warmstart_information.iterate_changed();
+      compute_residuals(reformulated_problem, trial_iterate, trial_evaluations);
+      trial_iterate.status = this->check_termination(this->feasibility.problem, trial_iterate, trial_evaluations);
+      user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers,
+         this->feasibility.problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
+         trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
+      return true;
+   }
+
    // possibly switch back to the optimality phase, then compute the residuals and check termination
    void FeasibilityRestoration::finalize_accepted_iterate(const Model& model, Iterate& trial_iterate, const Direction& direction,
          double step_length, Evaluations& current_evaluations, Evaluations& trial_evaluations,
