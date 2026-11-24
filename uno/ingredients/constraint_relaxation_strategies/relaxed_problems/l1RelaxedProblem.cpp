@@ -464,8 +464,10 @@ namespace uno {
    }
 
    PredictedObjectiveReduction l1RelaxedProblem::build_predicted_objective_reduction(const Iterate& /*current_iterate*/,
-         const Vector<double>& primal_direction, Evaluations& /*current_evaluations*/, double /*hessian_quadratic_form*/) const {
-      // −α ρ̄ Σ(Δp + Δn). Currently independent of the objective multiplier; steer ρ here later.
+         const Vector<double>& primal_direction, Evaluations& /*current_evaluations*/, double hessian_quadratic_form) const {
+      // −α ρ̄ Σ(Δp + Δn) − α²/2 dᵀHd: decrease of the model minimized by the restoration QP (H: Hessian of the Lagrangian of
+      // the feasibility problem), as in OptimizationProblem. Currently independent of the objective multiplier; steer ρ
+      // here later.
       double elastic_step_sum = 0.;
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
          elastic_step_sum += primal_direction[elastic_index];
@@ -474,8 +476,13 @@ namespace uno {
          elastic_step_sum += primal_direction[elastic_index];
       }
       const double coefficient = this->constraint_violation_coefficient;
-      return [elastic_step_sum, coefficient](double step_length, double /*objective_multiplier*/, bool /*use_curvature_information*/) {
-         return -step_length * coefficient * elastic_step_sum;
+      return [elastic_step_sum, coefficient, hessian_quadratic_form](double step_length, double /*objective_multiplier*/,
+            bool use_curvature_information) {
+         double reduction = -step_length * coefficient * elastic_step_sum;
+         if (use_curvature_information) {
+            reduction -= step_length * step_length / 2. * hessian_quadratic_form;
+         }
+         return reduction;
       };
    }
 
