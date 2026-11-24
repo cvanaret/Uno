@@ -99,31 +99,36 @@ namespace uno {
    }
 
    // add (infeasibility, objective) to the filter
-   // invariant: infeasibility strictly increasing, objective strictly decreasing (raw values, no margins)
+   // invariant: infeasibility strictly increasing, dominance key strictly decreasing (see dominance_key)
    void Filter::add(double current_infeasibility, double current_objective) {
       assert(this->infeasibility.size() == this->objective.size());
+      const double current_key = this->dominance_key(current_infeasibility, current_objective);
       // first entry whose infeasibility is >= the new one (raw comparison, same as the removal below)
       const auto infeasibility_begin = this->infeasibility.begin();
       const auto objective_begin = this->objective.begin();
       const size_t position = static_cast<size_t>(std::lower_bound(infeasibility_begin, this->infeasibility.end(),
          current_infeasibility) - infeasibility_begin);
 
-      // if an existing entry dominates the new pair, the filter is unchanged:
-      // - entries before `position` have smaller infeasibility; the one with the smallest objective is position-1
+      // if the taboo region of an existing entry contains that of the new pair, the filter is unchanged:
+      // - entries before `position` have smaller infeasibility; the one with the smallest key is position-1
       // - the entry at `position` may have equal infeasibility
-      if (0 < position && this->objective[position - 1] <= current_objective) {
+      if (0 < position && this->dominance_key(this->infeasibility[position - 1], this->objective[position - 1]) <= current_key) {
          return;
       }
       if (position < this->number_entries() && this->infeasibility[position] == current_infeasibility &&
-            this->objective[position] <= current_objective) {
+            this->dominance_key(this->infeasibility[position], this->objective[position]) <= current_key) {
          return;
       }
 
-      // remove the entries dominated by the new pair: from `position` on, infeasibility >= new one, and the
-      // objectives are decreasing, so the dominated entries form a contiguous block [position, end_position)
+      // remove the entries whose taboo region is contained in that of the new pair: from `position` on, infeasibility
+      // >= new one, and the keys are decreasing, so these entries form a contiguous block [position, end)
       const auto start = static_cast<std::ptrdiff_t>(position);
-      const auto end = std::partition_point(objective_begin + start, this->objective.end(),
-         [&](double entry_objective) { return current_objective <= entry_objective; }) - objective_begin;
+      size_t end_position = position;
+      while (end_position < this->number_entries() &&
+            current_key <= this->dominance_key(this->infeasibility[end_position], this->objective[end_position])) {
+         ++end_position;
+      }
+      const auto end = static_cast<std::ptrdiff_t>(end_position);
       this->infeasibility.erase(infeasibility_begin + start, infeasibility_begin + end);
       this->objective.erase(objective_begin + start, objective_begin + end);
 
@@ -209,6 +214,15 @@ namespace uno {
    }
 
 
+   // the taboo region of an entry (h, f) is {(h', f'): h' >= beta*h and f' > f - gamma*m}, where the margin m is h
+   // (entry margin, Wächter & Biegler) or h' (trial margin, Fletcher & Leyffer). The regions of two entries are nested iff
+   // their infeasibilities and keys are ordered the same way: the key is the corner objective f - gamma*h with the entry
+   // margin, and the raw objective f with the trial margin. The entries themselves are stored raw: the infeasibilities
+   // are used as such (smallest infeasibility of the filter, infeasibility upper bound of a filter with fixed capacity)
+   double Filter::dominance_key(double entry_infeasibility, double entry_objective) const {
+      return this->margin_uses_entry_infeasibility ? entry_objective - this->parameters.gamma * entry_infeasibility : entry_objective;
+   }
+
    bool Filter::objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const {
       return (trial_objective <= current_objective - this->parameters.gamma * trial_infeasibility);
    }
@@ -240,7 +254,8 @@ namespace uno {
    bool Filter::is_sorted() const {
       for (size_t index = 1; index < this->number_entries(); ++index) {
          if (!(this->infeasibility[index - 1] < this->infeasibility[index] &&
-               this->objective[index - 1] > this->objective[index])) {
+               this->dominance_key(this->infeasibility[index - 1], this->objective[index - 1]) >
+               this->dominance_key(this->infeasibility[index], this->objective[index]))) {
             return false;
                }
       }

@@ -48,7 +48,8 @@ namespace {
    constexpr double trial_objective = 5.;
 }
 
-// the stored entries must be sorted by increasing infeasibility and decreasing objective (raw values, no margin)
+// the stored entries must be sorted by increasing infeasibility and decreasing dominance key (raw objective with the
+// trial margin, corner objective f - gamma*h with the entry margin). Here both orders coincide
 TEST(Filter, EntryWithinMarginIsInsertedInSortedOrder) {
    InspectableFilter filter(make_filter_options(filter_beta, filter_gamma, filter_capacity));
    filter.add(current_infeasibility, current_objective);
@@ -149,4 +150,44 @@ TEST(Filter, EntryMarginFilterIsTheUnionOfTabooRegions) {
    }
    EXPECT_EQ(number_wrongly_accepted, 0u);
    EXPECT_EQ(number_wrongly_rejected, 0u);
+}
+
+// trial margin (filterSQP, filterSLP): the taboo region of (h, f) is {h' >= beta*h, f' > f - gamma*h'}, and pruning
+// on raw values is exact. The filter is unchanged, including with a fixed capacity
+TEST(Filter, TrialMarginFilterIsTheUnionOfTabooRegions) {
+   for (const uno_int capacity: {0, 10, 50}) {
+      Options options = make_filter_options(0.999, 1e-3, capacity);
+      options.set_bool("filter_margin_uses_entry_infeasibility", false);
+      std::mt19937 generator(11);
+      std::uniform_real_distribution<double> uniform(0., 1.);
+      size_t number_wrongly_accepted = 0;
+      for (size_t run = 0; run < 200; ++run) {
+         Filter filter(options);
+         filter.set_infeasibility_upper_bound(1e30);
+         filter.reset();
+         std::vector<std::pair<double, double>> added_pairs;
+         for (size_t index = 0; index < 80; ++index) {
+            const double infeasibility = std::pow(10., 4. * uniform(generator) - 2.);
+            const double objective = uniform(generator) - 0.5;
+            added_pairs.emplace_back(infeasibility, objective);
+            filter.add(infeasibility, objective);
+         }
+         for (size_t sample = 0; sample < 200; ++sample) {
+            const double infeasibility = std::pow(10., 4. * uniform(generator) - 2.);
+            const double objective = uniform(generator) - 0.5 - 1e-3 * uniform(generator);
+            bool taboo = false;
+            for (const auto& [entry_infeasibility, entry_objective]: added_pairs) {
+               if (0.999 * entry_infeasibility <= infeasibility && entry_objective - 1e-3 * infeasibility < objective) {
+                  taboo = true;
+               }
+            }
+            const bool acceptable = filter.acceptable_wrt_infeasibility_upper_bound(infeasibility) &&
+               filter.filter_acceptable(infeasibility, objective);
+            if (taboo && acceptable) {
+               ++number_wrongly_accepted;
+            }
+         }
+      }
+      EXPECT_EQ(number_wrongly_accepted, 0u) << "capacity " << capacity;
+   }
 }
