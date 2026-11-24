@@ -43,7 +43,7 @@ namespace uno {
       // maximum number of entries. 0: unlimited capacity (the filter grows)
       const size_t capacity;
       std::vector<double> infeasibility{}; // infeasibility increases
-      std::vector<double> objective{}; // objective decreases
+      std::vector<double> objective{}; // raw objective; the dominance key (see dominance_key) decreases
       double infeasibility_upper_bound{Inf}; /*!< Upper bound on infeasibility measure */
       // the upper bound is lowered when an entry is dropped from a full filter; this value is restored upon reset
       double initial_infeasibility_upper_bound{Inf};
@@ -57,6 +57,7 @@ namespace uno {
       [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
       static void print_line(std::string& table, const std::string& infeasibility, const std::string& objective);
       [[nodiscard]] bool is_sorted() const;
+      [[nodiscard]] double dominance_key(double entry_infeasibility, double entry_objective) const;
    };
 } // namespace
 
