@@ -1,8 +1,12 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include <functional>
+#include <utility>
 #include "FeasibilityRestoration.hpp"
+#include "tools/Infinity.hpp"
+#include "tools/Symbols.hpp"
 #include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
@@ -35,6 +39,7 @@ namespace uno {
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          bound_multiplier_max_norm(options.get_double("bound_multiplier_max_norm")),
+         soft_restoration_error_reduction_factor(options.get_double("LS_soft_restoration_error_reduction_factor")),
          constraints_buffer(model.number_constraints) {
       this->optimality.globalization_strategy = GlobalizationStrategyFactory::create(model, options, option_overrides);
       this->feasibility.globalization_strategy = GlobalizationStrategyFactory::create(model,
@@ -110,7 +115,17 @@ namespace uno {
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
-      this->optimality.globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
+      // if the restoration phase is entered from the soft restoration phase, the iterate at which the latter started
+      // is already in the filter (IPOPT). The current iterate is then not in the filter: the exit test checks the
+      // acceptability wrt the current iterate explicitly (IPOPT, RestoFilterConvergenceCheck::TestOrigProgress)
+      if (this->soft_restoration_iterate_in_filter) {
+         this->restoration_reference_progress = current_iterate.progress;
+      }
+      else {
+         this->optimality.globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
+         this->restoration_reference_progress.reset();
+      }
+      this->soft_restoration_iterate_in_filter = false;
 
       const auto& reformulated_problem = this->optimality.inequality_handling_method->reformulated_problem();
       const auto& reformulated_feasibility_problem = this->feasibility.inequality_handling_method->reformulated_problem();
@@ -244,7 +259,9 @@ namespace uno {
       this->iterate_buffer.scaled_residuals.primal_infeasibility =
          this->optimality.inequality_handling_method->compute_reformulation_infeasibility(this->iterate_buffer, trial_evaluations);
 
-      if (this->optimality.globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility)) {
+      if (this->optimality.globalization_strategy->is_infeasibility_sufficiently_reduced(this->iterate_buffer, this->reference_infeasibility) &&
+            (!this->restoration_reference_progress.has_value() || this->optimality.globalization_strategy->is_acceptable_wrt_reference_iterate(
+               *this->restoration_reference_progress, this->iterate_buffer.progress))) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
             return true;
          }
@@ -312,6 +329,10 @@ namespace uno {
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate) {
       ++this->number_parameterization_updates;
       globalization_strategy.reset();
+      // the filter was reset: the iterate at which the soft restoration phase started is no longer in it
+      if (this->current_phase == Phase::OPTIMALITY) {
+         this->soft_restoration_iterate_in_filter = false;
+      }
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
          const double proximal_coefficient = inequality_handling_method.proximal_coefficient();
          this->feasibility.problem.set_proximal_coefficient(proximal_coefficient);
@@ -424,6 +445,77 @@ namespace uno {
          this->feasibility.problem.get_objective_multiplier(), trial_iterate.scaled_residuals.primal_infeasibility,
          trial_iterate.scaled_residuals.stationarity, trial_iterate.scaled_residuals.complementarity);
       return true;
+   }
+
+   // Uno restriction: the soft restoration phase only exists in the optimality phase (IPOPT also uses it within its
+   // restoration phase, before the second-level restoration)
+   bool FeasibilityRestoration::supports_soft_restoration() const {
+      return (this->current_phase == Phase::OPTIMALITY) &&
+         this->optimality.inequality_handling_method->provides_primal_dual_system_error();
+   }
+
+   void FeasibilityRestoration::start_soft_restoration(const Iterate& current_iterate) {
+      DEBUG << "Starting the soft restoration phase\n";
+      this->optimality.globalization_strategy->avoid_cycling_back_to(current_iterate.progress);
+      this->soft_restoration_iterate_in_filter = true;
+   }
+
+   void FeasibilityRestoration::end_soft_restoration() {
+      this->soft_restoration_iterate_in_filter = false;
+   }
+
+   // IPOPT (BacktrackingLineSearch::TrySoftRestoStep): the trial iterate is accepted if it is acceptable to the filter
+   // (without predicted reduction: h-type test), or if it sufficiently reduces the primal-dual error of the barrier
+   // problem at the current barrier parameter: E_mu(trial) <= kappa_soft E_mu(current)
+   SoftRestorationStep FeasibilityRestoration::take_soft_restoration_step(Statistics& statistics, const Model& model,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) {
+      assert(this->current_phase == Phase::OPTIMALITY && "The soft restoration phase only exists in the optimality phase");
+      auto& inequality_handling_method = *this->optimality.inequality_handling_method;
+      const auto& reformulated_problem = inequality_handling_method.reformulated_problem();
+      // same measures as the regular acceptance test: the trial iterate is measured after its postprocessing. The
+      // primal-dual error is evaluated with the multipliers before their kappa_sigma correction (IPOPT corrects them
+      // once the trial iterate is accepted)
+      Multipliers uncorrected_multipliers = trial_iterate.multipliers;
+      reformulated_problem.postprocess_iterate(trial_iterate, trial_evaluations);
+      reformulated_problem.evaluate_progress_measures(trial_iterate, trial_evaluations, this->progress_norm);
+      reformulated_problem.set_auxiliary_measure(current_iterate);
+      trial_iterate.objective_multiplier = reformulated_problem.get_objective_multiplier();
+      if (is_infinite(trial_iterate.progress.auxiliary)) {
+         statistics.set("Status", "soft resto: inf auxiliary");
+         return SoftRestorationStep::REJECTED;
+      }
+      // the next subproblem must be well defined, and the primal-dual error requires the derivatives (an exception is
+      // thrown upon evaluation failure)
+      trial_evaluations.evaluate_objective_gradient(model, trial_iterate.primals);
+      trial_evaluations.evaluate_jacobian(model, trial_iterate.primals);
+
+      SoftRestorationStep outcome;
+      if (this->optimality.globalization_strategy->is_acceptable_without_predicted_reduction(current_iterate.progress,
+            trial_iterate.progress)) {
+         DEBUG << "Soft restoration step acceptable to the globalization strategy\n";
+         statistics.set("Status", std::string(symbols::check) + " (soft resto, filter)");
+         outcome = SoftRestorationStep::ACCEPTED_BY_GLOBALIZATION_STRATEGY;
+      }
+      else {
+         const double current_error = inequality_handling_method.primal_dual_system_error(current_iterate, current_evaluations);
+         std::swap(trial_iterate.multipliers, uncorrected_multipliers);
+         const double trial_error = inequality_handling_method.primal_dual_system_error(trial_iterate, trial_evaluations);
+         std::swap(trial_iterate.multipliers, uncorrected_multipliers);
+         DEBUG << "Soft restoration: primal-dual error " << current_error << " -> " << trial_error << '\n';
+         if (!(trial_error <= this->soft_restoration_error_reduction_factor * current_error)) {
+            statistics.set("Status", std::string(symbols::fail) + " (soft resto)");
+            return SoftRestorationStep::REJECTED;
+         }
+         statistics.set("Status", std::string(symbols::check) + " (soft resto)");
+         outcome = SoftRestorationStep::ACCEPTED;
+      }
+      inequality_handling_method.notify_trial_iterate(statistics, current_iterate, trial_iterate, current_evaluations,
+         trial_evaluations);
+      this->finalize_accepted_iterate(model, trial_iterate, direction, step_length, current_evaluations, trial_evaluations,
+         warmstart_information, user_callbacks);
+      return outcome;
    }
 
    // possibly switch back to the optimality phase, then compute the residuals and check termination

@@ -28,6 +28,15 @@ namespace uno {
    class UserCallbacks;
    class WarmstartInformation;
 
+   // outcome of a soft restoration step (see ConstraintRelaxationStrategy::take_soft_restoration_step)
+   enum class SoftRestorationStep {
+      REJECTED,
+      // accepted: the primal-dual error is sufficiently reduced
+      ACCEPTED,
+      // accepted: the trial iterate is acceptable to the globalization strategy (the soft restoration phase ends)
+      ACCEPTED_BY_GLOBALIZATION_STRATEGY
+   };
+
    class ConstraintRelaxationStrategy {
    public:
       explicit ConstraintRelaxationStrategy(const Options& options);
@@ -72,6 +81,23 @@ namespace uno {
       // the last acceptable iterate) instead of switching to (or failing in) the feasibility problem
       [[nodiscard]] virtual bool terminate_at_line_search_failure(const Iterate& current_iterate, Iterate& trial_iterate,
          const Evaluations& current_evaluations, Evaluations& trial_evaluations) = 0;
+      // soft restoration phase of the line search (IPOPT, BacktrackingLineSearch::TrySoftRestoStep): upon line search
+      // failure in the optimality phase, steps that reduce the primal-dual error are accepted before the feasibility
+      // restoration phase is entered. By default, there is no soft restoration phase
+      [[nodiscard]] virtual bool supports_soft_restoration() const { return false; }
+      // the soft restoration phase starts at the current iterate: add it to the filter, as when entering the restoration
+      // phase (IPOPT, PrepareRestoPhaseStart). A restoration phase entered from the soft restoration phase does not add
+      // its current iterate again
+      virtual void start_soft_restoration(const Iterate& /*current_iterate*/) { }
+      // the soft restoration phase ended without entering the restoration phase
+      virtual void end_soft_restoration() { }
+      // test the trial iterate (assembled by the globalization mechanism) and, if accepted, finalize it
+      [[nodiscard]] virtual SoftRestorationStep take_soft_restoration_step(Statistics& /*statistics*/, const Model& /*model*/,
+            Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/, const Direction& /*direction*/, double /*step_length*/,
+            Evaluations& /*current_evaluations*/, Evaluations& /*trial_evaluations*/,
+            WarmstartInformation& /*warmstart_information*/, UserCallbacks& /*user_callbacks*/) {
+         return SoftRestorationStep::REJECTED;
+      }
       // the line search failed in the feasibility problem: second-level restoration (IPOPT). Returns true if the trial
       // iterate was set to the current iterate with reset elastic variables, which reduces the infeasibility of the
       // feasibility problem. By default, there is no second-level restoration

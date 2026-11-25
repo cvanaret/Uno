@@ -162,6 +162,9 @@ For each dumped iteration, two files are written to `dump_kkt_path`:
 | `gamma_alpha`                     | double  | 0.05    | Safety factor for the minimum step length                        |
 | `LS_watchdog_shortened_iterations_trigger` | integer | 10 | Number of consecutive shortened steps that triggers the watchdog (0 disables it) |
 | `LS_watchdog_max_trial_iterations` | integer | 3 | Maximum number of watchdog iterations in which the full step is accepted unchecked |
+| `LS_soft_restoration` | bool | `false` | Upon line search failure, try steps that reduce the primal-dual error before the feasibility restoration phase (interior-point methods) |
+| `LS_soft_restoration_error_reduction_factor` | double | 0.9999 | Soft restoration: required reduction factor of the primal-dual error |
+| `LS_soft_restoration_max_iterations` | integer | 10 | Soft restoration: maximum number of consecutive iterations |
 
 ## Second-Order Corrections (SOC) options
 

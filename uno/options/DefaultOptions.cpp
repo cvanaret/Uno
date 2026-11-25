@@ -133,6 +133,14 @@ namespace uno {
       options.set_integer("LS_watchdog_shortened_iterations_trigger", 10);
       // watchdog: maximum number of iterations in which the full step is accepted without globalization test
       options.set_integer("LS_watchdog_max_trial_iterations", 3);
+      // soft restoration phase (IPOPT): upon line search failure, try steps that reduce the primal-dual error
+      // before calling the feasibility restoration phase. Requires an inequality handling method that provides the
+      // primal-dual error (interior-point methods)
+      options.set_bool("LS_soft_restoration", false);
+      // soft restoration: required reduction factor of the primal-dual error
+      options.set_double("LS_soft_restoration_error_reduction_factor", 1. - 1e-4);
+      // soft restoration: maximum number of consecutive iterations
+      options.set_integer("LS_soft_restoration_max_iterations", 10);
 
       /** Second-Order Corrections (SOC) options */
       // maximum number of SOC iterations

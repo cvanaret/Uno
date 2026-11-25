@@ -93,6 +93,9 @@ namespace uno {
       // reformulation_infeasibility (restoration switching test): max of the constraint violation of the unslacked problem
       // and of the residuals c(x) - s of the slacked constraints
       [[nodiscard]] double reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations, Norm residual_norm) const override;
+      // primal-dual error of the barrier problem (IPOPT, primal_dual_system_error): l1 norms of the dual infeasibility, the
+      // primal infeasibility and the mu-shifted complementarity, each averaged over its number of entries
+      [[nodiscard]] double primal_dual_system_error(const Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 

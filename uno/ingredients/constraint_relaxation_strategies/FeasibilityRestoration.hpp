@@ -4,6 +4,7 @@
 #ifndef UNO_FEASIBILITYRESTORATION_H
 #define UNO_FEASIBILITYRESTORATION_H
 
+#include <optional>
 #include <memory>
 #include <vector>
 #include "ConstraintRelaxationStrategy.hpp"
@@ -66,6 +67,13 @@ namespace uno {
       [[nodiscard]] bool reset_elastic_variables(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
          Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) override;
+      [[nodiscard]] bool supports_soft_restoration() const override;
+      void start_soft_restoration(const Iterate& current_iterate) override;
+      void end_soft_restoration() override;
+      [[nodiscard]] SoftRestorationStep take_soft_restoration_step(Statistics& statistics, const Model& model,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         Evaluations& current_evaluations, Evaluations& trial_evaluations, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] double small_infeasibility_threshold() const override;
       [[nodiscard]] double optimality_small_infeasibility_threshold() const override;
@@ -93,6 +101,12 @@ namespace uno {
       bool first_test_of_switch_back{true};
       const double least_square_multiplier_max_norm;
       const double bound_multiplier_max_norm;
+      const double soft_restoration_error_reduction_factor;
+      // the iterate at which the soft restoration phase started was added to the optimality filter
+      bool soft_restoration_iterate_in_filter{false};
+      // iterate at which the restoration phase started, if it is not in the optimality filter (restoration phase entered
+      // from the soft restoration phase): the exit test checks acceptability wrt this iterate (IPOPT)
+      std::optional<ProgressMeasures> restoration_reference_progress{};
 
       mutable Vector<double> constraints_buffer;
 

@@ -17,6 +17,10 @@ namespace uno {
       [[nodiscard]] Decision is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
       void notify_step_limited_by(RejectionReason sole_rejection_reason) override;
+      [[nodiscard]] bool is_acceptable_without_predicted_reduction(const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress) const override;
+      [[nodiscard]] bool is_acceptable_wrt_reference_iterate(const ProgressMeasures& reference_progress,
+         const ProgressMeasures& trial_progress) const override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const override;
       [[nodiscard]] double small_infeasibility_threshold() const override;

@@ -658,6 +658,44 @@ namespace uno {
       return std::max(unslacked_infeasibility, norm(residual_norm, this->constraints_buffer));
    }
 
+   // IPOPT (IpoptCalculatedQuantities::trial_primal_dual_system_error):
+   //   ||grad L||_1 / n + ||c(x) - s||_1 / m + ||Z S e - mu e||_1 / (number of finite bounds),
+   // where the variables include the slacks and S contains the distances to the (relaxed) bounds
+   double PrimalDualInteriorPointProblem::primal_dual_system_error(const Iterate& iterate, Evaluations& evaluations) const {
+      // dual infeasibility
+      Vector<double> lagrangian_gradient(this->number_variables);
+      this->evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
+         iterate.multipliers.upper_bounds, evaluations, lagrangian_gradient.view());
+      double error = (0 < this->number_variables) ? norm_1(lagrangian_gradient) / static_cast<double>(this->number_variables) : 0.;
+
+      // primal infeasibility
+      if (0 < this->number_constraints) {
+         Vector<double> constraints(this->number_constraints);
+         this->evaluate_constraints(iterate, constraints.view(), evaluations);
+         error += norm_1(constraints) / static_cast<double>(this->number_constraints);
+      }
+
+      // mu-shifted complementarity
+      double complementarity = 0.;
+      size_t number_bounds = 0;
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (is_finite(this->variables_lower_bounds[variable_index])) {
+            complementarity += std::abs(iterate.multipliers.lower_bounds[variable_index] *
+               (iterate.primals[variable_index] - this->variables_lower_bounds[variable_index]) - this->barrier_parameter);
+            ++number_bounds;
+         }
+         if (is_finite(this->variables_upper_bounds[variable_index])) {
+            complementarity += std::abs(iterate.multipliers.upper_bounds[variable_index] *
+               (iterate.primals[variable_index] - this->variables_upper_bounds[variable_index]) - this->barrier_parameter);
+            ++number_bounds;
+         }
+      }
+      if (0 < number_bounds) {
+         error += complementarity / static_cast<double>(number_bounds);
+      }
+      return error;
+   }
+
    double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& /*constraints*/,
          const Multipliers& multipliers, Norm residual_norm) const {
       // dematerialized vectors

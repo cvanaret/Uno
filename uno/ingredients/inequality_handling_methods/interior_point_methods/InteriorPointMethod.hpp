@@ -65,6 +65,8 @@ namespace uno {
          Evaluations& current_evaluations, Evaluations& trial_evaluations) override;
 
       [[nodiscard]] double compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const override;
+      [[nodiscard]] bool provides_primal_dual_system_error() const override { return true; }
+      [[nodiscard]] double primal_dual_system_error(const Iterate& iterate, Evaluations& evaluations) const override;
 
       [[nodiscard]] std::string get_name() const override;
 
@@ -351,6 +353,11 @@ namespace uno {
    template <typename BarrierProblem>
    double InteriorPointMethod<BarrierProblem>::compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const {
       return this->barrier_problem.reformulation_infeasibility(iterate, evaluations, this->residual_norm);
+   }
+
+   template <typename BarrierProblem>
+   double InteriorPointMethod<BarrierProblem>::primal_dual_system_error(const Iterate& iterate, Evaluations& evaluations) const {
+      return this->barrier_problem.primal_dual_system_error(iterate, evaluations);
    }
 
    // protected member functions

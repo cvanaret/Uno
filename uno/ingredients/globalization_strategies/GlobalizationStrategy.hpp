@@ -28,6 +28,16 @@ namespace uno {
       virtual void notify_step_limited_by(RejectionReason /*sole_rejection_reason*/) { }
       [[nodiscard]] virtual bool is_infeasibility_sufficiently_reduced(const Iterate& trial_iterate,
          double reference_infeasibility) const = 0;
+      // soft restoration phase (IPOPT, CheckAcceptabilityOfTrialPoint(0)): whether the trial iterate would be accepted
+      // without any predicted reduction (h-type acceptance: sufficient reduction wrt the current iterate and acceptable
+      // to the filter/funnel). No side effect: the strategy is not updated. By default, never acceptable
+      [[nodiscard]] virtual bool is_acceptable_without_predicted_reduction(const ProgressMeasures& /*current_progress*/,
+         const ProgressMeasures& /*trial_progress*/) const { return false; }
+      // exit of the restoration phase (IPOPT, IsAcceptableToCurrentIterate called from the restoration phase): sufficient
+      // reduction of the infeasibility or of the merit wrt the iterate at which the restoration phase started. Needed
+      // when that iterate is not in the filter. No side effect. By default, acceptable
+      [[nodiscard]] virtual bool is_acceptable_wrt_reference_iterate(const ProgressMeasures& /*reference_progress*/,
+         const ProgressMeasures& /*trial_progress*/) const { return true; }
 
       virtual void reset() = 0;
 

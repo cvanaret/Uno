@@ -5,6 +5,7 @@
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
@@ -75,6 +76,12 @@ namespace uno {
          double /*multipliers_threshold*/) { }
       // primal infeasibility of the reformulated problem, as used in the restoration switching test
       [[nodiscard]] virtual double compute_reformulation_infeasibility(const Iterate& iterate, Evaluations& evaluations) const = 0;
+      // primal-dual error of the reformulated problem, as used by the soft restoration phase of the line search (IPOPT).
+      // Only methods that provide it support the soft restoration phase
+      [[nodiscard]] virtual bool provides_primal_dual_system_error() const { return false; }
+      [[nodiscard]] virtual double primal_dual_system_error(const Iterate& /*iterate*/, Evaluations& /*evaluations*/) const {
+         throw std::runtime_error("The inequality handling method does not provide a primal-dual error");
+      }
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 
