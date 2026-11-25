@@ -98,6 +98,9 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     gamma_alpha: float | None = None
     LS_watchdog_shortened_iterations_trigger: int | None = None
     LS_watchdog_max_trial_iterations: int | None = None
+    LS_soft_restoration: bool | None = None
+    LS_soft_restoration_error_reduction_factor: float | None = None
+    LS_soft_restoration_max_iterations: int | None = None
     quasi_newton_memory_size: int | None = None
     quasi_newton_delta_lower_bound: float | None = None
     quasi_newton_delta_upper_bound: float | None = None

@@ -279,6 +279,15 @@ LS_watchdog_shortened_iterations_trigger 10
 # Maximum number of watchdog iterations in which the full step is accepted without globalization test (integer)
 LS_watchdog_max_trial_iterations 3
 
+# Upon line search failure, try steps that reduce the primal-dual error before the feasibility restoration phase (interior-point methods) (bool)
+LS_soft_restoration false
+
+# Soft restoration: required reduction factor of the primal-dual error (double)
+LS_soft_restoration_error_reduction_factor 0.9999
+
+# Soft restoration: maximum number of consecutive iterations (integer)
+LS_soft_restoration_max_iterations 10
+
 # --------------------------------------
 ## Second-order correction (SOC) options
 # --------------------------------------
