@@ -161,8 +161,11 @@ namespace {
       }
    };
 
+   // the fill growth tests use small factors: no minimum number of entries
    LinearSystemScalingParameters on_demand(LinearSystemScalingMethod method) {
-      return {method, true, 0.05};
+      LinearSystemScalingParameters parameters{method, true, 0.05};
+      parameters.fill_growth_minimum_entries = 0;
+      return parameters;
    }
 
    // solution of the unscaled system K x = b with the unscaled mock
@@ -352,6 +355,68 @@ TEST(ScalingStrategy, FillGrowthReference) {
    setting.factorize_new_matrix();
    EXPECT_TRUE(setting.strategy().is_active());
    EXPECT_EQ(setting.strategy().get_method(), LinearSystemScalingMethod::MATCHING);
+}
+
+// the fill growth trigger ignores the factors with fewer entries than fill_growth_minimum_entries (cheap
+// factorizations), but they still define the reference
+TEST(ScalingStrategy, FillGrowthMinimumEntries) {
+   LinearSystemScalingParameters parameters = on_demand(LinearSystemScalingMethod::RUIZ);
+   parameters.fill_growth_minimum_entries = 1000;
+   Setting setting(parameters);
+   for (const size_t entries: {100, 300, 999}) { // up to ~10 times the reference, but small
+      setting.mock->factor_entries = entries;
+      setting.factorize_new_matrix();
+      EXPECT_FALSE(setting.strategy().is_active()) << entries;
+   }
+   setting.mock->factor_entries = 1000; // large enough, 10 times the sparsest factors
+   setting.factorize_new_matrix();
+   EXPECT_TRUE(setting.strategy().is_active());
+   EXPECT_EQ(setting.strategy().get_method(), LinearSystemScalingMethod::MATCHING);
+}
+
+// by default, only factors with at least a million entries are monitored
+TEST(ScalingStrategy, FillGrowthDefaultMinimumEntries) {
+   Setting setting({LinearSystemScalingMethod::RUIZ, true, 0.05});
+   for (const size_t entries: {300'000, 900'000}) {
+      setting.mock->factor_entries = entries;
+      setting.factorize_new_matrix();
+   }
+   EXPECT_FALSE(setting.strategy().is_active());
+   setting.mock->factor_entries = 1'000'000;
+   setting.factorize_new_matrix();
+   EXPECT_TRUE(setting.strategy().is_active());
+}
+
+// a refactorization of the same matrix reuses its scaling, unless the matrix changed so much (e.g. a large
+// regularization of the inertia correction) that the scaled entries are no longer bounded: the scaling is then
+// recomputed, and the scaled matrix remains well scaled. Otherwise, a regularization delta becomes delta s_i^2 in the
+// scaled matrix (on A0NNDNSL, the fill of the retries then exploded from 3.4e5 to more than 2.4e7 entries)
+TEST(ScalingStrategy, ScalingRecomputedAfterLargeRegularization) {
+   for (const LinearSystemScalingMethod method: {LinearSystemScalingMethod::MATCHING, LinearSystemScalingMethod::RUIZ}) {
+      Setting setting({method, false, 0.05});
+      setting.factorize_new_matrix();
+      EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 1u);
+      auto& values = setting.mock->linear_system.matrix_values;
+      const size_t regularization_index = values.size() - 1; // regularization of x0 (diagonal entry 1e6)
+      // small regularization: the scaling is reused
+      values[regularization_index] = 1.;
+      setting.solver.do_numerical_factorization(false);
+      EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 1u);
+      // large regularization: the scaling is recomputed
+      values[regularization_index] = 1e10;
+      setting.solver.do_numerical_factorization(false);
+      EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 2u);
+      EXPECT_LE(max_abs(setting.mock->factorized_values), 10.);
+      // the solution is that of the regularized system
+      MockSolver mock;
+      fill(mock.linear_system);
+      mock.linear_system.matrix_values[regularization_index] = 1e10;
+      mock.do_numerical_factorization(false);
+      std::vector<double> reference(4), solution(4);
+      mock.solve_indefinite_system(reference.data());
+      setting.solver.solve_indefinite_system(solution.data());
+      expect_near(solution, reference);
+   }
 }
 
 // no fill growth monitoring with a threshold <= 1, without scaling, or without the number of factor entries
