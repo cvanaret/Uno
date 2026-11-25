@@ -237,6 +237,9 @@ namespace uno {
       // triggers above, it does not test the accuracy: the factorizations of badly scaled KKT matrices may remain
       // accurate while their delayed pivots, fill-in and cost explode
       options.set_double("linear_system_scaling_fill_growth_threshold", 2.);
+      // the fill growth trigger only considers factors with at least this number of entries: smaller factorizations are
+      // cheap even with fill growth, and switching the scaling would change the trajectory for no gain
+      options.set_integer("linear_system_scaling_fill_growth_minimum_entries", 1000000);
 
       /** MA57 options **/
       // MC64 scaling inside MA57, at every factorization (on top of linear_system_scaling)

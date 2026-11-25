@@ -483,6 +483,9 @@ linear_system_scaling_delayed_pivots_threshold 1.0
 # Fill growth: factor of the entries of the sparsest first factorization of a matrix so far above which the matching-based scaling replaces linear_system_scaling (<= 1: disabled) (double)
 linear_system_scaling_fill_growth_threshold 2.0
 
+# Fill growth: minimum number of entries in the factors for the trigger to be considered (smaller factorizations are cheap) (integer)
+linear_system_scaling_fill_growth_minimum_entries 1000000
+
 # -------------
 ## MA57 options
 # -------------

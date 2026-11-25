@@ -338,4 +338,5 @@ TEST(MatchingScaling, FillGrowthOptions) {
    DefaultOptions::load(options);
    EXPECT_EQ(options.get_string("linear_system_scaling"), "ruiz");
    EXPECT_DOUBLE_EQ(options.get_double("linear_system_scaling_fill_growth_threshold"), 2.);
+   EXPECT_EQ(options.get_unsigned_int("linear_system_scaling_fill_growth_minimum_entries"), 1000000u);
 }

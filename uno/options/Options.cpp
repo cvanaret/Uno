@@ -155,6 +155,7 @@ namespace uno {
       {"linear_system_scaling_on_demand", OptionType::BOOL},
       {"linear_system_scaling_delayed_pivots_threshold", OptionType::DOUBLE},
       {"linear_system_scaling_fill_growth_threshold", OptionType::DOUBLE},
+      {"linear_system_scaling_fill_growth_minimum_entries", OptionType::INTEGER},
    };
 
    namespace {

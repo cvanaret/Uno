@@ -29,6 +29,10 @@ namespace uno {
       // not monitored, and neither are the matrices that begin_new_matrix excludes (e.g. the least-squares multiplier
       // system, much sparser than the KKT matrices)
       double fill_growth_threshold{2.};
+      // the fill growth trigger only considers factors with at least this number of entries: the factorization of
+      // smaller matrices is cheap, even with fill growth, and switching the scaling would change the trajectory of the
+      // method for no gain
+      size_t fill_growth_minimum_entries{1000000};
    };
 
    // symmetric diagonal scaling S K S of the matrix K of a direct linear solver (DirectSymmetricIndefiniteLinearSolver
@@ -37,9 +41,11 @@ namespace uno {
    // Cost control:
    // - on demand, nothing is done (zero overhead) until the scaling is switched on, either by the caller (activate, e.g.
    //   iterative refinement failed) or because the factorization delayed too many pivots;
-   // - upon fill growth (the factors became much denser), the matching-based scaling replaces the method;
-   // - the scaling factors are computed at most once per matrix: at the first factorization after begin_new_matrix(). The
-   //   refactorizations of the same matrix (inertia correction retries, pivoting tolerance increase) reuse them, and so do
+   // - upon fill growth (the factors became much denser, and large enough for their cost to matter), the matching-based
+   //   scaling replaces the method;
+   // - the scaling factors are computed once per matrix: at the first factorization after begin_new_matrix(). The
+   //   refactorizations of the same matrix (inertia correction retries, pivoting tolerance increase) reuse them as long as
+   //   the scaled entries remain bounded (otherwise, e.g. after a large regularization, they are recomputed), and so do
    //   the solves with an existing factorization (second-order corrections, iterative refinement)
    class ScalingStrategy {
    public:
@@ -92,7 +98,11 @@ namespace uno {
       std::vector<double> unscaled_values{};
       std::vector<double> scaled_rhs{};
 
+      // above this absolute value of a scaled entry, the scaling is not reused for a refactorization of the same matrix
+      static constexpr double maximum_scaled_entry_for_reuse{10.};
+
       void compute_scaling(const COOLinearSystem& linear_system);
+      [[nodiscard]] bool is_scaling_valid_for(const double* values, size_t number_nonzeros) const;
       void monitor_fill_growth(size_t number_factor_entries);
    };
 } // namespace

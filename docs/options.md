@@ -203,6 +203,7 @@ See [Linear system scaling](methods.md#linear-system-scaling) for how and when t
 | `linear_system_scaling_on_demand`                | bool   | `true`     | Scale only when the factorizations seem inaccurate (then until the end). `false`: scale all the matrices |
 | `linear_system_scaling_delayed_pivots_threshold` | double | 1.0        | Fraction of delayed pivots above which the scaling is switched on (>= 1: never)                  |
 | `linear_system_scaling_fill_growth_threshold`    | double | 2.0        | Fill growth: when the factors of the first factorization of a matrix have more than this factor times the entries of the sparsest such factorization so far, the matching-based scaling replaces `linear_system_scaling` (≤ 1: disabled) |
+| `linear_system_scaling_fill_growth_minimum_entries` | integer | 1000000 | Fill growth: only factors with at least this number of entries are considered (smaller factorizations are cheap, even with fill growth) |
 
 ## Quasi-Newton options
 
