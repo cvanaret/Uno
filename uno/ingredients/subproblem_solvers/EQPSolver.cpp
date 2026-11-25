@@ -135,8 +135,10 @@ namespace uno {
          this->analysis_performed = true;
       }
 
-      // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated)
-      this->linear_solver->begin_new_matrix();
+      // factorize the matrix. If the Jacobian is rank deficient, regularize the (2, 2) block (when it is allocated). With
+      // its identity (1, 1) block, the matrix is much sparser to factorize than the KKT matrices: its fill is not
+      // monitored
+      this->linear_solver->begin_new_matrix(false);
       this->linear_solver->do_numerical_factorization(false);
       this->pivoting_tolerance_increased_for_current_matrix = false;
       if (!structurally_singular && this->linear_solver->matrix_is_singular() && !dual_inertia_correction.empty()) {

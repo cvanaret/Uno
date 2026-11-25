@@ -7,12 +7,17 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include "MinimumCostAssignment.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
    enum class LinearSystemScalingMethod {
       NONE,
       RUIZ, // symmetric Ruiz infinity-norm equilibration (Ruiz 2001; Knight, Ruiz & Uçar 2014)
+      // symmetric scaling from a maximum product matching (Duff & Koster 2001, MC64 job 5; symmetrized as in Duff &
+      // Pralet 2005, HSL_MC64): all the entries of S A S are at most 1 in absolute value, the matched entries are 1 (up
+      // to rounding errors and the bounds on the scaling factors)
+      MATCHING,
    };
 
    [[nodiscard]] LinearSystemScalingMethod linear_system_scaling_method_from_string(const std::string& method);
@@ -55,9 +60,19 @@ namespace uno {
       std::vector<size_t> entry_rows{};
       std::vector<size_t> entry_columns{};
       std::vector<double> entry_values{};
+      // matching-based scaling: assignment (with its workspace), and the column duals of the last matrix (warm start for
+      // the next matrix with the same pattern)
+      MinimumCostAssignment assignment{};
+      std::vector<double> previous_column_duals{};
 
       void assemble_entry_values(const double* coo_values);
       void compute_ruiz_scaling(std::vector<double>& scaling) const;
+      void compute_matching_scaling(std::vector<double>& scaling);
+      [[nodiscard]] BipartiteGraph build_matching_graph(std::vector<double>& absolute_values,
+         std::vector<double>& log_column_maximum) const;
+      void store_column_duals_for_warm_start(const BipartiteGraph& graph);
+      static void scale_from_duals(const MinimumCostAssignment& assignment, const std::vector<double>& log_column_maximum,
+         const std::vector<size_t>& original_index, std::vector<double>& scaling, std::vector<bool>& scaled_by_matching);
    };
 } // namespace
 

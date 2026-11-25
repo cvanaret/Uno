@@ -234,6 +234,12 @@ namespace uno {
       this->solve(MA57Job::UPPER, rhs, number_of_rhs);
    }
 
+   std::optional<size_t> MA57Solver::number_factor_entries() const {
+      // INFO(14): number of entries in the factors (32-bit integer; not reported if negative after an overflow)
+      const int entries = MA57_INFO(14);
+      return (0 <= entries) ? std::optional<size_t>{static_cast<size_t>(entries)} : std::nullopt;
+   }
+
    std::optional<size_t> MA57Solver::number_delayed_pivots() const {
       // total number of fully-summed variables passed to the father node because of numerical pivoting
       return static_cast<size_t>(MA57_INFO(23));

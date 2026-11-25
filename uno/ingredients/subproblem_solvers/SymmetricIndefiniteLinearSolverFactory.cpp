@@ -55,6 +55,8 @@ namespace uno {
          LinearSystemScalingParameters parameters;
          parameters.method = linear_system_scaling_method_from_string(options.get_string_optional("linear_system_scaling").value_or("none"));
          parameters.on_demand = options.get_bool_optional("linear_system_scaling_on_demand").value_or(parameters.on_demand);
+         parameters.fill_growth_threshold = options.get_double_optional("linear_system_scaling_fill_growth_threshold")
+            .value_or(parameters.fill_growth_threshold);
          parameters.delayed_pivots_threshold = options.get_double_optional("linear_system_scaling_delayed_pivots_threshold")
             .value_or(parameters.delayed_pivots_threshold);
          return parameters;

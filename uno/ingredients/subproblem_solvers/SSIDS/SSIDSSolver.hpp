@@ -34,6 +34,7 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
       [[nodiscard]] std::optional<size_t> number_delayed_pivots() const override;
+      [[nodiscard]] std::optional<size_t> number_factor_entries() const override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
       [[nodiscard]] COOLinearSystem& get_coo_linear_system() override;

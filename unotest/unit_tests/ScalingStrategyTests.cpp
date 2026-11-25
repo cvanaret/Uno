@@ -38,6 +38,7 @@ namespace {
       std::vector<double> factorized_values{};
       size_t number_factorizations{0};
       std::optional<size_t> delayed_pivots{0};
+      std::optional<size_t> factor_entries{};
       bool throw_in_factorization{false};
 
       void initialize_memory() override { }
@@ -47,6 +48,7 @@ namespace {
       [[nodiscard]] bool matrix_is_singular() const override { return false; }
       [[nodiscard]] size_t rank() const override { return this->linear_system.dimension; }
       [[nodiscard]] std::optional<size_t> number_delayed_pivots() const override { return this->delayed_pivots; }
+      [[nodiscard]] std::optional<size_t> number_factor_entries() const override { return this->factor_entries; }
       [[nodiscard]] LinearSystem& get_linear_system() override { return this->linear_system; }
       [[nodiscard]] COOLinearSystem& get_coo_linear_system() override { return this->linear_system; }
       [[nodiscard]] ScalingStrategy& strategy() { return *this->scaling_strategy; }
@@ -153,8 +155,8 @@ namespace {
       [[nodiscard]] ScalingStrategy& strategy() { return this->solver.strategy(); }
 
       // first factorization of a new matrix
-      void factorize_new_matrix() {
-         this->solver.begin_new_matrix();
+      void factorize_new_matrix(bool monitor_fill_growth = true) {
+         this->solver.begin_new_matrix(monitor_fill_growth);
          this->solver.do_numerical_factorization(false);
       }
    };
@@ -234,6 +236,143 @@ TEST(ScalingStrategy, ScaledFactorizationAndSolve) {
       EXPECT_NEAR(block[index], reference[index], 1e-9 * (1. + std::abs(reference[index])));
       EXPECT_NEAR(block[4 + index], 2. * reference[index], 1e-9 * (1. + std::abs(reference[index])));
    }
+}
+
+namespace {
+   double max_abs(const std::vector<double>& values) {
+      double maximum = 0.;
+      for (double value: values) {
+         maximum = std::max(maximum, std::abs(value));
+      }
+      return maximum;
+   }
+} // namespace
+
+// fill growth: once the factors have more than twice the entries of the sparsest factorization, the matching-based
+// scaling is switched on from the next factorization on. The solves with the current factorization are unaffected
+TEST(ScalingStrategy, FillGrowthSwitchesToMatching) {
+   Setting setting(on_demand(LinearSystemScalingMethod::RUIZ));
+   for (const size_t entries: {100, 90, 170}) {
+      setting.mock->factor_entries = entries;
+      setting.factorize_new_matrix();
+      EXPECT_FALSE(setting.strategy().is_active()) << entries;
+   }
+   setting.mock->factor_entries = 200; // > 2 * 90
+   setting.factorize_new_matrix();
+   EXPECT_TRUE(setting.strategy().is_active());
+   EXPECT_EQ(setting.strategy().get_method(), LinearSystemScalingMethod::MATCHING);
+   EXPECT_FALSE(setting.strategy().is_last_factorization_scaled());
+   std::vector<double> solution(4);
+   setting.solver.solve_indefinite_system(solution.data());
+   expect_near(solution, reference_solution());
+
+   // refactorization of the same matrix (e.g. inertia correction): scaled, entries of S K S at most 1
+   setting.solver.do_numerical_factorization(false);
+   EXPECT_TRUE(setting.strategy().is_last_factorization_scaled());
+   EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 1u);
+   EXPECT_LE(max_abs(setting.mock->factorized_values), 1. + 1e-10);
+   setting.solver.solve_indefinite_system(solution.data());
+   expect_near(solution, reference_solution());
+   // further refactorizations and solves (e.g. second-order corrections) reuse the scaling; a new matrix recomputes it
+   setting.solver.do_numerical_factorization(false);
+   EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 1u);
+   setting.factorize_new_matrix();
+   EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 2u);
+   EXPECT_EQ(setting.strategy().get_method(), LinearSystemScalingMethod::MATCHING);
+}
+
+// the matching-based scaling replaces an active Ruiz scaling
+TEST(ScalingStrategy, FillGrowthReplacesRuiz) {
+   Setting setting(on_demand(LinearSystemScalingMethod::RUIZ));
+   ASSERT_TRUE(setting.solver.activate_scaling());
+   setting.mock->factor_entries = 100;
+   setting.factorize_new_matrix();
+   setting.mock->factor_entries = 300;
+   setting.factorize_new_matrix();
+   EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 2u); // Ruiz, for each matrix
+   EXPECT_EQ(setting.strategy().get_method(), LinearSystemScalingMethod::MATCHING);
+   // the solves with the last (Ruiz-scaled) factorization still use its scaling
+   const std::vector<double> ruiz_scaling = setting.strategy().get_scaling();
+   std::vector<double> solution(4);
+   setting.solver.solve_indefinite_system(solution.data());
+   expect_near(solution, reference_solution());
+   EXPECT_EQ(setting.strategy().get_scaling(), ruiz_scaling);
+   // refactorization of the same matrix: matching-based scaling
+   setting.solver.do_numerical_factorization(false);
+   EXPECT_EQ(setting.strategy().get_number_scaling_computations(), 3u);
+   EXPECT_LE(max_abs(setting.mock->factorized_values), 1. + 1e-10);
+}
+
+// with linear_system_scaling = matching on demand, fill growth switches the scaling on
+TEST(ScalingStrategy, FillGrowthSwitchesOnDemandMatchingOn) {
+   Setting setting(on_demand(LinearSystemScalingMethod::MATCHING));
+   setting.mock->factor_entries = 100;
+   setting.factorize_new_matrix();
+   EXPECT_FALSE(setting.strategy().is_active());
+   setting.mock->factor_entries = 300;
+   setting.factorize_new_matrix();
+   EXPECT_TRUE(setting.strategy().is_active());
+   setting.factorize_new_matrix();
+   EXPECT_TRUE(setting.strategy().is_last_factorization_scaled());
+}
+
+// only the first factorization of each matrix is monitored: the refactorizations of the same matrix (e.g. inertia
+// correction with a regularization) neither set the reference nor trigger the switch
+TEST(ScalingStrategy, FillGrowthIgnoresRefactorizations) {
+   Setting setting(on_demand(LinearSystemScalingMethod::RUIZ));
+   setting.mock->factor_entries = 100;
+   setting.factorize_new_matrix();
+   setting.mock->factor_entries = 1000;
+   setting.solver.do_numerical_factorization(false);
+   EXPECT_FALSE(setting.strategy().is_active());
+   setting.mock->factor_entries = 10; // sparser refactorization: not the reference
+   setting.solver.do_numerical_factorization(false);
+   setting.mock->factor_entries = 150;
+   setting.factorize_new_matrix();
+   EXPECT_FALSE(setting.strategy().is_active());
+   EXPECT_EQ(setting.strategy().get_method(), LinearSystemScalingMethod::RUIZ);
+}
+
+// the threshold is strict, the unmonitored matrices (e.g. the least-squares multiplier system) neither set the reference
+// nor trigger the switch, and empty factors are not a reference
+TEST(ScalingStrategy, FillGrowthReference) {
+   Setting setting(on_demand(LinearSystemScalingMethod::RUIZ));
+   setting.mock->factor_entries = 0;
+   setting.factorize_new_matrix();
+   setting.mock->factor_entries = 10; // sparser, unmonitored
+   setting.factorize_new_matrix(false);
+   setting.mock->factor_entries = 100;
+   setting.factorize_new_matrix();
+   setting.mock->factor_entries = 200; // exactly twice the reference
+   setting.factorize_new_matrix();
+   setting.mock->factor_entries = 10000; // unmonitored
+   setting.factorize_new_matrix(false);
+   EXPECT_FALSE(setting.strategy().is_active());
+   setting.mock->factor_entries = 201;
+   setting.factorize_new_matrix();
+   EXPECT_TRUE(setting.strategy().is_active());
+   EXPECT_EQ(setting.strategy().get_method(), LinearSystemScalingMethod::MATCHING);
+}
+
+// no fill growth monitoring with a threshold <= 1, without scaling, or without the number of factor entries
+TEST(ScalingStrategy, FillGrowthDisabled) {
+   for (const LinearSystemScalingParameters& parameters: {LinearSystemScalingParameters{LinearSystemScalingMethod::RUIZ, true, 1., 0.},
+         LinearSystemScalingParameters{LinearSystemScalingMethod::RUIZ, true, 1., 1.},
+         LinearSystemScalingParameters{LinearSystemScalingMethod::NONE, true, 1., 2.}}) {
+      Setting setting(parameters);
+      for (const size_t entries: {100, 1000, 10000}) {
+         setting.mock->factor_entries = entries;
+         setting.factorize_new_matrix();
+      }
+      EXPECT_FALSE(setting.strategy().is_active());
+      EXPECT_EQ(setting.strategy().get_method(), parameters.method);
+   }
+   Setting setting(on_demand(LinearSystemScalingMethod::RUIZ));
+   setting.mock->factor_entries = std::nullopt;
+   for (size_t matrix = 0; matrix < 3; ++matrix) {
+      setting.factorize_new_matrix();
+   }
+   EXPECT_FALSE(setting.strategy().is_active());
 }
 
 // without a strategy, the solver never scales and cannot be switched to scaling

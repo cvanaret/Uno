@@ -163,3 +163,4 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     linear_system_scaling: str | None = None
     linear_system_scaling_on_demand: bool | None = None
     linear_system_scaling_delayed_pivots_threshold: float | None = None
+    linear_system_scaling_fill_growth_threshold: float | None = None

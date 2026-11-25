@@ -63,6 +63,10 @@ namespace uno {
       }
    }
 
+   std::optional<size_t> SSIDSSolver::number_factor_entries() const {
+      return static_cast<size_t>(this->workspace.inform.num_factor);
+   }
+
    std::optional<size_t> SSIDSSolver::number_delayed_pivots() const {
       return static_cast<size_t>(this->workspace.inform.num_delay);
    }

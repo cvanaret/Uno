@@ -10,11 +10,13 @@
 namespace uno {
    ScalingStrategy::ScalingStrategy(const LinearSystemScalingParameters& parameters):
          parameters(parameters),
+         method(parameters.method),
          active(parameters.method != LinearSystemScalingMethod::NONE && !parameters.on_demand) {
    }
 
-   void ScalingStrategy::begin_new_matrix() {
+   void ScalingStrategy::begin_new_matrix(bool monitor_fill_growth) {
       this->new_matrix = true;
+      this->monitor_fill_of_new_matrix = monitor_fill_growth;
    }
 
    bool ScalingStrategy::activate() {
@@ -33,6 +35,9 @@ namespace uno {
    bool ScalingStrategy::scale_matrix(COOLinearSystem& linear_system) {
       this->first_factorization_of_matrix = this->new_matrix;
       this->new_matrix = false;
+      if (this->first_factorization_of_matrix) {
+         this->fill_of_matrix_monitored = this->monitor_fill_of_new_matrix;
+      }
       if (this->first_factorization_of_matrix) {
          this->scaling_up_to_date = false;
          if (this->pending_activation) {
@@ -61,7 +66,13 @@ namespace uno {
       std::copy(this->unscaled_values.begin(), this->unscaled_values.end(), linear_system.matrix_values.data());
    }
 
-   void ScalingStrategy::notify_factorization(std::optional<size_t> number_delayed_pivots, size_t dimension) {
+   void ScalingStrategy::notify_factorization(std::optional<size_t> number_delayed_pivots, size_t dimension,
+         std::optional<size_t> number_factor_entries) {
+      // fill growth: only the first factorization of each monitored matrix (the refactorizations of the same matrix, e.g.
+      // with a regularization, are not representative)
+      if (number_factor_entries.has_value() && this->first_factorization_of_matrix && this->fill_of_matrix_monitored) {
+         this->monitor_fill_growth(*number_factor_entries);
+      }
       // too many delayed pivots in the first (unscaled) factorization of the matrix: switch the scaling on from the next
       // matrix on
       if (this->active || !this->first_factorization_of_matrix || this->parameters.method == LinearSystemScalingMethod::NONE ||
@@ -72,6 +83,28 @@ namespace uno {
          INFO << "The factorization delayed " << *number_delayed_pivots << " pivots (dimension " << dimension <<
             "): the linear systems will be scaled\n";
          this->pending_activation = true;
+      }
+   }
+
+   // the factors became much denser than in the sparsest first factorization of a matrix so far: switch on the
+   // matching-based scaling from the next factorization on (the solves with the current factorization keep the current
+   // scaling). A threshold <= 1 disables the trigger
+   void ScalingStrategy::monitor_fill_growth(size_t number_factor_entries) {
+      if (this->parameters.method == LinearSystemScalingMethod::NONE || this->parameters.fill_growth_threshold <= 1. ||
+            (this->active && this->method == LinearSystemScalingMethod::MATCHING) || number_factor_entries == 0) {
+         return; // disabled, already switched, or no meaningful reference (empty factors)
+      }
+      if (!this->sparsest_factor_entries.has_value() || number_factor_entries < *this->sparsest_factor_entries) {
+         this->sparsest_factor_entries = number_factor_entries;
+      }
+      else if (this->parameters.fill_growth_threshold * static_cast<double>(*this->sparsest_factor_entries) <
+            static_cast<double>(number_factor_entries)) {
+         INFO << "The factors have " << number_factor_entries << " entries (" << *this->sparsest_factor_entries <<
+            " at best): the linear systems will be scaled with a matching\n";
+         this->method = LinearSystemScalingMethod::MATCHING;
+         this->active = true;
+         this->pending_activation = false;
+         this->scaling_up_to_date = false; // computed at the next factorization
       }
    }
 
@@ -99,7 +132,7 @@ namespace uno {
          this->scaling_method.initialize(linear_system.dimension, linear_system.matrix_row_indices.data(),
             linear_system.matrix_column_indices.data(), linear_system.number_nonzeros, linear_system.get_solver_indexing());
       }
-      this->scaling_method.compute(this->parameters.method, linear_system.matrix_values.data(), this->scaling);
+      this->scaling_method.compute(this->method, linear_system.matrix_values.data(), this->scaling);
       this->scaling_method.compute_entry_factors(this->scaling, this->entry_factors);
       this->scaling_up_to_date = true;
       ++this->number_scaling_computations;

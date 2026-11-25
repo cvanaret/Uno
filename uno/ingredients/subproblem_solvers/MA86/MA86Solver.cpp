@@ -256,6 +256,10 @@ namespace uno {
       }
    }
 
+   std::optional<size_t> MA86Solver::number_factor_entries() const {
+      return static_cast<size_t>(this->info.num_factor);
+   }
+
    std::optional<size_t> MA86Solver::number_delayed_pivots() const {
       return static_cast<size_t>(this->info.num_delay);
    }

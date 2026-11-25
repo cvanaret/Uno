@@ -130,6 +130,15 @@ namespace uno {
       }
    }
 
+   std::optional<size_t> MUMPSSolver::number_factor_entries() const {
+      if (this->factorization_aborted_singular) {
+         return std::nullopt;
+      }
+      // INFOG(29): effective number of entries in the factors (negative: in millions)
+      const int entries = MUMPS_INFOG(29);
+      return (entries < 0) ? static_cast<size_t>(-static_cast<long long>(entries)) * 1000000 : static_cast<size_t>(entries);
+   }
+
    std::optional<size_t> MUMPSSolver::number_delayed_pivots() const {
       if (this->factorization_aborted_singular) {
          return std::nullopt;

@@ -21,6 +21,14 @@ namespace uno {
       // the scaling is switched on (from the next matrix on) when the first factorization of a matrix delays more than
       // this fraction of the pivots. >= 1: disabled (default: the delayed pivots of KKT matrices are mostly structural)
       double delayed_pivots_threshold{1.};
+      // fill growth: when the factors of the first factorization of a matrix have more than this factor times the entries
+      // of the sparsest such factorization so far, the matching-based scaling is switched on (replacing the method above)
+      // from the next factorization on, until the end. In our experiments, equilibration does not prevent the cascade of
+      // delayed pivots that badly scaled KKT matrices cause at the end of interior-point methods, while the matching-based
+      // scaling does. <= 1: disabled. Solvers that do not report the number of entries in their factors (MA27, HiPO) are
+      // not monitored, and neither are the matrices that begin_new_matrix excludes (e.g. the least-squares multiplier
+      // system, much sparser than the KKT matrices)
+      double fill_growth_threshold{2.};
    };
 
    // symmetric diagonal scaling S K S of the matrix K of a direct linear solver (DirectSymmetricIndefiniteLinearSolver
@@ -29,6 +37,7 @@ namespace uno {
    // Cost control:
    // - on demand, nothing is done (zero overhead) until the scaling is switched on, either by the caller (activate, e.g.
    //   iterative refinement failed) or because the factorization delayed too many pivots;
+   // - upon fill growth (the factors became much denser), the matching-based scaling replaces the method;
    // - the scaling factors are computed at most once per matrix: at the first factorization after begin_new_matrix(). The
    //   refactorizations of the same matrix (inertia correction retries, pivoting tolerance increase) reuse them, and so do
    //   the solves with an existing factorization (second-order corrections, iterative refinement)
@@ -37,8 +46,9 @@ namespace uno {
       explicit ScalingStrategy(const LinearSystemScalingParameters& parameters);
 
       // the next factorization is that of a new matrix (as opposed to a refactorization of the current matrix with a
-      // different regularization or pivoting tolerance)
-      void begin_new_matrix();
+      // different regularization or pivoting tolerance). monitor_fill_growth: whether the fill of its factors is compared
+      // with that of the other monitored matrices (false for matrices of a different kind)
+      void begin_new_matrix(bool monitor_fill_growth = true);
       // switch on the scaling from the next factorization on. Returns false if already on
       [[nodiscard]] bool activate();
       [[nodiscard]] bool is_active() const { return this->active; }
@@ -47,8 +57,12 @@ namespace uno {
       // restore them after the factorization (also when it throws)
       [[nodiscard]] bool scale_matrix(COOLinearSystem& linear_system);
       void unscale_matrix(COOLinearSystem& linear_system) const;
-      // after the factorization: monitor the delayed pivots of the first unscaled factorization of a matrix
-      void notify_factorization(std::optional<size_t> number_delayed_pivots, size_t dimension);
+      // after the factorization: monitor the delayed pivots of the first unscaled factorization of a matrix, and the
+      // number of entries in the factors (fill growth)
+      void notify_factorization(std::optional<size_t> number_delayed_pivots, size_t dimension,
+         std::optional<size_t> number_factor_entries = std::nullopt);
+      // method used for the next scaling computations (the matching-based scaling after fill growth)
+      [[nodiscard]] LinearSystemScalingMethod get_method() const { return this->method; }
 
       // solves with a scaled factorization: S b (into an internal buffer) and x = S y (in place). Column-major blocks
       [[nodiscard]] bool is_last_factorization_scaled() const { return this->last_factorization_scaled; }
@@ -61,20 +75,25 @@ namespace uno {
 
    protected:
       const LinearSystemScalingParameters parameters;
+      LinearSystemScalingMethod method;
       SymmetricMatrixScaling scaling_method{};
       bool active;
       bool pending_activation{false}; // the scaling will be switched on at the next matrix
       bool new_matrix{true}; // the next factorization is the first factorization of a new matrix
       bool first_factorization_of_matrix{false}; // the current factorization is the first of its matrix
+      bool monitor_fill_of_new_matrix{true}; // argument of the last begin_new_matrix
+      bool fill_of_matrix_monitored{false}; // the fill of the current matrix is monitored
       bool scaling_up_to_date{false}; // the scaling was computed for the current matrix
       bool last_factorization_scaled{false};
       size_t number_scaling_computations{0};
+      std::optional<size_t> sparsest_factor_entries{}; // fewest entries in the factors of a first factorization so far
       std::vector<double> scaling{};
       std::vector<double> entry_factors{};
       std::vector<double> unscaled_values{};
       std::vector<double> scaled_rhs{};
 
       void compute_scaling(const COOLinearSystem& linear_system);
+      void monitor_fill_growth(size_t number_factor_entries);
    };
 } // namespace
 

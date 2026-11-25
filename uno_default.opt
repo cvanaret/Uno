@@ -471,14 +471,17 @@ BQPD_kmax_heuristic filtersqp
 ## linear system scaling
 # -------------
 
-# Symmetric diagonal scaling of the matrices of the direct linear solver (none|ruiz). MA57_use_scaling and MUMPS_use_scaling are applied on top
-linear_system_scaling none
+# Symmetric diagonal scaling of the matrices of the direct linear solver (none|ruiz|matching). MA57_use_scaling and MUMPS_use_scaling are applied on top
+linear_system_scaling ruiz
 
 # Scale only when the factorizations seem inaccurate (failed iterative refinement or inertia correction), then until the end. false: scale all the matrices (bool)
 linear_system_scaling_on_demand true
 
 # Fraction of delayed pivots in the first factorization of a matrix above which the scaling is switched on (>= 1: never) (double)
 linear_system_scaling_delayed_pivots_threshold 1.0
+
+# Fill growth: factor of the entries of the sparsest first factorization of a matrix so far above which the matching-based scaling replaces linear_system_scaling (<= 1: disabled) (double)
+linear_system_scaling_fill_growth_threshold 2.0
 
 # -------------
 ## MA57 options
