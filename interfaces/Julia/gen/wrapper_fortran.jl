@@ -64,7 +64,7 @@ const C_TO_FORTRAN_KIND = Dict(
 function extract_uno_version(include_dir)
   header = read(joinpath(include_dir, "Uno_C_API.h"), String)
   function extract(name)
-    m = match(Regex("const\\s+uno_int\\s+$name\\s*=\\s*(\\d+)\\s*;"), header)
+    m = match(Regex("#define\\s+$name\\s+(\\d+)"), header)
     m === nothing && error("Cannot find '$name' in Uno_C_API.h")
     return parse(Int, m[1])
   end

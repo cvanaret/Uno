@@ -24,7 +24,12 @@ function main_julia()
 
   # the opaque handles uno_model and uno_solver are passed as Ptr{Cvoid}
   handles = ["uno_model", "uno_solver"]
-  options["general"]["output_ignorelist"] = [callbacks; handles; "uno_int"]
+  # the constants (enumerators and version macros) are defined in the prologue, as Cint
+  constants = ["uno_optimization_sense", "uno_multiplier_sign_convention", "uno_base_indexing", "uno_triangular_part",
+               "uno_option_type", "uno_options_status", "uno_model_status", "uno_solver_status", "uno_result_status",
+               "uno_optimize_status", "uno_optimization_status", "uno_solution_status",
+               "UNO_VERSION_MAJOR", "UNO_VERSION_MINOR", "UNO_VERSION_PATCH"]
+  options["general"]["output_ignorelist"] = [callbacks; handles; constants; "uno_int"]
 
   args = get_default_args()
   push!(args, "-I$include_dir")

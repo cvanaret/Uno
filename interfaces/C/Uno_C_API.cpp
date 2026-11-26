@@ -483,9 +483,10 @@ namespace {
       }
    }
 
-   // runs a function and returns its value, or "failure_value" if it throws: no exception crosses the C interface
+   // runs a function and returns its value, or "failure_value" if it throws: no exception crosses the C interface.
+   // The return type is that of the function (the failure value may be an enumerator of the C API)
    template <typename Value, typename Function>
-   Value guard(Value failure_value, Function&& function) noexcept {
+   auto guard(Value failure_value, Function&& function) noexcept -> decltype(function()) {
       try {
          return function();
       }
@@ -842,8 +843,8 @@ uno_int uno_set_lagrangian_hessian(uno_model* model, uno_int number_hessian_nonz
          return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
-         WARNING << "Please specify a correct Hessian triangle in {'" << UNO_LOWER_TRIANGLE << "', '" <<
-            UNO_UPPER_TRIANGLE << "'}."  << std::endl;
+         WARNING << "Please specify a correct Hessian triangle in {'" << static_cast<char>(UNO_LOWER_TRIANGLE) << "', '" <<
+            static_cast<char>(UNO_UPPER_TRIANGLE) << "'}."  << std::endl;
          return UNO_MODEL_INVALID_VALUE;
       }
       if (model == nullptr) {

@@ -19,100 +19,127 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+   // The integer constants are enumerators: they are constant expressions in C (e.g. case labels) and define no
+   // symbol. The functions take and return them as uno_int.
+
    // Optimization sense
-   static const uno_int UNO_MINIMIZE =  1;
-   static const uno_int UNO_MAXIMIZE = -1;
+   enum uno_optimization_sense {
+      UNO_MINIMIZE = 1,
+      UNO_MAXIMIZE = -1,
+   };
 
    // Lagrange multiplier sign convention
-   static const uno_int UNO_MULTIPLIER_POSITIVE =  1;
-   static const uno_int UNO_MULTIPLIER_NEGATIVE = -1;
+   enum uno_multiplier_sign_convention {
+      UNO_MULTIPLIER_POSITIVE = 1,
+      UNO_MULTIPLIER_NEGATIVE = -1,
+   };
 
-   // Problem type: "LP" = Linear Problem, "Q" = Quadratic Problem, "NLP" = Nonlinear Problem
+   // Problem type: "LP" = Linear Problem, "QP" = Quadratic Problem, "NLP" = Nonlinear Problem
    static const char UNO_PROBLEM_LINEAR[]    = "LP";
    static const char UNO_PROBLEM_QUADRATIC[] = "QP";
    static const char UNO_PROBLEM_NONLINEAR[] = "NLP";
 
    // Base indexing style: 0-based (C) or 1-based (Fortran)
-   static const uno_int UNO_ZERO_BASED_INDEXING = 0;
-   static const uno_int UNO_ONE_BASED_INDEXING  = 1;
+   enum uno_base_indexing {
+      UNO_ZERO_BASED_INDEXING = 0,
+      UNO_ONE_BASED_INDEXING = 1,
+   };
 
    // Triangular part: 'L' = lower, 'U' = upper
-   static const char UNO_LOWER_TRIANGLE = 'L';
-   static const char UNO_UPPER_TRIANGLE = 'U';
+   enum uno_triangular_part {
+      UNO_LOWER_TRIANGLE = 'L',
+      UNO_UPPER_TRIANGLE = 'U',
+   };
 
    // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
-   static const uno_int UNO_OPTION_TYPE_INTEGER = 0;
-   static const uno_int UNO_OPTION_TYPE_DOUBLE = 1;
-   static const uno_int UNO_OPTION_TYPE_BOOL = 2;
-   static const uno_int UNO_OPTION_TYPE_STRING = 3;
-   static const uno_int UNO_OPTION_TYPE_NOT_FOUND = -1;
+   enum uno_option_type {
+      UNO_OPTION_TYPE_INTEGER = 0,
+      UNO_OPTION_TYPE_DOUBLE = 1,
+      UNO_OPTION_TYPE_BOOL = 2,
+      UNO_OPTION_TYPE_STRING = 3,
+      UNO_OPTION_TYPE_NOT_FOUND = -1,
+   };
 
    // Status codes returned by the functions that deal with options
-   static const uno_int UNO_OPTIONS_SUCCESS = 0;
-   static const uno_int UNO_OPTIONS_INVALID_ARGUMENT = 1; // null solver, option name, option value or file name
-   static const uno_int UNO_OPTIONS_NOT_FOUND = 2; // no option has this name
-   static const uno_int UNO_OPTIONS_WRONG_TYPE = 3; // the option exists, but has a different type
-   static const uno_int UNO_OPTIONS_INVALID_VALUE = 4; // the value is not valid for this option
-   static const uno_int UNO_OPTIONS_INVALID_FILE = 5; // the option file cannot be opened or is malformed
-   static const uno_int UNO_OPTIONS_ERROR = 6; // any other error
-   static const uno_int UNO_OPTIONS_NOT_SET = 7; // the option has no value: no default value, and set neither by the
-   // user nor by the preset. With the "auto" preset, the options set by the preset (e.g. globalization_mechanism) have
-   // no value until the solve: uno_optimize picks them depending on the model
+   enum uno_options_status {
+      UNO_OPTIONS_SUCCESS = 0,
+      UNO_OPTIONS_INVALID_ARGUMENT = 1, // null solver, option name, option value or file name
+      UNO_OPTIONS_NOT_FOUND = 2, // no option has this name
+      UNO_OPTIONS_WRONG_TYPE = 3, // the option exists, but has a different type
+      UNO_OPTIONS_INVALID_VALUE = 4, // the value is not valid for this option
+      UNO_OPTIONS_INVALID_FILE = 5, // the option file cannot be opened or is malformed
+      UNO_OPTIONS_ERROR = 6, // any other error
+      UNO_OPTIONS_NOT_SET = 7, // the option has no value: no default value, and set neither by the
+      // user nor by the preset. With the "auto" preset, the options set by the preset (e.g. globalization_mechanism) have
+      // no value until the solve: uno_optimize picks them depending on the model
+   };
 
    // Status codes returned by the functions that build a model (uno_set_*(uno_model* model, ...))
-   static const uno_int UNO_MODEL_SUCCESS = 0;
-   static const uno_int UNO_MODEL_INVALID_ARGUMENT = 1; // null model, null array, or invalid number of elements
-   static const uno_int UNO_MODEL_INVALID_INDEX = 2; // the index of the variable or constraint is not valid
-   static const uno_int UNO_MODEL_INVALID_VALUE = 3; // invalid value (optimization sense, sign convention, Hessian
-   // triangle, ...)
-   static const uno_int UNO_MODEL_ERROR = 4; // any other error (e.g. out of memory)
+   enum uno_model_status {
+      UNO_MODEL_SUCCESS = 0,
+      UNO_MODEL_INVALID_ARGUMENT = 1, // null model, null array, or invalid number of elements
+      UNO_MODEL_INVALID_INDEX = 2, // the index of the variable or constraint is not valid
+      UNO_MODEL_INVALID_VALUE = 3, // invalid value (optimization sense, sign convention, Hessian
+      // triangle, ...)
+      UNO_MODEL_ERROR = 4, // any other error (e.g. out of memory)
+   };
 
    // Status codes returned by the functions that configure a solver (other than the options)
-   static const uno_int UNO_SOLVER_SUCCESS = 0;
-   static const uno_int UNO_SOLVER_INVALID_ARGUMENT = 1; // null solver
-   static const uno_int UNO_SOLVER_ERROR = 2; // any other error
+   enum uno_solver_status {
+      UNO_SOLVER_SUCCESS = 0,
+      UNO_SOLVER_INVALID_ARGUMENT = 1, // null solver
+      UNO_SOLVER_ERROR = 2, // any other error
+   };
 
    // Status codes returned by the functions that get the result of an optimization
-   static const uno_int UNO_RESULT_SUCCESS = 0;
-   static const uno_int UNO_RESULT_INVALID_ARGUMENT = 1; // null solver or null pointer to the value
-   static const uno_int UNO_RESULT_NOT_AVAILABLE = 2; // no result: no optimization yet, or uno_optimize failed.
-   // This is not an error: no message is printed, so this status can be used to check whether a result is available
-   static const uno_int UNO_RESULT_INVALID_INDEX = 3; // the index of the component is not valid
-   static const uno_int UNO_RESULT_ERROR = 4; // any other error
+   enum uno_result_status {
+      UNO_RESULT_SUCCESS = 0,
+      UNO_RESULT_INVALID_ARGUMENT = 1, // null solver or null pointer to the value
+      UNO_RESULT_NOT_AVAILABLE = 2, // no result: no optimization yet, or uno_optimize failed.
+      // This is not an error: no message is printed, so this status can be used to check whether a result is available
+      UNO_RESULT_INVALID_INDEX = 3, // the index of the component is not valid
+      UNO_RESULT_ERROR = 4, // any other error
+   };
 
    // Status codes returned by uno_optimize. UNO_OPTIMIZE_SUCCESS means that the optimization was carried out and a
    // result is available: its outcome (success, iteration limit, evaluation error...) is given by
    // uno_get_optimization_status. The other codes mean that the optimization could not be carried out (no result)
-   static const uno_int UNO_OPTIMIZE_SUCCESS = 0;
-   static const uno_int UNO_OPTIMIZE_INVALID_ARGUMENT = 1; // null solver or model
-   static const uno_int UNO_OPTIMIZE_INVALID_MODEL = 2; // the model has neither an objective nor constraints
-   static const uno_int UNO_OPTIMIZE_INVALID_OPTIONS = 3; // the options cannot be resolved (e.g. the "auto" preset
-   // without any subproblem solver available)
-   static const uno_int UNO_OPTIMIZE_ERROR = 4; // any other error (e.g. out of memory)
+   enum uno_optimize_status {
+      UNO_OPTIMIZE_SUCCESS = 0,
+      UNO_OPTIMIZE_INVALID_ARGUMENT = 1, // null solver or model
+      UNO_OPTIMIZE_INVALID_MODEL = 2, // the model has neither an objective nor constraints
+      UNO_OPTIMIZE_INVALID_OPTIONS = 3, // the options cannot be resolved (e.g. the "auto" preset
+      // without any subproblem solver available)
+      UNO_OPTIMIZE_ERROR = 4, // any other error (e.g. out of memory)
+   };
 
    // Optimization status
-   static const uno_int UNO_SUCCESS = 0;
-   static const uno_int UNO_ITERATION_LIMIT = 1;
-   static const uno_int UNO_TIME_LIMIT = 2;
-   static const uno_int UNO_EVALUATION_ERROR = 3;
-   static const uno_int UNO_ALGORITHMIC_ERROR = 4;
-   static const uno_int UNO_USER_TERMINATION = 5;
-   static const uno_int UNO_USER_INTERRUPTION = 6;
+   enum uno_optimization_status {
+      UNO_SUCCESS = 0,
+      UNO_ITERATION_LIMIT = 1,
+      UNO_TIME_LIMIT = 2,
+      UNO_EVALUATION_ERROR = 3,
+      UNO_ALGORITHMIC_ERROR = 4,
+      UNO_USER_TERMINATION = 5,
+      UNO_USER_INTERRUPTION = 6,
+   };
 
    // Iterate status
-   static const uno_int UNO_NOT_OPTIMAL = 0;
-   static const uno_int UNO_FEASIBLE_KKT_POINT = 1; // feasible stationary point
-   static const uno_int UNO_FEASIBLE_FJ_POINT = 2; // stationary point without constraint qualification
-   static const uno_int UNO_INFEASIBLE_STATIONARY_POINT = 3; // infeasible stationary point of constraint violation
-   static const uno_int UNO_FEASIBLE_SMALL_STEP = 4;
-   static const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
-   static const uno_int UNO_DIVERGING_ITERATE = 6;
-   static const uno_int UNO_UNBOUNDED_OBJECTIVE = 7;
+   enum uno_solution_status {
+      UNO_NOT_OPTIMAL = 0,
+      UNO_FEASIBLE_KKT_POINT = 1, // feasible stationary point
+      UNO_FEASIBLE_FJ_POINT = 2, // stationary point without constraint qualification
+      UNO_INFEASIBLE_STATIONARY_POINT = 3, // infeasible stationary point of constraint violation
+      UNO_FEASIBLE_SMALL_STEP = 4,
+      UNO_INFEASIBLE_SMALL_STEP = 5,
+      UNO_DIVERGING_ITERATE = 6,
+      UNO_UNBOUNDED_OBJECTIVE = 7,
+   };
 
-   // current Uno version
-   static const uno_int UNO_VERSION_MAJOR = 2;
-   static const uno_int UNO_VERSION_MINOR = 9;
-   static const uno_int UNO_VERSION_PATCH = 3;
+   // current Uno version (preprocessor macros: the version can be tested with #if)
+#define UNO_VERSION_MAJOR 2
+#define UNO_VERSION_MINOR 9
+#define UNO_VERSION_PATCH 3
 
    // options iterator
    typedef void* uno_options_iterator;
