@@ -50,6 +50,11 @@ namespace uno {
       options.set_double("diverging_iterate_threshold", 1e20);
       // threshold on objective to declare unbounded NLP
       options.set_double("unbounded_objective_threshold", -1e20);
+      // the problem is also declared unbounded when the objective of feasible iterates is lower than that of the first
+      // feasible iterate f_ref by unbounded_objective_relative_decrease * max(1, |f_ref|) (inf: disabled), at
+      // unbounded_objective_iteration_threshold consecutive feasible iterates
+      options.set_double("unbounded_objective_relative_decrease", 1e10);
+      options.set_integer("unbounded_objective_iteration_threshold", 5);
 
       /** main options **/
       options.set_bool("write_solution_to_file", false);

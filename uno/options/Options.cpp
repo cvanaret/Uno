@@ -35,6 +35,8 @@ namespace uno {
       {"print_solution", OptionType::BOOL},
       {"diverging_iterate_threshold", OptionType::DOUBLE},
       {"unbounded_objective_threshold", OptionType::DOUBLE},
+      {"unbounded_objective_relative_decrease", OptionType::DOUBLE},
+      {"unbounded_objective_iteration_threshold", OptionType::INTEGER},
       {"logger", OptionType::STRING},
       {"constraint_relaxation_strategy", OptionType::STRING},
       {"inequality_handling_method", OptionType::STRING},

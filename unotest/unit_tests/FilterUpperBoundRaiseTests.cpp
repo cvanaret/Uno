@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 #include <initializer_list>
 #include <utility>
+#include "ingredients/constraint_relaxation_strategies/FeasibilityRestoration.hpp"
 #include "ingredients/globalization_mechanisms/RejectionHistory.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/globalization_strategies/switching_methods/filter_methods/WaechterFilterMethod.hpp"
@@ -164,4 +165,18 @@ TEST(FilterUpperBoundRaise, MaximumNumberOfRaises) {
    }
    EXPECT_FALSE(scenario.full_step_acceptable(2e6));
    EXPECT_TRUE(scenario.full_step_acceptable(2e4));
+}
+
+// the restoration filter never raises its upper bound: in the restoration phase, the elastic variables absorb the
+// constraint violation, and raising the upper bound lets the iterates run away (CUTE polak3, preset ipopt): the
+// infeasibility of the restoration problem grew to 1e9 within the restoration phase
+TEST(FilterUpperBoundRaise, NeverRaisedInRestorationPhase) {
+   const Options optimality_options = make_options(3);
+   Scenario scenario(FeasibilityRestoration::restoration_globalization_options(optimality_options));
+   for (size_t step = 0; step < 6; ++step) {
+      scenario.upper_bound_limited_step();
+   }
+   EXPECT_FALSE(scenario.full_step_acceptable(2e4));
+   // the options of the optimality phase are left untouched
+   EXPECT_EQ(optimality_options.get_unsigned_int("filter_ubd_raise_trigger"), 3u);
 }
