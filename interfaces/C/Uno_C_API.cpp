@@ -457,8 +457,6 @@ private:
    CStreamBuffer buffer;
 };
 
-COStream* c_ostream = nullptr;
-
 // the opaque solver handle of the C API
 struct uno_solver {
    std::unique_ptr<Uno> solver{std::make_unique<Uno>()};
@@ -466,6 +464,7 @@ struct uno_solver {
    Options preset_options{}; // empty for "auto"
    Options default_options{};
    std::unique_ptr<UserCallbacks> user_callbacks{std::make_unique<NoUserCallbacks>()};
+   std::unique_ptr<COStream> logger_stream{}; // the output of the optimizations, if not the standard output
    std::unique_ptr<Result> result{}; // the result of the last optimization, if it succeeded
    bool options_consistent_with_solve{false}; // is true only after the solve, false whenever new options are set
    // the options used by the last solve (defaults -> preset, including the values picked by the "auto" preset -> user).
@@ -1217,25 +1216,66 @@ uno_int uno_set_solver_callbacks(uno_solver* solver, uno_notify_acceptable_itera
    });
 }
 
-bool uno_set_logger_stream_callback(uno_logger_stream_callback logger_stream_callback, void* user_data) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
-      // the logger never refers to a deleted stream
-      COStream* stream = new COStream(logger_stream_callback, user_data);
-      Logger::set_stream(*stream);
-      delete c_ostream;
-      c_ostream = stream;
-      return true;
+uno_int uno_set_logger_stream_callback(uno_solver* solver, uno_logger_stream_callback logger_stream_callback,
+      void* user_data) UNO_NOEXCEPT {
+   return guard(UNO_SOLVER_ERROR, [&]() -> uno_int {
+      if (solver == nullptr) {
+         WARNING << "Please specify a valid solver."  << std::endl;
+         return UNO_SOLVER_INVALID_ARGUMENT;
+      }
+      // a null callback resets the stream to the standard output
+      solver->logger_stream = (logger_stream_callback != nullptr) ?
+         std::make_unique<COStream>(logger_stream_callback, user_data) : nullptr;
+      return UNO_SOLVER_SUCCESS;
    });
 }
 
-bool uno_reset_logger_stream() UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
-      Logger::set_stream(std::cout);
-      delete c_ostream;
-      c_ostream = nullptr;
-      return true;
+uno_int uno_reset_logger_stream(uno_solver* solver) UNO_NOEXCEPT {
+   return guard(UNO_SOLVER_ERROR, [&]() -> uno_int {
+      if (solver == nullptr) {
+         WARNING << "Please specify a valid solver."  << std::endl;
+         return UNO_SOLVER_INVALID_ARGUMENT;
+      }
+      solver->logger_stream.reset();
+      return UNO_SOLVER_SUCCESS;
    });
 }
+
+namespace {
+   // during an optimization, the logger uses the level and the stream of the solver; the previous ones are restored
+   // afterwards (also if an exception is raised). The logger of the core is process-wide: concurrent optimizations
+   // in several threads share it
+   class SolverLoggerScope {
+   public:
+      explicit SolverLoggerScope(uno_solver& solver):
+            previous_level(Logger::level), previous_stream(Logger::stream), solver(solver) {
+         if (this->solver.logger_stream != nullptr) {
+            Logger::set_stream(*this->solver.logger_stream);
+         }
+         else {
+            Logger::set_stream(std::cout);
+         }
+      }
+
+      ~SolverLoggerScope() {
+         try {
+            Logger::flush();
+         }
+         catch (...) {
+         }
+         Logger::level = this->previous_level;
+         Logger::stream = this->previous_stream;
+      }
+
+      SolverLoggerScope(const SolverLoggerScope&) = delete;
+      SolverLoggerScope& operator=(const SolverLoggerScope&) = delete;
+
+   private:
+      const Level previous_level;
+      std::ostream* const previous_stream;
+      uno_solver& solver;
+   };
+} // namespace
 
 uno_int uno_optimize(uno_solver* solver, uno_model* model) UNO_NOEXCEPT {
    if (solver == nullptr) {
@@ -1261,6 +1301,7 @@ uno_int uno_optimize(uno_solver* solver, uno_model* model) UNO_NOEXCEPT {
    // the status returned if an exception is raised: it depends on the current stage
    uno_int failure_status = UNO_OPTIMIZE_ERROR;
    try {
+      const SolverLoggerScope logger_scope(*solver_data);
       // create an instance of UnoModel, a subclass of Model
       const UnoModel uno_model(*user_model);
 

@@ -281,13 +281,14 @@ function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
                                            user_data::Ptr{Cvoid})::Int32
 end
 
-function uno_set_logger_stream_callback(logger_stream_callback, user_data)
-    @ccall libuno.uno_set_logger_stream_callback(logger_stream_callback::Ptr{Cvoid},
-                                                 user_data::Ptr{Cvoid})::Bool
+function uno_set_logger_stream_callback(solver, logger_stream_callback, user_data)
+    @ccall libuno.uno_set_logger_stream_callback(solver::Ptr{Cvoid},
+                                                 logger_stream_callback::Ptr{Cvoid},
+                                                 user_data::Ptr{Cvoid})::Int32
 end
 
-function uno_reset_logger_stream()
-    @ccall libuno.uno_reset_logger_stream()::Bool
+function uno_reset_logger_stream(solver)
+    @ccall libuno.uno_reset_logger_stream(solver::Ptr{Cvoid})::Int32
 end
 
 function uno_optimize(solver, model)

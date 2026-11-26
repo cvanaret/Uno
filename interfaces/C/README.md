@@ -231,15 +231,19 @@ Both callbacks receive the iterate in the space of the model (its numbers of var
 slack or elastic variables that Uno may introduce), with multipliers in the Lagrangian sign convention of the model, as
 returned by the result getters.
 
-Setting the logger stream callback:
+Setting the logger stream callback of a solver (the output of its optimizations is sent to the callback):
 ```c
-uno_set_logger_stream_callback(logger_stream_callback, user_data);
+uno_set_logger_stream_callback(solver, logger_stream_callback, user_data);
 ```
 
 and reset the logger stream to the standard output:
 ```c
-uno_reset_logger_stream();
+uno_reset_logger_stream(solver);
 ```
+The logger level (option `logger`) and the logger stream of a solver apply during its optimizations only: they are
+restored afterwards, and do not affect other solvers. The messages printed outside of an optimization (e.g. about an
+invalid argument) go to the standard output. The logger of Uno is process-wide: concurrent optimizations in several
+threads are not supported.
 
 ### Solving the model
 

@@ -763,13 +763,14 @@ end interface
 ! uno_set_logger_stream_callback
 !---------------------------------------------
 interface
-   function uno_set_logger_stream_callback(logger_stream_callback, user_data) &
-      result(success) &
+   function uno_set_logger_stream_callback(solver, logger_stream_callback, user_data) &
+      result(status) &
       bind(C, name="uno_set_logger_stream_callback")
-      import :: c_funptr, c_ptr, c_bool
+      import :: c_ptr, c_funptr, uno_int
+      type(c_ptr), value :: solver
       type(c_funptr), value :: logger_stream_callback
       type(c_ptr), value :: user_data
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_logger_stream_callback
 end interface
 
@@ -777,11 +778,12 @@ end interface
 ! uno_reset_logger_stream
 !---------------------------------------------
 interface
-   function uno_reset_logger_stream() &
-      result(success) &
+   function uno_reset_logger_stream(solver) &
+      result(status) &
       bind(C, name="uno_reset_logger_stream")
-      import :: c_bool
-      logical(c_bool) :: success
+      import :: c_ptr, uno_int
+      type(c_ptr), value :: solver
+      integer(uno_int) :: status
    end function uno_reset_logger_stream
 end interface
 

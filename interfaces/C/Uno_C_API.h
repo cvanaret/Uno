@@ -236,7 +236,8 @@ extern "C" {
       double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
 
-   // - takes as inputs a vector "buffer" of size "length".
+   // - takes as inputs a vector "buffer" of size "length" (not null-terminated) and an object "user_data".
+   // - returns the number of characters written ("length" upon success).
    typedef uno_int (*uno_logger_stream_callback)(const char* buffer, uno_int length, void* user_data);
 
    // get the current Uno version as v major.minor.patch
@@ -452,16 +453,21 @@ extern "C" {
       uno_termination_callback termination_callback, void* user_data) UNO_NOEXCEPT;
 
    // [optional]
-   // sets the logger stream callback.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_logger_stream_callback(uno_logger_stream_callback logger_stream_callback, void* user_data) UNO_NOEXCEPT;
+   // sets the logger stream callback of a solver: the output of its optimizations (uno_optimize) is sent to the callback
+   // instead of the standard output. A null callback resets the stream to the standard output. The messages printed
+   // outside of an optimization (e.g. about an invalid argument) are always printed on the standard output.
+   // The logger of Uno is process-wide: concurrent optimizations in several threads are not supported.
+   // returns UNO_SOLVER_SUCCESS (0) if it succeeded, otherwise UNO_SOLVER_INVALID_ARGUMENT or UNO_SOLVER_ERROR.
+   uno_int uno_set_logger_stream_callback(uno_solver* solver, uno_logger_stream_callback logger_stream_callback,
+      void* user_data) UNO_NOEXCEPT;
 
    // [optional]
-   // resets the logger stream to the standard output
-   // returns true if it succeeded, false otherwise.
-   bool uno_reset_logger_stream() UNO_NOEXCEPT;
+   // resets the logger stream of a solver to the standard output.
+   // returns UNO_SOLVER_SUCCESS (0) if it succeeded, otherwise UNO_SOLVER_INVALID_ARGUMENT or UNO_SOLVER_ERROR.
+   uno_int uno_reset_logger_stream(uno_solver* solver) UNO_NOEXCEPT;
 
-   // optimizes a given model using the Uno solver and given options.
+   // optimizes a given model using the Uno solver and given options. The logger level (option "logger") and the logger
+   // stream of the solver apply during the optimization only: the previous ones are restored afterwards.
    // returns UNO_OPTIMIZE_SUCCESS if the optimization was carried out (its outcome is given by
    // uno_get_optimization_status), otherwise UNO_OPTIMIZE_INVALID_ARGUMENT, UNO_OPTIMIZE_INVALID_MODEL,
    // UNO_OPTIMIZE_INVALID_OPTIONS or UNO_OPTIMIZE_ERROR. An error raised during the optimization itself (including the
