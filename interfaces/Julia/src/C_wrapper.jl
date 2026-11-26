@@ -11,7 +11,7 @@ function uno_version()
     return VersionNumber(major[], minor[], patch[])
 end
 
-function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_objective(number_variables::Cint, x::Ptr{Float64}, new_x::Bool, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
   _f = _user_data.eval_objective(_user_data.user_model, _x)::Float64
@@ -19,7 +19,7 @@ function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value:
   return Cint(0)
 end
 
-function uno_constraints(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, constraint_values::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_constraints(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, new_x::Bool, constraint_values::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _c = unsafe_wrap(Array, constraint_values, number_constraints)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
@@ -27,7 +27,7 @@ function uno_constraints(number_variables::Cint, number_constraints::Cint, x::Pt
   return Cint(0)
 end
 
-function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, gradient::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, new_x::Bool, gradient::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _g = unsafe_wrap(Array, gradient, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
@@ -35,7 +35,7 @@ function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, gradien
   return Cint(0)
 end
 
-function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x::Ptr{Float64}, jacobian_nonzeros::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_jacobian(number_variables::Cint, number_constraints::Cint, number_jacobian_nonzeros::Cint, x::Ptr{Float64}, new_x::Bool, jacobian_nonzeros::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _jvals = unsafe_wrap(Array, jacobian_nonzeros, number_jacobian_nonzeros)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
@@ -43,7 +43,7 @@ function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x:
   return Cint(0)
 end
 
-function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian_nonzeros::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, new_x::Bool, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian_nonzeros::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
   _hvals = unsafe_wrap(Array, hessian_nonzeros, number_hessian_nonzeros)
@@ -52,31 +52,31 @@ function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint
   return Cint(0)
 end
 
-function uno_jacobian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_jacobian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, new_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _v = unsafe_wrap(Array, vector, number_variables)
   _Jv = unsafe_wrap(Array, result, number_constraints)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  _user_data.eval_Jv(_user_data.user_model, _Jv, _x, _v, evaluate_at_x)
+  _user_data.eval_Jv(_user_data.user_model, _Jv, _x, _v, true)
   return Cint(0)
 end
 
-function uno_jacobian_transposed_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_jacobian_transposed_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, new_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _v = unsafe_wrap(Array, vector, number_constraints)
   _Jtv = unsafe_wrap(Array, result, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  _user_data.eval_Jtv(_user_data.user_model, _Jtv, _x, _v, evaluate_at_x)
+  _user_data.eval_Jtv(_user_data.user_model, _Jtv, _x, _v, true)
   return Cint(0)
 end
 
-function uno_lagrangian_hessian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, objective_multiplier::Float64, multipliers::Ptr{Float64}, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_lagrangian_hessian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, new_x::Bool, objective_multiplier::Float64, multipliers::Ptr{Float64}, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
   _v = unsafe_wrap(Array, vector, number_variables)
   _Hv = unsafe_wrap(Array, result, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  _user_data.eval_Hv(_user_data.user_model, _Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
+  _user_data.eval_Hv(_user_data.user_model, _Hv, _x, objective_multiplier, _multipliers, _v, true)
   return Cint(0)
 end
 
@@ -269,13 +269,13 @@ function uno_model(
   flag = uno_set_user_data(c_model, user_data)
   flag == UNO_MODEL_SUCCESS || error("Failed to set user data via uno_set_user_data.")
 
-  eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  eval_gradient_c = @cfunction(uno_objective_gradient, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+  eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Cvoid}))
+  eval_gradient_c = @cfunction(uno_objective_gradient, Cint, (Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Cvoid}))
   flag = uno_set_objective(c_model, optimization_sense, eval_objective_c, eval_gradient_c)
   flag == UNO_MODEL_SUCCESS || error("Failed to set objective and gradient via uno_set_objective.")
 
   if !isnothing(eval_hessian)
-    eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
     flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c)
     flag == UNO_MODEL_SUCCESS || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
   end
@@ -291,8 +291,8 @@ function uno_model(
 
   if ncon > 0
     @assert !isnothing(eval_constraints) && !isnothing(eval_jacobian)
-    eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-    eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Cvoid}))
+    eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Cvoid}))
     flag = uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
     flag == UNO_MODEL_SUCCESS || error("Failed to set constraints and Jacobian via uno_set_constraints.")
 

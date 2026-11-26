@@ -122,11 +122,12 @@ integer(uno_int), parameter :: UNO_UNBOUNDED_OBJECTIVE         = 7
 ! uno_objective_callback
 !---------------------------------------------
 abstract interface
-   function uno_objective_callback(number_variables, x, objective_value, user_data) &
+   function uno_objective_callback(number_variables, x, new_x, objective_value, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: objective_value
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_objective_callback
@@ -137,13 +138,14 @@ end interface
 ! uno_constraints_callback
 !---------------------------------------------
 abstract interface
-   function uno_constraints_callback(number_variables, number_constraints, x, &
+   function uno_constraints_callback(number_variables, number_constraints, x, new_x, &
                                      constraint_values, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: constraint_values(*)
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_constraints_callback
@@ -154,11 +156,12 @@ end interface
 ! uno_objective_gradient_callback
 !---------------------------------------------
 abstract interface
-   function uno_objective_gradient_callback(number_variables, x, gradient, user_data) &
+   function uno_objective_gradient_callback(number_variables, x, new_x, gradient, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: gradient(*)
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_objective_gradient_callback
@@ -169,14 +172,16 @@ end interface
 ! uno_constraints_jacobian_callback
 !---------------------------------------------
 abstract interface
-   function uno_constraints_jacobian_callback(number_variables, &
-                                              number_jacobian_nonzeros, x, &
+   function uno_constraints_jacobian_callback(number_variables, number_constraints, &
+                                              number_jacobian_nonzeros, x, new_x, &
                                               jacobian_values, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
+      integer(uno_int), value :: number_constraints
       integer(uno_int), value :: number_jacobian_nonzeros
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: jacobian_values(*)
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_constraints_jacobian_callback
@@ -188,15 +193,16 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_lagrangian_hessian_callback(number_variables, number_constraints, &
-                                            number_hessian_nonzeros, x, &
+                                            number_hessian_nonzeros, x, new_x, &
                                             objective_multiplier, multipliers, &
                                             hessian_values, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       integer(uno_int), value :: number_hessian_nonzeros
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), value :: objective_multiplier
       real(c_double), intent(in) :: multipliers(*)
       real(c_double), intent(out) :: hessian_values(*)
@@ -210,15 +216,14 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_constraints_jacobian_operator_callback(number_variables, &
-                                                       number_constraints, x, &
-                                                       evaluate_at_x, vector, &
-                                                       result, user_data) &
+                                                       number_constraints, x, new_x, &
+                                                       vector, result, user_data) &
       bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
+      logical(c_bool), value :: new_x
       real(c_double), intent(in) :: vector(*)
       real(c_double), intent(out) :: result(*)
       type(c_ptr), value :: user_data
@@ -231,15 +236,14 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_constraints_jacobian_transposed_operator_callback(number_variables, &
-                                                                  number_constraints, x, &
-                                                                  evaluate_at_x, vector, &
-                                                                  result, user_data) &
+                                                                  number_constraints, x, new_x, &
+                                                                  vector, result, user_data) &
       bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
+      logical(c_bool), value :: new_x
       real(c_double), intent(in) :: vector(*)
       real(c_double), intent(out) :: result(*)
       type(c_ptr), value :: user_data
@@ -252,8 +256,7 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_lagrangian_hessian_operator_callback(number_variables, &
-                                                     number_constraints, x, &
-                                                     evaluate_at_x, &
+                                                     number_constraints, x, new_x, &
                                                      objective_multiplier, &
                                                      multipliers, vector, result, &
                                                      user_data) &
@@ -262,7 +265,7 @@ abstract interface
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
+      logical(c_bool), value :: new_x
       real(c_double), value :: objective_multiplier
       real(c_double), intent(in) :: multipliers(*)
       real(c_double), intent(in) :: vector(*)

@@ -305,10 +305,11 @@ contains
     end subroutine check_status
 
     ! Objective
-    function objective_hs15(number_variables, x, objective_value, user_data) result(res) &
+    function objective_hs15(number_variables, x, new_x, objective_value, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables
         real(c_double), intent(in) :: x(*)
+        logical(c_bool), value :: new_x
         real(c_double), intent(out) :: objective_value
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
@@ -318,10 +319,11 @@ contains
     end function objective_hs15
 
     ! Gradient
-    function gradient_hs15(number_variables, x, gradient, user_data) result(res) &
+    function gradient_hs15(number_variables, x, new_x, gradient, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables
         real(c_double), intent(in) :: x(*)
+        logical(c_bool), value :: new_x
         real(c_double), intent(out) :: gradient(*)
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
@@ -332,10 +334,11 @@ contains
     end function gradient_hs15
 
     ! Constraints
-    function constraints_hs15(number_variables, number_constraints, x, constraint_values, user_data) result(res) &
+    function constraints_hs15(number_variables, number_constraints, x, new_x, constraint_values, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
+        logical(c_bool), value :: new_x
         real(c_double), intent(out) :: constraint_values(*)
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
@@ -346,10 +349,11 @@ contains
     end function constraints_hs15
 
     ! Jacobian
-    function jacobian_hs15(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) result(res) &
-        bind(C)
-        integer(uno_int), value :: number_variables, number_jacobian_nonzeros
+    function jacobian_hs15(number_variables, number_constraints, number_jacobian_nonzeros, x, new_x, jacobian_values, &
+                           user_data) result(res) bind(C)
+        integer(uno_int), value :: number_variables, number_constraints, number_jacobian_nonzeros
         real(c_double), intent(in) :: x(*)
+        logical(c_bool), value :: new_x
         real(c_double), intent(out) :: jacobian_values(*)
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
@@ -362,12 +366,12 @@ contains
     end function jacobian_hs15
 
     ! Jacobian operator
-    function jacobian_operator_hs15(number_variables, number_constraints, x, evaluate_at_x, &
+    function jacobian_operator_hs15(number_variables, number_constraints, x, new_x, &
                                     vector, result, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
-        logical(c_bool), value :: evaluate_at_x
+        logical(c_bool), value :: new_x
         real(c_double), intent(in) :: vector(*)
         real(c_double), intent(out) :: result(*)
         type(c_ptr), value :: user_data
@@ -379,12 +383,12 @@ contains
     end function jacobian_operator_hs15
 
     ! Jacobian transposed operator
-    function jacobian_transposed_operator_hs15(number_variables, number_constraints, x, evaluate_at_x, &
+    function jacobian_transposed_operator_hs15(number_variables, number_constraints, x, new_x, &
                                                vector, result, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
-        logical(c_bool), value :: evaluate_at_x
+        logical(c_bool), value :: new_x
         real(c_double), intent(in) :: vector(*)
         real(c_double), intent(out) :: result(*)
         type(c_ptr), value :: user_data
@@ -397,10 +401,11 @@ contains
 
     ! Lagrangian Hessian
     function lagrangian_hessian_hs15(number_variables, number_constraints, number_hessian_nonzeros, &
-                                     x, objective_multiplier, multipliers, hessian_values, user_data) result(res) &
+                                     x, new_x, objective_multiplier, multipliers, hessian_values, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
         real(c_double), intent(in) :: x(*), multipliers(*)
+        logical(c_bool), value :: new_x
         real(c_double), intent(out) :: hessian_values(*)
         real(c_double), value :: objective_multiplier
         type(c_ptr), value :: user_data
@@ -413,11 +418,11 @@ contains
     end function lagrangian_hessian_hs15
 
     ! Lagrangian Hessian operator
-    function lagrangian_hessian_operator_hs15(number_variables, number_constraints, x, evaluate_at_x, &
+    function lagrangian_hessian_operator_hs15(number_variables, number_constraints, x, new_x, &
                                               objective_multiplier, multipliers, vector, result, user_data) result(res) bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
-        logical(c_bool), value :: evaluate_at_x
+        logical(c_bool), value :: new_x
         real(c_double), value :: objective_multiplier
         real(c_double), intent(in) :: multipliers(*), vector(*)
         real(c_double), intent(out) :: result(*)

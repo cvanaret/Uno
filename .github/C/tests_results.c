@@ -20,14 +20,14 @@ static int number_failures = 0;
    } while (0)
 
 // min (x0 - 1)^2 + (x1 - 2)^2
-static uno_int objective(uno_int number_variables, const double* x, double* objective_value, void* user_data) {
+static uno_int objective(uno_int number_variables, const double* x, bool new_x, double* objective_value, void* user_data) {
    (void)number_variables;
    (void)user_data;
    *objective_value = pow(x[0] - 1., 2.) + pow(x[1] - 2., 2.);
    return 0;
 }
 
-static uno_int objective_gradient(uno_int number_variables, const double* x, double* gradient, void* user_data) {
+static uno_int objective_gradient(uno_int number_variables, const double* x, bool new_x, double* gradient, void* user_data) {
    (void)number_variables;
    (void)user_data;
    gradient[0] = 2. * (x[0] - 1.);
@@ -36,7 +36,7 @@ static uno_int objective_gradient(uno_int number_variables, const double* x, dou
 }
 
 static uno_int lagrangian_hessian(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* user_data) {
+      const double* x, bool new_x, double objective_multiplier, const double* multipliers, double* hessian_values, void* user_data) {
    (void)number_variables;
    (void)number_constraints;
    (void)number_hessian_nonzeros;

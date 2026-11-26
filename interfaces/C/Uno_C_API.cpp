@@ -89,7 +89,7 @@ public:
       double objective_value{0.};
       if (this->user_model.objective_function != nullptr) {
          const uno_int return_code = this->user_model.objective_function(this->user_model.number_variables, x.data(),
-            &objective_value, this->user_model.user_data);
+            this->is_new_point(x.data()), &objective_value, this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw FunctionEvaluationError();
@@ -103,7 +103,8 @@ public:
    void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
       if (this->user_model.constraint_functions != nullptr) {
          const uno_int return_code = this->user_model.constraint_functions(this->user_model.number_variables,
-            this->user_model.number_constraints, x.data(), constraints.data(), this->user_model.user_data);
+            this->user_model.number_constraints, x.data(), this->is_new_point(x.data()), constraints.data(),
+            this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw FunctionEvaluationError();
@@ -116,7 +117,7 @@ public:
    void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
       if (this->user_model.objective_gradient != nullptr) {
          const uno_int return_code = this->user_model.objective_gradient(this->user_model.number_variables, x.data(),
-            gradient.data(), this->user_model.user_data);
+            this->is_new_point(x.data()), gradient.data(), this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -159,7 +160,9 @@ public:
    void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const override {
       if (this->user_model.jacobian != nullptr) {
          const uno_int return_code = this->user_model.jacobian(this->user_model.number_variables,
-            this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
+            this->user_model.number_constraints, this->user_model.number_jacobian_nonzeros, x.data(),
+            this->is_new_point(x.data()), jacobian_values,
+            this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
@@ -178,7 +181,8 @@ public:
          }
          const uno_int number_hessian_nonzeros = static_cast<uno_int>(this->number_hessian_nonzeros());
          const uno_int return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
-            this->user_model.number_constraints, number_hessian_nonzeros, x.data(), objective_multiplier,
+            this->user_model.number_constraints, number_hessian_nonzeros, x.data(), this->is_new_point(x.data()),
+            objective_multiplier,
             multipliers.data(), hessian_values.data(), this->user_model.user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
@@ -198,7 +202,7 @@ public:
    void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
       if (this->user_model.jacobian_operator != nullptr) {
          const uno_int return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
-            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+            this->user_model.number_constraints, x, this->is_new_point(x), vector, result, this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
@@ -212,7 +216,7 @@ public:
    void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
       if (this->user_model.jacobian_transposed_operator != nullptr) {
          const uno_int return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
-            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+            this->user_model.number_constraints, x, this->is_new_point(x), vector, result, this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
@@ -232,7 +236,8 @@ public:
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const uno_int return_code = this->user_model.lagrangian_hessian_operator(this->user_model.number_variables,
-            this->user_model.number_constraints, x.data(), true, objective_multiplier, multipliers.data(), vector.data(),
+            this->user_model.number_constraints, x.data(), this->is_new_point(x.data()), objective_multiplier,
+            multipliers.data(), vector.data(),
             result.data(), this->user_model.user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
@@ -340,6 +345,21 @@ public:
 
 protected:
    const CUserModel& user_model;
+   // the point of the previous evaluation, to compute the "new_x" flag of the callbacks
+   mutable std::vector<double> previous_evaluation_point{};
+   mutable bool has_previous_evaluation_point{false};
+
+   // returns true if x differs from the point of the previous evaluation (of any function), and records x
+   [[nodiscard]] bool is_new_point(const double* x) const {
+      const size_t number_variables = static_cast<size_t>(this->user_model.number_variables);
+      if (this->has_previous_evaluation_point &&
+            std::equal(x, x + number_variables, this->previous_evaluation_point.begin())) {
+         return false;
+      }
+      this->previous_evaluation_point.assign(x, x + number_variables);
+      this->has_previous_evaluation_point = true;
+      return true;
+   }
    mutable NumberModelEvaluations number_model_evaluations{};
    const IntegerRange linear_constraints{0};
    const IntegerRange nonlinear_constraints;

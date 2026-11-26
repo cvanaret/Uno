@@ -98,29 +98,29 @@ namespace {
       return 0;
    }
 
-   uno_int failing_objective(uno_int n, const double* x, double* objective_value, void* user_data) {
-      objective_function(n, x, objective_value, user_data);
+   uno_int failing_objective(uno_int n, const double* x, bool new_x, double* objective_value, void* user_data) {
+      objective_function(n, x, new_x, objective_value, user_data);
       return next_return_code(user_data, Function::OBJECTIVE);
    }
 
-   uno_int failing_constraints(uno_int n, uno_int m, const double* x, double* values, void* user_data) {
-      constraint_functions(n, m, x, values, user_data);
+   uno_int failing_constraints(uno_int n, uno_int m, const double* x, bool new_x, double* values, void* user_data) {
+      constraint_functions(n, m, x, new_x, values, user_data);
       return next_return_code(user_data, Function::CONSTRAINTS);
    }
 
-   uno_int failing_gradient(uno_int n, const double* x, double* gradient, void* user_data) {
-      objective_gradient(n, x, gradient, user_data);
+   uno_int failing_gradient(uno_int n, const double* x, bool new_x, double* gradient, void* user_data) {
+      objective_gradient(n, x, new_x, gradient, user_data);
       return next_return_code(user_data, Function::GRADIENT);
    }
 
-   uno_int failing_jacobian(uno_int n, uno_int nnz, const double* x, double* values, void* user_data) {
-      jacobian(n, nnz, x, values, user_data);
+   uno_int failing_jacobian(uno_int n, uno_int m, uno_int nnz, const double* x, bool new_x, double* values, void* user_data) {
+      jacobian(n, m, nnz, x, new_x, values, user_data);
       return next_return_code(user_data, Function::JACOBIAN);
    }
 
-   uno_int failing_hessian(uno_int n, uno_int m, uno_int nnz, const double* x, double objective_multiplier,
+   uno_int failing_hessian(uno_int n, uno_int m, uno_int nnz, const double* x, bool new_x, double objective_multiplier,
          const double* multipliers, double* values, void* user_data) {
-      lagrangian_hessian(n, m, nnz, x, objective_multiplier, multipliers, values, user_data);
+      lagrangian_hessian(n, m, nnz, x, new_x, objective_multiplier, multipliers, values, user_data);
       return next_return_code(user_data, Function::HESSIAN);
    }
 
@@ -248,29 +248,29 @@ namespace {
    }
 
    // min x0 s.t. x0^2 + x1^2 <= -1: infeasible, Uno ends in the feasibility restoration phase
-   uno_int infeasible_objective(uno_int /*n*/, const double* x, double* objective_value, void* /*user_data*/) {
+   uno_int infeasible_objective(uno_int /*n*/, const double* x, bool /*new_x*/, double* objective_value, void* /*user_data*/) {
       *objective_value = x[0];
       return 0;
    }
 
-   uno_int infeasible_gradient(uno_int /*n*/, const double* /*x*/, double* gradient, void* /*user_data*/) {
+   uno_int infeasible_gradient(uno_int /*n*/, const double* /*x*/, bool /*new_x*/, double* gradient, void* /*user_data*/) {
       gradient[0] = 1.;
       gradient[1] = 0.;
       return 0;
    }
 
-   uno_int infeasible_constraints(uno_int /*n*/, uno_int /*m*/, const double* x, double* values, void* /*user_data*/) {
+   uno_int infeasible_constraints(uno_int /*n*/, uno_int /*m*/, const double* x, bool /*new_x*/, double* values, void* /*user_data*/) {
       values[0] = x[0]*x[0] + x[1]*x[1];
       return 0;
    }
 
-   uno_int infeasible_jacobian(uno_int /*n*/, uno_int /*nnz*/, const double* x, double* values, void* /*user_data*/) {
+   uno_int infeasible_jacobian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* x, bool /*new_x*/, double* values, void* /*user_data*/) {
       values[0] = 2.*x[0];
       values[1] = 2.*x[1];
       return 0;
    }
 
-   uno_int infeasible_hessian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* /*x*/,
+   uno_int infeasible_hessian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* /*x*/, bool /*new_x*/,
          double /*objective_multiplier*/, const double* multipliers, double* values, void* /*user_data*/) {
       // Lagrangian rho f(x) - y c(x) (negative sign convention)
       values[0] = -2.*multipliers[0];

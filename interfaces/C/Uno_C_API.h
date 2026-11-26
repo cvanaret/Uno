@@ -148,71 +148,76 @@ extern "C" {
    typedef struct uno_model uno_model;
    typedef struct uno_solver uno_solver;
 
-   // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
+   // The evaluation callbacks receive a flag "new_x" right after "x": it is true if "x" differs from the point of the
+   // previous evaluation (of any function, during the current optimization), and false otherwise. When "new_x" is
+   // false, the quantities that depend only on "x" (e.g. computed by a previous callback) can be reused.
+
+   // - takes as inputs a vector "x" of size "number_variables", the flag "new_x" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
    // - returns 0 if the evaluation succeeded, a positive integer if it failed (Uno may then try another point), or a
    // negative integer to stop the optimization (UNO_USER_TERMINATION).
-   typedef uno_int (*uno_objective_callback)(uno_int number_variables, const double* x, double* objective_value, void* user_data);
+   typedef uno_int (*uno_objective_callback)(uno_int number_variables, const double* x, bool new_x, double* objective_value,
+      void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the constraint
    // values at "x" in the vector "constraint_values" of size "number_constraints".
    // - returns 0 if the evaluations succeeded, a positive integer if they failed (Uno may then try another point), or a
    // negative integer to stop the optimization (UNO_USER_TERMINATION).
-   typedef uno_int (*uno_constraints_callback)(uno_int number_variables, uno_int number_constraints, const double* x, double* constraint_values,
-      void* user_data);
+   typedef uno_int (*uno_constraints_callback)(uno_int number_variables, uno_int number_constraints, const double* x, bool new_x,
+      double* constraint_values, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the dense objective
    // gradient at "x" in the vector "gradient" of size "number_variables".
    // - returns 0 if the evaluations succeeded, a positive integer if they failed (Uno may then try another point), or a
    // negative integer to stop the optimization (UNO_USER_TERMINATION).
-   typedef uno_int (*uno_objective_gradient_callback)(uno_int number_variables, const double* x, double* gradient, void* user_data);
+   typedef uno_int (*uno_objective_gradient_callback)(uno_int number_variables, const double* x, bool new_x, double* gradient,
+      void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
-   // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
-   // the same order as the indices provided in "jacobian_sparsity".
+   // sparse constraint Jacobian (with "number_constraints" rows) in the vector "jacobian_values" of size
+   // "number_jacobian_nonzeros". The values should be in the same order as the Jacobian indices passed to
+   // uno_set_constraints.
    // - returns 0 if the evaluation succeeded, a positive integer if it failed (Uno may then try another point), or a
    // negative integer to stop the optimization (UNO_USER_TERMINATION).
-   typedef uno_int (*uno_constraints_jacobian_callback)(uno_int number_variables, uno_int number_jacobian_nonzeros, const double* x,
-      double* jacobian_values, void* user_data);
+   typedef uno_int (*uno_constraints_jacobian_callback)(uno_int number_variables, uno_int number_constraints,
+      uno_int number_jacobian_nonzeros, const double* x, bool new_x, double* jacobian_values, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
    // Lagrange multipliers of size "number_constraints", and an object "user_data", and stores the entries of the
-   // sparse Lagrangian Hessian in the vector "hessian" of size "number_hessian_nonzeros". The values should be in
-   // the same order as the indices provided in "jacobian_sparsity".
+   // sparse Lagrangian Hessian in the vector "hessian_values" of size "number_hessian_nonzeros". The values should be
+   // in the same order as the Hessian indices passed to uno_set_lagrangian_hessian.
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns 0 if the evaluation succeeded, a positive integer if it failed (Uno may then try another point), or a
    // negative integer to stop the optimization (UNO_USER_TERMINATION).
    typedef uno_int (*uno_lagrangian_hessian_callback)(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* user_data);
+      const double* x, bool new_x, double objective_multiplier, const double* multipliers, double* hessian_values,
+      void* user_data);
 
-   // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
-   // the Jacobian should be evaluated at "x" (otherwise, the current constraint Jacobian is used), a vector "vector"
-   // of size "number_variables" and an object "user_data", and stores the Jacobian-vector product in the vector
-   // "result" of size "number_constraints".
+   // - takes as inputs a vector "x" of size "number_variables", a vector "vector" of size "number_variables" and an
+   // object "user_data", and stores the product of the Jacobian at "x" with "vector" in the vector "result" of size
+   // "number_constraints".
    // - returns 0 if the evaluation succeeded, a positive integer if it failed (Uno may then try another point), or a
    // negative integer to stop the optimization (UNO_USER_TERMINATION).
    typedef uno_int (*uno_constraints_jacobian_operator_callback)(uno_int number_variables, uno_int number_constraints, const double* x,
-      bool evaluate_at_x, const double* vector, double* result, void* user_data);
+      bool new_x, const double* vector, double* result, void* user_data);
 
-   // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
-   // the Jacobian should be evaluated at "x" (otherwise, the current constraint Jacobian is used), a vector "vector"
-   // of size "number_constraints" and an object "user_data", and stores the Jacobian transposed-vector product in the
-   // vector "result" of size "number_variables".
-   // - returns 0 if the evaluation succeeded, a positive integer if it failed (Uno may then try another point), or a
-   // negative integer to stop the optimization (UNO_USER_TERMINATION).
-   typedef uno_int (*uno_constraints_jacobian_transposed_operator_callback)(uno_int number_variables, uno_int number_constraints, const double* x,
-      bool evaluate_at_x, const double* vector, double* result, void* user_data);
-
-   // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
-   // the Lagrangian Hessian should be evaluated at "x" (otherwise, the current Hessian is used), an objective
-   // multiplier, a vector "multipliers" of Lagrange multipliers of size "number_constraints", a vector "vector" of
-   // size "number_variables", and an object "user_data", and stores the Hessian-vector product in the vector "result"
+   // - takes as inputs a vector "x" of size "number_variables", a vector "vector" of size "number_constraints" and an
+   // object "user_data", and stores the product of the transposed Jacobian at "x" with "vector" in the vector "result"
    // of size "number_variables".
    // - returns 0 if the evaluation succeeded, a positive integer if it failed (Uno may then try another point), or a
    // negative integer to stop the optimization (UNO_USER_TERMINATION).
+   typedef uno_int (*uno_constraints_jacobian_transposed_operator_callback)(uno_int number_variables, uno_int number_constraints, const double* x,
+      bool new_x, const double* vector, double* result, void* user_data);
+
+   // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
+   // Lagrange multipliers of size "number_constraints", a vector "vector" of size "number_variables", and an object
+   // "user_data", and stores the product of the Lagrangian Hessian at "x" with "vector" in the vector "result" of size
+   // "number_variables".
+   // - returns 0 if the evaluation succeeded, a positive integer if it failed (Uno may then try another point), or a
+   // negative integer to stop the optimization (UNO_USER_TERMINATION).
    typedef uno_int (*uno_lagrangian_hessian_operator_callback)(uno_int number_variables, uno_int number_constraints, const double* x,
-      bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
-      double* result, void* user_data);
+      bool new_x, double objective_multiplier, const double* multipliers, const double* vector, double* result,
+      void* user_data);
 
    // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
    // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size

@@ -14,25 +14,25 @@ namespace uno::capi_test {
    constexpr uno_int number_variables = 2;
    constexpr uno_int number_constraints = 2;
 
-   inline uno_int objective_function(uno_int /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
+   inline uno_int objective_function(uno_int /*number_variables*/, const double* x, bool /*new_x*/, double* objective_value, void* /*user_data*/) {
       *objective_value = 100. * std::pow(x[1] - x[0]*x[0], 2.) + std::pow(1. - x[0], 2.);
       return 0;
    }
 
-   inline uno_int objective_gradient(uno_int /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
+   inline uno_int objective_gradient(uno_int /*number_variables*/, const double* x, bool /*new_x*/, double* gradient, void* /*user_data*/) {
       gradient[0] = 400.*std::pow(x[0], 3.) - 400.*x[0]*x[1] + 2.*x[0] - 2.;
       gradient[1] = 200.*(x[1] - x[0]*x[0]);
       return 0;
    }
 
-   inline uno_int constraint_functions(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x,
+   inline uno_int constraint_functions(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x, bool /*new_x*/,
          double* constraint_values, void* /*user_data*/) {
       constraint_values[0] = x[0]*x[1];
       constraint_values[1] = x[0] + x[1]*x[1];
       return 0;
    }
 
-   inline uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
+   inline uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_jacobian_nonzeros*/, const double* x, bool /*new_x*/,
          double* jacobian_values, void* /*user_data*/) {
       jacobian_values[0] = x[1];
       jacobian_values[1] = 1.;
@@ -42,7 +42,7 @@ namespace uno::capi_test {
    }
 
    inline uno_int lagrangian_hessian(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-         const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+         const double* x, bool /*new_x*/, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
       hessian_values[0] = objective_multiplier*(1200.*x[0]*x[0] - 400.*x[1] + 2.);
       hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0];
       hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1];

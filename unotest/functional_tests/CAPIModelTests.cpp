@@ -12,27 +12,27 @@ using namespace uno::capi_test;
 
 namespace {
    // min (x - 3)^2 s.t. lb <= x <= ub (as a general constraint c(x) = x)
-   uno_int shifted_square(uno_int /*n*/, const double* x, double* objective_value, void* /*user_data*/) {
+   uno_int shifted_square(uno_int /*n*/, const double* x, bool /*new_x*/, double* objective_value, void* /*user_data*/) {
       *objective_value = (x[0] - 3.)*(x[0] - 3.);
       return 0;
    }
 
-   uno_int shifted_square_gradient(uno_int /*n*/, const double* x, double* gradient, void* /*user_data*/) {
+   uno_int shifted_square_gradient(uno_int /*n*/, const double* x, bool /*new_x*/, double* gradient, void* /*user_data*/) {
       gradient[0] = 2.*(x[0] - 3.);
       return 0;
    }
 
-   uno_int identity_constraint(uno_int /*n*/, uno_int /*m*/, const double* x, double* values, void* /*user_data*/) {
+   uno_int identity_constraint(uno_int /*n*/, uno_int /*m*/, const double* x, bool /*new_x*/, double* values, void* /*user_data*/) {
       values[0] = x[0];
       return 0;
    }
 
-   uno_int identity_jacobian(uno_int /*n*/, uno_int /*nnz*/, const double* /*x*/, double* values, void* /*user_data*/) {
+   uno_int identity_jacobian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* /*x*/, bool /*new_x*/, double* values, void* /*user_data*/) {
       values[0] = 1.;
       return 0;
    }
 
-   uno_int shifted_square_hessian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* /*x*/,
+   uno_int shifted_square_hessian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* /*x*/, bool /*new_x*/,
          double objective_multiplier, const double* /*multipliers*/, double* values, void* /*user_data*/) {
       values[0] = 2.*objective_multiplier;
       return 0;

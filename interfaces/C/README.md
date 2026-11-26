@@ -111,7 +111,11 @@ uno_set_initial_dual_iterate(model, initial_dual_iterate);
 `UNO_MODEL_INVALID_ARGUMENT` (null model or array, invalid number of elements), `UNO_MODEL_INVALID_INDEX`,
 `UNO_MODEL_INVALID_VALUE` (e.g. invalid optimization sense or sign convention) or `UNO_MODEL_ERROR`.*
 
-Each evaluation callback (objective, constraints, gradient, Jacobian, Hessian and operators) returns:
+Each evaluation callback (objective, constraints, gradient, Jacobian, Hessian and operators) receives a flag `new_x`
+right after `x`: it is `true` if `x` differs from the point of the previous evaluation (of any function, during the
+current optimization), and `false` otherwise, in which case the quantities that depend only on `x` can be reused.
+
+Each evaluation callback returns:
 - 0 if the evaluation succeeded;
 - a positive integer if the evaluation failed: Uno handles the error (for example, by backtracking to a closer point);
 - a negative integer to stop the optimization immediately: the optimization status is then `UNO_USER_TERMINATION`, and the
