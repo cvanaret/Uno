@@ -47,7 +47,8 @@ namespace uno {
          if (scaled) {
             this->scaling_strategy->unscale_matrix(linear_system);
          }
-         this->scaling_strategy->notify_factorization(this->number_delayed_pivots(), linear_system.dimension);
+         this->scaling_strategy->notify_factorization(this->number_delayed_pivots(), linear_system.dimension,
+            this->number_factor_entries());
       }
 
       void solve_indefinite_system(ElementType* solution) final {
@@ -103,6 +104,8 @@ namespace uno {
 
       // number of pivots delayed by numerical pivoting in the last factorization, if reported by the solver
       [[nodiscard]] virtual std::optional<size_t> number_delayed_pivots() const { return std::nullopt; }
+      // number of entries in the factors of the last factorization, if reported by the solver (fill growth monitoring)
+      [[nodiscard]] virtual std::optional<size_t> number_factor_entries() const { return std::nullopt; }
 
       [[nodiscard]] virtual COOLinearSystem& get_coo_linear_system() = 0;
 
@@ -111,10 +114,10 @@ namespace uno {
       void set_scaling_strategy(std::unique_ptr<ScalingStrategy> strategy) { this->scaling_strategy = std::move(strategy); }
       [[nodiscard]] const ScalingStrategy* get_scaling_strategy() const { return this->scaling_strategy.get(); }
       // the next factorization is that of a new matrix (as opposed to a refactorization of the current matrix with a
-      // different regularization or pivoting tolerance)
-      void begin_new_matrix() {
+      // different regularization or pivoting tolerance). monitor_fill_growth: see ScalingStrategy::begin_new_matrix
+      void begin_new_matrix(bool monitor_fill_growth = true) {
          if (this->scaling_strategy != nullptr) {
-            this->scaling_strategy->begin_new_matrix();
+            this->scaling_strategy->begin_new_matrix(monitor_fill_growth);
          }
       }
       // switch on the scaling from the next factorization on. Returns false if there is no strategy or it is already on

@@ -221,7 +221,7 @@ namespace uno {
       options.set_string("BQPD_kmax_heuristic", "filtersqp");
 
       /** linear system scaling (applied by the direct linear solvers, see ScalingStrategy) **/
-      // symmetric diagonal scaling of the matrices of the direct linear solver (none|ruiz). The solvers' own scalings
+      // symmetric diagonal scaling of the matrices of the direct linear solver (none|ruiz|matching). The solvers' own scalings
       // (MA57_use_scaling, MUMPS_use_scaling) are applied on top
       options.set_string("linear_system_scaling", "ruiz");
       // scale only when the factorizations seem inaccurate (failed iterative refinement or inertia correction), then until
@@ -231,6 +231,15 @@ namespace uno {
       // never). Disabled by default: the delayed pivots of KKT matrices are mostly structural (2x2 pivots around the zero
       // (2, 2) block), e.g. 9% at every iteration on nql180, and do not indicate inaccurate factorizations
       options.set_double("linear_system_scaling_delayed_pivots_threshold", 1.);
+      // fill growth: when the factors of the first factorization of a matrix have more than this factor times the entries
+      // of the sparsest such factorization so far, the matching-based scaling replaces linear_system_scaling from the next
+      // factorization on (<= 1: disabled). Unlike the
+      // triggers above, it does not test the accuracy: the factorizations of badly scaled KKT matrices may remain
+      // accurate while their delayed pivots, fill-in and cost explode
+      options.set_double("linear_system_scaling_fill_growth_threshold", 2.);
+      // the fill growth trigger only considers factors with at least this number of entries: smaller factorizations are
+      // cheap even with fill growth, and switching the scaling would change the trajectory for no gain
+      options.set_integer("linear_system_scaling_fill_growth_minimum_entries", 1000000);
 
       /** MA57 options **/
       // MC64 scaling inside MA57, at every factorization (on top of linear_system_scaling)

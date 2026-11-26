@@ -154,6 +154,8 @@ namespace uno {
       {"linear_system_scaling", OptionType::STRING},
       {"linear_system_scaling_on_demand", OptionType::BOOL},
       {"linear_system_scaling_delayed_pivots_threshold", OptionType::DOUBLE},
+      {"linear_system_scaling_fill_growth_threshold", OptionType::DOUBLE},
+      {"linear_system_scaling_fill_growth_minimum_entries", OptionType::INTEGER},
    };
 
    namespace {
@@ -184,7 +186,7 @@ namespace uno {
          {"LP_solver", {{"BQPD"}, {"HIGHS", false}}},
          {"linear_solver", {{"MA57"}, {"MA27"}, {"MA86"}, {"MUMPS"}, {"SSIDS"}, {"HIPO", false}}},
          {"preset", {{"auto"}, {"filtersqp"}, {"ipopt"}, {"funnelsqp"}, {"filterslp"}}},
-         {"linear_system_scaling", {{"none"}, {"ruiz"}}},
+         {"linear_system_scaling", {{"none"}, {"ruiz"}, {"matching"}}},
       };
    }
 

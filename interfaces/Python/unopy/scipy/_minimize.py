@@ -489,6 +489,8 @@ def minimize(
         "linear_system_scaling" : str
         "linear_system_scaling_on_demand" : bool
         "linear_system_scaling_delayed_pivots_threshold" : float
+        "linear_system_scaling_fill_growth_threshold" : float
+        "linear_system_scaling_fill_growth_minimum_entries" : int
 
 
     Returns
