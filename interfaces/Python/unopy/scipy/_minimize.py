@@ -424,6 +424,9 @@ def minimize(
         "gamma_alpha" : float
         "LS_watchdog_shortened_iterations_trigger" : int
         "LS_watchdog_max_trial_iterations" : int
+        "LS_soft_restoration" : bool
+        "LS_soft_restoration_error_reduction_factor" : float
+        "LS_soft_restoration_max_iterations" : int
         "quasi_newton_memory_size" : int
         "quasi_newton_delta_lower_bound" : float
         "quasi_newton_delta_upper_bound" : float

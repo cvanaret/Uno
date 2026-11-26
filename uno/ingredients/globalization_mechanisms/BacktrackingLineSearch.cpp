@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <stdexcept>
@@ -39,7 +40,11 @@ namespace uno {
          tiny_step_factor(options.get_double("barrier_small_direction_factor")),
          print_minor_iterations(options.get_bool("print_minor_iterations")),
          watchdog_shortened_iterations_trigger(options.get_unsigned_int("LS_watchdog_shortened_iterations_trigger")),
-         watchdog_max_trial_iterations(options.get_unsigned_int("LS_watchdog_max_trial_iterations")) {
+         watchdog_max_trial_iterations(options.get_unsigned_int("LS_watchdog_max_trial_iterations")),
+         // as in IPOPT, a zero reduction factor disables the soft restoration phase
+         soft_restoration(options.get_bool("LS_soft_restoration") &&
+            0. < options.get_double("LS_soft_restoration_error_reduction_factor")),
+         soft_restoration_max_iterations(options.get_unsigned_int("LS_soft_restoration_max_iterations")) {
       if (this->backtracking_ratio <= 0. || this->backtracking_ratio >= 1.) {
          throw std::runtime_error("The LS backtracking ratio should be in (0, 1)");
       }
@@ -62,6 +67,8 @@ namespace uno {
 
       // compute a feasible direction
       bool direction_failed = false;
+      // direction along which the line search failed (if any), for the soft restoration phase
+      const Direction* failed_direction = nullptr;
       try {
          const Direction& direction = this->constraint_relaxation_strategy->compute_direction(statistics, current_iterate,
             Inf, evaluation_cache.current_evaluations, warmstart_information);
@@ -79,31 +86,57 @@ namespace uno {
          }
          else {
             check_unboundedness(direction);
-            this->update_watchdog_state(current_iterate, direction, evaluation_cache.current_evaluations);
-            bool skip_full_step = false;
-            if (this->in_watchdog) {
-               if (this->take_watchdog_step(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
+            // the parameterization (barrier parameter) changed: leave the soft restoration phase (IPOPT resets the line
+            // search, and the filter was reset)
+            if (this->in_soft_restoration && (!this->constraint_relaxation_strategy->supports_soft_restoration() ||
+                  this->constraint_relaxation_strategy->get_number_parameterization_updates() !=
+                     this->soft_restoration_parameterization_updates)) {
+               DEBUG << "Leaving the soft restoration phase: the parameterization changed\n";
+               this->leave_soft_restoration();
+            }
+            if (this->in_soft_restoration) {
+               // a tiny direction is accepted unchecked, also in the soft restoration phase (IPOPT)
+               if (this->try_tiny_step(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
                      warmstart_information, user_callbacks)) {
                   return;
                }
-               // the watchdog failed: the current iterate was reverted to the watchdog iterate. Backtrack along the
-               // watchdog direction, skipping the full step (already rejected)
-               skip_full_step = true;
+               ++this->number_soft_restoration_iterations;
+               if (this->number_soft_restoration_iterations <= this->soft_restoration_max_iterations &&
+                     this->take_soft_restoration_step(statistics, model, current_iterate, trial_iterate, direction,
+                        evaluation_cache, warmstart_information, user_callbacks)) {
+                  return;
+               }
+               DEBUG << "The soft restoration phase failed\n";
+               // enter the restoration phase (below), without line search
             }
-            const Direction& line_search_direction = skip_full_step ? this->watchdog_direction : direction;
-            const PredictedReductionModels predicted_reduction_models =
-               this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, line_search_direction,
-               evaluation_cache.current_evaluations);
-            const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
-            const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
-               line_search_direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
-               user_callbacks, skip_full_step);
-            if (backtracking_success) {
-               // count the consecutive shortened steps (watchdog trigger)
-               this->number_shortened_iterations = this->last_step_was_shortened ? this->number_shortened_iterations + 1 : 0;
-               return;
+            else {
+               this->update_watchdog_state(current_iterate, direction, evaluation_cache.current_evaluations);
+               bool skip_full_step = false;
+               if (this->in_watchdog) {
+                  if (this->take_watchdog_step(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
+                        warmstart_information, user_callbacks)) {
+                     return;
+                  }
+                  // the watchdog failed: the current iterate was reverted to the watchdog iterate. Backtrack along the
+                  // watchdog direction, skipping the full step (already rejected)
+                  skip_full_step = true;
+               }
+               const Direction& line_search_direction = skip_full_step ? this->watchdog_direction : direction;
+               const PredictedReductionModels predicted_reduction_models =
+                  this->constraint_relaxation_strategy->build_predicted_reduction_models(current_iterate, line_search_direction,
+                  evaluation_cache.current_evaluations);
+               const double minimum_step_length = this->compute_minimum_step_length(predicted_reduction_models, current_iterate);
+               const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
+                  line_search_direction, evaluation_cache, predicted_reduction_models, minimum_step_length, warmstart_information,
+                  user_callbacks, skip_full_step);
+               if (backtracking_success) {
+                  // count the consecutive shortened steps (watchdog trigger)
+                  this->number_shortened_iterations = this->last_step_was_shortened ? this->number_shortened_iterations + 1 : 0;
+                  return;
+               }
+               failed_direction = &line_search_direction;
+               // if backtracking failed, switch to the feasibility problem (below)
             }
-            // if backtracking failed, switch to the feasibility problem (below)
          }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
@@ -133,7 +166,24 @@ namespace uno {
             this->number_shortened_iterations = this->last_step_was_shortened ? this->number_shortened_iterations + 1 : 0;
             return;
          }
+         failed_direction = &this->watchdog_direction;
          // if backtracking failed, switch to the feasibility problem from the watchdog iterate (below)
+      }
+
+      // the line search failed: try the soft restoration phase first (IPOPT)
+      if (failed_direction != nullptr && this->soft_restoration && !this->in_soft_restoration &&
+            this->constraint_relaxation_strategy->supports_soft_restoration()) {
+         DEBUG << "Starting the soft restoration phase\n";
+         this->stop_watchdog();
+         this->constraint_relaxation_strategy->start_soft_restoration(current_iterate);
+         if (Logger::level == INFO) {
+            statistics.print_current_line();
+            statistics.start_new_line();
+         }
+         if (this->take_soft_restoration_step(statistics, model, current_iterate, trial_iterate, *failed_direction,
+               evaluation_cache, warmstart_information, user_callbacks)) {
+            return;
+         }
       }
 
       // if the line search failed, terminate at an acceptable iterate if possible
@@ -168,6 +218,9 @@ namespace uno {
 
       // switch to solving the feasibility problem
       this->stop_watchdog();
+      // the restoration phase is entered (possibly from the soft restoration phase)
+      this->in_soft_restoration = false;
+      this->number_soft_restoration_iterations = 0;
       this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
          evaluation_cache.current_evaluations, warmstart_information);
       assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
@@ -359,6 +412,61 @@ namespace uno {
       } // end while loop
       this->constraint_relaxation_strategy->notify_step_limited_by(rejection_history.sole_reason());
       return success;
+   }
+
+   // soft restoration step (IPOPT, BacktrackingLineSearch::TrySoftRestoStep): the same step length (the largest one
+   // that satisfies the fraction-to-the-boundary rule for the primal and the dual variables) for all the variables.
+   // Returns true if the step was accepted
+   bool BacktrackingLineSearch::take_soft_restoration_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      const double step_length = std::min(direction.primal_dual_step_length, direction.bound_dual_step_length);
+      SoftRestorationStep outcome = SoftRestorationStep::REJECTED;
+      if (direction.is_finite() && std::isfinite(step_length) && 0. < step_length) {
+         try {
+            GlobalizationMechanism::assemble_trial_iterate(current_iterate, trial_iterate, direction, step_length, step_length,
+               step_length);
+            evaluation_cache.trial_evaluations.reset();
+            statistics.set("Steplength", step_length / direction.primal_dual_step_length);
+            statistics.set("||Step||", step_length * direction.norm);
+            statistics.set("LS", 1);
+            outcome = this->constraint_relaxation_strategy->take_soft_restoration_step(statistics, model, current_iterate,
+               trial_iterate, direction, step_length, evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations,
+               warmstart_information, user_callbacks);
+         }
+         catch (const EvaluationError&) {
+            DEBUG << "An evaluation error occurred at the soft restoration step\n";
+            statistics.set("Status", "soft resto: eval. error");
+         }
+      }
+      if (outcome == SoftRestorationStep::REJECTED) {
+         return false;
+      }
+      if (outcome == SoftRestorationStep::ACCEPTED_BY_GLOBALIZATION_STRATEGY) {
+         DEBUG << "Leaving the soft restoration phase: the step is acceptable to the globalization strategy\n";
+         this->leave_soft_restoration();
+      }
+      else if (!this->in_soft_restoration) {
+         this->in_soft_restoration = true;
+         this->number_soft_restoration_iterations = 0;
+         this->soft_restoration_parameterization_updates = this->constraint_relaxation_strategy->get_number_parameterization_updates();
+      }
+      this->previous_tiny_step_with_small_dual_direction = false;
+      this->number_shortened_iterations = 0;
+      this->last_step_was_shortened = false;
+      set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+      set_dual_residuals_statistics(statistics, trial_iterate);
+      statistics.set("Time", Timer::format_to_seconds(statistics.timers.solve.get_elapsed_time()));
+      if (Logger::level == INFO) {
+         statistics.print_current_line();
+      }
+      return true;
+   }
+
+   void BacktrackingLineSearch::leave_soft_restoration() {
+      this->in_soft_restoration = false;
+      this->number_soft_restoration_iterations = 0;
+      this->constraint_relaxation_strategy->end_soft_restoration();
    }
 
    // returns true if the direction is tiny and the full step was accepted

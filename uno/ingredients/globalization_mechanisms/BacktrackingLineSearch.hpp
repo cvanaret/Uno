@@ -68,6 +68,17 @@ namespace uno {
       size_t last_number_parameterization_updates{0};
       bool last_step_was_shortened{false};
 
+      // soft restoration phase (IPOPT, Wächter & Biegler 2006, Section 3.3): upon line search failure in the optimality
+      // phase, the step along the direction (with the same step length for all the variables) is accepted if it reduces
+      // the primal-dual error of the barrier problem. The phase ends when a step is acceptable to the filter or when the
+      // barrier parameter changes; after soft_restoration_max_iterations iterations or upon failure, the feasibility
+      // restoration phase starts. No watchdog in the soft restoration phase
+      const bool soft_restoration;
+      const size_t soft_restoration_max_iterations;
+      bool in_soft_restoration{false};
+      size_t number_soft_restoration_iterations{0};
+      size_t soft_restoration_parameterization_updates{0};
+
       void assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) const;
       [[nodiscard]] double compute_minimum_step_length(const PredictedReductionModels& predicted_reduction_models,
@@ -82,6 +93,10 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void revert_to_watchdog_iterate(Iterate& current_iterate, EvaluationCache& evaluation_cache);
       void stop_watchdog();
+      [[nodiscard]] bool take_soft_restoration_step(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+      void leave_soft_restoration();
       [[nodiscard]] bool try_tiny_step(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks);

@@ -153,6 +153,39 @@ namespace uno {
       return Decision::accept();
    }
 
+   // IPOPT (FilterLSAcceptor::CheckAcceptabilityOfTrialPoint with alpha_primal_test = 0): with zero predicted reduction,
+   // the switching condition does not hold and the h-type tests apply. Unlike is_iterate_acceptable, the filter and the
+   // reset heuristic are left untouched
+   bool WaechterFilterMethod::is_acceptable_without_predicted_reduction(const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress) const {
+      // as in the regular test, no h-type iterate at a feasible current iterate (the merit must decrease sufficiently)
+      if (!SwitchingMethod::allows_h_type_iterate(current_progress.infeasibility)) {
+         return false;
+      }
+      const double current_merit = unconstrained_merit_function(current_progress);
+      const double trial_merit = unconstrained_merit_function(trial_progress);
+      if (!this->filter.acceptable_wrt_infeasibility_upper_bound(trial_progress.infeasibility)) {
+         return false;
+      }
+      // IPOPT (obj_max_inc)
+      if (current_merit < trial_merit) {
+         const double magnitude = (10. < std::abs(current_merit)) ? std::log10(std::abs(current_merit)) : 1.;
+         if (this->merit_max_increase + magnitude < std::log10(trial_merit - current_merit)) {
+            return false;
+         }
+      }
+      return this->filter.acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit,
+            trial_progress.infeasibility, trial_merit) &&
+         this->filter.filter_acceptable(trial_progress.infeasibility, trial_merit);
+   }
+
+   bool WaechterFilterMethod::is_acceptable_wrt_reference_iterate(const ProgressMeasures& reference_progress,
+         const ProgressMeasures& trial_progress) const {
+      return this->filter.acceptable_wrt_current_iterate(reference_progress.infeasibility,
+         unconstrained_merit_function(reference_progress), trial_progress.infeasibility,
+         unconstrained_merit_function(trial_progress));
+   }
+
    // a step limited by the upper bound only: its trial iterates were all rejected by the upper bound, except possibly
    // the last one (the accepted step is shorter only because of the upper bound)
    void WaechterFilterMethod::notify_step_limited_by(RejectionReason sole_rejection_reason) {

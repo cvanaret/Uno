@@ -53,6 +53,7 @@ If not provided, the QP solver is chosen automatically from the available QP sol
 | `armijo_decrease_fraction`                             | double | 1e-8                      |
 | `armijo_tolerance`                                     | double | 0                         |
 | `LS_backtracking_ratio`                                | double | 0.5                       |
+| `LS_soft_restoration`                                  | bool   | `true`                    |
 | `LS_min_step_length`                                   | double | 5e-7                      |
 | `barrier_tau_min`                                      | double | 0.99                      |
 | `barrier_damping_factor`                               | double | 1e-5                      |

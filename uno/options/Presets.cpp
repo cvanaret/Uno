@@ -112,6 +112,7 @@ namespace uno {
          // protect_actual_reduction_against_roundoff, relative to the merit)
          options.set_double("armijo_tolerance", 0.);
          options.set_double("LS_backtracking_ratio", 0.5);
+         options.set_bool("LS_soft_restoration", true);
          options.set_double("barrier_tau_min", 0.99);
          options.set_double("barrier_damping_factor", 1e-5);
          options.set_double("l1_constraint_violation_coefficient", 1000.);
