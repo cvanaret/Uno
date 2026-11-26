@@ -106,6 +106,12 @@ uno_set_initial_dual_iterate(model, initial_dual_iterate);
 
 *Each of these functions returns an integer that is 0 upon success and positive upon failure.*
 
+Each evaluation callback (objective, constraints, gradient, Jacobian, Hessian and operators) returns:
+- 0 if the evaluation succeeded;
+- a positive integer if the evaluation failed: Uno handles the error (for example, by backtracking to a closer point);
+- a negative integer to stop the optimization immediately: the optimization status is then `UNO_USER_TERMINATION`, and the
+result is the last accepted iterate.
+
 The memory for the model is allocated by the C interface and must be freed by a call to the function:
 ```c
 uno_destroy_model(model);
@@ -214,6 +220,11 @@ Setting the user callbacks to the Uno solver:
 ```c
 uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, user_termination_callback, user_data);
 ```
+The termination callback is called at each iterate and returns 0 to continue the optimization, or a nonzero value to
+stop it (the optimization status is then `UNO_USER_TERMINATION`).
+Both callbacks receive the iterate in the space of the model (its numbers of variables and constraints, without the
+slack or elastic variables that Uno may introduce), with multipliers in the Lagrangian sign convention of the model, as
+returned by the result getters.
 
 Setting the logger stream callback:
 ```c

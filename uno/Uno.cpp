@@ -35,6 +35,76 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
+   namespace {
+      // forwards the iterates to the user callbacks in the space of the user model: the iterate of the reformulated
+      // problem is postprocessed (removal of the slacks and elastics, unscaling of the multipliers, expansion of the
+      // reduced model) and the multipliers get the sign convention of the user, as in the Result.
+      // Note: Model::postprocess_solution is therefore also called on intermediate (copied) iterates when the user
+      // callbacks are active; with a reduced model, recovering the bound multipliers of the fixed variables evaluates
+      // the Lagrangian gradient of the user model
+      class UserSpaceCallbacks: public UserCallbacks {
+      public:
+         UserSpaceCallbacks(UserCallbacks& user_callbacks, const Model& user_model, const Model& model,
+               const std::unique_ptr<GlobalizationMechanism>& globalization_mechanism):
+               UserCallbacks(), user_callbacks(user_callbacks), user_model(user_model), model(model),
+               globalization_mechanism(globalization_mechanism) { }
+
+         void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+               double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override {
+            if (!this->user_callbacks.is_active()) {
+               return;
+            }
+            const Iterate& iterate = this->to_user_space(primals, multipliers, objective_multiplier);
+            this->user_callbacks.notify_acceptable_iterate(iterate.primals, iterate.multipliers, objective_multiplier,
+               primal_feasibility_residual, stationarity_residual, complementarity_residual);
+         }
+
+         bool termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+               double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override {
+            if (!this->user_callbacks.is_active()) {
+               return false;
+            }
+            const Iterate& iterate = this->to_user_space(primals, multipliers, objective_multiplier);
+            return this->user_callbacks.termination(iterate.primals, iterate.multipliers, objective_multiplier,
+               primal_feasibility_residual, stationarity_residual, complementarity_residual);
+         }
+
+         [[nodiscard]] bool is_active() const override {
+            return this->user_callbacks.is_active();
+         }
+
+      private:
+         UserCallbacks& user_callbacks;
+         const Model& user_model;
+         const Model& model;
+         const std::unique_ptr<GlobalizationMechanism>& globalization_mechanism;
+         Iterate buffer{};
+
+         const Iterate& to_user_space(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier) {
+            this->buffer.set_dimensions(primals.size(), multipliers.constraints.size());
+            this->buffer.primals = primals;
+            this->buffer.multipliers = multipliers;
+            this->buffer.objective_multiplier = objective_multiplier;
+            // no cached function values: the postprocessing only maps the primal-dual iterate
+            Evaluations evaluations(this->model);
+            if (this->globalization_mechanism != nullptr) {
+               this->globalization_mechanism->postprocess_solution(this->buffer, evaluations);
+            }
+            else {
+               this->model.postprocess_solution(this->buffer, evaluations);
+            }
+            // same sign convention as in Uno::postprocess_multipliers_signs
+            if (!((this->user_model.optimization_sense == 1. && this->user_model.lagrangian_sign_convention == -1.) ||
+                  (this->user_model.optimization_sense == -1. && this->user_model.lagrangian_sign_convention == 1.))) {
+               this->buffer.multipliers.constraints.scale(-1.);
+               this->buffer.multipliers.lower_bounds.scale(-1.);
+               this->buffer.multipliers.upper_bounds.scale(-1.);
+            }
+            return this->buffer;
+         }
+      };
+   } // namespace
+
    // solve without user callbacks
    Result Uno::solve(const Model& model, const Options& options) {
       // pass user callbacks that do nothing
@@ -151,8 +221,10 @@ namespace uno {
    // protected solve function
    // user_model is the original model provided by the user, model is the possibly reformulated model (function scaling,
    // relaxed bounds)
-   Result Uno::uno_solve(const Model& user_model, const Model& model, const Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::uno_solve(const Model& user_model, const Model& model, const Options& options, UserCallbacks& callbacks) {
       InterruptGuard interrupt_guard;
+      // the user callbacks receive the iterates in the space of the user model
+      UserSpaceCallbacks user_callbacks(callbacks, user_model, model, this->globalization_mechanism);
       // drop the ingredients of a previous solve: they must not postprocess the iterate of this solve
       this->globalization_mechanism.reset();
       this->method_description = "strategy combination not initialized";

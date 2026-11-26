@@ -84,10 +84,8 @@ class _IterationCallback:
     ) -> None:
         """Call the user callback at an accepted iterate.
 
-        Uno may pass the primals and the bound multipliers of a reformulated problem
-        (e.g. with slack variables): only the first ``n`` entries are kept.
-        Uno passes the multipliers with its internal sign convention,
-        i.e. the opposite of the one of the result.
+        Uno passes the iterate in the space of the model (``n`` variables), with the
+        multipliers in the sign convention of the result.
 
         Args:
             primals: The primal variables.
@@ -108,13 +106,13 @@ class _IterationCallback:
                     x=x,
                     fun=self._objective.value_at(x),
                     nit=self.calls + 1,
-                    constraint_multipliers=-np.array(
+                    constraint_multipliers=np.array(
                         constraint_multipliers, dtype=float
                     ),
-                    lower_bound_multipliers=-np.array(
+                    lower_bound_multipliers=np.array(
                         lower_bound_multipliers[: self._n], dtype=float
                     ),
-                    upper_bound_multipliers=-np.array(
+                    upper_bound_multipliers=np.array(
                         upper_bound_multipliers[: self._n], dtype=float
                     ),
                     objective_multiplier=float(objective_multiplier),

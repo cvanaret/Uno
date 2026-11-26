@@ -18,6 +18,7 @@
 #include "options/Presets.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/UserTermination.hpp"
 #include "symbolic/IntegerRange.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
@@ -34,6 +35,13 @@ using CUserModel = UserModel<uno_objective_callback, uno_objective_gradient_call
    uno_lagrangian_hessian_callback, uno_lagrangian_hessian_operator_callback, std::vector<double>, void*>;
 
 // UnoModel contains an instance of UserModel and complies with the Model interface
+// a negative return code of an evaluation callback is a user termination request (a positive code is an evaluation error)
+static void throw_if_user_termination(uno_int return_code) {
+   if (return_code < 0) {
+      throw UserTermination();
+   }
+}
+
 class UnoModel: public Model {
 public:
    explicit UnoModel(const CUserModel& user_model):
@@ -77,6 +85,7 @@ public:
       if (this->user_model.objective_function != nullptr) {
          const uno_int return_code = this->user_model.objective_function(this->user_model.number_variables, x.data(),
             &objective_value, this->user_model.user_data);
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -90,6 +99,7 @@ public:
       if (this->user_model.constraint_functions != nullptr) {
          const uno_int return_code = this->user_model.constraint_functions(this->user_model.number_variables,
             this->user_model.number_constraints, x.data(), constraints.data(), this->user_model.user_data);
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -102,6 +112,7 @@ public:
       if (this->user_model.objective_gradient != nullptr) {
          const uno_int return_code = this->user_model.objective_gradient(this->user_model.number_variables, x.data(),
             gradient.data(), this->user_model.user_data);
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -144,6 +155,7 @@ public:
       if (this->user_model.jacobian != nullptr) {
          const uno_int return_code = this->user_model.jacobian(this->user_model.number_variables,
             this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
          }
@@ -167,6 +179,7 @@ public:
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw HessianEvaluationError();
          }
@@ -181,6 +194,7 @@ public:
       if (this->user_model.jacobian_operator != nullptr) {
          const uno_int return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
             this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
          }
@@ -194,6 +208,7 @@ public:
       if (this->user_model.jacobian_transposed_operator != nullptr) {
          const uno_int return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
             this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
          }
@@ -218,6 +233,7 @@ public:
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
+         throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw HessianEvaluationError();
          }
@@ -355,7 +371,7 @@ public:
          return this->termination_callback(static_cast<uno_int>(primals.size()),
             static_cast<uno_int>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
-            stationarity_residual, complementarity_residual, this->user_data) == 0;
+            stationarity_residual, complementarity_residual, this->user_data) != 0;
       }
       else {
          return false; // no user termination
@@ -658,11 +674,9 @@ bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraint
       // build the new data first: if an allocation fails, the model is left untouched
       const size_t unsigned_number_constraints = static_cast<size_t>(number_constraints);
       const size_t unsigned_number_jacobian_nonzeros = static_cast<size_t>(number_jacobian_nonzeros);
-      // copy the bounds internally
-      std::vector<double> lower_bounds = user_model->constraints_lower_bounds;
-      std::vector<double> upper_bounds = user_model->constraints_upper_bounds;
-      lower_bounds.resize(unsigned_number_constraints);
-      upper_bounds.resize(unsigned_number_constraints);
+      // copy the bounds internally. NULL bounds are infinite (as for the variables)
+      std::vector<double> lower_bounds(unsigned_number_constraints, -Inf);
+      std::vector<double> upper_bounds(unsigned_number_constraints, Inf);
       for (size_t constraint_index: Range(unsigned_number_constraints)) {
          if (constraints_lower_bounds != nullptr) {
             lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];
