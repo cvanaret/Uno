@@ -19,6 +19,8 @@ namespace uno {
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) = 0;
       virtual bool termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) = 0; // returns true for user termination
+      // false if the callbacks do nothing: Uno then skips the mapping of the iterates to the space of the user model
+      [[nodiscard]] virtual bool is_active() const { return true; }
    };
 
    class NoUserCallbacks: public UserCallbacks {
@@ -31,6 +33,8 @@ namespace uno {
             double /*primal_feasibility_residual*/, double /*stationarity_residual*/, double /*complementarity_residual*/) override {
          return false;
       }
+
+      [[nodiscard]] bool is_active() const override { return false; }
    };
 } // namespace
 

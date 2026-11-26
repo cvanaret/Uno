@@ -337,7 +337,7 @@ TEST_P(CAPICallbackIterateTests, CallbacksReceiveUserDimensions) {
    expect_user_dimensions(this->recorder.termination_checks, number_variables, number_constraints);
 }
 
-// at convergence, the last accepted iterate is the solution: the callbacks see the same values as the result getters
+// at convergence, the last accepted iterate is the solution: the notify callback sees the same values as the result getters
 TEST_P(CAPICallbackIterateTests, LastNotifiedIterateIsTheSolution) {
    void* model = create_hs015_model();
    uno_set_lagrangian_sign_convention(model, GetParam());
@@ -346,8 +346,8 @@ TEST_P(CAPICallbackIterateTests, LastNotifiedIterateIsTheSolution) {
    uno_int status{-1};
    ASSERT_EQ(uno_get_optimization_status(this->solver, &status), UNO_RESULT_SUCCESS);
    ASSERT_EQ(status, UNO_SUCCESS);
-   ASSERT_FALSE(this->recorder.termination_checks.empty());
-   const RecordedIterate& last = this->recorder.termination_checks.back();
+   ASSERT_FALSE(this->recorder.notified.empty());
+   const RecordedIterate& last = this->recorder.notified.back();
    ASSERT_EQ(last.number_variables, number_variables);
    ASSERT_EQ(last.number_constraints, number_constraints);
 

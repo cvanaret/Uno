@@ -328,8 +328,7 @@ def minimize(
           the residuals computed by Uno.
 
         The multipliers are the current estimates of Uno, with the sign convention
-        of the result (see ``v`` below), possibly in the units of the functions
-        scaled by Uno. ``fun`` is the value of the objective computed by Uno
+        and in the units of the result (see ``v`` below). ``fun`` is the value of the objective computed by Uno
         at ``x`` (stored with its point), so that no additional call to ``fun``
         is made in practice; if the last value was computed at another point,
         ``fun`` is evaluated at ``x``.

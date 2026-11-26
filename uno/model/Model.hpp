@@ -91,6 +91,8 @@ namespace uno {
 
       virtual void initial_primal_point(Vector<double>& x) const = 0;
       virtual void initial_dual_point(Vector<double>& multipliers) const = 0;
+      // maps a primal-dual iterate back to the space of the original model. Called on the final iterate, and on copies
+      // of the accepted iterates when user callbacks are set
       virtual void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const = 0;
 
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;

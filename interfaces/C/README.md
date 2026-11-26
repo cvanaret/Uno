@@ -222,6 +222,9 @@ uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, user_termin
 ```
 The termination callback is called at each iterate and returns 0 to continue the optimization, or a nonzero value to
 stop it (the optimization status is then `UNO_USER_TERMINATION`).
+Both callbacks receive the iterate in the space of the model (its numbers of variables and constraints, without the
+slack or elastic variables that Uno may introduce), with multipliers in the Lagrangian sign convention of the model, as
+returned by the result getters.
 
 Setting the logger stream callback:
 ```c
