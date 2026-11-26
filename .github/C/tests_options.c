@@ -20,7 +20,7 @@ static int number_failures = 0;
    } while (0)
 
 static void test_setters(void) {
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    CHECK(uno_set_solver_integer_option(solver, "max_iterations", 50) == UNO_OPTIONS_SUCCESS);
    CHECK(uno_set_solver_double_option(solver, "primal_tolerance", 1e-6) == UNO_OPTIONS_SUCCESS);
    CHECK(uno_set_solver_bool_option(solver, "print_solution", true) == UNO_OPTIONS_SUCCESS);
@@ -52,7 +52,7 @@ static void test_setters(void) {
 }
 
 static void test_getters(void) {
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    uno_int integer_value = -1;
    double double_value = -1.;
    bool bool_value = false;
@@ -89,7 +89,7 @@ static void test_getters(void) {
 
 // #925: getting the value of every option never fails, before and after setting a preset
 static void test_iterate_over_options(const char* preset) {
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    if (preset != NULL) {
       CHECK(uno_set_solver_preset(solver, preset) == UNO_OPTIONS_SUCCESS);
    }
@@ -125,8 +125,8 @@ static void test_iterate_over_options(const char* preset) {
 }
 
 static void test_optimize_with_invalid_arguments(void) {
-   void* solver = uno_create_solver();
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
+   uno_solver* solver = uno_create_solver();
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
    CHECK(uno_optimize(NULL, model) == UNO_OPTIMIZE_INVALID_ARGUMENT);
    CHECK(uno_optimize(solver, NULL) == UNO_OPTIMIZE_INVALID_ARGUMENT);
    // neither objective nor constraints

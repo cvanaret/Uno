@@ -56,7 +56,6 @@
     REAL ( KIND = c_double ), ALLOCATABLE, DIMENSION( : ) ::                   &
       X_0, X_l, X_u, Y_0, C, C_l, C_u, X, Y, Z_l, Z_u
     LOGICAL :: filexst, same_method, new_header
-    LOGICAL ( KIND = c_bool ) :: success
     LOGICAL ( KIND = c_bool ) :: write_solution_to_file
     LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
     CHARACTER ( LEN = 7 ) :: tool
@@ -210,16 +209,16 @@
 
     model = uno_create_model( problem_type, n_c, X_l, X_u, base_indexing )
 
-    success = uno_set_objective(model, optimization_sense, objective, gradient)
-    success                                                                    &
+    uno_status = uno_set_objective(model, optimization_sense, objective, gradient)
+    uno_status                                                                 &
       = uno_set_constraints( model, m_c, constraints, C_l, C_u,                &
                              nnz_j_c, J_row, J_col, jacobian )
-    success = uno_set_jacobian_operator(model, jacobian_operator )
-    success                                                                    &
+    uno_status = uno_set_jacobian_operator(model, jacobian_operator )
+    uno_status                                                                 &
        = uno_set_jacobian_transposed_operator( model,                          &
                                                jacobian_transposed_operator )
-    success = uno_set_initial_primal_iterate( model, X_0 )
-    success = uno_set_initial_dual_iterate( model, Y_0 )
+    uno_status = uno_set_initial_primal_iterate( model, X_0 )
+    uno_status = uno_set_initial_dual_iterate( model, Y_0 )
 
 !  solver creation
 
@@ -233,14 +232,14 @@
 
 !  how to solve with exact Hessian
 
-    success =                                                                  &
+    uno_status =                                                               &
       uno_set_lagrangian_hessian( model, nnz_h_c, hessian_triangular_part,     &
                                   H_row, H_col, lagrangian_hessian )
     uno_status =                                                               &
       uno_set_solver_string_option( solver, "hessian_model", hessian_model )
     CALL CHECK_UNO_STATUS( uno_status, UNO_OPTIONS_SUCCESS,                    &
                            'uno_set_solver_string_option' )
-    success =                                                                  &
+    uno_status =                                                               &
       uno_set_lagrangian_sign_convention( model, lagrangian_sign_convention )
 
 !  call the optimizer
@@ -532,9 +531,10 @@
 
 !  objective
 
-    FUNCTION objective_cutest( n, X, f, user_data ) RESULT( res ) BIND( C )
+    FUNCTION objective_cutest( n, X, new_x, f, user_data ) RESULT( res ) BIND( C )
     INTEGER ( KIND = uno_int ), VALUE :: n
     REAL ( KIND = c_double) , INTENT( IN ), DIMENSION( * ) :: X
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), INTENT( OUT ) :: f
     TYPE( c_ptr ), VALUE :: user_data
     INTEGER ( KIND = uno_int ) :: res
@@ -545,9 +545,10 @@
 
 !  gradient
 
-    FUNCTION gradient_cutest( n, X, G, user_data ) RESULT( res ) BIND( C )
+    FUNCTION gradient_cutest( n, X, new_x, G, user_data ) RESULT( res ) BIND( C )
     INTEGER ( KIND = uno_int ), VALUE :: n
     REAL ( KIND = c_double ), INTENT( IN ), DIMENSION( * ) :: X
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), INTENT( OUT ), DIMENSION( * ) :: G
     TYPE( c_ptr ), VALUE :: user_data
     INTEGER ( KIND = uno_int ) :: res
@@ -558,9 +559,10 @@
 
 !  constraints
 
-    FUNCTION constraints_cutest( n, m, X, C, user_data ) RESULT( res ) BIND( C )
+    FUNCTION constraints_cutest( n, m, X, new_x, C, user_data ) RESULT( res ) BIND( C )
     INTEGER ( KIND = uno_int ), VALUE :: n, m
     REAL ( KIND = c_double ), INTENT( IN ) , DIMENSION( * ):: X
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), INTENT( OUT ), DIMENSION( * ) :: C
     TYPE( c_ptr ), VALUE :: user_data
     INTEGER ( KIND = uno_int ) :: res
@@ -571,10 +573,11 @@
 
 !  Jacobian
 
-    FUNCTION jacobian_cutest( n, nnz_j, X, J_val,                              &
+    FUNCTION jacobian_cutest( n, m, nnz_j, X, new_x, J_val,                    &
                               user_data ) RESULT( res ) BIND( C )
-    INTEGER ( KIND = uno_int ), VALUE :: n, nnz_j
+    INTEGER ( KIND = uno_int ), VALUE :: n, m, nnz_j
     REAL ( KIND = c_double ), INTENT( IN ), DIMENSION( * ) :: X
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), INTENT( OUT ), DIMENSION( * ) :: J_val
     TYPE( c_ptr ), VALUE :: user_data
     INTEGER ( KIND = uno_int ) :: res
@@ -588,16 +591,16 @@
 
 ! Jacobian operator
 
-    FUNCTION jacobian_operator_cutest( n, m, X, evaluate_at_x, VECTOR, RESULT, &
+    FUNCTION jacobian_operator_cutest( n, m, X, new_x, VECTOR, RESULT,         &
                                        user_data ) RESULT( res ) BIND( C )
     INTEGER ( KIND = uno_int ), VALUE :: n, m
     REAL ( KIND = c_double ), INTENT( IN ), DIMENSION( * ) :: X, VECTOR
-    LOGICAL ( KIND = c_bool ), VALUE :: evaluate_at_x
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), INTENT( OUT ), DIMENSION( * ) :: RESULT
     TYPE( c_ptr ), VALUE :: user_data
     INTEGER ( KIND = uno_int ) :: res
     LOGICAL :: got_j
-    got_j = .NOT. evaluate_at_x
+    got_j = .FALSE. ! the Jacobian is evaluated at X
     CALL CUTEST_cjprod_r( status, n, m, got_j, .FALSE., X, VECTOR, n, RESULT, n)
     res = INT( status, KIND = uno_int )
     RETURN
@@ -605,16 +608,16 @@
 
 ! Jacobian transposed operator
 
-    FUNCTION jacobian_transposed_operator_cutest( n, m, X, evaluate_at_x,      &
+    FUNCTION jacobian_transposed_operator_cutest( n, m, X, new_x,              &
                           VECTOR, RESULT, user_data ) RESULT( res ) BIND( C )
     INTEGER ( KIND = uno_int ), VALUE :: n, m
     REAL ( KIND = c_double ), INTENT( IN ), DIMENSION( * ) :: X, VECTOR
-   LOGICAL ( KIND = c_bool ), VALUE :: evaluate_at_x
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), INTENT( OUT ), DIMENSION( * ) :: RESULT
     TYPE( c_ptr ), VALUE :: user_data
     INTEGER ( KIND = uno_int ) :: res
     LOGICAL :: got_j
-    got_j = .NOT. evaluate_at_x
+    got_j = .FALSE. ! the Jacobian is evaluated at X
     CALL CUTEST_cjprod_r( status, n, m, got_j, .TRUE., X, VECTOR, n, RESULT, n )
     res = INT( status, KIND = uno_int )
     RETURN
@@ -622,10 +625,11 @@
 
 !  Lagrangian Hessian
 
-    FUNCTION lagrangian_hessian_cutest( n, m, nnz_h, X, y0, Y, H_val,          &
+    FUNCTION lagrangian_hessian_cutest( n, m, nnz_h, X, new_x, y0, Y, H_val,   &
                                         user_data ) RESULT( res ) BIND( C )
     INTEGER ( KIND = uno_int ), VALUE :: n, m, nnz_h
     REAL ( KIND = c_double ), INTENT( IN ), DIMENSION( * ) :: X, Y
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), INTENT( OUT ), DIMENSION( * ) :: H_val
     REAL ( KIND = c_double ), VALUE :: y0
     TYPE( c_ptr ), VALUE :: user_data
@@ -649,11 +653,11 @@
 
 !  Lagrangian Hessian operator
 
-    FUNCTION lagrangian_hessian_operator_cutest( n, m, X, evaluate_at_x, y0,   &
+    FUNCTION lagrangian_hessian_operator_cutest( n, m, X, new_x, y0,           &
                           Y, VECTOR, RESULT, user_data ) RESULT( res ) BIND( C )
     INTEGER ( KIND = uno_int ), VALUE :: n, m
     REAL ( KIND = c_double), INTENT( IN ), DIMENSION( * ) :: X, Y, VECTOR
-    LOGICAL ( KIND = c_bool ), VALUE :: evaluate_at_x
+    LOGICAL ( KIND = c_bool ), VALUE :: new_x
     REAL ( KIND = c_double ), VALUE :: y0
     REAL ( KIND = c_double ), INTENT( OUT ), DIMENSION( * ) :: RESULT
     TYPE( c_ptr ), VALUE :: user_data
@@ -661,7 +665,7 @@
     REAL ( KIND = c_double ) :: Y_null( 1 )
     REAL ( KIND = c_double ), DIMENSION( m ) :: YY
     LOGICAL :: got_h
-    got_h = .NOT. evaluate_at_x
+    got_h = .FALSE. ! the Hessian is evaluated at X
     IF ( m > 0 ) THEN
       YY( 1 : m ) = Y( 1 : m )
       CALL CUTEST_chjprod_r( status, n, m, got_h, X, y0, - YY,                 &

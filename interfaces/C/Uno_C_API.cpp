@@ -34,6 +34,11 @@ using CUserModel = UserModel<uno_objective_callback, uno_objective_gradient_call
    uno_constraints_jacobian_callback, uno_constraints_jacobian_operator_callback, uno_constraints_jacobian_transposed_operator_callback,
    uno_lagrangian_hessian_callback, uno_lagrangian_hessian_operator_callback, std::vector<double>, void*>;
 
+// the opaque model handle of the C API
+struct uno_model: CUserModel {
+   using CUserModel::CUserModel;
+};
+
 // UnoModel contains an instance of UserModel and complies with the Model interface
 // a negative return code of an evaluation callback is a user termination request (a positive code is an evaluation error)
 static void throw_if_user_termination(uno_int return_code) {
@@ -84,7 +89,7 @@ public:
       double objective_value{0.};
       if (this->user_model.objective_function != nullptr) {
          const uno_int return_code = this->user_model.objective_function(this->user_model.number_variables, x.data(),
-            &objective_value, this->user_model.user_data);
+            this->is_new_point(x.data()), &objective_value, this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw FunctionEvaluationError();
@@ -98,7 +103,8 @@ public:
    void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
       if (this->user_model.constraint_functions != nullptr) {
          const uno_int return_code = this->user_model.constraint_functions(this->user_model.number_variables,
-            this->user_model.number_constraints, x.data(), constraints.data(), this->user_model.user_data);
+            this->user_model.number_constraints, x.data(), this->is_new_point(x.data()), constraints.data(),
+            this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw FunctionEvaluationError();
@@ -111,7 +117,7 @@ public:
    void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
       if (this->user_model.objective_gradient != nullptr) {
          const uno_int return_code = this->user_model.objective_gradient(this->user_model.number_variables, x.data(),
-            gradient.data(), this->user_model.user_data);
+            this->is_new_point(x.data()), gradient.data(), this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -154,7 +160,9 @@ public:
    void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const override {
       if (this->user_model.jacobian != nullptr) {
          const uno_int return_code = this->user_model.jacobian(this->user_model.number_variables,
-            this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
+            this->user_model.number_constraints, this->user_model.number_jacobian_nonzeros, x.data(),
+            this->is_new_point(x.data()), jacobian_values,
+            this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
@@ -173,7 +181,8 @@ public:
          }
          const uno_int number_hessian_nonzeros = static_cast<uno_int>(this->number_hessian_nonzeros());
          const uno_int return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
-            this->user_model.number_constraints, number_hessian_nonzeros, x.data(), objective_multiplier,
+            this->user_model.number_constraints, number_hessian_nonzeros, x.data(), this->is_new_point(x.data()),
+            objective_multiplier,
             multipliers.data(), hessian_values.data(), this->user_model.user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
@@ -193,7 +202,7 @@ public:
    void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
       if (this->user_model.jacobian_operator != nullptr) {
          const uno_int return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
-            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+            this->user_model.number_constraints, x, this->is_new_point(x), vector, result, this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
@@ -207,7 +216,7 @@ public:
    void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
       if (this->user_model.jacobian_transposed_operator != nullptr) {
          const uno_int return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
-            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+            this->user_model.number_constraints, x, this->is_new_point(x), vector, result, this->user_model.user_data);
          throw_if_user_termination(return_code);
          if (0 < return_code) {
             throw JacobianEvaluationError();
@@ -227,7 +236,8 @@ public:
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const uno_int return_code = this->user_model.lagrangian_hessian_operator(this->user_model.number_variables,
-            this->user_model.number_constraints, x.data(), true, objective_multiplier, multipliers.data(), vector.data(),
+            this->user_model.number_constraints, x.data(), this->is_new_point(x.data()), objective_multiplier,
+            multipliers.data(), vector.data(),
             result.data(), this->user_model.user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
@@ -335,6 +345,21 @@ public:
 
 protected:
    const CUserModel& user_model;
+   // the point of the previous evaluation, to compute the "new_x" flag of the callbacks
+   mutable std::vector<double> previous_evaluation_point{};
+   mutable bool has_previous_evaluation_point{false};
+
+   // returns true if x differs from the point of the previous evaluation (of any function), and records x
+   [[nodiscard]] bool is_new_point(const double* x) const {
+      const size_t number_variables = static_cast<size_t>(this->user_model.number_variables);
+      if (this->has_previous_evaluation_point &&
+            std::equal(x, x + number_variables, this->previous_evaluation_point.begin())) {
+         return false;
+      }
+      this->previous_evaluation_point.assign(x, x + number_variables);
+      this->has_previous_evaluation_point = true;
+      return true;
+   }
    mutable NumberModelEvaluations number_model_evaluations{};
    const IntegerRange linear_constraints{0};
    const IntegerRange nonlinear_constraints;
@@ -452,14 +477,14 @@ private:
    CStreamBuffer buffer;
 };
 
-COStream* c_ostream = nullptr;
-
-struct Solver {
+// the opaque solver handle of the C API
+struct uno_solver {
    std::unique_ptr<Uno> solver{std::make_unique<Uno>()};
    Options user_options{};
    Options preset_options{}; // empty for "auto"
    Options default_options{};
    std::unique_ptr<UserCallbacks> user_callbacks{std::make_unique<NoUserCallbacks>()};
+   std::unique_ptr<COStream> logger_stream{}; // the output of the optimizations, if not the standard output
    std::unique_ptr<Result> result{}; // the result of the last optimization, if it succeeded
    bool options_consistent_with_solve{false}; // is true only after the solve, false whenever new options are set
    // the options used by the last solve (defaults -> preset, including the values picked by the "auto" preset -> user).
@@ -477,9 +502,10 @@ namespace {
       }
    }
 
-   // runs a function and returns its value, or "failure_value" if it throws: no exception crosses the C interface
+   // runs a function and returns its value, or "failure_value" if it throws: no exception crosses the C interface.
+   // The return type is that of the function (the failure value may be an enumerator of the C API)
    template <typename Value, typename Function>
-   Value guard(Value failure_value, Function&& function) noexcept {
+   auto guard(Value failure_value, Function&& function) noexcept -> decltype(function()) {
       try {
          return function();
       }
@@ -505,21 +531,26 @@ void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) UNO_NOEXCEP
    }
 }
 
-void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
+uno_model* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing) UNO_NOEXCEPT {
-   return guard(static_cast<void*>(nullptr), [&]() -> void* {
-      void* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
+   return guard(static_cast<uno_model*>(nullptr), [&]() -> uno_model* {
+      uno_model* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
       if (model == nullptr) {
          return nullptr;
       }
-      uno_set_variables_lower_bounds(model, variables_lower_bounds);
-      uno_set_variables_upper_bounds(model, variables_upper_bounds);
+      // NULL bounds are infinite
+      if (variables_lower_bounds != nullptr) {
+         uno_set_variables_lower_bounds(model, variables_lower_bounds);
+      }
+      if (variables_upper_bounds != nullptr) {
+         uno_set_variables_upper_bounds(model, variables_upper_bounds);
+      }
       return model;
    });
 }
 
-void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing) UNO_NOEXCEPT {
-   return guard(static_cast<void*>(nullptr), [&]() -> void* {
+uno_model* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing) UNO_NOEXCEPT {
+   return guard(static_cast<uno_model*>(nullptr), [&]() -> uno_model* {
       if (number_variables <= 0) {
          WARNING << "Please specify a positive number of variables."  << std::endl;
          return nullptr;
@@ -534,7 +565,7 @@ void* uno_create_unconstrained_model(const char* problem_type, uno_int number_va
          return nullptr;
       }
       // owned by a unique_ptr until the model is complete
-      auto user_model = std::make_unique<CUserModel>(problem_type, number_variables, base_indexing);
+      auto user_model = std::make_unique<uno_model>(problem_type, number_variables, base_indexing);
       // set (-inf, +inf) bounds
       const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
       user_model->variables_lower_bounds.resize(unsigned_number_variables, -Inf);
@@ -548,127 +579,135 @@ void* uno_create_unconstrained_model(const char* problem_type, uno_int number_va
    });
 }
 
-bool uno_set_model_name(void* model, const char* name) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_model_name(uno_model* model, const char* name) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->name = (name != nullptr) ? name : "";
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variables_lower_bounds(uno_model* model, const double* variables_lower_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (variables_lower_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (variables_lower_bounds != nullptr) {
+      {
          for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
             user_model->variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index];
          }
       }
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variables_upper_bounds(void* model, const double* variables_upper_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variables_upper_bounds(uno_model* model, const double* variables_upper_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (variables_upper_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (variables_upper_bounds != nullptr) {
+      {
          for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
             user_model->variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index];
          }
       }
 
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variable_lower_bound(void* model, uno_int variable_index, double lower_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variable_lower_bound(uno_model* model, uno_int variable_index, double lower_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       variable_index -= user_model->base_indexing;
       if (variable_index < 0 || variable_index >= user_model->number_variables) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->variables_lower_bounds[static_cast<size_t>(variable_index)] = lower_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variable_upper_bound(void* model, uno_int variable_index, double upper_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variable_upper_bound(uno_model* model, uno_int variable_index, double upper_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       variable_index -= user_model->base_indexing;
       if (variable_index < 0 || variable_index >= user_model->number_variables) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->variables_upper_bounds[static_cast<size_t>(variable_index)] = upper_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_objective(void* model, uno_int optimization_sense, uno_objective_callback objective_function,
+uno_int uno_set_objective(uno_model* model, uno_int optimization_sense, uno_objective_callback objective_function,
       uno_objective_gradient_callback objective_gradient) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
          WARNING << "Please specify a valid objective sense."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_VALUE;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->optimization_sense = optimization_sense;
       user_model->objective_function = objective_function;
       user_model->objective_gradient = objective_gradient;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
+uno_int uno_set_constraints(uno_model* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
       const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (number_constraints <= 0) {
          WARNING << "Please specify a positive number of constraints."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (number_jacobian_nonzeros < 0) {
          WARNING << "Please specify a nonnegative number of Jacobian nonzeros."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (0 < number_jacobian_nonzeros && (jacobian_row_indices == nullptr || jacobian_column_indices == nullptr)) {
          WARNING << "Please specify valid Jacobian row and column indices."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // build the new data first: if an allocation fails, the model is left untouched
@@ -705,123 +744,131 @@ bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraint
       user_model->initial_dual_iterate = std::move(initial_dual_iterate);
       user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
       user_model->number_constraints = number_constraints;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraints_lower_bounds(void* model, const double* constraints_lower_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraints_lower_bounds(uno_model* model, const double* constraints_lower_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (constraints_lower_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (constraints_lower_bounds != nullptr) {
+      {
          for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
             user_model->constraints_lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];
          }
       }
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraints_upper_bounds(void* model, const double* constraints_upper_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraints_upper_bounds(uno_model* model, const double* constraints_upper_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (constraints_upper_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (constraints_upper_bounds != nullptr) {
+      {
          for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
             user_model->constraints_upper_bounds[constraint_index] = constraints_upper_bounds[constraint_index];
          }
       }
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraint_lower_bound(void* model, uno_int constraint_index, double lower_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraint_lower_bound(uno_model* model, uno_int constraint_index, double lower_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       constraint_index -= user_model->base_indexing;
       if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->constraints_lower_bounds[static_cast<size_t>(constraint_index)] = lower_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraint_upper_bound(void* model, uno_int constraint_index, double upper_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraint_upper_bound(uno_model* model, uno_int constraint_index, double upper_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       constraint_index -= user_model->base_indexing;
       if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->constraints_upper_bounds[static_cast<size_t>(constraint_index)] = upper_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_jacobian_operator(void* model, uno_constraints_jacobian_operator_callback jacobian_operator) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_jacobian_operator(uno_model* model, uno_constraints_jacobian_operator_callback jacobian_operator) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->jacobian_operator = jacobian_operator;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_jacobian_transposed_operator(void* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_jacobian_transposed_operator(uno_model* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->jacobian_transposed_operator = jacobian_transposed_operator;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
+uno_int uno_set_lagrangian_hessian(uno_model* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
       const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, uno_lagrangian_hessian_callback lagrangian_hessian) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (number_hessian_nonzeros < 0) {
          WARNING << "Please specify a nonnegative number of Lagrangian Hessian nonzeros."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (0 < number_hessian_nonzeros && (hessian_row_indices == nullptr || hessian_column_indices == nullptr)) {
          WARNING << "Please specify valid Lagrangian Hessian row and column indices."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
-         WARNING << "Please specify a correct Hessian triangle in {'" << UNO_LOWER_TRIANGLE << "', '" <<
-            UNO_UPPER_TRIANGLE << "'}."  << std::endl;
-         return false;
+         WARNING << "Please specify a correct Hessian triangle in {'" << static_cast<char>(UNO_LOWER_TRIANGLE) << "', '" <<
+            static_cast<char>(UNO_UPPER_TRIANGLE) << "'}."  << std::endl;
+         return UNO_MODEL_INVALID_VALUE;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // if the Hessian is empty, the problem is an LP
@@ -848,90 +895,90 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
       }
       // the count is set last
       user_model->number_hessian_nonzeros = number_hessian_nonzeros;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_lagrangian_hessian_operator(void* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_lagrangian_hessian_operator(uno_model* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_lagrangian_sign_convention(void* model, uno_int lagrangian_sign_convention) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_lagrangian_sign_convention(uno_model* model, uno_int lagrangian_sign_convention) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
          WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
             UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_VALUE;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->lagrangian_sign_convention = lagrangian_sign_convention;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_user_data(void* model, void* user_data) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_user_data(uno_model* model, void* user_data) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->user_data = user_data;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double initial_primal_component) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_primal_iterate_component(uno_model* model, uno_int index, double initial_primal_component) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       index -= user_model->base_indexing;
       if (0 <= index && index < user_model->number_variables) {
          user_model->initial_primal_iterate[static_cast<size_t>(index)] = initial_primal_component;
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_INDEX;
    });
 }
 
-bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double initial_dual_component) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_dual_iterate_component(uno_model* model, uno_int index, double initial_dual_component) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       index -= user_model->base_indexing;
       if (0 <= index && index < user_model->number_constraints) {
          user_model->initial_dual_iterate[static_cast<size_t>(index)] = initial_dual_component;
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_INDEX;
    });
 }
 
-bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_primal_iterate(uno_model* model, const double* initial_primal_iterate) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (initial_primal_iterate != nullptr) {
          CUserModel* user_model = static_cast<CUserModel*>(model);
@@ -939,17 +986,17 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
          for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
             user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
          }
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_ARGUMENT;
    });
 }
 
-bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_dual_iterate(uno_model* model, const double* initial_dual_iterate) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (initial_dual_iterate != nullptr) {
          CUserModel* user_model = static_cast<CUserModel*>(model);
@@ -957,15 +1004,15 @@ bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterat
          for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
             user_model->initial_dual_iterate[constraint_index] = initial_dual_iterate[constraint_index];
          }
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_ARGUMENT;
    });
 }
 
-void* uno_create_solver() UNO_NOEXCEPT {
-   return guard(static_cast<void*>(nullptr), [&]() -> void* {
-      auto solver = std::make_unique<Solver>();
+uno_solver* uno_create_solver() UNO_NOEXCEPT {
+   return guard(static_cast<uno_solver*>(nullptr), [&]() -> uno_solver* {
+      auto solver = std::make_unique<uno_solver>();
       DefaultOptions::load(solver->default_options);
       return solver.release();
    });
@@ -1018,27 +1065,27 @@ namespace {
 
    // modifies a copy of the user options, then commits it: if any step fails, the options of the solver are unchanged
    template <typename Modifier>
-   uno_int modify_user_options(void* solver, Modifier&& modify) noexcept {
+   uno_int modify_user_options(uno_solver* solver, Modifier&& modify) noexcept {
       if (solver == nullptr) {
          report_error("Please specify a valid solver.");
          return UNO_OPTIONS_INVALID_ARGUMENT;
       }
-      Solver* uno_solver = static_cast<Solver*>(solver);
+      uno_solver* const solver_data = solver;
       return guard_options([&]() {
-         Options user_options = uno_solver->user_options;
+         Options user_options = solver_data->user_options;
          modify(user_options);
-         Options preset_options = compute_preset_options(user_options, uno_solver->default_options);
+         Options preset_options = compute_preset_options(user_options, solver_data->default_options);
          // commit
-         uno_solver->user_options = std::move(user_options);
-         uno_solver->preset_options = std::move(preset_options);
-         uno_solver->options_consistent_with_solve = false;
-         uno_solver->solve_options = Options{};
+         solver_data->user_options = std::move(user_options);
+         solver_data->preset_options = std::move(preset_options);
+         solver_data->options_consistent_with_solve = false;
+         solver_data->solve_options = Options{};
       });
    }
 
    // sets a particular option
    template <typename Setter>
-   uno_int set_user_option(void* solver, const char* option_name, Setter&& setter) noexcept {
+   uno_int set_user_option(uno_solver* solver, const char* option_name, Setter&& setter) noexcept {
       if (option_name == nullptr) {
          report_error("Please specify a valid option name.");
          return UNO_OPTIONS_INVALID_ARGUMENT;
@@ -1049,25 +1096,25 @@ namespace {
    }
 } // namespace
 
-uno_int uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) UNO_NOEXCEPT {
+uno_int uno_set_solver_integer_option(uno_solver* solver, const char* option_name, uno_int option_value) UNO_NOEXCEPT {
    return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
       options.set_integer(name, option_value);
    });
 }
 
-uno_int uno_set_solver_double_option(void* solver, const char* option_name, double option_value) UNO_NOEXCEPT {
+uno_int uno_set_solver_double_option(uno_solver* solver, const char* option_name, double option_value) UNO_NOEXCEPT {
    return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
       options.set_double(name, option_value);
    });
 }
 
-uno_int uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) UNO_NOEXCEPT {
+uno_int uno_set_solver_bool_option(uno_solver* solver, const char* option_name, bool option_value) UNO_NOEXCEPT {
    return set_user_option(solver, option_name, [&](Options& options, const std::string& name) {
       options.set_bool(name, option_value);
    });
 }
 
-uno_int uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) UNO_NOEXCEPT {
+uno_int uno_set_solver_string_option(uno_solver* solver, const char* option_name, const char* option_value) UNO_NOEXCEPT {
    if (option_value == nullptr) {
       report_error("Please specify a valid option value.");
       return UNO_OPTIONS_INVALID_ARGUMENT;
@@ -1077,7 +1124,7 @@ uno_int uno_set_solver_string_option(void* solver, const char* option_name, cons
    });
 }
 
-uno_int uno_get_solver_option_type(void* solver, const char* option_name) UNO_NOEXCEPT {
+uno_int uno_get_solver_option_type(const uno_solver* solver, const char* option_name) UNO_NOEXCEPT {
    if (solver == nullptr || option_name == nullptr) {
       return UNO_OPTION_TYPE_NOT_FOUND;
    }
@@ -1154,7 +1201,7 @@ void uno_options_destroy_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT {
    *iterator = nullptr;
 }
 
-uno_int uno_load_solver_option_file(void* solver, const char* file_name) UNO_NOEXCEPT {
+uno_int uno_load_solver_option_file(uno_solver* solver, const char* file_name) UNO_NOEXCEPT {
    if (file_name == nullptr) {
       report_error("Please specify a valid option file name.");
       return UNO_OPTIONS_INVALID_ARGUMENT;
@@ -1164,7 +1211,7 @@ uno_int uno_load_solver_option_file(void* solver, const char* file_name) UNO_NOE
    });
 }
 
-uno_int uno_set_solver_preset(void* solver, const char* preset_name) UNO_NOEXCEPT {
+uno_int uno_set_solver_preset(uno_solver* solver, const char* preset_name) UNO_NOEXCEPT {
    if (preset_name == nullptr) {
       report_error("Please specify a valid preset.");
       return UNO_OPTIONS_INVALID_ARGUMENT;
@@ -1174,51 +1221,92 @@ uno_int uno_set_solver_preset(void* solver, const char* preset_name) UNO_NOEXCEP
    });
 }
 
-bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+uno_int uno_set_solver_callbacks(uno_solver* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
       uno_termination_callback termination_callback, void* user_data) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_SOLVER_ERROR, [&]() -> uno_int {
       if (solver == nullptr) {
          WARNING << "Please specify a valid solver."  << std::endl;
-         return false;
+         return UNO_SOLVER_INVALID_ARGUMENT;
       }
-      Solver* uno_solver = static_cast<Solver*>(solver);
+      uno_solver* const solver_data = solver;
       // replaces (and deletes) the previous callbacks
-      uno_solver->user_callbacks = std::make_unique<CUserCallbacks>(notify_acceptable_iterate_callback,
+      solver_data->user_callbacks = std::make_unique<CUserCallbacks>(notify_acceptable_iterate_callback,
          termination_callback, user_data);
-      return true;
+      return UNO_SOLVER_SUCCESS;
    });
 }
 
-bool uno_set_logger_stream_callback(uno_logger_stream_callback logger_stream_callback, void* user_data) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
-      // the logger never refers to a deleted stream
-      COStream* stream = new COStream(logger_stream_callback, user_data);
-      Logger::set_stream(*stream);
-      delete c_ostream;
-      c_ostream = stream;
-      return true;
+uno_int uno_set_logger_stream_callback(uno_solver* solver, uno_logger_stream_callback logger_stream_callback,
+      void* user_data) UNO_NOEXCEPT {
+   return guard(UNO_SOLVER_ERROR, [&]() -> uno_int {
+      if (solver == nullptr) {
+         WARNING << "Please specify a valid solver."  << std::endl;
+         return UNO_SOLVER_INVALID_ARGUMENT;
+      }
+      // a null callback resets the stream to the standard output
+      solver->logger_stream = (logger_stream_callback != nullptr) ?
+         std::make_unique<COStream>(logger_stream_callback, user_data) : nullptr;
+      return UNO_SOLVER_SUCCESS;
    });
 }
 
-bool uno_reset_logger_stream() UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
-      Logger::set_stream(std::cout);
-      delete c_ostream;
-      c_ostream = nullptr;
-      return true;
+uno_int uno_reset_logger_stream(uno_solver* solver) UNO_NOEXCEPT {
+   return guard(UNO_SOLVER_ERROR, [&]() -> uno_int {
+      if (solver == nullptr) {
+         WARNING << "Please specify a valid solver."  << std::endl;
+         return UNO_SOLVER_INVALID_ARGUMENT;
+      }
+      solver->logger_stream.reset();
+      return UNO_SOLVER_SUCCESS;
    });
 }
 
-uno_int uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
+namespace {
+   // during an optimization, the logger uses the level and the stream of the solver; the previous ones are restored
+   // afterwards (also if an exception is raised). The logger of the core is process-wide: concurrent optimizations
+   // in several threads share it
+   class SolverLoggerScope {
+   public:
+      explicit SolverLoggerScope(uno_solver& solver):
+            previous_level(Logger::level), previous_stream(Logger::stream), solver(solver) {
+         if (this->solver.logger_stream != nullptr) {
+            Logger::set_stream(*this->solver.logger_stream);
+         }
+         else {
+            Logger::set_stream(std::cout);
+         }
+      }
+
+      ~SolverLoggerScope() {
+         try {
+            Logger::flush();
+         }
+         catch (...) {
+         }
+         Logger::level = this->previous_level;
+         Logger::stream = this->previous_stream;
+      }
+
+      SolverLoggerScope(const SolverLoggerScope&) = delete;
+      SolverLoggerScope& operator=(const SolverLoggerScope&) = delete;
+
+   private:
+      const Level previous_level;
+      std::ostream* const previous_stream;
+      uno_solver& solver;
+   };
+} // namespace
+
+uno_int uno_optimize(uno_solver* solver, uno_model* model) UNO_NOEXCEPT {
    if (solver == nullptr) {
       report_error("Please specify a valid solver.");
       return UNO_OPTIMIZE_INVALID_ARGUMENT;
    }
-   Solver* uno_solver = static_cast<Solver*>(solver);
+   uno_solver* const solver_data = solver;
    // the result of a previous optimization does not correspond to this optimization
-   uno_solver->result.reset();
-   uno_solver->options_consistent_with_solve = false;
-   uno_solver->solve_options = Options{};
+   solver_data->result.reset();
+   solver_data->options_consistent_with_solve = false;
+   solver_data->solve_options = Options{};
 
    if (model == nullptr) {
       report_error("Please specify a valid model.");
@@ -1233,35 +1321,36 @@ uno_int uno_optimize(void* solver, void* model) UNO_NOEXCEPT {
    // the status returned if an exception is raised: it depends on the current stage
    uno_int failure_status = UNO_OPTIMIZE_ERROR;
    try {
+      const SolverLoggerScope logger_scope(*solver_data);
       // create an instance of UnoModel, a subclass of Model
       const UnoModel uno_model(*user_model);
 
       // defaults -> preset -> user options
       failure_status = UNO_OPTIMIZE_INVALID_OPTIONS;
-      Options full_options = uno_solver->default_options;
-      const std::string preset = uno_solver->user_options.get_string_optional("preset").value_or(uno_solver->default_options.get_string("preset"));
+      Options full_options = solver_data->default_options;
+      const std::string preset = solver_data->user_options.get_string_optional("preset").value_or(solver_data->default_options.get_string("preset"));
       if (preset == "auto") {
          Presets::set(uno_model, full_options, preset);
       }
       else {
-         full_options.overwrite(uno_solver->preset_options);
+         full_options.overwrite(solver_data->preset_options);
       }
-      full_options.overwrite(uno_solver->user_options);
+      full_options.overwrite(solver_data->user_options);
 
       // resolve logger
       Logger::set_logger(full_options.get_string("logger"));
 
-      uno_solver->user_options.print("User options");
+      solver_data->user_options.print("User options");
 
       // solve the model. Uno::solve reports its errors in the result
       failure_status = UNO_OPTIMIZE_ERROR;
-      Result result = uno_solver->solver->solve(uno_model, full_options, *uno_solver->user_callbacks);
+      Result result = solver_data->solver->solve(uno_model, full_options, *solver_data->user_callbacks);
       // move the new result into uno_solver
-      uno_solver->result = std::make_unique<Result>(std::move(result));
+      solver_data->result = std::make_unique<Result>(std::move(result));
       // keep the options used by the solve, so that the getters can return them (including the values picked by the
       // "auto" preset)
-      uno_solver->solve_options = std::move(full_options);
-      uno_solver->options_consistent_with_solve = true;
+      solver_data->solve_options = std::move(full_options);
+      solver_data->options_consistent_with_solve = true;
       // flush the logger
       Logger::flush();
       return UNO_OPTIMIZE_SUCCESS;
@@ -1289,7 +1378,7 @@ namespace {
    // gets the value of an option of type "type": the value set by the user, otherwise by the preset, otherwise the default
    // value. "read" reads the value from a set of options that contains it
    template <typename T, typename Reader>
-   uno_int get_solver_option(void* solver, const char* option_name, T* option_value, OptionType type, Reader&& read) noexcept {
+   uno_int get_solver_option(const uno_solver* solver, const char* option_name, T* option_value, OptionType type, Reader&& read) noexcept {
       if (solver == nullptr) {
          report_error("Please specify a valid solver.");
          return UNO_OPTIONS_INVALID_ARGUMENT;
@@ -1302,7 +1391,7 @@ namespace {
          report_error("Please specify a valid pointer to the option value.");
          return UNO_OPTIONS_INVALID_ARGUMENT;
       }
-      const Solver* uno_solver = static_cast<const Solver*>(solver);
+      const uno_solver* const solver_data = solver;
       uno_int status = UNO_OPTIONS_NOT_SET;
       const uno_int guard_status = guard_options([&]() {
          const std::string name{option_name};
@@ -1312,9 +1401,9 @@ namespace {
          }
          // after a solve (and until the options are modified), the options used by the solve. Otherwise, the user
          // options, then the preset options, then the default options
-         const std::array<const Options*, 3> sources = uno_solver->options_consistent_with_solve ?
-            std::array<const Options*, 3>{&uno_solver->solve_options, nullptr, nullptr} :
-            std::array<const Options*, 3>{&uno_solver->user_options, &uno_solver->preset_options, &uno_solver->default_options};
+         const std::array<const Options*, 3> sources = solver_data->options_consistent_with_solve ?
+            std::array<const Options*, 3>{&solver_data->solve_options, nullptr, nullptr} :
+            std::array<const Options*, 3>{&solver_data->user_options, &solver_data->preset_options, &solver_data->default_options};
          for (const Options* options: sources) {
             if (options != nullptr && options->contains(name)) {
                *option_value = read(*options, name);
@@ -1327,24 +1416,24 @@ namespace {
    }
 } // namespace
 
-uno_int uno_get_solver_integer_option(void* solver, const char* option_name, uno_int* option_value) UNO_NOEXCEPT {
+uno_int uno_get_solver_integer_option(const uno_solver* solver, const char* option_name, uno_int* option_value) UNO_NOEXCEPT {
    return get_solver_option(solver, option_name, option_value, OptionType::INTEGER,
       [](const Options& options, const std::string& name) { return options.get_int(name); });
 }
 
-uno_int uno_get_solver_double_option(void* solver, const char* option_name, double* option_value) UNO_NOEXCEPT {
+uno_int uno_get_solver_double_option(const uno_solver* solver, const char* option_name, double* option_value) UNO_NOEXCEPT {
    return get_solver_option(solver, option_name, option_value, OptionType::DOUBLE,
       [](const Options& options, const std::string& name) { return options.get_double(name); });
 }
 
-uno_int uno_get_solver_bool_option(void* solver, const char* option_name, bool* option_value) UNO_NOEXCEPT {
+uno_int uno_get_solver_bool_option(const uno_solver* solver, const char* option_name, bool* option_value) UNO_NOEXCEPT {
    return get_solver_option(solver, option_name, option_value, OptionType::BOOL,
       [](const Options& options, const std::string& name) { return options.get_bool(name); });
 }
 
 namespace {
    // after a solve, the value of a string option overridden by the solver, otherwise nullptr
-   const char* find_option_override(const Solver& solver, const char* option_name) {
+   const char* find_option_override(const uno_solver& solver, const char* option_name) {
       if (solver.result != nullptr && solver.options_consistent_with_solve) {
          for (const auto& option_override: solver.result->option_overrides) {
             if (option_override.option_name == option_name) {
@@ -1356,14 +1445,14 @@ namespace {
    }
 } // namespace
 
-uno_int uno_get_solver_string_option(void* solver, const char* option_name, const char** option_value) UNO_NOEXCEPT {
+uno_int uno_get_solver_string_option(const uno_solver* solver, const char* option_name, const char** option_value) UNO_NOEXCEPT {
    // the pointer to the stored string (not a copy)
    const uno_int status = get_solver_option(solver, option_name, option_value, OptionType::STRING,
       [](const Options& options, const std::string& name) { return options.get_string(name).c_str(); });
    // after a solve, an option overridden by the solver has the value used by the solver. The arguments are valid if
    // the status is UNO_OPTIONS_SUCCESS or UNO_OPTIONS_NOT_SET
    if (status == UNO_OPTIONS_SUCCESS || status == UNO_OPTIONS_NOT_SET) {
-      if (const char* overridden_value = find_option_override(*static_cast<const Solver*>(solver), option_name)) {
+      if (const char* overridden_value = find_option_override(*solver, option_name)) {
          *option_value = overridden_value;
          return UNO_OPTIONS_SUCCESS;
       }
@@ -1374,7 +1463,7 @@ uno_int uno_get_solver_string_option(void* solver, const char* option_name, cons
 namespace {
    // checks the arguments and gets the result of the last optimization. If there is no result (e.g. before the first
    // optimization), returns UNO_RESULT_NOT_AVAILABLE without a message: this is a state, not an error
-   uno_int get_result(void* solver, bool valid_output, const Result*& result) noexcept {
+   uno_int get_result(const uno_solver* solver, bool valid_output, const Result*& result) noexcept {
       if (solver == nullptr) {
          report_error("Please specify a valid solver.");
          return UNO_RESULT_INVALID_ARGUMENT;
@@ -1383,13 +1472,13 @@ namespace {
          report_error("Please specify a valid pointer to the value.");
          return UNO_RESULT_INVALID_ARGUMENT;
       }
-      result = static_cast<const Solver*>(solver)->result.get();
+      result = solver->result.get();
       return (result != nullptr) ? UNO_RESULT_SUCCESS : UNO_RESULT_NOT_AVAILABLE;
    }
 
    // gets a member of the result of the last optimization
    template <typename T, typename Member>
-   uno_int get_result_value(void* solver, T* value, const Member Result::* member) noexcept {
+   uno_int get_result_value(const uno_solver* solver, T* value, const Member Result::* member) noexcept {
       const Result* result{nullptr};
       const uno_int status = get_result(solver, value != nullptr, result);
       if (status == UNO_RESULT_SUCCESS) {
@@ -1399,7 +1488,7 @@ namespace {
    }
 
    // gets one component of a vector of the result, whose size is "size"
-   uno_int get_result_component(void* solver, uno_int index, double* value, Vector<double> Result::* vector,
+   uno_int get_result_component(const uno_solver* solver, uno_int index, double* value, Vector<double> Result::* vector,
          const size_t Result::* size) noexcept {
       const Result* result{nullptr};
       const uno_int status = get_result(solver, value != nullptr, result);
@@ -1417,7 +1506,7 @@ namespace {
    }
 
    // copies a vector of the result, whose size is "size". A null pointer is allowed for an empty vector
-   uno_int get_result_vector(void* solver, double* values, Vector<double> Result::* vector,
+   uno_int get_result_vector(const uno_solver* solver, double* values, Vector<double> Result::* vector,
          const size_t Result::* size) noexcept {
       const Result* result{nullptr};
       const uno_int status = get_result(solver, true, result);
@@ -1437,86 +1526,86 @@ namespace {
    }
 } // namespace
 
-uno_int uno_get_method_description(void* solver, const char** method_description) UNO_NOEXCEPT {
+uno_int uno_get_method_description(const uno_solver* solver, const char** method_description) UNO_NOEXCEPT {
    const Result* result{nullptr};
    const uno_int status = get_result(solver, method_description != nullptr, result);
    if (status == UNO_RESULT_SUCCESS) {
-      *method_description = static_cast<const Solver*>(solver)->solver->get_method_description().c_str();
+      *method_description = solver->solver->get_method_description().c_str();
    }
    return status;
 }
 
-uno_int uno_get_optimization_status(void* solver, uno_int* optimization_status) UNO_NOEXCEPT {
+uno_int uno_get_optimization_status(const uno_solver* solver, uno_int* optimization_status) UNO_NOEXCEPT {
    return get_result_value(solver, optimization_status, &Result::optimization_status);
 }
 
-uno_int uno_get_solution_status(void* solver, uno_int* solution_status) UNO_NOEXCEPT {
+uno_int uno_get_solution_status(const uno_solver* solver, uno_int* solution_status) UNO_NOEXCEPT {
    return get_result_value(solver, solution_status, &Result::solution_status);
 }
 
-uno_int uno_get_solution_objective(void* solver, double* solution_objective) UNO_NOEXCEPT {
+uno_int uno_get_solution_objective(const uno_solver* solver, double* solution_objective) UNO_NOEXCEPT {
    return get_result_value(solver, solution_objective, &Result::solution_objective);
 }
 
-uno_int uno_get_primal_solution_component(void* solver, uno_int index, double* primal_component) UNO_NOEXCEPT {
+uno_int uno_get_primal_solution_component(const uno_solver* solver, uno_int index, double* primal_component) UNO_NOEXCEPT {
    return get_result_component(solver, index, primal_component, &Result::primal_solution, &Result::number_variables);
 }
 
-uno_int uno_get_constraint_dual_solution_component(void* solver, uno_int index, double* constraint_dual_component) UNO_NOEXCEPT {
+uno_int uno_get_constraint_dual_solution_component(const uno_solver* solver, uno_int index, double* constraint_dual_component) UNO_NOEXCEPT {
    return get_result_component(solver, index, constraint_dual_component, &Result::constraint_dual_solution,
       &Result::number_constraints);
 }
 
-uno_int uno_get_lower_bound_dual_solution_component(void* solver, uno_int index, double* lower_bound_dual_component) UNO_NOEXCEPT {
+uno_int uno_get_lower_bound_dual_solution_component(const uno_solver* solver, uno_int index, double* lower_bound_dual_component) UNO_NOEXCEPT {
    return get_result_component(solver, index, lower_bound_dual_component, &Result::lower_bound_dual_solution,
       &Result::number_variables);
 }
 
-uno_int uno_get_upper_bound_dual_solution_component(void* solver, uno_int index, double* upper_bound_dual_component) UNO_NOEXCEPT {
+uno_int uno_get_upper_bound_dual_solution_component(const uno_solver* solver, uno_int index, double* upper_bound_dual_component) UNO_NOEXCEPT {
    return get_result_component(solver, index, upper_bound_dual_component, &Result::upper_bound_dual_solution,
       &Result::number_variables);
 }
 
-uno_int uno_get_primal_solution(void* solver, double* primal_solution) UNO_NOEXCEPT {
+uno_int uno_get_primal_solution(const uno_solver* solver, double* primal_solution) UNO_NOEXCEPT {
    return get_result_vector(solver, primal_solution, &Result::primal_solution, &Result::number_variables);
 }
 
-uno_int uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution) UNO_NOEXCEPT {
+uno_int uno_get_constraint_dual_solution(const uno_solver* solver, double* constraint_dual_solution) UNO_NOEXCEPT {
    return get_result_vector(solver, constraint_dual_solution, &Result::constraint_dual_solution,
       &Result::number_constraints);
 }
 
-uno_int uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution) UNO_NOEXCEPT {
+uno_int uno_get_lower_bound_dual_solution(const uno_solver* solver, double* lower_bound_dual_solution) UNO_NOEXCEPT {
    return get_result_vector(solver, lower_bound_dual_solution, &Result::lower_bound_dual_solution,
       &Result::number_variables);
 }
 
-uno_int uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution) UNO_NOEXCEPT {
+uno_int uno_get_upper_bound_dual_solution(const uno_solver* solver, double* upper_bound_dual_solution) UNO_NOEXCEPT {
    return get_result_vector(solver, upper_bound_dual_solution, &Result::upper_bound_dual_solution,
       &Result::number_variables);
 }
 
-uno_int uno_get_solution_constraints(void* solver, double* constraint_values) UNO_NOEXCEPT {
+uno_int uno_get_solution_constraints(const uno_solver* solver, double* constraint_values) UNO_NOEXCEPT {
    return get_result_vector(solver, constraint_values, &Result::constraint_values, &Result::number_constraints);
 }
 
-uno_int uno_get_solution_primal_feasibility(void* solver, double* primal_feasibility) UNO_NOEXCEPT {
+uno_int uno_get_solution_primal_feasibility(const uno_solver* solver, double* primal_feasibility) UNO_NOEXCEPT {
    return get_result_value(solver, primal_feasibility, &Result::solution_primal_feasibility);
 }
 
-uno_int uno_get_solution_stationarity(void* solver, double* stationarity) UNO_NOEXCEPT {
+uno_int uno_get_solution_stationarity(const uno_solver* solver, double* stationarity) UNO_NOEXCEPT {
    return get_result_value(solver, stationarity, &Result::solution_stationarity);
 }
 
-uno_int uno_get_solution_complementarity(void* solver, double* complementarity) UNO_NOEXCEPT {
+uno_int uno_get_solution_complementarity(const uno_solver* solver, double* complementarity) UNO_NOEXCEPT {
    return get_result_value(solver, complementarity, &Result::solution_complementarity);
 }
 
-uno_int uno_get_number_iterations(void* solver, uno_int* number_iterations) UNO_NOEXCEPT {
+uno_int uno_get_number_iterations(const uno_solver* solver, uno_int* number_iterations) UNO_NOEXCEPT {
    return get_result_value(solver, number_iterations, &Result::number_iterations);
 }
 
-uno_int uno_get_cpu_time(void* solver, double* cpu_time) UNO_NOEXCEPT {
+uno_int uno_get_cpu_time(const uno_solver* solver, double* cpu_time) UNO_NOEXCEPT {
    const Result* result{nullptr};
    const uno_int status = get_result(solver, cpu_time != nullptr, result);
    if (status == UNO_RESULT_SUCCESS) {
@@ -1525,36 +1614,36 @@ uno_int uno_get_cpu_time(void* solver, double* cpu_time) UNO_NOEXCEPT {
    return status;
 }
 
-uno_int uno_get_number_objective_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
+uno_int uno_get_number_objective_evaluations(const uno_solver* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
    return get_result_value(solver, number_evaluations, &Result::number_objective_evaluations);
 }
 
-uno_int uno_get_number_constraint_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
+uno_int uno_get_number_constraint_evaluations(const uno_solver* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
    return get_result_value(solver, number_evaluations, &Result::number_constraint_evaluations);
 }
 
-uno_int uno_get_number_objective_gradient_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
+uno_int uno_get_number_objective_gradient_evaluations(const uno_solver* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
    return get_result_value(solver, number_evaluations, &Result::number_objective_gradient_evaluations);
 }
 
-uno_int uno_get_number_jacobian_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
+uno_int uno_get_number_jacobian_evaluations(const uno_solver* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
    return get_result_value(solver, number_evaluations, &Result::number_jacobian_evaluations);
 }
 
-uno_int uno_get_number_hessian_evaluations(void* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
+uno_int uno_get_number_hessian_evaluations(const uno_solver* solver, uno_int* number_evaluations) UNO_NOEXCEPT {
    return get_result_value(solver, number_evaluations, &Result::number_hessian_evaluations);
 }
 
-uno_int uno_get_number_subproblem_solved_evaluations(void* solver, uno_int* number_subproblems) UNO_NOEXCEPT {
+uno_int uno_get_number_subproblem_solved_evaluations(const uno_solver* solver, uno_int* number_subproblems) UNO_NOEXCEPT {
    return get_result_value(solver, number_subproblems, &Result::number_subproblems_solved);
 }
 
-void uno_destroy_model(void* model) UNO_NOEXCEPT {
+void uno_destroy_model(uno_model* model) UNO_NOEXCEPT {
    if (model != nullptr) {
-      delete static_cast<CUserModel*>(model);
+      delete model;
    }
 }
 
-void uno_destroy_solver(void* solver) UNO_NOEXCEPT {
-   delete static_cast<Solver*>(solver);
+void uno_destroy_solver(uno_solver* solver) UNO_NOEXCEPT {
+   delete solver;
 }

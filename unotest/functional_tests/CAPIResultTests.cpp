@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 #include <cmath>
+#include <sstream>
 #include <string>
 #include <vector>
 #include "CAPITestProblem.hpp"
@@ -22,8 +23,8 @@ static_assert(noexcept(uno_set_constraints(nullptr, 0, nullptr, nullptr, nullptr
 static_assert(noexcept(uno_set_lagrangian_hessian(nullptr, 0, 'L', nullptr, nullptr, nullptr)));
 static_assert(noexcept(uno_create_solver()));
 static_assert(noexcept(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr)));
-static_assert(noexcept(uno_set_logger_stream_callback(nullptr, nullptr)));
-static_assert(noexcept(uno_reset_logger_stream()));
+static_assert(noexcept(uno_set_logger_stream_callback(nullptr, nullptr, nullptr)));
+static_assert(noexcept(uno_reset_logger_stream(nullptr)));
 static_assert(noexcept(uno_get_method_description(nullptr, nullptr)));
 static_assert(noexcept(uno_get_optimization_status(nullptr, nullptr)));
 static_assert(noexcept(uno_get_primal_solution_component(nullptr, 0, nullptr)));
@@ -98,8 +99,8 @@ namespace {
          }
       }
 
-      void* model{nullptr};
-      void* solver{nullptr};
+      uno_model* model{nullptr};
+      uno_solver* solver{nullptr};
    };
 } // namespace
 
@@ -200,28 +201,21 @@ TEST_F(CAPIResultTests, MethodDescription) {
    EXPECT_TRUE(method.find("SQP") != std::string::npos || method.find("interior-point") != std::string::npos) << method;
 }
 
-namespace {
-   // appends the messages of the logger to a string
-   uno_int append_to_string(const char* buffer, uno_int length, void* user_data) {
-      static_cast<std::string*>(user_data)->append(buffer, static_cast<size_t>(length));
-      return length;
-   }
-} // namespace
-
 // an unavailable result is not an error: no message is printed, so that the getters can be used to check whether a
-// result is available
+// result is available. The messages printed outside of an optimization go to the global logger stream
 TEST_F(CAPIResultTests, NotAvailableResultPrintsNothing) {
    const Level level = Logger::level;
+   std::ostream* const stream = Logger::stream;
    Logger::set_logger("WARNING");
-   std::string messages{};
-   ASSERT_TRUE(uno_set_logger_stream_callback(append_to_string, &messages));
+   std::ostringstream messages{};
+   Logger::set_stream(messages);
    double value{-1.};
    EXPECT_EQ(uno_get_solution_objective(this->solver, &value), UNO_RESULT_NOT_AVAILABLE);
-   const std::string messages_not_available = messages;
+   const std::string messages_not_available = messages.str();
    // an invalid argument is reported
    EXPECT_EQ(uno_get_solution_objective(nullptr, &value), UNO_RESULT_INVALID_ARGUMENT);
-   const std::string messages_invalid_argument = messages;
-   EXPECT_TRUE(uno_reset_logger_stream());
+   const std::string messages_invalid_argument = messages.str();
+   Logger::stream = stream;
    Logger::level = level;
    EXPECT_EQ(messages_not_available, "");
    EXPECT_NE(messages_invalid_argument, "");
@@ -237,24 +231,24 @@ TEST(CAPIModel, InvalidArgumentsAreRejected) {
    EXPECT_EQ(uno_create_model(nullptr, 2, nullptr, nullptr, UNO_ZERO_BASED_INDEXING), nullptr);
    EXPECT_EQ(uno_create_model(UNO_PROBLEM_NONLINEAR, 2, nullptr, nullptr, 2), nullptr);
 
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
    ASSERT_NE(model, nullptr);
    // null sparsity patterns
-   EXPECT_FALSE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, 4, nullptr, nullptr, jacobian));
-   EXPECT_FALSE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, -1, nullptr, nullptr, jacobian));
-   EXPECT_FALSE(uno_set_lagrangian_hessian(model, 3, UNO_LOWER_TRIANGLE, nullptr, nullptr, lagrangian_hessian));
-   EXPECT_FALSE(uno_set_variable_lower_bound(model, 2, 0.));
-   EXPECT_FALSE(uno_set_objective(nullptr, UNO_MINIMIZE, objective_function, objective_gradient));
-   EXPECT_TRUE(uno_set_objective(model, UNO_MINIMIZE, objective_function, objective_gradient));
+   EXPECT_NE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, 4, nullptr, nullptr, jacobian), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, -1, nullptr, nullptr, jacobian), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_lagrangian_hessian(model, 3, UNO_LOWER_TRIANGLE, nullptr, nullptr, lagrangian_hessian), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_variable_lower_bound(model, 2, 0.), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_objective(nullptr, UNO_MINIMIZE, objective_function, objective_gradient), UNO_MODEL_SUCCESS);
+   EXPECT_EQ(uno_set_objective(model, UNO_MINIMIZE, objective_function, objective_gradient), UNO_MODEL_SUCCESS);
    uno_destroy_model(model);
 }
 
 TEST(CAPISolver, CallbacksAndLoggerStream) {
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    ASSERT_NE(solver, nullptr);
-   EXPECT_FALSE(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr));
-   EXPECT_TRUE(uno_set_solver_callbacks(solver, nullptr, nullptr, nullptr));
-   EXPECT_TRUE(uno_set_logger_stream_callback(nullptr, nullptr));
-   EXPECT_TRUE(uno_reset_logger_stream());
+   EXPECT_NE(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr), UNO_SOLVER_SUCCESS);
+   EXPECT_EQ(uno_set_solver_callbacks(solver, nullptr, nullptr, nullptr), UNO_SOLVER_SUCCESS);
+   EXPECT_EQ(uno_set_logger_stream_callback(solver, nullptr, nullptr), UNO_SOLVER_SUCCESS);
+   EXPECT_EQ(uno_reset_logger_stream(solver), UNO_SOLVER_SUCCESS);
    uno_destroy_solver(solver);
 }

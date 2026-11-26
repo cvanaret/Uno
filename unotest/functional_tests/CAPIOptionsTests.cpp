@@ -74,7 +74,7 @@ namespace {
          return (value != nullptr) ? std::string{value} : std::string{"<null>"};
       }
 
-      void* solver{nullptr};
+      uno_solver* solver{nullptr};
    };
 
    // writes a temporary option file and removes it at destruction
@@ -348,7 +348,7 @@ TEST_F(CAPIOptionsTests, StringOverriddenBySolverIsReportedAfterTheSolve) {
       GTEST_SKIP() << "no subproblem solver available";
    }
    // without a Hessian, the solver falls back to L-BFGS
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, number_variables, UNO_ZERO_BASED_INDEXING);
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, number_variables, UNO_ZERO_BASED_INDEXING);
    double constraints_lower_bounds[] = {1., 0.};
    double constraints_upper_bounds[] = {Inf, Inf};
    uno_int jacobian_row_indices[] = {0, 1, 0, 1};
@@ -376,8 +376,8 @@ TEST(CAPIOptimize, AutoPresetValuesCanBeReadAfterTheSolve) {
    if (available_preset() == nullptr) {
       GTEST_SKIP() << "no subproblem solver available";
    }
-   void* solver = uno_create_solver();
-   void* model = create_hs015_model();
+   uno_solver* solver = uno_create_solver();
+   uno_model* model = create_hs015_model();
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    ASSERT_EQ(uno_set_solver_integer_option(solver, "max_iterations", 123), UNO_OPTIONS_SUCCESS);
    const char* value{nullptr};
@@ -438,7 +438,7 @@ TEST(CAPIOptimize, OverrideOfAnOptionWithoutValueIsReportedAfterTheSolve) {
       GTEST_SKIP() << "no subproblem solver available";
    }
    // hs015 without a Hessian: the solver falls back to L-BFGS
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, number_variables, UNO_ZERO_BASED_INDEXING);
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, number_variables, UNO_ZERO_BASED_INDEXING);
    double constraints_lower_bounds[] = {1., 0.};
    double constraints_upper_bounds[] = {Inf, Inf};
    uno_int jacobian_row_indices[] = {0, 1, 0, 1};
@@ -449,7 +449,7 @@ TEST(CAPIOptimize, OverrideOfAnOptionWithoutValueIsReportedAfterTheSolve) {
       constraints_upper_bounds, 4, jacobian_row_indices, jacobian_column_indices, jacobian);
    uno_set_variable_upper_bound(model, 0, 0.5);
    uno_set_initial_primal_iterate(model, x0);
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    const char* value{nullptr};
    ASSERT_EQ(uno_get_solver_string_option(solver, "hessian_model", &value), UNO_OPTIONS_NOT_SET);
@@ -461,8 +461,8 @@ TEST(CAPIOptimize, OverrideOfAnOptionWithoutValueIsReportedAfterTheSolve) {
 }
 
 TEST(CAPIOptimize, NullArgumentsAreRejected) {
-   void* solver = uno_create_solver();
-   void* model = create_hs015_model();
+   uno_solver* solver = uno_create_solver();
+   uno_model* model = create_hs015_model();
    EXPECT_EQ(uno_optimize(nullptr, model), UNO_OPTIMIZE_INVALID_ARGUMENT);
    EXPECT_EQ(uno_optimize(solver, nullptr), UNO_OPTIMIZE_INVALID_ARGUMENT);
    EXPECT_EQ(uno_optimize(nullptr, nullptr), UNO_OPTIMIZE_INVALID_ARGUMENT);
@@ -471,8 +471,8 @@ TEST(CAPIOptimize, NullArgumentsAreRejected) {
 }
 
 TEST(CAPIOptimize, ModelWithoutObjectiveAndConstraintsIsRejected) {
-   void* solver = uno_create_solver();
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
+   uno_solver* solver = uno_create_solver();
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
    EXPECT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_INVALID_MODEL);
    uno_destroy_model(model);
    uno_destroy_solver(solver);
@@ -483,8 +483,8 @@ TEST(CAPIOptimize, AutoPresetWithoutSubproblemSolverIsRejected) {
    if (available_preset() != nullptr) {
       GTEST_SKIP() << "a subproblem solver is available";
    }
-   void* solver = uno_create_solver();
-   void* model = create_hs015_model();
+   uno_solver* solver = uno_create_solver();
+   uno_model* model = create_hs015_model();
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    EXPECT_EQ(uno_optimize(solver, model), UNO_OPTIMIZE_INVALID_OPTIONS);
    uno_int optimization_status{-1};
@@ -509,8 +509,8 @@ TEST(CAPIOptimize, UnavailableLinearSolverIsReportedByTheOptimizationStatus) {
    if (unavailable_solver == nullptr) {
       GTEST_SKIP() << "all the linear solvers are available";
    }
-   void* solver = uno_create_solver();
-   void* model = create_hs015_model();
+   uno_solver* solver = uno_create_solver();
+   uno_model* model = create_hs015_model();
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    ASSERT_EQ(uno_set_solver_preset(solver, "ipopt"), UNO_OPTIONS_SUCCESS);
    ASSERT_EQ(uno_set_solver_string_option(solver, "linear_solver", unavailable_solver), UNO_OPTIONS_SUCCESS);
@@ -527,8 +527,8 @@ TEST(CAPIOptimize, SolveAfterRejectedOption) {
    if (available_preset() == nullptr) {
       GTEST_SKIP() << "no subproblem solver available";
    }
-   void* solver = uno_create_solver();
-   void* model = create_hs015_model();
+   uno_solver* solver = uno_create_solver();
+   uno_model* model = create_hs015_model();
    ASSERT_EQ(uno_set_solver_preset(solver, available_preset()), UNO_OPTIONS_SUCCESS);
    ASSERT_EQ(uno_set_solver_string_option(solver, "logger", "SILENT"), UNO_OPTIONS_SUCCESS);
    EXPECT_EQ(uno_set_solver_string_option(solver, "logger", "SOLENT"), UNO_OPTIONS_INVALID_VALUE);

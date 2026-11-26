@@ -52,8 +52,8 @@ namespace {
          return status;
       }
 
-      void* model{nullptr};
-      void* solver{nullptr};
+      uno_model* model{nullptr};
+      uno_solver* solver{nullptr};
    };
 } // namespace
 
@@ -98,34 +98,34 @@ namespace {
       return 0;
    }
 
-   uno_int failing_objective(uno_int n, const double* x, double* objective_value, void* user_data) {
-      objective_function(n, x, objective_value, user_data);
+   uno_int failing_objective(uno_int n, const double* x, bool new_x, double* objective_value, void* user_data) {
+      objective_function(n, x, new_x, objective_value, user_data);
       return next_return_code(user_data, Function::OBJECTIVE);
    }
 
-   uno_int failing_constraints(uno_int n, uno_int m, const double* x, double* values, void* user_data) {
-      constraint_functions(n, m, x, values, user_data);
+   uno_int failing_constraints(uno_int n, uno_int m, const double* x, bool new_x, double* values, void* user_data) {
+      constraint_functions(n, m, x, new_x, values, user_data);
       return next_return_code(user_data, Function::CONSTRAINTS);
    }
 
-   uno_int failing_gradient(uno_int n, const double* x, double* gradient, void* user_data) {
-      objective_gradient(n, x, gradient, user_data);
+   uno_int failing_gradient(uno_int n, const double* x, bool new_x, double* gradient, void* user_data) {
+      objective_gradient(n, x, new_x, gradient, user_data);
       return next_return_code(user_data, Function::GRADIENT);
    }
 
-   uno_int failing_jacobian(uno_int n, uno_int nnz, const double* x, double* values, void* user_data) {
-      jacobian(n, nnz, x, values, user_data);
+   uno_int failing_jacobian(uno_int n, uno_int m, uno_int nnz, const double* x, bool new_x, double* values, void* user_data) {
+      jacobian(n, m, nnz, x, new_x, values, user_data);
       return next_return_code(user_data, Function::JACOBIAN);
    }
 
-   uno_int failing_hessian(uno_int n, uno_int m, uno_int nnz, const double* x, double objective_multiplier,
+   uno_int failing_hessian(uno_int n, uno_int m, uno_int nnz, const double* x, bool new_x, double objective_multiplier,
          const double* multipliers, double* values, void* user_data) {
-      lagrangian_hessian(n, m, nnz, x, objective_multiplier, multipliers, values, user_data);
+      lagrangian_hessian(n, m, nnz, x, new_x, objective_multiplier, multipliers, values, user_data);
       return next_return_code(user_data, Function::HESSIAN);
    }
 
    // hs015 whose callbacks may fail, according to the EvaluationState passed as user_data
-   void* create_failing_hs015_model(EvaluationState& state) {
+   uno_model* create_failing_hs015_model(EvaluationState& state) {
       double variables_lower_bounds[] = {-Inf, -Inf};
       double variables_upper_bounds[] = {0.5, Inf};
       double constraints_lower_bounds[] = {1., 0.};
@@ -135,7 +135,7 @@ namespace {
       uno_int hessian_row_indices[] = {0, 1, 1};
       uno_int hessian_column_indices[] = {0, 0, 1};
       double x0[] = {-2., 1.};
-      void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
+      uno_model* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
          variables_upper_bounds, UNO_ZERO_BASED_INDEXING);
       uno_set_objective(model, UNO_MINIMIZE, failing_objective, failing_gradient);
       uno_set_constraints(model, number_constraints, failing_constraints, constraints_lower_bounds,
@@ -166,7 +166,7 @@ namespace {
       // solves hs015 where the second evaluation of the function GetParam() returns "return_code"
       [[nodiscard]] uno_int solve(uno_int return_code) {
          EvaluationState state{GetParam(), 2, return_code, 0};
-         void* model = create_failing_hs015_model(state);
+         uno_model* model = create_failing_hs015_model(state);
          uno_int status{-1};
          EXPECT_EQ(uno_optimize(this->solver, model), UNO_OPTIMIZE_SUCCESS);
          EXPECT_EQ(uno_get_optimization_status(this->solver, &status), UNO_RESULT_SUCCESS);
@@ -175,7 +175,7 @@ namespace {
          return status;
       }
 
-      void* solver{nullptr};
+      uno_solver* solver{nullptr};
    };
 } // namespace
 
@@ -248,29 +248,29 @@ namespace {
    }
 
    // min x0 s.t. x0^2 + x1^2 <= -1: infeasible, Uno ends in the feasibility restoration phase
-   uno_int infeasible_objective(uno_int /*n*/, const double* x, double* objective_value, void* /*user_data*/) {
+   uno_int infeasible_objective(uno_int /*n*/, const double* x, bool /*new_x*/, double* objective_value, void* /*user_data*/) {
       *objective_value = x[0];
       return 0;
    }
 
-   uno_int infeasible_gradient(uno_int /*n*/, const double* /*x*/, double* gradient, void* /*user_data*/) {
+   uno_int infeasible_gradient(uno_int /*n*/, const double* /*x*/, bool /*new_x*/, double* gradient, void* /*user_data*/) {
       gradient[0] = 1.;
       gradient[1] = 0.;
       return 0;
    }
 
-   uno_int infeasible_constraints(uno_int /*n*/, uno_int /*m*/, const double* x, double* values, void* /*user_data*/) {
+   uno_int infeasible_constraints(uno_int /*n*/, uno_int /*m*/, const double* x, bool /*new_x*/, double* values, void* /*user_data*/) {
       values[0] = x[0]*x[0] + x[1]*x[1];
       return 0;
    }
 
-   uno_int infeasible_jacobian(uno_int /*n*/, uno_int /*nnz*/, const double* x, double* values, void* /*user_data*/) {
+   uno_int infeasible_jacobian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* x, bool /*new_x*/, double* values, void* /*user_data*/) {
       values[0] = 2.*x[0];
       values[1] = 2.*x[1];
       return 0;
    }
 
-   uno_int infeasible_hessian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* /*x*/,
+   uno_int infeasible_hessian(uno_int /*n*/, uno_int /*m*/, uno_int /*nnz*/, const double* /*x*/, bool /*new_x*/,
          double /*objective_multiplier*/, const double* multipliers, double* values, void* /*user_data*/) {
       // Lagrangian rho f(x) - y c(x) (negative sign convention)
       values[0] = -2.*multipliers[0];
@@ -278,7 +278,7 @@ namespace {
       return 0;
    }
 
-   void* create_infeasible_model() {
+   uno_model* create_infeasible_model() {
       double variables_lower_bounds[] = {-10., -10.};
       double variables_upper_bounds[] = {10., 10.};
       double constraints_lower_bounds[] = {-Inf};
@@ -287,7 +287,7 @@ namespace {
       uno_int jacobian_column_indices[] = {0, 1};
       uno_int hessian_indices[] = {0, 1};
       double x0[] = {1., 2.};
-      void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, 2, variables_lower_bounds, variables_upper_bounds,
+      uno_model* model = uno_create_model(UNO_PROBLEM_NONLINEAR, 2, variables_lower_bounds, variables_upper_bounds,
          UNO_ZERO_BASED_INDEXING);
       uno_set_objective(model, UNO_MINIMIZE, infeasible_objective, infeasible_gradient);
       uno_set_constraints(model, 1, infeasible_constraints, constraints_lower_bounds, constraints_upper_bounds, 2,
@@ -322,14 +322,14 @@ namespace {
          uno_destroy_solver(this->solver);
       }
 
-      void* solver{nullptr};
+      uno_solver* solver{nullptr};
       IterateRecorder recorder;
    };
 } // namespace
 
 // hs015 has 2 variables and 2 inequality constraints (slacked by the interior-point method)
 TEST_P(CAPICallbackIterateTests, CallbacksReceiveUserDimensions) {
-   void* model = create_hs015_model();
+   uno_model* model = create_hs015_model();
    uno_set_lagrangian_sign_convention(model, GetParam());
    ASSERT_EQ(uno_optimize(this->solver, model), UNO_OPTIMIZE_SUCCESS);
    uno_destroy_model(model);
@@ -339,7 +339,7 @@ TEST_P(CAPICallbackIterateTests, CallbacksReceiveUserDimensions) {
 
 // at convergence, the last accepted iterate is the solution: the notify callback sees the same values as the result getters
 TEST_P(CAPICallbackIterateTests, LastNotifiedIterateIsTheSolution) {
-   void* model = create_hs015_model();
+   uno_model* model = create_hs015_model();
    uno_set_lagrangian_sign_convention(model, GetParam());
    ASSERT_EQ(uno_optimize(this->solver, model), UNO_OPTIMIZE_SUCCESS);
    uno_destroy_model(model);
@@ -366,7 +366,7 @@ TEST_P(CAPICallbackIterateTests, LastNotifiedIterateIsTheSolution) {
 
 // in the feasibility restoration phase, the elastic variables are not exposed
 TEST_P(CAPICallbackIterateTests, CallbacksReceiveUserDimensionsDuringRestoration) {
-   void* model = create_infeasible_model();
+   uno_model* model = create_infeasible_model();
    uno_set_lagrangian_sign_convention(model, GetParam());
    ASSERT_EQ(uno_optimize(this->solver, model), UNO_OPTIMIZE_SUCCESS);
    uno_destroy_model(model);

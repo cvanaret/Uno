@@ -6,26 +6,26 @@
 #include <math.h>
 #include "uno/Uno_C_API.h"
 
-uno_int objective_function(uno_int /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
+uno_int objective_function(uno_int /*number_variables*/, const double* x, bool /*new_x*/, double* objective_value, void* /*user_data*/) {
    *objective_value = 100.*pow(x[1] - pow(x[0], 2.), 2.) + pow(1. - x[0], 2.);
    return 0;
 }
 
-uno_int constraint_functions(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x,
+uno_int constraint_functions(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x, bool /*new_x*/,
       double* constraint_values, void* /*user_data*/) {
    constraint_values[0] = x[0]*x[1];
    constraint_values[1] = x[0] + pow(x[1], 2.);
    return 0;
 }
 
-uno_int objective_gradient(uno_int /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
+uno_int objective_gradient(uno_int /*number_variables*/, const double* x, bool /*new_x*/, double* gradient, void* /*user_data*/) {
    gradient[0] = 400.*pow(x[0], 3.) - 400.*x[0]*x[1] + 2.*x[0] - 2.;
    gradient[1] = 200.*(x[1] - pow(x[0], 2.));
    return 0;
 }
 
-uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
-      double* jacobian_values, void* /*user_data*/) {
+uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_jacobian_nonzeros*/,
+      const double* x, bool /*new_x*/, double* jacobian_values, void* /*user_data*/) {
    jacobian_values[0] = x[1];
    jacobian_values[1] = 1.;
    jacobian_values[2] = x[0];
@@ -33,31 +33,30 @@ uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzero
    return 0;
 }
 
-uno_int jacobian_operator(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x,
-      bool evaluate_at_x, const double* vector, double* result, void* /*user_data*/) {
+uno_int jacobian_operator(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x, bool /*new_x*/,
+      const double* vector, double* result, void* /*user_data*/) {
    result[0] = x[1]*vector[0] + 1.*vector[1];
    result[1] = x[0]*vector[0] + 2.*x[1]*vector[1];
    return 0;
 }
 
-uno_int jacobian_transposed_operator(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x,
-      bool evaluate_at_x, const double* vector, double* result, void* /*user_data*/) {
+uno_int jacobian_transposed_operator(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x, bool /*new_x*/,
+      const double* vector, double* result, void* /*user_data*/) {
    result[0] = x[1]*vector[0] + x[0]*vector[1];
    result[1] = 1.*vector[0] + 2.*x[1]*vector[1];
    return 0;
 }
 
 uno_int lagrangian_hessian(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+      const double* x, bool /*new_x*/, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
    hessian_values[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
    hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0];
    hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1];
    return 0;
 }
 
-uno_int lagrangian_hessian_operator(uno_int number_variables, uno_int number_constraints, const double* x,
-      bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
-      double* result, void* user_data) {
+uno_int lagrangian_hessian_operator(uno_int number_variables, uno_int number_constraints, const double* x, bool /*new_x*/,
+      double objective_multiplier, const double* multipliers, const double* vector, double* result, void* user_data) {
    const double hessian00 = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
    const double hessian10 = -400.*objective_multiplier*x[0] - multipliers[0];
    const double hessian11 = 200.*objective_multiplier - 2.*multipliers[1];
@@ -74,7 +73,7 @@ void check_result(uno_int status, const char* function_name) {
    }
 }
 
-const char* method_description(void* solver) {
+const char* method_description(const uno_solver* solver) {
    const char* description = NULL;
    check_result(uno_get_method_description(solver, &description), "uno_get_method_description");
    return description;
@@ -89,7 +88,7 @@ void print_vector(const double* vector, uno_int size) {
 
 void print_uno_options() {
    // temporary solver for default options
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    printf("Uno options:\n");
    for (uno_options_iterator it = uno_options_begin_iterator(); it != uno_options_end_iterator(); uno_options_next_iterator(&it)) {
       const char* name = uno_options_iterator_name(it);
@@ -164,7 +163,7 @@ int main() {
    // initial point
    double x0[] = {-2., 1.};
 
-   void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
+   uno_model* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
       variables_upper_bounds, base_indexing);
    uno_set_model_name(model, "hs015");
    uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
@@ -179,7 +178,7 @@ int main() {
    uno_set_initial_primal_iterate(model, x0);
 
    // solver creation
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    uno_int option_status = uno_set_solver_preset(solver, "filtersqp");
    assert(option_status == UNO_OPTIONS_SUCCESS);
    option_status = uno_set_solver_bool_option(solver, "print_solution", true);

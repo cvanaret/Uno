@@ -65,6 +65,22 @@ integer(uno_int), parameter :: UNO_OPTIONS_ERROR            = 6
 integer(uno_int), parameter :: UNO_OPTIONS_NOT_SET          = 7
 
 !---------------------------------------------
+! Status codes returned by the functions that build a model
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_MODEL_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_MODEL_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_MODEL_INVALID_INDEX    = 2
+integer(uno_int), parameter :: UNO_MODEL_INVALID_VALUE    = 3
+integer(uno_int), parameter :: UNO_MODEL_ERROR            = 4
+
+!---------------------------------------------
+! Status codes returned by the functions that configure a solver (other than the options)
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_SOLVER_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_SOLVER_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_SOLVER_ERROR            = 2
+
+!---------------------------------------------
 ! Status codes returned by the functions that get the result of an optimization
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_RESULT_SUCCESS          = 0
@@ -116,11 +132,12 @@ integer(uno_int), parameter :: UNO_VERSION_PATCH = 3
 ! uno_objective_callback
 !---------------------------------------------
 abstract interface
-   function uno_objective_callback(number_variables, x, objective_value, user_data) &
+   function uno_objective_callback(number_variables, x, new_x, objective_value, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: objective_value
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_objective_callback
@@ -131,13 +148,14 @@ end interface
 ! uno_constraints_callback
 !---------------------------------------------
 abstract interface
-   function uno_constraints_callback(number_variables, number_constraints, x, &
+   function uno_constraints_callback(number_variables, number_constraints, x, new_x, &
                                      constraint_values, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: constraint_values(*)
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_constraints_callback
@@ -148,11 +166,12 @@ end interface
 ! uno_objective_gradient_callback
 !---------------------------------------------
 abstract interface
-   function uno_objective_gradient_callback(number_variables, x, gradient, user_data) &
+   function uno_objective_gradient_callback(number_variables, x, new_x, gradient, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: gradient(*)
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_objective_gradient_callback
@@ -163,14 +182,16 @@ end interface
 ! uno_constraints_jacobian_callback
 !---------------------------------------------
 abstract interface
-   function uno_constraints_jacobian_callback(number_variables, &
-                                              number_jacobian_nonzeros, x, &
+   function uno_constraints_jacobian_callback(number_variables, number_constraints, &
+                                              number_jacobian_nonzeros, x, new_x, &
                                               jacobian_values, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
+      integer(uno_int), value :: number_constraints
       integer(uno_int), value :: number_jacobian_nonzeros
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), intent(out) :: jacobian_values(*)
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_constraints_jacobian_callback
@@ -182,15 +203,16 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_lagrangian_hessian_callback(number_variables, number_constraints, &
-                                            number_hessian_nonzeros, x, &
+                                            number_hessian_nonzeros, x, new_x, &
                                             objective_multiplier, multipliers, &
                                             hessian_values, user_data) &
       bind(C)
-      import :: uno_int, c_double, c_ptr
+      import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       integer(uno_int), value :: number_hessian_nonzeros
       real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: new_x
       real(c_double), value :: objective_multiplier
       real(c_double), intent(in) :: multipliers(*)
       real(c_double), intent(out) :: hessian_values(*)
@@ -204,15 +226,14 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_constraints_jacobian_operator_callback(number_variables, &
-                                                       number_constraints, x, &
-                                                       evaluate_at_x, vector, &
-                                                       result, user_data) &
+                                                       number_constraints, x, new_x, &
+                                                       vector, result, user_data) &
       bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
+      logical(c_bool), value :: new_x
       real(c_double), intent(in) :: vector(*)
       real(c_double), intent(out) :: result(*)
       type(c_ptr), value :: user_data
@@ -225,15 +246,14 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_constraints_jacobian_transposed_operator_callback(number_variables, &
-                                                                  number_constraints, x, &
-                                                                  evaluate_at_x, vector, &
-                                                                  result, user_data) &
+                                                                  number_constraints, x, new_x, &
+                                                                  vector, result, user_data) &
       bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
+      logical(c_bool), value :: new_x
       real(c_double), intent(in) :: vector(*)
       real(c_double), intent(out) :: result(*)
       type(c_ptr), value :: user_data
@@ -246,8 +266,7 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_lagrangian_hessian_operator_callback(number_variables, &
-                                                     number_constraints, x, &
-                                                     evaluate_at_x, &
+                                                     number_constraints, x, new_x, &
                                                      objective_multiplier, &
                                                      multipliers, vector, result, &
                                                      user_data) &
@@ -256,7 +275,7 @@ abstract interface
       integer(uno_int), value :: number_variables
       integer(uno_int), value :: number_constraints
       real(c_double), intent(in) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
+      logical(c_bool), value :: new_x
       real(c_double), value :: objective_multiplier
       real(c_double), intent(in) :: multipliers(*)
       real(c_double), intent(in) :: vector(*)
@@ -354,12 +373,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_variables_lower_bounds(model, variables_lower_bounds) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_variables_lower_bounds")
-      import :: c_ptr, c_double, c_bool
+      import :: c_ptr, c_double, uno_int
       type(c_ptr), value :: model
       real(c_double) :: variables_lower_bounds(*)
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_variables_lower_bounds
 end interface
 
@@ -368,12 +387,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_variables_upper_bounds(model, variables_upper_bounds) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_variables_upper_bounds")
-      import :: c_ptr, c_double, c_bool
+      import :: c_ptr, c_double, uno_int
       type(c_ptr), value :: model
       real(c_double) :: variables_upper_bounds(*)
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_variables_upper_bounds
 end interface
 
@@ -382,13 +401,13 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_variable_lower_bound(model, variable_index, lower_bound) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_variable_lower_bound")
-      import :: c_ptr, uno_int, c_double, c_bool
+      import :: c_ptr, uno_int, c_double
       type(c_ptr), value :: model
       integer(uno_int), value :: variable_index
       real(c_double), value :: lower_bound
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_variable_lower_bound
 end interface
 
@@ -397,13 +416,13 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_variable_upper_bound(model, variable_index, upper_bound) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_variable_upper_bound")
-      import :: c_ptr, uno_int, c_double, c_bool
+      import :: c_ptr, uno_int, c_double
       type(c_ptr), value :: model
       integer(uno_int), value :: variable_index
       real(c_double), value :: upper_bound
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_variable_upper_bound
 end interface
 
@@ -413,14 +432,14 @@ end interface
 interface
    function uno_set_objective(model, optimization_sense, objective_function, &
                               objective_gradient) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_objective")
-      import :: c_ptr, uno_int, c_funptr, c_bool
+      import :: c_ptr, uno_int, c_funptr
       type(c_ptr), value :: model
       integer(uno_int), value :: optimization_sense
       type(c_funptr), value :: objective_function
       type(c_funptr), value :: objective_gradient
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_objective
 end interface
 
@@ -432,9 +451,9 @@ interface
                                 constraints_lower_bounds, constraints_upper_bounds, &
                                 number_jacobian_nonzeros, jacobian_row_indices, &
                                 jacobian_column_indices, jacobian) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_constraints")
-      import :: c_ptr, uno_int, c_funptr, c_double, c_bool
+      import :: c_ptr, uno_int, c_funptr, c_double
       type(c_ptr), value :: model
       integer(uno_int), value :: number_constraints
       type(c_funptr), value :: constraint_functions
@@ -444,7 +463,7 @@ interface
       integer(uno_int) :: jacobian_row_indices(*)
       integer(uno_int) :: jacobian_column_indices(*)
       type(c_funptr), value :: jacobian
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_constraints
 end interface
 
@@ -453,12 +472,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_constraints_lower_bounds(model, constraints_lower_bounds) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_constraints_lower_bounds")
-      import :: c_ptr, c_double, c_bool
+      import :: c_ptr, c_double, uno_int
       type(c_ptr), value :: model
       real(c_double) :: constraints_lower_bounds(*)
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_constraints_lower_bounds
 end interface
 
@@ -467,12 +486,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_constraints_upper_bounds(model, constraints_upper_bounds) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_constraints_upper_bounds")
-      import :: c_ptr, c_double, c_bool
+      import :: c_ptr, c_double, uno_int
       type(c_ptr), value :: model
       real(c_double) :: constraints_upper_bounds(*)
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_constraints_upper_bounds
 end interface
 
@@ -481,13 +500,13 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_constraint_lower_bound(model, constraint_index, lower_bound) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_constraint_lower_bound")
-      import :: c_ptr, uno_int, c_double, c_bool
+      import :: c_ptr, uno_int, c_double
       type(c_ptr), value :: model
       integer(uno_int), value :: constraint_index
       real(c_double), value :: lower_bound
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_constraint_lower_bound
 end interface
 
@@ -496,13 +515,13 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_constraint_upper_bound(model, constraint_index, upper_bound) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_constraint_upper_bound")
-      import :: c_ptr, uno_int, c_double, c_bool
+      import :: c_ptr, uno_int, c_double
       type(c_ptr), value :: model
       integer(uno_int), value :: constraint_index
       real(c_double), value :: upper_bound
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_constraint_upper_bound
 end interface
 
@@ -511,12 +530,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_jacobian_operator(model, jacobian_operator) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_jacobian_operator")
-      import :: c_ptr, c_funptr, c_bool
+      import :: c_ptr, c_funptr, uno_int
       type(c_ptr), value :: model
       type(c_funptr), value :: jacobian_operator
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_jacobian_operator
 end interface
 
@@ -525,12 +544,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_jacobian_transposed_operator")
-      import :: c_ptr, c_funptr, c_bool
+      import :: c_ptr, c_funptr, uno_int
       type(c_ptr), value :: model
       type(c_funptr), value :: jacobian_transposed_operator
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_jacobian_transposed_operator
 end interface
 
@@ -541,16 +560,16 @@ interface
    function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, &
                                        hessian_triangular_part, hessian_row_indices, &
                                        hessian_column_indices, lagrangian_hessian) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_lagrangian_hessian")
-      import :: c_ptr, uno_int, c_char, c_funptr, c_bool
+      import :: c_ptr, uno_int, c_char, c_funptr
       type(c_ptr), value :: model
       integer(uno_int), value :: number_hessian_nonzeros
       character(c_char), value :: hessian_triangular_part
       integer(uno_int) :: hessian_row_indices(*)
       integer(uno_int) :: hessian_column_indices(*)
       type(c_funptr), value :: lagrangian_hessian
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_lagrangian_hessian
 end interface
 
@@ -559,12 +578,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_lagrangian_hessian_operator")
-      import :: c_ptr, c_funptr, c_bool
+      import :: c_ptr, c_funptr, uno_int
       type(c_ptr), value :: model
       type(c_funptr), value :: lagrangian_hessian_operator
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_lagrangian_hessian_operator
 end interface
 
@@ -573,12 +592,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_lagrangian_sign_convention")
-      import :: c_ptr, uno_int, c_bool
+      import :: c_ptr, uno_int
       type(c_ptr), value :: model
       integer(uno_int), value :: lagrangian_sign_convention
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_lagrangian_sign_convention
 end interface
 
@@ -587,12 +606,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_user_data(model, user_data) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_user_data")
-      import :: c_ptr, c_bool
+      import :: c_ptr, uno_int
       type(c_ptr), value :: model
       type(c_ptr), value :: user_data
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_user_data
 end interface
 
@@ -602,13 +621,13 @@ end interface
 interface
    function uno_set_initial_primal_iterate_component(model, index, &
                                                      initial_primal_component) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_initial_primal_iterate_component")
-      import :: c_ptr, uno_int, c_double, c_bool
+      import :: c_ptr, uno_int, c_double
       type(c_ptr), value :: model
       integer(uno_int), value :: index
       real(c_double), value :: initial_primal_component
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_initial_primal_iterate_component
 end interface
 
@@ -617,13 +636,13 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_initial_dual_iterate_component(model, index, initial_dual_component) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_initial_dual_iterate_component")
-      import :: c_ptr, uno_int, c_double, c_bool
+      import :: c_ptr, uno_int, c_double
       type(c_ptr), value :: model
       integer(uno_int), value :: index
       real(c_double), value :: initial_dual_component
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_initial_dual_iterate_component
 end interface
 
@@ -632,12 +651,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_initial_primal_iterate(model, initial_primal_iterate) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_initial_primal_iterate")
-      import :: c_ptr, c_double, c_bool
+      import :: c_ptr, c_double, uno_int
       type(c_ptr), value :: model
       real(c_double) :: initial_primal_iterate(*)
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_initial_primal_iterate
 end interface
 
@@ -646,12 +665,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_initial_dual_iterate(model, initial_dual_iterate) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_initial_dual_iterate")
-      import :: c_ptr, c_double, c_bool
+      import :: c_ptr, c_double, uno_int
       type(c_ptr), value :: model
       real(c_double) :: initial_dual_iterate(*)
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_initial_dual_iterate
 end interface
 
@@ -732,14 +751,14 @@ end interface
 interface
    function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, &
                                      termination_callback, user_data) &
-      result(success) &
+      result(status) &
       bind(C, name="uno_set_solver_callbacks")
-      import :: c_ptr, c_funptr, c_bool
+      import :: c_ptr, c_funptr, uno_int
       type(c_ptr), value :: solver
       type(c_funptr), value :: notify_acceptable_iterate_callback
       type(c_funptr), value :: termination_callback
       type(c_ptr), value :: user_data
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_solver_callbacks
 end interface
 
@@ -747,13 +766,14 @@ end interface
 ! uno_set_logger_stream_callback
 !---------------------------------------------
 interface
-   function uno_set_logger_stream_callback(logger_stream_callback, user_data) &
-      result(success) &
+   function uno_set_logger_stream_callback(solver, logger_stream_callback, user_data) &
+      result(status) &
       bind(C, name="uno_set_logger_stream_callback")
-      import :: c_funptr, c_ptr, c_bool
+      import :: c_ptr, c_funptr, uno_int
+      type(c_ptr), value :: solver
       type(c_funptr), value :: logger_stream_callback
       type(c_ptr), value :: user_data
-      logical(c_bool) :: success
+      integer(uno_int) :: status
    end function uno_set_logger_stream_callback
 end interface
 
@@ -761,11 +781,12 @@ end interface
 ! uno_reset_logger_stream
 !---------------------------------------------
 interface
-   function uno_reset_logger_stream() &
-      result(success) &
+   function uno_reset_logger_stream(solver) &
+      result(status) &
       bind(C, name="uno_reset_logger_stream")
-      import :: c_bool
-      logical(c_bool) :: success
+      import :: c_ptr, uno_int
+      type(c_ptr), value :: solver
+      integer(uno_int) :: status
    end function uno_reset_logger_stream
 end interface
 

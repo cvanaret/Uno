@@ -20,14 +20,14 @@ static int number_failures = 0;
    } while (0)
 
 // min (x0 - 1)^2 + (x1 - 2)^2
-static uno_int objective(uno_int number_variables, const double* x, double* objective_value, void* user_data) {
+static uno_int objective(uno_int number_variables, const double* x, bool new_x, double* objective_value, void* user_data) {
    (void)number_variables;
    (void)user_data;
    *objective_value = pow(x[0] - 1., 2.) + pow(x[1] - 2., 2.);
    return 0;
 }
 
-static uno_int objective_gradient(uno_int number_variables, const double* x, double* gradient, void* user_data) {
+static uno_int objective_gradient(uno_int number_variables, const double* x, bool new_x, double* gradient, void* user_data) {
    (void)number_variables;
    (void)user_data;
    gradient[0] = 2. * (x[0] - 1.);
@@ -36,7 +36,7 @@ static uno_int objective_gradient(uno_int number_variables, const double* x, dou
 }
 
 static uno_int lagrangian_hessian(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* user_data) {
+      const double* x, bool new_x, double objective_multiplier, const double* multipliers, double* hessian_values, void* user_data) {
    (void)number_variables;
    (void)number_constraints;
    (void)number_hessian_nonzeros;
@@ -48,7 +48,7 @@ static uno_int lagrangian_hessian(uno_int number_variables, uno_int number_const
    return 0;
 }
 
-static void check_not_available(void* solver) {
+static void check_not_available(const uno_solver* solver) {
    uno_int integer_value = -1;
    double double_value = -1.;
    double vector[2] = {-1., -1.};
@@ -68,15 +68,15 @@ int main(void) {
    CHECK(uno_create_unconstrained_model(NULL, 2, UNO_ZERO_BASED_INDEXING) == NULL);
    CHECK(uno_create_model(UNO_PROBLEM_NONLINEAR, 0, NULL, NULL, UNO_ZERO_BASED_INDEXING) == NULL);
 
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
-   void* solver = uno_create_solver();
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
+   uno_solver* solver = uno_create_solver();
    CHECK(model != NULL && solver != NULL);
    const uno_int hessian_row_indices[] = {0, 1};
    const uno_int hessian_column_indices[] = {0, 1};
-   CHECK(uno_set_objective(model, UNO_MINIMIZE, objective, objective_gradient));
-   CHECK(!uno_set_lagrangian_hessian(model, 2, UNO_LOWER_TRIANGLE, NULL, NULL, lagrangian_hessian));
+   CHECK(uno_set_objective(model, UNO_MINIMIZE, objective, objective_gradient) == UNO_MODEL_SUCCESS);
+   CHECK(uno_set_lagrangian_hessian(model, 2, UNO_LOWER_TRIANGLE, NULL, NULL, lagrangian_hessian) == UNO_MODEL_INVALID_ARGUMENT);
    CHECK(uno_set_lagrangian_hessian(model, 2, UNO_LOWER_TRIANGLE, hessian_row_indices, hessian_column_indices,
-      lagrangian_hessian));
+      lagrangian_hessian) == UNO_MODEL_SUCCESS);
    CHECK(uno_set_solver_string_option(solver, "logger", "SILENT") == UNO_OPTIONS_SUCCESS);
    CHECK(uno_set_solver_preset(solver, "ipopt") == UNO_OPTIONS_SUCCESS);
 

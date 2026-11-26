@@ -12,15 +12,18 @@ Start by including the Uno header:
 
 ### Building an optimization model
 
+The model and the solver are opaque handles of types `uno_model*` and `uno_solver*` (in C, they convert implicitly
+from and to `void*`). The getters take a `const uno_solver*`.
+
 Building an optimization model is incremental and starts with the information about the variables:
 
 ```c
-void* model = uno_create_model(problem_type, number_variables,
+uno_model* model = uno_create_model(problem_type, number_variables,
    variables_lower_bounds, variables_upper_bounds, base_indexing);
 ```
 or (for an unconstrained model):
 ```c
-void* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
+uno_model* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
 ```
 
 The following optional elements can be added or set to the model separately:
@@ -104,9 +107,15 @@ uno_set_initial_primal_iterate(model, initial_primal_iterate);
 uno_set_initial_dual_iterate(model, initial_dual_iterate);
 ```
 
-*Each of these functions returns an integer that is 0 upon success and positive upon failure.*
+*Each of these functions returns `UNO_MODEL_SUCCESS` (0) upon success, and otherwise a positive status code:
+`UNO_MODEL_INVALID_ARGUMENT` (null model or array, invalid number of elements), `UNO_MODEL_INVALID_INDEX`,
+`UNO_MODEL_INVALID_VALUE` (e.g. invalid optimization sense or sign convention) or `UNO_MODEL_ERROR`.*
 
-Each evaluation callback (objective, constraints, gradient, Jacobian, Hessian and operators) returns:
+Each evaluation callback (objective, constraints, gradient, Jacobian, Hessian and operators) receives a flag `new_x`
+right after `x`: it is `true` if `x` differs from the point of the previous evaluation (of any function, during the
+current optimization), and `false` otherwise, in which case the quantities that depend only on `x` can be reused.
+
+Each evaluation callback returns:
 - 0 if the evaluation succeeded;
 - a positive integer if the evaluation failed: Uno handles the error (for example, by backtracking to a closer point);
 - a negative integer to stop the optimization immediately: the optimization status is then `UNO_USER_TERMINATION`, and the
@@ -121,7 +130,7 @@ uno_destroy_model(model);
 
 Create an instance of the Uno solver with a simple function call.
 ```c
-void* solver = uno_create_solver();
+uno_solver* solver = uno_create_solver();
 ```
 
 The memory for the solver is allocated by the C interface and must be freed by a call to the function:
@@ -226,15 +235,19 @@ Both callbacks receive the iterate in the space of the model (its numbers of var
 slack or elastic variables that Uno may introduce), with multipliers in the Lagrangian sign convention of the model, as
 returned by the result getters.
 
-Setting the logger stream callback:
+Setting the logger stream callback of a solver (the output of its optimizations is sent to the callback):
 ```c
-uno_set_logger_stream_callback(logger_stream_callback, user_data);
+uno_set_logger_stream_callback(solver, logger_stream_callback, user_data);
 ```
 
 and reset the logger stream to the standard output:
 ```c
-uno_reset_logger_stream();
+uno_reset_logger_stream(solver);
 ```
+The logger level (option `logger`) and the logger stream of a solver apply during its optimizations only: they are
+restored afterwards, and do not affect other solvers. The messages printed outside of an optimization (e.g. about an
+invalid argument) go to the standard output. The logger of Uno is process-wide: concurrent optimizations in several
+threads are not supported.
 
 ### Solving the model
 
