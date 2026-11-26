@@ -82,7 +82,7 @@ void check_result(uno_int status, const char* function_name) {
 	}
 }
 
-const char* method_description(void* solver) {
+const char* method_description(const uno_solver* solver) {
 	const char* description = NULL;
 	check_result(uno_get_method_description(solver, &description), "uno_get_method_description");
 	return description;
@@ -119,7 +119,7 @@ void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_conventi
 	// initial point
 	double x0[] = {-2., 1.};
 
-	void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
+	uno_model* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
       variables_upper_bounds, base_indexing);
 	if (optimization_sense == UNO_MINIMIZE) {
 		uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
@@ -153,7 +153,7 @@ void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_conventi
 	uno_set_initial_primal_iterate(model, x0);
 
 	// solver creation
-	void* solver = uno_create_solver();
+	uno_solver* solver = uno_create_solver();
 	const uno_int preset_status = uno_set_solver_preset(solver, "filtersqp");
 	assert(preset_status == UNO_OPTIONS_SUCCESS);
 	const uno_int logger_status = uno_set_solver_string_option(solver, "logger", "INFO");

@@ -74,7 +74,7 @@ void check_result(uno_int status, const char* function_name) {
    }
 }
 
-const char* method_description(void* solver) {
+const char* method_description(const uno_solver* solver) {
    const char* description = NULL;
    check_result(uno_get_method_description(solver, &description), "uno_get_method_description");
    return description;
@@ -89,7 +89,7 @@ void print_vector(const double* vector, uno_int size) {
 
 void print_uno_options() {
    // temporary solver for default options
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    printf("Uno options:\n");
    for (uno_options_iterator it = uno_options_begin_iterator(); it != uno_options_end_iterator(); uno_options_next_iterator(&it)) {
       const char* name = uno_options_iterator_name(it);
@@ -164,7 +164,7 @@ int main() {
    // initial point
    double x0[] = {-2., 1.};
 
-   void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
+   uno_model* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
       variables_upper_bounds, base_indexing);
    uno_set_model_name(model, "hs015");
    uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
@@ -179,7 +179,7 @@ int main() {
    uno_set_initial_primal_iterate(model, x0);
 
    // solver creation
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    uno_int option_status = uno_set_solver_preset(solver, "filtersqp");
    assert(option_status == UNO_OPTIONS_SUCCESS);
    option_status = uno_set_solver_bool_option(solver, "print_solution", true);

@@ -63,7 +63,7 @@ namespace uno::capi_test {
    }
 
    // creates the C API model of hs015 (to be destroyed with uno_destroy_model)
-   inline void* create_hs015_model() {
+   inline uno_model* create_hs015_model() {
       double variables_lower_bounds[] = {-Inf, -Inf};
       double variables_upper_bounds[] = {0.5, Inf};
       double constraints_lower_bounds[] = {1., 0.};
@@ -74,7 +74,7 @@ namespace uno::capi_test {
       uno_int hessian_column_indices[] = {0, 0, 1};
       double x0[] = {-2., 1.};
 
-      void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
+      uno_model* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
          variables_upper_bounds, UNO_ZERO_BASED_INDEXING);
       uno_set_objective(model, UNO_MINIMIZE, objective_function, objective_gradient);
       uno_set_constraints(model, number_constraints, constraint_functions, constraints_lower_bounds,

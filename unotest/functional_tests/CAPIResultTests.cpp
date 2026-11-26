@@ -98,8 +98,8 @@ namespace {
          }
       }
 
-      void* model{nullptr};
-      void* solver{nullptr};
+      uno_model* model{nullptr};
+      uno_solver* solver{nullptr};
    };
 } // namespace
 
@@ -237,7 +237,7 @@ TEST(CAPIModel, InvalidArgumentsAreRejected) {
    EXPECT_EQ(uno_create_model(nullptr, 2, nullptr, nullptr, UNO_ZERO_BASED_INDEXING), nullptr);
    EXPECT_EQ(uno_create_model(UNO_PROBLEM_NONLINEAR, 2, nullptr, nullptr, 2), nullptr);
 
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
    ASSERT_NE(model, nullptr);
    // null sparsity patterns
    EXPECT_FALSE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, 4, nullptr, nullptr, jacobian));
@@ -250,7 +250,7 @@ TEST(CAPIModel, InvalidArgumentsAreRejected) {
 }
 
 TEST(CAPISolver, CallbacksAndLoggerStream) {
-   void* solver = uno_create_solver();
+   uno_solver* solver = uno_create_solver();
    ASSERT_NE(solver, nullptr);
    EXPECT_FALSE(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr));
    EXPECT_TRUE(uno_set_solver_callbacks(solver, nullptr, nullptr, nullptr));

@@ -42,12 +42,12 @@ namespace {
    std::optional<double> solve_with_constraint_bounds(const double* lower_bound, const double* upper_bound) {
       double x0[] = {0.};
       uno_int zero[] = {0};
-      void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, 1, nullptr, nullptr, UNO_ZERO_BASED_INDEXING);
+      uno_model* model = uno_create_model(UNO_PROBLEM_NONLINEAR, 1, nullptr, nullptr, UNO_ZERO_BASED_INDEXING);
       uno_set_objective(model, UNO_MINIMIZE, shifted_square, shifted_square_gradient);
       uno_set_constraints(model, 1, identity_constraint, lower_bound, upper_bound, 1, zero, zero, identity_jacobian);
       uno_set_lagrangian_hessian(model, 1, UNO_LOWER_TRIANGLE, zero, zero, shifted_square_hessian);
       uno_set_initial_primal_iterate(model, x0);
-      void* solver = uno_create_solver();
+      uno_solver* solver = uno_create_solver();
       uno_set_solver_string_option(solver, "logger", "SILENT");
       uno_set_solver_preset(solver, available_preset());
       std::optional<double> solution{};

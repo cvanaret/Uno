@@ -22,7 +22,9 @@ function main_julia()
                "uno_termination_callback",
                "uno_logger_stream_callback"]
 
-  options["general"]["output_ignorelist"] = [callbacks; "uno_int"]
+  # the opaque handles uno_model and uno_solver are passed as Ptr{Cvoid}
+  handles = ["uno_model", "uno_solver"]
+  options["general"]["output_ignorelist"] = [callbacks; handles; "uno_int"]
 
   args = get_default_args()
   push!(args, "-I$include_dir")
@@ -35,6 +37,9 @@ function main_julia()
   wrappers = replace(wrappers, r"^#.*\n?"m => "")
   for callback in callbacks
     wrappers = replace(wrappers, callback => "Ptr{Cvoid}")
+  end
+  for handle in handles
+    wrappers = replace(wrappers, "Ptr{$handle}" => "Ptr{Cvoid}")
   end
   wrappers = replace(wrappers, "uno_int" => "Int32")
   wrappers = "# Copyright (c) 2026 Alexis Montoison and Charlie Vanaret\n# Licensed under the MIT license. See LICENSE file in the project directory for details.\n\n" * wrappers

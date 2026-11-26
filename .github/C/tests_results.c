@@ -48,7 +48,7 @@ static uno_int lagrangian_hessian(uno_int number_variables, uno_int number_const
    return 0;
 }
 
-static void check_not_available(void* solver) {
+static void check_not_available(const uno_solver* solver) {
    uno_int integer_value = -1;
    double double_value = -1.;
    double vector[2] = {-1., -1.};
@@ -68,8 +68,8 @@ int main(void) {
    CHECK(uno_create_unconstrained_model(NULL, 2, UNO_ZERO_BASED_INDEXING) == NULL);
    CHECK(uno_create_model(UNO_PROBLEM_NONLINEAR, 0, NULL, NULL, UNO_ZERO_BASED_INDEXING) == NULL);
 
-   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
-   void* solver = uno_create_solver();
+   uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
+   uno_solver* solver = uno_create_solver();
    CHECK(model != NULL && solver != NULL);
    const uno_int hessian_row_indices[] = {0, 1};
    const uno_int hessian_column_indices[] = {0, 1};

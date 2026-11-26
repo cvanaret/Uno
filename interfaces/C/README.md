@@ -12,15 +12,18 @@ Start by including the Uno header:
 
 ### Building an optimization model
 
+The model and the solver are opaque handles of types `uno_model*` and `uno_solver*` (in C, they convert implicitly
+from and to `void*`). The getters take a `const uno_solver*`.
+
 Building an optimization model is incremental and starts with the information about the variables:
 
 ```c
-void* model = uno_create_model(problem_type, number_variables,
+uno_model* model = uno_create_model(problem_type, number_variables,
    variables_lower_bounds, variables_upper_bounds, base_indexing);
 ```
 or (for an unconstrained model):
 ```c
-void* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
+uno_model* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
 ```
 
 The following optional elements can be added or set to the model separately:
@@ -121,7 +124,7 @@ uno_destroy_model(model);
 
 Create an instance of the Uno solver with a simple function call.
 ```c
-void* solver = uno_create_solver();
+uno_solver* solver = uno_create_solver();
 ```
 
 The memory for the solver is allocated by the C interface and must be freed by a call to the function:

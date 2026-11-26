@@ -121,18 +121,18 @@ namespace {
          uno_optimize(this->solver, this->model);
       }
 
-      void* model{nullptr};
-      void* solver{nullptr};
+      uno_model* model{nullptr};
+      uno_solver* solver{nullptr};
    };
 
    // results of the last optimization
-   uno_int optimization_status(void* solver) {
+   uno_int optimization_status(const uno_solver* solver) {
       uno_int status{-1};
       EXPECT_EQ(uno_get_optimization_status(solver, &status), UNO_RESULT_SUCCESS);
       return status;
    }
 
-   uno_int number_iterations(void* solver) {
+   uno_int number_iterations(const uno_solver* solver) {
       uno_int iterations{-1};
       EXPECT_EQ(uno_get_number_iterations(solver, &iterations), UNO_RESULT_SUCCESS);
       return iterations;
