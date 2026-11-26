@@ -45,6 +45,8 @@ class BaseUnoSettings(BaseOptimizerSettings, BaseGradientBasedAlgorithmSettings)
     print_solution: bool | None = None
     diverging_iterate_threshold: float | None = None
     unbounded_objective_threshold: float | None = None
+    unbounded_objective_relative_decrease: float | None = None
+    unbounded_objective_iteration_threshold: int | None = None
     logger: str | None = None
     constraint_relaxation_strategy: str | None = None
     inequality_handling_method: str | None = None

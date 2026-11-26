@@ -8,6 +8,7 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
+#include "UnboundedObjectiveDetector.hpp"
 #include "ingredients/globalization_strategies/Decision.hpp"
 #include "ingredients/globalization_strategies/PredictedReductionModels.hpp"
 #include "linear_algebra/Norm.hpp"
@@ -101,7 +102,8 @@ namespace uno {
       const double primal_tolerance;
       const double dual_tolerance;
       const double diverging_iterate_threshold;
-      const double unbounded_objective_threshold;
+      // unbounded objective along feasible iterates (termination heuristic)
+      UnboundedObjectiveDetector unbounded_objective_detector;
       size_t number_subproblems_solved{0};
       size_t number_parameterization_updates{0};
 

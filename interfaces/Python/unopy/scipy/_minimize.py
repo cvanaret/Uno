@@ -371,6 +371,8 @@ def minimize(
         "print_solution" : bool
         "diverging_iterate_threshold" : float
         "unbounded_objective_threshold" : float
+        "unbounded_objective_relative_decrease" : float
+        "unbounded_objective_iteration_threshold" : int
         "logger" : str
         "constraint_relaxation_strategy" : str
         "inequality_handling_method" : str

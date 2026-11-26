@@ -97,6 +97,12 @@ diverging_iterate_threshold 1e20
 # Objective threshold under which the problem is declared unbounded (double)
 unbounded_objective_threshold -1e20
 
+# Relative objective decrease wrt the first feasible iterate under which the problem is declared unbounded (double)
+unbounded_objective_relative_decrease 1e10
+
+# Number of consecutive feasible iterates below the relative unboundedness threshold before the problem is declared unbounded (integer)
+unbounded_objective_iteration_threshold 5
+
 # -------------
 ## Main options
 # -------------

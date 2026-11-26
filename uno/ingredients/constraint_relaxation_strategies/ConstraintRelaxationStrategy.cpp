@@ -23,7 +23,9 @@ namespace uno {
          primal_tolerance(options.get_double("primal_tolerance")),
          dual_tolerance(options.get_double("dual_tolerance")),
          diverging_iterate_threshold(options.get_double("diverging_iterate_threshold")),
-         unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")),
+         unbounded_objective_detector(options.get_double("unbounded_objective_threshold"),
+            options.get_double("unbounded_objective_relative_decrease"),
+            options.get_unsigned_int("unbounded_objective_iteration_threshold")),
          tight_unscaled_stationarity_tolerance(options.get_double("tight_unscaled_stationarity_tolerance")),
          tight_unscaled_primal_infeasibility_tolerance(options.get_double("tight_unscaled_primal_infeasibility_tolerance")),
          tight_unscaled_complementarity_tolerance(options.get_double("tight_unscaled_complementarity_tolerance")),
@@ -165,9 +167,12 @@ namespace uno {
          evaluations.constraints, this->residual_norm);
       if (unscaled_primal_infeasibility <= this->tight_unscaled_primal_infeasibility_tolerance) {
          evaluations.evaluate_objective(problem.model, iterate.primals);
-         if (problem.model.unscaled_objective(evaluations.objective) < this->unbounded_objective_threshold) {
+         if (this->unbounded_objective_detector.is_unbounded(problem.model.unscaled_objective(evaluations.objective))) {
             return SolutionStatus::UNBOUNDED_OBJECTIVE;
          }
+      }
+      else {
+         this->unbounded_objective_detector.notify_infeasible_iterate();
       }
 
       // tight termination: test convergence wrt the tight tolerance

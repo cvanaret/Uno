@@ -57,6 +57,8 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `print_solution`                      | bool    | false    | Whether the primal-dual solution is printed                        |
 | `diverging_iterate_threshold`         | double  | 1e20     | Threshold on norm of primal variables to declare diverging iterate |
 | `unbounded_objective_threshold`       | double  | -1e20    | Objective threshold under which the problem is declared unbounded  |
+| `unbounded_objective_relative_decrease` | double | 1e10    | The problem is declared unbounded when feasible iterates have an objective below f_ref - this factor * max(1, abs(f_ref)), f_ref being the objective of the first feasible iterate (inf: disabled) |
+| `unbounded_objective_iteration_threshold` | integer | 5    | Number of consecutive feasible iterates below the relative threshold before the problem is declared unbounded |
 
 ## Main options
 
