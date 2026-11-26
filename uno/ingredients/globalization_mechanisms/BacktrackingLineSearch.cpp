@@ -278,6 +278,9 @@ namespace uno {
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
          if (this->print_minor_iterations && 1 < number_iterations && Logger::level == INFO) {
             statistics.start_new_line();
+            // the soft restoration step belongs to the current outer iteration
+            statistics.set("Iter", statistics.iteration);
+            statistics.set("Phase", "OPT");
          }
          statistics.set("Steplength", step_length);
          // the total step length is the step length scaled by the direction's step length

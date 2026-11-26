@@ -37,7 +37,18 @@ namespace uno {
          bound_multiplier_max_norm(options.get_double("bound_multiplier_max_norm")),
          constraints_buffer(model.number_constraints) {
       this->optimality.globalization_strategy = GlobalizationStrategyFactory::create(model, options, option_overrides);
-      this->feasibility.globalization_strategy = GlobalizationStrategyFactory::create(model, options, option_overrides);
+      this->feasibility.globalization_strategy = GlobalizationStrategyFactory::create(model,
+         FeasibilityRestoration::restoration_globalization_options(options), option_overrides);
+   }
+
+   // the restoration phase does not raise the infeasibility upper bound of its filter: the elastic variables absorb the
+   // violation of the relaxed constraints, so that a step limited by the upper bound does not signal a too tight bound,
+   // but a step that would increase the residuals of the restoration problem by orders of magnitude. Raising it lets the
+   // restoration iterates run away (CUTE polak3, preset ipopt)
+   Options FeasibilityRestoration::restoration_globalization_options(const Options& options) {
+      Options restoration_options = options;
+      restoration_options.set_integer("filter_ubd_raise_trigger", 0);
+      return restoration_options;
    }
 
    FeasibilityRestoration::~FeasibilityRestoration() = default;

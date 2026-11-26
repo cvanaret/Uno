@@ -26,6 +26,10 @@ namespace uno {
          std::vector<OptionOverride>& option_overrides);
       ~FeasibilityRestoration() override;
 
+      // options of the globalization strategy of the restoration phase: the infeasibility upper bound of the filter is
+      // never raised
+      [[nodiscard]] static Options restoration_globalization_options(const Options& options);
+
       void initialize(Statistics& statistics, Iterate& initial_iterate, bool uses_trust_region,
          EvaluationCache& evaluation_cache, const Options& options, std::vector<OptionOverride>& option_overrides) override;
       void postprocess_solution(Iterate& iterate, Evaluations& evaluations) const override;
