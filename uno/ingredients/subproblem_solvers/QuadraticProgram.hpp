@@ -60,6 +60,11 @@ namespace uno {
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) = 0;
 
+      // replace the constants c(x_k) of the linearized constraints c(x_k) + J_k d with constraint_constants (second-order
+      // corrections: c(x_k + d) - J_k d), and restore c(x_k). Only the constraint bounds of the QP change
+      virtual void set_constraint_constants(const Subproblem& subproblem, Vector<double>& constraint_constants) = 0;
+      virtual void restore_constraint_constants(const Subproblem& subproblem) = 0;
+
    protected:
       // validate the data of the COO fill() before any native storage is written: consistent array lengths, indices
       // within the dimensions (C indexing), finite coefficients and non-NaN bounds. Throws std::invalid_argument

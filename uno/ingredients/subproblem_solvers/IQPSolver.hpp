@@ -6,6 +6,7 @@
 
 #include <memory>
 #include "SubproblemSolver.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 
 namespace uno {
@@ -20,6 +21,9 @@ namespace uno {
    // DirectSymmetricIndefiniteLinearSolver that knows only a LinearSystem. The backend is held as an
    // LPSolver so that both curvature-free (LP) and quadratic (QP) subproblems can be wrapped; the
    // factory hands IQPSolver an LPSolver or a QPSolver as appropriate.
+   // forward declaration
+   class Evaluations;
+
    class IQPSolver : public SubproblemSolver {
    public:
       explicit IQPSolver(std::unique_ptr<LPSolver> qp_solver);
@@ -47,6 +51,15 @@ namespace uno {
    private:
       Direction direction;
       std::unique_ptr<LPSolver> qp_solver;
+      // second-order corrections: constants c(x_k + d) - J_k d of the linearized constraints
+      Direction direction_SOC;
+      Vector<double> constraints_SOC{};
+      Vector<double> jacobian_vector_product_SOC{};
+      Vector<double> initial_point_SOC{};
+      Evaluations* current_evaluations_SOC{nullptr};
+
+      void compute_SOC_constraint_constants(const Subproblem& subproblem, const Iterate& trial_iterate,
+         const Direction& step, Evaluations& trial_evaluations);
 
       static void compute_dual_direction(const Subproblem& subproblem, const Iterate& current_iterate, Multipliers& direction_multipliers);
    };

@@ -37,6 +37,8 @@ namespace uno {
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds) override;
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Iterate& current_iterate,
          const Vector<double>& vector) const override;
+      void set_constraint_constants(const Subproblem& subproblem, Vector<double>& constraint_constants) override;
+      void restore_constraint_constants(const Subproblem& subproblem) override;
 
       HighsModel model;
       Vector<double> constraints{};
