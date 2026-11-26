@@ -214,6 +214,8 @@ Setting the user callbacks to the Uno solver:
 ```c
 uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, user_termination_callback, user_data);
 ```
+The termination callback is called at each iterate and returns 0 to continue the optimization, or a nonzero value to
+stop it (the optimization status is then `UNO_USER_TERMINATION`).
 
 Setting the logger stream callback:
 ```c
