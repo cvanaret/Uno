@@ -518,8 +518,13 @@ uno_model* uno_create_model(const char* problem_type, uno_int number_variables, 
       if (model == nullptr) {
          return nullptr;
       }
-      uno_set_variables_lower_bounds(model, variables_lower_bounds);
-      uno_set_variables_upper_bounds(model, variables_upper_bounds);
+      // NULL bounds are infinite
+      if (variables_lower_bounds != nullptr) {
+         uno_set_variables_lower_bounds(model, variables_lower_bounds);
+      }
+      if (variables_upper_bounds != nullptr) {
+         uno_set_variables_upper_bounds(model, variables_upper_bounds);
+      }
       return model;
    });
 }
@@ -554,127 +559,135 @@ uno_model* uno_create_unconstrained_model(const char* problem_type, uno_int numb
    });
 }
 
-bool uno_set_model_name(uno_model* model, const char* name) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_model_name(uno_model* model, const char* name) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->name = (name != nullptr) ? name : "";
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variables_lower_bounds(uno_model* model, const double* variables_lower_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variables_lower_bounds(uno_model* model, const double* variables_lower_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (variables_lower_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (variables_lower_bounds != nullptr) {
+      {
          for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
             user_model->variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index];
          }
       }
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variables_upper_bounds(uno_model* model, const double* variables_upper_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variables_upper_bounds(uno_model* model, const double* variables_upper_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (variables_upper_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (variables_upper_bounds != nullptr) {
+      {
          for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
             user_model->variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index];
          }
       }
 
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variable_lower_bound(uno_model* model, uno_int variable_index, double lower_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variable_lower_bound(uno_model* model, uno_int variable_index, double lower_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       variable_index -= user_model->base_indexing;
       if (variable_index < 0 || variable_index >= user_model->number_variables) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->variables_lower_bounds[static_cast<size_t>(variable_index)] = lower_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_variable_upper_bound(uno_model* model, uno_int variable_index, double upper_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_variable_upper_bound(uno_model* model, uno_int variable_index, double upper_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       variable_index -= user_model->base_indexing;
       if (variable_index < 0 || variable_index >= user_model->number_variables) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->variables_upper_bounds[static_cast<size_t>(variable_index)] = upper_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_objective(uno_model* model, uno_int optimization_sense, uno_objective_callback objective_function,
+uno_int uno_set_objective(uno_model* model, uno_int optimization_sense, uno_objective_callback objective_function,
       uno_objective_gradient_callback objective_gradient) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
          WARNING << "Please specify a valid objective sense."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_VALUE;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->optimization_sense = optimization_sense;
       user_model->objective_function = objective_function;
       user_model->objective_gradient = objective_gradient;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraints(uno_model* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
+uno_int uno_set_constraints(uno_model* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
       const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (number_constraints <= 0) {
          WARNING << "Please specify a positive number of constraints."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (number_jacobian_nonzeros < 0) {
          WARNING << "Please specify a nonnegative number of Jacobian nonzeros."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (0 < number_jacobian_nonzeros && (jacobian_row_indices == nullptr || jacobian_column_indices == nullptr)) {
          WARNING << "Please specify valid Jacobian row and column indices."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // build the new data first: if an allocation fails, the model is left untouched
@@ -711,123 +724,131 @@ bool uno_set_constraints(uno_model* model, uno_int number_constraints, uno_const
       user_model->initial_dual_iterate = std::move(initial_dual_iterate);
       user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
       user_model->number_constraints = number_constraints;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraints_lower_bounds(uno_model* model, const double* constraints_lower_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraints_lower_bounds(uno_model* model, const double* constraints_lower_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (constraints_lower_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (constraints_lower_bounds != nullptr) {
+      {
          for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
             user_model->constraints_lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];
          }
       }
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraints_upper_bounds(uno_model* model, const double* constraints_upper_bounds) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraints_upper_bounds(uno_model* model, const double* constraints_upper_bounds) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
+      }
+      if (constraints_upper_bounds == nullptr) {
+         WARNING << "Please specify a valid array of bounds."  << std::endl;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the bounds internally
-      if (constraints_upper_bounds != nullptr) {
+      {
          for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
             user_model->constraints_upper_bounds[constraint_index] = constraints_upper_bounds[constraint_index];
          }
       }
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraint_lower_bound(uno_model* model, uno_int constraint_index, double lower_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraint_lower_bound(uno_model* model, uno_int constraint_index, double lower_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       constraint_index -= user_model->base_indexing;
       if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->constraints_lower_bounds[static_cast<size_t>(constraint_index)] = lower_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_constraint_upper_bound(uno_model* model, uno_int constraint_index, double upper_bound) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_constraint_upper_bound(uno_model* model, uno_int constraint_index, double upper_bound) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       constraint_index -= user_model->base_indexing;
       if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
          WARNING << "Please specify a valid index."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_INDEX;
       }
       user_model->constraints_upper_bounds[static_cast<size_t>(constraint_index)] = upper_bound;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_jacobian_operator(uno_model* model, uno_constraints_jacobian_operator_callback jacobian_operator) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_jacobian_operator(uno_model* model, uno_constraints_jacobian_operator_callback jacobian_operator) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->jacobian_operator = jacobian_operator;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_jacobian_transposed_operator(uno_model* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_jacobian_transposed_operator(uno_model* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->jacobian_transposed_operator = jacobian_transposed_operator;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_lagrangian_hessian(uno_model* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
+uno_int uno_set_lagrangian_hessian(uno_model* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
       const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, uno_lagrangian_hessian_callback lagrangian_hessian) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (number_hessian_nonzeros < 0) {
          WARNING << "Please specify a nonnegative number of Lagrangian Hessian nonzeros."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (0 < number_hessian_nonzeros && (hessian_row_indices == nullptr || hessian_column_indices == nullptr)) {
          WARNING << "Please specify valid Lagrangian Hessian row and column indices."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
          WARNING << "Please specify a correct Hessian triangle in {'" << UNO_LOWER_TRIANGLE << "', '" <<
             UNO_UPPER_TRIANGLE << "'}."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_VALUE;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // if the Hessian is empty, the problem is an LP
@@ -854,90 +875,90 @@ bool uno_set_lagrangian_hessian(uno_model* model, uno_int number_hessian_nonzero
       }
       // the count is set last
       user_model->number_hessian_nonzeros = number_hessian_nonzeros;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_lagrangian_hessian_operator(uno_model* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_lagrangian_hessian_operator(uno_model* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_lagrangian_sign_convention(uno_model* model, uno_int lagrangian_sign_convention) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_lagrangian_sign_convention(uno_model* model, uno_int lagrangian_sign_convention) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
          WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
             UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_VALUE;
       }
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->lagrangian_sign_convention = lagrangian_sign_convention;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_user_data(uno_model* model, void* user_data) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_user_data(uno_model* model, void* user_data) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       user_model->user_data = user_data;
-      return true;
+      return UNO_MODEL_SUCCESS;
    });
 }
 
-bool uno_set_initial_primal_iterate_component(uno_model* model, uno_int index, double initial_primal_component) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_primal_iterate_component(uno_model* model, uno_int index, double initial_primal_component) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       index -= user_model->base_indexing;
       if (0 <= index && index < user_model->number_variables) {
          user_model->initial_primal_iterate[static_cast<size_t>(index)] = initial_primal_component;
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_INDEX;
    });
 }
 
-bool uno_set_initial_dual_iterate_component(uno_model* model, uno_int index, double initial_dual_component) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_dual_iterate_component(uno_model* model, uno_int index, double initial_dual_component) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // shift the index with the base indexing
       index -= user_model->base_indexing;
       if (0 <= index && index < user_model->number_constraints) {
          user_model->initial_dual_iterate[static_cast<size_t>(index)] = initial_dual_component;
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_INDEX;
    });
 }
 
-bool uno_set_initial_primal_iterate(uno_model* model, const double* initial_primal_iterate) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_primal_iterate(uno_model* model, const double* initial_primal_iterate) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (initial_primal_iterate != nullptr) {
          CUserModel* user_model = static_cast<CUserModel*>(model);
@@ -945,17 +966,17 @@ bool uno_set_initial_primal_iterate(uno_model* model, const double* initial_prim
          for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
             user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
          }
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_ARGUMENT;
    });
 }
 
-bool uno_set_initial_dual_iterate(uno_model* model, const double* initial_dual_iterate) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+uno_int uno_set_initial_dual_iterate(uno_model* model, const double* initial_dual_iterate) UNO_NOEXCEPT {
+   return guard(UNO_MODEL_ERROR, [&]() -> uno_int {
       if (model == nullptr) {
          WARNING << "Please specify a valid model."  << std::endl;
-         return false;
+         return UNO_MODEL_INVALID_ARGUMENT;
       }
       if (initial_dual_iterate != nullptr) {
          CUserModel* user_model = static_cast<CUserModel*>(model);
@@ -963,9 +984,9 @@ bool uno_set_initial_dual_iterate(uno_model* model, const double* initial_dual_i
          for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
             user_model->initial_dual_iterate[constraint_index] = initial_dual_iterate[constraint_index];
          }
-         return true;
+         return UNO_MODEL_SUCCESS;
       }
-      return false;
+      return UNO_MODEL_INVALID_ARGUMENT;
    });
 }
 
@@ -1180,18 +1201,18 @@ uno_int uno_set_solver_preset(uno_solver* solver, const char* preset_name) UNO_N
    });
 }
 
-bool uno_set_solver_callbacks(uno_solver* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+uno_int uno_set_solver_callbacks(uno_solver* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
       uno_termination_callback termination_callback, void* user_data) UNO_NOEXCEPT {
-   return guard(false, [&]() -> bool {
+   return guard(UNO_SOLVER_ERROR, [&]() -> uno_int {
       if (solver == nullptr) {
          WARNING << "Please specify a valid solver."  << std::endl;
-         return false;
+         return UNO_SOLVER_INVALID_ARGUMENT;
       }
       uno_solver* const solver_data = solver;
       // replaces (and deletes) the previous callbacks
       solver_data->user_callbacks = std::make_unique<CUserCallbacks>(notify_acceptable_iterate_callback,
          termination_callback, user_data);
-      return true;
+      return UNO_SOLVER_SUCCESS;
    });
 }
 

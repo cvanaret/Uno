@@ -57,6 +57,22 @@ integer(uno_int), parameter :: UNO_OPTIONS_ERROR            = 6
 integer(uno_int), parameter :: UNO_OPTIONS_NOT_SET          = 7
 
 !---------------------------------------------
+! Status codes returned by the functions that build a model
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_MODEL_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_MODEL_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_MODEL_INVALID_INDEX    = 2
+integer(uno_int), parameter :: UNO_MODEL_INVALID_VALUE    = 3
+integer(uno_int), parameter :: UNO_MODEL_ERROR            = 4
+
+!---------------------------------------------
+! Status codes returned by the functions that configure a solver (other than the options)
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_SOLVER_SUCCESS          = 0
+integer(uno_int), parameter :: UNO_SOLVER_INVALID_ARGUMENT = 1
+integer(uno_int), parameter :: UNO_SOLVER_ERROR            = 2
+
+!---------------------------------------------
 ! Status codes returned by the functions that get the result of an optimization
 !---------------------------------------------
 integer(uno_int), parameter :: UNO_RESULT_SUCCESS          = 0

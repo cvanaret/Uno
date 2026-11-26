@@ -13,7 +13,7 @@ program example_uno
     real(c_double), dimension(number_constraints) :: constraint_dual_solution, solution_constraints
     real(c_double) :: solution_primal_feasibility, solution_stationarity, solution_complementarity
     integer(uno_int) :: optimization_status, iterate_status, option_type, status
-    logical(c_bool) :: success, print_solution = .true.
+    logical(c_bool) :: print_solution = .true.
     integer(uno_int) :: number_iterations, max_iterations = 1000
     real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
     character(:), allocatable :: logger, option_file
@@ -95,23 +95,23 @@ program example_uno
     !---------------------------------------------------
     model = uno_create_model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 
-    success = uno_set_model_name(model, "hs015")
-    call check_success(success, "uno_set_model_name")
-    success = uno_set_objective(model, optimization_sense, objective, gradient)
-    call check_success(success, "uno_set_objective")
-    success = uno_set_constraints(model, number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds, &
+    status = uno_set_model_name(model, "hs015")
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_model_name")
+    status = uno_set_objective(model, optimization_sense, objective, gradient)
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_objective")
+    status = uno_set_constraints(model, number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds, &
                                   number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
-    call check_success(success, "uno_set_constraints")
-    success = uno_set_jacobian_operator(model, jacobian_operator)
-    call check_success(success, "uno_set_jacobian_operator")
-    success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
-    call check_success(success, "uno_set_jacobian_transposed_operator")
-    ! success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
-    ! success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
-    success = uno_set_initial_primal_iterate(model, x0)
-    call check_success(success, "uno_set_initial_primal_iterate")
-    success = uno_set_initial_dual_iterate(model, y0)
-    call check_success(success, "uno_set_initial_dual_iterate")
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_constraints")
+    status = uno_set_jacobian_operator(model, jacobian_operator)
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_jacobian_operator")
+    status = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_jacobian_transposed_operator")
+    ! status = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
+    ! status = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
+    status = uno_set_initial_primal_iterate(model, x0)
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_initial_primal_iterate")
+    status = uno_set_initial_dual_iterate(model, y0)
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_initial_dual_iterate")
 
     !---------------------------------------------------
     ! Solver creation
@@ -160,11 +160,11 @@ program example_uno
     !---------------------------------------------------
     ! Run 2: solve with exact Hessian
     !---------------------------------------------------
-    success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
+    status = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
                                          hessian_column_indices, lagrangian_hessian)
-    call check_success(success, "uno_set_lagrangian_hessian")
-    success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
-    call check_success(success, "uno_set_lagrangian_sign_convention")
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_lagrangian_hessian")
+    status = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
+    call check_status(status, UNO_MODEL_SUCCESS, "uno_set_lagrangian_sign_convention")
     status = uno_optimize(solver, model)
     call check_status(status, UNO_OPTIMIZE_SUCCESS, "uno_optimize")
 
@@ -294,16 +294,6 @@ program example_uno
 
 contains
     include 'uno_fortran.f90'
-
-    ! Stop if a call to the Uno API was rejected
-    subroutine check_success(success, function_name)
-        logical(c_bool), intent(in) :: success
-        character(len=*), intent(in) :: function_name
-        if (.not. success) then
-            print *, 'Error: ', function_name, ' failed'
-            error stop 1
-        end if
-    end subroutine check_success
 
     subroutine check_status(status, expected_status, function_name)
         integer(uno_int), intent(in) :: status, expected_status

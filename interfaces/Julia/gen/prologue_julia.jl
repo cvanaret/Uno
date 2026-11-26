@@ -36,6 +36,18 @@ const UNO_OPTIONS_INVALID_FILE     = Cint(5)
 const UNO_OPTIONS_ERROR            = Cint(6)
 const UNO_OPTIONS_NOT_SET          = Cint(7)
 
+# Status codes returned by the functions that build a model
+const UNO_MODEL_SUCCESS          = Cint(0)
+const UNO_MODEL_INVALID_ARGUMENT = Cint(1)
+const UNO_MODEL_INVALID_INDEX    = Cint(2)
+const UNO_MODEL_INVALID_VALUE    = Cint(3)
+const UNO_MODEL_ERROR            = Cint(4)
+
+# Status codes returned by the functions that configure a solver (other than the options)
+const UNO_SOLVER_SUCCESS          = Cint(0)
+const UNO_SOLVER_INVALID_ARGUMENT = Cint(1)
+const UNO_SOLVER_ERROR            = Cint(2)
+
 # Status codes returned by the functions that get the result of an optimization
 const UNO_RESULT_SUCCESS          = Cint(0)
 const UNO_RESULT_INVALID_ARGUMENT = Cint(1)

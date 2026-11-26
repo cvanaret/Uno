@@ -114,7 +114,7 @@ function uno_set_variables_lower_bounds(model::Model, variables_lower_bounds::Ve
   GC.@preserve model begin
     flag = uno_set_variables_lower_bounds(model.c_model, variables_lower_bounds)
   end
-  flag || error("Failed to set variables lower bounds via uno_set_variables_lower_bounds.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set variables lower bounds via uno_set_variables_lower_bounds.")
   return
 end
 
@@ -123,7 +123,7 @@ function uno_set_variable_lower_bound(model::Model, variable_index::Int, lower_b
   GC.@preserve model begin
     flag = uno_set_variable_lower_bound(model.c_model, Cint(variable_index), lower_bound)
   end
-  flag || error("Failed to set variable lower bound via uno_set_variable_lower_bound.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set variable lower bound via uno_set_variable_lower_bound.")
   return
 end
 
@@ -132,7 +132,7 @@ function uno_set_variables_upper_bounds(model::Model, variables_upper_bounds::Ve
   GC.@preserve model begin
     flag = uno_set_variables_upper_bounds(model.c_model, variables_upper_bounds)
   end
-  flag || error("Failed to set variables upper bounds via uno_set_variables_upper_bounds.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set variables upper bounds via uno_set_variables_upper_bounds.")
   return
 end
 
@@ -141,7 +141,7 @@ function uno_set_variable_upper_bound(model::Model, variable_index::Int, upper_b
   GC.@preserve model begin
     flag = uno_set_variable_upper_bound(model.c_model, Cint(variable_index), upper_bound)
   end
-  flag || error("Failed to set variable upper bound via uno_set_variable_upper_bound.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set variable upper bound via uno_set_variable_upper_bound.")
   return
 end
 
@@ -150,7 +150,7 @@ function uno_set_constraints_lower_bounds(model::Model, constraints_lower_bounds
   GC.@preserve model begin
     flag = uno_set_constraints_lower_bounds(model.c_model, constraints_lower_bounds)
   end
-  flag || error("Failed to set constraints lower bounds via uno_set_constraints_lower_bounds.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set constraints lower bounds via uno_set_constraints_lower_bounds.")
   return
 end
 
@@ -159,7 +159,7 @@ function uno_set_constraint_lower_bound(model::Model, constraint_index::Int, low
   GC.@preserve model begin
     flag = uno_set_constraint_lower_bound(model.c_model, Cint(constraint_index), lower_bound)
   end
-  flag || error("Failed to set constraint lower bound via uno_set_constraint_lower_bound.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set constraint lower bound via uno_set_constraint_lower_bound.")
   return
 end
 
@@ -168,7 +168,7 @@ function uno_set_constraints_upper_bounds(model::Model, constraints_upper_bounds
   GC.@preserve model begin
     flag = uno_set_constraints_upper_bounds(model.c_model, constraints_upper_bounds)
   end
-  flag || error("Failed to set constraints upper bounds via uno_set_constraints_upper_bounds.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set constraints upper bounds via uno_set_constraints_upper_bounds.")
   return
 end
 
@@ -177,7 +177,7 @@ function uno_set_constraint_upper_bound(model::Model, constraint_index::Int, upp
   GC.@preserve model begin
     flag = uno_set_constraint_upper_bound(model.c_model, Cint(constraint_index), upper_bound)
   end
-  flag || error("Failed to set constraint upper bound via uno_set_constraint_upper_bound.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set constraint upper bound via uno_set_constraint_upper_bound.")
   return
 end
 
@@ -186,7 +186,7 @@ function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Ve
   GC.@preserve model begin
     flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
   end
-  flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
   return
 end
 
@@ -195,7 +195,7 @@ function uno_set_initial_primal_iterate_component(model::Model, index::Int, init
   GC.@preserve model begin
     flag = uno_set_initial_primal_iterate_component(model.c_model, Cint(index), initial_primal_component)
   end
-  flag || error("Failed to set initial primal iterate component via uno_set_initial_primal_iterate_component.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set initial primal iterate component via uno_set_initial_primal_iterate_component.")
   return
 end
 
@@ -204,7 +204,7 @@ function uno_set_initial_dual_iterate(model::Model, initial_dual_iterate::Vector
   GC.@preserve model begin
     flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
   end
-  flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
   return
 end
 
@@ -213,7 +213,7 @@ function uno_set_initial_dual_iterate_component(model::Model, index::Int, initia
   GC.@preserve model begin
     flag = uno_set_initial_dual_iterate_component(model.c_model, Cint(index), initial_dual_component)
   end
-  flag || error("Failed to set initial dual iterate component via uno_set_initial_dual_iterate_component.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set initial dual iterate component via uno_set_initial_dual_iterate_component.")
   return
 end
 
@@ -267,45 +267,45 @@ function uno_model(
 
   user_data = pointer_from_objref(model)::Ptr{Cvoid}
   flag = uno_set_user_data(c_model, user_data)
-  flag || error("Failed to set user data via uno_set_user_data.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set user data via uno_set_user_data.")
 
   eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   eval_gradient_c = @cfunction(uno_objective_gradient, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   flag = uno_set_objective(c_model, optimization_sense, eval_objective_c, eval_gradient_c)
-  flag || error("Failed to set objective and gradient via uno_set_objective.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set objective and gradient via uno_set_objective.")
 
   if !isnothing(eval_hessian)
     eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
     flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c)
-    flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
+    flag == UNO_MODEL_SUCCESS || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
   end
 
   if !isnothing(eval_Hv)
     eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
     flag = uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c)
-    flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
+    flag == UNO_MODEL_SUCCESS || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
   end
 
   flag = uno_set_lagrangian_sign_convention(c_model, Cint(lagrangian_sign))
-  flag || error("Failed to set Lagrangian sign convention via uno_set_lagrangian_sign_convention.")
+  flag == UNO_MODEL_SUCCESS || error("Failed to set Lagrangian sign convention via uno_set_lagrangian_sign_convention.")
 
   if ncon > 0
     @assert !isnothing(eval_constraints) && !isnothing(eval_jacobian)
     eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
     eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
     flag = uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
-    flag || error("Failed to set constraints and Jacobian via uno_set_constraints.")
+    flag == UNO_MODEL_SUCCESS || error("Failed to set constraints and Jacobian via uno_set_constraints.")
 
     if !isnothing(eval_Jv)
       eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
       flag = uno_set_jacobian_operator(c_model, eval_Jv_c)
-      flag || error("Failed to set Jacobian operator via uno_set_jacobian_operator.")
+      flag == UNO_MODEL_SUCCESS || error("Failed to set Jacobian operator via uno_set_jacobian_operator.")
     end
 
     if !isnothing(eval_Jtv)
       eval_Jtv_c = @cfunction(uno_jacobian_transposed_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
       flag = uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
-      flag || error("Failed to set transposed Jacobian operator via uno_set_jacobian_transposed_operator.")
+      flag == UNO_MODEL_SUCCESS || error("Failed to set transposed Jacobian operator via uno_set_jacobian_transposed_operator.")
     end
 
     if !isnothing(y0)

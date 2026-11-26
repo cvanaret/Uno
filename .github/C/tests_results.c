@@ -73,10 +73,10 @@ int main(void) {
    CHECK(model != NULL && solver != NULL);
    const uno_int hessian_row_indices[] = {0, 1};
    const uno_int hessian_column_indices[] = {0, 1};
-   CHECK(uno_set_objective(model, UNO_MINIMIZE, objective, objective_gradient));
-   CHECK(!uno_set_lagrangian_hessian(model, 2, UNO_LOWER_TRIANGLE, NULL, NULL, lagrangian_hessian));
+   CHECK(uno_set_objective(model, UNO_MINIMIZE, objective, objective_gradient) == UNO_MODEL_SUCCESS);
+   CHECK(uno_set_lagrangian_hessian(model, 2, UNO_LOWER_TRIANGLE, NULL, NULL, lagrangian_hessian) == UNO_MODEL_INVALID_ARGUMENT);
    CHECK(uno_set_lagrangian_hessian(model, 2, UNO_LOWER_TRIANGLE, hessian_row_indices, hessian_column_indices,
-      lagrangian_hessian));
+      lagrangian_hessian) == UNO_MODEL_SUCCESS);
    CHECK(uno_set_solver_string_option(solver, "logger", "SILENT") == UNO_OPTIONS_SUCCESS);
    CHECK(uno_set_solver_preset(solver, "ipopt") == UNO_OPTIONS_SUCCESS);
 

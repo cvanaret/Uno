@@ -107,7 +107,9 @@ uno_set_initial_primal_iterate(model, initial_primal_iterate);
 uno_set_initial_dual_iterate(model, initial_dual_iterate);
 ```
 
-*Each of these functions returns an integer that is 0 upon success and positive upon failure.*
+*Each of these functions returns `UNO_MODEL_SUCCESS` (0) upon success, and otherwise a positive status code:
+`UNO_MODEL_INVALID_ARGUMENT` (null model or array, invalid number of elements), `UNO_MODEL_INVALID_INDEX`,
+`UNO_MODEL_INVALID_VALUE` (e.g. invalid optimization sense or sign convention) or `UNO_MODEL_ERROR`.*
 
 Each evaluation callback (objective, constraints, gradient, Jacobian, Hessian and operators) returns:
 - 0 if the evaluation succeeded;

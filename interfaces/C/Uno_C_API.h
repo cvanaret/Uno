@@ -59,6 +59,19 @@ extern "C" {
    // user nor by the preset. With the "auto" preset, the options set by the preset (e.g. globalization_mechanism) have
    // no value until the solve: uno_optimize picks them depending on the model
 
+   // Status codes returned by the functions that build a model (uno_set_*(uno_model* model, ...))
+   static const uno_int UNO_MODEL_SUCCESS = 0;
+   static const uno_int UNO_MODEL_INVALID_ARGUMENT = 1; // null model, null array, or invalid number of elements
+   static const uno_int UNO_MODEL_INVALID_INDEX = 2; // the index of the variable or constraint is not valid
+   static const uno_int UNO_MODEL_INVALID_VALUE = 3; // invalid value (optimization sense, sign convention, Hessian
+   // triangle, ...)
+   static const uno_int UNO_MODEL_ERROR = 4; // any other error (e.g. out of memory)
+
+   // Status codes returned by the functions that configure a solver (other than the options)
+   static const uno_int UNO_SOLVER_SUCCESS = 0;
+   static const uno_int UNO_SOLVER_INVALID_ARGUMENT = 1; // null solver
+   static const uno_int UNO_SOLVER_ERROR = 2; // any other error
+
    // Status codes returned by the functions that get the result of an optimization
    static const uno_int UNO_RESULT_SUCCESS = 0;
    static const uno_int UNO_RESULT_INVALID_ARGUMENT = 1; // null solver or null pointer to the value
@@ -220,37 +233,43 @@ extern "C" {
    // [optional]
    // sets the name of a given model (used e.g. in logs and KKT system dumps).
    // an empty name falls back to the interface default.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_model_name(uno_model* model, const char* name) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_model_name(uno_model* model, const char* name) UNO_NOEXCEPT;
 
    // [optional]
    // sets the variables lower bounds of a given model.
    // takes as inputs an array of lower bounds of size "number_variables".
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_variables_lower_bounds(uno_model* model, const double* variables_lower_bounds) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_variables_lower_bounds(uno_model* model, const double* variables_lower_bounds) UNO_NOEXCEPT;
 
    // [optional]
    // sets the variables upper bounds of a given model.
    // takes as inputs an array of upper bounds of size "number_variables".
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_variables_upper_bounds(uno_model* model, const double* variables_upper_bounds) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_variables_upper_bounds(uno_model* model, const double* variables_upper_bounds) UNO_NOEXCEPT;
 
    // [optional]
    // sets the lower bound of a given variable.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_variable_lower_bound(uno_model* model, uno_int variable_index, double lower_bound) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_variable_lower_bound(uno_model* model, uno_int variable_index, double lower_bound) UNO_NOEXCEPT;
 
    // [optional]
    // sets the upper bound of a given variable.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_variable_upper_bound(uno_model* model, uno_int variable_index, double upper_bound) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_variable_upper_bound(uno_model* model, uno_int variable_index, double upper_bound) UNO_NOEXCEPT;
 
    // [optional]
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
    // function and a function pointer of its gradient function.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_objective(uno_model* model, uno_int optimization_sense, uno_objective_callback objective_function,
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_objective(uno_model* model, uno_int optimization_sense, uno_objective_callback objective_function,
       uno_objective_gradient_callback objective_gradient) UNO_NOEXCEPT;
 
    // [optional]
@@ -259,42 +278,49 @@ extern "C" {
    // upper bounds of size "number_constraints" (NULL means -inf for the lower bounds, +inf for the upper bounds), the
    // number of nonzero elements of the Jacobian, two arrays of row and column indices for the constraint Jacobian in
    // COOrdinate format, and a function pointer of the constraint Jacobian.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_constraints(uno_model* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_constraints(uno_model* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
       const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian) UNO_NOEXCEPT;
 
    // [optional]
    // sets the constraints lower bounds of a given model.
    // takes as inputs an array of lower bounds of size "number_constraints".
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_constraints_lower_bounds(uno_model* model, const double* constraints_lower_bounds) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_constraints_lower_bounds(uno_model* model, const double* constraints_lower_bounds) UNO_NOEXCEPT;
 
    // [optional]
    // sets the constraints upper bounds of a given model.
    // takes as inputs an array of upper bounds of size "number_constraints".
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_constraints_upper_bounds(uno_model* model, const double* constraints_upper_bounds) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_constraints_upper_bounds(uno_model* model, const double* constraints_upper_bounds) UNO_NOEXCEPT;
 
    // [optional]
    // sets the lower bound of a given constraint.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_constraint_lower_bound(uno_model* model, uno_int constraint_index, double lower_bound) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_constraint_lower_bound(uno_model* model, uno_int constraint_index, double lower_bound) UNO_NOEXCEPT;
 
    // [optional]
    // sets the upper bound of a given constraint.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_constraint_upper_bound(uno_model* model, uno_int constraint_index, double upper_bound) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_constraint_upper_bound(uno_model* model, uno_int constraint_index, double upper_bound) UNO_NOEXCEPT;
 
    // [optional]
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_jacobian_operator(uno_model* model, uno_constraints_jacobian_operator_callback jacobian_operator) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_jacobian_operator(uno_model* model, uno_constraints_jacobian_operator_callback jacobian_operator) UNO_NOEXCEPT;
 
    // [optional]
    // sets the Jacobian transposed operator (computes Jacobian^T-vector products) of a given model.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_jacobian_transposed_operator(uno_model* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_jacobian_transposed_operator(uno_model* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) UNO_NOEXCEPT;
 
    // [optional]
    // sets the Lagrangian Hessian of a given model.
@@ -302,48 +328,56 @@ extern "C" {
    // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a character that specifies whether the
    // lower ('L') or upper ('U') triangular part is provided, two arrays of row and column indices for the Hessian in
    // COOrdinate format, and a function pointer of the Hessian.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_hessian(uno_model* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_lagrangian_hessian(uno_model* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
       const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, uno_lagrangian_hessian_callback lagrangian_hessian) UNO_NOEXCEPT;
 
    // [optional]
    // sets the Lagrangian Hessian operator (computes Hessian-vector products) of a given model.
    // takes as inputs a function pointer of the Hessian operator.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_hessian_operator(uno_model* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_lagrangian_hessian_operator(uno_model* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) UNO_NOEXCEPT;
 
    // [optional]
    // sets the sign convention of the Lagrangian of a given model:
    // if "lagrangian_sign_convention" == UNO_MULTIPLIER_POSITIVE, the Lagrangian is rho*f(x) + y^T c(x)
    // if "lagrangian_sign_convention" == UNO_MULTIPLIER_NEGATIVE, the Lagrangian is rho*f(x) - y^T c(x)
    // if not set, Uno defaults to UNO_MULTIPLIER_NEGATIVE.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_sign_convention(uno_model* model, uno_int lagrangian_sign_convention) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_lagrangian_sign_convention(uno_model* model, uno_int lagrangian_sign_convention) UNO_NOEXCEPT;
 
    // [optional]
    // sets the user data of a given model.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_user_data(uno_model* model, void* user_data) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_user_data(uno_model* model, void* user_data) UNO_NOEXCEPT;
 
    // [optional]
    // sets one component of the initial primal iterate for a given model.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_primal_iterate_component(uno_model* model, uno_int index, double initial_primal_component) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_initial_primal_iterate_component(uno_model* model, uno_int index, double initial_primal_component) UNO_NOEXCEPT;
 
    // [optional]
    // sets one component of the initial dual iterate for a given model.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_dual_iterate_component(uno_model* model, uno_int index, double initial_dual_component) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_initial_dual_iterate_component(uno_model* model, uno_int index, double initial_dual_component) UNO_NOEXCEPT;
 
    // [optional]
    // sets the initial primal iterate of a given model.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_primal_iterate(uno_model* model, const double* initial_primal_iterate) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_initial_primal_iterate(uno_model* model, const double* initial_primal_iterate) UNO_NOEXCEPT;
 
    // [optional]
    // sets the initial dual iterate of a given model.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_dual_iterate(uno_model* model, const double* initial_dual_iterate) UNO_NOEXCEPT;
+   // returns UNO_MODEL_SUCCESS (0) if it succeeded, otherwise UNO_MODEL_INVALID_ARGUMENT, UNO_MODEL_INVALID_INDEX,
+   // UNO_MODEL_INVALID_VALUE or UNO_MODEL_ERROR.
+   uno_int uno_set_initial_dual_iterate(uno_model* model, const double* initial_dual_iterate) UNO_NOEXCEPT;
 
    // creates the Uno solver.
    uno_solver* uno_create_solver() UNO_NOEXCEPT;
@@ -386,8 +420,8 @@ extern "C" {
 
    // [optional]
    // sets the user callbacks for solver.
-   // returns true if it succeeded, false otherwise.
-   bool uno_set_solver_callbacks(uno_solver* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+   // returns UNO_SOLVER_SUCCESS (0) if it succeeded, otherwise UNO_SOLVER_INVALID_ARGUMENT or UNO_SOLVER_ERROR.
+   uno_int uno_set_solver_callbacks(uno_solver* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
       uno_termination_callback termination_callback, void* user_data) UNO_NOEXCEPT;
 
    // [optional]

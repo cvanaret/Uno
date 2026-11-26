@@ -86,21 +86,21 @@ end function uno_create_unconstrained_model
 !---------------------------------------------
 ! uno_set_model_name
 !---------------------------------------------
-function uno_set_model_name(model, name) result(success)
+function uno_set_model_name(model, name) result(status)
    type(c_ptr), value :: model
    character(len=*) :: name
-   logical(c_bool) :: success
+   integer(uno_int) :: status
    character(c_char), allocatable :: name_c(:)
    integer :: i, n
 
    interface
       function uno_set_model_name_c(model, name) &
-         result(success) &
+         result(status) &
          bind(C, name="uno_set_model_name")
-         import :: c_ptr, c_char, c_bool
+         import :: c_ptr, c_char, uno_int
          type(c_ptr), value :: model
          character(c_char) :: name(*)
-         logical(c_bool) :: success
+         integer(uno_int) :: status
       end function uno_set_model_name_c
    end interface
 
@@ -110,7 +110,7 @@ function uno_set_model_name(model, name) result(success)
       name_c(i) = name(i:i)
    end do
    name_c(n+1) = c_null_char
-   success = uno_set_model_name_c(model, name_c)
+   status = uno_set_model_name_c(model, name_c)
    deallocate(name_c)
 end function uno_set_model_name
 

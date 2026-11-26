@@ -56,7 +56,6 @@
     REAL ( KIND = c_double ), ALLOCATABLE, DIMENSION( : ) ::                   &
       X_0, X_l, X_u, Y_0, C, C_l, C_u, X, Y, Z_l, Z_u
     LOGICAL :: filexst, same_method, new_header
-    LOGICAL ( KIND = c_bool ) :: success
     LOGICAL ( KIND = c_bool ) :: write_solution_to_file
     LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
     CHARACTER ( LEN = 7 ) :: tool
@@ -210,16 +209,16 @@
 
     model = uno_create_model( problem_type, n_c, X_l, X_u, base_indexing )
 
-    success = uno_set_objective(model, optimization_sense, objective, gradient)
-    success                                                                    &
+    uno_status = uno_set_objective(model, optimization_sense, objective, gradient)
+    uno_status                                                                 &
       = uno_set_constraints( model, m_c, constraints, C_l, C_u,                &
                              nnz_j_c, J_row, J_col, jacobian )
-    success = uno_set_jacobian_operator(model, jacobian_operator )
-    success                                                                    &
+    uno_status = uno_set_jacobian_operator(model, jacobian_operator )
+    uno_status                                                                 &
        = uno_set_jacobian_transposed_operator( model,                          &
                                                jacobian_transposed_operator )
-    success = uno_set_initial_primal_iterate( model, X_0 )
-    success = uno_set_initial_dual_iterate( model, Y_0 )
+    uno_status = uno_set_initial_primal_iterate( model, X_0 )
+    uno_status = uno_set_initial_dual_iterate( model, Y_0 )
 
 !  solver creation
 
@@ -233,14 +232,14 @@
 
 !  how to solve with exact Hessian
 
-    success =                                                                  &
+    uno_status =                                                               &
       uno_set_lagrangian_hessian( model, nnz_h_c, hessian_triangular_part,     &
                                   H_row, H_col, lagrangian_hessian )
     uno_status =                                                               &
       uno_set_solver_string_option( solver, "hessian_model", hessian_model )
     CALL CHECK_UNO_STATUS( uno_status, UNO_OPTIONS_SUCCESS,                    &
                            'uno_set_solver_string_option' )
-    success =                                                                  &
+    uno_status =                                                               &
       uno_set_lagrangian_sign_convention( model, lagrangian_sign_convention )
 
 !  call the optimizer

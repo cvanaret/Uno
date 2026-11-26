@@ -169,8 +169,8 @@ function name_to_result(fname, ret_ftype="")
   r2 = replace(r, r"^get_" => "")
   r2 != r && return r2
   ret_ftype == "logical(c_bool)" && return "success"
-  # functions that set options return a status code
-  ret_ftype == "integer(uno_int)" && (startswith(r, "set_solver_") || startswith(r, "load_solver_")) && return "status"
+  # functions that set options or build a model return a status code
+  ret_ftype == "integer(uno_int)" && (startswith(r, "set_") || startswith(r, "load_solver_")) && return "status"
   # functions returning a handle: keep only the noun
   if ret_ftype == "type(c_ptr)"
     for noun in ("solver", "model")

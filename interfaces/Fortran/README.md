@@ -76,47 +76,47 @@ model = uno_create_unconstrained_model(problem_type, number_variables, &
 The following optional elements can be added or set to the model separately:
 * a name for the model (used in Uno's logs and outputs):
 ```fortran
-logical(c_bool) :: success
-success = uno_set_model_name(model, name)
+integer(uno_int) :: status
+status = uno_set_model_name(model, name)
 ```
 
 * lower bounds for the variables:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_variables_lower_bounds(model, variables_lower_bounds)
+integer(uno_int) :: status
+status = uno_set_variables_lower_bounds(model, variables_lower_bounds)
 ```
 
 * upper bounds for the variables:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_variables_upper_bounds(model, variables_upper_bounds)
+integer(uno_int) :: status
+status = uno_set_variables_upper_bounds(model, variables_upper_bounds)
 ```
 
 * a lower bound for a given variable:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_variable_lower_bound(model, variable_index, lower_bound)
+integer(uno_int) :: status
+status = uno_set_variable_lower_bound(model, variable_index, lower_bound)
 ```
 
 * an upper bound for a given variable:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_variable_upper_bound(model, variable_index, upper_bound)
+integer(uno_int) :: status
+status = uno_set_variable_upper_bound(model, variable_index, upper_bound)
 ```
 
 * the objective function and its gradient:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_objective(model, optimization_sense, &
+integer(uno_int) :: status
+status = uno_set_objective(model, optimization_sense, &
                             objective_function, objective_gradient)
 ```
 
 * constraint functions and their Jacobian:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_constraints(model, number_constraints, constraint_functions, &
+integer(uno_int) :: status
+status = uno_set_constraints(model, number_constraints, constraint_functions, &
                               constraints_lower_bounds, constraints_upper_bounds, &
                               number_jacobian_nonzeros, jacobian_row_indices, &
                               jacobian_column_indices, jacobian)
@@ -124,33 +124,33 @@ success = uno_set_constraints(model, number_constraints, constraint_functions, &
 
 * lower bounds for the constraints:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_constraints_lower_bounds(model, constraints_lower_bounds)
+integer(uno_int) :: status
+status = uno_set_constraints_lower_bounds(model, constraints_lower_bounds)
 ```
 
 * upper bounds for the constraints:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_constraints_upper_bounds(model, constraints_upper_bounds)
+integer(uno_int) :: status
+status = uno_set_constraints_upper_bounds(model, constraints_upper_bounds)
 ```
 
 * a lower bound for a given constraint:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_constraint_lower_bound(model, constraint_index, lower_bound)
+integer(uno_int) :: status
+status = uno_set_constraint_lower_bound(model, constraint_index, lower_bound)
 ```
 
 * an upper bound for a given constraint:
 ```fortran
-logical(c_bool) :: success
-success = uno_set_constraint_upper_bound(model, constraint_index, upper_bound)
+integer(uno_int) :: status
+status = uno_set_constraint_upper_bound(model, constraint_index, upper_bound)
 ```
 
 * the Lagrangian Hessian:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, &
+integer(uno_int) :: status
+status = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, &
                                      hessian_triangular_part, &
                                      hessian_row_indices, hessian_column_indices, &
                                      lagrangian_hessian)
@@ -159,50 +159,50 @@ success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, &
 * a Jacobian operator:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_jacobian_operator(model, jacobian_operator)
+integer(uno_int) :: status
+status = uno_set_jacobian_operator(model, jacobian_operator)
 ```
 
 * a Jacobian-transposed operator:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
+integer(uno_int) :: status
+status = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
 ```
 
 * a Hessian operator:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
+integer(uno_int) :: status
+status = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
 ```
 
 * the Lagrangian sign convention (default is `UNO_MULTIPLIER_NEGATIVE`):
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
+integer(uno_int) :: status
+status = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
 ```
 
 * user-defined data:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_user_data(model, user_data)
+integer(uno_int) :: status
+status = uno_set_user_data(model, user_data)
 ```
 
 * an initial primal point:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_initial_primal_iterate(model, initial_primal_iterate)
+integer(uno_int) :: status
+status = uno_set_initial_primal_iterate(model, initial_primal_iterate)
 ```
 
 * an initial dual point:
 
 ```fortran
-logical(c_bool) :: success
-success = uno_set_initial_dual_iterate(model, initial_dual_iterate)
+integer(uno_int) :: status
+status = uno_set_initial_dual_iterate(model, initial_dual_iterate)
 ```
 
 The memory for the model is allocated by Uno and must be freed with:

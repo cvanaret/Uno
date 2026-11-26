@@ -240,20 +240,20 @@ TEST(CAPIModel, InvalidArgumentsAreRejected) {
    uno_model* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 2, UNO_ZERO_BASED_INDEXING);
    ASSERT_NE(model, nullptr);
    // null sparsity patterns
-   EXPECT_FALSE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, 4, nullptr, nullptr, jacobian));
-   EXPECT_FALSE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, -1, nullptr, nullptr, jacobian));
-   EXPECT_FALSE(uno_set_lagrangian_hessian(model, 3, UNO_LOWER_TRIANGLE, nullptr, nullptr, lagrangian_hessian));
-   EXPECT_FALSE(uno_set_variable_lower_bound(model, 2, 0.));
-   EXPECT_FALSE(uno_set_objective(nullptr, UNO_MINIMIZE, objective_function, objective_gradient));
-   EXPECT_TRUE(uno_set_objective(model, UNO_MINIMIZE, objective_function, objective_gradient));
+   EXPECT_NE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, 4, nullptr, nullptr, jacobian), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_constraints(model, 2, constraint_functions, nullptr, nullptr, -1, nullptr, nullptr, jacobian), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_lagrangian_hessian(model, 3, UNO_LOWER_TRIANGLE, nullptr, nullptr, lagrangian_hessian), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_variable_lower_bound(model, 2, 0.), UNO_MODEL_SUCCESS);
+   EXPECT_NE(uno_set_objective(nullptr, UNO_MINIMIZE, objective_function, objective_gradient), UNO_MODEL_SUCCESS);
+   EXPECT_EQ(uno_set_objective(model, UNO_MINIMIZE, objective_function, objective_gradient), UNO_MODEL_SUCCESS);
    uno_destroy_model(model);
 }
 
 TEST(CAPISolver, CallbacksAndLoggerStream) {
    uno_solver* solver = uno_create_solver();
    ASSERT_NE(solver, nullptr);
-   EXPECT_FALSE(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr));
-   EXPECT_TRUE(uno_set_solver_callbacks(solver, nullptr, nullptr, nullptr));
+   EXPECT_NE(uno_set_solver_callbacks(nullptr, nullptr, nullptr, nullptr), UNO_SOLVER_SUCCESS);
+   EXPECT_EQ(uno_set_solver_callbacks(solver, nullptr, nullptr, nullptr), UNO_SOLVER_SUCCESS);
    EXPECT_TRUE(uno_set_logger_stream_callback(nullptr, nullptr));
    EXPECT_TRUE(uno_reset_logger_stream());
    uno_destroy_solver(solver);
