@@ -674,11 +674,9 @@ bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraint
       // build the new data first: if an allocation fails, the model is left untouched
       const size_t unsigned_number_constraints = static_cast<size_t>(number_constraints);
       const size_t unsigned_number_jacobian_nonzeros = static_cast<size_t>(number_jacobian_nonzeros);
-      // copy the bounds internally
-      std::vector<double> lower_bounds = user_model->constraints_lower_bounds;
-      std::vector<double> upper_bounds = user_model->constraints_upper_bounds;
-      lower_bounds.resize(unsigned_number_constraints);
-      upper_bounds.resize(unsigned_number_constraints);
+      // copy the bounds internally. NULL bounds are infinite (as for the variables)
+      std::vector<double> lower_bounds(unsigned_number_constraints, -Inf);
+      std::vector<double> upper_bounds(unsigned_number_constraints, Inf);
       for (size_t constraint_index: Range(unsigned_number_constraints)) {
          if (constraints_lower_bounds != nullptr) {
             lower_bounds[constraint_index] = constraints_lower_bounds[constraint_index];

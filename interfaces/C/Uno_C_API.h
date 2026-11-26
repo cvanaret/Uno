@@ -249,8 +249,9 @@ extern "C" {
    // [optional]
    // sets the constraints and constraint Jacobian of a given model.
    // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
-   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, two arrays of row and
-   // column indices for the constraint Jacobian in COOrdinate format, and a function pointer of the constraint Jacobian.
+   // upper bounds of size "number_constraints" (NULL means -inf for the lower bounds, +inf for the upper bounds), the
+   // number of nonzero elements of the Jacobian, two arrays of row and column indices for the constraint Jacobian in
+   // COOrdinate format, and a function pointer of the constraint Jacobian.
    // returns true if it succeeded, false otherwise.
    bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
