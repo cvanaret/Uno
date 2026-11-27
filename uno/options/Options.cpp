@@ -166,8 +166,7 @@ namespace uno {
       // possible values of the string options whose values are enumerated. The other string options (option_file,
       // libhsl_path, dump_kkt_path) accept any string. The values are the ones known to Uno, regardless of whether they
       // are available in this build (e.g. a solver that was not compiled in, or an HSL library loaded at runtime from
-      // libhsl_path): availability is checked when the solver is created. The matching follows the factories: a value is
-      // case-sensitive unless the factory compares it case-insensitively
+      // libhsl_path): availability is checked when the solver is created.
       const std::unordered_map<std::string, std::vector<std::string>> possible_string_values = {
          {"logger", {"SILENT", "DISCRETE", "WARNING", "INFO", "DEBUG", "DEBUG2", "DEBUG3"}},
          {"constraint_relaxation_strategy", {"feasibility_restoration"}},

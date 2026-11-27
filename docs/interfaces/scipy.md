@@ -163,7 +163,7 @@ res = minimize(
 )
 ```
 
-Options are checked before the optimization: an unknown option raises a `KeyError`, a value of the wrong type raises a `TypeError`, and a value of a string option that is not one of its possible values raises a `ValueError` that lists them (the values are case-sensitive, except `HIGHS` and `HIPO`):
+Options are checked before the optimization: an unknown option raises a `KeyError`, a value of the wrong type raises a `TypeError`, and a value of a string option that is not one of its possible values raises a `ValueError` that lists them (the values are case-sensitive, except `HIGHS`/`HiGHS` and `HIPO`/`HiPO` that are both accepted):
 
 
 ## Callback

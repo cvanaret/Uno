@@ -350,7 +350,8 @@ def minimize(
 
         The available options and their types are listed below.
         An int value is accepted for a float option.
-        The value of a `str` option must be one of its possible values, which are case-sensitive (except "HIGHS" and "HIPO").
+        The value of a `str` option must be one of its possible values (case-sensitive, except for the variants
+        HIGHS/HiGHS and HIPO/HiPO that are both accepted)
 
         "primal_tolerance" : float
         "dual_tolerance" : float
