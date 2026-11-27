@@ -99,10 +99,10 @@ TEST(Options, EnumeratedStringOptionsAreCaseSensitiveUnlessTheFactoryIsNot) {
    EXPECT_THROW(options.set_string("hessian_model", "lbfgs"), InvalidOptionValue);
    EXPECT_THROW(options.set_string("linear_solver", "ma57"), InvalidOptionValue);
    EXPECT_THROW(options.set_string("QP_solver", "bqpd"), InvalidOptionValue);
-   // the factories compare HIGHS and HIPO case-insensitively
-   EXPECT_NO_THROW(options.set_string("QP_solver", "highs"));
+   // the factories accept HIGHS/HiGHS and HIPO/HiPO
+   EXPECT_NO_THROW(options.set_string("QP_solver", "HIGHS"));
    EXPECT_NO_THROW(options.set_string("LP_solver", "HiGHS"));
-   EXPECT_NO_THROW(options.set_string("linear_solver", "hipo"));
+   EXPECT_NO_THROW(options.set_string("linear_solver", "HiPO"));
 }
 
 TEST(Options, FreeStringOptionsAcceptAnyValue) {

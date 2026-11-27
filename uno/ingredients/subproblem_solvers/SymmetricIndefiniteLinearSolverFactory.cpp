@@ -43,7 +43,6 @@ namespace uno {
 
 #ifdef HAS_HIPO
 #include "ingredients/subproblem_solvers/HiPO/HiPOSolver.hpp"
-#include "tools/Strings.hpp"
 #endif
 
 namespace uno {
@@ -130,7 +129,8 @@ namespace uno {
       }
 #endif
 #ifdef HAS_HIPO
-      if (case_insensitive_equals(linear_solver, "HIPO")) {
+      // two possible cases
+      if (linear_solver == "HIPO" || linear_solver == "HiPO") {
          return std::make_unique<HiPOSolver>();
       }
 #endif

@@ -342,7 +342,7 @@ extern "C" {
    bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate) UNO_NOEXCEPT;
 
    // creates the Uno solver.
-   void* uno_create_solver() UNO_NOEXCEPT;
+   void* uno_create_solver(void) UNO_NOEXCEPT;
 
    // sets a particular option in the Uno solver.
    // takes as inputs the name of the option and the value to which it should be set.
@@ -362,8 +362,8 @@ extern "C" {
    uno_int uno_get_solver_option_type(void* solver, const char* option_name) UNO_NOEXCEPT;
 
    // iterate over the Uno option types and names
-   uno_options_iterator uno_options_begin_iterator() UNO_NOEXCEPT;
-   uno_options_iterator uno_options_end_iterator() UNO_NOEXCEPT;
+   uno_options_iterator uno_options_begin_iterator(void) UNO_NOEXCEPT;
+   uno_options_iterator uno_options_end_iterator(void) UNO_NOEXCEPT;
    void uno_options_next_iterator(uno_options_iterator* iterator) UNO_NOEXCEPT;
    const char* uno_options_iterator_name(uno_options_iterator iterator) UNO_NOEXCEPT;
    uno_int uno_options_iterator_type(uno_options_iterator iterator) UNO_NOEXCEPT;
@@ -394,7 +394,7 @@ extern "C" {
    // [optional]
    // resets the logger stream to the standard output
    // returns true if it succeeded, false otherwise.
-   bool uno_reset_logger_stream() UNO_NOEXCEPT;
+   bool uno_reset_logger_stream(void) UNO_NOEXCEPT;
 
    // optimizes a given model using the Uno solver and given options.
    // returns UNO_OPTIMIZE_SUCCESS if the optimization was carried out (its outcome is given by
