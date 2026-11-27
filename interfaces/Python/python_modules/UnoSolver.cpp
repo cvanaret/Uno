@@ -10,6 +10,7 @@
 #include "../cpp_classes/UnoSolverWrapper.hpp"
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
+#include "tools/Strings.hpp"
 
 namespace py = pybind11;
 
@@ -31,7 +32,7 @@ namespace uno {
             }
          }
          else { // key not found
-            throw py::key_error(option_name + " does not exist");
+            throw py::key_error(abbreviate(option_name) + " does not exist");
          }
       }, py::arg("option_name"), py::arg("option_value"))
 
@@ -46,7 +47,7 @@ namespace uno {
             }
          }
          else { // key not found
-            throw py::key_error(option_name + " does not exist");
+            throw py::key_error(abbreviate(option_name) + " does not exist");
          }
       }, py::arg("option_name"), py::arg("option_value"))
 
@@ -61,7 +62,7 @@ namespace uno {
             }
          }
          else { // key not found
-            throw py::key_error(option_name + " does not exist");
+            throw py::key_error(abbreviate(option_name) + " does not exist");
          }
       }, py::arg("option_name"), py::arg("option_value"))
 
@@ -81,7 +82,7 @@ namespace uno {
             }
          }
          else { // key not found
-            throw py::key_error(option_name + " does not exist");
+            throw py::key_error(abbreviate(option_name) + " does not exist");
          }
       }, py::arg("option_name"), py::arg("option_value"))
 

@@ -12,6 +12,10 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 #include "CAPITestProblem.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
@@ -160,6 +164,66 @@ TEST_F(CAPIOptionsTests, PresetCanBeSetAsAnOption) {
    EXPECT_EQ(uno_set_solver_string_option(this->solver, "preset", "snopt"), UNO_OPTIONS_INVALID_VALUE);
    EXPECT_EQ(uno_set_solver_preset(this->solver, "auto"), UNO_OPTIONS_SUCCESS);
 }
+
+TEST_F(CAPIOptionsTests, StringsHaveABoundedLength) {
+   const std::string longest(Options::max_string_length, 'a');
+   const std::string too_long(Options::max_string_length + 1, 'a');
+   EXPECT_EQ(uno_set_solver_string_option(this->solver, "libhsl_path", longest.c_str()), UNO_OPTIONS_SUCCESS);
+   EXPECT_EQ(this->string_option("libhsl_path"), longest);
+   EXPECT_EQ(uno_set_solver_string_option(this->solver, "libhsl_path", too_long.c_str()), UNO_OPTIONS_INVALID_VALUE);
+   EXPECT_EQ(this->string_option("libhsl_path"), longest); // unchanged
+   EXPECT_EQ(uno_set_solver_string_option(this->solver, "logger", too_long.c_str()), UNO_OPTIONS_INVALID_VALUE);
+   EXPECT_EQ(uno_set_solver_preset(this->solver, too_long.c_str()), UNO_OPTIONS_INVALID_VALUE);
+   EXPECT_EQ(uno_load_solver_option_file(this->solver, too_long.c_str()), UNO_OPTIONS_INVALID_FILE);
+   // a too long option name cannot exist
+   EXPECT_EQ(uno_set_solver_integer_option(this->solver, too_long.c_str(), 1), UNO_OPTIONS_NOT_FOUND);
+   EXPECT_EQ(uno_set_solver_string_option(this->solver, too_long.c_str(), "INFO"), UNO_OPTIONS_NOT_FOUND);
+   uno_int value{};
+   EXPECT_EQ(uno_get_solver_integer_option(this->solver, too_long.c_str(), &value), UNO_OPTIONS_NOT_FOUND);
+   const char* string_value{nullptr};
+   EXPECT_EQ(uno_get_solver_string_option(this->solver, too_long.c_str(), &string_value), UNO_OPTIONS_NOT_FOUND);
+   EXPECT_EQ(string_value, nullptr);
+   EXPECT_EQ(uno_get_solver_option_type(this->solver, too_long.c_str()), UNO_OPTION_TYPE_NOT_FOUND);
+}
+
+TEST(CAPIStrings, ModelNameHasABoundedLength) {
+   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 1, UNO_ZERO_BASED_INDEXING);
+   ASSERT_NE(model, nullptr);
+   const std::string longest(Options::max_string_length, 'a');
+   const std::string too_long(Options::max_string_length + 1, 'a');
+   EXPECT_TRUE(uno_set_model_name(model, longest.c_str()));
+   EXPECT_FALSE(uno_set_model_name(model, too_long.c_str()));
+   EXPECT_TRUE(uno_set_model_name(model, nullptr));
+   uno_destroy_model(model);
+}
+
+#if defined(__unix__) || defined(__APPLE__)
+// a string that is not null-terminated, followed by an unreadable page: reading past it would crash. Uno reads at most
+// UNO_MAX_STRING_LENGTH + 1 characters
+TEST_F(CAPIOptionsTests, UnterminatedStringsAreNotReadPastTheMaximumLength) {
+   const size_t page_size = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+   const size_t length = Options::max_string_length + 1;
+   const size_t number_pages = (length + page_size - 1) / page_size + 1;
+   void* memory = mmap(nullptr, number_pages * page_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+   ASSERT_NE(memory, MAP_FAILED);
+   char* guard_page = static_cast<char*>(memory) + (number_pages - 1) * page_size;
+   ASSERT_EQ(mprotect(guard_page, page_size, PROT_NONE), 0);
+   char* string = guard_page - length;
+   std::memset(string, 'a', length);
+
+   EXPECT_EQ(uno_set_solver_string_option(this->solver, "libhsl_path", string), UNO_OPTIONS_INVALID_VALUE);
+   EXPECT_EQ(uno_set_solver_string_option(this->solver, string, "INFO"), UNO_OPTIONS_NOT_FOUND);
+   EXPECT_EQ(uno_set_solver_preset(this->solver, string), UNO_OPTIONS_INVALID_VALUE);
+   EXPECT_EQ(uno_load_solver_option_file(this->solver, string), UNO_OPTIONS_INVALID_FILE);
+   EXPECT_EQ(uno_get_solver_option_type(this->solver, string), UNO_OPTION_TYPE_NOT_FOUND);
+   bool value{};
+   EXPECT_EQ(uno_get_solver_bool_option(this->solver, string, &value), UNO_OPTIONS_NOT_FOUND);
+   void* model = uno_create_unconstrained_model(UNO_PROBLEM_NONLINEAR, 1, UNO_ZERO_BASED_INDEXING);
+   EXPECT_FALSE(uno_set_model_name(model, string));
+   uno_destroy_model(model);
+   munmap(memory, number_pages * page_size);
+}
+#endif
 
 TEST_F(CAPIOptionsTests, OptionTypes) {
    EXPECT_EQ(uno_get_solver_option_type(this->solver, "max_iterations"), UNO_OPTION_TYPE_INTEGER);

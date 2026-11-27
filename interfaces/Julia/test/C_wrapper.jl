@@ -644,6 +644,39 @@ end
   @test UnoSolver.uno_get_solver_string_option(solver, "logger") == "SILENT"
 end
 
+@testset "Strings -- maximum length" begin
+  max_length = UnoSolver.UNO_MAX_STRING_LENGTH
+  solver = uno_solver()
+  @test uno_set_solver_string_option(solver, "libhsl_path", "a"^max_length) == UnoSolver.UNO_OPTIONS_SUCCESS
+  @test UnoSolver.uno_get_solver_string_option(solver, "libhsl_path") == "a"^max_length
+  @test uno_set_solver_string_option(solver, "libhsl_path", "a"^(max_length + 1)) == UnoSolver.UNO_OPTIONS_INVALID_VALUE
+  @test uno_set_solver_integer_option(solver, "a"^(max_length + 1), Cint(1)) == UnoSolver.UNO_OPTIONS_NOT_FOUND
+  @test UnoSolver.uno_get_solver_string_option(solver, "libhsl_path") == "a"^max_length # unchanged
+  # a null character would truncate the string: rejected by the conversion to Cstring
+  @test_throws ArgumentError uno_set_solver_string_option(solver, "libhsl_path", "lib\0hsl.so")
+  # the error message does not echo a long value
+  message = try
+    uno_solver(libhsl_path="a"^1_000_000)
+    ""
+  catch exception
+    sprint(showerror, exception)
+  end
+  @test 0 < length(message) < 300
+
+  # the model name is checked before the C model is created
+  objective(userdata, x) = (x[1] - 1.0)^2
+  function gradient(userdata, g, x)
+    g[1] = 2.0 * (x[1] - 1.0)
+    return g
+  end
+  named_model(name) = uno_model("NLP", true, 1, 0, [-Inf], [Inf], Float64[], Float64[], Cint[], Cint[], 0, Cint[], Cint[],
+                                0, objective, nothing, gradient, nothing, nothing, nothing, nothing, nothing, nothing, 'L',
+                                1, nothing, nothing, name)
+  @test named_model("a"^max_length) isa UnoSolver.Model
+  @test_throws ArgumentError named_model("a"^(max_length + 1))
+  @test_throws ArgumentError named_model("a\0b")
+end
+
 # https://github.com/cvanaret/Uno/issues/925: the getters used to throw for the options without a value
 @testset "Options -- getters (issue 925)" begin
   solver = uno_solver()

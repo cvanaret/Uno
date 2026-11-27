@@ -7,6 +7,7 @@
 #include <utility>
 #include <stdexcept>
 #include "../unopy.hpp"
+#include "options/Options.hpp"
 #include "tools/Infinity.hpp"
 
 namespace py = pybind11;
@@ -38,6 +39,13 @@ namespace uno {
 
       // methods
       .def("set_name", [](PythonUserModel& user_model, std::string name) {
+         if (Options::max_string_length < name.size()) {
+            throw std::invalid_argument("The model name has more than " + std::to_string(Options::max_string_length) +
+               " characters");
+         }
+         if (name.find('\0') != std::string::npos) {
+            throw std::invalid_argument("The model name contains a null character");
+         }
          user_model.name = std::move(name);
       })
 

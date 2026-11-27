@@ -167,6 +167,39 @@ def test_invalid_string_option_value(solver, option, value):
 		solver.set_option(option, value)
 
 
+def test_strings_have_a_bounded_length():
+	max_length = unopy.MAX_STRING_LENGTH
+	solver = unopy.UnoSolver()
+	solver.set_option("libhsl_path", "a" * max_length)
+	with pytest.raises(ValueError, match="maximum 4095"):
+		solver.set_option("libhsl_path", "a" * (max_length + 1))
+	with pytest.raises(ValueError):
+		solver.set_option("logger", "a" * (max_length + 1))
+	# a null character would truncate the value when passed to C (e.g. dlopen)
+	with pytest.raises(ValueError, match="null character"):
+		solver.set_option("libhsl_path", "lib\0hsl.so")
+
+
+def test_error_messages_do_not_echo_long_strings():
+	solver = unopy.UnoSolver()
+	huge = "a" * 1_000_000
+	with pytest.raises(ValueError) as error:
+		solver.set_option("logger", huge)
+	assert len(str(error.value)) < 300
+	with pytest.raises(KeyError) as error:
+		solver.set_option(huge, "INFO")
+	assert len(str(error.value)) < 300
+
+
+def test_model_name_has_a_bounded_length():
+	model = unopy.Model(unopy.PROBLEM_NONLINEAR, 1, [-1.], [1.], unopy.ZERO_BASED_INDEXING)
+	model.set_name("a" * unopy.MAX_STRING_LENGTH)
+	with pytest.raises(ValueError, match="more than 4095"):
+		model.set_name("a" * (unopy.MAX_STRING_LENGTH + 1))
+	with pytest.raises(ValueError, match="null character"):
+		model.set_name("a\0b")
+
+
 def test_rejected_option_value_leaves_the_solver_usable(ipopt):
 	with pytest.raises(ValueError):
 		ipopt.set_option("logger", "SOLENT")
