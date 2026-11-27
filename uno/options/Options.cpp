@@ -13,7 +13,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Strings.hpp"
 
 namespace uno {
    const std::unordered_map<std::string, OptionType> Options::option_types = {
@@ -164,34 +163,29 @@ namespace uno {
    };
 
    namespace {
-      struct PossibleValue {
-         std::string value;
-         bool case_sensitive{true};
-      };
-
       // possible values of the string options whose values are enumerated. The other string options (option_file,
       // libhsl_path, dump_kkt_path) accept any string. The values are the ones known to Uno, regardless of whether they
       // are available in this build (e.g. a solver that was not compiled in, or an HSL library loaded at runtime from
       // libhsl_path): availability is checked when the solver is created. The matching follows the factories: a value is
       // case-sensitive unless the factory compares it case-insensitively
-      const std::unordered_map<std::string, std::vector<PossibleValue>> possible_string_values = {
-         {"logger", {{"SILENT"}, {"DISCRETE"}, {"WARNING"}, {"INFO"}, {"DEBUG"}, {"DEBUG2"}, {"DEBUG3"}}},
-         {"constraint_relaxation_strategy", {{"feasibility_restoration"}}},
-         {"inequality_handling_method", {{"inequality_constrained"}, {"interior_point"}}},
-         {"globalization_mechanism", {{"TR"}, {"LS"}}},
-         {"globalization_strategy", {{"merit_function"}, {"fletcher_filter_method"}, {"waechter_filter_method"},
-            {"funnel_method"}}},
-         {"hessian_model", {{"exact"}, {"LBFGS"}, {"LSR1"}, {"identity"}, {"zero"}}},
-         {"inertia_correction_strategy", {{"primal"}, {"primal_dual"}, {"none"}}},
-         {"progress_norm", {{"L1"}, {"L2"}, {"L2_squared"}, {"INF"}}},
-         {"residual_norm", {{"L1"}, {"L2"}, {"L2_squared"}, {"INF"}}},
-         {"barrier_function", {{"log"}}},
-         {"BQPD_kmax_heuristic", {{"filtersqp"}, {"minotaur"}}},
-         {"QP_solver", {{"BQPD"}, {"HIGHS", false}}},
-         {"LP_solver", {{"BQPD"}, {"HIGHS", false}}},
-         {"linear_solver", {{"MA57"}, {"MA27"}, {"MA86"}, {"MUMPS"}, {"SSIDS"}, {"HIPO", false}}},
-         {"preset", {{"auto"}, {"filtersqp"}, {"ipopt"}, {"funnelsqp"}, {"filterslp"}}},
-         {"linear_system_scaling", {{"none"}, {"ruiz"}, {"matching"}}},
+      const std::unordered_map<std::string, std::vector<std::string>> possible_string_values = {
+         {"logger", {"SILENT", "DISCRETE", "WARNING", "INFO", "DEBUG", "DEBUG2", "DEBUG3"}},
+         {"constraint_relaxation_strategy", {"feasibility_restoration"}},
+         {"inequality_handling_method", {"inequality_constrained", "interior_point"}},
+         {"globalization_mechanism", {"TR", "LS"}},
+         {"globalization_strategy", {"merit_function", "fletcher_filter_method", "waechter_filter_method",
+            "funnel_method"}},
+         {"hessian_model", {"exact", "LBFGS", "LSR1", "identity", "zero"}},
+         {"inertia_correction_strategy", {"primal", "primal_dual", "none"}},
+         {"progress_norm", {"L1", "L2", "L2_squared", "INF"}},
+         {"residual_norm", {"L1", "L2", "L2_squared", "INF"}},
+         {"barrier_function", {"log"}},
+         {"BQPD_kmax_heuristic", {"filtersqp", "minotaur"}},
+         {"QP_solver", {"BQPD", "HIGHS", "HiGHS"}},
+         {"LP_solver", {"BQPD", "HIGHS", "HiGHS"}},
+         {"linear_solver", {"MA57", "MA27", "MA86", "MUMPS", "SSIDS", "HIPO", "HiPO"}},
+         {"preset", {"auto", "filtersqp", "ipopt", "funnelsqp", "filterslp"}},
+         {"linear_system_scaling", {"none", "ruiz", "matching"}},
       };
    }
 
@@ -199,8 +193,8 @@ namespace uno {
       std::vector<std::string> values{};
       const auto possible_values = possible_string_values.find(option_name);
       if (possible_values != possible_string_values.end()) {
-         for (const PossibleValue& possible_value: possible_values->second) {
-            values.push_back(possible_value.value);
+         for (const std::string& possible_value: possible_values->second) {
+            values.push_back(possible_value);
          }
       }
       return values;
@@ -211,14 +205,13 @@ namespace uno {
       if (possible_values == possible_string_values.end()) {
          return; // any string is accepted
       }
-      for (const PossibleValue& possible_value: possible_values->second) {
-         if (possible_value.case_sensitive ? (option_value == possible_value.value) :
-               case_insensitive_equals(option_value, possible_value.value)) {
+      for (const std::string& possible_value: possible_values->second) {
+         if (option_value == possible_value) {
             return;
          }
       }
       throw InvalidOptionValue("The value " + option_value + " of option " + option_name + " is not valid. Possible values: " +
-         join(Options::get_possible_values(option_name), ", "));
+         join(get_possible_values(option_name), ", "));
    }
 
    // setters

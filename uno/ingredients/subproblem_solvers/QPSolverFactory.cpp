@@ -12,7 +12,6 @@
 #endif
 #ifdef HAS_HIGHS
 #include "ingredients/subproblem_solvers/HiGHS/HiGHSSolver.hpp"
-#include "tools/Strings.hpp"
 #endif
 
 namespace uno {
@@ -25,7 +24,8 @@ namespace uno {
          }
 #endif
 #ifdef HAS_HIGHS
-         if (case_insensitive_equals(QP_solver_name, "HIGHS")) {
+         // two possible cases
+         if (QP_solver_name == "HIGHS" || QP_solver_name == "HiGHS") {
             return std::make_unique<HiGHSSolver>(options);
          }
 #endif
